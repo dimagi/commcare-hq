@@ -23,188 +23,134 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "integer",
-        "required": false,
         "display": "Age in Months Low Bound",
-        "field": "age_in_months",
+        "slug": "age_in_months",
         "type": "numeric",
-        "slug": "age_in_months"
+        "field": "age_in_months",
+        "datatype": "integer"
       },
       {
-        "compare_as_string": false,
-        "datatype": "integer",
-        "required": false,
         "display": "Age in Months High Bound",
-        "field": "age_in_months",
+        "slug": "age_in_months1",
         "type": "numeric",
-        "slug": "age_in_months1"
+        "field": "age_in_months",
+        "datatype": "integer"
       },
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
         "display": "Date Last Weighed",
-        "field": "last_date_gmp",
+        "slug": "last_date_gmp",
         "type": "date",
-        "slug": "last_date_gmp"
+        "field": "last_date_gmp",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by AWW",
         "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by AWW"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Supervisor",
         "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by Supervisor"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Block",
         "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by Block"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by District",
         "slug": "district_id",
+        "type": "dynamic_choice_list",
         "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by District"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by State",
         "slug": "state_id",
+        "type": "dynamic_choice_list",
         "field": "state_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by State"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "awc_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_resident_weighed_count",
         "column_id": "M_resident_weighed_count",
+        "type": "field",
         "field": "M_resident_weighed_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "M_resident_weighed_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_resident_weighed_count",
         "column_id": "F_resident_weighed_count",
+        "type": "field",
         "field": "F_resident_weighed_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "F_resident_weighed_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_mod_resident_weighed_count",
         "column_id": "M_mod_resident_weighed_count",
+        "type": "field",
         "field": "M_mod_resident_weighed_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "M_mod_resident_weighed_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_mod_resident_weighed_count",
         "column_id": "F_mod_resident_weighed_count",
+        "type": "field",
         "field": "F_mod_resident_weighed_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "F_mod_resident_weighed_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_sev_resident_weighed_count",
         "column_id": "M_sev_resident_weighed_count",
-        "field": "M_sev_resident_weighed_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "M_sev_resident_weighed_count"
+        "field": "M_sev_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_sev_resident_weighed_count",
         "column_id": "F_sev_resident_weighed_count",
-        "field": "F_sev_resident_weighed_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "F_sev_resident_weighed_count"
+        "field": "F_sev_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],

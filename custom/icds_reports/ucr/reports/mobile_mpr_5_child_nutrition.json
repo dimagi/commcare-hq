@@ -21,340 +21,242 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Age in Months Low Bound",
         "slug": "age_in_months",
-        "field": "age_in_months",
         "type": "numeric",
-        "display": "Age in Months Low Bound"
+        "field": "age_in_months",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Age in Months High Bound",
         "slug": "age_in_months1",
-        "field": "age_in_months",
         "type": "numeric",
-        "display": "Age in Months High Bound"
+        "field": "age_in_months",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Month for Data",
         "slug": "month",
-        "field": "month",
         "type": "date",
-        "display": "Month for Data"
+        "field": "month",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "choice_provider": {
-          "type": "location"
-        },
-        "required": false,
         "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
-        "type": "dynamic_choice_list",
-        "slug": "awc_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
-        "type": "dynamic_choice_list",
-        "slug": "supervisor_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
-        "type": "dynamic_choice_list",
-        "slug": "block_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by District",
-        "field": "district_id",
+        "slug": "district_id",
         "type": "dynamic_choice_list",
-        "slug": "district_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
+        "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by State",
-        "field": "state_id",
+        "slug": "state_id",
         "type": "dynamic_choice_list",
-        "slug": "state_id"
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "awc_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_male_st",
         "column_id": "thr_rations_male_st",
+        "type": "field",
         "field": "thr_rations_male_st",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_male_st"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_female_st",
         "column_id": "thr_rations_female_st",
+        "type": "field",
         "field": "thr_rations_female_st",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_female_st"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_male_sc",
         "column_id": "thr_rations_male_sc",
+        "type": "field",
         "field": "thr_rations_male_sc",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_male_sc"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_female_sc",
         "column_id": "thr_rations_female_sc",
+        "type": "field",
         "field": "thr_rations_female_sc",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_female_sc"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_male_others",
         "column_id": "thr_rations_male_others",
+        "type": "field",
         "field": "thr_rations_male_others",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_male_others"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_female_others",
         "column_id": "thr_rations_female_others",
+        "type": "field",
         "field": "thr_rations_female_others",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_female_others"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_male_disabled",
         "column_id": "thr_rations_male_disabled",
+        "type": "field",
         "field": "thr_rations_male_disabled",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_male_disabled"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_female_disabled",
         "column_id": "thr_rations_female_disabled",
+        "type": "field",
         "field": "thr_rations_female_disabled",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_female_disabled"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_male_minority",
         "column_id": "thr_rations_male_minority",
+        "type": "field",
         "field": "thr_rations_male_minority",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_male_minority"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_female_minority",
         "column_id": "thr_rations_female_minority",
+        "type": "field",
         "field": "thr_rations_female_minority",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_female_minority"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_absent_male",
         "column_id": "thr_rations_absent_male",
+        "type": "field",
         "field": "thr_rations_absent_male",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_absent_male"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_absent_female",
         "column_id": "thr_rations_absent_female",
+        "type": "field",
         "field": "thr_rations_absent_female",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_absent_female"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_partial_male",
         "column_id": "thr_rations_partial_male",
+        "type": "field",
         "field": "thr_rations_partial_male",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_partial_male"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_partial_female",
         "column_id": "thr_rations_partial_female",
+        "type": "field",
         "field": "thr_rations_partial_female",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_partial_female"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_migrant_male",
         "column_id": "thr_rations_migrant_male",
+        "type": "field",
         "field": "thr_rations_migrant_male",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_migrant_male"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_migrant_female",
         "column_id": "thr_rations_migrant_female",
-        "field": "thr_rations_migrant_female",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "thr_rations_migrant_female"
+        "field": "thr_rations_migrant_female",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "format": "default",
-        "aggregation": "sum",
         "column_id": "child_count_female",
+        "type": "field",
         "field": "child_count_female",
-        "calculate_total": true,
-        "type": "field"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "format": "default",
-        "aggregation": "sum",
         "column_id": "child_count_male",
+        "type": "field",
         "field": "child_count_male",
-        "calculate_total": true,
-        "type": "field"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "format": "default",
-        "aggregation": "sum",
         "column_id": "thr_total_rations_female",
+        "type": "field",
         "field": "thr_total_rations_female",
-        "calculate_total": true,
-        "type": "field"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "format": "default",
-        "aggregation": "sum",
         "column_id": "thr_total_rations_male",
+        "type": "field",
         "field": "thr_total_rations_male",
-        "calculate_total": true,
-        "type": "field"
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],

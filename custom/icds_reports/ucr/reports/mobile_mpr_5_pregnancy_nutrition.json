@@ -21,333 +21,237 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Age in Months",
         "slug": "age_in_months",
-        "field": "age_in_months",
         "type": "numeric",
-        "display": "Age in Months"
+        "field": "age_in_months",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Month for Data",
         "slug": "month",
-        "field": "month",
         "type": "date",
-        "display": "Month for Data"
+        "field": "month",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "choice_provider": {
-          "type": "location"
-        },
-        "required": false,
         "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
-        "type": "dynamic_choice_list",
-        "slug": "awc_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
-        "type": "dynamic_choice_list",
-        "slug": "supervisor_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
-        "type": "dynamic_choice_list",
-        "slug": "block_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by District",
-        "field": "district_id",
+        "slug": "district_id",
         "type": "dynamic_choice_list",
-        "slug": "district_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
+        "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by State",
-        "field": "state_id",
+        "slug": "state_id",
         "type": "dynamic_choice_list",
-        "slug": "state_id"
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "awc_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_pregnant_st",
         "column_id": "thr_rations_pregnant_st",
+        "type": "field",
         "field": "thr_rations_pregnant_st",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_pregnant_st"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_lactating_st",
         "column_id": "thr_rations_lactating_st",
+        "type": "field",
         "field": "thr_rations_lactating_st",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_lactating_st"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_pregnant_sc",
         "column_id": "thr_rations_pregnant_sc",
+        "type": "field",
         "field": "thr_rations_pregnant_sc",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_pregnant_sc"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_lactating_sc",
         "column_id": "thr_rations_lactating_sc",
+        "type": "field",
         "field": "thr_rations_lactating_sc",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_lactating_sc"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_pregnant_others",
         "column_id": "thr_rations_pregnant_others",
+        "type": "field",
         "field": "thr_rations_pregnant_others",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_pregnant_others"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_lactating_others",
         "column_id": "thr_rations_lactating_others",
+        "type": "field",
         "field": "thr_rations_lactating_others",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_lactating_others"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_pregnant_disabled",
         "column_id": "thr_rations_pregnant_disabled",
+        "type": "field",
         "field": "thr_rations_pregnant_disabled",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_pregnant_disabled"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_lactating_disabled",
         "column_id": "thr_rations_lactating_disabled",
+        "type": "field",
         "field": "thr_rations_lactating_disabled",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_lactating_disabled"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_pregnant_minority",
         "column_id": "thr_rations_pregnant_minority",
+        "type": "field",
         "field": "thr_rations_pregnant_minority",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_pregnant_minority"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_lactating_minority",
         "column_id": "thr_rations_lactating_minority",
+        "type": "field",
         "field": "thr_rations_lactating_minority",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_lactating_minority"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_absent_pregnant",
         "column_id": "thr_rations_absent_pregnant",
+        "type": "field",
         "field": "thr_rations_absent_pregnant",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_absent_pregnant"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_absent_lactating",
         "column_id": "thr_rations_absent_lactating",
+        "type": "field",
         "field": "thr_rations_absent_lactating",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_absent_lactating"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_partial_pregnant",
         "column_id": "thr_rations_partial_pregnant",
+        "type": "field",
         "field": "thr_rations_partial_pregnant",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_partial_pregnant"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_partial_lactating",
         "column_id": "thr_rations_partial_lactating",
+        "type": "field",
         "field": "thr_rations_partial_lactating",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_partial_lactating"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_migrant_pregnant",
         "column_id": "thr_rations_migrant_pregnant",
+        "type": "field",
         "field": "thr_rations_migrant_pregnant",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_migrant_pregnant"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_rations_migrant_lactating",
         "column_id": "thr_rations_migrant_lactating",
+        "type": "field",
         "field": "thr_rations_migrant_lactating",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "thr_rations_migrant_lactating"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "format": "default",
-        "aggregation": "sum",
         "column_id": "pregnant",
+        "type": "field",
         "field": "pregnant",
-        "calculate_total": true,
-        "type": "field"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "format": "default",
-        "aggregation": "sum",
         "column_id": "lactating",
+        "type": "field",
         "field": "lactating",
-        "calculate_total": true,
-        "type": "field"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_total_rations_pregnant",
         "column_id": "thr_total_rations_pregnant",
-        "field": "thr_total_rations_pregnant",
-        "calculate_total": true,
         "type": "field",
-        "display": "thr_total_rations_pregnant"
+        "field": "thr_total_rations_pregnant",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "format": "default",
-        "aggregation": "sum",
+        "display": "thr_total_rations_lactating",
         "column_id": "thr_total_rations_lactating",
-        "field": "thr_total_rations_lactating",
-        "calculate_total": true,
         "type": "field",
-        "display": "thr_total_rations_lactating"
+        "field": "thr_total_rations_lactating",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],

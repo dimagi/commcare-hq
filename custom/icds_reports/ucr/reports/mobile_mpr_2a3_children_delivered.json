@@ -23,299 +23,207 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Submission Date",
         "slug": "submitted_on",
+        "type": "date",
         "field": "submitted_on",
-        "type": "date",
-        "display": "Submission Date"
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Date of Birth",
         "slug": "add",
-        "field": "add",
         "type": "date",
-        "display": "Date of Birth"
+        "field": "add",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "choice_provider": {
-          "type": "location"
-        },
-        "required": false,
         "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
-        "type": "dynamic_choice_list",
-        "slug": "awc_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
-        "type": "dynamic_choice_list",
-        "slug": "supervisor_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
-        "type": "dynamic_choice_list",
-        "slug": "block_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by District",
-        "field": "district_id",
+        "slug": "district_id",
         "type": "dynamic_choice_list",
-        "slug": "district_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
+        "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by State",
-        "field": "state_id",
+        "slug": "state_id",
         "type": "dynamic_choice_list",
-        "slug": "state_id"
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "awc_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "live_F_resident_birth_count",
         "column_id": "live_F_resident_birth_count",
+        "type": "field",
         "field": "live_F_resident_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "live_F_resident_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "live_M_resident_birth_count",
         "column_id": "live_M_resident_birth_count",
+        "type": "field",
         "field": "live_M_resident_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "live_M_resident_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "live_F_migrant_birth_count",
         "column_id": "live_F_migrant_birth_count",
+        "type": "field",
         "field": "live_F_migrant_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "live_F_migrant_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "live_M_migrant_birth_count",
         "column_id": "live_M_migrant_birth_count",
+        "type": "field",
         "field": "live_M_migrant_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "live_M_migrant_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "still_F_resident_birth_count",
         "column_id": "still_F_resident_birth_count",
+        "type": "field",
         "field": "still_F_resident_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "still_F_resident_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "still_M_resident_birth_count",
         "column_id": "still_M_resident_birth_count",
+        "type": "field",
         "field": "still_M_resident_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "still_M_resident_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "still_F_migrant_birth_count",
         "column_id": "still_F_migrant_birth_count",
+        "type": "field",
         "field": "still_F_migrant_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "still_F_migrant_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "still_M_migrant_birth_count",
         "column_id": "still_M_migrant_birth_count",
+        "type": "field",
         "field": "still_M_migrant_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "still_M_migrant_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "weighed_F_resident_birth_count",
         "column_id": "weighed_F_resident_birth_count",
+        "type": "field",
         "field": "weighed_F_resident_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "weighed_F_resident_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "weighed_M_resident_birth_count",
         "column_id": "weighed_M_resident_birth_count",
+        "type": "field",
         "field": "weighed_M_resident_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "weighed_M_resident_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "weighed_F_migrant_birth_count",
         "column_id": "weighed_F_migrant_birth_count",
+        "type": "field",
         "field": "weighed_F_migrant_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "weighed_F_migrant_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "weighed_M_migrant_birth_count",
         "column_id": "weighed_M_migrant_birth_count",
+        "type": "field",
         "field": "weighed_M_migrant_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "weighed_M_migrant_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "lbw_F_resident_birth_count",
         "column_id": "lbw_F_resident_birth_count",
+        "type": "field",
         "field": "lbw_F_resident_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "lbw_F_resident_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "lbw_M_resident_birth_count",
         "column_id": "lbw_M_resident_birth_count",
+        "type": "field",
         "field": "lbw_M_resident_birth_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "lbw_M_resident_birth_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "lbw_F_migrant_birth_count",
         "column_id": "lbw_F_migrant_birth_count",
-        "field": "lbw_F_migrant_birth_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "lbw_F_migrant_birth_count"
+        "field": "lbw_F_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "lbw_M_migrant_birth_count",
         "column_id": "lbw_M_migrant_birth_count",
-        "field": "lbw_M_migrant_birth_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "lbw_M_migrant_birth_count"
+        "field": "lbw_M_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],

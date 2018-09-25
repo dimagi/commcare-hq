@@ -23,218 +23,142 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Submission Date",
         "slug": "submitted_on",
-        "field": "submitted_on",
         "type": "date",
-        "display": "Submission Date"
+        "field": "submitted_on",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "choice_provider": {
-          "type": "location"
-        },
-        "required": false,
         "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
-        "type": "dynamic_choice_list",
-        "slug": "awc_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
-        "type": "dynamic_choice_list",
-        "slug": "supervisor_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
-        "type": "dynamic_choice_list",
-        "slug": "block_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by District",
-        "field": "district_id",
+        "slug": "district_id",
         "type": "dynamic_choice_list",
-        "slug": "district_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
+        "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by State",
-        "field": "state_id",
+        "slug": "state_id",
         "type": "dynamic_choice_list",
-        "slug": "state_id"
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "awc_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "submitted_on",
         "column_id": "submitted_on",
+        "type": "field",
         "field": "submitted_on",
-        "transform": {},
-        "calculate_total": false,
-        "type": "field",
-        "display": "submitted_on"
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_icds_sup",
         "column_id": "visitor_icds_sup",
+        "type": "field",
         "field": "visitor_icds_sup",
-        "transform": {},
-        "calculate_total": false,
-        "type": "field",
-        "display": "visitor_icds_sup"
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_anm",
         "column_id": "visitor_anm",
+        "type": "field",
         "field": "visitor_anm",
-        "transform": {},
-        "calculate_total": false,
-        "type": "field",
-        "display": "visitor_anm"
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_health_sup",
         "column_id": "visitor_health_sup",
+        "type": "field",
         "field": "visitor_health_sup",
-        "transform": {},
-        "calculate_total": false,
-        "type": "field",
-        "display": "visitor_health_sup"
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_cdpo",
         "column_id": "visitor_cdpo",
+        "type": "field",
         "field": "visitor_cdpo",
-        "transform": {},
-        "calculate_total": false,
-        "type": "field",
-        "display": "visitor_cdpo"
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_med_officer",
         "column_id": "visitor_med_officer",
+        "type": "field",
         "field": "visitor_med_officer",
-        "transform": {},
-        "calculate_total": false,
-        "type": "field",
-        "display": "visitor_med_officer"
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_dpo",
         "column_id": "visitor_dpo",
+        "type": "field",
         "field": "visitor_dpo",
-        "transform": {},
-        "calculate_total": false,
-        "type": "field",
-        "display": "visitor_dpo"
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_officer_state",
         "column_id": "visitor_officer_state",
+        "type": "field",
         "field": "visitor_officer_state",
-        "transform": {},
-        "calculate_total": false,
-        "type": "field",
-        "display": "visitor_officer_state"
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_officer_central",
         "column_id": "visitor_officer_central",
-        "field": "visitor_officer_central",
-        "transform": {},
-        "calculate_total": false,
         "type": "field",
-        "display": "visitor_officer_central"
+        "field": "visitor_officer_central",
+        "aggregation": "max"
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "max",
+        "display": "visitor_other",
         "column_id": "visitor_other",
-        "field": "visitor_other",
-        "transform": {},
-        "calculate_total": false,
         "type": "field",
-        "display": "visitor_other"
+        "field": "visitor_other",
+        "aggregation": "max"
       }
     ],
     "sort_expression": [],

@@ -23,122 +23,88 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
         "display": "Date Turns One Year",
-        "field": "date_turns_one_yr",
+        "slug": "date_turns_one_yr",
         "type": "date",
-        "slug": "date_turns_one_yr"
+        "field": "date_turns_one_yr",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by AWW",
         "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by AWW"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Supervisor",
         "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by Supervisor"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Block",
         "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by Block"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by District",
         "slug": "district_id",
+        "type": "dynamic_choice_list",
         "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by District"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by State",
         "slug": "state_id",
+        "type": "dynamic_choice_list",
         "field": "state_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by State"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "owner_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "owner_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "open_child_count",
         "column_id": "open_child_count",
-        "field": "open_child_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "open_child_count"
+        "field": "open_child_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "open_child_1yr_immun_complete",
         "column_id": "open_child_1yr_immun_complete",
-        "field": "open_child_1yr_immun_complete",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "open_child_1yr_immun_complete"
+        "field": "open_child_1yr_immun_complete",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],

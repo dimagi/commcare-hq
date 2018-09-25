@@ -23,242 +23,168 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Last Referral Date",
         "slug": "last_referral_date",
-        "field": "last_referral_date",
         "type": "date",
-        "display": "Last Referral Date"
+        "field": "last_referral_date",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "choice_provider": {
-          "type": "location"
-        },
-        "required": false,
         "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
-        "type": "dynamic_choice_list",
-        "slug": "awc_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
-        "type": "dynamic_choice_list",
-        "slug": "supervisor_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
-        "type": "dynamic_choice_list",
-        "slug": "block_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by District",
-        "field": "district_id",
+        "slug": "district_id",
         "type": "dynamic_choice_list",
-        "slug": "district_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
+        "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by State",
-        "field": "state_id",
+        "slug": "state_id",
         "type": "dynamic_choice_list",
-        "slug": "state_id"
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "owner_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "owner_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_bleeding",
         "column_id": "referred_bleeding",
+        "type": "field",
         "field": "referred_bleeding",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_bleeding"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_convulsions",
         "column_id": "referred_convulsions",
+        "type": "field",
         "field": "referred_convulsions",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_convulsions"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_prolonged_labor",
         "column_id": "referred_prolonged_labor",
+        "type": "field",
         "field": "referred_prolonged_labor",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_prolonged_labor"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_abortion_complications",
         "column_id": "referred_abortion_complications",
+        "type": "field",
         "field": "referred_abortion_complications",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_abortion_complications"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_fever_discharge",
         "column_id": "referred_fever_discharge",
+        "type": "field",
         "field": "referred_fever_discharge",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_fever_discharge"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_other",
         "column_id": "referred_other",
+        "type": "field",
         "field": "referred_other",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_other"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "bleeding_reached_count",
         "column_id": "bleeding_reached_count",
+        "type": "field",
         "field": "bleeding_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "bleeding_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "convulsions_reached_count",
         "column_id": "convulsions_reached_count",
+        "type": "field",
         "field": "convulsions_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "convulsions_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "prolonged_labor_reached_count",
         "column_id": "prolonged_labor_reached_count",
+        "type": "field",
         "field": "prolonged_labor_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "prolonged_labor_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "abort_comp_reached_count",
         "column_id": "abort_comp_reached_count",
+        "type": "field",
         "field": "abort_comp_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "abort_comp_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "fever_discharge_reached_count",
         "column_id": "fever_discharge_reached_count",
-        "field": "fever_discharge_reached_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "fever_discharge_reached_count"
+        "field": "fever_discharge_reached_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "other_reached_count",
         "column_id": "other_reached_count",
-        "field": "other_reached_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "other_reached_count"
+        "field": "other_reached_count",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],

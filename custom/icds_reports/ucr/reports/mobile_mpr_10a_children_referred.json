@@ -23,266 +23,184 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Last Referral Date",
         "slug": "last_referral_date",
-        "field": "last_referral_date",
         "type": "date",
-        "display": "Last Referral Date"
+        "field": "last_referral_date",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "choice_provider": {
-          "type": "location"
-        },
-        "required": false,
         "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
-        "type": "dynamic_choice_list",
-        "slug": "awc_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
-        "type": "dynamic_choice_list",
-        "slug": "supervisor_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
-        "type": "dynamic_choice_list",
-        "slug": "block_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by District",
-        "field": "district_id",
+        "slug": "district_id",
         "type": "dynamic_choice_list",
-        "slug": "district_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
+        "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by State",
-        "field": "state_id",
+        "slug": "state_id",
         "type": "dynamic_choice_list",
-        "slug": "state_id"
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "owner_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "owner_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_premature",
         "column_id": "referred_premature",
+        "type": "field",
         "field": "referred_premature",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_premature"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_sepsis",
         "column_id": "referred_sepsis",
+        "type": "field",
         "field": "referred_sepsis",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_sepsis"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_diarrhoea",
         "column_id": "referred_diarrhoea",
+        "type": "field",
         "field": "referred_diarrhoea",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_diarrhoea"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_pneumonia",
         "column_id": "referred_pneumonia",
+        "type": "field",
         "field": "referred_pneumonia",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_pneumonia"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_fever_child",
         "column_id": "referred_fever_child",
+        "type": "field",
         "field": "referred_fever_child",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_fever_child"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_severely_underweight",
         "column_id": "referred_severely_underweight",
+        "type": "field",
         "field": "referred_severely_underweight",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_severely_underweight"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "referred_other_child",
         "column_id": "referred_other_child",
+        "type": "field",
         "field": "referred_other_child",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "referred_other_child"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "premature_reached_count",
         "column_id": "premature_reached_count",
+        "type": "field",
         "field": "premature_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "premature_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "sepsis_reached_count",
         "column_id": "sepsis_reached_count",
+        "type": "field",
         "field": "sepsis_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "sepsis_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "diarrhoea_reached_count",
         "column_id": "diarrhoea_reached_count",
+        "type": "field",
         "field": "diarrhoea_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "diarrhoea_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "pneumonia_reached_count",
         "column_id": "pneumonia_reached_count",
+        "type": "field",
         "field": "pneumonia_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "pneumonia_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "fever_child_reached_count",
         "column_id": "fever_child_reached_count",
+        "type": "field",
         "field": "fever_child_reached_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "fever_child_reached_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "sev_underweight_reached_count",
         "column_id": "sev_underweight_reached_count",
-        "field": "sev_underweight_reached_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "sev_underweight_reached_count"
+        "field": "sev_underweight_reached_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "other_child_reached_count",
         "column_id": "other_child_reached_count",
-        "field": "other_child_reached_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "other_child_reached_count"
+        "field": "other_child_reached_count",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],
