@@ -12,6 +12,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.domain.utils import silence_during_tests
+from corehq.apps.es import AppES, CaseES, CaseSearchES, DomainES, FormES, GroupES, LedgerES, UserES
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.views.mobile import UserFieldsView
@@ -162,6 +163,11 @@ def _delete_custom_data_fields(domain_name):
     logger.info('Deleting custom data fields complete.')
 
 
+def _assert_es_empty(domain_name):
+    for hqESQuery in [AppES, CaseES, CaseSearchES, DomainES, FormES, GroupES, LedgerES, UserES]:
+        assert hqESQuery().domain(domain_name).run().total == 0, '%s contains data' % hqESQuery.index
+
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -232,6 +238,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     CustomDeletion('custom_data_fields', _delete_custom_data_fields),
+    CustomDeletion('es', _assert_es_empty),
 ]
 
 
