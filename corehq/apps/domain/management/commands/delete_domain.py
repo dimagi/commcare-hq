@@ -42,9 +42,10 @@ class Command(BaseCommand):
                 print("\n\t\tDomain deletion cancelled.")
                 return
 
+        print("Deleting domain {}".format(domain_name))
+        domain.delete()
+
         for hqESQuery in [AppES, CaseES, CaseSearchES, DomainES, FormES, GroupES, LedgerES, UserES]:
             assert hqESQuery().domain(domain_name).run().total == 0, '%s contains data' % hqESQuery.index
 
-        print("Deleting domain {}".format(domain_name))
-        domain.delete()
         print("Operation completed")
