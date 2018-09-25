@@ -236,7 +236,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             return [properly_wrap_sync_log(log.doc) for log in SyncLogSQL.objects.all()]
 
         xml_data = self.get_xml('create_short')
-        xml_data = xml_data.format(user_id=self.restore_user.user_id)
+        xml_data = xml_data.decode('utf-8').format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
 
         restore_payload = deprecated_generate_restore_payload(
