@@ -55,7 +55,7 @@ branches:
 #  - np/celery-4.x-2  # Nick P Aug 22
   - pv/deactivated-users # Preethi Aug 23
   - sr-batch-ucrpillow # Sravan Sept 4
-#  - rn_migratin_download_index # Rohit Sept 10
+  - rn_migratin_download_index # Rohit Sept 10
   - rn_pre_migration_work_for_hqmedia # Rohit Sept 11
   - nh/omrs/atom  # Norman Sept 12
   - lwyszomi:lw/report_export_v3  # Jenny Sept 12
@@ -64,7 +64,8 @@ branches:
 #  - rn_funneling_ace_use # Rohit Sept24
   - mk-282955 # MK Sept 25
   - qa-customer-billing # Gabriella Sept 24
-  - rn_testing # Rohit Sept 25
+  - rn_funneling_ace_use # Rohit Sept 25
+  - rn_encapsulate_casexmljs # Rohit Sept 25 
 submodules:
   submodules/django-digest-src:
     branches: []
