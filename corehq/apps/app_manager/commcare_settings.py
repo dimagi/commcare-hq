@@ -10,6 +10,8 @@ import yaml
 import six
 from io import open
 
+from corehq.apps.app_manager.util import app_doc_types
+
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
     'name',
@@ -69,15 +71,19 @@ def _load_commcare_settings_layout(doc_type):
         # i18n; not statically analyzable
         section['title'] = ugettext_noop(section['title'])
         for i, key in enumerate(section['settings']):
+            include = False
             setting = settings.pop(key)
             if doc_type == 'Application':
+                include = True
                 section['settings'][i] = setting
-            elif doc_type != 'LinkedApplication' and setting['type'] == 'hq':
-                section['settings'][i] = setting
-            elif doc_type == 'LinkedApplication' and setting.get('supports_linked_app'):
-                section['settings'][i] = setting
+            elif doc_type == 'LinkedApplication':
+                include = setting.get('supports_linked_app', False)
+            elif doc_type == 'RemoteApp':
+                include = setting['type'] == 'hq'
             else:
-                section['settings'][i] = None
+                raise Exception("Unexpected doc_type received: %s" % doc_type)
+            section['settings'][i] = setting if include else None
+
         section['settings'] = [_f for _f in section['settings'] if _f]
         for setting in section['settings']:
             setting['value'] = None
@@ -103,7 +109,7 @@ def get_custom_commcare_settings():
 
 @memoized
 def get_commcare_settings_layout(doc_type):
-    if doc_type in ['Application', 'RemoteApp', 'LinkedApplication']:
+    if doc_type in app_doc_types():
         return _load_commcare_settings_layout(doc_type)
     raise Exception("Unexpected doc_type received: %s" % doc_type)
 
