@@ -16,10 +16,10 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
         self.placeholder = options.placeholder;
         self.multiple = options.multiple || false;
         self.value = ko.observable();
-
+        self.createTags = options.createTags || false;
         self.clear = function () {
             var fieldInput = self.utils.getField();
-            fieldInput.select2('val', '');
+            fieldInput.val("").trigger("change");
         };
 
         self.getHandlerSlug = function () {
@@ -41,11 +41,12 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
             // the user entered.
         };
 
-        self.formatResult = function (result) {
+        self.templateResult = function (result) {
+
             return result.text;
         };
 
-        self.formatSelection = function (result) {
+        self.templateSelection = function (result) {
             return result.text;
         };
 
@@ -62,22 +63,18 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
         self.init = function () {
             var fieldInput = self.utils.getField();
 
-
             fieldInput.select2(_.extend({
                 multiple: true,
                 tags: fieldInput.data("choices"),
             }, {}));
 
-            fieldInput.prepend('<option value="-1"></option>').select2({
+            fieldInput.select2({
                 minimumInputLength: 0,
                 allowClear: true,
                 multiple: self.multiple,
-                placeholder: {
-                    id: '-1',
-                    text: self.placeholder,
-                },
+                placeholder: self.placeholder,
                 ajax: {
-                    quietMillis: 150,
+                    delay: 150,
                     url: '',
                     dataType: 'json',
                     type: 'post',
@@ -88,26 +85,32 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
                         data['searchString'] = term;
                         return data;
                     },
-                    results: self.processResults,
-                    500: function () {
-                        self.error(
-                            gettext("There was an issue communicating with the server. Please try back later.")
-                        );
-                    },
+                    processResults: self.processResults,
+
                 },
-                createSearchChoice: self.createNewChoice,
-                formatResult: self.formatResult,
-                formatSelection: self.formatSelection,
-                initSelection: function (element, callback) {
-                    if (element.val()) {
-                        var data = self.getInitialData(element);
-                        if (data) callback(data);
-                    }
-                },
+                tags: self.createTags,
+                createTag: self.createNewChoice,
+                templateResult: self.templateResult,
+                templateSelection: self.templateSelection,
+
             });
+
+            var initial = self.getInitialData(fieldInput);
+            if (initial) {
+                if (!_.isArray(initial)) {
+                    initial = [initial];
+                }
+                _.each(initial, function (result) {
+                    fieldInput.append(new Option(result.text, result.id));
+                });
+                fieldInput.val(_.pluck(initial, 'id')).trigger('change');
+            }
+
             if (self.onSelect2Change) {
                 fieldInput.on("change", self.onSelect2Change);
             }
+
+
         };
 
         return self;

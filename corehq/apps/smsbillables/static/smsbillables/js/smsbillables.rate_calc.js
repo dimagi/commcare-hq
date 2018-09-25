@@ -134,7 +134,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
             return 'sms_rate_calc';
         };
 
-        self.formatSelection = function (result) {
+        self.templateSelection = function (result) {
             return result.text || (result.name + ' [' + result.rate_type + ']');
         };
 
