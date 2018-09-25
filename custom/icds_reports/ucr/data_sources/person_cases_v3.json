@@ -310,50 +310,30 @@
         }
       },
       {
-        "comment": "to be removed when disabled is added",
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "named",
-              "name": "open_cases"
+        "column_id": "disabled",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "disabled"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
             },
-            {
-              "type": "named",
-              "name": "female"
-            },
-            {
-              "type": "named",
-              "name": "disabled"
+            "yes": {
+              "type": "constant",
+              "constant": 1
             }
-          ]
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "F_disabled_count"
-      },
-      {
-        "comment": "to be removed when disabled is added",
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "named",
-              "name": "open_cases"
-            },
-            {
-              "type": "named",
-              "name": "male"
-            },
-            {
-              "type": "named",
-              "name": "disabled"
-            }
-          ]
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "M_disabled_count"
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       },
       {
         "display_name": null,
@@ -594,16 +574,6 @@
         },
         "type": "boolean_expression",
         "property_value": false
-      },
-      "disabled": {
-        "operator": "eq",
-        "type": "boolean_expression",
-        "expression": {
-          "datatype": "string",
-          "type": "property_name",
-          "property_name": "disabled"
-        },
-        "property_value": "yes"
       },
       "female": {
         "operator": "eq",
