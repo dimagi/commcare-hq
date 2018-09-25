@@ -901,7 +901,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
 
     def get_infa_value(data, prop):
         if beta:
-            value = data[0][prop] if data[0]['num_awc_infra_last_update'] else None
+            value = data[0][prop] if data and data[0]['num_awc_infra_last_update'] else None
         else:
             value = (data[0][prop] or None) if data else None
         if value is not None:
