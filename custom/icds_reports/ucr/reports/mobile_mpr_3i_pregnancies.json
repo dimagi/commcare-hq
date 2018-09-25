@@ -14,7 +14,8 @@
     "description": "",
     "visible": false,
     "aggregation_columns": [
-      "owner_id"
+      "owner_id",
+      "month"
     ],
     "filters": [
       {
@@ -84,6 +85,13 @@
           "type": "custom",
           "custom_type": "owner_display"
         }
+      },
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "opened_on",
+        "format": "%Y-%m"
       },
       {
         "display": "pregnant_resident_count",

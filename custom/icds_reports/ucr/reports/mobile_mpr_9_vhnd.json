@@ -87,6 +87,13 @@
         }
       },
       {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "submitted_on",
+        "format": "%Y-%m"
+      },
+      {
         "display": "vhsnd_date_past_month",
         "column_id": "vhsnd_date_past_month",
         "type": "field",
