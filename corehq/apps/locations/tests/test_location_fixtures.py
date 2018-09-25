@@ -433,7 +433,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         location_type.include_without_expanding = self.locations['DTO'].location_type
         location_type.save()
 
-        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1])
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1]).decode('utf-8')
 
         for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
             self.assertTrue(location_name in fixture)
