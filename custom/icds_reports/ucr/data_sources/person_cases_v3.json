@@ -335,77 +335,49 @@
           }
         }
       },
-
       {
-        "comment": "This filters on both registered status and migration status",
-        "column_id": "seeking_services",
-        "type": "boolean",
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "not",
-              "filter": {
-                "operator": "eq",
-                "type": "boolean_expression",
-                "expression": {
-                  "type": "root_doc",
-                  "expression": {
-                    "property_name": "registered_status",
-                    "type": "property_name"
-                  }
-                },
-                "property_value": "not_registered"
-              }
-            },
-            {
-              "type": "not",
-              "filter": {
-                "operator": "eq",
-                "type": "boolean_expression",
-                "expression": {
-                  "type": "root_doc",
-                  "expression": {
-                    "property_name": "migration_status",
-                    "type": "property_name"
-                  }
-                },
-                "property_value": "migrated"
-              }
+        "comment": "TODO: Figure out if there are other values",
+        "column_id": "registered_status",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "registered_status"
+          },
+          "cases": {
+            "not_registered": {
+              "type": "constant",
+              "constant": 1
             }
-          ]
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
         }
       },
       {
-        "column_id": "not_migrated",
+        "comment": "TODO: Figure out if there are other values",
+        "column_id": "migration_status",
+        "datatype": "small_integer",
         "type": "expression",
-        "datatype": "integer",
-        "is_nullable": true,
-        "is_primary_key": false,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "not",
-            "filter": {
-              "operator": "eq",
-              "type": "boolean_expression",
-              "expression": {
-                "type": "root_doc",
-                "expression": {
-                  "property_name": "migration_status",
-                  "type": "property_name"
-                }
-              },
-              "property_value": "migrated"
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "migration_status"
+          },
+          "cases": {
+            "migrated": {
+              "type": "constant",
+              "constant": 1
             }
           },
-          "expression_if_true": {
+          "default": {
             "type": "constant",
-            "constant": 1
-          },
-          "expression_if_false": {
-            "type": "constant",
-            "constant": 0
+            "constant": null
           }
         }
       },
