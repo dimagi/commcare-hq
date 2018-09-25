@@ -196,14 +196,31 @@
         }
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "string",
-        "is_primary_key": false,
+        "comment": "TODO: make sure i can use small_integer here, and that this is an exhaustive list, would be best to use array though",
         "column_id": "referral_health_problem",
-        "is_nullable": true,
-        "type": "raw",
-        "property_name": "referral_health_problem"
+        "type": "choice_list",
+        "select_style": "multiple",
+        "property_name": "referral_health_problem",
+        "choices": [
+          "bleeding",
+          "fever",
+          "abdominal_pain",
+          "offensive_discharge",
+          "painful_urination",
+          "convulsions",
+          "severely_underweight",
+          "premature",
+          "sepsis",
+          "diarrhoea",
+          "pneumonia",
+          "fever_child",
+          "other_child",
+          "prolonged_labor",
+          "abortion_complications",
+          "swelling",
+          "blurred_vision",
+          "other"
+        ]
       },
       {
         "display_name": null,
@@ -235,27 +252,6 @@
         "column_id": "referral_reached_facility",
         "type": "raw",
         "property_name": "referral_reached_facility"
-      },
-      {
-        "display_name": null,
-        "property_path": [],
-        "choices": [
-          "premature",
-          "sepsis",
-          "diarrhoea",
-          "pneumonia",
-          "fever_child",
-          "severely_underweight",
-          "other_child",
-          "bleeding",
-          "convulsions",
-          "prolonged_labor",
-          "abortion_complications"
-        ],
-        "select_style": "multiple",
-        "column_id": "referred",
-        "type": "choice_list",
-        "property_name": "referral_health_problem"
       },
       {
         "comment": "to be removed when caste is added",
