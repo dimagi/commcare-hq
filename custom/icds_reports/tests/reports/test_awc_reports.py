@@ -2473,17 +2473,17 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][0],
                 {
-                    'age': 23,
+                    'age': None,
                     'anemic': 'Unknown',
                     'beneficiary': 'Yes',
-                    'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                    'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
                     'edd': None,
                     'last_date_thr': None,
                     'num_anc_complete': None,
-                    'number_of_thrs_given': 0,
+                    'number_of_thrs_given': 21,
                     'opened_on': None,
                     'person_name': None,
-                    'trimester': 2,
+                    'trimester': 3,
                 }
             )
 
@@ -2497,17 +2497,17 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][1],
                 {
-                    'age': 28,
+                    'age': None,
                     'anemic': 'Unknown',
                     'beneficiary': 'Yes',
-                    'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
+                    'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
                     'edd': None,
                     'last_date_thr': None,
                     'num_anc_complete': None,
-                    'number_of_thrs_given': 21,
+                    'number_of_thrs_given': 0,
                     'opened_on': None,
                     'person_name': None,
-                    'trimester': 3,
+                    'trimester': 2,
                 }
             )
 
@@ -2532,7 +2532,7 @@ class TestAWCReport(TestCase):
                 data['data'][1],
                 [
                     {
-                        'age': 23,
+                        'age': None,
                         'anc_abnormalities': None,
                         'anc_hemoglobin': '--',
                         'anc_weight': '--',
@@ -2577,14 +2577,14 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][0],
                 {
-                    'num_rations_distributed': 0,
+                    'num_rations_distributed': 12,
                     'institutional_delivery_in_month': 'N',
                     'person_name': None,
                     'delivery_nature': None,
-                    'age': 20,
+                    'age': None,
                     'num_pnc_visits': None,
                     'add': None,
-                    'case_id': '36d5e223-a631-4030-910c-262a1d066fb3',
+                    'case_id': '10a53900-f65e-46b7-ae0c-f32a208c0677',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
@@ -2603,10 +2603,10 @@ class TestAWCReport(TestCase):
                     'institutional_delivery_in_month': 'N',
                     'person_name': None,
                     'delivery_nature': None,
-                    'age': 23,
+                    'age': None,
                     'num_pnc_visits': None,
                     'add': None,
-                    'case_id': 'aefb8fe5-1cd1-4235-9baf-963b1a0b498e',
+                    'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
@@ -2621,14 +2621,14 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][2],
                 {
-                    'num_rations_distributed': 6,
+                    'num_rations_distributed': 12,
                     'institutional_delivery_in_month': 'N',
                     'person_name': None,
                     'delivery_nature': None,
-                    'age': 24,
+                    'age': None,
                     'num_pnc_visits': None,
                     'add': None,
-                    'case_id': '4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2',
+                    'case_id': '1a6851bc-8172-48fc-80d1-b198f23033ab',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
@@ -2643,14 +2643,14 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][3],
                 {
-                    'num_rations_distributed': 12,
+                    'num_rations_distributed': 0,
                     'institutional_delivery_in_month': 'N',
                     'person_name': None,
                     'delivery_nature': None,
-                    'age': 26,
+                    'age': None,
                     'num_pnc_visits': None,
                     'add': None,
-                    'case_id': '10a53900-f65e-46b7-ae0c-f32a208c0677',
+                    'case_id': '36d5e223-a631-4030-910c-262a1d066fb3',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
@@ -2665,14 +2665,14 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][4],
                 {
-                    'num_rations_distributed': 12,
+                    'num_rations_distributed': 6,
                     'institutional_delivery_in_month': 'N',
                     'person_name': None,
                     'delivery_nature': None,
-                    'age': 26,
+                    'age': None,
                     'num_pnc_visits': None,
                     'add': None,
-                    'case_id': '1a6851bc-8172-48fc-80d1-b198f23033ab',
+                    'case_id': '37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
@@ -2691,10 +2691,10 @@ class TestAWCReport(TestCase):
                     'institutional_delivery_in_month': 'N',
                     'person_name': None,
                     'delivery_nature': None,
-                    'age': 26,
+                    'age': None,
                     'num_pnc_visits': None,
                     'add': None,
-                    'case_id': '37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa',
+                    'case_id': '4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
@@ -2713,10 +2713,10 @@ class TestAWCReport(TestCase):
                     'institutional_delivery_in_month': 'N',
                     'person_name': None,
                     'delivery_nature': None,
-                    'age': 29,
+                    'age': None,
                     'num_pnc_visits': None,
                     'add': None,
-                    'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
+                    'case_id': 'aefb8fe5-1cd1-4235-9baf-963b1a0b498e',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )

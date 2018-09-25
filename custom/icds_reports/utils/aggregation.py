@@ -1706,7 +1706,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
             ('last_date_thr', 'case_list.last_date_thr'),
             ('num_anc_complete', 'case_list.num_anc_complete'),
-            ('opened_on', 'case_list.opened_on')
+            ('opened_on', 'case_list.opened_on'),
+            ('dob', 'case_list.dob')
         )
         return """
         INSERT INTO "{tablename}" (
