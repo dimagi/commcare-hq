@@ -33,7 +33,6 @@ class PersistentFileStore(object):
 
     def write_file(self, f, filename, domain):
         identifier = random_url_id(16)
-        print(type(f))
         meta = self._db.put(
             f,
             domain=domain,
