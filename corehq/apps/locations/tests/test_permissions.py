@@ -6,6 +6,7 @@ import random
 import string
 from io import BytesIO
 import mock
+import six
 
 from django.urls import reverse
 from django.http import HttpResponse
@@ -262,6 +263,8 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
 
     def _call_djangoRMI(self, url, method_name, data):
         data = json.dumps(data)
+        if six.PY3:
+            data = data.encode('utf-8')
         return self.client.post(
             url,
             content_type="application/json;charset=utf-8",
