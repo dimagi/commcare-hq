@@ -85,7 +85,7 @@ class DomainTest(TestCase):
         result_alice = submit_form_locally(ALICE_XML, ALICE_DOMAIN)
         result_eve = submit_form_locally(EVE_XML, EVE_DOMAIN)
 
-        self.assertIn('IllegalCaseId', result_eve.response.content)
+        self.assertIn('IllegalCaseId', result_eve.response.content.decode('utf-8'))
         self.assertNotIn('plan_to_buy_gun', result_alice.case.dynamic_case_properties())
 
         result_alice_update = submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
