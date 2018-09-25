@@ -236,16 +236,6 @@
         "property_name": "referral_reached_date"
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "referral_reached_facility",
-        "type": "raw",
-        "property_name": "referral_reached_facility"
-      },
-      {
         "comment": "to be removed when caste is added",
         "filter": {
           "type": "and",
