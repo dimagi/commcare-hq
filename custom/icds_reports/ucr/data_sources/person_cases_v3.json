@@ -335,22 +335,7 @@
           }
         }
       },
-      {
-        "display_name": null,
-        "property_path": [],
-        "choices": [
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6"
-        ],
-        "select_style": "multiple",
-        "column_id": "disability_type",
-        "type": "choice_list",
-        "property_name": "disability_type"
-      },
+
       {
         "comment": "This filters on both registered status and migration status",
         "column_id": "seeking_services",
