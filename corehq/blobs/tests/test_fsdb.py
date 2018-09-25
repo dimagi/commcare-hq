@@ -81,7 +81,7 @@ class _BlobDBTests(object):
 
     def test_bulk_delete(self):
         metas = [
-            self.db.put(BytesIO(b"content-{}".format(key)), meta=new_meta())
+            self.db.put(BytesIO("content-{}".format(key).encode('utf-8')), meta=new_meta())
             for key in ['test.5', 'test.6']
         ]
 
