@@ -103,7 +103,7 @@ class _BlobDBTests(object):
             ('test.6', 'doc.6'),
         ]
         infos = [
-            self.db.put(BytesIO(b"content-{}".format(blob[0])), get_id(), bucket=blob[1])
+            self.db.put(BytesIO("content-{}".format(blob[0]).encode('utf-8')), get_id(), bucket=blob[1])
             for blob in blobs
         ]
 
