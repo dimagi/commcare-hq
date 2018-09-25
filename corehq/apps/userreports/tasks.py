@@ -343,7 +343,7 @@ def _build_async_indicators(indicator_doc_ids):
 
     def doc_ids_from_rows(rows):
         formatted_rows = [
-            {column.column.database_column_name: column.value for column in row}
+            {column.column.database_column_name.decode('utf-8'): column.value for column in row}
             for row in rows
         ]
         return set(row['doc_id'] for row in formatted_rows)

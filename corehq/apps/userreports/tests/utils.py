@@ -162,7 +162,7 @@ def load_data_from_db(table_name):
                     row[idx] = str(value)
                 elif isinstance(value, (float, Decimal)):
                     row[idx] = _convert_decimal_to_string(row[idx])
-                elif isinstance(value, six.string_types):
+                elif six.PY2 and isinstance(value, six.string_types):
                     row[idx] = value.encode('utf-8')
                 elif value is None:
                     row[idx] = ''

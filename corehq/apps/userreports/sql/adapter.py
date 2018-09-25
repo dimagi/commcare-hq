@@ -155,7 +155,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
         # transform format from ColumnValue to dict
         formatted_rows = [
-            {i.column.database_column_name: i.value for i in row}
+            {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
         doc_ids = set(row['doc_id'] for row in formatted_rows)
