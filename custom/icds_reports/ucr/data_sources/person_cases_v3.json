@@ -124,9 +124,9 @@
         "property_name": "dob"
       },
       {
-        "comment": "investigate making small_integer. Is it years?",
+        "comment": "This is the age at registration in years",
         "column_id": "age_at_reg",
-        "datatype": "integer",
+        "datatype": "small_integer",
         "type": "raw",
         "property_name": "age_at_reg"
       },
