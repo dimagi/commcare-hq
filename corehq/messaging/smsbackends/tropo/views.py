@@ -16,6 +16,7 @@ def sms_in(request, backend_id=None):
     """
     Handles tropo messaging requests
     """
+    raise Exception("can't import Tropo until it's upgraded")
     from tropo import Tropo
     if request.method == "POST":
         data = json.loads(request.body)
@@ -52,6 +53,7 @@ def ivr_in(request):
     """
     Handles tropo call requests
     """
+    raise Exception("can't import Tropo until it's upgraded")
     from tropo import Tropo
     if request.method == "POST":
         data = json.loads(request.body)
