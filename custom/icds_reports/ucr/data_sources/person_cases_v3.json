@@ -170,14 +170,30 @@
         "property_name": "age_at_death_yrs"
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "string",
-        "is_primary_key": false,
         "column_id": "female_death_type",
-        "is_nullable": true,
-        "type": "raw",
-        "property_name": "female_death_type"
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "female_death_type"
+          },
+          "cases": {
+            "pnc": {
+              "type": "constant",
+              "constant": 1
+            },
+            "delivery": {
+              "type": "constant",
+              "constant": 2
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       },
       {
         "display_name": null,
