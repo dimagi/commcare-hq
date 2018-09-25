@@ -10,7 +10,7 @@ from unidecode import unidecode
 from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
-    OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
+    OR, AND, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
     ModifiedOnRangeFilter, FormSubmittedByFilter, NOT, SmsReceivedRangeFilter
 )
 from corehq.apps.locations.models import SQLLocation
@@ -55,6 +55,8 @@ from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
 from corehq.util import flatten_non_iterable_list
+
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 
 
 class UserTypesField(forms.MultipleChoiceField):
@@ -882,7 +884,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         if group_ids:
             return GroupFormSubmittedByFilter(list(group_ids))
 
-    def _get_user_type_filter(self, user_types):
+    def _get_user_type_filters(self, user_types):
         """
         :return: FormSubmittedByFilter with user_ids for selected user types
         """
@@ -903,7 +905,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
             return form_filters
 
     def get_filters(self, can_access_all_locations, accessible_location_ids, group_ids, user_types, user_ids,
-                   location_ids, date_range):
+                    location_ids, date_range):
         """
         Return a list of `ExportFilter`s for the given ids.
         This list of filters will eventually be ANDed to filter the documents that appear in the export.
@@ -919,29 +921,38 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         :param location_ids:
         :param date_range: A DatePeriod or DateSpan
         """
-        form_filters = []
-        if can_access_all_locations:
-            form_filters += [_f for _f in [
-                self._get_group_filter(group_ids),
-                self._get_user_type_filter(user_types),
-            ] if _f]
 
-        form_filters += [_f for _f in [
-            self._get_users_filter(user_ids),
-            self._get_locations_filter(location_ids)
-        ] if _f]
-
-        form_filters = flatten_non_iterable_list(form_filters)
-        if form_filters:
-            form_filters = [OR(*form_filters)]
-        else:
-            form_filters = []
+        form_filters = list(filter(None,
+                                   [self._create_user_filter(user_types, user_ids, group_ids, location_ids)]))
         date_filter = self._get_datespan_filter(date_range)
         if date_filter:
             form_filters.append(date_filter)
         if not can_access_all_locations:
             form_filters.append(self._scope_filter(accessible_location_ids))
+
         return form_filters
+
+    def _create_user_filter(self, user_types, user_ids, group_ids, location_ids):
+        all_user_filters = None
+        user_type_filters = self._get_user_type_filters(user_types)
+        user_id_filter = self._get_users_filter(user_ids)
+        group_filter = self._get_group_filter(group_ids)
+        location_filter = self._get_locations_filter(location_ids)
+
+        if not location_filter and not group_filter:
+            group_and_location_metafilter = None
+        elif FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain_object.name) and location_ids and group_ids:
+            group_and_location_metafilter = AND(group_filter, location_filter)
+        else:
+            group_and_location_metafilter = OR(*list(filter(None, [group_filter, location_filter])))
+
+        if group_and_location_metafilter or user_id_filter or user_type_filters:
+            all_user_filter_list = [group_and_location_metafilter, user_id_filter]
+            if user_type_filters:
+                all_user_filter_list += user_type_filters
+            all_user_filters = OR(*list(filter(None, all_user_filter_list)))
+
+        return all_user_filters
 
     def _scope_filter(self, accessible_location_ids):
         # Filter to be applied in AND with filters for export for restricted user
