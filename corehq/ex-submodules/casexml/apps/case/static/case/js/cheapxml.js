@@ -101,11 +101,8 @@ hqDefine("case/js/cheapxml",[
         return self;
     };
 
-    var cheapxml = {
-        $: Node,
-    };
     return {
-        cheapxml: cheapxml,
+        $: Node,
     };
 });
 
