@@ -6567,6 +6567,7 @@ class LinkedApplication(Application):
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
     linked_app_translations = DictProperty()  # corresponding property: translations
+    linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
 
     @property
     @memoized
@@ -6589,8 +6590,9 @@ class LinkedApplication(Application):
         else:
             raise ActionNotPermitted
 
-    def reapply_translations(self):
+    def reapply_overrides(self):
         self.translations.update(self.linked_app_translations)
+        self.logo_refs.update(self.linked_app_logo_refs)
         self.save()
 
 
