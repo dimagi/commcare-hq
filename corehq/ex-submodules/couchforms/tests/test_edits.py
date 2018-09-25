@@ -112,7 +112,7 @@ class EditFormTest(TestCase, TestFileMixin):
         )
         form = self.formdb.get_form(form_id)
         self.assertIn('fruity_file', form.attachments)
-        self.assertIn(original_xml, form.get_xml())
+        self.assertIn(original_xml, form.get_xml().decode('utf-8'))
 
         # edit form
         edit_xml = _get_xml('2016-04-01T12:04:16Z', form_id)
@@ -124,7 +124,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertIsNotNone(form.edited_on)
         self.assertIsNotNone(form.deprecated_form_id)
         self.assertIn('fruity_file', form.attachments)
-        self.assertIn(edit_xml, form.get_xml())
+        self.assertIn(edit_xml, form.get_xml().decode('utf-8'))
 
     def test_edit_an_error(self):
         form_id = uuid.uuid4().hex
