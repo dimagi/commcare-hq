@@ -53,7 +53,7 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     starttime = utcnow_sans_milliseconds()
 
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
-    with open(file_path, "rb") as f:
+    with open(file_path, "r") as f:
         xml_data = f.read()
     updated_xml, uid, case_id = _replace_ids_in_xform_xml(
         xml_data,
