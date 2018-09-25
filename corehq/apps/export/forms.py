@@ -810,7 +810,7 @@ class AbstractExportFilterBuilder(object):
         self.domain_object = domain_object
         self.timezone = timezone
 
-    def get_user_ids_for_user_types(self, admin, unknown, demo, commtrack, active=False, deactivated=False):
+    def get_user_ids_for_user_types(self, admin, unknown, web, demo, commtrack, active=False, deactivated=False):
         """
         referenced from CaseListMixin to fetch user_ids for selected user type
         :param admin: if admin users to be included
@@ -820,12 +820,13 @@ class AbstractExportFilterBuilder(object):
         :return: user_ids for selected user types
         """
         from corehq.apps.es import filters, users as user_es
-        if not any([admin, unknown, demo, commtrack, active, deactivated]):
+        if not any([admin, unknown, web, demo, commtrack, active, deactivated]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
             (admin, user_es.admin_users()),
-            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
+            (unknown, filters.OR(user_es.unknown_users())),
+            (web, user_es.web_users()),
             (demo, user_es.demo_users()),
             # Sets the is_active filter status correctly for if either active or deactivated users are selected
             (active ^ deactivated, user_es.is_active(active)),
@@ -898,6 +899,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
             user_ids = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
+                web=HQUserType.WEB in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=False,
                 active=HQUserType.ACTIVE in user_types,
@@ -980,6 +982,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             ids_to_exclude = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
+                web=HQUserType.WEB in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
                 # this should be true since we are excluding
                 commtrack=True,
@@ -1038,6 +1041,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             ids_to_include = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
+                web=HQUserType.WEB in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=False,
             )
