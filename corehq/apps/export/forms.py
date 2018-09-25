@@ -922,7 +922,8 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         :param date_range: A DatePeriod or DateSpan
         """
 
-        form_filters = filter(None, [self._create_user_filter(user_types, user_ids, group_ids, location_ids)])
+        form_filters = list(filter(None,
+                                   [self._create_user_filter(user_types, user_ids, group_ids, location_ids)]))
         date_filter = self._get_datespan_filter(date_range)
         if date_filter:
             form_filters.append(date_filter)
@@ -943,13 +944,13 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         elif FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain_object.name) and location_ids and group_ids:
             group_and_location_metafilter = AND(group_filter, location_filter)
         else:
-            group_and_location_metafilter = OR(*filter(None, [group_filter, location_filter]))
+            group_and_location_metafilter = OR(*list(filter(None, [group_filter, location_filter])))
 
         if group_and_location_metafilter or user_id_filter or user_type_filters:
             all_user_filter_list = [group_and_location_metafilter, user_id_filter]
             if user_type_filters:
                 all_user_filter_list += user_type_filters
-            all_user_filters = OR(*filter(None, all_user_filter_list))
+            all_user_filters = OR(*list(filter(None, all_user_filter_list)))
 
         return all_user_filters
 
