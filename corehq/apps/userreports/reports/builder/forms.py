@@ -579,7 +579,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             'timeEnd': _('Date Form Completed'),
         }
         properties = OrderedDict()
-        questions = form_xml.get_questions([], for_report=True)
+        questions = form_xml.get_questions([], exclude_select_with_itemsets=True)
         for prop in FORM_METADATA_PROPERTIES:
             question_type = prop[1]
             data_type = {
