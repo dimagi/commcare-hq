@@ -582,7 +582,7 @@ class RebuildTableTest(TestCase):
         self._setup_data_source('add_index')
 
         insp = reflection.Inspector.from_engine(self.engine)
-        table_name = get_table_name(self.config.domain, self.config.table_id)
+        table_name = get_table_name(self.config.domain, self.config.table_id).decode('utf-8')
         self.assertEqual(len(insp.get_indexes(table_name)), 0)
 
         # add the index to the config
