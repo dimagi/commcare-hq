@@ -23,11 +23,5 @@ class Migration(migrations.Migration):
             name='lactating',
             field=models.IntegerField(blank=True, null=True),
         ),
-        migrations.AddField(
-            model_name='CcsRecordMonthlyView',
-            name='dob',
-            field=models.DateField(blank=True, null=True),
-        ),
-        migrator.get_migration('update_tables28.sql'),
     ]
     operations.extend(get_view_migrations())

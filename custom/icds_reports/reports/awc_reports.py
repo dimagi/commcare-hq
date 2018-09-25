@@ -8,7 +8,6 @@ from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
 
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
-from math import ceil
 
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
@@ -1097,9 +1096,9 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         pregnant=1,
-        dob__gte=ten_months_ago,
-    ).order_by('case_id', '-dob').distinct('case_id').values(
-        'case_id', 'person_name', 'dob', 'opened_on', 'edd', 'trimester', 'anemic_severe',
+        month__gte=ten_months_ago,
+    ).order_by('case_id', '-age_in_months').distinct('case_id').values(
+        'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
         'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
         'num_rations_distributed', 'last_date_thr'
     )
@@ -1112,7 +1111,7 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
         return dict(
             case_id=row_data['case_id'],
             person_name=row_data['person_name'],
-            age=ceil((datetime.utcnow() - row_data['dob']).days / 365.25) if row_data['dob'] else row_data['dob'],
+            age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
             opened_on=row_data['opened_on'],
             edd=row_data['edd'],
             trimester=row_data['trimester'],
@@ -1139,9 +1138,9 @@ def get_pregnant_details(case_id, awc_id):
     data = CcsRecordMonthlyView.objects.filter(
         case_id=case_id,
         awc_id=awc_id,
-        dob__gte=ten_months_ago,
-    ).order_by('home_visit_date', '-dob').distinct('home_visit_date').values(
-        'case_id', 'trimester', 'person_name', 'dob', 'mobile_number', 'edd', 'opened_on', 'preg_order',
+        month__gte=ten_months_ago,
+    ).order_by('home_visit_date', '-age_in_months').distinct('home_visit_date').values(
+        'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
         'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
         'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
         'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
@@ -1164,8 +1163,7 @@ def get_pregnant_details(case_id, awc_id):
                 case_id=row_data['case_id'],
                 trimester=row_data['trimester'],
                 person_name=row_data['person_name'],
-                age=ceil((datetime.utcnow() - row_data['dob']).days / 365.25) if row_data['dob'] else
-                row_data['dob'],
+                age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
                 mobile_number=row_data['mobile_number'],
                 edd=row_data['edd'],
                 opened_on=row_data['opened_on'],
@@ -1201,9 +1199,9 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         lactating=1,
-        dob__gte=six_months_ago,
-    ).order_by('case_id', '-dob').distinct('case_id').values(
-        'case_id', 'person_name', 'dob', 'add', 'delivery_nature', 'institutional_delivery_in_month',
+        month__gte=six_months_ago,
+    ).order_by('case_id', '-age_in_months').distinct('case_id').values(
+        'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
         'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed'
     )
     data_count = data.count()
@@ -1215,7 +1213,7 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
         return dict(
             case_id=row_data['case_id'],
             person_name=row_data['person_name'],
-            age=ceil((datetime.utcnow() - row_data['dob']).days / 365.25) if row_data['dob'] else row_data['dob'],
+            age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
             add=row_data['add'],
             delivery_nature=row_data['delivery_nature'],
             institutional_delivery_in_month='Y' if row_data['institutional_delivery_in_month'] else 'N',
