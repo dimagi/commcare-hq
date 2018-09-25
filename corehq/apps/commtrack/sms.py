@@ -66,9 +66,6 @@ def handle(verified_contact, text, msg):
 
 
 def process(domain, data):
-    import pprint
-    logger.debug(pprint.pformat(data))
-
     xml = to_instance(data)
 
     logger.debug(xml)
