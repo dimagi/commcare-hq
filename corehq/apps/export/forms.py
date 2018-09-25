@@ -60,12 +60,14 @@ from corehq.util import flatten_non_iterable_list
 class UserTypesField(forms.MultipleChoiceField):
     _USER_MOBILE = 'mobile'
     _USER_DEMO = 'demo_user'
+    _USER_WEB = 'web'
     _USER_UNKNOWN = 'unknown'
     _USER_SUPPLY = 'supply'
 
     _USER_TYPES_CHOICES = [
         (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
         (_USER_DEMO, ugettext_lazy("Demo User")),
+        (_USER_WEB, ugettext_lazy("Web Users")),
         (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
@@ -251,6 +253,7 @@ class BaseFilterExportDownloadForm(forms.Form):
 
     _USER_MOBILE = 'mobile'
     _USER_DEMO = 'demo_user'
+    _USER_WEB = 'web'
     _USER_UNKNOWN = 'unknown'
     _USER_SUPPLY = 'supply'
     _USER_ADMIN = 'admin'
@@ -258,6 +261,7 @@ class BaseFilterExportDownloadForm(forms.Form):
     _USER_TYPES_CHOICES = [
         (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
         (_USER_DEMO, ugettext_lazy("Demo User")),
+        (_USER_WEB, ugettext_lazy("Web Users")),
         (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
