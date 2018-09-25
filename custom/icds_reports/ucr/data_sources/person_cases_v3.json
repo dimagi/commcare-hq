@@ -511,6 +511,32 @@
         }
       },
       {
+        "column_id": "is_pregnant",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "is_pregnant"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
         "column_id": "marital_status",
         "datatype": "small_integer",
         "type": "expression",
