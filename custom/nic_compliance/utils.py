@@ -28,7 +28,7 @@ def extract_password(obfuscated_password):
         # b64 decode the encoded internal block to get raw internal block
         # raw internal block = (paddling_left + encoded_password + padding_right)
         try:
-            decoded_internal_block = base64.b64decode(encoded_internal_block)
+            decoded_internal_block = base64.b64decode(encoded_internal_block).decode('utf-8')
         except TypeError:
             return ''
         # match regex for padding along with b64 encoded password and find matches
