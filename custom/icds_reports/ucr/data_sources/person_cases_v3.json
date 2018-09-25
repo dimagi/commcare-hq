@@ -290,7 +290,7 @@
             },
             "value_expression": {
               "type": "property_name",
-              "property_name": "hh_minoritY"
+              "property_name": "hh_minority"
             }
           },
           "cases": {
