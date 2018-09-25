@@ -1121,14 +1121,14 @@ class MessagingTab(UITab):
             url=reverse(ConditionalAlertListView.urlname, args=[self.domain]),
         ))
 
-        if not self.show_dashboard:
-            if result:
-                result.append(dropdown_dict(None, is_divider=True))
+        if result:
+            result.append(dropdown_dict(None, is_divider=True))
 
-            result.append(dropdown_dict(
-                _("View All"),
-                url=reverse('sms_compose_message', args=[self.domain]),
-            ))
+        view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
+        result.append(dropdown_dict(
+            _("View All"),
+            url=reverse(view_all_view, args=[self.domain]),
+        ))
 
         return result
 
