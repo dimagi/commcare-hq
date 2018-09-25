@@ -28,7 +28,7 @@ requirejs.config({
         "nvd3/nv.d3.min": {
             deps: ['d3/d3.min'],
             exports: 'nv',
-        },
+        }
     },
     map: {
         "datatables.fixedColumns": {
