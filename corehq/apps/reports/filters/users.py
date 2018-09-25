@@ -274,7 +274,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if not self.request.can_access_all_locations:
             return self._get_assigned_locations_default()
 
-        defaults = [('t__0', _("[Active Mobile Workers]"))]
+        defaults = [('t__0', _("[Active Mobile Workers]")), ('t__5', _("[Deactivated Mobile Workers]"))]
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
