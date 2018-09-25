@@ -384,9 +384,6 @@
       {
         "column_id": "aadhar_date",
         "type": "expression",
-        "is_nullable": true,
-        "is_primary_key": false,
-        "create_index": false,
         "datatype": "date",
         "expression": {
           "type": "conditional",
@@ -406,27 +403,13 @@
             }
           },
           "expression_if_true": {
-            "type": "conditional",
-            "test": {
-              "type": "not",
-              "filter": {
-                "operator": "in",
-                "type": "boolean_expression",
-                "expression": {
-                  "type": "property_name",
-                  "property_name": "aadhar_date"
-                },
-                "property_value": [
-                  "",
-                  null
-                ]
-              }
-            },
-            "expression_if_true": {
+            "type": "coalesce",
+            "expression": {
               "type": "property_name",
               "property_name": "aadhar_date"
             },
-            "expression_if_false": {
+            "default_expression": {
+              "comment": "TODO: a case migration will need to be run to ensure that all cases have aadhar_date",
               "type": "nested",
               "argument_expression": {
                 "type": "reduce_items",
