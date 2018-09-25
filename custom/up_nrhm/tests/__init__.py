@@ -42,9 +42,9 @@ def setUpModule():
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
         for file_name in os.listdir(path):
             with open(os.path.join(path, file_name), encoding='utf-8') as f:
-                table_name = get_table_name(domain.name, file_name[:-4])
+                table_name = get_table_name(domain.name, file_name[:-4]).decode('utf-8')
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
+                postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
     _call_center_domain_mock.stop()
 
 
@@ -62,7 +62,7 @@ def tearDownModule():
     metadata.reflect(bind=engine, extend_existing=True)
     path = os.path.join(os.path.dirname(__file__), 'fixtures')
     for file_name in os.listdir(path):
-        table_name = get_table_name(domain.name, file_name[:-4])
+        table_name = get_table_name(domain.name, file_name[:-4]).decode('utf-8')
         table = metadata.tables[table_name]
         table.drop()
     _call_center_domain_mock.start()
