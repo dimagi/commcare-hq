@@ -2710,7 +2710,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         rows = self.parse_availability_data_to_rows(loc_names, data)
         if self.loc_id == 'pps_id':
             self.total_row = self.calculate_total_row(rows)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -3579,7 +3579,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
         pps_names, data = self.get_rupture_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_rupture_rate_to_rows(pps_names, data)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @cached_property
     def loc_id(self):

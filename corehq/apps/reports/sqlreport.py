@@ -252,8 +252,11 @@ class SqlData(ReportDataSource):
             return []
 
     def query_context(self, start=None, limit=None):
+        table_name = self.table_name
+        if isinstance(table_name, bytes):
+            table_name = table_name.decode('utf-8')
         return sqlagg.QueryContext(
-            self.table_name, self.wrapped_filters, self.group_by, self.order_by,
+            table_name, self.wrapped_filters, self.group_by, self.order_by,
             start=start, limit=limit
         )
 
