@@ -138,11 +138,30 @@
         "create_index": true
       },
       {
-        "comment": "make this a boolean?",
         "column_id": "resident",
-        "datatype": "string",
-        "type": "raw",
-        "property_name": "resident"
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "resident"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       },
       {
         "column_id": "age_at_death_yrs",
