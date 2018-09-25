@@ -277,27 +277,37 @@
         }
       },
       {
-        "comment": "to be removed when minority is added",
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "named",
-              "name": "open_cases"
+        "column_id": "hh_minority",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+              "type": "icds_parent_id"
             },
-            {
-              "type": "named",
-              "name": "female"
-            },
-            {
-              "type": "named",
-              "name": "minority"
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "hh_minoritY"
             }
-          ]
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "F_minority_count"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       },
       {
         "comment": "to be removed when disabled is added",
@@ -321,29 +331,6 @@
         "display_name": null,
         "type": "boolean",
         "column_id": "F_disabled_count"
-      },
-      {
-        "comment": "to be removed when minority is added",
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "named",
-              "name": "open_cases"
-            },
-            {
-              "type": "named",
-              "name": "male"
-            },
-            {
-              "type": "named",
-              "name": "minority"
-            }
-          ]
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "M_minority_count"
       },
       {
         "comment": "to be removed when disabled is added",
@@ -587,56 +574,6 @@
     ],
     "named_expressions": {},
     "named_filters": {
-      "minority": {
-        "operator": "eq",
-        "expression": {
-          "value_expression": {
-            "datatype": null,
-            "type": "property_name",
-            "property_name": "hh_minority"
-          },
-          "type": "related_doc",
-          "related_doc_type": "CommCareCase",
-          "doc_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "referenced_id"
-            },
-            "type": "nested",
-            "argument_expression": {
-              "array_expression": {
-                "filter_expression": {
-                  "operator": "eq",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "identifier"
-                  },
-                  "type": "boolean_expression",
-                  "property_value": "parent"
-                },
-                "type": "filter_items",
-                "items_expression": {
-                  "expression": {
-                    "datatype": "array",
-                    "type": "property_name",
-                    "property_name": "indices"
-                  },
-                  "type": "root_doc"
-                }
-              },
-              "type": "array_index",
-              "index_expression": {
-                "constant": 0,
-                "type": "constant"
-              }
-            }
-          }
-        },
-        "type": "boolean_expression",
-        "property_value": "yes"
-      },
       "pregnant": {
         "comment": "needed to add pregnant back",
         "operator": "eq",
