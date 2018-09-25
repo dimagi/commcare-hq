@@ -81,7 +81,7 @@ class BaseDumpLoadTest(TestCase):
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
         dump_output = output_stream.getvalue()
-        dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
+        dump_lines = [line.strip() for line in dump_output.split(b'\n') if line.strip()]
         total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
         expected_model_counts = _normalize_object_counter(expected_object_counts)
