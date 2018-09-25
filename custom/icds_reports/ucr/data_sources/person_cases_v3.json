@@ -32,7 +32,8 @@
           "datatype": null,
           "type": "property_name",
           "property_name": "owner_id"
-        }
+        },
+        "create_index": true
       },
       {
         "column_id": "supervisor_id",
@@ -46,7 +47,8 @@
           },
           "location_type": "supervisor",
           "location_property": "_id"
-        }
+        },
+        "create_index": true
       },
       {
         "column_id": "block_id",
@@ -60,7 +62,8 @@
           },
           "location_type": "block",
           "location_property": "_id"
-        }
+        },
+        "create_index": true
       },
       {
         "column_id": "district_id",
@@ -94,13 +97,11 @@
         "column_id": "opened_on",
         "datatype": "datetime",
         "type": "raw",
-        "property_name": "opened_on",
-        "create_index": true
+        "property_name": "opened_on"
       },
       {
         "column_id": "closed_on",
         "datatype": "datetime",
-        "create_index": false,
         "type": "raw",
         "property_name": "closed_on"
       },
@@ -134,8 +135,7 @@
         "column_id": "date_death",
         "datatype": "date",
         "type": "raw",
-        "property_name": "date_death",
-        "create_index": true
+        "property_name": "date_death"
       },
       {
         "column_id": "resident",
@@ -226,8 +226,7 @@
         "column_id": "last_referral_date",
         "datatype": "date",
         "type": "raw",
-        "property_name": "last_referral_date",
-        "create_index": true
+        "property_name": "last_referral_date"
       },
       {
         "column_id": "referral_reached_date",
@@ -533,50 +532,8 @@
     "sql_column_indexes": [
       {
         "column_ids": [
-          "block_id",
-          "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
-          "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
-          "owner_id"
-        ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
-          "opened_on"
-        ]
-      },
-      {
-        "column_ids": [
-          "awc_id",
-          "date_death"
-        ]
-      },
-      {
-        "column_ids": [
-          "awc_id",
-          "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "awc_id",
-          "owner_id"
-        ]
-      },
-      {
-        "column_ids": [
-          "awc_id",
-          "opened_on"
+          "opened_on",
+          "closed_on"
         ]
       }
     ],
