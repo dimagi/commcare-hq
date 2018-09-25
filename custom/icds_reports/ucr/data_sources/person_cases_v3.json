@@ -223,23 +223,15 @@
         ]
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "date",
-        "is_primary_key": false,
         "column_id": "last_referral_date",
-        "create_index": true,
-        "is_nullable": true,
+        "datatype": "date",
         "type": "raw",
-        "property_name": "last_referral_date"
+        "property_name": "last_referral_date",
+        "create_index": true
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "date",
-        "is_primary_key": false,
         "column_id": "referral_reached_date",
-        "is_nullable": true,
+        "datatype": "date",
         "type": "raw",
         "property_name": "referral_reached_date"
       },
