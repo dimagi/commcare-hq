@@ -127,14 +127,14 @@ class EmwfUtils(object):
             name = "%s [Active Mobile Worker]" % user['username_in_report']
         else:
             name = "%s [Deactivated Mobile Worker]" % user['username_in_report']
-        return (uid, name)
+        return uid, name
 
     def reporting_group_tuple(self, g):
-        return ("g__%s" % g['_id'], '%s [group]' % g['name'])
+        return "g__%s" % g['_id'], '%s [group]' % g['name']
 
     def user_type_tuple(self, t):
         return (
-            "t__%s" % (t),
+            "t__%s" % t,
             "[%s]" % HQUserType.human_readable[t]
         )
 
