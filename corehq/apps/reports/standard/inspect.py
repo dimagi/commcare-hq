@@ -65,7 +65,11 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                                        mobile_user_and_group_slugs,
                                        self.request.couch_user)
                     .values_list('_id', flat=True))
-        return form_es.user_id(user_ids)
+        # If no filters are selected, return all results
+        if user_ids:
+            return form_es.user_id(user_ids)
+        else:
+            return 'match_all'
 
     @staticmethod
     def _form_filter(form):
