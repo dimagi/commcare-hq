@@ -564,64 +564,7 @@
       }
     ],
     "named_expressions": {},
-    "named_filters": {
-      "pregnant": {
-        "comment": "needed to add pregnant back",
-        "operator": "eq",
-        "expression": {
-          "datatype": "string",
-          "type": "property_name",
-          "property_name": "is_pregnant"
-        },
-        "type": "boolean_expression",
-        "property_value": "yes"
-      },
-      "open_cases": {
-        "operator": "eq",
-        "expression": {
-          "datatype": null,
-          "type": "property_name",
-          "property_name": "closed"
-        },
-        "type": "boolean_expression",
-        "property_value": false
-      },
-      "female": {
-        "operator": "eq",
-        "expression": {
-          "datatype": "string",
-          "type": "property_name",
-          "property_name": "sex"
-        },
-        "type": "boolean_expression",
-        "property_value": "F"
-      },
-      "male": {
-        "type": "or",
-        "filters": [
-          {
-            "operator": "eq",
-            "expression": {
-              "datatype": "string",
-              "type": "property_name",
-              "property_name": "sex"
-            },
-            "type": "boolean_expression",
-            "property_value": "M"
-          },
-          {
-            "operator": "eq",
-            "expression": {
-              "datatype": "string",
-              "type": "property_name",
-              "property_name": "sex"
-            },
-            "type": "boolean_expression",
-            "property_value": "O"
-          }
-        ]
-      }
-    },
+    "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
       "partition_config": [
