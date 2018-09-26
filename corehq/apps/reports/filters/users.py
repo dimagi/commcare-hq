@@ -266,6 +266,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def show_all_mobile_workers(mobile_user_and_group_slugs):
         return 't__0' in mobile_user_and_group_slugs
 
+    @staticmethod
+    def all_users_selected(mobile_user_and_group_slugs):
+        return not any(mobile_user_and_group_slugs)
+
     def _get_assigned_locations_default(self):
         user_locations = self.request.couch_user.get_sql_locations(self.domain)
         return list(map(self.utils.location_tuple, user_locations))
