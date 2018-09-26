@@ -222,8 +222,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_lazy("User(s)")
     default_options = None
-    placeholder = ugettext_lazy(
-        "Specify groups and users to include in the report")
+    placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options'
     search_help_inline = ugettext_lazy(mark_safe(

@@ -38,6 +38,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     slug = 'case_list_filter'
     options_url = 'case_list_options'
     default_selections = [('project_data', _("[Project Data (Active & Deactivated Owners)]"))]
+    placeholder = _("Add case owners to filter this report.")
 
     @property
     @memoized
