@@ -64,7 +64,7 @@ branches:
   - qa-customer-billing # Gabriella Sept 24
   - rn_funneling_ace_use # Rohit Sept 25
   - rn_encapsulate_casexmljs # Rohit Sept 25 
-  - rn_upgrade_select2 # Rohit Sept 26
+#  - rn_upgrade_select2 # Rohit Sept 26
 submodules:
   submodules/django-digest-src:
     branches: []
