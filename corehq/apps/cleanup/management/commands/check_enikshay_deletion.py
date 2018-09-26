@@ -11,7 +11,7 @@ from corehq.apps.es import AppES, CaseES, CaseSearchES, DomainES, FormES, GroupE
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 
-DOMAINS = (
+DOMAINS_IN_SETTINGS = (
     'enikshay-test',
     'enikshay',
     'enikshay-test-2',
@@ -43,6 +43,42 @@ DOMAINS = (
     'enikshay-reports-qa',
     'enikshay-performance-test',
 )
+
+DOMAINS_FROM_SOFTLAYER = (
+    'cz-migration-1',
+    'cz-migration-2',
+    'cz-migration-3',
+    'migration-01-05',
+    'migration-1-2',
+    'nikshay-speedup',
+    'nikshay-speedup-2',
+    'np-migration-1',
+    'np-migration-1-22',
+    'np-migration-1-22-full',
+    'np-migration-10',
+    'np-migration-12-26',
+    'np-migration-12-26-2',
+    'np-migration-12-26-3',
+    'np-migration-12_24.2',
+    'np-migration-2',
+    'np-migration-2-7-1',
+    'np-migration-4',
+    'np-migration-5',
+    'np-migration-6',
+    'np-migration-7',
+    'np-migration-8',
+    'np-migration-9',
+    'np-migration-no-tests',
+    'np-migration-np-tests',
+    'np-no-dirtiness',
+    'np-test-migration-03-10',
+)
+
+DOMAINS_FROM_STAGING = (
+    'np-migration3',
+)
+
+DOMAINS = DOMAINS_IN_SETTINGS + DOMAINS_FROM_SOFTLAYER + DOMAINS_FROM_STAGING
 
 
 class Command(BaseCommand):
