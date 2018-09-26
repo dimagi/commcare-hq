@@ -3,7 +3,8 @@ hqDefine("data_interfaces/js/case_management",[
     'underscore',
     'knockout',
     'case/js/casexml',
-], function ($, _, ko, casexmlModule) {
+    'hqwebapp/js/initial_page_data',
+], function ($, _, ko, casexmlModule, initialPageData) {
     var CaseManagement = function (o) {
         'use strict';
         var self = {};
@@ -154,8 +155,7 @@ hqDefine("data_interfaces/js/case_management",[
     };
 
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            interfaceSelector = '#data-interfaces-reassign-cases',
+        var interfaceSelector = '#data-interfaces-reassign-cases',
             caseManagementModel;
 
         var applyBindings = function () {
