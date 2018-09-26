@@ -49,6 +49,7 @@ from corehq.apps.data_interfaces.dispatcher import (
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.hqwebapp.decorators import use_typeahead, use_angular_js
+from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface
@@ -114,7 +115,7 @@ class DataInterfaceSection(BaseDomainView):
         return reverse("data_interfaces_default", args=[self.domain])
 
 
-class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
+class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     template_name = "data_interfaces/list_case_groups.html"
     urlname = 'case_group_list'
     page_title = ugettext_lazy("Case Groups")
