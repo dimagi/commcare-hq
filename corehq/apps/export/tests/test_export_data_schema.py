@@ -1173,7 +1173,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         # One for case, one for case history, one for parent case
         self.assertEqual(len(schema.group_schemas), 3)
-        main_table = filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas)[0]
+        main_table = list(filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas))[0]
         self.assertEqual(
             len([item for item in main_table.items if item.doc_type == 'CaseIndexItem']),
             1
