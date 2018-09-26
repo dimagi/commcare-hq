@@ -63,7 +63,7 @@ def get_latest_released_app_source(request, domain, app_id):
 
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
-    page_title = ugettext_lazy("Domain Links")
+    page_title = ugettext_lazy("Linked Projects")
     template_name = 'linked_domain/domain_links.html'
 
     @property
@@ -193,7 +193,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
 
 class DomainLinkHistoryReport(GenericTabularReport):
-    name = 'Project Link History'
+    name = 'Linked Project History'
     base_template = "reports/base_template.html"
     section_name = 'Project Settings'
     slug = 'project_link_report'
