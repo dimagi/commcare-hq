@@ -293,10 +293,8 @@ class SetupTab(UITab):
         from corehq.apps.programs.views import ProgramListView
         from corehq.apps.products.views import ProductListView
 
-        dropdown_items = []
-
         if self.project.commtrack_enabled:
-            dropdown_items += [(_(view.page_title), view) for view in (
+            dropdown_items = [(_(view.page_title), view) for view in (
                 ProductListView,
                 ProgramListView,
                 SMSSettingsView,
@@ -304,12 +302,17 @@ class SetupTab(UITab):
                 CommTrackSettingsView,
             )]
 
-        return [
-            dropdown_dict(
-                item[0],
-                url=reverse(item[1].urlname, args=[self.domain])
-            ) for item in dropdown_items
-        ]
+            return [
+                dropdown_dict(
+                    item[0],
+                    url=reverse(item[1].urlname, args=[self.domain])
+                ) for item in dropdown_items
+            ] + [
+                dropdown_dict(None, is_divider=True),
+                dropdown_dict(_("View All"), url=ProductListView.urlname),
+            ]
+
+        return []
 
     @property
     def _is_viewable(self):
@@ -341,6 +344,7 @@ class SetupTab(UITab):
             NewProductView,
             EditProductView,
             ProductFieldsView,
+            UploadProductView,
         )
 
         if self.project.commtrack_enabled:
@@ -360,6 +364,10 @@ class SetupTab(UITab):
                         {
                             'title': _(ProductFieldsView.page_name()),
                             'urlname': ProductFieldsView.urlname,
+                        },
+                        {
+                            'title': _(UploadProductView.page_title),
+                            'urlname': UploadProductView.urlname,
                         },
                     ]
                 },
@@ -1113,14 +1121,14 @@ class MessagingTab(UITab):
             url=reverse(ConditionalAlertListView.urlname, args=[self.domain]),
         ))
 
-        if not self.show_dashboard:
-            if result:
-                result.append(dropdown_dict(None, is_divider=True))
+        if result:
+            result.append(dropdown_dict(None, is_divider=True))
 
-            result.append(dropdown_dict(
-                _("View All"),
-                url=reverse('sms_compose_message', args=[self.domain]),
-            ))
+        view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
+        result.append(dropdown_dict(
+            _("View All"),
+            url=reverse(view_all_view, args=[self.domain]),
+        ))
 
         return result
 
@@ -1256,7 +1264,7 @@ class ProjectUsersTab(UITab):
                     'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                     'subpages': [
                         {
-                            'title': _("Add Web User"),
+                            'title': _("Invite Web User"),
                             'urlname': 'invite_web_user'
                         },
                         {
