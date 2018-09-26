@@ -369,7 +369,10 @@ def _fill_in_location_element(xml_root, location, data_fields):
     for field in fixture_fields:
         field_node = Element(field)
         val = getattr(location, field)
-        field_node.text = six.text_type(val if val is not None else '')
+        if field == 'location_type':
+            field_node.text = val.name
+        else:
+            field_node.text = six.text_type(val if val is not None else '')
         xml_root.append(field_node)
 
     # in order to be indexed, custom data fields need to be top-level
