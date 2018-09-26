@@ -971,7 +971,7 @@ class CustomerInvoiceSummaryView(InvoiceSummaryViewBase):
     def page_context(self):
         context = super(CustomerInvoiceSummaryView, self).page_context
         context.update({
-            'adjustment_balance_form': self.adjust_balance_form,
+            'adjust_balance_form': self.adjust_balance_form,
             'adjustment_list': self.adjustment_list
         })
         return context
