@@ -10,8 +10,7 @@ from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import TableNotFoundWarning, MissingColumnWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
-from corehq.apps.userreports.tests.utils import load_data_from_db
+from corehq.apps.userreports.util import get_indicator_adapter
 from six.moves import range
 
 
@@ -95,9 +94,10 @@ class AdapterBulkSaveTest(TestCase):
 
         self.adapter.build_table()
         self.adapter.bulk_save(docs)
+        self.assertEqual(self.adapter.get_query_object().count(), 10)
 
-        results = list(load_data_from_db(get_table_name(self.domain, self.config.table_id)))
-        self.assertEqual(len(results), 10)
+        self.adapter.bulk_delete([doc['_id'] for doc in docs])
+        self.assertEqual(self.adapter.get_query_object().count(), 0)
 
     def test_save_rows_empty(self):
         self.adapter.build_table()
