@@ -1,12 +1,9 @@
 {% extends "accounting/report_filter_actions.html" %}
 
 
-{% block page_content %}
-    <div class="well well-sm" style="margin-bottom: 0px;">
-        <a href="{{ new_url_name }}" class="btn btn-success" data-toggle="modal" style="margin-left:2px">
-            <i class="fa fa-plus"></i>
-            Add New {{ item_name }}
-        </a>
-    </div>
-    {{ block.super }}
+{% block pre_page_content %}
+    <a href="{{ new_url_name }}" class="btn btn-success" style="margin: 10px 0;">
+        <i class="fa fa-plus"></i>
+        Add New {{ item_name }}
+    </a>
 {% endblock %}
