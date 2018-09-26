@@ -62,7 +62,6 @@ branches:
   - mk-282955 # MK Sept 25
   - qa-customer-billing # Gabriella Sept 24
   - rn_upgrade_select2 # Rohit Sept 26
-  - je/upgrade-redis-packages # j$ sept 26
   - rn_testing_upgrade_sel # Rohit sept 27
 submodules:
   submodules/django-digest-src:
