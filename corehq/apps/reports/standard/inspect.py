@@ -89,7 +89,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                  .filter(time_filter(gte=self.datespan.startdate,
                                      lt=self.datespan.enddate_adjusted))
                  .filter(self._get_users_filter(mobile_user_and_group_slugs)
-                         if mobile_user_and_group_slugs[0] else match_all()))
+                         if any(mobile_user_and_group_slugs) else match_all()))
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):
