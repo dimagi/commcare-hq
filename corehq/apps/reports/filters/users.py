@@ -340,6 +340,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
+        q = user_es.UserES().domain(domain)
+        if not any(mobile_user_and_group_slugs):
+            return q.filter(filters.match_all())
+
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
@@ -354,7 +358,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 
-        q = user_es.UserES().domain(domain)
         if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
             q = q.show_inactive()
         elif HQUserType.DEACTIVATED in user_types:
