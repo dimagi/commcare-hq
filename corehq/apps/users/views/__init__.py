@@ -290,7 +290,7 @@ class BaseEditUserView(BaseUserSettingsView):
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
-    page_title = ugettext_noop("Edit User Role")
+    page_title = ugettext_noop("Edit Web User")
 
     @property
     @memoized
