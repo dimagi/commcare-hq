@@ -67,7 +67,7 @@ hqDefine("reports/js/hq_report", [
                                     data: getReportParams(undefined),
                                     type: "POST",
                                     success: function () {
-                                        alertUser.alert_user(gettext("Your requested excel report will be sent to the email " +
+                                        alertUser.alert_user(gettext("Your requested Excel report will be sent to the email " +
                                             "address defined in your account settings."), "success");
                                     },
                                 });

@@ -65,7 +65,7 @@ def read_uploaded_app_translation_file(f):
     except JSONReaderError as e:
         msgs.append(
             (messages.error, _(
-                "App Translation Failed! There is an issue with excel columns. Error details: {}."
+                "App Translation Failed! There is an issue with Excel columns. Error details: {}."
             ).format(e))
         )
         return False, msgs
@@ -241,7 +241,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
 def expected_bulk_app_sheet_headers(app):
     '''
     Returns lists representing the expected structure of bulk app translation
-    excel file uploads and downloads.
+    Excel file uploads and downloads.
 
     The list will be in the form:
     [

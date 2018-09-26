@@ -173,9 +173,9 @@ class UpdateCaseGroupForm(AddCaseGroupForm):
         try:
             self.current_group = CommCareCaseGroup.get(self.cleaned_data.get('item_id'))
         except AttributeError:
-            raise forms.ValidationError("You're not passing in the group's id!")
+            raise forms.ValidationError(_("Please include the case group ID."))
         except ResourceNotFound:
-            raise forms.ValidationError("This case group was not found in our database!")
+            raise forms.ValidationError(_("A case group was not found with that ID."))
         return cleaned_data
 
     def update_group(self):
@@ -221,7 +221,7 @@ class CaseUpdateRuleForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         if 'initial' in kwargs:
-            raise ValueError("Initial values are set by the form")
+            raise ValueError(_("Initial values are set by the form"))
 
         self.is_system_admin = kwargs.pop('is_system_admin', False)
 
@@ -346,7 +346,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         if 'initial' in kwargs:
-            raise ValueError("Initial values are set by the form")
+            raise ValueError(_("Initial values are set by the form."))
 
         self.is_system_admin = kwargs.pop('is_system_admin', False)
 
@@ -400,7 +400,7 @@ class CaseRuleCriteriaForm(forms.Form):
         return len(self.cleaned_data['custom_match_definitions']) > 0
 
     def _json_fail_hard(self):
-        raise ValueError("Invalid JSON object given")
+        raise ValueError(_("Invalid JSON object given"))
 
     def set_case_type_choices(self, initial):
         case_types = [''] + list(get_case_types_for_domain_es(self.domain))
@@ -612,7 +612,7 @@ class CaseRuleActionsForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         if 'initial' in kwargs:
-            raise ValueError("Initial values are set by the form")
+            raise ValueError(_("Initial values are set by the form."))
 
         self.is_system_admin = kwargs.pop('is_system_admin', False)
 
@@ -731,7 +731,7 @@ class CaseRuleActionsForm(forms.Form):
 
             name = obj['name'].strip()
             if not name or name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
-                raise ValidationError(_("Invalid custom action id reference"))
+                raise ValidationError(_("Invalid custom action ID reference"))
 
             result.append({
                 'name': name

@@ -183,7 +183,7 @@ class ImportErrorDetail(object):
         ),
         ImportErrors.InvalidDate: _(
             "Date fields were specified that caused an error during "
-            "conversion. This is likely caused by a value from excel having "
+            "conversion. This is likely caused by a value from Excel having "
             "the wrong type or not being formatted properly."
         ),
         ImportErrors.BlankExternalId: _(
@@ -203,11 +203,11 @@ class ImportErrorDetail(object):
             "with this same name, try using site-code instead."
         ),
         ImportErrors.InvalidInteger: _(
-            "Integer values were specified, but the values in excel were not "
+            "Integer values were specified, but the values in Excel were not "
             "all integers"
         ),
         ImportErrors.ImportErrorMessage: _(
-            "Problems in importing cases. Please check the excel file."
+            "Problems in importing cases. Please check the Excel file."
         )
     }
 
@@ -241,7 +241,7 @@ def convert_field_value(value):
 
 
 def parse_search_id(config, row):
-    """ Find and convert the search id in an excel row """
+    """ Find and convert the search id in an Excel row """
 
     # Find index of user specified search column
     search_column = config.search_column
@@ -416,8 +416,8 @@ def get_importer_error_message(e):
         # happened though...)
         return _('Sorry, your session has expired. Please start over and try again.')
     elif isinstance(e, ImporterFileNotFound):
-        return _('The session containing the file you uploaded has expired '
-                 '- please upload a new one.')
+        return _('The session containing the file you uploaded has expired. '
+                 'Please upload a new one.')
     elif isinstance(e, ImporterExcelFileEncrypted):
         return _('The file you want to import is password protected. '
                  'Please choose a file that is not password protected.')

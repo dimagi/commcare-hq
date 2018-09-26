@@ -6242,9 +6242,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Properties. You can remove User Properties '
-                             'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".'),
+                'message': _('Your application is using User Properties and your current subscription does not '
+                             'support that. You can remove User Properties functionality by opening the User '
+                             'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
             })
         return errors
 
