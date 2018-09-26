@@ -1,5 +1,3 @@
-/* globals ko, $ */
-
 hqDefine("data_interfaces/js/case_rule_criteria", [
     'jquery',
     'knockout',
