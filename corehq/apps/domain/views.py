@@ -299,7 +299,7 @@ class BaseProjectSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        return reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
+        return reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
 
 
 class DefaultProjectSettingsView(BaseDomainView):
