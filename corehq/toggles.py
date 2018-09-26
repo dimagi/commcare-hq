@@ -1638,7 +1638,7 @@ SEARCH_DEACTIVATED_USERS = StaticToggle(
 
 FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
     'filter_on_groups_and_locations',
-    '[ONSE] Toggle filter from groups OR locations to groups AND locations in all reports and exports in the '
+    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
     'ONSE domain with group and location filters',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
