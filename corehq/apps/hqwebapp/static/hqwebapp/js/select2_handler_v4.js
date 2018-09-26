@@ -7,7 +7,7 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
 ], function (
     $,
     ko,
-    _
+    _,
 ) {
     var baseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
@@ -33,7 +33,7 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
             return {};
         };
 
-        self.processResults = function (response) {
+        self.processResults = function (response, params) {
             // override this if you want to do something special with the response.
             return response;
         };
@@ -81,13 +81,27 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
                     dataType: 'json',
                     type: 'post',
                     data: function (term) {
+                        $('.select2-results__options').find('li:not(.loading-results)').remove();
                         var data = self.getExtraData(term);
                         data['handler'] = self.getHandlerSlug();
                         data['action'] = self.fieldName;
                         data['searchString'] = term;
+
                         return data;
                     },
                     processResults: self.processResults,
+                    error: function () {
+                        $('.select2-results__options').empty();
+
+                        var erroMessage = $('<li role="treeitem" ' +
+                            'class="select2-results__option " ' +
+                            'aria-disabled="true">Error Loading Data</li>')
+
+                        $('.select2-results__options').append(erroMessage);
+
+
+                    },
+
 
                 },
                 tags: self.createTags,
