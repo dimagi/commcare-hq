@@ -47,16 +47,28 @@ DOMAINS = (
 
 class Command(BaseCommand):
 
-    def handle(self, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            default=False,
+            help='Run all checks for each domain, instead of short-circuiting.',
+        ),
+
+    def handle(self, all=False, **options):
         for domain_name in DOMAINS:
-            if not any(check(domain_name) for check in [
+            checks = (check(domain_name) for check in [
                 _check_domain_exists,
                 _check_cases,
                 _check_soft_deleted_sql_cases,
                 _check_forms,
                 _check_soft_deleted_sql_forms,
                 _check_elasticsearch,
-            ]):
+            ])
+            if all:
+                checks = list(checks)
+
+            if not any(checks):
                 print('No remaining data for domain "%s"' % domain_name)
 
 
