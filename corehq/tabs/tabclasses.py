@@ -1350,6 +1350,10 @@ class EnterpriseSettingsTab(UITab):
                 'title': _('Enterprise Settings'),
                 'url': reverse('enterprise_settings', args=[self.domain]),
             },
+            {
+                'title': _('Billing Statements'),
+                'url': reverse('enterprise_billing_statements', args=[self.domain])
+            }
         ]))
         return items
 
