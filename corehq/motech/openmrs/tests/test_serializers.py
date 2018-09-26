@@ -8,7 +8,7 @@ import doctest
 from django.test import SimpleTestCase
 
 import corehq.motech.openmrs.serializers
-from corehq.motech.openmrs.serializers import to_name, to_timestamp
+from corehq.motech.openmrs.serializers import to_name, to_omrs_datetime
 
 
 class SerializerTests(SimpleTestCase):
@@ -24,28 +24,28 @@ class SerializerTests(SimpleTestCase):
                 return datetime.timedelta(0)
 
         dt = datetime.datetime(2017, 6, 27, 9, 36, 47, tzinfo=CAT())
-        openmrs_timestamp = to_timestamp(dt)
-        self.assertEqual(openmrs_timestamp, '2017-06-27T09:36:47.000+0200')
+        openmrs_datetime = to_omrs_datetime(dt)
+        self.assertEqual(openmrs_datetime, '2017-06-27T09:36:47.000+0200')
 
     def test_to_timestamp_datetime_str(self):
         datetime_str = '2017-06-27T09:36:47.396000Z'
-        openmrs_timestamp = to_timestamp(datetime_str)
-        self.assertEqual(openmrs_timestamp, '2017-06-27T09:36:47.396+0000')
+        openmrs_datetime = to_omrs_datetime(datetime_str)
+        self.assertEqual(openmrs_datetime, '2017-06-27T09:36:47.396+0000')
 
     def test_to_timestamp_date(self):
         date = datetime.date(2017, 6, 27)
-        openmrs_timestamp = to_timestamp(date)
-        self.assertEqual(openmrs_timestamp, '2017-06-27T00:00:00.000+0000')
+        openmrs_datetime = to_omrs_datetime(date)
+        self.assertEqual(openmrs_datetime, '2017-06-27T00:00:00.000+0000')
 
     def test_to_timestamp_day_str(self):
         day_str = 'Wednesday'
         with self.assertRaisesMessage(ValueError, '"Wednesday" is not recognised as a date or a datetime'):
-            to_timestamp(day_str)
+            to_omrs_datetime(day_str)
 
     def test_to_timestamp_day_num(self):
         day_str = '1'
         with self.assertRaisesMessage(ValueError, '"1" is not recognised as a date or a datetime'):
-            to_timestamp(day_str)
+            to_omrs_datetime(day_str)
 
     def test_to_name_numeric(self):
         commcare_name = 'Bush 2'
