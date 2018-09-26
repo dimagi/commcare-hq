@@ -1,11 +1,13 @@
 hqDefine("hqwebapp/js/select2_handler_v4", [
     "jquery",
     "knockout",
+    "underscore",
     "select2/dist/js/select2.full.min",
     "bootstrap-timepicker/js/bootstrap-timepicker",
 ], function (
     $,
-    ko
+    ko,
+    _
 ) {
     var baseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
