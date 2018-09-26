@@ -14,6 +14,7 @@ from collections import (
 from contextlib import contextmanager
 from datetime import datetime
 
+import attr
 import six
 from io import BytesIO
 from django.db import models
@@ -72,12 +73,53 @@ class TruncatingCharField(models.CharField):
         return value
 
 
-class Attachment(namedtuple('Attachment', 'name raw_content content_type'), IsImageMixin):
+@attr.s
+class Attachment(IsImageMixin):
     """Unsaved form attachment
 
     This class implements the subset of the `BlobMeta` interface needed
     when handling attachments before they are saved.
     """
+
+    name = attr.ib()
+    raw_content = attr.ib(repr=False)
+    content_type = attr.ib()
+
+    def __attrs_post_init__(self):
+        """This is necessary for case attachments
+
+        DO NOT USE `self.key` OR `self.properties`; they are only
+        referenced when creating case attachments, which are slated for
+        removal. The `properties` calculation should be moved back into
+        `write()` when case attachments are removed.
+        """
+        self.key = uuid.uuid4().hex
+        self.properties = {}
+        if self.is_image:
+            try:
+                img_size = Image.open(self.open()).size
+                self.properties.update(width=img_size[0], height=img_size[1])
+            except IOError:
+                self.content_type = 'application/octet-stream'
+
+    @property
+    @memoized
+    def content_length(self):
+        """This is necessary for case attachments
+
+        DO NOT USE THIS. It is only referenced when creating case
+        attachments, which are slated for removal.
+        """
+        if isinstance(self.raw_content, bytes):
+            return len(self.raw_content)
+        if isinstance(self.raw_content, six.text_type):
+            return len(self.raw_content.encode('utf-8'))
+        pos = self.raw_content.tell()
+        try:
+            self.raw_content.seek(0, os.SEEK_END)
+            return self.raw_content.tell()
+        finally:
+            self.raw_content.seek(pos)
 
     @property
     @memoized
@@ -113,10 +155,11 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type'), IsIm
             return BytesIO(self.content)
         fileobj = self.raw_content.open()
 
-        from django.core.files.uploadedfile import InMemoryUploadedFile
-        if fileobj is None and isinstance(self.raw_content, InMemoryUploadedFile):
+        if fileobj is None:
+            assert not isinstance(self.raw_content, BlobMeta), repr(self)
             # work around Django 1.11 bug, fixed in 2.0
-            # https://docs.djangoproject.com/en/1.11/_modules/django/core/files/uploadedfile/#InMemoryUploadedFile
+            # https://github.com/django/django/blob/1.11.15/django/core/files/base.py#L131-L137
+            # https://github.com/django/django/blob/2.0/django/core/files/base.py#L128
             return self.raw_content
 
         return fileobj
@@ -142,22 +185,15 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type'), IsIm
         :param xform: The XForm instance associated with this attachment.
         :returns: `BlobMeta` object.
         """
-        properties = {}
-        content_type = self.content_type
-        if self.is_image:
-            try:
-                img_size = Image.open(self.open()).size
-                properties.update(width=img_size[0], height=img_size[1])
-            except IOError:
-                content_type = 'application/octet-stream'
         return blob_db.put(
             self.open(),
+            key=self.key,
             domain=xform.domain,
             parent_id=xform.form_id,
             type_code=(CODES.form_xml if self.name == "form.xml" else CODES.form_attachment),
             name=self.name,
-            content_type=content_type,
-            properties=properties,
+            content_type=self.content_type,
+            properties=self.properties,
         )
 
 

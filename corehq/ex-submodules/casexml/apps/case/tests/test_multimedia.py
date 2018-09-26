@@ -82,8 +82,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
     def _attachmentFileStream(self, key):
         attachment_path = MEDIA_FILES[key]
         attachment = open(attachment_path, 'rb')
-        uf = UploadedFile(attachment, key)
-        return uf
+        return NoClose(UploadedFile(attachment, key))
 
     def _calc_file_hash(self, key):
         with open(MEDIA_FILES[key], 'rb') as attach:
@@ -344,3 +343,19 @@ class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
 @use_sql_backend
 class CaseMultimediaS3DBTestSQL(CaseMultimediaS3DBTest):
     pass
+
+
+class NoClose(object):
+    """HACK file object with no-op `close()` to avoid close by S3Transfer
+
+    https://github.com/boto/s3transfer/issues/80
+    """
+
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+    def __getattr__(self, name):
+        return getattr(self.fileobj, name)
+
+    def close(self):
+        pass
