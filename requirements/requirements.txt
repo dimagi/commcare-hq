@@ -73,7 +73,6 @@ gevent==1.2.2
 ghdiff==0.4
 greenlet==0.4.12
 gunicorn==19.9.0
-hiredis==0.2.0
 html5lib==1.0b8
 httpagentparser==1.7.8
 idna==2.7                 # via cryptography, email-validator
