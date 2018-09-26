@@ -78,7 +78,7 @@ ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
 
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
-        raise BadValueError("Invalid ID")
+        raise BadValueError("Invalid ID: '{}'".format(value))
 
 
 class SQLColumnIndexes(DocumentSchema):
