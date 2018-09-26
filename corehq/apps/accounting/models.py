@@ -3182,7 +3182,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     @classmethod
     def add_credit(cls, amount, account=None, subscription=None,
                    is_product=False, feature_type=None, payment_record=None,
-                   invoice=None, line_item=None, related_credit=None,
+                   invoice=None, customer_invoice=None, line_item=None, related_credit=None,
                    note=None, reason=None, web_user=None, permit_inactive=False):
         if account is None and subscription is None:
             raise CreditLineError(
@@ -3231,7 +3231,7 @@ class CreditLine(ValidateModelMixin, models.Model):
             is_new = True
         credit_line.adjust_credit_balance(amount, is_new=is_new, note=note,
                                           payment_record=payment_record,
-                                          invoice=invoice, line_item=line_item,
+                                          invoice=invoice, customer_invoice=customer_invoice, line_item=line_item,
                                           related_credit=related_credit,
                                           reason=reason, web_user=web_user)
         return credit_line
