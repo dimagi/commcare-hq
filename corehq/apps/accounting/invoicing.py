@@ -246,7 +246,7 @@ class DomainInvoiceFactory(object):
 
 class DomainWireInvoiceFactory(object):
 
-    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None):
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, account=None):
         self.date_start = date_start
         self.date_end = date_end
         self.contact_emails = contact_emails
@@ -254,22 +254,25 @@ class DomainWireInvoiceFactory(object):
         self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '{}' is not a valid domain on HQ!".format(self.domain))
+        self.account = account
 
     @transaction.atomic
     def create_wire_invoice(self, balance):
 
         # Gather relevant invoices
-        invoices = Invoice.objects.filter(
-            subscription__subscriber__domain=self.domain,
-            is_hidden=False,
-            date_paid__exact=None,
-        ).order_by('-date_start')
-
-        BillingAccount.get_or_create_account_by_domain(
-            self.domain.name,
-            created_by=self.__class__.__name__,
-            entry_point=EntryPoint.SELF_STARTED,
-        )[0]
+        if self.account and self.account.is_customer_billing_account:
+            invoices = CustomerInvoice.objects.filter(account=self.account)
+        else:
+            invoices = Invoice.objects.filter(
+                subscription__subscriber__domain=self.domain,
+                is_hidden=False,
+                date_paid__exact=None
+            ).order_by('-date_start')
+            self.account = BillingAccount.get_or_create_account_by_domain(
+                self.domain.name,
+                created_by=self.__class__.__name__,
+                entry_point=EntryPoint.SELF_STARTED
+            )[0]
 
         # If no start date supplied, default earliest start date of unpaid invoices
         if self.date_start:
