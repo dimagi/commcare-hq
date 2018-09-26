@@ -3,7 +3,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/select2_handler',
+    'hqwebapp/js/select2_handler_v3',
     'hqwebapp/js/multiselect_utils',
     'select2-3.5.2-legacy/select2',
 ], function (
