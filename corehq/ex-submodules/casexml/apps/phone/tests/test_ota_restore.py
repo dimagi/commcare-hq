@@ -158,7 +158,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertNotIsInstance(restore_config_other_device.get_payload(), CachedResponse)
 
     def testUserRestoreWithCase(self):
-        xml_data = self.get_xml('create_short')
+        xml_data = self.get_xml('create_short').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
 
         # implicit length assertion
