@@ -63,9 +63,11 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return {
             'repeaters': self.repeaters,
             'pending_record_count': RepeatRecord.count(self.domain),
-            'gefingerpoken': self.request.couch_user.is_superuser or
-                             self.request.couch_user.has_permission(self.domain, 'edit_motech') or
-                             toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+            'gefingerpoken': (
+                self.request.couch_user.is_superuser or
+                self.request.couch_user.has_permission(self.domain, 'edit_motech') or
+                toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+            )
         }
 
 
