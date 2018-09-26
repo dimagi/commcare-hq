@@ -170,7 +170,7 @@ def check_for_sql_cases_without_existing_domain():
         )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@periodic_task(run_every=crontab(minute=0, hour=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_forms_without_existing_domain():
     existing_domain_names = set(Domain.get_all_names())
 
