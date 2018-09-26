@@ -56,7 +56,7 @@ branches:
   - pv/deactivated-users # Preethi Aug 23
   - sr-batch-ucrpillow # Sravan Sept 4
   - nh/omrs/atom  # Norman Sept 12
-  - lwyszomi:lw/report_export_v3  # Jenny Sept 12
+ # - lwyszomi:lw/report_export_v3  # Jenny Sept 12
   - jls/add-js-to-sentry  # Jenny Sept 18
   - sr-redis-client # Sravan Sept 19
   - mk-282955 # MK Sept 25
