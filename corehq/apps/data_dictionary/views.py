@@ -152,7 +152,7 @@ class ExportDataDictionaryView(View):
 
 
 class DataDictionaryView(BaseProjectDataView):
-    section_name = _("Data Dictionary")
+    page_title = _("Data Dictionary")
     template_name = "data_dictionary/base.html"
     urlname = 'data_dictionary'
 
@@ -170,14 +170,9 @@ class DataDictionaryView(BaseProjectDataView):
         })
         return main_context
 
-    @property
-    @memoized
-    def section_url(self):
-        return reverse(DataDictionaryView.urlname, args=[self.domain])
-
 
 class UploadDataDictionaryView(BaseProjectDataView):
-    section_name = _("Data Dictionary")
+    page_title = _("Upload Data Dictionary")
     template_name = "data_dictionary/import_data_dict.html"
     urlname = 'upload_data_dict'
 
@@ -186,6 +181,13 @@ class UploadDataDictionaryView(BaseProjectDataView):
     @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(UploadDataDictionaryView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': DataDictionaryView.page_title,
+            'url': reverse(DataDictionaryView.urlname, args=(self.domain,)),
+        }]
 
     @property
     def page_context(self):
