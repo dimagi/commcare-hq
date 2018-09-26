@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import time
+
 from django.core.management.base import BaseCommand
 
 from corehq.apps.users.models import CommCareUser
@@ -32,17 +34,23 @@ class Command(BaseCommand):
             )
             for user_id in with_progress_bar(commcare_user_ids):
                 sms_sync_user_phone_numbers.delay(user_id)
-
             self.sync_cases(domain)
 
     def sync_cases(self, domain):
         db_aliases = get_db_aliases_for_partitioned_query()
         db_aliases.sort()
+
         if should_use_sql_backend(domain):
             case_accessor = CaseReindexAccessor(domain)
-            for case in iter_all_rows(case_accessor):
-                sync_case_for_messaging.delay(domain, case.case_id)
+            case_ids = (case.case_id for case in iter_all_rows(case_accessor))
         else:
             changes = _get_case_iterator(self.domain).iter_all_changes()
-            for case in changes:
-                sync_case_for_messaging.delay(domain, case.id)
+            case_ids = (case.id for case in changes)
+
+        next_event = time.time() + 10
+        for i, case_id in enumerate(case_ids):
+            sync_case_for_messaging.delay(domain, case_id)
+
+            if time.time() > next_event:
+                print("Queued %d cases for domain %s" % (i + 1, domain))
+                next_event = time.time() + 10
