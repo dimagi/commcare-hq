@@ -4,6 +4,8 @@ import os
 import json
 from time import time
 from collections import defaultdict
+from datetime import datetime
+import six
 
 from celery.schedules import crontab
 from celery.task import periodic_task
@@ -11,10 +13,13 @@ from celery.task import periodic_task
 from django.conf import settings
 from django.core.management import call_command
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from io import open
 
 
@@ -141,3 +146,47 @@ def pprint_stats(stats, outstream):
 @periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def clear_expired_sessions():
     call_command('clearsessions')
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def check_for_sql_cases_without_existing_domain():
+    existing_domain_names = set(Domain.get_all_names())
+
+    case_domain_names = set()
+    db_names = get_db_aliases_for_partitioned_query()
+    for db_name in db_names:
+        case_domain_names |= set(CommCareCaseSQL.objects.using(db_name).values_list(
+            'domain', flat=True).distinct())
+
+    missing_domains_with_cases = case_domain_names - existing_domain_names
+    if missing_domains_with_cases:
+        mail_admins_async.delay(
+            'There exist SQL cases with belonging to a missing domain',
+            six.text_type(missing_domains_with_cases)
+        )
+    elif datetime.utcnow().isoweekday() == 1:
+        mail_admins_async.delay(
+            'All SQL cases belong to valid domains', ''
+        )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def check_for_sql_forms_without_existing_domain():
+    existing_domain_names = set(Domain.get_all_names())
+
+    form_domain_names = set()
+    db_names = get_db_aliases_for_partitioned_query()
+    for db_name in db_names:
+        form_domain_names |= set(XFormInstanceSQL.objects.using(db_name).values_list(
+            'domain', flat=True).distinct())
+
+    missing_domains_with_forms = form_domain_names - existing_domain_names
+    if missing_domains_with_forms:
+        mail_admins_async.delay(
+            'There exist SQL forms with belonging to a missing domain',
+            six.text_type(missing_domains_with_forms)
+        )
+    elif datetime.utcnow().isoweekday() == 1:
+        mail_admins_async.delay(
+            'All SQL forms belong to valid domains', ''
+        )
