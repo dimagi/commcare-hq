@@ -20,16 +20,15 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-d', '--domains', type=str, help='Comma separated domain list')
 
-    def handle(self,  **kwargs):
+    def handle(self, **kwargs):
         domains = kwargs['domains'].split(',')
-
 
         for domain in domains:
             print("Resync all contacts' phone numbers for project %s  " % domain)
             print("Synching for phone numbers")
             commcare_user_ids = (
-                    CommCareUser.ids_by_domain(domain, is_active=True) +
-                    CommCareUser.ids_by_domain(domain, is_active=False)
+                CommCareUser.ids_by_domain(domain, is_active=True) +
+                CommCareUser.ids_by_domain(domain, is_active=False)
             )
             for user_id in with_progress_bar(commcare_user_ids):
                 sms_sync_user_phone_numbers.delay(user_id)
