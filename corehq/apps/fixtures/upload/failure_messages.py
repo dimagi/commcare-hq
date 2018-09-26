@@ -22,11 +22,11 @@ FAILURE_MESSAGES = {
         "table_id '{tag}' should not contain spaces or special characters, or start with a number."
     ),
     "has_no_field_column": ugettext_noop(
-        "Excel-sheet '{tag}' does not contain the column 'field: {field}' "
+        "Excel worksheet '{tag}' does not contain the column 'field: {field}' "
         "as specified in its 'types' definition"
     ),
     "has_extra_column": ugettext_noop(
-        "Excel-sheet '{tag}' has an extra column"
+        "Excel worksheet '{tag}' has an extra column"
         "'field: {field}' that's not defined in its 'types' definition"
     ),
     "wrong_property_syntax": ugettext_noop(
