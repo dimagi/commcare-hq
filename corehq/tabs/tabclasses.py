@@ -114,7 +114,7 @@ class ProjectReportsTab(UITab):
         if self.couch_user.can_edit_data():
             has_access = has_report_builder_access(self._request)
             user_reports = [(
-                _("Create Reports"),
+                _("Report Builder"),
                 [{
                     "title": _('Create New Report'),
                     "url": self._get_create_report_url(),
