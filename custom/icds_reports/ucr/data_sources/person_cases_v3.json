@@ -42,8 +42,8 @@
         "expression": {
           "type": "ancestor_location",
           "location_id": {
-            "type": "named",
-            "name": "user_location_id"
+            "type": "property_name",
+            "property_name": "owner_id"
           },
           "location_type": "supervisor",
           "location_property": "_id"
@@ -57,8 +57,8 @@
         "expression": {
           "type": "ancestor_location",
           "location_id": {
-            "type": "named",
-            "name": "user_location_id"
+            "type": "property_name",
+            "property_name": "owner_id"
           },
           "location_type": "block",
           "location_property": "_id"
@@ -72,8 +72,8 @@
         "expression": {
           "type": "ancestor_location",
           "location_id": {
-            "type": "named",
-            "name": "user_location_id"
+            "type": "property_name",
+            "property_name": "owner_id"
           },
           "location_type": "district",
           "location_property": "_id"
@@ -86,8 +86,8 @@
         "expression": {
           "type": "ancestor_location",
           "location_id": {
-            "type": "named",
-            "name": "user_location_id"
+            "type": "property_name",
+            "property_name": "owner_id"
           },
           "location_type": "state",
           "location_property": "_id"
