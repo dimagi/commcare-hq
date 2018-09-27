@@ -267,7 +267,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return 't__0' in mobile_user_and_group_slugs
 
     @staticmethod
-    def all_users_selected(mobile_user_and_group_slugs):
+    def no_filters_selected(mobile_user_and_group_slugs):
         return not any(mobile_user_and_group_slugs)
 
     def _get_assigned_locations_default(self):
@@ -345,7 +345,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
         q = user_es.UserES().domain(domain)
-        if not SubmitHistoryFilter.all_users_selected(mobile_user_and_group_slugs):
+        if not SubmitHistoryFilter.no_filters_selected(mobile_user_and_group_slugs):
             return q
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)

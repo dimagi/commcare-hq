@@ -67,7 +67,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             query = query.is_closed(self.case_status == 'closed')
 
         if self.request.can_access_all_locations and (EMWF.show_all_data(mobile_user_and_group_slugs) or
-                                                      EMWF.all_users_selected(mobile_user_and_group_slugs)):
+                                                      EMWF.no_filters_selected(mobile_user_and_group_slugs)):
             pass
         elif self.request.can_access_all_locations and EMWF.show_project_data(mobile_user_and_group_slugs):
             # Show everything but stuff we know for sure to exclude
