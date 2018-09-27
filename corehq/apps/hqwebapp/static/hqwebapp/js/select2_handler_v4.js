@@ -95,7 +95,9 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
                         select2options.empty();
                         var errorMessage = $('<li role="treeitem" ' +
                             'class="select2-results__option " ' +
-                            'aria-disabled="true">Error Loading Data</li>');
+                            'aria-disabled="true">' +
+                            gettext("There was an issue communicating with the server. Please try back later.") +
+                            '</li>');
 
                         select2options.append(errorMessage);
                     },
