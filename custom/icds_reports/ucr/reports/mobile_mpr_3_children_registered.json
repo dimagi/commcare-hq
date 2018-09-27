@@ -28,19 +28,11 @@
         "datatype": "date"
       },
       {
-        "slug": "age_at_registration_exists",
-        "type": "pre",
-        "field": "age_at_reg",
-        "pre_operator": "!=",
-        "pre_value": "",
-        "datatype": "integer"
-      },
-      {
         "slug": "age_at_registration_in_bounds",
         "type": "pre",
         "field": "age_at_reg",
-        "pre_operator": "<=",
-        "pre_value": 6,
+        "pre_operator": "between",
+        "pre_value": [0, 6],
         "datatype": "integer"
       },
       {
