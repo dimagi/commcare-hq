@@ -94,7 +94,7 @@ def db_for_read_write(model, write=True):
         return settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == PHONE_LOG_APP:
         return settings.PHONE_LOG_SQL_DB_ALIAS
-    
+
     if not settings.USE_PARTITIONED_DATABASE:
         return 'default'
 
