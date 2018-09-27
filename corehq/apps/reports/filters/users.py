@@ -15,7 +15,7 @@ from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.commtrack.models import SQLLocation
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS, SEARCH_DEACTIVATED_USERS
+from corehq.toggles import SEARCH_DEACTIVATED_USERS
 
 from .. import util
 from ..models import HQUserType
@@ -147,7 +147,7 @@ class EmwfUtils(object):
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
 
-        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN', 'GROUPS_AND_LOCATIONS']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
@@ -190,7 +190,7 @@ class SubmitHistoryUtils(EmwfUtils):
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
         if SEARCH_DEACTIVATED_USERS.enabled(self.domain):
-            types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN']
+            types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN', 'GROUPS_AND_LOCATIONS']
         else:
             types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
@@ -381,7 +381,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
             group_id_filter = filters.term("__group_ids", group_ids)
 
-            if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
+            if HQUserType.GROUPS_AND_LOCATIONS in user_types and group_ids and location_ids:
                 group_and_location_filter = filters.AND(
                     group_id_filter,
                     user_es.location(location_ids),
