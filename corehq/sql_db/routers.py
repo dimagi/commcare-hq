@@ -61,6 +61,8 @@ def allow_migrate(db, app_label):
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == WAREHOUSE_APP:
         return db == settings.WAREHOUSE_DATABASE_ALIAS
+    elif app_label == PHONELOG_APP:
+        return db == settings.PHONELOG_SQL_DB_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP and db in ('default', None)
