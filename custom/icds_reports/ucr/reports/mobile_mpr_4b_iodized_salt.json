@@ -1,7 +1,8 @@
 {
   "domains": [
     "icds-cas",
-    "icds-dashboard-qa"
+    "icds-dashboard-qa",
+    "reach-test"
   ],
   "server_environment": [
     "softlayer",
