@@ -16,21 +16,16 @@
     "visible": false,
     "aggregation_columns": [
       "owner_id",
-      "month"
+      "month",
+      "age_group"
     ],
     "filters": [
       {
-        "display": "Age in Months Low Bound",
-        "slug": "age_in_months",
-        "type": "numeric",
+        "slug": "age_in_months_in_bounds",
+        "type": "pre",
         "field": "age_in_months",
-        "datatype": "integer"
-      },
-      {
-        "display": "Age in Months High Bound",
-        "slug": "age_in_months1",
-        "type": "numeric",
-        "field": "age_in_months",
+        "pre_operator": "between",
+        "pre_value": [0, 60],
         "datatype": "integer"
       },
       {
@@ -107,6 +102,16 @@
         "type": "aggregate_date",
         "field": "last_date_gmp",
         "format": "%Y-%m"
+      },
+      {
+        "display": "Age Group",
+        "column_id": "age_group",
+        "type": "conditional_aggregation",
+        "whens": {
+            "0 <= age_in_months AND age_in_months < 12": "less_than_1",
+            "12 <= age_in_months AND age_in_months < 36": "1_to_2",
+            "36 <= age_in_months AND age_in_months <= 60": "3_to_4",
+        }
       },
       {
         "display": "M_resident_weighed_count",
