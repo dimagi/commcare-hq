@@ -15,7 +15,7 @@ from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.commtrack.models import SQLLocation
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS, SEARCH_DEACTIVATED_USERS
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 
 from .. import util
 from ..models import HQUserType
@@ -189,10 +189,7 @@ class SubmitHistoryUtils(EmwfUtils):
     @memoized
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
-        if SEARCH_DEACTIVATED_USERS.enabled(self.domain):
-            types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN']
-        else:
-            types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
