@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 import logging
 import datetime
 import sqlalchemy
+from sqlalchemy.dialects import postgresql
 from .const import (
+    TYPE_ARRAY,
     TYPE_DATE,
     TYPE_DATETIME,
     TYPE_DECIMAL,
@@ -78,6 +80,8 @@ def get_column_type(data_type):
         return sqlalchemy.Numeric(precision=64, scale=16)
     if data_type == TYPE_STRING:
         return sqlalchemy.Unicode(255)
+    if data_type == TYPE_ARRAY:
+        return postgresql.ARRAY(sqlalchemy.UnicodeText)
 
     raise Exception('Unexpected type: {0}'.format(data_type))
 

@@ -119,6 +119,45 @@ class ChoiceListColumnDbTest(TestCase):
         self.assertEqual(1, q.count())
 
 
+class ArrayTypeColumnDbTest(TestCase):
+
+    def test_array_type_column(self):
+        problem_spec = {
+            "column_id": "referral_health_problem",
+            "datatype": "array",
+            "type": "expression",
+            "expression": {
+                "type": "split_string",
+                "string_expression": {
+                    "type": "property_name",
+                    "property_name": "referral_health_problem",
+                }
+            },
+        }
+        data_source_config = DataSourceConfiguration(
+            domain='test',
+            display_name='foo',
+            referenced_doc_type='CommCareCase',
+            table_id=uuid.uuid4().hex,
+            configured_filter={},
+            configured_indicators=[problem_spec],
+        )
+        adapter = get_indicator_adapter(data_source_config)
+        adapter.rebuild_table()
+        self.addCleanup(adapter.drop_table)
+        # ensure we can save data to the table.
+        adapter.save({
+            '_id': uuid.uuid4().hex,
+            'domain': 'test',
+            'doc_type': 'CommCareCase',
+            'referral_health_problem': 'bleeding convulsions',
+        })
+        # and query it back
+        qs = adapter.get_query_object()
+        self.assertEqual(1, qs.count())
+        self.assertEqual(qs.first().referral_health_problem, ['bleeding', 'convulsions'])
+
+
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
