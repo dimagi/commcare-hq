@@ -90,14 +90,15 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
                     },
                     processResults: self.processResults,
                     error: function () {
-                        $('.select2-results__options').empty();
+                        var select2options = $('.select2-results__options');
 
-                        var erroMessage = $('<li role="treeitem" ' +
+                        select2options.empty();
+                        var errorMessage = $('<li role="treeitem" ' +
                             'class="select2-results__option " ' +
                             'aria-disabled="true">Error Loading Data</li>');
 
-                         $('.select2-results__options').append(erroMessage);
-                     },
+                        select2options.append(errorMessage);
+                    },
 
                 },
                 tags: self.createTags,
