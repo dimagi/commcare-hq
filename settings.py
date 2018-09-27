@@ -834,7 +834,7 @@ DATADOG_APP_KEY = None
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 WAREHOUSE_DATABASE_ALIAS = 'default'
-PHONE_LOG_SQL_DB_ALIAS = 'default' 
+PHONELOG_SQL_DB_ALIAS = 'default'
 
 # A dict of django apps in which the reads are
 # split betweeen the primary and standby db machines

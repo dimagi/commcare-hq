@@ -16,7 +16,7 @@ ICDS_MODEL = 'icds_model'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
 SYNCLOGS_APP = 'phone'
-PHONE_LOG_APP = 'phonelog'
+PHONELOG_APP = 'phonelog'
 
 
 class MultiDBRouter(object):
@@ -92,8 +92,8 @@ def db_for_read_write(model, write=True):
         return settings.WAREHOUSE_DATABASE_ALIAS
     elif app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
-    elif app_label == PHONE_LOG_APP:
-        return settings.PHONE_LOG_SQL_DB_ALIAS
+    elif app_label == PHONELOG_APP:
+        return settings.PHONELOG_SQL_DB_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
         return 'default'
