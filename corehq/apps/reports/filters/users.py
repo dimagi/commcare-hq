@@ -346,7 +346,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         # The queryset returned by this method is location-safe
         q = user_es.UserES().domain(domain)
         if not any(mobile_user_and_group_slugs):
-            return q.filter(filters.match_all())
+            return q
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
