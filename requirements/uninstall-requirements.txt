@@ -8,4 +8,3 @@ pycrypto
 restkit
 http-parser
 msgpack-python
-hiredis
