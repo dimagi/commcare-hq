@@ -27,15 +27,26 @@ class ChangeProducer(object):
         )
         return self._producer
 
-    def send_change(self, topic, change_meta):
+    def send_change(self, topic, change_meta, flush=False):
         message = change_meta.to_json()
         try:
             self.producer.send(topic, bytes(json.dumps(message)))
-            self.producer.flush()
+            if flush:
+                self.producer.flush()
         except Exception as e:
             _assert = soft_assert(notify_admins=True)
             _assert(False, 'Problem sending change to kafka {}: {} ({})'.format(
                 message, e, type(e)
+            ))
+            raise
+
+    def flush_changes(self, metadata=None):
+        try:
+            self.producer.flush()
+        except Exception as e:
+            _assert = soft_assert(notify_admins=True)
+            _assert(False, 'Problem flushing changes to kafka {}: {} ({})'.format(
+                metadata, e, type(e)
             ))
             raise
 

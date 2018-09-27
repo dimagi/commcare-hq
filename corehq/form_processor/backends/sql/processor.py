@@ -152,14 +152,16 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def publish_changes_to_kafka(processed_forms, cases, stock_result):
-        publish_form_saved(processed_forms.submitted)
+        from corehq.apps.change_feed.producer import producer
+        publish_form_saved(processed_forms.submitted, flush=False)
         cases = cases or []
         for case in cases:
-            publish_case_saved(case)
+            publish_case_saved(case, flush=False)
 
         if stock_result:
             for ledger in stock_result.models_to_save:
-                publish_ledger_v2_saved(ledger)
+                publish_ledger_v2_saved(ledger, flush=False)
+        producer.flush(metadata={'domain': processed_forms.submitted.domain})
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
