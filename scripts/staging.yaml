@@ -59,8 +59,7 @@ branches:
   - sr-redis-client # Sravan Sept 19
   - mk-282955 # MK Sept 25
   - qa-customer-billing # Gabriella Sept 24
-#  - rn_upgrade_select2 # Rohit Sept 26
-  - rn_testing_upgrade_sel # Rohit sept 27
+  - rn_upgrade_select2 # Rohit Sept 26
 submodules:
   submodules/django-digest-src:
     branches: []
