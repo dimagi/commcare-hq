@@ -2630,6 +2630,7 @@ class CustomerBillingRecord(BillingRecordBase):
         payment_status = (_("Paid")
                           if self.invoice.is_paid or self.invoice.balance == 0
                           else _("Payment Required"))
+        # Random domain, because all subscriptions on a customer account link to the same Enterprise Dashboard
         domain = self.invoice.subscriptions.first().subscriber.domain
         context.update({
             'account_name': self.invoice.account.name,
