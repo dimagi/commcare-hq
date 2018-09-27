@@ -1437,7 +1437,7 @@ class ProjectSettingsTab(UITab):
         if user_is_admin:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-        if self.couch_user.has_permission(self.domain, 'edit_motech'):
+        if self.couch_user.can_edit_motech():
             items.append((_('Integration'), _get_integration_section(self.domain)))
 
         feature_flag_items = _get_feature_flag_items(self.domain)
