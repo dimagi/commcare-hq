@@ -648,13 +648,12 @@ class ProjectDataTab(UITab):
                         'subpages': []
                     })
 
-            if toggles.DATA_FIND_BY_ID.enabled_for_request(self._request):
-                if self.can_view_form_exports or self.can_view_case_exports:
-                    export_data_views.append({
-                        'title': _('Find Data by ID'),
-                        'url': reverse('data_find_by_id', args=[self.domain]),
-                        'icon': 'fa fa-search',
-                    })
+            if self.can_view_form_exports or self.can_view_case_exports:
+                export_data_views.append({
+                    'title': _('Find Data by ID'),
+                    'url': reverse('data_find_by_id', args=[self.domain]),
+                    'icon': 'fa fa-search',
+                })
 
             if self.should_see_daily_saved_export_list_view:
                 export_data_views.append({
@@ -797,12 +796,11 @@ class ProjectDataTab(UITab):
                 _(DownloadNewSmsExportView.page_title),
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
             ))
-        if toggles.DATA_FIND_BY_ID.enabled_for_request(self._request):
-            if self.can_view_form_exports or self.can_view_case_exports:
-                items.append(dropdown_dict(
-                    _('Find Data by ID (Beta)'),
-                    url=reverse('data_find_by_id', args=[self.domain])
-                ))
+        if self.can_view_form_exports or self.can_view_case_exports:
+            items.append(dropdown_dict(
+                _('Find Data by ID (Beta)'),
+                url=reverse('data_find_by_id', args=[self.domain])
+            ))
 
         if items:
             items += [dropdown_dict(None, is_divider=True)]
@@ -1445,7 +1443,7 @@ class ProjectSettingsTab(UITab):
         if user_is_admin:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-        if self.couch_user.can_edit_motech:
+        if self.couch_user.can_edit_motech():
             items.append((_('Integration'), _get_integration_section(self.domain)))
 
         feature_flag_items = _get_feature_flag_items(self.domain)

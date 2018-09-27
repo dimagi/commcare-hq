@@ -559,13 +559,6 @@ EXPORT_NO_SORT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-DATA_FIND_BY_ID = StaticToggle(
-    'data_find_by_id',
-    "Enable the Data > Find Data by ID page",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',

@@ -624,9 +624,6 @@ def find_by_id(request, domain):
     can_view_cases = can_view_case_exports(request.couch_user, domain)
     can_view_forms = can_view_form_exports(request.couch_user, domain)
 
-    if not toggles.DATA_FIND_BY_ID.enabled_for_request(request):
-        raise Http404()
-
     if not can_view_cases and not can_view_forms:
         raise Http403()
 
