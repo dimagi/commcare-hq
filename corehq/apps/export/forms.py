@@ -1029,16 +1029,27 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             owner_filter_ids = group_ids + groups_static_user_ids
             last_modified_filter_ids = groups_static_user_ids
 
-        return [OR(
-            OwnerFilter(list(owner_filter_ids)),
-            LastModifiedByFilter(last_modified_filter_ids),
-            *self._get_group_independent_filters(
-                can_access_all_locations, selected_user_types, location_ids, user_ids
+        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain_object.name) and location_ids and group_ids:
+            group_independent_filters_minus_location = self._get_group_independent_filters_minus_location(
+                can_access_all_locations, selected_user_types, user_ids
             )
-        )]
+            return [OR(AND(OwnerFilter(list(owner_filter_ids)),
+                           LastModifiedByFilter(last_modified_filter_ids),
+                           *self._get_locations_filters(location_ids)),
+                       *group_independent_filters_minus_location)]
+        else:
+            group_independent_filters_minus_location = self._get_group_independent_filters_minus_location(
+                    can_access_all_locations, selected_user_types, user_ids
+                ) + self._get_locations_filters(location_ids)
 
-    def _get_group_independent_filters(self, can_access_all_locations, selected_user_types, location_ids,
-                                       user_ids):
+            return [OR(
+                OwnerFilter(list(owner_filter_ids)),
+                LastModifiedByFilter(last_modified_filter_ids),
+                *group_independent_filters_minus_location
+            )]
+
+    def _get_group_independent_filters_minus_location(self, can_access_all_locations, selected_user_types,
+                                                      user_ids):
         # filters for location and users for both and user type in case of full access
         if can_access_all_locations:
             user_types = selected_user_types
@@ -1051,16 +1062,19 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             default_filters = [OwnerFilter(ids_to_include)]
         else:
             default_filters = []
+
+        default_filters.append(self._get_users_filter(list(user_ids)))
+        default_filters.append(LastModifiedByFilter(list(user_ids)))
+        return [_f for _f in default_filters if _f]
+
+    def _get_locations_filters(self, location_ids):
+        default_filters = []
         # filters for cases owned by users at selected locations and their descendants
         default_filters.append(self._get_locations_filter(location_ids))
-        #default_filters.append(self.export_user_filter(location_ids))
         # filters for cases owned by selected locations and their descendants
         default_filters.append(
             self.export_user_filter(self._get_selected_locations_and_descendants_ids(location_ids))
         )
-
-        default_filters.append(self._get_users_filter(list(user_ids)))
-        default_filters.append(LastModifiedByFilter(list(user_ids)))
         return [_f for _f in default_filters if _f]
 
     def _get_selected_locations_and_descendants_ids(self, location_ids):
