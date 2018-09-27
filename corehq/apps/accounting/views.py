@@ -1287,7 +1287,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     @property
     def invoices(self):
-        invoices = CustomerInvoice.objects.filter(account=self.account)
+        account = self.account or _get_account_or_404(self.request, self.request.domain)
+        invoices = CustomerInvoice.objects.filter(account=account)
         if not self.show_hidden:
             invoices = invoices.filter(is_hidden=False)
         if self.show_unpaid:
@@ -1309,8 +1310,9 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
         Returns the total balance of unpaid, unhidden invoices.
         Doesn't take into account the view settings on the page.
         """
+        account = self.account or _get_account_or_404(self.request, self.request.domain)
         invoices = (CustomerInvoice.objects
-                    .filter(account=self.account)
+                    .filter(account=account)
                     .filter(date_paid__exact=None)
                     .filter(is_hidden=False))
         return invoices.aggregate(
@@ -1414,6 +1416,4 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
         return self.paginate_crud_response
 
     def dispatch(self, request, *args, **kwargs):
-        if self.account is None:
-            raise Http404()
         return super(EnterpriseBillingStatementsView, self).dispatch(request, *args, **kwargs)
