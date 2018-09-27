@@ -1111,6 +1111,7 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
+        Subscription.get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         super(Subscription, self).save(*args, **kwargs)
         try:
             Domain.get_by_name(self.subscriber.domain).save()
@@ -1596,6 +1597,7 @@ class Subscription(models.Model):
             self.account.save()
 
     @classmethod
+    @quickcache(['domain_name'], timeout=60*60)
     def get_active_subscription_by_domain(cls, domain_name):
         try:
             return cls.visible_objects.select_related(
