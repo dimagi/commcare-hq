@@ -941,7 +941,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
         if not location_filter and not group_filter:
             group_and_location_metafilter = None
-        elif FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain_object.name) and location_ids and group_ids:
+        elif HQUserType.GROUPS_AND_LOCATIONS in user_types and location_ids and group_ids:
             group_and_location_metafilter = AND(group_filter, location_filter)
         else:
             group_and_location_metafilter = OR(*list(filter(None, [group_filter, location_filter])))

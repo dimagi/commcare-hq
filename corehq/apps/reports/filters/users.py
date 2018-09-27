@@ -147,7 +147,10 @@ class EmwfUtils(object):
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
 
-        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain):
+            types = ['DEMO_USER', 'ADMIN', 'UNKNOWN', 'GROUPS_AND_LOCATIONS']
+        else:
+            types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
@@ -190,9 +193,15 @@ class SubmitHistoryUtils(EmwfUtils):
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
         if SEARCH_DEACTIVATED_USERS.enabled(self.domain):
-            types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN']
+            if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain):
+                types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN', 'GROUPS_AND_LOCATIONS']
+            else:
+                types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN']
         else:
-            types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+            if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain):
+                types = ['DEMO_USER', 'ADMIN', 'UNKNOWN', 'GROUPS_AND_LOCATIONS']
+            else:
+                types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
