@@ -2636,7 +2636,7 @@ class CustomerBillingRecord(BillingRecordBase):
             'account_name': self.invoice.account.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
-            'total_balance': self.invoice.balance,
+            'total_balance': '{:.2f}'.format(self.invoice.balance),
             'is_total_balance_due': self.invoice.balance >= SMALL_INVOICE_THRESHOLD,
             'payment_status': payment_status,
             'statements_url': absolute_reverse(
