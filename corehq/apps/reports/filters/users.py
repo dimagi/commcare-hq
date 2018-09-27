@@ -222,15 +222,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_lazy("User(s)")
     default_options = None
-    placeholder = ugettext_lazy(
-        "Specify groups and users to include in the report")
+    placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options'
     search_help_inline = ugettext_lazy(mark_safe(
-        'To quick search for a location, write your query as "parent"/descendant. '
-        'For more info, see the '
+        'See <a href="https://confluence.dimagi.com/display/commcarepublic/Report+Filters" target="_blank">'
+        'Filter Definitions </a>. To quick search for a '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
-        'target="_blank">Location Search</a> help page.'
+        'target="_blank">Location</a>, write your query as "parent"/descendant.'
     ))
 
     @property
