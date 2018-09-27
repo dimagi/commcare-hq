@@ -24,6 +24,7 @@ from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
+from dimagi.utils.logging import notify_exception
 from fluff.signals import (
     migrate_tables,
     get_migration_context,
@@ -32,17 +33,16 @@ from fluff.signals import (
     reformat_alembic_diffs
 )
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.dao.exceptions import DocumentMismatchError
+from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import PillowProcessor
+from pillowtop.processors import BulkPillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
-
-
-class PillowConfigError(Exception):
-    pass
+UCR_PROCESSING_CHUNK_SIZE = 10
 
 
 def time_ucr_process_change(method):
@@ -194,7 +194,7 @@ class ConfigurableReportTableManagerMixin(object):
             rebuild_indicators.delay(adapter.config.get_id)
 
 
-class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
+class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
 
     domain_timing_context = Counter()
 
@@ -206,6 +206,112 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         except UserReportsWarning:
             # remove it until the next bootstrap call
             self.table_adapters_by_domain[domain].remove(table)
+
+    def process_changes_chunk(self, pillow_instance, changes):
+        """
+        Update UCR tables in bulk by breaking up changes per domain per UCR table.
+            If an exception is raised in bulk operations of a set of changes,
+            those changes are returned to pillow for serial reprocessing.
+        """
+        self.bootstrap_if_needed()
+        # break up changes by domain
+        changes_by_domain = defaultdict(list)
+        for change in changes:
+            # skip if no domain or no UCR tables in the domain
+            if change.metadata.domain and change.metadata.domain in self.table_adapters_by_domain:
+                changes_by_domain[change.metadata.domain].append(change)
+
+        retry_changes = set()
+        change_exceptions = []
+        for domain, changes_chunk in six.iteritems(changes_by_domain):
+            failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
+            retry_changes.update(failed)
+            change_exceptions.extend(exceptions)
+
+        return retry_changes, change_exceptions
+
+    def _process_chunk_for_domain(self, domain, changes_chunk):
+        adapters = list(self.table_adapters_by_domain[domain])
+        changes_by_id = {change.id: change for change in changes_chunk}
+        to_delete_by_adapter = defaultdict(list)
+        rows_to_save_by_adapter = defaultdict(list)
+        async_configs_by_doc_id = defaultdict(list)
+        to_update = {change for change in changes_chunk if not change.deleted}
+        retry_changes, docs = self.get_docs_for_changes(to_update, domain)
+        change_exceptions = []
+
+        for doc in docs:
+            eval_context = EvaluationContext(doc)
+            for adapter in adapters:
+                if adapter.config.filter(doc):
+                    if adapter.run_asynchronous:
+                        async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+                    else:
+                        try:
+                            rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                        except Exception as e:
+                            change_exceptions.append((changes_by_id[doc["_id"]], e))
+                        eval_context.reset_iteration()
+                elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
+                    to_delete_by_adapter[adapter].append(doc['_id'])
+
+        # bulk delete by adapter
+        to_delete = [c.id for c in changes_chunk if c.deleted]
+        for adapter in adapters:
+            delete_ids = to_delete_by_adapter[adapter] + to_delete
+            try:
+                adapter.bulk_delete(delete_ids)
+            except Exception as ex:
+                notify_exception(None,
+                    "Error in deleting changes chunk {ids}: {ex}".format(
+                        ids=delete_ids, ex=ex))
+                retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
+        # bulk update by adapter
+        for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+            try:
+                adapter.save_rows(rows)
+            except Exception:
+                notify_exception(None,
+                    "Error in saving changes chunk {ids}: {ex}".format(
+                        ids=[c.id for c in to_update], ex=ex))
+                retry_changes.update(to_update)
+        if async_configs_by_doc_id:
+            doc_type_by_id = {
+                _id: changes_by_id[_id].metadata.document_type
+                for _id in async_configs_by_doc_id.keys()
+            }
+            AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
+
+        return retry_changes, change_exceptions
+
+    @staticmethod
+    def get_docs_for_changes(changes, domain):
+        # break up by doctype
+        changes_by_doctype = defaultdict(list)
+        for change in changes:
+            assert change.metadata.domain == domain
+            changes_by_doctype[change.metadata.data_source_name].append(change)
+
+        # query
+        docs = []
+        for _, _changes in six.iteritems(changes_by_doctype):
+            doc_store = _changes[0].document_store
+            docs.extend(list(doc_store.iter_documents([change.id for change in _changes])))
+
+        # catch missing docs
+        retry_changes = set()
+        docs_by_id = {doc['_id']: doc for doc in docs}
+        for change in changes:
+            if change.id not in docs_by_id:
+                # we need to capture DocumentMissingError which is not possible in bulk
+                #   so let pillow fall back to serial mode to capture the error for missing docs
+                retry_changes.add(change)
+                continue
+            try:
+                ensure_matched_revisions(change, docs_by_id.get(change.id))
+            except DocumentMismatchError:
+                retry_changes.add(change)
+        return retry_changes, docs
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
@@ -223,7 +329,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         async_tables = []
         doc = change.get_document()
         ensure_document_exists(change)
-        ensure_matched_revisions(change)
+        ensure_matched_revisions(change, doc)
 
         if doc is None:
             return
@@ -272,7 +378,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
-    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
+    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False,
+            processor_chunk_size=0):
         change_feed = KafkaChangeFeed(
             topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
@@ -286,7 +393,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
             change_feed=change_feed,
             processor=processor,
             checkpoint=checkpoint,
-            change_processed_event_handler=event_handler
+            change_processed_event_handler=event_handler,
+            processor_chunk_size=processor_chunk_size
         )
         # set by the superclass constructor
         assert self.processors is not None
@@ -307,7 +415,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
-                         num_processes=1, process_num=0, **kwargs):
+                         num_processes=1, process_num=0,
+                         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -322,12 +431,14 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
         topics=topics,
         num_processes=num_processes,
         process_num=process_num,
+        processor_chunk_size=processor_chunk_size,
     )
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
-                                num_processes=1, process_num=0, **kwargs):
+                                num_processes=1, process_num=0,
+                                processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -343,5 +454,6 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         topics=topics,
         num_processes=num_processes,
         process_num=process_num,
-        retry_errors=True
+        retry_errors=True,
+        processor_chunk_size=processor_chunk_size,
     )
