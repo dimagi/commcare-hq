@@ -16,22 +16,17 @@
     "visible": false,
     "aggregation_columns": [
       "owner_id",
-      "month"
+      "month",
+      "age_group"
     ],
     "filters": [
       {
-        "display": "Age in Months Low Bound",
-        "slug": "age_in_months",
-        "type": "numeric",
+        "slug": "age_in_months_in_bounds",
+        "type": "pre",
         "field": "age_in_months",
-        "datatype": "date"
-      },
-      {
-        "display": "Age in Months High Bound",
-        "slug": "age_in_months1",
-        "type": "numeric",
-        "field": "age_in_months",
-        "datatype": "date"
+        "pre_operator": "between"
+        "pre_value": [36, 72],
+        "datatype": "integer"
       },
       {
         "display": "Month for Data",
@@ -107,6 +102,16 @@
         "type": "aggregate_date",
         "field": "month",
         "format": "%Y-%m"
+      },
+      {
+        "display": "Age Group",
+        "column_id": "age_group",
+        "type": "conditional_aggregation",
+        "whens": {
+            "36 <= age_in_months AND age_in_months < 48": "3_years",
+            "48 <= age_in_months AND age_in_months < 60": "4_years",
+            "60 <= age_in_months AND age_in_months <= 72": "5_years",
+        }
       },
       {
         "display": "pse_daily_attendance_male",
