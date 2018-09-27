@@ -2600,6 +2600,9 @@ class CustomerBillingRecord(BillingRecordBase):
     INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
     INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
 
+    INVOICE_HTML_TEMPLATE = 'accounting/email/customer_invoice.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/customer_invoice.txt'
+
     class Meta(object):
         app_label = 'accounting'
 
@@ -2621,18 +2624,22 @@ class CustomerBillingRecord(BillingRecordBase):
         return not self.invoice.is_hidden
 
     def email_context(self):
+        from corehq.apps.accounting.views import EnterpriseBillingStatementsView
         context = super(CustomerBillingRecord, self).email_context()
         is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
         payment_status = (_("Paid")
                           if self.invoice.is_paid or self.invoice.balance == 0
                           else _("Payment Required"))
+        domain = self.invoice.subscriptions.first().subscriber.domain
         context.update({
-            # 'plan_name': self.invoice.subscription.plan_version.plan.name,
+            'account_name': self.invoice.account.name,
             'date_due': self.invoice.date_due,
             'is_small_invoice': is_small_invoice,
             'total_balance': self.invoice.balance,
             'is_total_balance_due': self.invoice.balance >= SMALL_INVOICE_THRESHOLD,
             'payment_status': payment_status,
+            'statements_url': absolute_reverse(
+                EnterpriseBillingStatementsView.urlname, args=[domain]),
         })
         if self.invoice.account.auto_pay_enabled:
             try:
@@ -2798,9 +2805,9 @@ class CustomerBillingRecord(BillingRecordBase):
 
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
-        return "Your %(month)s CommCare Billing Statement for Customer Account %(account)s" % {
+        return "Your %(month)s CommCare Billing Statement for Customer Account %(account_name)s" % {
             'month': month_name,
-            'account': self.invoice.account,
+            'account_name': self.invoice.account.name,
         }
 
     def email_from(self):
@@ -3182,7 +3189,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     @classmethod
     def add_credit(cls, amount, account=None, subscription=None,
                    is_product=False, feature_type=None, payment_record=None,
-                   invoice=None, line_item=None, related_credit=None,
+                   invoice=None, customer_invoice=None, line_item=None, related_credit=None,
                    note=None, reason=None, web_user=None, permit_inactive=False):
         if account is None and subscription is None:
             raise CreditLineError(
@@ -3231,7 +3238,7 @@ class CreditLine(ValidateModelMixin, models.Model):
             is_new = True
         credit_line.adjust_credit_balance(amount, is_new=is_new, note=note,
                                           payment_record=payment_record,
-                                          invoice=invoice, line_item=line_item,
+                                          invoice=invoice, customer_invoice=customer_invoice, line_item=line_item,
                                           related_credit=related_credit,
                                           reason=reason, web_user=web_user)
         return credit_line
