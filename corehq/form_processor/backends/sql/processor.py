@@ -161,7 +161,7 @@ class FormProcessorSQL(object):
         if stock_result:
             for ledger in stock_result.models_to_save:
                 publish_ledger_v2_saved(ledger, flush=False)
-        producer.flush(metadata={'domain': processed_forms.submitted.domain})
+        producer.flush_changes(metadata={'domain': processed_forms.submitted.domain})
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
