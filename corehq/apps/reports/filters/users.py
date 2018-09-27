@@ -226,8 +226,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     is_cacheable = False
     options_url = 'emwf_options'
     search_help_inline = ugettext_lazy(mark_safe(
-        'See <a href="https://confluence.dimagi.com/display/commcarepublic/Report+Filters" target="_blank">'
-        'Filter Definitions </a>. To quick search for a '
+        'See <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
+        ' target="_blank"> Filter Definitions </a>. To quick search for a '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
         'target="_blank">Location</a>, write your query as "parent"/descendant.'
     ))
