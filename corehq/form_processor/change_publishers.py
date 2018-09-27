@@ -9,18 +9,6 @@ from corehq.form_processor.signals import sql_case_post_save
 from pillowtop.feed.interface import ChangeMeta
 
 
-def republish_all_changes_for_form(domain, form_id):
-    """
-    Publishes all changes for the form and any touched cases/ledgers.
-
-    """
-    form = FormAccessors(domain=domain).get_form(form_id)
-    publish_form_saved(form)
-    for case in get_cases_from_form(domain, form):
-        publish_case_saved(case, send_post_save_signal=False)
-    _publish_ledgers_from_form(domain, form)
-
-
 def publish_form_saved(form):
     producer.send_change(topics.FORM_SQL, change_meta_from_sql_form(form))
 
