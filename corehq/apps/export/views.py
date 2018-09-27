@@ -153,6 +153,20 @@ def user_can_view_deid_exports(domain, couch_user):
             ))
 
 
+def get_export(domain, export_id, export_class, username=None):
+    if export_class in [FormExportInstance, CaseExportInstance]:
+        return export_class.get(export_id)
+    elif export_class is SMSExportInstance:
+        if not username:
+            raise Exception("Username needed to ensure permissions")
+        include_metadata = MESSAGE_LOG_METADATA.enabled(username)
+        return SMSExportInstance._new_from_schema(
+            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
+        )
+    else:
+        raise Exception("Unexpected export cls %s" % export_class)
+
+
 class ExportsPermissionsMixin(object):
     """For mixing in with a subclass of BaseDomainView
 
@@ -2019,14 +2033,20 @@ class GenericDownloadNewExportMixin(object):
     mobile_user_and_group_slugs_regex = re.compile(
         '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
     )
+    export_class = None
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
-        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+        export_ids = [spec['export_id'] for spec in export_specs]
+        export_instances = [self._get_export(self.domain, export_id)
+                            for export_id in export_ids]
         self._check_deid_permissions(export_instances)
         self._check_export_size(export_instances, export_filters)
         return get_export_download(
-            export_instances=export_instances,
+            domain=self.domain,
+            export_ids=export_ids,
+            export_class=self.export_class,
+            username=self.request.user.username,
             filters=export_filters,
             filename=self._get_filename(export_instances)
         )
@@ -2104,9 +2124,10 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
     export_filter_class = SubmitHistoryFilter
+    export_class = FormExportInstance
 
     def _get_export(self, domain, export_id):
-        return FormExportInstance.get(export_id)
+        return get_export(domain, export_id, self.export_class)
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
@@ -2155,9 +2176,10 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
     export_filter_class = CaseListFilter
+    export_class = CaseExportInstance
 
     def _get_export(self, domain, export_id):
-        return CaseExportInstance.get(export_id)
+        return get_export(domain, export_id, self.export_class)
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
@@ -2192,6 +2214,7 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
     filter_form_class = FilterSmsESExportDownloadForm
     export_id = None
     sms_export = True
+    export_class = SMSExportInstance
 
     @staticmethod
     def get_export_schema(domain, include_metadata):
@@ -2225,10 +2248,7 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
         return filter_form
 
     def _get_export(self, domain, export_id):
-        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
-        return SMSExportInstance._new_from_schema(
-            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
-        )
+        return get_export(domain, export_id, self.request.user.username)
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
