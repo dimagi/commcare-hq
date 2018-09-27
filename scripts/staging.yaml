@@ -60,6 +60,7 @@ branches:
   - mk-282955 # MK Sept 25
   - qa-customer-billing # Gabriella Sept 24
   - rn_upgrade_select2 # Rohit Sept 26
+  - rn_test_select2 # Rohit Sept 27 
 submodules:
   submodules/django-digest-src:
     branches: []
