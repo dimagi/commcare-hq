@@ -152,13 +152,13 @@ def clear_expired_sessions():
 def check_for_sql_cases_without_existing_domain():
     existing_domain_names = set(Domain.get_all_names())
 
-    case_domain_names = set()
+    missing_domains_with_cases = set()
     db_names = get_db_aliases_for_partitioned_query()
     for db_name in db_names:
-        case_domain_names |= set(CommCareCaseSQL.objects.using(db_name).values_list(
-            'domain', flat=True).distinct())
+        missing_domains_with_cases |= set(CommCareCaseSQL.objects.using(db_name).exclude(
+            domain__in=existing_domain_names,
+        ).values_list('domain', flat=True).distinct())
 
-    missing_domains_with_cases = case_domain_names - existing_domain_names
     if missing_domains_with_cases:
         mail_admins_async.delay(
             'There exist SQL cases with belonging to a missing domain',
@@ -174,13 +174,13 @@ def check_for_sql_cases_without_existing_domain():
 def check_for_sql_forms_without_existing_domain():
     existing_domain_names = set(Domain.get_all_names())
 
-    form_domain_names = set()
+    missing_domains_with_forms = set()
     db_names = get_db_aliases_for_partitioned_query()
     for db_name in db_names:
-        form_domain_names |= set(XFormInstanceSQL.objects.using(db_name).values_list(
-            'domain', flat=True).distinct())
+        missing_domains_with_forms |= set(XFormInstanceSQL.objects.using(db_name).exclude(
+            domain__in=existing_domain_names,
+        ).values_list('domain', flat=True).distinct())
 
-    missing_domains_with_forms = form_domain_names - existing_domain_names
     if missing_domains_with_forms:
         mail_admins_async.delay(
             'There exist SQL forms with belonging to a missing domain',
