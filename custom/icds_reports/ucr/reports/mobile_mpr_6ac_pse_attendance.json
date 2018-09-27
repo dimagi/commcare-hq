@@ -20,18 +20,12 @@
     ],
     "filters": [
       {
-        "display": "Age in Months Low Bound",
-        "slug": "age_in_months",
-        "type": "numeric",
+        "slug": "age_in_months_in_bounds",
+        "type": "pre",
         "field": "age_in_months",
-        "datatype": "date"
-      },
-      {
-        "display": "Age in Months High Bound",
-        "slug": "age_in_months1",
-        "type": "numeric",
-        "field": "age_in_months",
-        "datatype": "date"
+        "pre_operator": "between"
+        "pre_value": [36, 72],
+        "datatype": "integer"
       },
       {
         "display": "Month for Data",
