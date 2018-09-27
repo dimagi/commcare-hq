@@ -20,6 +20,7 @@
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
 {% endif %}
 <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
+<script src="{% static 'users/js/mobile_workers.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -30,6 +31,7 @@
     {% initial_page_data 'location_url' location_url %}
     {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
     {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
+    {% registerurl 'paginate_mobile_workers' domain %}
 
     <div ng-app="mobileWorkerApp">
         <div ng-controller="mobileWorkerCreationController">
@@ -211,14 +213,14 @@
             {% endangularjs %}
         </div>
     </div>
-        <!--div class="panel panel-default"
-             ng-controller="PaginatedListController"
-             ng-cloak>
+    <div id="mobile-workers-list">
+        <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
             </div>
             <div class="panel-body">
-                <div class="row">
+                <!-- TODO: controls -->
+                <!--div class="row">
                     <div class="col-sm-4">
                         <div class="input-group">
                             <input type="text"
@@ -274,8 +276,9 @@
                                         ng-change="pageChanged()"></pagination>
                         </div>
                     </div>
-                </div>
-                <div class="alert alert-info"
+                </div-->
+                <!-- TODO: no mobile workers -->
+                <!--div class="alert alert-info"
                      ng-show="total_records != 0 && paginatedItems.length == 0 && !notLoaded && !hasError">
                     {% blocktrans %}
                     No Mobile Workers were found that matched your query.
@@ -287,10 +290,8 @@
                         <strong>There are currently no Mobile Workers in this project.</strong>
                         Please Create a new Mobile Worker above to get started.
                     {% endblocktrans %}
-                </div>
-                <table class="table table-striped table-responsive"
-                       style="margin-bottom: 0;"
-                       ng-show="paginatedItems.length > 0">
+                </div-->
+                <table class="table table-striped table-responsive" style="margin-bottom: 0;">
                     <thead>
                         <tr>
                             <th class="col-xs-3">{% trans "Username" %}</th>
@@ -300,21 +301,20 @@
                             <th class="col-xs-2">{% trans 'Action' %}</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr ng-repeat="user in paginatedItems">
-                            {% angularjs %}
+                    <tbody data-bind="foreach: users">
+                        <tr>
                             <td>
-                                <a href="{{ user.editUrl }}">
-                                     <i class="fa fa-user"></i>
-                                    <strong>{{ user.username }}</strong>
-                                    <span ng-if="!!user.name">({{ user.name }})</span>
+                                <a data-bind="attr: {href: editUrl}">
+                                    <i class="fa fa-user"></i>
+                                    <strong data-bind="text: username"></strong>
                                 </a>
                             </td>
-                            <td>{{ user.first_name }}</td>
-                            <td>{{ user.last_name }}</td>
-                            <td>{{ user.dateRegistered }}</td>
-                            <td ng-if="user.action === 'activate'">
-                                <button type="button"
+                            <td data-bind="text: first_name"></td>
+                            <td data-bind="text: last_name"></td>
+                            <td data-bind="text: dateRegistered"></td>
+                            <td>
+                                TODO: activate/deactivate button
+                                <!--button type="button"
                                         class="btn btn-default"
                                         data-toggle="modal"
                                         ng-show="!user.mark_activated"
@@ -379,8 +379,6 @@
                                         </form>
                                     </div>
                                 </div>
-                            </td>
-                            <td ng-if="user.action === 'deactivate'">
                                 <button type="button"
                                         class="btn btn-default"
                                         data-toggle="modal"
@@ -445,18 +443,19 @@
                                             </div>
                                         </form>
                                     </div>
-                                </div>
+                                </div-->
                             </td>
-                            {% endangularjs %}
                         </tr>
                     </tbody>
                 </table>
-                <div class="alert alert-info"
+                <!-- TODO: loading indicator -->
+                <!--div class="alert alert-info"
                      ng-show="!!notLoaded && !hasError">
                     <i class="fa fa-circle-o-notch fa-spin"></i>
                     {% trans "Loading Workers..." %}
-                </div>
-                <div class="alert alert-danger"
+                </div-->
+                <!-- TODO: error handling -->
+                <!--div class="alert alert-danger"
                      ng-show="!!hasError">
                     {% blocktrans %}
                         <strong>There was an issue contacting the server.</strong>
@@ -465,8 +464,9 @@
                         <a href="#modalReportIssue"
                            data-toggle="modal">file a bug report</a>.
                     {% endblocktrans %}
-                </div>
-                <div class="pull-right">
+                </div-->
+                <!-- TODO: pagination -->
+                <!--div class="pull-right">
                     <pagination direction-links="true"
                                 total-items="total"
                                 items-per-page="limit"
@@ -475,7 +475,8 @@
                                 max-size="maxSize"
                                 ng-model="currentPage"
                                 ng-change="pageChanged()"></pagination>
-                </div>
+                </div-->
             </div>
         </div-->
+    </div>
 {% endblock %}

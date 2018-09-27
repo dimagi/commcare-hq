@@ -808,7 +808,7 @@ def paginate_mobile_workers(request, domain):
         users_query = users_query.show_only_inactive()
     users_data = users_query.run()
     return json_response({
-        'itemList': [_format_user(user, include_location) for user in users_data.hits],
+        'users': [_format_user(user, include_location) for user in users_data.hits],
         'total': users_data.total,
         'page': page,
         'query': query,
