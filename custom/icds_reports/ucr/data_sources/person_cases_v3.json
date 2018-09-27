@@ -332,7 +332,30 @@
         }
       },
       {
-        "comment": "TODO: Figure out if there are other values",
+        "column_id": "disability_type",
+        "datatype": "array",
+        "type": "expression",
+        "expression": {
+          "type": "filter_items",
+          "items_expression": {
+            "type": "split_string",
+            "string_expression": {
+              "type": "property_name",
+              "property_name": "disability_type"
+            }
+          },
+          "filter_expression": {
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "disability_type"
+            },
+            "operator": "not_eq",
+            "property_value": ""
+          }
+        }
+      },
+      {
         "column_id": "registered_status",
         "datatype": "small_integer",
         "type": "expression",
@@ -355,7 +378,6 @@
         }
       },
       {
-        "comment": "TODO: Figure out if there are other values",
         "column_id": "migration_status",
         "datatype": "small_integer",
         "type": "expression",
