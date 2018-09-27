@@ -83,28 +83,38 @@ def paginate_releases(request, domain, app_id):
         limit = 10
     skip = (page - 1) * limit
 
-    tz = get_timezone_for_user(request.couch_user, domain)
-
-    start_build = {}
-    saved_apps = []
-    batch = [None]
-    while len(saved_apps) < skip + limit and len(batch):
-        batch = Application.get_db().view('app_manager/saved_app',
+    def _get_batch(start_build=None, skip=None):
+        timezone = get_timezone_for_user(request.couch_user, domain)
+        start_build = {} if start_build is None else start_build
+        return Application.get_db().view('app_manager/saved_app',
             startkey=[domain, app_id, start_build],
             endkey=[domain, app_id],
             descending=True,
             limit=limit,
-            wrapper=lambda x: SavedAppBuild.wrap(x['value'], scrap_old_conventions=False).releases_list_json(tz),
+            skip=skip,
+            wrapper=lambda x: SavedAppBuild.wrap(x['value'],
+                                                 scrap_old_conventions=False).releases_list_json(timezone),
         ).all()
-        if len(batch):
-            start_build = batch[-1]['version'] - 1
-        for app in batch:
-            # TODO: suck less if not searching, just skip
-            if not only_show_released or app['is_released']:
-                if not build_comment or build_comment.lower() in (app['build_comment'] or '').lower():
-                    saved_apps.append(app)
 
-    saved_apps = saved_apps[skip:skip + limit]
+    if not bool(only_show_released or build_comment):
+        # If user is limiting builds by released status or build comment, it's much
+        # harder to be performant with couch. So if they're not doing so, take shortcuts.
+        total_apps = len(get_built_app_ids_for_app_id(domain, app_id))
+        saved_apps = _get_batch(skip=skip)
+    else:
+        saved_apps = []
+        batch = [None]
+        start_build = {}
+        while len(batch):
+            batch = _get_batch(start_build=start_build)
+            if len(batch):
+                start_build = batch[-1]['version'] - 1
+            for app in batch:
+                if not only_show_released or app['is_released']:
+                    if not build_comment or build_comment.lower() in (app['build_comment'] or '').lower():
+                        saved_apps.append(app)
+        total_apps = len(saved_apps)
+        saved_apps = saved_apps[skip:skip + limit]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
@@ -122,7 +132,6 @@ def paginate_releases(request, domain, app_id):
         for app in saved_apps:
             app['num_errors'] = num_errors_dict.get(app['version'], 0)
 
-    total_apps = len(get_built_app_ids_for_app_id(domain, app_id))   # TODO: make accurate if searching
     num_pages = int(ceil(total_apps / limit))
 
     return json_response({
