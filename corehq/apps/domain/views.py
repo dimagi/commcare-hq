@@ -1729,8 +1729,9 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
+            next_subscription = self.current_subscription.next_subscription
             if not is_saved:
-                downgrade_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
+                downgrade_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
                 messages.error(
                     request, _(
                         "You have already scheduled a downgrade to the %s Software Plan on %s. If this is a "
@@ -1740,10 +1741,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             else:
                 if not request.user.is_superuser:
                     self.send_downgrade_email()
-                if self.current_subscription.next_subscription is not None:
+                if next_subscription is not None:
                     # New subscription has been scheduled for the future
                     current_subscription = self.current_subscription.plan_version.plan.edition
-                    start_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
+                    start_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
                     message = _(
                         "You have successfully scheduled your current %s Edition Plan subscription to "
                         "downgrade to the %s Edition Plan on %s."
