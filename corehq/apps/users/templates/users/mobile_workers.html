@@ -430,17 +430,10 @@
                         <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
                     {% endblocktrans %}
                 </div>
-                <!-- TODO: pagination -->
-                <!--div class="pull-right">
-                    <pagination direction-links="true"
-                                total-items="total"
-                                items-per-page="limit"
-                                previous-text="&laquo;"
-                                next-text="&raquo;"
-                                max-size="maxSize"
-                                ng-model="currentPage"
-                                ng-change="pageChanged()"></pagination>
-                </div-->
+                <pagination data-apply-bindings="false"
+                            params="goToPage: goToPage,
+                                    perPage: itemsPerPage,
+                                    totalItems: totalItems"></pagination>
             </div>
         </div-->
     </div>
