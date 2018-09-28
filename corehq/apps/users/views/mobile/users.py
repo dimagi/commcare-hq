@@ -779,12 +779,8 @@ def paginate_mobile_workers(request, domain):
     def _format_user(user_json):
         user = CouchUser.wrap_correctly(user_json)
         user_data = {}
-        # TODO
-        #for field in self.custom_data.fields:
-        #    user_data[field.slug] = user.user_data.get(field.slug, '')
         return {
             'username': user.raw_username,
-            'customFields': user_data,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
