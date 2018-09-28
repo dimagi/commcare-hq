@@ -1080,8 +1080,11 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
         except IndexError:
             raise PaymentRequestError("invoice_id is required")
         try:
-            return Invoice.objects.get(pk=invoice_id)
-        except Invoice.DoesNotExist:
+            if self.account and self.account.is_customer_billing_account:
+                return CustomerInvoice.objects.get(pk=invoice_id)
+            else:
+                return Invoice.objects.get(pk=invoice_id)
+        except (Invoice.DoesNotExist, CustomerInvoice.DoesNotExist):
             raise PaymentRequestError(
                 "Could not find a matching invoice for invoice_id '%s'"
                 % invoice_id
@@ -1089,7 +1092,7 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
 
     @property
     def account(self):
-        return self.invoice.subscription.account
+        return BillingAccount.get_account_by_domain(self.domain)
 
     def get_payment_handler(self):
         return InvoiceStripePaymentHandler(
