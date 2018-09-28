@@ -1,5 +1,10 @@
-/* globals _, ko, casexml, $ */
-hqDefine("data_interfaces/js/case_management", function () {
+hqDefine("data_interfaces/js/case_management",[
+    'jquery',
+    'underscore',
+    'knockout',
+    'case/js/casexml',
+    'hqwebapp/js/initial_page_data',
+], function ($, _, ko, casexmlModule, initialPageData) {
     var CaseManagement = function (o) {
         'use strict';
         var self = {};
@@ -113,7 +118,7 @@ hqDefine("data_interfaces/js/case_management", function () {
                 for (var i = 0; i < self.selected_cases().length; i++) {
                     var caseId = self.selected_cases()[i],
                         xform;
-                    xform = casexml.CaseDelta.wrap({
+                    xform = casexmlModule.casexml.CaseDelta.wrap({
                         case_id: caseId,
                         properties: {owner_id: newOwner},
                     }).asXFormInstance({
@@ -150,8 +155,7 @@ hqDefine("data_interfaces/js/case_management", function () {
     };
 
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            interfaceSelector = '#data-interfaces-reassign-cases',
+        var interfaceSelector = '#data-interfaces-reassign-cases',
             caseManagementModel;
 
         var applyBindings = function () {
