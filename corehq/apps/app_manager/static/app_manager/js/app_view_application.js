@@ -45,8 +45,8 @@ hqDefine("app_manager/js/app_view_application", function () {
                                     label: gettext("<span class='label label-default'>" + gettext("Select All") +
                                     "</span>"),
                                 }));
-                            $selectAll.find("input:checkbox").change(function() {
-                                $ul.find("input:checkbox").prop('checked', $(this).prop('checked'))
+                            $selectAll.find("input:checkbox").change(function () {
+                                $ul.find("input:checkbox").prop('checked', $(this).prop('checked'));
                             });
                             $ul.append($selectAll);
                             _.each(toggles, function (toggle) {
