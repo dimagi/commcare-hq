@@ -108,8 +108,8 @@
         "column_id": "age_group",
         "type": "conditional_aggregation",
         "whens": {
-            "6 <= age_in_months AND age_in_months < 36": "6mo_to_2",
-            "36 <= age_in_months AND age_in_months <= 72": "3_to_6",
+            "6 <= age_in_months AND age_in_months < 36": "6_to_36",
+            "36 <= age_in_months AND age_in_months <= 72": "36_to_72",
         }
       },
       {

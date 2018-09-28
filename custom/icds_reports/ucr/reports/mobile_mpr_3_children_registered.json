@@ -108,8 +108,8 @@
         "column_id": "age_group",
         "type": "conditional_aggregation",
         "whens": {
-            "0 <= age_at_reg AND age_at_reg < 3": "under_3",
-            "3 <= age_at_reg AND age_at_reg <= 6": "over_3"
+            "0 <= age_at_reg AND age_at_reg < 3": "0_to_3",
+            "3 <= age_at_reg AND age_at_reg <= 6": "3_to_6"
         }
       },
       {
