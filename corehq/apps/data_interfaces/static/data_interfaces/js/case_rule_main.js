@@ -8,21 +8,5 @@ hqDefine("data_interfaces/js/case_rule_main", [
     caseRuleCriteria,
     caseRuleActions
 ) {
-
-    $(function () {
-        $("#rule-definition-form").submit(function () {
-            var result = true;
-
-            var actions_model = caseRuleActions.get_actions_model();
-            if (actions_model.selected_case_action_id() !== 'select-one') {
-                actions_model.show_add_action_warning(true);
-                result = false;
-            } else {
-                actions_model.show_add_action_warning(false);
-            }
-
-            return result;
-        });
-    });
-
+    // Nothing to do here, this is just a main module that depends on some other modules
 });

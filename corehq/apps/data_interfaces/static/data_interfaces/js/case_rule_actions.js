@@ -12,8 +12,6 @@ hqDefine("data_interfaces/js/case_rule_actions", [
         var self = this;
 
         self.actions = ko.observableArray();
-        self.selected_case_action_id = ko.observable();
-        self.show_add_action_warning = ko.observable(false);
 
         self.get_ko_template_id = function (obj) {
             if (obj instanceof CloseCaseDefinition) {
@@ -81,8 +79,7 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             return false;
         };
 
-        self.add_action = function () {
-            var ko_template_id = self.selected_case_action_id();
+        self.add_action = function (ko_template_id) {
             if (ko_template_id === 'select-one') {
                 return;
             }
@@ -93,8 +90,6 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             }
 
             self.actions.push(new js_class());
-            self.selected_case_action_id('select-one');
-            self.show_add_action_warning(false);
         };
 
         self.remove_action = function () {
