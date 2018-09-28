@@ -124,17 +124,17 @@ class EmwfUtils(object):
         user = util._report_user_dict(u)
         uid = "u__%s" % user['user_id']
         if user['is_active']:
-            name = "%s [active user]" % user['username_in_report']
+            name = "%s [Active Mobile Worker]" % user['username_in_report']
         else:
-            name = "%s [deactivated user]" % user['username_in_report']
-        return (uid, name)
+            name = "%s [Deactivated Mobile Worker]" % user['username_in_report']
+        return uid, name
 
     def reporting_group_tuple(self, g):
-        return ("g__%s" % g['_id'], '%s [group]' % g['name'])
+        return "g__%s" % g['_id'], '%s [group]' % g['name']
 
     def user_type_tuple(self, t):
         return (
-            "t__%s" % (t),
+            "t__%s" % t,
             "[%s]" % HQUserType.human_readable[t]
         )
 
@@ -274,7 +274,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if not self.request.can_access_all_locations:
             return self._get_assigned_locations_default()
 
-        defaults = [('t__0', _("[Active Mobile Workers]"))]
+        defaults = [('t__0', _("[Active Mobile Workers]")), ('t__5', _("[Deactivated Mobile Workers]"))]
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
