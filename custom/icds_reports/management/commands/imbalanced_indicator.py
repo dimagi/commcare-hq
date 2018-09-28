@@ -25,10 +25,7 @@ class Command(BaseCommand):
     def execute_query(self, params):
         query = 'select month,({0}) as numerator, {1} as denomerator from {2} where  aggregation_level=1   group by month having ({0})>{1};'
         query_with_param = query.format(*(params['num'], params['denom'], params['table']))
-        print(query_with_param)
         with connection.cursor() as cursor:
-
-
             cursor.execute(query_with_param)
             return cursor.fetchall()
 
