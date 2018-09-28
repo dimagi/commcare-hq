@@ -313,7 +313,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
                                                      active=False, deactivated=False, web=True)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
