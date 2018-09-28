@@ -226,7 +226,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
-                                                     active=True, deactivated=True)
+                                                     active=True, deactivated=True, web=False)
         self.assertIsInstance(user_filters[0], UserTypeFilter)
         self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
 
@@ -237,7 +237,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
-                                                     active=True, deactivated=False)
+                                                     active=True, deactivated=False, web=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
 
     @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.DEACTIVATED])
@@ -247,7 +247,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
-                                                     active=False, deactivated=True)
+                                                     active=False, deactivated=True, web=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
 
     @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.ACTIVE, HQUserType.DEACTIVATED])
@@ -257,7 +257,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
-                                                     active=True, deactivated=True)
+                                                     active=True, deactivated=True, web=False)
         self.assertIsInstance(user_filters[0], UserTypeFilter)
         self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
 
@@ -272,7 +272,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False,
-                                                     active=True, deactivated=True)
+                                                     active=True, deactivated=True, web=False)
 
         self.assertIsInstance(user_filters[0], UserTypeFilter)
         self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
@@ -289,7 +289,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False,
-                                                     active=False, deactivated=False)
+                                                     active=False, deactivated=False, web=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
 
@@ -302,7 +302,20 @@ class TestEmwfFilterFormExportFilters(TestCase):
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=True, commtrack=False,
-                                                     active=False, deactivated=False)
+                                                     active=False, deactivated=False, web=False)
+        self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
+        self.assertEqual(user_filters[0].submitted_by, self.user_ids)
+
+    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.WEB])
+    @patch.object(filter_builder, 'get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_web(self, fetch_user_ids_patch):
+        self.filter_export = self.subject(self.domain, pytz.utc)
+        self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
+        fetch_user_ids_patch.return_value = self.user_ids
+        es_user_types = self.filter_export._get_selected_es_user_types('')
+        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
+                                                     active=False, deactivated=False, web=True)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
 
@@ -397,7 +410,8 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertTrue(self.export_filter.is_valid())
         case_filters = self.export_filter.get_case_filter('', True, None)
 
-        fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
+                                                     web=False)
         assert not filters_from_slugs_patch.called
 
         self.assertIsInstance(case_filters[0], NOT)
