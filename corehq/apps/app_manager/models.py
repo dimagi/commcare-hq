@@ -6568,6 +6568,7 @@ class LinkedApplication(Application):
     # the master app everytime the new master is pulled
     linked_app_translations = DictProperty()  # corresponding property: translations
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
+    uses_master_form_ids = BooleanProperty(default=False)
 
     @property
     @memoized
