@@ -12,14 +12,6 @@ hqDefine("data_interfaces/js/case_rule_main", [
     $(function () {
         $("#rule-definition-form").submit(function () {
             var result = true;
-            var criteria_model = caseRuleCriteria.get_criteria_model();
-
-            if (criteria_model.selected_case_filter_id() !== 'select-one') {
-                criteria_model.show_add_filter_warning(true);
-                result = false;
-            } else {
-                criteria_model.show_add_filter_warning(false);
-            }
 
             var actions_model = caseRuleActions.get_actions_model();
             if (actions_model.selected_case_action_id() !== 'select-one') {
