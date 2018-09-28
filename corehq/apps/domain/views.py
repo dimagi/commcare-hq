@@ -93,7 +93,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice,
+    EntryPoint, WireInvoice, CustomerInvoice,
     StripePaymentMethod, LastPayment,
     UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
 )
@@ -883,6 +883,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 ),
             },
             'total_balance': self.total_balance,
+            'show_plan': True
         })
         return pagination_context
 
@@ -1080,8 +1081,11 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
         except IndexError:
             raise PaymentRequestError("invoice_id is required")
         try:
-            return Invoice.objects.get(pk=invoice_id)
-        except Invoice.DoesNotExist:
+            if self.account and self.account.is_customer_billing_account:
+                return CustomerInvoice.objects.get(pk=invoice_id)
+            else:
+                return Invoice.objects.get(pk=invoice_id)
+        except (Invoice.DoesNotExist, CustomerInvoice.DoesNotExist):
             raise PaymentRequestError(
                 "Could not find a matching invoice for invoice_id '%s'"
                 % invoice_id
@@ -1089,7 +1093,7 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
 
     @property
     def account(self):
-        return self.invoice.subscription.account
+        return BillingAccount.get_account_by_domain(self.domain)
 
     def get_payment_handler(self):
         return InvoiceStripePaymentHandler(
@@ -1119,9 +1123,11 @@ class WireInvoiceView(View):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        from corehq.apps.accounting.views import _get_account_or_404
         emails = request.POST.get('emails', []).split()
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
-        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+        account = _get_account_or_404(request, request.domain)
+        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails, account=account)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
         except Exception as e:
@@ -1153,24 +1159,37 @@ class BillingStatementPdfView(View):
                     pk=invoice_pdf.invoice_id,
                     domain=domain
                 )
+            elif invoice_pdf.is_customer:
+                invoice = CustomerInvoice.objects.get(
+                    pk=invoice_pdf.invoice_id
+                )
             else:
                 invoice = Invoice.objects.get(
                     pk=invoice_pdf.invoice_id,
                     subscription__subscriber__domain=domain
                 )
-        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist):
+        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist, CustomerInvoice.DoesNotExist):
             raise Http404()
 
-        if invoice.is_wire:
-            edition = 'Bulk'
+        if invoice.is_customer_invoice:
+            from corehq.apps.accounting.views import _get_account_or_404
+            account = _get_account_or_404(request, domain)
+            filename = "%(pdf_id)s_%(account)s_%(filename)s" % {
+                'pdf_id': invoice_pdf._id,
+                'account': account,
+                'filename': invoice_pdf.get_filename(invoice)
+            }
         else:
-            edition = DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name']
-        filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
-            'pdf_id': invoice_pdf._id,
-            'domain': domain,
-            'edition': edition,
-            'filename': invoice_pdf.get_filename(invoice),
-        }
+            if invoice.is_wire:
+                edition = 'Bulk'
+            else:
+                edition = DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name']
+            filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
+                'pdf_id': invoice_pdf._id,
+                'domain': domain,
+                'edition': edition,
+                'filename': invoice_pdf.get_filename(invoice),
+            }
         try:
             data = invoice_pdf.get_data(invoice)
             response = HttpResponse(data, content_type='application/pdf')
