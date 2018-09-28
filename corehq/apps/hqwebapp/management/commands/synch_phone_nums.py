@@ -44,7 +44,7 @@ class Command(BaseCommand):
             case_accessor = CaseReindexAccessor(domain)
             case_ids = (case.case_id for case in iter_all_rows(case_accessor))
         else:
-            changes = _get_case_iterator(self.domain).iter_all_changes()
+            changes = _get_case_iterator(domain).iter_all_changes()
             case_ids = (case.id for case in changes)
 
         next_event = time.time() + 10
