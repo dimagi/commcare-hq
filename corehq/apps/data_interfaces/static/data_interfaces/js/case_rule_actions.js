@@ -23,12 +23,12 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             }
         };
 
-        self.get_js_class = function (ko_template_id) {
-            if (ko_template_id === 'close-case-action') {
+        self.get_js_class = function (templateId) {
+            if (templateId === 'close-case-action') {
                 return CloseCaseDefinition;
-            } else if (ko_template_id === 'update-case-property-action') {
+            } else if (templateId === 'update-case-property-action') {
                 return UpdatePropertyDefinition;
-            } else if (ko_template_id === 'custom-action') {
+            } else if (templateId === 'custom-action') {
                 return CustomActionDefinition;
             }
         };
@@ -79,11 +79,11 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             return false;
         };
 
-        self.add_action = function (ko_template_id) {
-            if (ko_template_id === 'select-one') {
+        self.add_action = function (templateId) {
+            if (templateId === 'select-one') {
                 return;
             }
-            var js_class = self.get_js_class(ko_template_id);
+            var js_class = self.get_js_class(templateId);
 
             if (js_class === CloseCaseDefinition && self.action_already_added(CloseCaseDefinition)) {
                 return;
