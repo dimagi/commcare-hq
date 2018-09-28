@@ -40,7 +40,11 @@ hqDefine("app_manager/js/app_view_application", function () {
                         if (toggles.length) {
                             var template = _.template($modal.find("script").html()),
                                 $ul = $modal.find("ul").html(""),
-                                $selectAll = $(template({ slug: "", label: gettext("Select All") }));
+                                $selectAll = $(template({
+                                    slug: "",
+                                    label: gettext("<span class='label label-default'>" + gettext("Select All") +
+                                    "</span>"),
+                                }));
                             $selectAll.find("input:checkbox").change(function() {
                                 $ul.find("input:checkbox").prop('checked', $(this).prop('checked'))
                             });
