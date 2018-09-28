@@ -15,7 +15,7 @@ from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.commtrack.models import SQLLocation
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS, SEARCH_DEACTIVATED_USERS
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 
 from .. import util
 from ..models import HQUserType
@@ -147,7 +147,7 @@ class EmwfUtils(object):
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
 
-        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        types = ['DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
@@ -189,10 +189,7 @@ class SubmitHistoryUtils(EmwfUtils):
     @memoized
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
-        if SEARCH_DEACTIVATED_USERS.enabled(self.domain):
-            types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN']
-        else:
-            types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
@@ -222,15 +219,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     slug = "emw"
     label = ugettext_lazy("User(s)")
     default_options = None
-    placeholder = ugettext_lazy(
-        "Specify groups and users to include in the report")
+    placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options'
     search_help_inline = ugettext_lazy(mark_safe(
-        'To quick search for a location, write your query as "parent"/descendant. '
-        'For more info, see the '
+        'See <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
+        ' target="_blank"> Filter Definitions </a>. To quick search for a '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
-        'target="_blank">Location Search</a> help page.'
+        'target="_blank">Location</a>, write your query as "parent"/descendant.'
     ))
 
     @property
@@ -358,6 +354,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
+        if HQUserType.WEB in user_types:
             user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
