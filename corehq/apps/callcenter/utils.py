@@ -30,9 +30,9 @@ class DomainLite(object):
     default_timezone = attr.ib()
     cc_case_type = attr.ib()
     use_fixtures = attr.ib()
-    form_datasource_enabled = attr.ib()
-    case_datasource_enabled = attr.ib()
-    case_actions_datasource_enabled = attr.ib()
+    form_datasource_enabled = attr.ib(default=True)
+    case_datasource_enabled = attr.ib(default=True)
+    case_actions_datasource_enabled = attr.ib(default=True)
 
     def midnights(self, utcnow=None):
         """Returns a list containing two datetimes in UTC that corresponds to midnight

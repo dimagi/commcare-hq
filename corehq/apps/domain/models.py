@@ -129,9 +129,9 @@ class CallCenterProperties(DocumentSchema):
 
     case_type = StringProperty()
 
-    form_datasource_enabled = BooleanProperty()
-    case_datasource_enabled = BooleanProperty()
-    case_actions_datasource_enabled = BooleanProperty()
+    form_datasource_enabled = BooleanProperty(default=True)
+    case_datasource_enabled = BooleanProperty(default=True)
+    case_actions_datasource_enabled = BooleanProperty(default=True)
 
     def fixtures_are_active(self):
         return self.enabled and self.use_fixtures
