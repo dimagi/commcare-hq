@@ -76,8 +76,9 @@ from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import get_blob_db, NotFound
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, doc_type_to_state
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
 from couchforms.models import UnfinishedSubmissionStub
@@ -291,14 +292,28 @@ class TestDeleteDomain(TestCase):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_deletion(self):
+        form_states = [state_tuple[0] for state_tuple in XFormInstanceSQL.STATES]
+
         for domain_name in [self.domain.name, self.domain2.name]:
-            create_form_for_test(domain_name)
-            self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
+            for form_state in form_states:
+                create_form_for_test(domain_name, state=form_state)
+            for doc_type in doc_type_to_state:
+                self.assertEqual(
+                    len(FormAccessors(domain_name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                    1
+                )
 
         self.domain.delete()
 
-        self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
-        self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
+        for doc_type in doc_type_to_state:
+            self.assertEqual(
+                len(FormAccessors(self.domain.name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                0
+            )
+            self.assertEqual(
+                len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                1
+            )
 
     def _assert_queryset_count(self, queryset_list, count):
         for queryset in queryset_list:
