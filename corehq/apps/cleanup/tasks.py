@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.management import call_command
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import filters, AppES, CaseSearchES, FormES, GroupES, LedgerES, UserES
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
@@ -190,3 +191,21 @@ def check_for_sql_forms_without_existing_domain():
         mail_admins_async.delay(
             'All SQL forms belong to valid domains', ''
         )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def check_for_elasticsearch_data_without_existing_domain():
+    existing_domain_names = set(Domain.get_all_names())
+    for hqESQuery in [AppES, CaseSearchES, FormES, GroupES, LedgerES, UserES]:
+        query = hqESQuery()
+        for domain_name in existing_domain_names:
+            query = query.NOT(filters.domain(domain_name))
+        count = query.count()
+        if count != 0:
+            mail_admins_async.delay(
+                'ES index "%s" contains %s items belonging to a missing domain' % (query.index, count), ''
+            )
+        elif datetime.utcnow().isoweekday() == 1:
+            mail_admins_async.delay(
+                'All data in ES index "%s" belong to valid domains' % query.index, ''
+            )
