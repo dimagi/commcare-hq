@@ -5,12 +5,13 @@ from collections import namedtuple
 import json
 
 from datetime import date
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from sqlalchemy import bindparam
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.userreports import const
-from corehq.apps.userreports.exceptions import InvalidQueryColumn
+from corehq.apps.userreports.exceptions import InvalidQueryColumn, BadSpecError
 from corehq.apps.userreports.expressions import ExpressionFactory
 
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
@@ -369,6 +370,13 @@ class _CaseExpressionColumn(ReportColumn):
     _agg_column_type = None
 
     def get_column_config(self, data_source_config, lang):
+        if not data_source_config.is_static and not settings.UNIT_TESTING:
+            # The conditional expressions used here don't have sufficient safety checks,
+            # so this column type is only available for static reports.  To release this,
+            # we should require that conditions be expressed using a PreFilterValue type
+            # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
+            raise BadSpecError("{} columns are only available to static report configs"
+                               .format(self.type))
         if not self.type and self._agg_column_type:
             raise NotImplementedError("subclasses must define a type and column_type")
         return ColumnConfig(columns=[

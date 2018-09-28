@@ -38,7 +38,7 @@ hqDefine("data_interfaces/js/find_by_id", [
                 method: 'GET',
                 url: initialPageData.reverse('global_quick_find'),
                 data: {
-                    q: self.query(),
+                    q: self.query().trim(),
                     redirect: 'false',
                 },
                 success: function (data) {

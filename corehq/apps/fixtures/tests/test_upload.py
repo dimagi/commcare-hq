@@ -31,11 +31,11 @@ validation_test_cases = [
         "table_id 'invalid table_id' should not contain spaces or special characters, or start with a number."
     ]),
     ('multiple_errors', [
-        "Excel-sheet 'level_1' does not contain the column "
+        "Excel worksheet 'level_1' does not contain the column "
         "'field: fun_fact' as specified in its 'types' definition",
-        "Excel-sheet 'level_1' does not contain the column "
+        "Excel worksheet 'level_1' does not contain the column "
         "'field: other' as specified in its 'types' definition",
-        "Excel-sheet 'level_2' does not contain the column "
+        "Excel worksheet 'level_2' does not contain the column "
         "'field: other' as specified in its 'types' definition",
         "There's no sheet for type 'level_3' in 'types' sheet. "
         "There must be one sheet per row in the 'types' sheet.",
@@ -45,23 +45,23 @@ validation_test_cases = [
         "There must be one sheet per row in the 'types' sheet.",
     ]),
     ('has_no_field_column', [
-        "Excel-sheet 'things' does not contain the column 'field: name' "
+        "Excel worksheet 'things' does not contain the column 'field: name' "
         "as specified in its 'types' definition",
     ]),
     ('has_no_field_column_extra_rows', [
-        "Excel-sheet 'things' does not contain the column 'field: name' "
+        "Excel worksheet 'things' does not contain the column 'field: name' "
         "as specified in its 'types' definition",
     ]),
     ('has_extra_column', [
-        "Excel-sheet 'things' has an extra column"
+        "Excel worksheet 'things' has an extra column"
         "'field: fun_fact' that's not defined in its 'types' definition",
     ]),
     ('sheet_has_no_property', [
-        "Excel-sheet 'things' does not contain property "
+        "Excel worksheet 'things' does not contain property "
         "'lang' of the field 'name' as specified in its 'types' definition",
     ]),
     ('sheet_has_extra_property', [
-        "Excel-sheet 'things' has an extra property "
+        "Excel worksheet 'things' has an extra property "
         "'style' for the field 'name' that's not defined in its 'types' definition. "
         "Re-check the formatting",
     ]),
@@ -86,7 +86,7 @@ validation_test_cases = [
         "table_id 'things' has no fields and no properties",
     ]),
     ('invalid_field_syntax', [
-        "In excel-sheet 'things', field 'name' should be numbered as 'field: name integer",
+        "In Excel worksheet 'things', field 'name' should be numbered as 'field: name integer",
     ]),
     ('wrong_property_syntax', [
         "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
