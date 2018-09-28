@@ -24,7 +24,7 @@
         "slug": "age_in_months_in_bounds",
         "type": "pre",
         "field": "age_in_months",
-        "pre_operator": "between"
+        "pre_operator": "between",
         "pre_value": [36, 72],
         "datatype": "integer"
       },
