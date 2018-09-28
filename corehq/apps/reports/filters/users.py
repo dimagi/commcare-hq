@@ -147,7 +147,7 @@ class EmwfUtils(object):
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
 
-        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        types = ['DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
@@ -189,7 +189,7 @@ class SubmitHistoryUtils(EmwfUtils):
     @memoized
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
-        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN']
+        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
@@ -354,6 +354,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
+        if HQUserType.WEB in user_types:
             user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
