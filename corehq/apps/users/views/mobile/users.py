@@ -764,7 +764,6 @@ def paginate_mobile_workers(request, domain):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     query = request.GET.get('query')
-    include_location = request.GET.get('include_location', False)   # TODO: test
     deactivated_only = bool(int(request.GET.get('showDeactivatedUsers', 0)))
 
     def _user_query(search_string, page, limit):
@@ -777,7 +776,7 @@ def paginate_mobile_workers(request, domain):
             user_es = user_es.location(list(loc_ids))
         return user_es.mobile_users()
 
-    def _format_user(user_json, include_location=False):
+    def _format_user(user_json):
         user = CouchUser.wrap_correctly(user_json)
         user_data = {}
         # TODO
@@ -790,7 +789,6 @@ def paginate_mobile_workers(request, domain):
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
-            'location': user.sql_location.to_json() if include_location and user.sql_location else None,
             'mark_activated': False,
             'mark_deactivated': False,
             'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
@@ -808,7 +806,7 @@ def paginate_mobile_workers(request, domain):
         users_query = users_query.show_only_inactive()
     users_data = users_query.run()
     return json_response({
-        'users': [_format_user(user, include_location) for user in users_data.hits],
+        'users': [_format_user(user) for user in users_data.hits],
         'total': users_data.total,
         'page': page,
         'query': query,
