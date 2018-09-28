@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='aggregatesqlprofile',
-            name='latest_aggregation',
+            name='last_included_doc_time',
             field=models.DateTimeField(null=True),
         ),
     ]
