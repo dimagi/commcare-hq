@@ -14,10 +14,26 @@ class TestCallCenterDataSources(SimpleTestCase):
 
 
 @generate_cases([
-    (DomainLite('d', None, None, True, True, False, False), ['cc_forms']),
-    (DomainLite('d', None, None, True, False, True, False), ['cc_cases']),
-    (DomainLite('d', None, None, True, False, False, True), ['cc_case_actions']),
-    (DomainLite('d', None, None, True, True, True, True), ['cc_forms', 'cc_cases', 'cc_case_actions']),
+    (DomainLite(
+        name='d', default_timezone=None, cc_case_type=None, use_fixtures=True,
+        form_datasource_enabled=True,
+        case_datasource_enabled=False,
+        case_actions_datasource_enabled=False), ['cc_forms']),
+    (DomainLite(
+        name='d', default_timezone=None, cc_case_type=None, use_fixtures=True,
+        form_datasource_enabled=False,
+        case_datasource_enabled=True,
+        case_actions_datasource_enabled=False), ['cc_cases']),
+    (DomainLite(
+        name='d', default_timezone=None, cc_case_type=None, use_fixtures=True,
+        form_datasource_enabled=False,
+        case_datasource_enabled=False,
+        case_actions_datasource_enabled=True), ['cc_case_actions']),
+    (DomainLite(
+        name='d', default_timezone=None, cc_case_type=None, use_fixtures=True,
+        form_datasource_enabled=True,
+        case_datasource_enabled=True,
+        case_actions_datasource_enabled=True), ['cc_forms', 'cc_cases', 'cc_case_actions']),
 ], TestCallCenterDataSources)
 def test_call_center_data_source_provider(self, domain, tables):
     with patch('corehq.apps.callcenter.data_source.get_call_center_domains') as get_call_center_domains:
