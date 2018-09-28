@@ -32,6 +32,8 @@
     {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
     {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
     {% registerurl 'paginate_mobile_workers' domain %}
+    {% registerurl 'activate_commcare_user' domain '---' %}
+    {% registerurl 'deactivate_commcare_user' domain '---' %}
 
     <div ng-app="mobileWorkerApp">
         <div ng-controller="mobileWorkerCreationController">
@@ -283,137 +285,116 @@
                             <td data-bind="text: last_name"></td>
                             <td data-bind="text: dateRegistered"></td>
                             <td>
-                                TODO: activate/deactivate button
-                                <!--button type="button"
-                                        class="btn btn-default"
-                                        data-toggle="modal"
-                                        ng-show="!user.mark_activated"
-                                        data-target="#activate_{{ user.user_id }}">
+                                <div data-bind="visible: showActivate">
+                                    <button type="button" class="btn btn-default" data-toggle="modal"
+                                            data-bind="visible: !mark_activated(), attr: {'data-target': '#activate_' + user_id()}">
                                         {% trans "Reactivate" %}
-                                </button>
-                                <span ng-show="user.mark_activated">
-                                    <i class="fa fa-check"></i> {% trans "ACTIVE" %}
-                                </span>
-                                <p ng-show="!!user.action_error">
-                                    <i class="fa fa-exclamation-triangle"></i>
-                                    {{ user.action_error }}
-                                </p>
-                                <div id="activate_{{ user.user_id }}"
-                                     class="modal fade">
-                                    <div class="modal-dialog">
-                                        <form class="modal-content"
-                                              method="post"
-                                              ng-submit="activateUser(user, djangoRMI);">
-                                            <div class="modal-header">
-                                                <button type="button"
-                                                        class="close"
-                                                        data-dismiss="modal">
-                                                    <span aria-hidden="true">&times;</span>
-                                                    <span class="sr-only">{% trans "Close" %}</span>
-                                                </button>
-                                                <h4 class="modal-title">{% trans "Reactivate Mobile Worker" %}</h4>
+                                    </button>
+                                    <span data-bind="visible: mark_activated()">
+                                        <i class="fa fa-check"></i> {% trans "ACTIVE" %}
+                                    </span>
+                                    <p data-bind="visible: action_error">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                        <span data-bind="text: action_error"></span>
+                                    </p>
+                                    <div class="modal fade" data-bind="attr: {id: 'activate_' + user_id()}">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal">
+                                                        <span aria-hidden="true">&times;</span>
+                                                        <span class="sr-only">{% trans "Close" %}</span>
+                                                    </button>
+                                                    <h4 class="modal-title">{% trans "Reactivate Mobile Worker" %}</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="lead">
+                                                        {% blocktrans %}
+                                                            Are you sure you want to <strong>reactivate</strong> this mobile worker?
+                                                        {% endblocktrans %}
+                                                    </p>
+                                                    <p class="lead">
+                                                        <i class="fa fa-user"></i>
+                                                        <strong data-bind="text: username"></strong>
+                                                    </p>
+                                                    <p>
+                                                        {% blocktrans %}
+                                                            Deactivated mobile workers are not able to log into new devices.<br />
+                                                            Read more about
+                                                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
+                                                                deactivating mobile workers
+                                                            </a> on our Help Site.
+                                                        {% endblocktrans %}
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                                                        {% trans "Cancel" %}
+                                                    </button>
+                                                    <button type="button" class="btn btn-success"
+                                                            data-bind="click: function(data, e) { modifyStatus(true, e.currentTarget) }">
+                                                        {% trans 'Reactivate' %}
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div class="modal-body">
-                                                <p class="lead">
-                                                    {% blocktrans %}
-                                                        Are you sure you want to <strong>reactivate</strong> this mobile worker?
-                                                    {% endblocktrans %}
-                                                </p>
-                                                <p class="lead">
-                                                    <i class="fa fa-user"></i>
-                                                    <strong>{{ user.username }}</strong>
-                                                    <span ng-if="!!user.name" class="text-center">({{ user.name }})</span>
-                                                </p>
-                                                <p>
-                                                    {% blocktrans %}
-                                                    Deactivated mobile workers are not able to log into new devices.<br />
-                                                    Read more about
-                                                    <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers'
-                                                       target="_blank">
-                                                        deactivating mobile workers
-                                                    </a> on our Help Site.
-                                                    {% endblocktrans %}
-                                                </p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button"
-                                                        class="btn btn-default"
-                                                        data-dismiss="modal">
-                                                    {% trans "Cancel" %}
-                                                </button>
-                                                <button type="submit"
-                                                        class="btn btn-success">
-                                                    {% trans 'Reactivate' %}
-                                                </button>
-                                            </div>
-                                        </form>
+                                        </div>
                                     </div>
                                 </div>
-                                <button type="button"
-                                        class="btn btn-default"
-                                        data-toggle="modal"
-                                        data-target="#deactivate_{{ user.user_id }}"
-                                        ng-show="!user.mark_deactivated">
+                                <div data-bind="visible: showDeactivate">
+                                    <button type="button" class="btn btn-default" data-toggle="modal"
+                                            data-bind="attr: {'data-target': '#deactivate_' + user_id()}, visible: !mark_deactivated()">
                                         {% trans "Deactivate" %}
-                                </button>
-                                <span ng-show="user.mark_deactivated">
-                                    <i class="fa fa-check"></i> {% trans "INACTIVE" %}
-                                </span>
-                                <p ng-show="!!user.action_error">
-                                    <i class="fa fa-exclamation-triangle"></i>
-                                    {{ user.action_error }}
-                                </p>
-                                <div id="deactivate_{{ user.user_id }}"
-                                     class="modal fade">
-                                    <div class="modal-dialog">
-                                        <form class="modal-content"
-                                              method="post"
-                                              ng-submit="deactivateUser(user, djangoRMI);">
-                                            <div class="modal-header">
-                                                <button type="button"
-                                                        class="close"
-                                                        data-dismiss="modal">
-                                                    <span aria-hidden="true">&times;</span>
-                                                    <span class="sr-only">{% trans "Close" %}</span>
-                                                </button>
-                                                <h4 class="modal-title">{% trans "Deactivate Mobile Worker" %}</h4>
+                                    </button>
+                                    <span data-bind="visible: mark_deactivated">
+                                        <i class="fa fa-check"></i> {% trans "INACTIVE" %}
+                                    </span>
+                                    <p data-bind="visible: action_error">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                        <span data-bind="text: action_error"></span>
+                                    </p>
+                                    <div class="modal fade" data-bind="attr: {id: 'deactivate_' + user_id()}">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal">
+                                                        <span aria-hidden="true">&times;</span>
+                                                        <span class="sr-only">{% trans "Close" %}</span>
+                                                    </button>
+                                                    <h4 class="modal-title">{% trans "Deactivate Mobile Worker" %}</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="lead">
+                                                        {% blocktrans %}
+                                                            Are you sure you want to <strong>deactivate</strong> this mobile worker?
+                                                        {% endblocktrans %}
+                                                    </p>
+                                                    <p class="lead">
+                                                        <i class="fa fa-user"></i>
+                                                        <strong data-bind="text: username"></strong>
+                                                    </p>
+                                                    <p>
+                                                        {% blocktrans %}
+                                                        Deactivated mobile workers are not able to log into new devices.<br />
+                                                        Read more about
+                                                        <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
+                                                            deactivating mobile workers
+                                                        </a> on our Help Site.
+                                                        {% endblocktrans %}
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                                                        {% trans "Cancel" %}
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger"
+                                                            data-bind="click: function(data, e) { modifyStatus(false, e.currentTarget) }">
+                                                        {% trans 'Deactivate' %}
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div class="modal-body">
-                                                <p class="lead">
-                                                    {% blocktrans %}
-                                                        Are you sure you want to <strong>deactivate</strong> this mobile worker?
-                                                    {% endblocktrans %}
-                                                </p>
-                                                <p class="lead">
-                                                    <i class="fa fa-user"></i>
-                                                    <strong>{{ user.username }}</strong>
-                                                    <span ng-if="!!user.name" class="text-center">({{ user.name }})</span>
-                                                </p>
-                                                <p>
-                                                    {% blocktrans %}
-                                                    Deactivated mobile workers are not able to log into new devices.<br />
-                                                    Read more about
-                                                    <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers'
-                                                       target="_blank">
-                                                        deactivating mobile workers
-                                                    </a> on our Help Site.
-                                                    {% endblocktrans %}
-                                                </p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button"
-                                                        class="btn btn-default"
-                                                        data-dismiss="modal">
-                                                    {% trans "Cancel" %}
-                                                </button>
-                                                <button type="submit"
-                                                        class="btn btn-default btn-danger">
-                                                    {% trans 'Deactivate' %}
-                                                </button>
-                                            </div>
-                                        </form>
+                                        </div>
                                     </div>
-                                </div-->
+                                </div>
                             </td>
                         </tr>
                     </tbody>
