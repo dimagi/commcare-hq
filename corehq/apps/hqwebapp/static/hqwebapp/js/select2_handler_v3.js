@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/select2_handler", [
+hqDefine("hqwebapp/js/select2_handler_v3", [
     "jquery",
     "knockout",
     "select2-3.5.2-legacy/select2",
