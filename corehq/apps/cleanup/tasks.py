@@ -161,7 +161,7 @@ def check_for_sql_cases_without_existing_domain():
 
     if missing_domains_with_cases:
         mail_admins_async.delay(
-            'There exist SQL cases with belonging to a missing domain',
+            'There exist SQL cases belonging to a missing domain',
             six.text_type(missing_domains_with_cases)
         )
     elif datetime.utcnow().isoweekday() == 1:
@@ -183,7 +183,7 @@ def check_for_sql_forms_without_existing_domain():
 
     if missing_domains_with_forms:
         mail_admins_async.delay(
-            'There exist SQL forms with belonging to a missing domain',
+            'There exist SQL forms belonging to a missing domain',
             six.text_type(missing_domains_with_forms)
         )
     elif datetime.utcnow().isoweekday() == 1:
