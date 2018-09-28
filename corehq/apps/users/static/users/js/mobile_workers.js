@@ -3,7 +3,7 @@ hqDefine("users/js/mobile_workers", function() {
         var self = {};
         self.users = ko.observableArray([]);
 
-        self.query = ko.observable(''); // TODO
+        self.query = ko.observable('');
 
         // Visibility of spinner, messages, and user table
         self.hasError = ko.observable(false);
@@ -14,7 +14,7 @@ hqDefine("users/js/mobile_workers", function() {
             return !self.notLoaded() && !self.hasError() && !self.projectHasUsers();
         });
 
-        self.showNoUsers = ko.computed(function() { // TODO: test
+        self.showNoUsers = ko.computed(function() {
             return !self.notLoaded() && !self.hasError() && !self.users().length && !self.showProjectHasNoUsers();
         });
 
@@ -39,15 +39,16 @@ hqDefine("users/js/mobile_workers", function() {
                     limit: 10,  // TODO
                 },
                 success: function(data) {
-                    self.notLoaded(false);
-                    self.hasError(false);
-                    if (!self.query()) {
-                        self.projectHasUsers(!!data.users.length);
-                    }
                     self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
                     _.each(data.users, function(user) {
                         self.users.push(user);
                     });
+
+                    if (!self.query()) {
+                        self.projectHasUsers(!!data.users.length);
+                    }
+                    self.notLoaded(false);
+                    self.hasError(false);
                 },
                 error: function() {
                     self.notLoaded(false);
