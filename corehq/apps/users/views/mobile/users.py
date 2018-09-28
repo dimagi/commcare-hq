@@ -778,7 +778,6 @@ def paginate_mobile_workers(request, domain):
 
     def _format_user(user_json):
         user = CouchUser.wrap_correctly(user_json)
-        user_data = {}
         return {
             'username': user.raw_username,
             'first_name': user.first_name,

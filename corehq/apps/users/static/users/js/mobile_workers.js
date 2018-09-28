@@ -1,30 +1,30 @@
-hqDefine("users/js/mobile_workers", function() {
-    var mobileWorker = function(options) {
+hqDefine("users/js/mobile_workers", function () {
+    var mobileWorker = function (options) {
         var self = ko.mapping.fromJS(options);
 
         self.mark_activated = ko.observable(false);
         self.mark_deactivated = ko.observable(false);
         self.action_error = ko.observable('');
 
-        self.showActivate = ko.computed(function() {
+        self.showActivate = ko.computed(function () {
             return self.action() === 'activate';
         });
 
-        self.showDeactivate = ko.computed(function() {
+        self.showDeactivate = ko.computed(function () {
             return self.action() === 'deactivate';
         });
 
-        self.modifyStatus = function(isActive, button) {
+        self.modifyStatus = function (isActive, button) {
             var urlName = isActive ? 'activate_commcare_user' : 'deactivate_commcare_user',
                 modalId = (isActive ? 'activate_' : 'deactivate_') + self.user_id();
             $(button).addSpinnerToButton();
-             $.ajax({
+            $.ajax({
                 method: 'POST',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse(urlName, self.user_id()),
                 data: {
                     is_active: isActive,
                 },
-                success: function(data) {
+                success: function (data) {
                     $('#' + modalId).modal('hide');
                     if (data.success) {
                         self.mark_activated(isActive);
@@ -34,7 +34,7 @@ hqDefine("users/js/mobile_workers", function() {
                         self.action_error(data.error);
                     }
                 },
-                error: function() {
+                error: function () {
                     $('#' + modalId).modal('hide');
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
@@ -43,7 +43,7 @@ hqDefine("users/js/mobile_workers", function() {
         return self;
     };
 
-    var mobileWorkersList = function() {
+    var mobileWorkersList = function () {
         var self = {};
         self.users = ko.observableArray([]);
 
@@ -58,28 +58,28 @@ hqDefine("users/js/mobile_workers", function() {
         self.notLoaded = ko.observable(true);
         self.projectHasUsers = ko.observable(true);
 
-        self.showProjectHasNoUsers = ko.computed(function() {
+        self.showProjectHasNoUsers = ko.computed(function () {
             return !self.notLoaded() && !self.hasError() && !self.projectHasUsers();
         });
 
-        self.showNoUsers = ko.computed(function() {
+        self.showNoUsers = ko.computed(function () {
             return !self.notLoaded() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
         });
 
-        self.showSpinner = ko.computed(function() {
+        self.showSpinner = ko.computed(function () {
             return self.notLoaded() && !self.hasError();
         });
 
-        self.showTable = ko.computed(function() {
+        self.showTable = ko.computed(function () {
             return !self.notLoaded() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
         });
 
-        self.toggleInactiveOnly = function(inactiveOnly) {
+        self.toggleInactiveOnly = function (inactiveOnly) {
             self.inactiveOnly(inactiveOnly);
             self.goToPage(1);
         };
 
-        self.goToPage = function(page) {
+        self.goToPage = function (page) {
             self.users.removeAll();
             self.hasError(false);
             self.notLoaded(true);
@@ -92,10 +92,10 @@ hqDefine("users/js/mobile_workers", function() {
                     limit: self.itemsPerPage(),
                     showDeactivatedUsers: self.inactiveOnly() ? 1 : 0,
                 },
-                success: function(data) {
+                success: function (data) {
                     self.totalItems(data.total);
                     self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
-                    _.each(data.users, function(user) {
+                    _.each(data.users, function (user) {
                         self.users.push(mobileWorker(user));
                     });
 
@@ -105,17 +105,17 @@ hqDefine("users/js/mobile_workers", function() {
                     self.notLoaded(false);
                     self.hasError(false);
                 },
-                error: function() {
+                error: function () {
                     self.notLoaded(false);
                     self.hasError(true);
-               },
+                },
             });
         };
-         self.goToPage(1);
-         return self;
+        self.goToPage(1);
+        return self;
     };
 
-    $(function() {
+    $(function () {
         $("#mobile-workers-list").koApplyBindings(mobileWorkersList());
     });
 });
