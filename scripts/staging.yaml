@@ -61,6 +61,8 @@ branches:
   - rn_upgrade_select2 # Rohit Sept 26
 #  - rn_test_select2 # Rohit Sept 27
   - qa-customer-billing # Gabriella Sept 27
+  - pv/no-filter-reports # Preethi Sept 28
+  - pv/deac-users-fixes # Preethi Sept 28
 submodules:
   submodules/django-digest-src:
     branches: []
