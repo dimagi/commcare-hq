@@ -110,7 +110,7 @@
         "whens": {
             "0 <= age_in_months AND age_in_months < 12": "0_to_12",
             "12 <= age_in_months AND age_in_months < 36": "12_to_36",
-            "36 <= age_in_months AND age_in_months <= 60": "36_to_60",
+            "36 <= age_in_months AND age_in_months <= 60": "36_to_60"
         }
       },
       {

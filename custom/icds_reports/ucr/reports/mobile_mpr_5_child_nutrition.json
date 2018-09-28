@@ -109,7 +109,7 @@
         "type": "conditional_aggregation",
         "whens": {
             "6 <= age_in_months AND age_in_months < 36": "6_to_36",
-            "36 <= age_in_months AND age_in_months <= 72": "36_to_72",
+            "36 <= age_in_months AND age_in_months <= 72": "36_to_72"
         }
       },
       {
