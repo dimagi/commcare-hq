@@ -21,7 +21,7 @@ class Command(BaseCommand):
             if "vectorlink" in app.domain:
                 continue
 
-            if not isinstance(app, LinkedApplication):
+            if isinstance(app, LinkedApplication):
                 yield app
 
     def handle(self, *args, **options):

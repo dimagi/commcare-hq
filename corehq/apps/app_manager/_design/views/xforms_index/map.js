@@ -10,7 +10,7 @@ function (doc) {
         return;
     }
     if (doc.doc_type === 'Application' ||
-            (doc.doc_type === 'LinkedApplication' && !doc.uses_master_form_ids) {
+            (doc.doc_type === 'LinkedApplication' && !doc.uses_master_form_ids)) {
         if (doc.user_registration) {
             doEmit(doc.user_registration);
         }
