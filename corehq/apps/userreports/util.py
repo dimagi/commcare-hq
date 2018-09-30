@@ -7,9 +7,11 @@ from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
+from django.core.cache import cache
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import DocumentNotFound
+from corehq.apps.userreports.models import DataSourceConfiguration
 
 
 def localize(value, lang):
@@ -224,3 +226,20 @@ def get_static_report_mapping(from_domain, to_domain):
 
 def add_tabbed_text(text):
     return '\t' + '\n\t'.join(text.splitlines(False))
+
+
+def reset_data_source_configurations():
+    cache.set("ucr_pillow_data_source_configurations_reset", True)
+    data_source_configs = [config for config in DataSourceConfiguration.all()
+                           if not config.is_deactivated]
+    cache.set("ucr_pillow_data_source_configurations", data_source_configs)
+    cache.set("ucr_pillow_data_source_configurations_reset", False)
+    return data_source_configs
+
+
+def get_data_source_configurations():
+    data_source_confs = cache.get("ucr_pillow_data_source_configurations")
+    if data_source_confs:
+        return data_source_confs
+    else:
+        return reset_data_source_configurations()
