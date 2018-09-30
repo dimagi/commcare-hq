@@ -1622,13 +1622,6 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-SEARCH_DEACTIVATED_USERS = StaticToggle(
-    'search_deactivated_users',
-    'Allow for searching by deactivating users in form and case reports and exports',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
     'filter_on_groups_and_locations',
     'Filter on groups AND locations in all reports with group and location filters',

@@ -91,6 +91,7 @@ ghdiff==0.4
 graphviz==0.7
 greenlet==0.4.12
 gunicorn==19.9.0
+hiredis==0.2.0
 html5lib==1.0b8
 http-parser==0.8.3        # via restkit
 httpagentparser==1.7.8
