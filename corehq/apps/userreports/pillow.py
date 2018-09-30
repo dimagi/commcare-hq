@@ -122,9 +122,9 @@ class ConfigurableReportTableManagerMixin(object):
             # not waiting on a reset and has not been bootstrapped for the bootstrap_interval
             or (not self.reset_initiated_at and (
                 datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)))
-            # waiting on a reset and request was initiated 5 mins before
+            # waiting on a reset and request was initiated 2 mins before
             or (self.reset_initiated_at and
-                (datetime.utcnow() - self.reset_initiated_at > timedelta(minutes=5)))
+                (datetime.utcnow() - self.reset_initiated_at > timedelta(minutes=2)))
         )
 
     def bootstrap_if_needed(self):
