@@ -153,16 +153,16 @@ def user_can_view_deid_exports(domain, couch_user):
             ))
 
 
-def get_export(domain, export_id, export_class, username=None):
+def get_exports(domain, export_ids, export_class, username=None):
     if export_class in [FormExportInstance, CaseExportInstance]:
-        return export_class.get(export_id)
+        return [export_class.get(export_id) for export_id in export_ids]
     elif export_class is SMSExportInstance:
         if not username:
             raise Exception("Username needed to ensure permissions")
         include_metadata = MESSAGE_LOG_METADATA.enabled(username)
-        return SMSExportInstance._new_from_schema(
+        return [SMSExportInstance._new_from_schema(
             SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
-        )
+        )]
     else:
         raise Exception("Unexpected export cls %s" % export_class)
 
@@ -2127,7 +2127,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     export_class = FormExportInstance
 
     def _get_export(self, domain, export_id):
-        return get_export(domain, export_id, self.export_class)
+        return get_exports(domain, [export_id], self.export_class)[0]
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
@@ -2179,7 +2179,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     export_class = CaseExportInstance
 
     def _get_export(self, domain, export_id):
-        return get_export(domain, export_id, self.export_class)
+        return get_exports(domain, [export_id], self.export_class)[0]
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
@@ -2248,7 +2248,7 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
         return filter_form
 
     def _get_export(self, domain, export_id):
-        return get_export(domain, export_id, self.request.user.username)
+        return get_exports(domain, [export_id], self.request.user.username)[0]
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
