@@ -30,7 +30,6 @@ from .dbaccessors import (
 from .export import get_export_file, rebuild_export, should_rebuild_export
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
-from corehq.apps.export.views import get_exports
 
 from six.moves import filter
 
@@ -43,6 +42,7 @@ def populate_export_download_task(domain, export_ids, export_class, username, fi
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
+    from corehq.apps.export.views import get_exports
     export_instances = get_exports(domain, export_ids, export_class, username)
     domain = export_instances[0].domain
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
