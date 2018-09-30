@@ -125,20 +125,22 @@ class ConfigurableReportTableManagerMixin(object):
             self.bootstrap()
 
     def bootstrap(self, configs=None):
-        configs = self.get_filtered_configs(configs)
-        if not configs:
-            pillow_logging.warning("UCR pillow has no configs to process")
+        with TimingContext() as timer:
+            configs = self.get_filtered_configs(configs)
+            if not configs:
+                pillow_logging.warning("UCR pillow has no configs to process")
 
-        self.table_adapters_by_domain = defaultdict(list)
+            self.table_adapters_by_domain = defaultdict(list)
 
-        for config in configs:
-            self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, can_handle_laboratory=True, raise_errors=True)
-            )
+            for config in configs:
+                self.table_adapters_by_domain[config.domain].append(
+                    get_indicator_adapter(config, can_handle_laboratory=True, raise_errors=True)
+                )
 
-        self.rebuild_tables_if_necessary()
-        self.bootstrapped = True
-        self.last_bootstrapped = datetime.utcnow()
+            self.rebuild_tables_if_necessary()
+            self.bootstrapped = True
+            self.last_bootstrapped = datetime.utcnow()
+        datadog_histogram('commcare.change_feed.bootstrap', timer.duration)
 
     def rebuild_tables_if_necessary(self):
         self._rebuild_sql_tables([
