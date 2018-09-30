@@ -294,7 +294,7 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.goToPage = function (page) {
             if (self.fetchState() === 'pending') {
-                return self.savedApps();
+                return false;
             }
             self.fetchState('pending');
             $.ajax({
