@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 import six
 from alembic.autogenerate.api import compare_metadata
+from django.core.cache import cache
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import KAFKA_TOPICS
@@ -19,7 +20,7 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, reset_data_source_configurations
 from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
@@ -95,6 +96,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
         self.bootstrap_interval = bootstrap_interval
+        self.reset_initiated_at = None
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -117,7 +119,12 @@ class ConfigurableReportTableManagerMixin(object):
     def needs_bootstrap(self):
         return (
             not self.bootstrapped
-            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
+            # not waiting on a reset and has not been bootstrapped for the bootstrap_interval
+            or (not self.reset_initiated_at and (
+                datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)))
+            # waiting on a reset and request was initiated 5 mins before
+            or (self.reset_initiated_at and
+                (datetime.utcnow() - self.reset_initiated_at > timedelta(minutes=5)))
         )
 
     def bootstrap_if_needed(self):
@@ -125,6 +132,14 @@ class ConfigurableReportTableManagerMixin(object):
             self.bootstrap()
 
     def bootstrap(self, configs=None):
+        # if this is not first bootstrap at load and the request to reset has
+        # not been inititated
+        if self.bootstrapped and not self.reset_initiated_at:
+            # if there no reset currently in progress by any other pillow, initiate reset
+            if not cache.get("ucr_pillow_data_source_configurations_reset"):
+                reset_data_source_configurations()
+            self.reset_initiated_at = datetime.utcnow()
+            return
         with TimingContext() as timer:
             configs = self.get_filtered_configs(configs)
             if not configs:
@@ -139,6 +154,7 @@ class ConfigurableReportTableManagerMixin(object):
 
             self.rebuild_tables_if_necessary()
             self.bootstrapped = True
+            self.reset_initiated_at = None
             self.last_bootstrapped = datetime.utcnow()
         datadog_histogram('commcare.change_feed.bootstrap', timer.duration)
 
