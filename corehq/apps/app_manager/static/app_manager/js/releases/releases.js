@@ -293,7 +293,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.goToPage = function (page) {
-            if(self.fetchState() == 'pending') {
+            if (self.fetchState() === 'pending') {
                 return self.savedApps();
             }
             self.fetchState('pending');
