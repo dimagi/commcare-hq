@@ -374,9 +374,12 @@ def track_workflow(email, event, properties=None):
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
-    if analytics_enabled_for_email(email):
-        timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-        _track_workflow_task_v2.delay(email, event, properties, timestamp)
+    try:
+        if analytics_enabled_for_email(email):
+            timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+            _track_workflow_task_v2.delay(email, event, properties, timestamp)
+    except Exception:
+        notify_exception(None, "Error tracking kissmetrics workflow")
 
 
 @analytics_task(serializer='pickle', )
