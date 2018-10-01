@@ -688,7 +688,7 @@ def update_subscription_properties_by_domain(domain):
 
 def update_subscription_properties_by_user(couch_user):
     properties = get_subscription_properties_by_user(couch_user)
-    identify_v2.delay(couch_user.username, properties)
+    identify_v2(couch_user.username, properties)
     update_hubspot_properties_v2(couch_user, properties)
 
 
