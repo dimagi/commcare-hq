@@ -5,19 +5,19 @@
 #    `make requirements` or `make upgrade-requirements`
 #
 git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
-alembic==0.8.6
+alembic==1.0.0
 amqp==1.4.9
 anyjson==0.3.3
 appdirs==1.4.3
 asn1crypto==0.24.0
-attrs==18.1.0
+attrs==18.2.0
 babel==2.6.0
 backports-abc==0.5        # via tornado
 backports.shutil-get-terminal-size==1.0.0  # via ipython
 billiard==3.3.0.23
 boto3==1.4.4
 botocore==1.5.95
-cached-property==1.4.3
+cached-property==1.5.1
 celery==3.1.25
 certifi==2018.8.24
 cffi==1.11.5
@@ -28,10 +28,10 @@ contextlib2==0.5.4
 cryptography==2.3.1
 csiphash==0.0.5
 csv342==1.0.0
-cython==0.27.3
-datadog==0.15.0
-decorator==4.0.11
-defusedxml==0.4.1
+cython==0.28.5
+datadog==0.22.0
+decorator==4.3.0
+defusedxml==0.5.0
 diff-match-patch==20120106
 dimagi-memoized==1.1.1
 django-angular==0.7.16
@@ -45,26 +45,26 @@ django-crispy-forms==1.7.0
 django-cte==1.1.4
 django-formtools==2.1
 django-otp==0.3.13
-django-partial-index==0.4.0
+django-partial-index==0.5.2
 django-phonenumber-field==1.3.0
 django-prbac==0.0.7
 django-ranged-response==0.2.0
 django-redis-sessions==0.6.1
 django-redis==4.9.0
-django-simple-captcha==0.5.7
+django-simple-captcha==0.5.9
 django-statici18n==1.3.0
-django-tastypie==0.14.0
+django-tastypie==0.14.2
 django-transfer==0.4
 django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
 django-websocket-redis==0.5.2
-django==1.11.14
-djangorestframework==3.5.4
+django==1.11.15
+djangorestframework==3.8.2
 dnspython==1.15.0
 docutils==0.14
 dropbox==7.3.1
 elasticsearch==1.9.0
-email_validator==1.0.2
+email_validator==1.0.3
 enum34==1.1.6
 errand-boy==0.3.8
 et-xmlfile==1.0.1
@@ -79,20 +79,19 @@ gevent==1.2.2
 ghdiff==0.4
 greenlet==0.4.12
 gunicorn==19.9.0
-hiredis==0.2.0
 html5lib==1.0b8
 httpagentparser==1.7.8
 idna==2.7
 ipaddress==1.0.22
 ipython-genutils==0.2.0   # via traitlets
 ipython==5.2.2
-iso8601==0.1.11
+iso8601==0.1.12
 isodate==0.6.0
 jdcal==1.4
-jinja2==2.8
+jinja2==2.10
 jmespath==0.9.3
 json-delta==2.0
-jsonfield==1.0.3
+jsonfield==2.0.2
 jsonobject-couchdbkit==0.9.9
 jsonobject==0.9.4
 jsonpath-rw==1.4.0
@@ -106,25 +105,25 @@ markupsafe==1.0
 mock==2.0.0
 monotonic==1.5            # via eventlet
 ndg-httpsclient==0.5.1
-newrelic==4.2.0.100
+newrelic==4.4.1.104
 numpy==1.7.1
-openpyxl==2.5.3
+openpyxl==2.5.8
 pathlib2==2.3.2           # via ipython, pickleshare
 pbr==4.2.0
 pexpect==4.6.0            # via ipython
-phonenumberslite==8.8.9
-pickleshare==0.7.4        # via ipython
+phonenumberslite==8.9.12
+pickleshare==0.7.5        # via ipython
 pillow==5.2.0
 ply==3.11
 polib==1.1.0
 prompt-toolkit==1.0.15    # via ipython
 psycogreen==1.0
-psycopg2==2.7.3.1
+psycopg2==2.7.5
 ptyprocess==0.6.0         # via pexpect
 py-kissmetrics==1.0.1
 pyasn1==0.4.4
 pycco==0.5.1
-pycparser==2.18
+pycparser==2.19
 pycryptodome==3.6.6
 pygithub==1.35
 pygments==2.0.2
@@ -136,33 +135,32 @@ pystache==0.5.4
 python-dateutil==2.6.1
 python-editor==1.0.3
 python-levenshtein==0.12.0
-python-magic==0.4.13
+python-magic==0.4.15
 python-mimeparse==1.6.0
 pytz==2017.2
-pyyaml==3.12
+pyyaml==3.13
 pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache==0.5.1
-raven==6.1.0
+raven==6.9.0
 rcssmin==1.0.6
 redis==2.10.6
 reportlab==3.0
 requests-toolbelt==0.8.0
-requests[security]==2.10.0
+requests[security]==2.19.1
 rjsmin==1.0.12
 s3transfer==0.1.13
 scandir==1.9.0            # via pathlib2
 setproctitle==1.1.9
 sh==1.09
-simpleeval==0.9.5
+simpleeval==0.9.6
 simplegeneric==0.8.1      # via ipython
-simplejson==3.11.1
+simplejson==3.16.0
 singledispatch==3.4.0.3   # via tornado
 six==1.11.0
 smartypants==2.0.1
-socketpool==0.5.3
 sqlagg==0.10.5
-sqlalchemy==1.2.9
+sqlalchemy==1.2.12
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2
@@ -172,12 +170,12 @@ traitlets==4.3.2          # via ipython
 tropo-webapi-python==0.1.3
 twilio==6.5.1
 ua-parser==0.8.0
-unidecode==0.04.20
+unidecode==1.0.22
 urllib3==1.23
 user-agents==1.1.0
 uwsgi==2.0.11.2
 wcwidth==0.1.7            # via prompt-toolkit
-werkzeug==0.11.15
+werkzeug==0.14.1
 xhtml2pdf==0.0.6
 xlrd==1.0.0
 xlwt==1.3.0
@@ -185,4 +183,4 @@ zeep==1.6.0
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==18.0
-setuptools==40.2.0        # via django-simple-captcha, django-websocket-redis, ipython, python-levenshtein
+setuptools==40.4.3        # via django-websocket-redis, ipython, python-levenshtein
