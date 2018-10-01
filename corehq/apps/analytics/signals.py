@@ -40,7 +40,7 @@ def user_save_callback(sender, **kwargs):
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
         identify_v2.delay(couch_user.username, properties)
-        update_hubspot_properties_v2(couch_user, properties)
+        update_hubspot_properties_v2.delay(couch_user, properties)
 
 
 @receiver(commcare_domain_post_save)
