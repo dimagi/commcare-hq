@@ -217,7 +217,7 @@ def update_subscriptions():
     warn_subscriptions_still_active()
     warn_subscriptions_not_active()
     warn_active_subscriptions_per_domain_not_one()
-    warn_subscriptions_without_active_domain()
+    warn_subscriptions_without_domain()
 
 
 @periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
