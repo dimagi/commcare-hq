@@ -15,7 +15,7 @@ babel==2.6.0              # via django-phonenumber-field
 billiard==3.3.0.23        # via celery
 boto3==1.4.4
 botocore==1.5.95          # via boto3, s3transfer
-cached-property==1.4.3    # via zeep
+cached-property==1.5.1    # via zeep
 celery==3.1.25
 cffi==1.11.5              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff
@@ -55,7 +55,7 @@ django-transfer==0.4
 django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
 django-websocket-redis==0.5.2
-django==1.11.14
+django==1.11.16
 djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14            # via botocore
@@ -109,7 +109,7 @@ psycopg2==2.7.3.1
 py-kissmetrics==1.0.1
 pyasn1==0.4.4             # via ndg-httpsclient, requests
 pycco==0.5.1
-pycparser==2.18           # via cffi
+pycparser==2.19           # via cffi
 pycryptodome==3.6.6
 pygithub==1.35
 pygments==2.0.2

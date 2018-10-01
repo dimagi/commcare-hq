@@ -17,7 +17,7 @@ backports.shutil-get-terminal-size==1.0.0  # via ipython
 billiard==3.3.0.23
 boto3==1.4.4
 botocore==1.5.95
-cached-property==1.4.3
+cached-property==1.5.1
 celery==3.1.25
 certifi==2018.8.24
 cffi==1.11.5
@@ -58,7 +58,7 @@ django-transfer==0.4
 django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
 django-websocket-redis==0.5.2
-django==1.11.14
+django==1.11.16
 djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14
@@ -106,14 +106,14 @@ markupsafe==1.0
 mock==2.0.0
 monotonic==1.5            # via eventlet
 ndg-httpsclient==0.5.1
-newrelic==4.2.0.100
+newrelic==4.4.1.104
 numpy==1.7.1
 openpyxl==2.5.3
 pathlib2==2.3.2           # via ipython, pickleshare
 pbr==4.2.0
 pexpect==4.6.0            # via ipython
 phonenumberslite==8.8.9
-pickleshare==0.7.4        # via ipython
+pickleshare==0.7.5        # via ipython
 pillow==5.2.0
 ply==3.11
 polib==1.1.0
@@ -124,7 +124,7 @@ ptyprocess==0.6.0         # via pexpect
 py-kissmetrics==1.0.1
 pyasn1==0.4.4
 pycco==0.5.1
-pycparser==2.18
+pycparser==2.19
 pycryptodome==3.6.6
 pygithub==1.35
 pygments==2.0.2
@@ -185,4 +185,4 @@ zeep==1.6.0
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==18.0
-setuptools==40.2.0        # via django-simple-captcha, django-websocket-redis, ipython, python-levenshtein
+setuptools==40.4.3        # via django-simple-captcha, django-websocket-redis, ipython, python-levenshtein

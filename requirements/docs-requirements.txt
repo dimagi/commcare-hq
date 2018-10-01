@@ -16,7 +16,7 @@ babel==2.6.0
 billiard==3.3.0.23
 boto3==1.4.4
 botocore==1.5.95
-cached-property==1.4.3
+cached-property==1.5.1
 celery==3.1.25
 cffi==1.11.5
 chardet==3.0.4
@@ -57,7 +57,7 @@ django-transfer==0.4
 django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
 django-websocket-redis==0.5.2
-django==1.11.14
+django==1.11.16
 djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14
@@ -79,7 +79,7 @@ hiredis==0.2.0
 html5lib==1.0b8
 httpagentparser==1.7.8
 idna==2.7
-imagesize==1.0.0          # via sphinx
+imagesize==1.1.0          # via sphinx
 ipaddress==1.0.22
 iso8601==0.1.11
 isodate==0.6.0
@@ -102,7 +102,7 @@ mock==2.0.0
 ndg-httpsclient==0.5.1
 numpy==1.7.1
 openpyxl==2.5.3
-packaging==17.1           # via sphinx
+packaging==18.0           # via sphinx
 pbr==4.2.0
 phonenumberslite==8.8.9
 pillow==5.2.0
@@ -113,14 +113,14 @@ psycopg2==2.7.3.1
 py-kissmetrics==1.0.1
 pyasn1==0.4.4
 pycco==0.5.1
-pycparser==2.18
+pycparser==2.19
 pycryptodome==3.6.6
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
 pyjwt==1.6.4
 pyopenssl==18.0.0
-pyparsing==2.2.0          # via packaging
+pyparsing==2.2.2          # via packaging
 pypdf2==1.26.0
 pystache==0.5.4
 python-dateutil==2.6.1
