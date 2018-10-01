@@ -11,6 +11,7 @@
     {% initial_page_data 'payment_error_messages' payment_error_messages %}
     {% initial_page_data 'item_creation_allowed' pagination.create.is_allowed %}
     {% initial_page_data 'total_balance' total_balance %}
+    {% initial_page_data 'show_plan' show_plan %}
 
     <div id="currentBalanceSection">
         <h2>{% trans 'Total Due:' %}
@@ -62,7 +63,9 @@
 {% block pagination_templates %}
     <script type="text/html" id="statement-row-template">
         <td class="col-sm-2" data-bind="text: invoice_number"></td>
-        <td class="col-sm-2" data-bind="text: plan.name"></td>
+        {% if show_plan %}
+            <td class="col-sm-2" data-bind="text: plan.name"></td>
+        {% endif %}
         <td class="col-sm-3">
             <span data-bind="text: start"></span> - <span data-bind="text: end"></span>
         </td>
