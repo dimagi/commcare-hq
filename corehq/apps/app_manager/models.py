@@ -6569,10 +6569,10 @@ class LinkedApplication(Application):
     linked_app_translations = DictProperty()  # corresponding property: translations
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
 
-    # if `uses_master_form_ids` is True, the form id might match the master's form id
+    # if `uses_master_app_form_ids` is True, the form id might match the master's form id
     # from a bug years ago. These should be fixed when mobile can handle the change
     # https://manage.dimagi.com/default.asp?283410
-    uses_master_form_ids = BooleanProperty(default=False)
+    uses_master_app_form_ids = BooleanProperty(default=False)
 
     @property
     @memoized

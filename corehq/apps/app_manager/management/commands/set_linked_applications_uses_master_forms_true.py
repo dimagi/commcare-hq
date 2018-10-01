@@ -26,5 +26,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for app in self._iter_linked_apps():
-            app.uses_master_form_ids = True
+            app.uses_master_app_form_ids = True
             app.save()
