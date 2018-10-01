@@ -13,7 +13,7 @@ from celery.task import periodic_task
 from django.conf import settings
 from django.core.management import call_command
 
-from corehq.apps.accounting.models import Subscriber, Subscription
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
