@@ -8,7 +8,7 @@
     "softlayer",
     "icds-new"
   ],
-  "report_id": "static-mobile_mpr_6ac_pse_attendance",
+  "report_id": "static-mpr_6ac_pse_attendance",
   "data_source_table": "static-child_cases_monthly_v2",
   "config": {
     "title": "MPR 6ac - PSE Attendance 3 to 6 (Static)",

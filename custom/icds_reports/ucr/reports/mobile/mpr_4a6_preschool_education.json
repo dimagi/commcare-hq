@@ -8,31 +8,22 @@
     "softlayer",
     "icds-new"
   ],
-  "report_id": "static-mobile_mpr_7_growth_monitored",
-  "data_source_table": "static-gm_forms",
+  "report_id": "static-mpr_4a6_preschool_education",
+  "data_source_table": "static-daily_feeding_forms",
   "config": {
-    "title": "MPR 7 - Growth Monitored (Static)",
+    "title": "MPR 4a,6 - Pre-School Education (Static)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
       "owner_id",
-      "month",
-      "age_group"
+      "month"
     ],
     "filters": [
       {
-        "slug": "age_in_months_in_bounds",
-        "type": "pre",
-        "field": "age_in_months",
-        "pre_operator": "between",
-        "pre_value": [0, 60],
-        "datatype": "integer"
-      },
-      {
-        "display": "Date Last Weighed",
-        "slug": "last_date_gmp",
+        "display": "Date Form Submitted",
+        "slug": "submitted_on",
         "type": "date",
-        "field": "last_date_gmp",
+        "field": "submitted_on",
         "datatype": "date"
       },
       {
@@ -100,64 +91,62 @@
         "display": "Month",
         "column_id": "month",
         "type": "aggregate_date",
-        "field": "last_date_gmp",
+        "field": "submitted_on",
         "format": "%Y-%m"
       },
       {
-        "display": "Age Group",
-        "column_id": "age_group",
-        "type": "conditional_aggregation",
-        "whens": {
-            "0 <= age_in_months AND age_in_months < 12": "0_to_12",
-            "12 <= age_in_months AND age_in_months < 36": "12_to_36",
-            "36 <= age_in_months AND age_in_months <= 60": "36_to_60"
-        }
-      },
-      {
-        "display": "M_resident_weighed_count",
-        "column_id": "M_resident_weighed_count",
+        "display": "awc_open_count",
+        "column_id": "awc_open_count",
         "type": "field",
-        "field": "M_resident_weighed_count",
+        "field": "awc_open_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "F_resident_weighed_count",
-        "column_id": "F_resident_weighed_count",
+        "display": "open_bfast_count",
+        "column_id": "open_bfast_count",
         "type": "field",
-        "field": "F_resident_weighed_count",
+        "field": "open_bfast_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "M_mod_resident_weighed_count",
-        "column_id": "M_mod_resident_weighed_count",
+        "display": "open_hotcooked_count",
+        "column_id": "open_hotcooked_count",
         "type": "field",
-        "field": "M_mod_resident_weighed_count",
+        "field": "open_hotcooked_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "F_mod_resident_weighed_count",
-        "column_id": "F_mod_resident_weighed_count",
+        "display": "days_thr_provided_count",
+        "column_id": "days_thr_provided_count",
         "type": "field",
-        "field": "F_mod_resident_weighed_count",
+        "field": "days_thr_provided_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "M_sev_resident_weighed_count",
-        "column_id": "M_sev_resident_weighed_count",
+        "display": "open_pse_count",
+        "column_id": "open_pse_count",
         "type": "field",
-        "field": "M_sev_resident_weighed_count",
+        "field": "open_pse_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "F_sev_resident_weighed_count",
-        "column_id": "F_sev_resident_weighed_count",
+        "display": "open_four_acts_count",
+        "column_id": "open_four_acts_count",
         "type": "field",
-        "field": "F_sev_resident_weighed_count",
+        "field": "open_four_acts_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "open_one_acts_count",
+        "column_id": "open_one_acts_count",
+        "type": "field",
+        "field": "open_one_acts_count",
         "aggregation": "sum",
         "calculate_total": true
       }

@@ -8,7 +8,7 @@
     "softlayer",
     "icds-new"
   ],
-  "report_id": "static-mobile_mpr_9_vhnd",
+  "report_id": "static-mpr_9_vhnd",
   "data_source_table": "static-vhnd_form",
   "config": {
     "title": "MPR 9 - VHND (Static)",

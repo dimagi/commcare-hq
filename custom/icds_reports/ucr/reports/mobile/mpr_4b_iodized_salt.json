@@ -8,10 +8,10 @@
     "softlayer",
     "icds-new"
   ],
-  "report_id": "static-mobile_mpr_3i_pregnancies",
-  "data_source_table": "static-person_cases_v2",
+  "report_id": "static-mpr_4b_iodized_salt",
+  "data_source_table": "static-infrastructure_form",
   "config": {
-    "title": "MPR 3i - Pregnancies Registered (Static)",
+    "title": "MPR 4b - AWC Uses Iodized Salt (Static)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
@@ -20,10 +20,10 @@
     ],
     "filters": [
       {
-        "display": "Date Case Opened",
-        "slug": "opened_on",
+        "display": "Date Form Submitted",
+        "slug": "submitted_on",
         "type": "date",
-        "field": "opened_on",
+        "field": "submitted_on",
         "datatype": "date"
       },
       {
@@ -80,7 +80,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -91,24 +91,15 @@
         "display": "Month",
         "column_id": "month",
         "type": "aggregate_date",
-        "field": "opened_on",
+        "field": "submitted_on",
         "format": "%Y-%m"
       },
       {
-        "display": "pregnant_resident_count",
-        "column_id": "pregnant_resident_count",
+        "display": "use_salt",
+        "column_id": "use_salt",
         "type": "field",
-        "field": "pregnant_resident_count",
-        "aggregation": "sum",
-        "calculate_total": true
-      },
-      {
-        "display": "pregnant_migrant_count",
-        "column_id": "pregnant_migrant_count",
-        "type": "field",
-        "field": "pregnant_migrant_count",
-        "aggregation": "sum",
-        "calculate_total": true
+        "field": "use_salt",
+        "aggregation": "sum"
       }
     ],
     "sort_expression": [],

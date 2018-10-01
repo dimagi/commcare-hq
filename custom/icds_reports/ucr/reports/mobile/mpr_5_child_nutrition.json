@@ -8,23 +8,25 @@
     "softlayer",
     "icds-new"
   ],
-  "report_id": "static-mobile_mpr_5_pregnancy_nutrition",
-  "data_source_table": "static-ccs_record_cases_monthly_v2",
+  "report_id": "static-mpr_5_child_nutrition",
+  "data_source_table": "static-child_cases_monthly_v2",
   "config": {
-    "title": "MPR 5 - Pregnancy Nutrition (Static)",
+    "title": "MPR 5 - Child Nutrition (Static)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
       "owner_id",
-      "month"
+      "month",
+      "age_group"
     ],
     "filters": [
       {
-        "display": "Age in Months",
-        "slug": "age_in_months",
-        "type": "numeric",
+        "slug": "age_in_months_in_bounds",
+        "type": "pre",
         "field": "age_in_months",
-        "datatype": "date"
+        "pre_operator": "between",
+        "pre_value": [6, 72],
+        "datatype": "integer"
       },
       {
         "display": "Month for Data",
@@ -102,160 +104,167 @@
         "format": "%Y-%m"
       },
       {
-        "display": "thr_rations_pregnant_st",
-        "column_id": "thr_rations_pregnant_st",
+        "display": "Age Group",
+        "column_id": "age_group",
+        "type": "conditional_aggregation",
+        "whens": {
+            "6 <= age_in_months AND age_in_months < 36": "6_to_36",
+            "36 <= age_in_months AND age_in_months <= 72": "36_to_72"
+        }
+      },
+      {
+        "display": "thr_rations_male_st",
+        "column_id": "thr_rations_male_st",
         "type": "field",
-        "field": "thr_rations_pregnant_st",
+        "field": "thr_rations_male_st",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_lactating_st",
-        "column_id": "thr_rations_lactating_st",
+        "display": "thr_rations_female_st",
+        "column_id": "thr_rations_female_st",
         "type": "field",
-        "field": "thr_rations_lactating_st",
+        "field": "thr_rations_female_st",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_pregnant_sc",
-        "column_id": "thr_rations_pregnant_sc",
+        "display": "thr_rations_male_sc",
+        "column_id": "thr_rations_male_sc",
         "type": "field",
-        "field": "thr_rations_pregnant_sc",
+        "field": "thr_rations_male_sc",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_lactating_sc",
-        "column_id": "thr_rations_lactating_sc",
+        "display": "thr_rations_female_sc",
+        "column_id": "thr_rations_female_sc",
         "type": "field",
-        "field": "thr_rations_lactating_sc",
+        "field": "thr_rations_female_sc",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_pregnant_others",
-        "column_id": "thr_rations_pregnant_others",
+        "display": "thr_rations_male_others",
+        "column_id": "thr_rations_male_others",
         "type": "field",
-        "field": "thr_rations_pregnant_others",
+        "field": "thr_rations_male_others",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_lactating_others",
-        "column_id": "thr_rations_lactating_others",
+        "display": "thr_rations_female_others",
+        "column_id": "thr_rations_female_others",
         "type": "field",
-        "field": "thr_rations_lactating_others",
+        "field": "thr_rations_female_others",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_pregnant_disabled",
-        "column_id": "thr_rations_pregnant_disabled",
+        "display": "thr_rations_male_disabled",
+        "column_id": "thr_rations_male_disabled",
         "type": "field",
-        "field": "thr_rations_pregnant_disabled",
+        "field": "thr_rations_male_disabled",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_lactating_disabled",
-        "column_id": "thr_rations_lactating_disabled",
+        "display": "thr_rations_female_disabled",
+        "column_id": "thr_rations_female_disabled",
         "type": "field",
-        "field": "thr_rations_lactating_disabled",
+        "field": "thr_rations_female_disabled",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_pregnant_minority",
-        "column_id": "thr_rations_pregnant_minority",
+        "display": "thr_rations_male_minority",
+        "column_id": "thr_rations_male_minority",
         "type": "field",
-        "field": "thr_rations_pregnant_minority",
+        "field": "thr_rations_male_minority",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_lactating_minority",
-        "column_id": "thr_rations_lactating_minority",
+        "display": "thr_rations_female_minority",
+        "column_id": "thr_rations_female_minority",
         "type": "field",
-        "field": "thr_rations_lactating_minority",
+        "field": "thr_rations_female_minority",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_absent_pregnant",
-        "column_id": "thr_rations_absent_pregnant",
+        "display": "thr_rations_absent_male",
+        "column_id": "thr_rations_absent_male",
         "type": "field",
-        "field": "thr_rations_absent_pregnant",
+        "field": "thr_rations_absent_male",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_absent_lactating",
-        "column_id": "thr_rations_absent_lactating",
+        "display": "thr_rations_absent_female",
+        "column_id": "thr_rations_absent_female",
         "type": "field",
-        "field": "thr_rations_absent_lactating",
+        "field": "thr_rations_absent_female",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_partial_pregnant",
-        "column_id": "thr_rations_partial_pregnant",
+        "display": "thr_rations_partial_male",
+        "column_id": "thr_rations_partial_male",
         "type": "field",
-        "field": "thr_rations_partial_pregnant",
+        "field": "thr_rations_partial_male",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_partial_lactating",
-        "column_id": "thr_rations_partial_lactating",
+        "display": "thr_rations_partial_female",
+        "column_id": "thr_rations_partial_female",
         "type": "field",
-        "field": "thr_rations_partial_lactating",
+        "field": "thr_rations_partial_female",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_migrant_pregnant",
-        "column_id": "thr_rations_migrant_pregnant",
+        "display": "thr_rations_migrant_male",
+        "column_id": "thr_rations_migrant_male",
         "type": "field",
-        "field": "thr_rations_migrant_pregnant",
+        "field": "thr_rations_migrant_male",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_rations_migrant_lactating",
-        "column_id": "thr_rations_migrant_lactating",
+        "display": "thr_rations_migrant_female",
+        "column_id": "thr_rations_migrant_female",
         "type": "field",
-        "field": "thr_rations_migrant_lactating",
+        "field": "thr_rations_migrant_female",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "column_id": "pregnant",
+        "column_id": "child_count_female",
         "type": "field",
-        "field": "pregnant",
+        "field": "child_count_female",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "column_id": "lactating",
+        "column_id": "child_count_male",
         "type": "field",
-        "field": "lactating",
+        "field": "child_count_male",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_total_rations_pregnant",
-        "column_id": "thr_total_rations_pregnant",
+        "column_id": "thr_total_rations_female",
         "type": "field",
-        "field": "thr_total_rations_pregnant",
+        "field": "thr_total_rations_female",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "thr_total_rations_lactating",
-        "column_id": "thr_total_rations_lactating",
+        "column_id": "thr_total_rations_male",
         "type": "field",
-        "field": "thr_total_rations_lactating",
+        "field": "thr_total_rations_male",
         "aggregation": "sum",
         "calculate_total": true
       }

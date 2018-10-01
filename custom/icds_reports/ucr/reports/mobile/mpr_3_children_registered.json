@@ -8,23 +8,32 @@
     "softlayer",
     "icds-new"
   ],
-  "report_id": "static-mobile_mpr_11_awc_visits",
-  "data_source_table": "static-visitorbook_forms",
+  "report_id": "static-mpr_3_children_registered",
+  "data_source_table": "static-person_cases_v2",
   "config": {
-    "title": "MPR 11 - AWC Visits (Static)",
-    "description": "",
+    "title": "MPR 3 - Children Registered (Static)",
+    "description": "New children registered during month.  Displays person cases grouped by month opened, owner ID, and age group at time of registration",
     "visible": false,
     "aggregation_columns": [
       "owner_id",
-      "month"
+      "month",
+      "age_group"
     ],
     "filters": [
       {
-        "display": "Submission Date",
-        "slug": "submitted_on",
+        "display": "Date Case Opened",
+        "slug": "opened_on",
         "type": "date",
-        "field": "submitted_on",
+        "field": "opened_on",
         "datatype": "date"
+      },
+      {
+        "slug": "age_at_registration_in_bounds",
+        "type": "pre",
+        "field": "age_at_reg",
+        "pre_operator": "between",
+        "pre_value": [0, 6],
+        "datatype": "integer"
       },
       {
         "display": "Filter by AWW",
@@ -80,7 +89,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "awc_id",
+        "field": "owner_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -91,78 +100,49 @@
         "display": "Month",
         "column_id": "month",
         "type": "aggregate_date",
-        "field": "submitted_on",
+        "field": "opened_on",
         "format": "%Y-%m"
       },
       {
-        "display": "submitted_on",
-        "column_id": "submitted_on",
-        "type": "field",
-        "field": "submitted_on",
-        "aggregation": "max"
+        "display": "Age Group",
+        "column_id": "age_group",
+        "type": "conditional_aggregation",
+        "whens": {
+            "0 <= age_at_reg AND age_at_reg < 3": "0_to_3",
+            "3 <= age_at_reg AND age_at_reg <= 6": "3_to_6"
+        }
       },
       {
-        "display": "visitor_icds_sup",
-        "column_id": "visitor_icds_sup",
+        "display": "F_resident_count",
+        "column_id": "F_resident_count",
         "type": "field",
-        "field": "visitor_icds_sup",
-        "aggregation": "max"
+        "field": "F_resident_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "display": "visitor_anm",
-        "column_id": "visitor_anm",
+        "display": "M_resident_count",
+        "column_id": "M_resident_count",
         "type": "field",
-        "field": "visitor_anm",
-        "aggregation": "max"
+        "field": "M_resident_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "display": "visitor_health_sup",
-        "column_id": "visitor_health_sup",
+        "display": "F_migrant_count",
+        "column_id": "F_migrant_count",
         "type": "field",
-        "field": "visitor_health_sup",
-        "aggregation": "max"
+        "field": "F_migrant_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "display": "visitor_cdpo",
-        "column_id": "visitor_cdpo",
+        "display": "M_migrant_count",
+        "column_id": "M_migrant_count",
         "type": "field",
-        "field": "visitor_cdpo",
-        "aggregation": "max"
-      },
-      {
-        "display": "visitor_med_officer",
-        "column_id": "visitor_med_officer",
-        "type": "field",
-        "field": "visitor_med_officer",
-        "aggregation": "max"
-      },
-      {
-        "display": "visitor_dpo",
-        "column_id": "visitor_dpo",
-        "type": "field",
-        "field": "visitor_dpo",
-        "aggregation": "max"
-      },
-      {
-        "display": "visitor_officer_state",
-        "column_id": "visitor_officer_state",
-        "type": "field",
-        "field": "visitor_officer_state",
-        "aggregation": "max"
-      },
-      {
-        "display": "visitor_officer_central",
-        "column_id": "visitor_officer_central",
-        "type": "field",
-        "field": "visitor_officer_central",
-        "aggregation": "max"
-      },
-      {
-        "display": "visitor_other",
-        "column_id": "visitor_other",
-        "type": "field",
-        "field": "visitor_other",
-        "aggregation": "max"
+        "field": "M_migrant_count",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],
