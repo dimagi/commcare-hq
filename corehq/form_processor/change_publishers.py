@@ -9,8 +9,8 @@ from corehq.form_processor.signals import sql_case_post_save
 from pillowtop.feed.interface import ChangeMeta
 
 
-def publish_form_saved(form, flush=True):
-    producer.send_change(topics.FORM_SQL, change_meta_from_sql_form(form), flush)
+def publish_form_saved(form):
+    producer.send_change(topics.FORM_SQL, change_meta_from_sql_form(form))
 
 
 def change_meta_from_sql_form(form):
@@ -36,12 +36,26 @@ def publish_form_deleted(domain, form_id):
     ))
 
 
-def publish_case_saved(case, send_post_save_signal=True, flush=True):
+def publish_case_saved(case, send_post_save_signal=True):
     """
     Publish the change to kafka and run case post-save signals.
     """
-    producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case), flush)
+    producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case))
     if send_post_save_signal:
+        sql_case_post_save.send(case.__class__, case=case)
+
+
+def publish_cases_saved(cases):
+    """
+    Publish the change to kafka and run case post-save signals.
+    """
+    for case in cases:
+        producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case), flush=False)
+
+    if cases:
+        producer.flush_changes(metadata={'domain': case[0].domain})
+
+    for case in cases:
         sql_case_post_save.send(case.__class__, case=case)
 
 
@@ -72,6 +86,16 @@ def publish_ledger_v2_saved(ledger_value, flush=True):
     producer.send_change(topics.LEDGER, change_meta_from_ledger_v2(
         ledger_value.ledger_reference, ledger_value.domain
     ), flush)
+
+
+def publish_ledgers_v2_saved(ledger_values):
+    for ledger_value in ledger_values:
+        producer.send_change(topics.LEDGER, change_meta_from_ledger_v2(
+            ledger_value.ledger_reference, ledger_value.domain
+        ))
+
+    if ledger_values:
+        producer.flush_changes(metadata={'domain': ledger_values[0].domain})
 
 
 def publish_ledger_v2_deleted(domain, case_id, section_id, entry_id):

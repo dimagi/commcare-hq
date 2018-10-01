@@ -16,7 +16,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
+    publish_form_saved, publish_case_saved, publish_cases_saved, publish_ledgers_v2_saved)
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
@@ -152,16 +152,12 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def publish_changes_to_kafka(processed_forms, cases, stock_result):
-        from corehq.apps.change_feed.producer import producer
-        publish_form_saved(processed_forms.submitted, flush=False)
-        cases = cases or []
-        for case in cases:
-            publish_case_saved(case, flush=False)
+        publish_form_saved(processed_forms.submitted)
+        if cases:
+            publish_cases_saved(cases)
 
         if stock_result:
-            for ledger in stock_result.models_to_save:
-                publish_ledger_v2_saved(ledger, flush=False)
-        producer.flush_changes(metadata={'domain': processed_forms.submitted.domain})
+            publish_ledgers_v2_saved(stock_result.models_to_save)
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
