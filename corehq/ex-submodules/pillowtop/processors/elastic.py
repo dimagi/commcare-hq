@@ -11,6 +11,9 @@ from pillowtop.logger import pillow_logging
 from .interface import PillowProcessor
 
 
+from corehq.apps.change_feed.document_types import is_deletion
+
+
 def identity(x):
     return x
 
@@ -38,6 +41,10 @@ class ElasticProcessor(PillowProcessor):
 
         ensure_document_exists(change)
         ensure_matched_revisions(change, doc)
+
+        if is_deletion(doc):
+            self._delete_doc_if_exists(change.id)
+            return
 
         if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
             return
