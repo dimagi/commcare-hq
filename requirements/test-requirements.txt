@@ -60,8 +60,8 @@ django-transfer==0.4
 django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
 django-websocket-redis==0.5.2
-django==1.11.15
-djangorestframework==3.8.2
+django==1.11.16
+djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14
 dropbox==7.3.1
