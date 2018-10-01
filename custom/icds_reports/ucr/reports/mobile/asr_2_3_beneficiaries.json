@@ -23,290 +23,200 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
         "display": "Date of Birth",
-        "field": "dob",
+        "slug": "dob",
         "type": "date",
-        "slug": "dob"
+        "field": "dob",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by AWW",
         "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by AWW"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Supervisor",
         "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by Supervisor"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Block",
         "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by Block"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by District",
         "slug": "district_id",
+        "type": "dynamic_choice_list",
         "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by District"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by State",
         "slug": "state_id",
+        "type": "dynamic_choice_list",
         "field": "state_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by State"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "owner_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "owner_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "open_count",
         "column_id": "open_count",
+        "type": "field",
         "field": "open_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "open_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_st_count",
         "column_id": "F_st_count",
+        "type": "field",
         "field": "F_st_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "F_st_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_sc_count",
         "column_id": "F_sc_count",
+        "type": "field",
         "field": "F_sc_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "F_sc_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_other_count",
         "column_id": "F_other_count",
+        "type": "field",
         "field": "F_other_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "F_other_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_minority_count",
         "column_id": "F_minority_count",
+        "type": "field",
         "field": "F_minority_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "F_minority_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_disabled_count",
         "column_id": "F_disabled_count",
+        "type": "field",
         "field": "F_disabled_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "F_disabled_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_st_count",
         "column_id": "M_st_count",
+        "type": "field",
         "field": "M_st_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "M_st_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_sc_count",
         "column_id": "M_sc_count",
+        "type": "field",
         "field": "M_sc_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "M_sc_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_other_count",
         "column_id": "M_other_count",
+        "type": "field",
         "field": "M_other_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "M_other_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_minority_count",
         "column_id": "M_minority_count",
+        "type": "field",
         "field": "M_minority_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "M_minority_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_disabled_count",
         "column_id": "M_disabled_count",
+        "type": "field",
         "field": "M_disabled_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "M_disabled_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_movement_count",
         "column_id": "disabled_movement_count",
+        "type": "field",
         "field": "disabled_movement_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "disabled_movement_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_mental_count",
         "column_id": "disabled_mental_count",
+        "type": "field",
         "field": "disabled_mental_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "disabled_mental_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_seeing_count",
         "column_id": "disabled_seeing_count",
+        "type": "field",
         "field": "disabled_seeing_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "disabled_seeing_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_hearing_count",
         "column_id": "disabled_hearing_count",
-        "field": "disabled_hearing_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "disabled_hearing_count"
+        "field": "disabled_hearing_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_speaking_count",
         "column_id": "disabled_speaking_count",
-        "field": "disabled_speaking_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "disabled_speaking_count"
+        "field": "disabled_speaking_count",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],
