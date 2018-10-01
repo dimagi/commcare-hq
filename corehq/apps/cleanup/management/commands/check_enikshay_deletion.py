@@ -150,7 +150,7 @@ def _check_soft_deleted_sql_forms(domain_name):
 
 def _check_elasticsearch(domain_name):
     def _check_index(hqESQuery):
-        if hqESQuery().domain(domain_name).run().total != 0:
+        if hqESQuery().domain(domain_name).count() != 0:
             print('Domain "%s" contains data in ES index "%s"' % (domain_name, hqESQuery.index))
             return True
 
