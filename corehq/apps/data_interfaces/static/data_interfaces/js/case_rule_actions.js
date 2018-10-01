@@ -1,7 +1,12 @@
-/* globals ko, $ */
-
-hqDefine("data_interfaces/js/case_rule_actions", function () {
-
+hqDefine("data_interfaces/js/case_rule_actions", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    ko,
+    initialPageData
+) {
     var CaseRuleActions = function (initial) {
         'use strict';
         var self = this;
@@ -146,7 +151,7 @@ hqDefine("data_interfaces/js/case_rule_actions", function () {
     var actions_model = null;
 
     $(function () {
-        actions_model = new CaseRuleActions(hqImport("hqwebapp/js/initial_page_data").get('actions_initial'));
+        actions_model = new CaseRuleActions(initialPageData.get('actions_initial'));
         $('#rule-actions').koApplyBindings(actions_model);
         actions_model.load_initial();
     });

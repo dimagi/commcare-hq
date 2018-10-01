@@ -1179,6 +1179,7 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False,
         max_length=256,
         label="New Role Slug",
+        help_text="A slug is a short label containing only letters, numbers, underscores or hyphens.",
     )
     new_role_name = forms.CharField(
         required=False,

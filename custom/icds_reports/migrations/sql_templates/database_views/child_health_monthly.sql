@@ -11,6 +11,7 @@ CREATE VIEW child_health_monthly_view AS
       awc_location_months.block_name,
       awc_location_months.district_id,
       awc_location_months.state_id,
+      awc_location_months."contact_phone_number" AS "contact_phone_number",
       child_health_monthly.person_name,
       child_health_monthly.mother_name,
       child_health_monthly.dob,

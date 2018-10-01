@@ -498,12 +498,20 @@ class AlertScheduleInstance(AbstractAlertScheduleInstance):
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_alertscheduleinstance'
 
+        unique_together = (
+            ('alert_schedule_id', 'recipient_type', 'recipient_id'),
+        )
+
 
 class TimedScheduleInstance(AbstractTimedScheduleInstance):
     partition_attr = 'schedule_instance_id'
 
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_timedscheduleinstance'
+
+        unique_together = (
+            ('timed_schedule_id', 'recipient_type', 'recipient_id'),
+        )
 
 
 class CaseScheduleInstanceMixin(object):

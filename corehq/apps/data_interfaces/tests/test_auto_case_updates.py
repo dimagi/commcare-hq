@@ -38,7 +38,7 @@ from mock import patch
 
 from corehq.util.context_managers import drop_connected_signals
 from toggle.shortcuts import update_toggle_cache
-from corehq.toggles import NAMESPACE_DOMAIN, AUTO_CASE_UPDATE_ENHANCEMENTS, RUN_AUTO_CASE_UPDATES_ON_SAVE
+from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.apps import hqcase
 
 

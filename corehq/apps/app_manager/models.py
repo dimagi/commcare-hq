@@ -242,21 +242,6 @@ def load_app_template(slug):
 
 
 @memoized
-def get_template_app_multimedia_paths(slug):
-    paths = []
-    base_path = app_template_dir(slug)
-    for root, subdirs, files in os.walk(base_path):
-        subdir = os.path.relpath(root, base_path)
-        if subdir == '.':
-            continue
-        for file in files:
-            if file.startswith("."):
-                continue
-            paths.append(subdir + os.sep + file)
-    return paths
-
-
-@memoized
 def load_case_reserved_words():
     with open(
         os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),
@@ -5525,11 +5510,18 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
-    def to_saved_build_json(self, timezone):
+    def releases_list_json(self, timezone):
+        """
+        returns minimum possible data that could be used to list a Build on releases page on HQ
+
+        :param timezone: timezone expected for timestamps in result
+        :return: data dict
+        """
         data = super(SavedAppBuild, self).to_json().copy()
+        # ignore details that are not used
         for key in ('modules', 'user_registration', 'external_blobs',
-                    '_attachments', 'profile', 'translations'
-                    'description', 'short_description'):
+                    '_attachments', 'profile', 'translations',
+                    'description', 'short_description', 'multimedia_map', 'media_language_map'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         data.update({
@@ -6250,9 +6242,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Properties. You can remove User Properties '
-                             'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".'),
+                'message': _('Your application is using User Properties and your current subscription does not '
+                             'support that. You can remove User Properties functionality by opening the User '
+                             'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
             })
         return errors
 
@@ -6572,6 +6564,11 @@ class LinkedApplication(Application):
     # This is the id of the master application
     master = StringProperty()
 
+    # The following properties will overwrite their corresponding values from
+    # the master app everytime the new master is pulled
+    linked_app_translations = DictProperty()  # corresponding property: translations
+    linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
+
     @property
     @memoized
     def domain_link(self):
@@ -6592,6 +6589,11 @@ class LinkedApplication(Application):
             return get_latest_master_app_release(self.domain_link, self.master)
         else:
             raise ActionNotPermitted
+
+    def reapply_overrides(self):
+        self.translations.update(self.linked_app_translations)
+        self.logo_refs.update(self.linked_app_logo_refs)
+        self.save()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):

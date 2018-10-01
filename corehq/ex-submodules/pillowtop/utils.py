@@ -9,6 +9,7 @@ import sys
 
 import simplejson
 from django.conf import settings
+from kafka import KafkaConsumer
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
@@ -145,15 +146,29 @@ def safe_force_seq_int(seq, default=None):
         return default
 
 
+def _get_consumer():
+    return KafkaConsumer(
+        client_id='pillowtop_utils',
+        bootstrap_servers=settings.KAFKA_BROKERS,
+        request_timeout_ms=1000
+    )
+
+
 def get_all_pillows_json():
     pillow_configs = get_all_pillow_configs()
-    return [get_pillow_json(pillow_config) for pillow_config in pillow_configs]
+    consumer = _get_consumer()
+    return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
 
 
-def get_pillow_json(pillow_config):
+def get_pillow_json(pillow_config, consumer=None):
     assert isinstance(pillow_config, PillowConfig)
 
+    def _is_kafka(checkpoint):
+        return checkpoint.sequence_format == 'json'
+
     pillow = pillow_config.get_instance()
+    if consumer is None:
+        consumer = _get_consumer()
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.timestamp
@@ -172,11 +187,19 @@ def get_pillow_json(pillow_config):
         seconds_since_last = 0
         prettified_time_since_last = ''
         hours_since_last = None
-    offsets = pillow.get_change_feed().get_latest_offsets_json()
+
+    if _is_kafka(checkpoint):
+        # breaking composition boundaries so that we can use one Kafka connection
+        offsets = {
+            "{},{}".format(tp.topic, tp.partition): offset
+            for tp, offset in consumer.end_offsets(list(checkpoint.wrapped_sequence.keys())).items()
+        }
+    else:
+        offsets = pillow.get_change_feed().get_latest_offsets_json()
 
     def _seq_to_int(checkpoint, seq):
         from pillowtop.models import kafka_seq_to_str
-        if checkpoint.sequence_format == 'json':
+        if _is_kafka(checkpoint):
             return json.loads(kafka_seq_to_str(seq))
         else:
             return force_seq_int(seq)
@@ -251,7 +274,7 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
     return [_f for _f in payloads if _f]
 
 
-def ensure_matched_revisions(change):
+def ensure_matched_revisions(change, fetched_document):
     """
     This function ensures that the document fetched from a change matches the
     revision at which it was pushed to kafka at.
@@ -261,7 +284,6 @@ def ensure_matched_revisions(change):
     :raises: DocumentMismatchError - Raised when the revisions of the fetched document
         and the change metadata do not match
     """
-    fetched_document = change.get_document()
 
     change_has_rev = change.metadata and change.metadata.document_rev is not None
     doc_has_rev = fetched_document and '_rev' in fetched_document

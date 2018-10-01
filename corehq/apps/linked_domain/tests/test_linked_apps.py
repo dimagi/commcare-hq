@@ -17,7 +17,7 @@ from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_id_map
+from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_id_map, update_linked_app
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
 from io import open
@@ -148,6 +148,83 @@ class TestLinkedApps(BaseLinkedAppsTest):
         with self.assertRaises(ActionNotPermitted):
             # re-fetch to bust memoize cache
             LinkedApplication.get(self.linked_app._id).get_latest_master_release()
+
+    def test_override_translations(self):
+        translations = {'en': {'updates.check.begin': 'update?'}}
+
+        self.linked_app.master = self.plain_master_app.get_id
+
+        copy = self.plain_master_app.make_build()
+        copy.save()
+        self.addCleanup(copy.delete)
+
+        self.plain_master_app.save()  # increment version number
+        copy1 = self.plain_master_app.make_build()
+        copy1.is_released = True
+        copy1.save()
+        self.addCleanup(copy1.delete)
+
+        self.linked_app.linked_app_translations = translations
+        self.linked_app.save()
+        self.assertEqual(self.linked_app.translations, {})
+
+        update_linked_app(self.linked_app, 'test_override_translations')
+        # fetch after update to get the new version
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+
+        self.assertEqual(self.plain_master_app.translations, {})
+        self.assertEqual(self.linked_app.linked_app_translations, translations)
+        self.assertEqual(self.linked_app.translations, translations)
+
+    def test_override_logo(self):
+        logo_refs = {
+            "hq_logo_android_home": {
+                "humanized_content_length": "45.4 KB",
+                "icon_class": "fa fa-picture-o",
+                "image_size": "448 X 332 Pixels",
+                "m_id": "e3c45dd61c5593fdc5d985f0b99f6199",
+                "media_type": "Image",
+                "path": "jr://file/commcare/logo/data/hq_logo_android_home.png",
+                "uid": "3b79a76a067baf6a23a0b6978b2fb352",
+                "updated": False,
+                "url": "/hq/multimedia/file/CommCareImage/e3c45dd61c5593fdc5d985f0b99f6199/"
+            },
+            "hq_logo_android_login": {
+                "humanized_content_length": "23.9 KB",
+                "icon_class": "fa fa-picture-o",
+                "image_size": "600 X 233 Pixels",
+                "m_id": "85dfa763344eea7b23f4d7fcd000db69",
+                "media_type": "Image",
+                "path": "jr://file/commcare/logo/data/hq_logo_android_login.png",
+                "uid": "595f99385362625eac8245c05f36f3d4",
+                "updated": False,
+                "url": "/hq/multimedia/file/CommCareImage/85dfa763344eea7b23f4d7fcd000db69/"
+            }
+        }
+
+        self.linked_app.master = self.plain_master_app.get_id
+
+        copy = self.plain_master_app.make_build()
+        copy.save()
+        self.addCleanup(copy.delete)
+
+        self.plain_master_app.save()  # increment version number
+        copy1 = self.plain_master_app.make_build()
+        copy1.is_released = True
+        copy1.save()
+        self.addCleanup(copy1.delete)
+
+        self.linked_app.linked_app_logo_refs = logo_refs
+        self.linked_app.save()
+        self.assertEqual(self.linked_app.logo_refs, {})
+
+        update_linked_app(self.linked_app, 'test_override_logos')
+        # fetch after update to get the new version
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+
+        self.assertEqual(self.plain_master_app.logo_refs, {})
+        self.assertEqual(self.linked_app.linked_app_logo_refs, logo_refs)
+        self.assertEqual(self.linked_app.logo_refs, logo_refs)
 
 
 class TestRemoteLinkedApps(BaseLinkedAppsTest):

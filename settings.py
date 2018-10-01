@@ -593,7 +593,10 @@ CUSTOM_PROJECT_SMS_QUEUES = {
 
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
-SMS_QUEUE_ENABLED = False
+# This should always be set to True in production environments, and the sms_queue
+# celery worker(s) should be deployed. We set this to False for tests and (optionally)
+# for local testing.
+SMS_QUEUE_ENABLED = True
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -892,6 +895,7 @@ AUTHPROXY_CERT = None
 ASYNC_INDICATORS_TO_QUEUE = 10000
 ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
+NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 
 UCR_COMPARISONS = {}
 
@@ -956,7 +960,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1265,6 +1269,11 @@ LOGGING = {
         'soft_asserts': {
             'handlers': ['soft_asserts', 'console'],
             'level': 'DEBUG',
+            'propagate': False,
+        },
+        'kafka': {
+            'handlers': ['file'],
+            'level': 'ERROR',
             'propagate': False,
         },
     }
@@ -2064,6 +2073,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
+    'reach-test': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

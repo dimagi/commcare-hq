@@ -27,7 +27,6 @@ from .dispatcher import (
 from .filters import urls as filter_urls
 from .util import get_installed_custom_modules
 from .views import (
-    EditFormInstance,
     AddSavedReportConfigView,
     FormDataView,
     CaseDataView,
@@ -115,7 +114,6 @@ urlpatterns = [
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', FormDataView.as_view(), name=FormDataView.urlname),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', download_form, name='download_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', restore_edit, name='restore_edit'),
     url(r'^form_data/download/media/$',
         form_multimedia_export, name='form_multimedia_export'),

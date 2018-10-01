@@ -27,6 +27,7 @@ from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+from django.urls import resolve
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
 
@@ -121,6 +122,14 @@ def server_error(request, template_name='500.html'):
     """
     500 error handler.
     """
+    urlname = resolve(request.path).url_name
+    submission_urls = [
+        'receiver_secure_post',
+        'receiver_secure_post_with_app_id',
+        'receiver_post_with_app_id'
+    ]
+    if urlname in submission_urls + ['app_aware_restore']:
+        return HttpResponse(status=500)
 
     domain = get_domain_from_url(request.path) or ''
 
@@ -371,8 +380,10 @@ def _login(req, domain_name, template_name):
         context.update({
             'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
-
-    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        auth_view = CloudCareLoginView
+    else:
+        auth_view = HQLoginView if not domain_name else CloudCareLoginView
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
@@ -671,7 +682,8 @@ class BugReportView(View):
             email.attach(filename=filename, content=content)
 
         # only fake the from email if it's an @dimagi.com account
-        if re.search('@dimagi\.com$', report['username']):
+        is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+        if re.search('@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
@@ -1066,7 +1078,7 @@ def quick_find(request):
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
-        elif request.couch_user.is_superuser:
+        elif redirect and request.couch_user.is_superuser:
             return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
         else:
             return json_response(doc_info)

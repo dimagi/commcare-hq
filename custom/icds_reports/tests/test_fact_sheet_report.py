@@ -176,13 +176,13 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
-                    'html': 33.333333333333336,
-                    'sort_key': 33.333333333333336
+                    'html': 29.62962962962963,
+                    'sort_key': 29.62962962962963
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with moderate acute malnutrition (weight-for-height)'},
                     {'html': 11.11111111111111, 'sort_key': 11.11111111111111},
-                    {'html': 33.333333333333336, 'sort_key': 33.333333333333336},
+                    {'html': 29.62962962962963, 'sort_key': 29.62962962962963},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',

@@ -13,6 +13,7 @@ from corehq.apps.data_interfaces.views import (
     default,
     AddCaseRuleView,
     EditCaseRuleView,
+    find_by_id,
 )
 from .interfaces import FormManagementMode
 
@@ -45,4 +46,5 @@ urlpatterns = [
     url(r'^$', default, name="data_interfaces_default"),
     url(r'^edit/', include(edit_data_urls)),
     url(r'^export/', include('corehq.apps.export.urls')),
+    url(r'^find/$', find_by_id, name="data_find_by_id"),
 ]

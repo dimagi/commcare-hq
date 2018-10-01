@@ -30,13 +30,12 @@ class ChangeFeedPillowTest(SimpleTestCase):
         # tests down the line to fail.
         # Specifically KafkaChangeFeedTest.test_multiple_topics_with_partial_checkpoint
         self._fake_couch.dbname = 'test_commcarehq'
-        with trap_extra_setup(KafkaUnavailableError):
-            self.consumer = KafkaConsumer(
-                topics.CASE,
-                bootstrap_servers=settings.KAFKA_BROKERS,
-                consumer_timeout_ms=100,
-                enable_auto_commit=False,
-            )
+        self.consumer = KafkaConsumer(
+            topics.CASE,
+            bootstrap_servers=settings.KAFKA_BROKERS,
+            consumer_timeout_ms=100,
+            enable_auto_commit=False,
+        )
         try:
             # This initialized the consumer listening from the latest offset
             next(self.consumer)
