@@ -51,9 +51,9 @@ django-prbac==0.0.7
 django-ranged-response==0.2.0
 django-redis-sessions==0.6.1
 django-redis==4.9.0
-django-simple-captcha==0.5.7
+django-simple-captcha==0.5.9
 django-statici18n==1.3.0
-django-tastypie==0.14.0
+django-tastypie==0.14.2
 django-transfer==0.4
 django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
@@ -64,7 +64,7 @@ dnspython==1.15.0
 docutils==0.14
 dropbox==7.3.1
 elasticsearch==1.9.0
-email_validator==1.0.2
+email_validator==1.0.3
 enum34==1.1.6
 errand-boy==0.3.8
 et-xmlfile==1.0.1
@@ -86,10 +86,10 @@ idna==2.7
 ipaddress==1.0.22
 ipython-genutils==0.2.0   # via traitlets
 ipython==5.2.2
-iso8601==0.1.11
+iso8601==0.1.12
 isodate==0.6.0
 jdcal==1.4
-jinja2==2.8
+jinja2==2.10
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
@@ -108,7 +108,7 @@ monotonic==1.5            # via eventlet
 ndg-httpsclient==0.5.1
 newrelic==4.4.1.104
 numpy==1.7.1
-openpyxl==2.5.3
+openpyxl==2.5.8
 pathlib2==2.3.2           # via ipython, pickleshare
 pbr==4.2.0
 pexpect==4.6.0            # via ipython
@@ -119,7 +119,7 @@ ply==3.11
 polib==1.1.0
 prompt-toolkit==1.0.15    # via ipython
 psycogreen==1.0
-psycopg2==2.7.3.1
+psycopg2==2.7.5
 ptyprocess==0.6.0         # via pexpect
 py-kissmetrics==1.0.1
 pyasn1==0.4.4
@@ -139,7 +139,7 @@ python-levenshtein==0.12.0
 python-magic==0.4.13
 python-mimeparse==1.6.0
 pytz==2017.2
-pyyaml==3.12
+pyyaml==3.13
 pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache==0.5.1
@@ -162,7 +162,7 @@ six==1.11.0
 smartypants==2.0.1
 socketpool==0.5.3
 sqlagg==0.10.5
-sqlalchemy==1.2.9
+sqlalchemy==1.2.12
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2
@@ -185,4 +185,4 @@ zeep==1.6.0
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==18.0
-setuptools==40.4.3        # via django-simple-captcha, django-websocket-redis, ipython, python-levenshtein
+setuptools==40.4.3        # via django-websocket-redis, ipython, python-levenshtein
