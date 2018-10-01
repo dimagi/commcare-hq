@@ -8,7 +8,7 @@ celery==3.1.25
 # required by django-digest
 decorator==4.0.11
 django==1.11.14
-django-braces==1.8.1
+django-braces==1.13.0
 django-celery==3.2.1
 django-crispy-forms==1.7.0
 jsonfield==1.0.3
@@ -68,7 +68,7 @@ django-transfer==0.4
 Pygments==2.0.2
 Jinja2==2.8
 tinys3==0.1.12
-django-formtools==2.0
+django-formtools==2.1
 django-otp==0.3.13
 django-two-factor-auth==1.6.2
 datadog==0.15.0
