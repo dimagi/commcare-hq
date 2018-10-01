@@ -152,16 +152,17 @@ def update_subscription_properties_by_domain(domain):
 @receiver(user_logged_in)
 @handle_uncaught_exceptions(mail_admins=True)
 def track_user_login(sender, request, user, **kwargs):
-    couch_user = CouchUser.from_django_user(user)
-    if couch_user and couch_user.is_web_user() and settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
-        if not request or HUBSPOT_COOKIE not in request.COOKIES:
-            # API calls, form submissions etc.
+    if settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
+        couch_user = CouchUser.from_django_user(user)
+        if couch_user and couch_user.is_web_user():
+            if not request or HUBSPOT_COOKIE not in request.COOKIES:
+                # API calls, form submissions etc.
 
-            user_confirming = request.path.startswith(reverse(ProcessRegistrationView.urlname))
-            if user_confirming:
-                _no_cookie_soft_assert(False, 'User confirmed account but had no cookie')
-            else:
-                return
+                user_confirming = request.path.startswith(reverse(ProcessRegistrationView.urlname))
+                if user_confirming:
+                    _no_cookie_soft_assert(False, 'User confirmed account but had no cookie')
+                else:
+                    return
 
-        meta = get_meta(request)
-        track_user_sign_in_on_hubspot_v2.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)
+            meta = get_meta(request)
+            track_user_sign_in_on_hubspot_v2.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)
