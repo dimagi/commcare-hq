@@ -43,7 +43,7 @@ class ElasticProcessor(PillowProcessor):
         if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
             return
 
-        if doc.doc_type is not None and doc.doc_type.endswith("-Deleted"):
+        if doc.get('doc_type') is not None and doc['doc_type'].endswith("-Deleted"):
             self._delete_doc_if_exists(change.id)
             return
 
