@@ -2221,8 +2221,8 @@ class AdjustBalanceForm(forms.Form):
     def adjust_balance(self, web_user=None):
         method = self.cleaned_data['method']
         kwargs = {
-            'account': self.invoice.account if self.invoice.is_customer_invoice
-            else self.invoice.subscription.account,
+            'account': (self.invoice.account if self.invoice.is_customer_invoice
+                        else self.invoice.subscription.account),
             'note': self.cleaned_data['note'],
             'reason': method,
             'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,

@@ -1418,6 +1418,3 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(EnterpriseBillingStatementsView, self).dispatch(request, *args, **kwargs)
