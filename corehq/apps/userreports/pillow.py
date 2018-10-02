@@ -262,7 +262,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             try:
                 adapter.bulk_delete(delete_ids)
             except Exception as ex:
-                notify_exception(None,
+                notify_exception(
+                    None,
                     "Error in deleting changes chunk {ids}: {ex}".format(
                         ids=delete_ids, ex=ex))
                 retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
@@ -270,8 +271,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         for adapter, rows in six.iteritems(rows_to_save_by_adapter):
             try:
                 adapter.save_rows(rows)
-            except Exception:
-                notify_exception(None,
+            except Exception as ex:
+                notify_exception(
+                    None,
                     "Error in saving changes chunk {ids}: {ex}".format(
                         ids=[c.id for c in to_update], ex=ex))
                 retry_changes.update(to_update)

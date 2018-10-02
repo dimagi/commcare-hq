@@ -1,13 +1,14 @@
 {
   "domains": [
     "icds-cas",
-    "icds-dashboard-qa"
+    "icds-dashboard-qa",
+    "reach-test"
   ],
   "server_environment": [
     "softlayer",
     "icds-new"
   ],
-  "report_id": "static-mobile_mpr_3_children_registered",
+  "report_id": "static-mpr_3_children_registered",
   "data_source_table": "static-person_cases_v2",
   "config": {
     "title": "MPR 3 - Children Registered (Static)",
@@ -27,19 +28,11 @@
         "datatype": "date"
       },
       {
-        "slug": "age_at_registration_exists",
-        "type": "pre",
-        "field": "age_at_reg",
-        "pre_operator": "!=",
-        "pre_value": "",
-        "datatype": "integer"
-      },
-      {
         "slug": "age_at_registration_in_bounds",
         "type": "pre",
         "field": "age_at_reg",
-        "pre_operator": "<=",
-        "pre_value": 6,
+        "pre_operator": "between",
+        "pre_value": [0, 6],
         "datatype": "integer"
       },
       {
@@ -115,8 +108,8 @@
         "column_id": "age_group",
         "type": "conditional_aggregation",
         "whens": {
-            "0 <= age_at_reg AND age_at_reg < 3": "under_3",
-            "3 <= age_at_reg AND age_at_reg <= 6": "over_3"
+            "age_at_reg BETWEEN 0 AND 2": "0_to_2",
+            "age_at_reg BETWEEN 3 AND 6": "3_to_6"
         }
       },
       {

@@ -147,7 +147,7 @@ class EmwfUtils(object):
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
 
-        types = ['DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
+        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
@@ -222,9 +222,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options'
-    search_help_inline = ugettext_lazy(mark_safe(
+    filter_help_inline = ugettext_lazy(mark_safe(
         'See <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
-        ' target="_blank"> Filter Definitions </a>. To quick search for a '
+        ' target="_blank"> Filter Definitions</a>.'
+    ))
+    search_help_inline = ugettext_lazy(mark_safe(
+        'To quick search for a '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
         'target="_blank">Location</a>, write your query as "parent"/descendant.'
     ))
@@ -333,6 +336,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         context = super(ExpandedMobileWorkerFilter, self).filter_context
         url = reverse(self.options_url, args=[self.domain])
         context.update({'endpoint': url})
+        context.update({'filter_help_inline': self.filter_help_inline})
         if self.request.project.uses_locations:
             context.update({'search_help_inline': self.search_help_inline})
         return context
@@ -341,7 +345,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
         q = user_es.UserES().domain(domain)
-        if not SubmitHistoryFilter.no_filters_selected(mobile_user_and_group_slugs):
+        if SubmitHistoryFilter.no_filters_selected(mobile_user_and_group_slugs):
             return q
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)

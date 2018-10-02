@@ -13,13 +13,13 @@ from celery.task import periodic_task
 from django.conf import settings
 from django.core.management import call_command
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, doc_type_to_state
 from io import open
 
 
@@ -148,16 +148,16 @@ def clear_expired_sessions():
     call_command('clearsessions')
 
 
+def _get_all_domains_that_have_ever_had_subscriptions():
+    return Subscription.visible_and_suppressed_objects.values_list('subscriber__domain', flat=True).distinct()
+
+
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_cases_without_existing_domain():
-    existing_domain_names = set(Domain.get_all_names())
-
     missing_domains_with_cases = set()
-    db_names = get_db_aliases_for_partitioned_query()
-    for db_name in db_names:
-        missing_domains_with_cases |= set(CommCareCaseSQL.objects.using(db_name).exclude(
-            domain__in=existing_domain_names,
-        ).values_list('domain', flat=True).distinct())
+    for domain in set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names()):
+        if CaseAccessorSQL.get_case_ids_in_domain(domain):
+            missing_domains_with_cases |= {domain}
 
     if missing_domains_with_cases:
         mail_admins_async.delay(
@@ -172,14 +172,11 @@ def check_for_sql_cases_without_existing_domain():
 
 @periodic_task(run_every=crontab(minute=0, hour=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_forms_without_existing_domain():
-    existing_domain_names = set(Domain.get_all_names())
-
     missing_domains_with_forms = set()
-    db_names = get_db_aliases_for_partitioned_query()
-    for db_name in db_names:
-        missing_domains_with_forms |= set(XFormInstanceSQL.objects.using(db_name).exclude(
-            domain__in=existing_domain_names,
-        ).values_list('domain', flat=True).distinct())
+    for domain in set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names()):
+        for doc_type in doc_type_to_state:
+            if FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type):
+                missing_domains_with_forms |= {domain}
 
     if missing_domains_with_forms:
         mail_admins_async.delay(

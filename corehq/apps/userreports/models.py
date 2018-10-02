@@ -79,7 +79,7 @@ ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
 
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
-        raise BadValueError("Invalid ID")
+        raise BadValueError("Invalid ID: '{}'".format(value))
 
 
 class SQLColumnIndexes(DocumentSchema):
@@ -948,7 +948,7 @@ class AsyncIndicator(models.Model):
         # configs_by_docs should be a dict of doc_id -> list of config_ids
         if not configs_by_docs:
             return
-        doc_ids = configs_by_docs.keys()
+        doc_ids = list(configs_by_docs.keys())
 
         current_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
         to_update = []
