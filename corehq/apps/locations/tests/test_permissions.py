@@ -75,14 +75,14 @@ class FormEditRestrictionsMixin(object):
 
     @classmethod
     def make_web_user(cls, location):
-        username = ''.join(random.sample(string.letters, 8))
+        username = ''.join(random.sample(string.ascii_letters, 8))
         user = WebUser.create(cls.domain, username, 'password')
         user.set_location(cls.domain, cls.locations[location])
         return user
 
     @classmethod
     def make_mobile_user(cls, location):
-        username = ''.join(random.sample(string.letters, 8))
+        username = ''.join(random.sample(string.ascii_letters, 8))
         user = CommCareUser.create(cls.domain, username, 'password')
         user.set_location(cls.locations[location])
         return user
