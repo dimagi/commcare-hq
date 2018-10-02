@@ -6,7 +6,7 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds"
   ],
   "report_id": "static-mpr_9_vhnd",
   "data_source_table": "static-vhnd_form",

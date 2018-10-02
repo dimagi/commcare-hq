@@ -6,7 +6,7 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds"
   ],
   "report_id": "static-asr_2_3_beneficiaries",
   "data_source_table": "static-person_cases_v2",
