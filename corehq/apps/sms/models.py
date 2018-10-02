@@ -1632,7 +1632,7 @@ class SelfRegistrationInvitation(models.Model):
         it gives the user the option to install the given app.
         """
         app_info_url = cls.get_app_info_url(domain, app_id)
-        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url)
+        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url.encode('utf-8'))
 
     def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
