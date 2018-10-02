@@ -153,6 +153,10 @@ def _get_all_domains_that_have_ever_had_subscriptions():
     return Subscription.visible_and_suppressed_objects.values_list('subscriber__domain', flat=True).distinct()
 
 
+def _is_monday():
+    return datetime.utcnow().isoweekday() == 1
+
+
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_cases_without_existing_domain():
     missing_domains_with_cases = set()
@@ -165,7 +169,7 @@ def check_for_sql_cases_without_existing_domain():
             'There exist SQL cases belonging to a missing domain',
             six.text_type(missing_domains_with_cases)
         )
-    elif datetime.utcnow().isoweekday() == 1:
+    elif _is_monday():
         mail_admins_async.delay(
             'All SQL cases belong to valid domains', ''
         )
@@ -184,7 +188,7 @@ def check_for_sql_forms_without_existing_domain():
             'There exist SQL forms belonging to a missing domain',
             six.text_type(missing_domains_with_forms)
         )
-    elif datetime.utcnow().isoweekday() == 1:
+    elif _is_monday():
         mail_admins_async.delay(
             'All SQL forms belong to valid domains', ''
         )
@@ -205,7 +209,7 @@ def check_for_elasticsearch_data_without_existing_domain():
                         query.index, count, domain_name
                     ), ''
                 )
-    if not issue_found and datetime.utcnow().isoweekday() == 1:
+    if not issue_found and _is_monday():
         mail_admins_async.delay(
             'All data in ES belongs to valid domains', ''
         )
