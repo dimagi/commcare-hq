@@ -113,6 +113,6 @@ hqDefine('accounting/js/credits', [
     };
 
     return {
-        creditsManager: creditsManager
+        creditsManager: creditsManager,
     };
 });

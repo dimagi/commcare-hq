@@ -427,7 +427,7 @@ hqDefine('accounting/js/payment_method_handler', [
     var creditCostItem = function (initData) {
         'use strict';
         var self = {};
-        self = baseCostItem.call(self, data);
+        self = baseCostItem.call(self, initData);
 
         self.creditType = ko.observable(initData.creditType);
         self.category = ko.observable(initData.category);

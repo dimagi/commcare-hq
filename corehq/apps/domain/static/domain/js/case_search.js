@@ -24,11 +24,11 @@ hqDefine('domain/js/case_search', [
 
         self.caseType = ko.observable(caseType);
         self.properties = ko.observableArray(
-            _.map(properties, function (name) { return new property(name); })
+            _.map(properties, function (name) { return property(name); })
         );
 
         self.addProperty = function () {
-            self.properties.push(new property(''));
+            self.properties.push(property(''));
         };
         self.removeProperty = function (property) {
             self.properties.remove(property);
