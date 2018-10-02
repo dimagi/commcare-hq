@@ -343,7 +343,7 @@ def update_linked_app(app, user_id):
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
 
     # reapply linked application specific data
-    app.reapply_translations()
+    app.reapply_overrides()
 
 
 def clear_xmlns_app_id_cache(domain):

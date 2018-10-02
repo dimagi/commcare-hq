@@ -19,6 +19,7 @@ from couchexport.writers import (
     XlsLengthException,
     ZippedExportWriter,
 )
+from six.moves import range
 
 
 class ZippedExportWriterTests(SimpleTestCase):

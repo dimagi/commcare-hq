@@ -7,3 +7,4 @@ feedparser
 pycrypto
 restkit
 http-parser
+msgpack-python

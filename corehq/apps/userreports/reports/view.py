@@ -160,8 +160,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @property
     def section_url(self):
-        # todo what should the parent section url be?
-        return "#"
+        return reverse('reports_home', args=(self.domain, ))
 
     @property
     def is_static(self):
@@ -620,8 +619,7 @@ class DownloadUCRStatusView(BaseDomainView):
 
     @property
     def section_url(self):
-        # todo what should the parent section url be?
-        return "#"
+        return reverse('reports_home', args=(self.domain, ))
 
     def get(self, request, *args, **kwargs):
         if _has_permission(self.domain, request.couch_user, self.report_config_id):

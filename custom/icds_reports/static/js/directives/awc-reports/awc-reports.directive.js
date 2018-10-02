@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -2577,12 +2577,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         demographics: {route: "/awc_reports/demographics", label: "Demographics"},
         awc_infrastructure: {route: "/awc_reports/awc_infrastructure", label: "AWC Infrastructure"},
         beneficiary: {route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
+        pregnant: {route: "/awc_reports/pregnant", label: "Pregnant Women"},
+        lactating: {route: "/awc_reports/lactating", label: "Lactating Women"},
     };
-
-    if (haveAccessToFeatures) {
-        vm.steps.pregnant = {route: "/awc_reports/pregnant", label: "Pregnant Women"};
-        vm.steps.lactating = {route: "/awc_reports/lactating", label: "Lactating Women"};
-    }
 
     if (vm.step === 'beneficiary_details') {
         vm.steps.beneficiary = {
@@ -2643,7 +2640,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('awcReports', function () {
     return {

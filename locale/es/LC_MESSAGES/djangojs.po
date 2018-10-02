@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-09-18 17:03+0000\n"
+"POT-Creation-Date: 2018-09-25 21:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -585,8 +585,10 @@ msgid "[unknown]"
 msgstr "[desconocido]"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js:5
-msgid "Publish"
-msgstr "Publicar"
+#, fuzzy
+#| msgid "Relevant"
+msgid "Releases"
+msgstr "Relevante"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:25
 msgid "You have unsaved changes to your application profiles"
@@ -709,7 +711,7 @@ msgid "Questions"
 msgstr "Preguntas"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:109
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:111
 msgid "Copy"
 msgstr "Copiar"
 
@@ -2636,10 +2638,8 @@ msgid "<a href='<%= link %>'>Click here</a> if you are not redirected."
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:63
-#, fuzzy
-#| msgid "Find Usages"
 msgid "Find Case"
-msgstr "Encontrar Usos"
+msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:64
 msgid "IDs can be found in a <a href=\"<%= url %>\">case data export</a>"
@@ -2847,19 +2847,19 @@ msgstr "Alto"
 msgid "Start"
 msgstr "Iniciar"
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:14
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:18
 msgid "Show All References"
 msgstr "Mostar Todas las Referencias"
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:14
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:18
 msgid "Show Only Missing References"
 msgstr "Mostrar Solo las Referencias Faltantes"
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:213
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
 msgid "Replace "
 msgstr "Reemplazaar"
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:213
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
 msgid "Upload "
 msgstr "Cargar"
 
@@ -3615,22 +3615,22 @@ msgid "(filtered from _MAX_ total broadcasts)"
 msgstr "(filtrado de _MAX_ total de transmisiones)"
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:62
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:60
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:62
 msgid "Active"
 msgstr "Activo"
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:64
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:62
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:64
 msgid "Inactive"
 msgstr "Inactivo"
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:74
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:85
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:87
 msgid "Deactivate"
 msgstr "Desactivar"
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:77
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:92
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:94
 msgid "Activate"
 msgstr "Activo"
 
@@ -3646,59 +3646,59 @@ msgstr "(filtrado del _MAX_total de mensajes)"
 msgid "Are you sure you want to delete this scheduled message?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:23
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:24
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:25
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:26
 msgid "There are no alerts to display."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:25
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:27
 msgid "Showing _START_ to _END_ of _TOTAL_ alerts"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:67
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:69
 msgid "Processing"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:97
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:99
 msgid "Restart Rule"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:108
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:110
 msgid "Project"
 msgstr "Proyecto"
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:177
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:179
 msgid "This rule has been restarted."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:180
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:182
 #, javascript-format
 msgid ""
 "Unable to restart rule. Rules can only be started every two hours and there "
 "are %s minute(s) remaining before this rule can be started again."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:188
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:190
 msgid "Copy successful."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:190
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:192
 #, javascript-format
 msgid "Error: %s"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:205
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:207
 msgid "Are you sure you want to delete this conditional message?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:214
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:216
 msgid ""
 "A rule should only be restarted when you believe it is stuck and is not "
 "progressing. You will only be able to restart this rule once every two "
 "hours. Restart this rule?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:219
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:221
 msgid ""
 "A rule should only be restarted when you believe it is stuck and is not "
 "progressing. Your user is able to restart as many times as you like, but "
@@ -3706,11 +3706,11 @@ msgid ""
 "system. Restart this rule?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:234
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:236
 msgid "Please enter a project name first."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:238
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:240
 #, javascript-format
 msgid "Copy this alert to project %s?"
 msgstr ""
@@ -3755,7 +3755,7 @@ msgstr ""
 msgid "Schedule Broadcast"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/dashboard.js:61
+#: corehq/messaging/scheduling/static/scheduling/js/dashboard.js:66
 msgid "(no errors over the given date range)"
 msgstr ""
 
@@ -3853,17 +3853,5 @@ msgstr ""
 msgid "Search Locations..."
 msgstr ""
 
-#~ msgid "There are no broadcasts to display."
-#~ msgstr "No hay transmisiones para visualizar."
-
-#~ msgid "Show _MENU_ broadcasts per page"
-#~ msgstr "Mostrar _MENÚ_ transmisiones por página"
-
-#~ msgid "Loading Broadcasts..."
-#~ msgstr "Cargando Transmisiones..."
-
-#~ msgid "Are you sure you want to delete this broadcast?"
-#~ msgstr "¿Está seguro de que quiere eliminar esta transmisión?"
-
-#~ msgid "There are no reminders to display."
-#~ msgstr "No hay recordatorios para visualizar."
+#~ msgid "Publish"
+#~ msgstr "Publicar"

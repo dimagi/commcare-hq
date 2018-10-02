@@ -6243,9 +6243,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Properties. You can remove User Properties '
-                             'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".'),
+                'message': _('Your application is using User Properties and your current subscription does not '
+                             'support that. You can remove User Properties functionality by opening the User '
+                             'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
             })
         return errors
 
@@ -6568,6 +6568,7 @@ class LinkedApplication(Application):
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
     linked_app_translations = DictProperty()  # corresponding property: translations
+    linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
 
     @property
     @memoized
@@ -6590,8 +6591,9 @@ class LinkedApplication(Application):
         else:
             raise ActionNotPermitted
 
-    def reapply_translations(self):
+    def reapply_overrides(self):
         self.translations.update(self.linked_app_translations)
+        self.logo_refs.update(self.linked_app_logo_refs)
         self.save()
 
 
