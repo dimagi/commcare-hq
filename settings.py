@@ -1853,6 +1853,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'asr_2_3_beneficiaries.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a3_children_delivered.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a_deaths.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3_children_registered.json'),
