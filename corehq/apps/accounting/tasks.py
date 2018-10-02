@@ -199,6 +199,14 @@ def warn_active_subscriptions_per_domain_not_one():
             log_accounting_error("There is no active subscription for domain %s" % domain_name)
 
 
+def warn_subscriptions_without_domain():
+    domains_with_active_subscription = Subscription.visible_objects.filter(
+        is_active=True,
+    ).values_list('subscriber__domain', flat=True).distinct()
+    for domain_name in set(domains_with_active_subscription) - set(Domain.get_all_names()):
+        log_accounting_error('Domain %s has an active subscription but does not exist.' % domain_name)
+
+
 @periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions(datetime.date.today())
@@ -209,6 +217,7 @@ def update_subscriptions():
     warn_subscriptions_still_active()
     warn_subscriptions_not_active()
     warn_active_subscriptions_per_domain_not_one()
+    warn_subscriptions_without_domain()
 
 
 @periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
