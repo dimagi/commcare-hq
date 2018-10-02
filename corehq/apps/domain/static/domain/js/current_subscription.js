@@ -13,7 +13,7 @@ hqDefine("domain/js/current_subscription", [
 ) {
     $(function () {
         Stripe.setPublishableKey(initialPageData.get('stripe_public_key'));
-        var paymentHandler = new paymentMethodHandler.PaymentMethodHandler(
+        var paymentHandler = new paymentMethodHandler.paymentMethodHandler(
             "add-credit-form",
             {
                 submitBtnText: gettext("Buy Credits"),

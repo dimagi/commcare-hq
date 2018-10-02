@@ -32,7 +32,7 @@ hqDefine('accounting/js/credits', [
 
     var prepaymentsModel = function (products, features, paymentHandler) {
         var self = {};
-        var PrepaymentItems = paymentMethodHandler.PrepaymentItems;
+        var prepaymentItems = paymentMethodHandler.prepaymentItems;
         self.products = products;
         self.features = features;
         self.paymentHandler = paymentHandler;
@@ -41,13 +41,12 @@ hqDefine('accounting/js/credits', [
         self.triggerPayment = function (paymentMethod) {
             self.paymentHandler.reset();
             self.paymentHandler.paymentMethod(paymentMethod);
-            self.paymentHandler.costItem(new PrepaymentItems({
+            self.paymentHandler.costItem(prepaymentItems({
                 products: self.products,
                 features: self.features,
                 general_credit: self.general_credit,
             }));
         };
-
         return self;
     };
 
@@ -65,7 +64,7 @@ hqDefine('accounting/js/credits', [
 
     var creditItem = function (category, data, paymentHandler, canPurchaseCredits) {
         var self = {};
-        var CreditCostItem = paymentMethodHandler.CreditCostItem;
+        var creditCostItem = paymentMethodHandler.creditCostItem;
         self.category = ko.observable(category);
         self.name = ko.observable(data.name);
         self.recurringInterval = ko.observable(data.recurring_interval);
@@ -96,7 +95,7 @@ hqDefine('accounting/js/credits', [
 
         self.triggerPayment = function () {
             self.paymentHandler.reset();
-            self.paymentHandler.costItem(new CreditCostItem({
+            self.paymentHandler.costItem(creditCostItem({
                 creditType: self.creditType(),
                 category: self.category(),
                 creditItem: self,
@@ -114,6 +113,6 @@ hqDefine('accounting/js/credits', [
     };
 
     return {
-        creditsManager: creditsManager,
+        creditsManager: creditsManager
     };
 });
