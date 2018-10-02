@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import AppES, CaseES, CaseSearchES, DomainES, FormES, GroupES, LedgerES, UserES
 from six.moves import input
 
 
@@ -40,6 +41,11 @@ class Command(BaseCommand):
             if confirm != domain_name:
                 print("\n\t\tDomain deletion cancelled.")
                 return
+
         print("Deleting domain {}".format(domain_name))
         domain.delete()
+
+        for hqESQuery in [AppES, CaseES, CaseSearchES, DomainES, FormES, GroupES, LedgerES, UserES]:
+            assert hqESQuery().domain(domain_name).run().total == 0, '%s contains data' % hqESQuery.index
+
         print("Operation completed")
