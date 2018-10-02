@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import re
 import sys
 from contextlib import contextmanager
-from six import StringIO
+from io import StringIO
 
 from corehq.util.teeout import tee_output
 from testil import assert_raises, replattr, eq
