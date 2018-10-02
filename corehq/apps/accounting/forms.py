@@ -2248,11 +2248,15 @@ class AdjustBalanceForm(forms.Form):
             )
         elif method == CreditAdjustmentReason.TRANSFER:
             if self.invoice.is_customer_invoice:
+                subscription_invoice = None
+                customer_invoice = self.invoice
                 credit_line_balance = sum(
                     credit_line.balance
                     for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
                 )
             else:
+                subscription_invoice = self.invoice
+                customer_invoice = None
                 credit_line_balance = sum(
                     credit_line.balance
                     for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
@@ -2263,7 +2267,8 @@ class AdjustBalanceForm(forms.Form):
             )
             CreditLine.add_credit(
                 -transfer_balance,
-                invoice=self.invoice,
+                invoice=subscription_invoice,
+                customer_invoice=customer_invoice,
                 **kwargs
             )
 
