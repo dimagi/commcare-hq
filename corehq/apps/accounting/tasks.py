@@ -265,7 +265,7 @@ def generate_invoices(based_on_date=None):
                 date_end=invoice_end
             )
             invoice_factory.create_invoice()
-        except CreditLineError as E:
+        except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
                 "domain %s: %s" % (domain.name, e),
