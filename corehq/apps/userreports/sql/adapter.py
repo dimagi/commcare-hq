@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
+import six
 
 from architect import install
 from django.utils.translation import ugettext as _
@@ -53,7 +54,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         properties['__tablename__'] = table.name
         properties['__table_args__'] = ({'extend_existing': True},)
 
-        type_ = type(b"TemporaryTableDef", (Base,), properties)
+        type_ = type("TemporaryTableDef" if six.PY3 else b"TemporaryTableDef", (Base,), properties)
         return type_
 
     def _install_partition(self):
