@@ -1105,7 +1105,7 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
         'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
-        'num_rations_distributed', 'last_date_thr', 'month', 'dob'
+        'num_rations_distributed', 'last_date_thr', 'month'
     )
     data_count = data.count()
     config = {
@@ -1116,7 +1116,7 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
         return dict(
             case_id=row_data['case_id'],
             person_name=row_data['person_name'],
-            age=ceil((datetime.utcnow() - row_data['dob']).days / 365.25) if row_data['dob'] else row_data['dob'],
+            age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
             opened_on=row_data['opened_on'],
             edd=row_data['edd'],
             trimester=row_data['trimester'],
@@ -1150,7 +1150,7 @@ def get_pregnant_details(case_id, awc_id):
         'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
         'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
         'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
-        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month', 'dob'
+        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month'
     )
 
     config = {
@@ -1168,8 +1168,7 @@ def get_pregnant_details(case_id, awc_id):
                 case_id=row_data['case_id'],
                 trimester=row_data['trimester'],
                 person_name=row_data['person_name'],
-                age=ceil(
-                    (datetime.utcnow() - row_data['dob']).days / 365.25) if row_data['dob'] else row_data['dob'],
+                age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
                 mobile_number=row_data['mobile_number'],
                 edd=row_data['edd'],
                 opened_on=row_data['opened_on'],
@@ -1212,7 +1211,7 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
         case_id__in=[case['case_id'] for case in data],
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
-        'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed', 'month', 'dob'
+        'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed', 'month'
     )
     data_count = data.count()
     config = {
@@ -1223,7 +1222,7 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
         return dict(
             case_id=row_data['case_id'],
             person_name=row_data['person_name'],
-            age=ceil((datetime.utcnow() - row_data['dob']).days / 365.25) if row_data['dob'] else row_data['dob'],
+            age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
             add=row_data['add'],
             delivery_nature=row_data['delivery_nature'],
             institutional_delivery_in_month='Y' if row_data['institutional_delivery_in_month'] else 'N',
