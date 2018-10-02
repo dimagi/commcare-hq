@@ -98,7 +98,7 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -6598,6 +6598,9 @@ class LinkedApplication(Application):
     def reapply_overrides(self):
         self.translations.update(self.linked_app_translations)
         self.logo_refs.update(self.linked_app_logo_refs)
+        for key, ref in self.logo_refs.items():
+            mm = CommCareMultimedia.get(ref['m_id'])
+            self.create_mapping(mm, ref['path'], save=False)
         self.save()
 
 
