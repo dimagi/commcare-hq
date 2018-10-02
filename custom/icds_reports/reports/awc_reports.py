@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
-from math import ceil
 
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
