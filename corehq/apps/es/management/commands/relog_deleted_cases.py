@@ -23,11 +23,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def _get_saved_deleted_case_ids():
-        return set(
-            CaseES().set_query(
-                {
-                    "term": {
-                        "doc_type": "CommCareCase-Deleted"
-                    }
+        return CaseES().set_query(
+            {
+                "term": {
+                    "doc_type": "CommCareCase-Deleted"
                 }
-            ).values_list("_id", "domain"))
+            }
+        ).values_list("_id", "domain")

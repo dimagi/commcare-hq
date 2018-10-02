@@ -17,6 +17,7 @@ from corehq.apps.change_feed.document_types import is_deletion
 def identity(x):
     return x
 
+
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
 
