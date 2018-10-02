@@ -35,7 +35,7 @@ class TestFieldColumn(SimpleTestCase):
             "field": "doc_id",
             "alias": "the_right_answer",
             "type": "field",
-        })
+        }, is_static=False)
         self.assertTrue(isinstance(field, FieldColumn))
         self.assertEqual('the_right_answer', field.column_id)
 
@@ -44,7 +44,7 @@ class TestFieldColumn(SimpleTestCase):
             "aggregation": "simple",
             "field": "doc_id",
             "type": "field",
-        })
+        }, is_static=False)
         self.assertEqual('doc_id', field.column_id)
 
     def testBadAggregation(self):
@@ -53,7 +53,7 @@ class TestFieldColumn(SimpleTestCase):
                 "aggregation": "simple_",
                 "field": "doc_id",
                 "type": "field",
-            })
+            }, is_static=False)
 
     def testGoodFormat(self):
         for format in [
@@ -66,7 +66,7 @@ class TestFieldColumn(SimpleTestCase):
                     "field": "doc_id",
                     "format": format,
                     "type": "field",
-                })
+                }, is_static=False)
             ))
 
     def testBadFormat(self):
@@ -76,7 +76,7 @@ class TestFieldColumn(SimpleTestCase):
                 "field": "doc_id",
                 "format": "default_",
                 "type": "field",
-            })
+            }, is_static=False)
 
 
 class ChoiceListColumnDbTest(TestCase):
@@ -303,7 +303,7 @@ class TestExpandedColumn(TestCase):
             display="Lab Result",
             format="default",
             description="foo"
-        ))
+        ), is_static=False)
         cols = expand_column(column, ["positive", "negative"], "en")
 
         self.assertEqual(len(cols), 2)
@@ -350,25 +350,25 @@ class TestAggregateDateColumn(SimpleTestCase):
         }
 
     def test_wrap(self):
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertTrue(isinstance(wrapped, AggregateDateColumn))
         self.assertEqual('a_date', wrapped.column_id)
 
     def test_group_by(self):
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertEqual(['a_date_year', 'a_date_month'], wrapped.get_query_column_ids())
 
     def test_format(self):
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertEqual('2015-03', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
 
     def test_custom_format(self):
         self._spec.update({'format': '%b %Y'})
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertEqual('Mar 2015', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
 
     def test_format_missing(self):
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertEqual('Unknown Date', wrapped.get_format_fn()({'year': None, 'month': None}))
 
 
@@ -388,7 +388,7 @@ class TestPercentageColumn(SimpleTestCase):
                 "field": "is_pregnant",
                 "type": "field",
             },
-        })
+        }, is_static=False)
         self.assertTrue(isinstance(wrapped, PercentageColumn))
         self.assertEqual('pct', wrapped.column_id)
         self.assertEqual('has_danger_signs', wrapped.numerator.field)
@@ -405,19 +405,19 @@ class TestPercentageColumn(SimpleTestCase):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
-            })
+            }, is_static=False)
         with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
                 'numerator': field_spec,
-            })
+            }, is_static=False)
         with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
                 'denominator': field_spec,
-            })
+            }, is_static=False)
 
     def test_wrong_field_type(self):
         # can't put a percent in another percent
@@ -432,37 +432,37 @@ class TestPercentageColumn(SimpleTestCase):
                 'column_id': 'pct',
                 'numerator': field_spec,
                 'denominator': field_spec,
-            })
+            }, is_static=False)
 
     def test_format_pct(self):
         spec = self._test_spec()
         spec['format'] = 'percent'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual('33%', wrapped.get_format_fn()({'num': 1, 'denom': 3}))
 
     def test_format_pct_denom_0(self):
         spec = self._test_spec()
         spec['format'] = 'percent'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         for empty_value in [0, 0.0, None, '']:
             self.assertEqual('--', wrapped.get_format_fn()({'num': 1, 'denom': empty_value}))
 
     def test_format_fraction(self):
         spec = self._test_spec()
         spec['format'] = 'fraction'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual('1/3', wrapped.get_format_fn()({'num': 1, 'denom': 3}))
 
     def test_format_both(self):
         spec = self._test_spec()
         spec['format'] = 'both'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual('33% (1/3)', wrapped.get_format_fn()({'num': 1, 'denom': 3}))
 
     def test_format_pct_non_numeric(self):
         spec = self._test_spec()
         spec['format'] = 'percent'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         for unexpected_value in ['hello', object()]:
             self.assertEqual('?', wrapped.get_format_fn()({'num': 1, 'denom': unexpected_value}),
                              'non-numeric value failed for denominator {}'. format(unexpected_value))
@@ -471,13 +471,13 @@ class TestPercentageColumn(SimpleTestCase):
     def test_format_numeric_pct(self):
         spec = self._test_spec()
         spec['format'] = 'numeric_percent'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual(33, wrapped.get_format_fn()({'num': 1, 'denom': 3}))
 
     def test_format_float(self):
         spec = self._test_spec()
         spec['format'] = 'decimal'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual(.333, wrapped.get_format_fn()({'num': 1, 'denom': 3}))
         self.assertEqual(.25, wrapped.get_format_fn()({'num': 1, 'denom': 4}))
 
