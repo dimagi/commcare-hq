@@ -193,17 +193,18 @@ def check_for_sql_forms_without_existing_domain():
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_elasticsearch_data_without_existing_domain():
     issue_found = False
-    existing_domain_names = set(Domain.get_all_names())
-    for hqESQuery in [AppES, CaseSearchES, FormES, GroupES, LedgerES, UserES]:
-        query = hqESQuery()
-        for domain_name in existing_domain_names:
-            query = query.NOT(filters.domain(domain_name))
-        count = query.count()
-        if count != 0:
-            issue_found = True
-            mail_admins_async.delay(
-                'ES index "%s" contains %s items belonging to a missing domain' % (query.index, count), ''
-            )
+    deleted_domain_names = set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names())
+    for domain_name in deleted_domain_names:
+        for hqESQuery in [AppES, CaseSearchES, FormES, GroupES, LedgerES, UserES]:
+            query = hqESQuery().domain(domain_name)
+            count = query.count()
+            if query.count() != 0:
+                issue_found = True
+                mail_admins_async.delay(
+                    'ES index "%s" contains %s items belonging to missing domain "%s"' % (
+                        query.index, count, domain_name
+                    ), ''
+                )
     if not issue_found and datetime.utcnow().isoweekday() == 1:
         mail_admins_async.delay(
             'All data in ES belongs to valid domains', ''
