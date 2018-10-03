@@ -6,6 +6,10 @@ hqDefine("users/js/mobile_workers", function () {
         self.mark_deactivated = ko.observable(false);
         self.action_error = ko.observable('');
 
+        self.editUrl = ko.computed(function () {
+            return hqImport("hqwebapp/js/initial_page_data").reverse('edit_commcare_user', self.user_id());
+        });
+
         self.showActivate = ko.computed(function () {
             return self.action() === 'activate';
         });

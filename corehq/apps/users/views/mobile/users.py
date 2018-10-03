@@ -787,7 +787,6 @@ def paginate_mobile_workers(request, domain):
             'mark_activated': False,
             'mark_deactivated': False,
             'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
-            'editUrl': reverse(EditCommCareUserView.urlname, args=[domain, user.user_id]),
             'deactivateUrl': "#",
             'actionText': _("Deactivate") if user.is_active else _("Activate"),
             'action': 'deactivate' if user.is_active else 'activate',
