@@ -4,6 +4,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.accounting.invoicing import should_create_invoice
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.smsbillables.models import SmsBillable
 
 
 class Command(BaseCommand):
@@ -24,3 +25,8 @@ class Command(BaseCommand):
                     month_start, month_end
                 ):
                     print affected_subcription
+                    print sum(
+                        b.gateway_charge + b.usage_charge
+                        for b in SmsBillable.objects.filter(date_sent=month_end)
+                    )
+                    print '----------'
