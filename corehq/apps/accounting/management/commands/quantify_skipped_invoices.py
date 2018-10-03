@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from django.core.management import BaseCommand
 
@@ -27,6 +27,10 @@ class Command(BaseCommand):
                     print affected_subcription
                     print sum(
                         b.gateway_charge + b.usage_charge
-                        for b in SmsBillable.objects.filter(date_sent=month_end)
+                        for b in SmsBillable.objects.filter(
+                            domain=affected_subcription.subscriber.domain,
+                            date_sent_gte=month_end,
+                            date_send_lt=datetime.combine(month_end, datetime.min.time()) + timedelta(days=1)
+                        )
                     )
                     print '----------'
