@@ -410,14 +410,14 @@ class CustomerAccountInvoiceFactory(object):
 
 def should_create_invoice(subscription, domain, invoice_start, invoice_end):
     if subscription.is_trial:
-        log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
+        # log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
         return False
     if subscription.skip_invoicing_if_no_feature_charges and not \
             subscription.plan_version.feature_charges_exist_for_domain(domain):
-        log_accounting_info(
-            "Skipping invoicing for Subscription %s because there are no feature charges."
-            % subscription.pk
-        )
+        # log_accounting_info(
+        #     "Skipping invoicing for Subscription %s because there are no feature charges."
+        #     % subscription.pk
+        # )
         return False
     if subscription.date_start > invoice_end:
         # No invoice gets created if the subscription didn't start in the previous month.
