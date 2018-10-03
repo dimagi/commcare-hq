@@ -106,6 +106,7 @@ from corehq.apps.export.utils import (
 import six
 from six.moves import range
 from six.moves import map
+from six.moves import filter
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -633,7 +634,7 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
-    user_types = ListProperty(IntegerProperty, default=[HQUserType.REGISTERED])
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE])
 
 
 class ExportInstance(BlobMixin, Document):
@@ -1867,9 +1868,18 @@ class FormExportDataSchema(ExportDataSchema):
         schema = cls()
         question_keyfn = lambda q: q['repeat']
 
-        question_groups = [(x, list(y)) for x, y in groupby(
-            sorted(questions, key=question_keyfn), question_keyfn
-        )]
+        question_groups = [
+            (None, [q for q in questions if question_keyfn(q) is None])
+        ] + [
+            (x, list(y)) for x, y in groupby(
+                sorted(
+                    (q for q in questions if question_keyfn(q) is not None),
+                    key=question_keyfn,
+                ),
+                question_keyfn
+            )
+        ]
+
         if None not in [x[0] for x in question_groups]:
             # If there aren't any questions in the main table, a group for
             # it anyways.

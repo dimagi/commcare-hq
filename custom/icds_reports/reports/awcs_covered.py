@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
 
@@ -100,18 +101,23 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     fills.update({'Not launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
-    info = _("Total AWCs that have launched ICDS-CAS. "
-             "AWCs are considered launched after submitting at least"
-             " one Household Registration form. <br /><br />"
-             "Number of AWCs launched: %s" % indian_formatted_number(total_awcs)
+    info = _(
+        "{:s}<br /><br />"
+        "Number of AWCs launched: {:s}".format(
+            awcs_launched_help_text(),
+            indian_formatted_number(total_awcs)
+        )
     )
     if level != 5:
         info = _(
-            "Total AWCs that have launched ICDS-CAS. "
-            "AWCs are considered launched after submitting at least"
-            " one Household Registration form. <br /><br />"
-            "Number of AWCs launched: %s <br />" % indian_formatted_number(total_awcs) +
-            "Number of %s launched: %s" % (prop.title(), indian_formatted_number(total))
+            "{:s}<br /><br />"
+            "Number of AWCs launched: {:s} <br />"
+            "Number of {:s} launched: {:s}".format(
+                awcs_launched_help_text(),
+                indian_formatted_number(total_awcs),
+                prop.title(),
+                indian_formatted_number(total)
+            )
         )
 
     return {
@@ -205,18 +211,14 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     total = sum([(x[prop] or 0) for x in six.itervalues(tooltips_data)])
 
     info = _(
-        "Total AWCs that have launched ICDS-CAS. "
-        "AWCs are considered launched after submitting at least"
-        " one Household Registration form. <br /><br />"
-        "Number of AWCs launched: %d" % total_awcs
+        "{:s}<br /><br />"
+        "Number of AWCs launched: {:d}".format(awcs_launched_help_text(), total_awcs)
     )
     if level != 5:
         info = _(
-            "Total AWCs that have launched ICDS-CAS. "
-            "AWCs are considered launched after submitting at least"
-            " one Household Registration form. <br /><br />"
-            "Number of AWCs launched: %d <br />" % total_awcs +
-            "Number of %s launched: %d" % (prop.title(), total)
+            "{:s}<br /><br />"
+            "Number of AWCs launched: {:d} <br />"
+            "Number of {:s} launched: {:d}".format(awcs_launched_help_text(), total_awcs, prop.title(), total)
         )
 
     return {

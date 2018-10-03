@@ -25,7 +25,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import StaticReportConfiguration
+from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
@@ -34,12 +34,14 @@ from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
-from django.db.models import Case, When, Q, F, IntegerField
+from django.db.models import Case, When, Q, F, IntegerField, Max, Min
 import six
 import uuid
 from six.moves import range
 from sqlagg.filters import EQ, NOT, AND
 from io import open
+from pillowtop.models import KafkaCheckpoint
+
 
 OPERATORS = {
     "==": operator.eq,
@@ -285,6 +287,27 @@ def get_age_filter(age_value):
         return {'age_tranche': age_value}
 
 
+def get_age_filter_in_months(age_value):
+    """
+        When age_value = 6 it means first range is chosen 0-6 months.
+        For that range we want to include 0 and 6 in results.
+    """
+    if age_value == '6':
+        return {'age_in_months__in': ['0', '6']}
+    elif age_value == '12':
+        return {'age_in_months__in': ['7', '12']}
+    elif age_value == '24':
+        return {'age_in_months__in': ['13', '24']}
+    elif age_value == '36':
+        return {'age_in_months__in': ['25', '36']}
+    elif age_value == '48':
+        return {'age_in_months__in': ['37', '48']}
+    elif age_value == '60':
+        return {'age_in_months__in': ['49', '60']}
+    elif age_value == '72':
+        return {'age_in_months__in': ['61', '72']}
+
+
 def match_age(age):
     if 0 <= age <= 1:
         return '0-1 month'
@@ -348,6 +371,68 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
     elif value in ['normal']:
         status = {'value': normal_value, 'color': 'black'}
     return status if not exportable else status['value']
+
+
+def get_anamic_status(value):
+    if value['anemic_severe']:
+        return 'Y'
+    elif value['anemic_moderate']:
+        return 'Y'
+    elif value['anemic_normal']:
+        return 'N'
+    elif value['anemic_unknown']:
+        return 'Unknown'
+    else:
+        return 'Not entered'
+
+
+def get_symptoms(value):
+    if value['bleeding']:
+        return 'Bleeding'
+    elif value['swelling']:
+        return 'Face, hand or genital swelling'
+    elif value['blurred_vision']:
+        return 'Blurred vision / headache'
+    elif value['convulsions']:
+        return 'Convulsions / unconsciousness'
+    elif value['rupture']:
+        return 'Water ruptured without labor pains'
+    else:
+        return 'None'
+
+
+def get_counseling(value):
+    counseling = []
+    if value['counsel_immediate_bf']:
+        counseling.append('Immediate breast feeding')
+    if value['counsel_bp_vid']:
+        counseling.append('BP vid')
+    if value['counsel_preparation']:
+        counseling.append('Preparation')
+    if value['counsel_fp_vid']:
+        counseling.append('Family planning vid')
+    if value['counsel_immediate_conception']:
+        counseling.append('Immediate conception')
+    if value['counsel_accessible_postpartum_fp']:
+        counseling.append('Accessible postpartum family planning')
+    if value['counsel_fp_methods']:
+        counseling.append('Family planning methods')
+    if counseling:
+        return ', '.join(counseling)
+    else:
+        return '--'
+
+
+def get_tt_dates(value):
+    tt_dates = []
+    if value['tt_1']:
+        tt_dates.append(value['tt_1'])
+    if value['tt_2']:
+        tt_dates.append(value['tt_2'])
+    if tt_dates:
+        return '; '.join(tt_dates)
+    else:
+        return '--'
 
 
 def current_age(dob, selected_date):
@@ -630,24 +715,40 @@ def get_age_filters(beta):
 
 
 def get_age_condition(beta):
-    if beta:
-        return "age_tranche != :age_72"
-    else:
-        return "age_tranche != :age_0 AND age_tranche != :age_6 AND age_tranche != :age_72"
+    return "age_tranche != :age_72"
 
 
 def track_time(func):
     """A decorator to track the duration an aggregation script takes to execute"""
     from custom.icds_reports.models import AggregateSQLProfile
 
+    def get_async_indicator_time():
+        return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
+            .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
+
+    def get_sync_datasource_time():
+        return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
+            .exclude(doc_modification_time__isnull=True)\
+            .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
+
+        sync_latest_ds_update = get_sync_datasource_time()
+        async_latest_ds_update = get_async_indicator_time()
+
+        if sync_latest_ds_update and async_latest_ds_update:
+            last_included_doc_time = min(sync_latest_ds_update, async_latest_ds_update)
+        else:
+            last_included_doc_time = sync_latest_ds_update or async_latest_ds_update
+
         AggregateSQLProfile.objects.create(
             name=func.__name__,
-            duration=int(end - start)
+            duration=int(end - start),
+            last_included_doc_time=last_included_doc_time
         )
         return result
 

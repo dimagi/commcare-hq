@@ -38,6 +38,7 @@ from corehq.apps.reminders.util import get_form_list
 from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.messaging.scheduling.async_handlers import get_combined_id
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
@@ -444,6 +445,9 @@ class ContentForm(Form):
         elif isinstance(content, SMSSurveyContent):
             result['form_unique_id'] = content.form_unique_id
             result['survey_expiration_in_hours'] = content.expire_after // 60
+            if (content.expire_after % 60) != 0:
+                # The old framework let you enter minutes. If it's not an even number of hours, round up.
+                result['survey_expiration_in_hours'] += 1
 
             if content.reminder_intervals:
                 result['survey_reminder_intervals_enabled'] = 'Y'
@@ -1127,6 +1131,8 @@ class ScheduleForm(Form):
         label=ugettext_lazy("User data filter: property value"),
         required=False,
     )
+
+    use_advanced_user_data_filter = True
 
     def is_valid(self):
         # Make sure .is_valid() is called on all appropriate forms before returning.
@@ -1814,29 +1820,35 @@ class ScheduleForm(Form):
         return self.initial_schedule and self.initial_schedule.use_utc_as_default_timezone
 
     def get_advanced_layout_fields(self):
-        return [
+        result = [
             crispy.Div(
                 crispy.Field('use_utc_as_default_timezone'),
                 data_bind='visible: %s' % ('true' if self.display_utc_timezone_option else 'false'),
             ),
             crispy.Field('default_language_code'),
-            hqcrispy.B3MultiField(
-                _("Filter user recipients"),
-                crispy.Div(
-                    twbscrispy.InlineField(
-                        'use_user_data_filter',
-                        data_bind='value: use_user_data_filter',
-                    ),
-                    get_system_admin_label("visible: use_user_data_filter() === '%s'" % self.JSON),
-                    css_class='col-sm-4',
-                ),
-            ),
-            crispy.Div(
-                crispy.Field('user_data_property_name'),
-                crispy.Field('user_data_property_value'),
-                data_bind="visible: use_user_data_filter() !== 'N'",
-            ),
         ]
+
+        if self.use_advanced_user_data_filter:
+            result.extend([
+                hqcrispy.B3MultiField(
+                    _("Filter user recipients"),
+                    crispy.Div(
+                        twbscrispy.InlineField(
+                            'use_user_data_filter',
+                            data_bind='value: use_user_data_filter',
+                        ),
+                        get_system_admin_label("visible: use_user_data_filter() === '%s'" % self.JSON),
+                        css_class='col-sm-4',
+                    ),
+                ),
+                crispy.Div(
+                    crispy.Field('user_data_property_name'),
+                    crispy.Field('user_data_property_value'),
+                    data_bind="visible: use_user_data_filter() !== 'N'",
+                ),
+            ])
+
+        return result
 
     def get_advanced_survey_layout_fields(self):
         return [
@@ -3263,10 +3275,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if self.cleaned_data.get('reset_case_property_enabled') == self.NO:
             return None
 
-        return validate_case_property_name(
+        value = validate_case_property_name(
             self.cleaned_data.get('reset_case_property_name'),
             allow_parent_case_references=False,
         )
+
+        if value in set([field.name for field in CommCareCaseSQL._meta.fields]):
+            raise ValidationError(_("Only dynamic case properties are allowed"))
+
+        return value
 
     def clean_stop_date_case_property_name(self):
         if self.cleaned_data.get('stop_date_case_property_enabled') != self.YES:

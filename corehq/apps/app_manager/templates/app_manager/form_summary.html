@@ -4,9 +4,7 @@
 
 {% block title %}{% trans "Form Summary" %}{% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/summary/form_summary.js" %}"></script>
-{% endblock js %}
+{% requirejs_main "app_manager/js/summary/form_summary" %}
 
 {% block content_extra %}
     {% initial_page_data 'errors' errors %}
@@ -63,7 +61,7 @@
                     <i data-bind="attr: { 'class': icon }"></i>
                     <span data-bind="text: $root.translate(name)"></span>
                 </div>
-                <span class="text-muted" data-bind="slideVisible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
+                <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
             </h4>
             <ul class="fa-ul" data-bind="foreach: forms">
                 <li data-bind="slideVisible: isVisible">
@@ -76,7 +74,7 @@
                             <i data-bind="attr: { 'class': icon }"></i>
                             <span data-bind="text: $root.translate(name)"></span>
                         </div>
-                        <span class="text-muted" data-bind="slideVisible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
+                        <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
                     </h5>
                     <ol data-bind="foreach: questions">
                         <li data-bind="slideVisible: isVisible">
@@ -84,7 +82,7 @@
                             <span data-bind="visible: $root.showIds, text: value"></span>
                             <span data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></span>
                             <span data-bind="visible: required" title="{% trans "This question is required"|escapejs %}">*</span>
-                            <span class="text-muted" data-bind="slideVisible: $root.showComments">
+                            <span class="text-muted" data-bind="visible: $root.showComments">
                                 &nbsp; <span data-bind="text: comment"></span>
                             </span>
                             <!-- ko template: {name: 'question-attribute', data: { attribute: calculate, icon: 'fa-calculator',

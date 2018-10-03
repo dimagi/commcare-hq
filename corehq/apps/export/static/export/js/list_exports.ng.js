@@ -14,7 +14,7 @@
         'ngMessages',
     ]);
 
-    list_exports.config(['$httpProvider', function($httpProvider) {
+    list_exports.config(['$httpProvider', function ($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
     }]);
 
@@ -98,12 +98,12 @@
             var currentUrl = useLegacyBulkExportUrl ? $scope.legacy_bulk_download_url : $scope.bulk_download_url;
             input.closest("form").attr("action", currentUrl);
         };
-        $scope.downloadRequested = function($event) {
+        $scope.downloadRequested = function ($event) {
             var $btn = $($event.target);
             $btn.addClass('disabled');
             $btn.text(gettext('Download Requested'));
         };
-        $scope.copyLinkRequested = function($event, export_) {
+        $scope.copyLinkRequested = function ($event, export_) {
             export_.showLink = true;
             var clipboard = new Clipboard($event.target, {
                 target: function (trigger) {
@@ -125,7 +125,7 @@
             });
             $scope.updateBulkStatus();
         };
-        $scope.sendExportAnalytics = function() {
+        $scope.sendExportAnalytics = function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
         };
 
@@ -178,7 +178,7 @@
                 .success(function (data) {
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
-                        var event = (exp.isAutoRebuildEnabled ? "Disable": "Enable") + " Saved Export";
+                        var event = (exp.isAutoRebuildEnabled ? "Disable" : "Enable") + " Saved Export";
                         hqImport('analytix/js/google').track.event(exportType + " Exports", event, "Saved");
                         exp.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
                         component.savingAutoRebuildChange = false;
@@ -189,7 +189,7 @@
             // The filterModalExport is used as context for the FeedFilterFormController
             $rootScope.filterModalExport = export_;
         };
-        $scope.isLocationSafeForUser = function(export_) {
+        $scope.isLocationSafeForUser = function (export_) {
             return (!export_.emailedExport) || export_.emailedExport.isLocationSafeForUser;
         };
 
@@ -247,7 +247,7 @@
             $scope.formElement.emwf_form_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter);
         });
 
-        $scope.$watch("formData.date_range", function(newDateRange) {
+        $scope.$watch("formData.date_range", function (newDateRange) {
             if (!newDateRange) {
                 $scope.formData.date_range = "since";
             } else {
@@ -288,11 +288,11 @@
             });
         };
 
-        self._handleSubmitError = function(data) {
+        self._handleSubmitError = function (data) {
             $scope.hasFormSubmitError = true;
             $scope.formSubmitErrorMessage = data.error;
         };
-        self._clearSubmitError = function() {
+        self._clearSubmitError = function () {
             $scope.hasFormSubmitError = false;
             $scope.formSubmitErrorMessage = null;
         };

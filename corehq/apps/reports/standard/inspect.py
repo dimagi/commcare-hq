@@ -1,15 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.es import forms as form_es, filters as es_filters
+from corehq.apps.es.filters import match_all
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
-from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import SubmitHistoryFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -51,7 +49,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.SubmitHistoryFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -68,6 +66,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                                        mobile_user_and_group_slugs,
                                        self.request.couch_user)
                     .values_list('_id', flat=True))
+        # If no filters are selected, return all results
         return form_es.user_id(user_ids)
 
     @staticmethod
@@ -89,7 +88,8 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                  .domain(self.domain)
                  .filter(time_filter(gte=self.datespan.startdate,
                                      lt=self.datespan.enddate_adjusted))
-                 .filter(self._get_users_filter(mobile_user_and_group_slugs)))
+                 .filter(self._get_users_filter(mobile_user_and_group_slugs)
+                         if not EMWF.no_filters_selected(mobile_user_and_group_slugs) else match_all()))
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):

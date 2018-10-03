@@ -1,146 +1,144 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load djangular_tags %}
 {% load crispy_forms_tags %}
 
-<script type="text/ng-template" id="step3.tpl">
-    <h2>{% trans "Step 3. Connect Incoming SMS" %}</h2>
-    <div ng-controller="TelerivetSetupController" ng-cloak>
-        <ol>
-            <li>
-                <div>
-                    <p>
-                        {% blocktrans %}
-                        Navigate to the Add Webhook Service page in the Telerivet website.
-                        <a href="#/step3" ng-hide="showAddWebookNavigation" ng-click="toggleAddWebookNavigation();">Show Me How</a>
-                        <a href="#/step3" ng-show="showAddWebookNavigation" ng-click="toggleAddWebookNavigation();">Hide Instructions</a>
-                        {% endblocktrans %}
-                    </p>
-                    <p class="help-block" ng-show="showAddWebookNavigation">
-                        {% blocktrans %}
-                        <i class="fa fa-info-circle" /> You may need to click "Add New Service" in the top-right corner of the page.
-                        {% endblocktrans %}
-                    </p>
-                    <p ng-show="showAddWebookNavigation">
-                        <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/add_webhook_service.png' %}" />
-                    </p>
-                </div>
-            </li>
-            <li>
-                <div>
-                    <p>
-                        {% blocktrans %}
-                        Enter the information below and click Done.
-                        <a href="#/step3" ng-hide="showWebhookDetails" ng-click="toggleWebhookDetails();">Show Me How</a>
-                        <a href="#/step3" ng-show="showWebhookDetails" ng-click="toggleWebhookDetails();">Hide Instructions</a>
-                        {% endblocktrans %}
-                    </p>
-                    <table style="width: auto;" class="table table-bordered">
-                        <tr>
-                            <th><strong>Service Name</strong></th>
-                            <td>CommCareHQ</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Webhook URL</strong></th>
-                            <td>{{ webhook_url }}</td>
-                        </tr>
-                        <tr>
-                            <th><strong>Webhook Secret</strong></th>
-                            <td>{{ webhook_secret}}</td>
-                        </tr>
-                        <tr>
-                            <th><strong>Advanced Settings > Selected Phones</strong></th>
-                            <td>{% trans "(Select ONLY the Android phone you are setting up with Telerivet right now)" %}</td>
-                        </tr>
-                    </table>
-                    {% if include_https_notice %}
-                    <p class="help-block">
-                        <i class="fa fa-info-circle" />
-                        {% trans "NOTE: Please make sure you enter https, not http, for the URL." %}
-                    </p>
-                    {% endif %}
-                    <p ng-show="showWebhookDetails">
-                        <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/webhook_detail_screen.png' %}" />
-                    </p>
-                </div>
-            </li>
-            <li>
-                <div>
-                    <p>
-                        {% blocktrans %}
-                        After creating the Webhook Service in the Telerivet website, send a reply to the message you received in Step 2.
-                        {% endblocktrans %}
-                    </p>
-                    <p>
-                        {% blocktrans %}
-                        <button class="btn btn-success" ng-click="startInboundPolling();">Click Here</button> after you have sent the reply SMS.
-                        {% endblocktrans %}
-                    </p>
-                </div>
-            </li>
-            <li ng-show="pollForInboundSMS">
-                <div>
-                    <p ng-show="!inboundSMSReceived && !inboundWaitTimedOut && !pollingErrorOccurred">{% trans "Waiting for inbound SMS..." %}</p>
-                    <p ng-show="inboundSMSReceived && !pollingErrorOccurred">
-                        {% trans "Message received!" %}
-                        <a class="btn btn-primary" href="#/finish">
-                            {% trans "Continue" %} &raquo;
-                        </a>
-                    </p>
-                    <p ng-show="inboundWaitTimedOut && !inboundSMSReceived && !pollingErrorOccurred">
-                        {% blocktrans %}
-                        Message not received.
-                        <button class="btn btn-danger" ng-click="showInboundTroubleshoot = true;">Troubleshoot</button>
-                        {% endblocktrans %}
-                    </p>
-                    <p ng-show="pollingErrorOccurred">
-                        {% blocktrans %}
-                        An error occurred. This can happen if it has been longer than one week since you started the Telerivet setup process in CommCareHQ.
-                        Please restart the setup process and if the problem persists, please report an issue.
-                        {% endblocktrans %}
-                    </p>
-                </div>
-                <div ng-show="showInboundTroubleshoot">
-                    <h3>{% trans "Troubleshoot Inbound SMS" %}</h3>
-                    <p>
-                        Look at the guidelines below for possible points of failure. At any point,
-                        you can send another SMS from your test phone to the Android phone, and if
-                        it is received by CommCareHQ, step 4 will automatically update and show
-                        you a success message.
-                    </p>
-                    <ul>
-                        <li>
-                            {% blocktrans %}
-                            Double-check the configuration entered in your Telerivet account for step 2.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                            Ensure that the Android phone is powered on, connected to wifi, and in a good cell reception area.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                            Check the messages page in your Telerivet account to see if the message shows up there. If
-                            it does, there might be an error message giving you more detail.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                            Try sending a message from your test phone to a third phone. If that succeeds, then you can
-                            rule out any issues with the test phone.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                            Check the Android phone itself and see if the message shows up there. If it does, then it
-                            likely means that there is a configuration error. If it does not, you may need to follow
-                            up with the carrier used by the Android phone to understand why it cannot receive SMS.
-                            {% endblocktrans %}
-                        </li>
-                    </ul>
-                </div>
-            </li>
-        </ol>
-    </div>
-</script>
+<h2>{% trans "Step 3. Connect Incoming SMS" %}</h2>
+<ol>
+    <li>
+        <div>
+            <p>
+                {% blocktrans %}
+                Navigate to the Add Webhook Service page in the Telerivet website.
+                <a data-bind="visible: !showAddWebhookNavigation(), click: function() { showAddWebhookNavigation(true) }">Show Me How</a>
+                <a data-bind="visible: showAddWebhookNavigation(), click: function() { showAddWebhookNavigation(false) }">Hide Instructions</a>
+                {% endblocktrans %}
+            </p>
+            <p class="help-block" data-bind="visible: showAddWebhookNavigation()">
+                {% blocktrans %}
+                <i class="fa fa-info-circle"></i> You may need to click "Add New Service" in the top-right corner of the page.
+                {% endblocktrans %}
+            </p>
+            <p data-bind="visible: showAddWebhookNavigation()">
+                <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/add_webhook_service.png' %}" />
+            </p>
+        </div>
+    </li>
+    <li>
+        <div>
+            <p>
+                {% blocktrans %}
+                Enter the information below and click Done.
+                <a data-bind="visible: !showWebhookDetails(), click: function() { showWebhookDetails(true) }">Show Me How</a>
+                <a data-bind="visible: showWebhookDetails(), click: function() { showWebhookDetails(false) }">Hide Instructions</a>
+                {% endblocktrans %}
+            </p>
+            <table style="width: auto;" class="table table-bordered">
+                <tr>
+                    <th><strong>Service Name</strong></th>
+                    <td>CommCareHQ</td>
+                </tr>
+                <tr>
+                    <td><strong>Webhook URL</strong></th>
+                    <td>{{ webhook_url }}</td>
+                </tr>
+                <tr>
+                    <th><strong>Webhook Secret</strong></th>
+                    <td>{{ webhook_secret}}</td>
+                </tr>
+                <tr>
+                    <th><strong>Advanced Settings > Selected Phones</strong></th>
+                    <td>{% trans "(Select ONLY the Android phone you are setting up with Telerivet right now)" %}</td>
+                </tr>
+            </table>
+            {% if include_https_notice %}
+            <p class="help-block">
+            <i class="fa fa-info-circle"></i>
+                {% trans "NOTE: Please make sure you enter https, not http, for the URL." %}
+            </p>
+            {% endif %}
+            <p data-bind="visible: showWebhookDetails()">
+                <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/webhook_detail_screen.png' %}" />
+            </p>
+        </div>
+    </li>
+    <li>
+        <div>
+            <p>
+                {% blocktrans %}
+                After creating the Webhook Service in the Telerivet website, send a reply to the message you received in Step 2.
+                {% endblocktrans %}
+            </p>
+            <p>
+            {% blocktrans %}
+                <button class="btn" data-bind="css: {'btn-default': messageReceived(), 'btn-primary': !messageReceived()}, click: startInboundPolling">
+                    Click Here
+                </button>
+                after you have sent the reply SMS.
+                {% endblocktrans %}
+            </p>
+        </div>
+    </li>
+    <li data-bind="visible: pollForInboundSMS()">
+        <div>
+            <p data-bind="visible: waiting">{% trans "Waiting for inbound SMS..." %}</p>
+            <p data-bind="visible: messageReceived">
+                {% trans "Message received!" %}
+                <button class="btn btn-primary" data-bind="click: nextStep">
+                    {% trans "Continue" %} &raquo;
+                </button>
+            </p>
+            <p data-bind="visible: messageNotReceived">
+                {% blocktrans %}
+                Message not received.
+                <button class="btn btn-danger" data-bind="click: function() { showInboundTroubleshoot(true); }">Troubleshoot</button>
+                {% endblocktrans %}
+            </p>
+            <p data-bind="visible: pollingErrorOccurred">
+                {% blocktrans %}
+                An error occurred. This can happen if it has been longer than one week since you started the Telerivet setup process in CommCareHQ.
+                Please restart the setup process and if the problem persists, please report an issue.
+                {% endblocktrans %}
+            </p>
+        </div>
+        <div data-bind="visible: showInboundTroubleshoot()">
+            <h3>{% trans "Troubleshoot Inbound SMS" %}</h3>
+            <p>
+                Look at the guidelines below for possible points of failure. At any point,
+                you can send another SMS from your test phone to the Android phone, and if
+                it is received by CommCareHQ, step 4 will automatically update and show
+                you a success message.
+            </p>
+            <ul>
+                <li>
+                    {% blocktrans %}
+                    Double-check the configuration entered in your Telerivet account for step 2.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    {% blocktrans %}
+                    Ensure that the Android phone is powered on, connected to wifi, and in a good cell reception area.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    {% blocktrans %}
+                    Check the messages page in your Telerivet account to see if the message shows up there. If
+                    it does, there might be an error message giving you more detail.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    {% blocktrans %}
+                    Try sending a message from your test phone to a third phone. If that succeeds, then you can
+                    rule out any issues with the test phone.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    {% blocktrans %}
+                    Check the Android phone itself and see if the message shows up there. If it does, then it
+                    likely means that there is a configuration error. If it does not, you may need to follow
+                    up with the carrier used by the Android phone to understand why it cannot receive SMS.
+                    {% endblocktrans %}
+                </li>
+            </ul>
+        </div>
+    </li>
+</ol>

@@ -84,7 +84,7 @@
                 </a>
                 {% endwith %}
                 {% endif %}
-                
+
                 <div class="pull-right btn-group">
                     {% if case.edit_data.edit_form_id != None and not case.closed %}
                     {% with case.edit_data as data %}
@@ -100,7 +100,7 @@
                     </a>
                     {% endwith %}
                     {% endif %}
-                    
+
                     {% if show_view_buttons and case.case_id != current_case.case_id %}
                     <a class="btn btn-sm btn-default" href="{{ case.edit_data.view_url }}">
                         <i class="fa fa-eye"></i> {% trans "View" %}
@@ -123,6 +123,17 @@
                     <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
                 </div>
                 {% endif %}
+
+                {% if case.num_children > max_child_cases %}
+                <br style="line-height:0">
+                <span class="indenter" style="line-height:0; padding: 0 {{ case.edit_data.indent_px }}px"></span>
+                <div style="display:inline-block">
+                    {% blocktrans with case.num_children as num_children %}
+                    Displaying {{ max_child_cases }} of {{ num_children }} children
+                    {% endblocktrans %}
+                </div>
+                {% endif %}
+
             </td>
 
             {% for column in case.columns %}

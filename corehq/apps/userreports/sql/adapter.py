@@ -100,10 +100,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             else:
                 self.get_table().drop(connection, checkfirst=True)
 
-    def refresh_table(self):
-        # SQL is always fresh
-        pass
-
     @unit_testing_only
     def clear_table(self):
         table = self.get_table()
@@ -147,13 +143,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def bulk_save(self, docs):
-        rows = []
-        for doc in docs:
-            rows.extend(self.get_all_values(doc))
-        self.save_rows(rows)
-
     def save_rows(self, rows):
+        """
+        Saves rows to a data source after deleting the old rows
+        """
         if not rows:
             return
 
@@ -177,6 +170,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_helper.session_context() as session:
             session.execute(delete)
             session.execute(insert)
+
+    def bulk_save(self, docs):
+        rows = []
+        for doc in docs:
+            rows.extend(self.get_all_values(doc))
+        self.save_rows(rows)
+
+    def bulk_delete(self, doc_ids):
+        table = self.get_table()
+        delete = table.delete(table.c.doc_id.in_(doc_ids))
+        with self.session_helper.session_context() as session:
+            session.execute(delete)
 
     def delete(self, doc):
         table = self.get_table()

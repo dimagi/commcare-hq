@@ -16,7 +16,7 @@ from corehq.apps.export.filters import (
 from corehq.apps.export.forms import (
     BaseFilterExportDownloadForm,
     EmwfFilterFormExport,
-    ExpandedMobileWorkerFilter,
+    SubmitHistoryFilter,
     FilterCaseESExportDownloadForm,
     CaseExportFilterBuilder,
     FormExportFilterBuilder,
@@ -115,7 +115,7 @@ class TestEmwfFilterFormExport(TestCase):
 
         self.assertTrue(self.export_filter.skip_layout)
         self.assertEqual(self.subject.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(self.subject.dynamic_filter_class, ExpandedMobileWorkerFilter)
+        self.assertEqual(self.subject.dynamic_filter_class, SubmitHistoryFilter)
 
     def test_export_to_es_user_types_map(self):
         mapping = {'mobile': ['mobile'], 'demo_user': ['demo'], 'supply': ['supply'],
@@ -201,7 +201,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
 
         self.assertTrue(export_filter.skip_layout)
         self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(export_filter.dynamic_filter_class, ExpandedMobileWorkerFilter)
+        self.assertEqual(export_filter.dynamic_filter_class, SubmitHistoryFilter)
 
     @patch('corehq.apps.export.filters.get_groups_user_ids')
     def test_get_group_filter(self, patch_object):
@@ -219,15 +219,66 @@ class TestEmwfFilterFormExportFilters(TestCase):
         }
         self.assertEqual(group_filter.to_es_filter(), expected_filter)
 
-    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.REGISTERED])
+    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.ACTIVE, HQUserType.DEACTIVATED])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
-    def test_get_user_type_filter_for_mobile(self, fetch_user_ids_patch):
+    def test_get_user_type_filter_for_mobile_active_and_deactivated(self, fetch_user_ids_patch):
         self.filter_export = self.subject(self.domain, pytz.utc)
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
-        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
+                                                     active=True, deactivated=True, web=False)
         self.assertIsInstance(user_filters[0], UserTypeFilter)
         self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
+
+    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.ACTIVE])
+    @patch.object(filter_builder, 'get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_active_mobile(self, fetch_user_ids_patch):
+        self.filter_export = self.subject(self.domain, pytz.utc)
+        es_user_types = self.filter_export._get_selected_es_user_types('')
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
+                                                     active=True, deactivated=False, web=False)
+        self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
+
+    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.DEACTIVATED])
+    @patch.object(filter_builder, 'get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_deactivated_mobile(self, fetch_user_ids_patch):
+        self.filter_export = self.subject(self.domain, pytz.utc)
+        es_user_types = self.filter_export._get_selected_es_user_types('')
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
+                                                     active=False, deactivated=True, web=False)
+        self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
+
+    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.ACTIVE, HQUserType.DEACTIVATED])
+    @patch.object(filter_builder, 'get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_active_and_deactivated_mobile(self, fetch_user_ids_patch):
+        self.filter_export = self.subject(self.domain, pytz.utc)
+        es_user_types = self.filter_export._get_selected_es_user_types('')
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
+                                                     active=True, deactivated=True, web=False)
+        self.assertIsInstance(user_filters[0], UserTypeFilter)
+        self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
+
+    @patch.object(form, '_get_selected_es_user_types', return_value=[HQUserType.ACTIVE, HQUserType.DEACTIVATED,
+                                                                     HQUserType.ADMIN])
+    @patch.object(filter_builder, 'get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_admin_and_deactivated_and_active_mobile(self, fetch_user_ids_patch,
+                                                                              *patches):
+        self.filter_export = self.subject(self.domain, pytz.utc)
+        self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
+        fetch_user_ids_patch.return_value = self.user_ids
+        es_user_types = self.filter_export._get_selected_es_user_types('')
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False,
+                                                     active=True, deactivated=True, web=False)
+
+        self.assertIsInstance(user_filters[0], UserTypeFilter)
+        self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
+
+        self.assertIsInstance(user_filters[1], FormSubmittedByFilter)
+        self.assertEqual(user_filters[1].submitted_by, self.user_ids)
 
     @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.ADMIN])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
@@ -236,26 +287,11 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
-        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False,
+                                                     active=False, deactivated=False, web=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
-
-    @patch.object(form, '_get_selected_es_user_types', return_value=[HQUserType.REGISTERED, HQUserType.ADMIN])
-    @patch.object(filter_builder, 'get_user_ids_for_user_types')
-    def test_get_user_type_filter_for_admin_and_mobile(self, fetch_user_ids_patch, *patches):
-        self.filter_export = self.subject(self.domain, pytz.utc)
-        self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
-        fetch_user_ids_patch.return_value = self.user_ids
-        es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
-        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False)
-
-        self.assertIsInstance(user_filters[0], UserTypeFilter)
-        self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
-
-        self.assertIsInstance(user_filters[1], FormSubmittedByFilter)
-        self.assertEqual(user_filters[1].submitted_by, self.user_ids)
 
     @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.UNKNOWN])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
@@ -264,15 +300,29 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
-        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=True, commtrack=False)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=True, commtrack=False,
+                                                     active=False, deactivated=False, web=False)
+        self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
+        self.assertEqual(user_filters[0].submitted_by, self.user_ids)
+
+    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.WEB])
+    @patch.object(filter_builder, 'get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_web(self, fetch_user_ids_patch):
+        self.filter_export = self.subject(self.domain, pytz.utc)
+        self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
+        fetch_user_ids_patch.return_value = self.user_ids
+        es_user_types = self.filter_export._get_selected_es_user_types('')
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
+                                                     active=False, deactivated=False, web=True)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
 
 
 @patch.object(FormExportFilterBuilder, '_get_datespan_filter', lambda self, x: None)
 @patch.object(FormExportFilterBuilder, '_get_group_filter')
-@patch.object(FormExportFilterBuilder, '_get_user_type_filter')
+@patch.object(FormExportFilterBuilder, '_get_user_type_filters')
 @patch.object(FormExportFilterBuilder, '_get_users_filter')
 @patch.object(FormExportFilterBuilder, '_get_locations_filter')
 class TestEmwfFilterFormExportFormFilters(TestCase):
@@ -291,9 +341,10 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         export_filter_form = self.subject(domain, pytz.utc, data=data)
         self.assertTrue(export_filter_form.is_valid())
-        export_filter_form.get_form_filter(group_ids_slug, True, None)
+        filters = export_filter_form.get_form_filter(group_ids_slug, True, None)
         extracted_group_ids = export_filter_form._get_group_ids(group_ids_slug)
 
+        self.assertEqual(len(filters), 1)
         group_patch.assert_called_once_with(extracted_group_ids)
         user_type_patch.assert_called_once_with([])
         users_patch.assert_called_once_with([])
@@ -308,10 +359,13 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         export_filter_form = self.subject(domain, pytz.utc, data=data)
         self.assertTrue(export_filter_form.is_valid())
         location_ids = ['some location', 'ids']
-        export_filter_form.get_form_filter(group_ids_slug, False, location_ids)
+        filters = export_filter_form.get_form_filter(group_ids_slug, False, location_ids)
+        extracted_group_ids = export_filter_form._get_group_ids(group_ids_slug)
 
-        assert not group_patch.called, 'User Filter Called for restricted location access'
-        assert not user_type_patch.called, 'User Type Filter Called for restricted location access'
+        # There are 2 filters because the scope filter has been applied for the restricted user
+        self.assertEqual(len(filters), 2)
+        group_patch.assert_called_once_with(extracted_group_ids)
+        user_type_patch.assert_called_once_with([])
         users_patch.assert_called_once_with([])
         locations_patch.assert_called_once_with([])
 
@@ -360,7 +414,8 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertTrue(self.export_filter.is_valid())
         case_filters = self.export_filter.get_case_filter('', True, None)
 
-        fetch_user_ids_patch.assert_called_once_with(admin=False, unknown=True, demo=True, commtrack=True)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
+                                                     web=False)
         assert not filters_from_slugs_patch.called
 
         self.assertIsInstance(case_filters[0], NOT)

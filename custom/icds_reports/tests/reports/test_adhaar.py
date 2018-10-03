@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text
 from custom.icds_reports.reports.adhaar import get_adhaar_data_map, get_adhaar_data_chart, get_adhaar_sector_data
 from django.test import TestCase
 
@@ -76,10 +77,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Of the total number of ICDS beneficiaries, "
-            "the percentage whose Adhaar identification has been captured. "
-        )
+        expected = percent_aadhaar_seeded_beneficiaries_help_text()
         self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -283,8 +281,7 @@ class TestAdhaar(TestCase):
                 location_id='b1'
             ),
             {
-                "info": "Of the total number of ICDS beneficiaries, "
-                        "the percentage whose Adhaar identification has been captured. ",
+                "info": percent_aadhaar_seeded_beneficiaries_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "in_month": 51,

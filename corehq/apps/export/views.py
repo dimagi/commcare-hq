@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 from __future__ import division
 from __future__ import unicode_literals
-
-import pickle
 from datetime import datetime, date, timedelta
 
 from couchdbkit import ResourceNotFound
@@ -31,7 +29,7 @@ from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_succ
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter
 from corehq.apps.reports.views import should_update_export
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
@@ -41,6 +39,8 @@ import re
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 
+from couchexport.writers import XlsLengthException
+
 from djangular.views.mixins import allow_remote_invocation
 import pytz
 from corehq import privileges, toggles
@@ -49,14 +49,12 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import (
     generate_schema_for_all_builds,
     get_saved_export_task_status,
     rebuild_saved_export,
 )
 from corehq.apps.export.exceptions import (
-    ExportNotFound,
     ExportAppException,
     BadExportConfiguration,
     ExportFormValidationException,
@@ -129,7 +127,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
@@ -484,6 +481,11 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             download = self._get_download_task(in_data)
         except ExportAsyncException as e:
             return format_angular_error(e.message, log_error=True)
+        except XlsLengthException:
+            return format_angular_error(
+                error_msg=_('This file has more than 256 columns, which is not supported '
+                            'by xls. Please change the output type to csv or xlsx to export this '
+                            'file.'), log_error=False)
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
         send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
@@ -1380,7 +1382,7 @@ class FormExportListView(BaseExportListView):
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
-            can_edit = export.can_edit(self.request.couch_user.user_id)
+            can_edit = export.can_edit(self.request.couch_user)
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
             sharing = export.sharing
@@ -2023,7 +2025,6 @@ class GenericDownloadNewExportMixin(object):
         export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
         self._check_deid_permissions(export_instances)
         self._check_export_size(export_instances, export_filters)
-
         return get_export_download(
             export_instances=export_instances,
             filters=export_filters,
@@ -2102,7 +2103,7 @@ class GenericDownloadNewExportMixin(object):
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
-    export_filter_class = ExpandedMobileWorkerFilter
+    export_filter_class = SubmitHistoryFilter
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
@@ -2264,7 +2265,7 @@ class GenerateSchemaFromAllBuildsView(View):
         assert type_ in [CASE_EXPORT, FORM_EXPORT], 'Unrecogized export type {}'.format(type_)
         download = DownloadBase()
         download.set_task(generate_schema_for_all_builds.delay(
-            pickle.dumps(self.export_cls(type_)),
+            self.export_cls(type_),
             request.domain,
             request.POST.get('app_id'),
             request.POST.get('identifier'),

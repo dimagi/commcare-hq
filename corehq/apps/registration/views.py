@@ -19,6 +19,7 @@ from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
@@ -48,6 +49,7 @@ from corehq import toggles
 from django.contrib.auth.models import User
 
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
 from dimagi.utils.web import get_ip
@@ -123,11 +125,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            ab_test = ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, self.request)
-            appcues_ab_test = ab_test.context['version'] == ab_tests.APPCUES_TEMPLATE_APP_OPTION_ON
-            self._create_new_account(reg_form, additional_hubspot_data={
-                "appcues_test": "On" if appcues_ab_test else "Off",
-            })
+            self._create_new_account(reg_form)
             try:
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
@@ -147,7 +145,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -200,7 +197,7 @@ class UserRegistrationView(BasePageView):
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
-        ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, request).update_response(response)
+        ab_tests.ABTest(ab_tests.DEMO_CTA, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -224,11 +221,14 @@ class UserRegistrationView(BasePageView):
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
+        ab_test = ab_tests.ABTest(ab_tests.DEMO_CTA, self.request)
+        demo_test = ab_test.context['version'] == ab_tests.DEMO_CTA_OPTION_ON
         return {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'demo_test': demo_test,
         }
 
     @property
@@ -377,63 +377,64 @@ def resend_confirmation(request):
 
 
 @transaction.atomic
-def confirm_domain(request, guid=None):
-    error = None
-    # Did we get a guid?
-    if guid is None:
-        error = _('An account activation key was not provided.  If you think this '
-                  'is an error, please contact the system administrator.')
+def confirm_domain(request, guid=''):
+    with CriticalSection(['confirm_domain_' + guid]):
+        error = None
+        # Did we get a guid?
+        if not guid:
+            error = _('An account activation key was not provided.  If you think this '
+                      'is an error, please contact the system administrator.')
 
-    # Does guid exist in the system?
-    else:
-        req = RegistrationRequest.get_by_guid(guid)
-        if not req:
-            error = _('The account activation key "%s" provided is invalid. If you '
-                      'think this is an error, please contact the system '
-                      'administrator.') % guid
-
-    if error is not None:
-        context = {
-            'message_body': error,
-            'current_page': {'page_name': 'Account Not Activated'},
-        }
-        return render(request, 'registration/confirmation_error.html', context)
-
-    requested_domain = Domain.get_by_name(req.domain)
-    view_name = "dashboard_default"
-    view_args = [requested_domain]
-    if not domain_has_apps(req.domain):
-        if ab_tests.appcues_template_app_test(request):
-            view_name = "app_from_template"
-            view_args.append("appcues")
+        # Does guid exist in the system?
         else:
-            view_name = "default_new_app"
+            req = RegistrationRequest.get_by_guid(guid)
+            if not req:
+                error = _('The account activation key "%s" provided is invalid. If you '
+                          'think this is an error, please contact the system '
+                          'administrator.') % guid
 
-    # Has guid already been confirmed?
-    if requested_domain.is_active:
-        assert(req.confirm_time is not None and req.confirm_ip is not None)
-        messages.success(request, 'Your account %s has already been activated. '
-            'No further validation is required.' % req.new_user_username)
+        if error is not None:
+            context = {
+                'message_body': error,
+                'current_page': {'page_name': 'Account Not Activated'},
+            }
+            return render(request, 'registration/confirmation_error.html', context)
+
+        requested_domain = Domain.get_by_name(req.domain)
+        view_name = "dashboard_default"
+        view_args = [requested_domain]
+        if not domain_has_apps(req.domain):
+            if False and settings.IS_SAAS_ENVIRONMENT and domain_is_on_trial(req.domain):
+                view_name = "app_from_template"
+                view_args.append("appcues")
+            else:
+                view_name = "default_new_app"
+
+        # Has guid already been confirmed?
+        if requested_domain.is_active:
+            assert(req.confirm_time is not None and req.confirm_ip is not None)
+            messages.success(request, 'Your account %s has already been activated. '
+                'No further validation is required.' % req.new_user_username)
+            return HttpResponseRedirect(reverse(view_name, args=view_args))
+
+        # Set confirm time and IP; activate domain and new user who is in the
+        req.confirm_time = datetime.utcnow()
+        req.confirm_ip = get_ip(request)
+        req.save()
+        requested_domain.is_active = True
+        requested_domain.save()
+        requesting_user = WebUser.get_by_username(req.new_user_username)
+
+        send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
+
+        messages.success(request,
+                'Your account has been successfully activated.  Thank you for taking '
+                'the time to confirm your email address: %s.'
+            % (requesting_user.username))
+        track_workflow(requesting_user.email, "Confirmed new project")
+        track_confirmed_account_on_hubspot_v2.delay(requesting_user)
+        request.session['CONFIRM'] = True
         return HttpResponseRedirect(reverse(view_name, args=view_args))
-
-    # Set confirm time and IP; activate domain and new user who is in the
-    req.confirm_time = datetime.utcnow()
-    req.confirm_ip = get_ip(request)
-    req.save()
-    requested_domain.is_active = True
-    requested_domain.save()
-    requesting_user = WebUser.get_by_username(req.new_user_username)
-
-    send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
-
-    messages.success(request,
-            'Your account has been successfully activated.  Thank you for taking '
-            'the time to confirm your email address: %s.'
-        % (requesting_user.username))
-    track_workflow(requesting_user.email, "Confirmed new project")
-    track_confirmed_account_on_hubspot_v2.delay(requesting_user)
-    request.session['CONFIRM'] = True
-    return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
 @retry_resource(3)

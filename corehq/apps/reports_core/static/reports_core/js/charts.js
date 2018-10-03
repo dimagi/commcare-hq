@@ -1,5 +1,5 @@
 /* global _, nv, d3 */
-hqDefine('reports_core/js/charts', function() {
+hqDefine('reports_core/js/charts', function () {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {
         return function () {
@@ -39,7 +39,7 @@ hqDefine('reports_core/js/charts', function() {
     };
 
     var renderMultibarAggregate = function (config, data, svgSelector) {
-        return function() {
+        return function () {
             var transformedDataDict = {};
             var transformedData = [];
             var secondaryValues = {};
@@ -105,9 +105,9 @@ hqDefine('reports_core/js/charts', function() {
     };
 
     var renderMultibar = function (config, data, svgSelector) {
-        return function() {
+        return function () {
             var valuesDict = {};
-            var chartData =[];
+            var chartData = [];
             var i, j, current, record;
 
             // initialize records
@@ -178,15 +178,15 @@ hqDefine('reports_core/js/charts', function() {
         }
     };
 
-    fn.clear = function(chartContainer) {
+    fn.clear = function (chartContainer) {
         chartContainer.hide();
         chartContainer.empty();
     };
     return fn;
 
-    function shouldStaggerXAxis(record){
+    function shouldStaggerXAxis(record) {
         // If any label is of more than 18 char length stagger
-        return _.some(record.values, function(value){
+        return _.some(record.values, function (value) {
             return value.x.length > 18;
         });
     }

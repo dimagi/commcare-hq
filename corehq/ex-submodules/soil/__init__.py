@@ -146,6 +146,8 @@ class DownloadBase(object):
     @property
     def task(self):
         from soil.util import get_task
+        if not self.task_id:
+            return None
         return get_task(self.task_id)
 
     def get_progress(self):

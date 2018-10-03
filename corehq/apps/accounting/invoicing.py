@@ -419,7 +419,7 @@ def should_create_invoice(subscription, domain, invoice_start, invoice_end):
             % subscription.pk
         )
         return False
-    if subscription.date_start >= invoice_end:
+    if subscription.date_start > invoice_end:
         # No invoice gets created if the subscription didn't start in the previous month.
         return False
     if subscription.date_end and subscription.date_end <= invoice_start:

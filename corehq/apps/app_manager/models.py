@@ -30,7 +30,11 @@ from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
-from corehq.apps.app_manager.app_schemas.case_properties import get_parent_type_map
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_all_case_properties,
+    get_parent_type_map,
+    get_usercase_properties,
+)
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -94,7 +98,7 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -238,21 +242,6 @@ def load_app_template(slug):
 
 
 @memoized
-def get_template_app_multimedia_paths(slug):
-    paths = []
-    base_path = app_template_dir(slug)
-    for root, subdirs, files in os.walk(base_path):
-        subdir = os.path.relpath(root, base_path)
-        if subdir == '.':
-            continue
-        for file in files:
-            if file.startswith("."):
-                continue
-            paths.append(subdir + os.sep + file)
-    return paths
-
-
-@memoized
 def load_case_reserved_words():
     with open(
         os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),
@@ -299,7 +288,7 @@ class IndexedSchema(DocumentSchema):
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
             # this makes Getter('foo') act like a bound method
-            return types.MethodType(self, instance, owner)
+            return types.MethodType(self, instance)
 
 
 class FormActionCondition(DocumentSchema):
@@ -974,7 +963,6 @@ class FormBase(DocumentSchema):
     @property
     def case_references(self):
         return self.case_references_data or CaseReferences()
-
 
     def requires_case(self):
         return False
@@ -2518,6 +2506,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             return self.forms[i].with_id(i % len(self.forms), self)
         except IndexError:
             raise FormNotFoundException()
+
+    def get_form_index(self, unique_id):
+        for index, form in enumerate(self.get_forms()):
+            if form.unique_id == unique_id:
+                return index
+        error = _("Could not find form with ID='{unique_id}' in module '{module_name}'.").format(
+            module_name=self.name, unique_id=unique_id)
+        raise FormNotFoundException(error)
 
     def get_child_modules(self):
         return [
@@ -4923,9 +4919,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     mobile_ucr_restore_version = StringProperty(
         default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
     )
+    location_fixture_restore = StringProperty(
+        default=DEFAULT_LOCATION_FIXTURE_OPTION, choices=LOCATION_FIXTURE_OPTIONS,
+        required=False
+    )
 
-    @classmethod
-    def wrap(cls, data):
+    @staticmethod
+    def _scrap_old_conventions(data):
         should_save = False
         # scrape for old conventions and get rid of them
         if 'commcare_build' in data:
@@ -4958,14 +4958,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if 'original_doc' in data:
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
+        return should_save
 
+    @classmethod
+    def wrap(cls, data, scrap_old_conventions=True):
+        if scrap_old_conventions:
+            should_save = cls._scrap_old_conventions(data)
         data["description"] = data.get('description') or data.get('short_description')
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = get_default_build_spec()
 
-        if should_save:
+        if scrap_old_conventions and should_save:
             self.save()
 
         return self
@@ -5419,6 +5424,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         LatestAppInfo(self.master_id, self.domain).clear_caches()
 
+        get_all_case_properties.clear(self)
+        get_usercase_properties.clear(self)
+
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
@@ -5473,7 +5481,7 @@ def validate_lang(lang):
         raise ValueError("Invalid Language")
 
 
-def validate_property(property):
+def validate_property(property, allow_parents=True):
     """
     Validate a case property name
 
@@ -5484,8 +5492,12 @@ def validate_property(property):
     ValueError: Invalid Property
 
     """
-    # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
+    if allow_parents:
+        # this regex is also copied in propertyList.ejs
+        regex = r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$'
+    else:
+        regex = r'^[a-zA-Z][\w_-]*$'
+    if not re.match(regex, property):
         raise ValueError("Invalid Property")
 
 
@@ -5498,11 +5510,18 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
-    def to_saved_build_json(self, timezone):
+    def releases_list_json(self, timezone):
+        """
+        returns minimum possible data that could be used to list a Build on releases page on HQ
+
+        :param timezone: timezone expected for timestamps in result
+        :return: data dict
+        """
         data = super(SavedAppBuild, self).to_json().copy()
+        # ignore details that are not used
         for key in ('modules', 'user_registration', 'external_blobs',
-                    '_attachments', 'profile', 'translations'
-                    'description', 'short_description'):
+                    '_attachments', 'profile', 'translations',
+                    'description', 'short_description', 'multimedia_map', 'media_language_map'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         data.update({
@@ -5974,6 +5993,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
+    def get_module_index(self, unique_id):
+        for index, module in enumerate(self.get_modules()):
+            if module.unique_id == unique_id:
+                return index
+        error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            app_name=self.name, unique_id=unique_id)
+        raise ModuleNotFoundException(error)
+
     def get_forms(self, bare=True):
         for module in self.get_modules():
             for form in module.get_forms():
@@ -6215,9 +6242,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Properties. You can remove User Properties '
-                             'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".'),
+                'message': _('Your application is using User Properties and your current subscription does not '
+                             'support that. You can remove User Properties functionality by opening the User '
+                             'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
             })
         return errors
 
@@ -6537,6 +6564,16 @@ class LinkedApplication(Application):
     # This is the id of the master application
     master = StringProperty()
 
+    # The following properties will overwrite their corresponding values from
+    # the master app everytime the new master is pulled
+    linked_app_translations = DictProperty()  # corresponding property: translations
+    linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
+
+    # if `uses_master_app_form_ids` is True, the form id might match the master's form id
+    # from a bug years ago. These should be fixed when mobile can handle the change
+    # https://manage.dimagi.com/default.asp?283410
+    uses_master_app_form_ids = BooleanProperty(default=False)
+
     @property
     @memoized
     def domain_link(self):
@@ -6557,6 +6594,14 @@ class LinkedApplication(Application):
             return get_latest_master_app_release(self.domain_link, self.master)
         else:
             raise ActionNotPermitted
+
+    def reapply_overrides(self):
+        self.translations.update(self.linked_app_translations)
+        self.logo_refs.update(self.linked_app_logo_refs)
+        for key, ref in self.logo_refs.items():
+            mm = CommCareMultimedia.get(ref['m_id'])
+            self.create_mapping(mm, ref['path'], save=False)
+        self.save()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):

@@ -18,7 +18,6 @@ from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
 from corehq.apps.registration.utils import PRICING_LINK
-from corehq.apps.sms.views import sms_in
 from corehq.apps.hqwebapp.urls import legacy_prelogin
 
 try:
@@ -116,7 +115,6 @@ urlpatterns = [
     url(r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
-    url(r'^megamobile/', include('corehq.messaging.smsbackends.megamobile.urls')),
     url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
     url(r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),
     url(r'^kookoo/', include('corehq.messaging.ivrbackends.kookoo.urls')),
@@ -139,7 +137,6 @@ urlpatterns = [
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
     url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
     url(r'^exchange/cda/$', cda, name='cda'),
-    url(r'^sms_in/$', sms_in, name='sms_in'),
     url(r'^wisepill/', include('custom.apps.wisepill.urls')),
     url(r'^pro_bono/$', ProBonoStaticView.as_view(),
         name=ProBonoStaticView.urlname),

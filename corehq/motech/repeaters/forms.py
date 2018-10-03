@@ -219,7 +219,8 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
+        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id',
+                                                                 select2_version='v4')
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()

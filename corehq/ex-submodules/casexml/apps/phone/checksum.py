@@ -62,7 +62,7 @@ class Checksum(object):
     def hash(cls, line):
         if isinstance(line, six.text_type):
             line = line.encode('utf-8')
-        return bytearray([ord(b) for b in hashlib.md5(line).digest()])
+        return bytearray(hashlib.md5(line).digest())
 
     @classmethod
     def xor(cls, bytes1, bytes2):

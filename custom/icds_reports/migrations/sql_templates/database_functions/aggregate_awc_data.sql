@@ -258,7 +258,7 @@ BEGIN
      'num_launched_awcs = 1 ' ||
     'FROM (SELECT DISTINCT(awc_id) ' ||
        'FROM agg_awc ' ||
-  'WHERE month <= ' || quote_literal(_previous_month_date) || ' AND usage_num_hh_reg > 0 AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
+  'WHERE month = ' || quote_literal(_previous_month_date) || ' AND usage_num_hh_reg > 0 AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
   'WHERE ut.awc_id = agg_awc.awc_id';
 
   -- Get latest infrastructure data

@@ -576,10 +576,10 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
         form.source = self.get_file("MySuperSpecialForm", "xml")
 
         xform = form.wrapped_xform()
-        rendered_form = xform.render()
+        rendered_form = xform.render().decode('utf-8')
 
         xform.set_name("NewTotallyAwesomeName")
-        new_rendered_form = xform.render()
+        new_rendered_form = xform.render().decode('utf-8')
 
         self.assertEqual(
             rendered_form.replace(

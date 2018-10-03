@@ -21,8 +21,6 @@ from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
-from corehq.apps.reminders.models import CaseReminderHandler
-from corehq.apps.reminders.views import ScheduledRemindersCalendarView
 from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
 from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
@@ -51,7 +49,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.messaging.tasks import initiate_messaging_rule_run
-from corehq.messaging.util import MessagingRuleProgressHelper, project_is_on_new_reminders
+from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -67,24 +65,6 @@ def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
 
 def get_conditional_alert_edit_critical_section(rule_id):
     return CriticalSection(['edit-conditional-alert-%s' % rule_id], timeout=5 * 60)
-
-
-def _requires_new_reminder_framework():
-    def decorate(fn):
-        @wraps(fn)
-        def wrapped(request, *args, **kwargs):
-            if (
-                hasattr(request, 'couch_user') and
-                toggles.NEW_REMINDERS_MIGRATOR.enabled(request.couch_user.username)
-            ):
-                return fn(request, *args, **kwargs)
-            if not hasattr(request, 'project'):
-                request.project = Domain.get_by_name(request.domain)
-            if project_is_on_new_reminders(request.project):
-                return fn(request, *args, **kwargs)
-            raise Http404()
-        return wrapped
-    return decorate
 
 
 class MessagingDashboardView(BaseMessagingSectionView):
@@ -119,11 +99,8 @@ class MessagingDashboardView(BaseMessagingSectionView):
             MessagingEventsReport,
         )
 
-        if project_is_on_new_reminders(self.domain_object):
-            scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
-                kwargs={'domain': self.domain, 'report_slug': ScheduleInstanceReport.slug})
-        else:
-            scheduled_events_url = reverse(ScheduledRemindersCalendarView.urlname, args=[self.domain])
+        scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
+            kwargs={'domain': self.domain, 'report_slug': ScheduleInstanceReport.slug})
 
         context = {
             'scheduled_events_url': scheduled_events_url,
@@ -176,15 +153,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         })
 
     def add_reminder_status_info(self, result):
-        if project_is_on_new_reminders(self.domain_object):
-            events_pending = get_count_of_active_schedule_instances_due(self.domain, datetime.utcnow())
-        else:
-            events_pending = len(CaseReminderHandler.get_all_reminders(
-                domain=self.domain,
-                due_before=datetime.utcnow(),
-                ids_only=True
-            ))
-
+        events_pending = get_count_of_active_schedule_instances_due(self.domain, datetime.utcnow())
         result['events_pending'] = events_pending
 
     def add_sms_count_info(self, result, days):
@@ -310,7 +279,6 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     ACTION_DEACTIVATE_SCHEDULED_BROADCAST = 'deactivate_scheduled_broadcast'
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
-    @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
@@ -425,7 +393,6 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [MessagingRecipientHandler]
     read_only_mode = False
 
-    @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
@@ -450,6 +417,14 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     def schedule(self):
         return None
 
+    @property
+    def schedule_form_class(self):
+        if toggles.EWS_BROADCAST_BY_ROLE.enabled(self.domain):
+            from custom.ewsghana.forms import NewRemindersEWSBroadcastForm
+            return NewRemindersEWSBroadcastForm
+
+        return BroadcastForm
+
     @cached_property
     def schedule_form(self):
         args = [self.domain, self.schedule, self.can_use_inbound_sms, self.broadcast]
@@ -457,7 +432,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == 'POST':
             args.append(self.request.POST)
 
-        return BroadcastForm(*args, is_system_admin=self.is_system_admin)
+        return self.schedule_form_class(*args, is_system_admin=self.is_system_admin)
 
     @property
     def page_context(self):
@@ -567,8 +542,8 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     ACTION_DEACTIVATE = 'deactivate'
     ACTION_DELETE = 'delete'
     ACTION_RESTART = 'restart'
+    ACTION_COPY = 'copy'
 
-    @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
@@ -584,10 +559,15 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
         )
 
+    @cached_property
+    def allow_copy(self):
+        return toggles.COPY_CONDITIONAL_ALERTS.enabled(self.request.couch_user.username)
+
     @property
     def page_context(self):
         context = super(ConditionalAlertListView, self).page_context
         context['limit_rule_restarts'] = self.limit_rule_restarts
+        context['allow_copy'] = self.allow_copy
         return context
 
     def get_conditional_alerts_queryset(self):
@@ -690,9 +670,41 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         initiate_messaging_rule_run(rule.domain, rule.pk)
         return JsonResponse({'status': 'success'})
 
+    def get_copy_ajax_response(self, rule, copy_to_project_name):
+        if not self.allow_copy:
+            return JsonResponse({
+                'status': 'error',
+                'error_msg': _("You do not have permission to copy alerts."),
+            })
+
+        destination_project = Domain.get_by_name(copy_to_project_name)
+        if (
+            destination_project is None or
+            destination_project.is_snapshot or
+            not self.request.couch_user.has_permission(copy_to_project_name, 'edit_data')
+        ):
+            return JsonResponse({
+                'status': 'error',
+                'error_msg': _("Destination project not found."),
+            })
+
+        # Use the same copy method as the exchange uses, which will
+        # return None if the rule can't be copied, otherwise will
+        # copy the rule as inactive.
+        copied_rule = rule.copy_conditional_alert(copy_to_project_name, allow_custom_references=True)
+        if copied_rule is None:
+            return JsonResponse({
+                'status': 'error',
+                'error_msg': _("This rule includes references that cannot be copied."),
+            })
+
+        initiate_messaging_rule_run(copied_rule.domain, copied_rule.pk)
+        return JsonResponse({'status': 'success'})
+
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         rule_id = request.POST.get('rule_id')
+        copy_to_project_name = request.POST.get('project')
 
         with get_conditional_alert_edit_critical_section(rule_id):
             rule = self.get_rule(rule_id)
@@ -707,6 +719,8 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 return self.get_delete_ajax_response(rule)
             elif action == self.ACTION_RESTART:
                 return self.get_restart_ajax_response(rule)
+            elif action == self.ACTION_COPY:
+                return self.get_copy_ajax_response(rule, copy_to_project_name)
             else:
                 return HttpResponseBadRequest()
 
@@ -718,7 +732,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
 
-    @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
@@ -840,7 +853,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                     rule = AutomaticUpdateRule(
                         domain=self.domain,
                         active=True,
-                        migrated=True,
                         workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
                     )
 

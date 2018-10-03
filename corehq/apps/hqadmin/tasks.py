@@ -4,6 +4,9 @@ from datetime import date, timedelta
 
 import csv342 as csv
 import io
+import attr
+import requests
+import json
 
 from celery.schedules import crontab
 from celery.task import task
@@ -27,7 +30,7 @@ from .utils import check_for_rewind
 _soft_assert_superusers = soft_assert(notify_admins=True)
 
 
-@periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
+@periodic_task(serializer='pickle', run_every=crontab(hour=0, minute=0), queue='background_queue')
 def check_pillows_for_rewind():
     for pillow in get_couch_pillow_instances():
         checkpoint = pillow.checkpoint
@@ -43,7 +46,7 @@ def check_pillows_for_rewind():
             )
 
 
-@periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
+@periodic_task(serializer='pickle', run_every=crontab(hour=0, minute=0), queue='background_queue')
 def create_historical_checkpoints():
     today = date.today()
     thirty_days_ago = today - timedelta(days=30)
@@ -51,7 +54,7 @@ def create_historical_checkpoints():
     HistoricalPillowCheckpoint.objects.filter(date_updated__lt=thirty_days_ago).delete()
 
 
-@periodic_task(run_every=crontab(minute=0), queue='background_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute=0), queue='background_queue')
 def check_non_dimagi_superusers():
     non_dimagis_superuser = ', '.join((get_user_model().objects.filter(
         (Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com')
@@ -61,7 +64,7 @@ def check_non_dimagi_superusers():
             False, "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser))
 
 
-@task(queue="email_queue")
+@task(serializer='pickle', queue="email_queue")
 def send_mass_emails(username, real_email, subject, html, text):
     if real_email:
         recipients = [{
@@ -112,6 +115,43 @@ def send_mass_emails(username, real_email, subject, html, text):
             _mass_email_attachment('successes', successes),
             _mass_email_attachment('failures', failures)]
     )
+
+
+@attr.s
+class AbnormalUsageAlert(object):
+    source = attr.ib()
+    domain = attr.ib()
+    message = attr.ib()
+
+
+support_email = "support@dimagi.com"
+slack_channel = "#support-alerts"
+
+
+@task(serializer='pickle', queue="email_queue")
+def send_abnormal_usage_alert(alert):
+    """ Sends an alert to #support and email to let support know when a domain is doing something weird
+
+    :param alert: AbnormalUsageAlert object
+    """
+
+    subject = "{domain} is doing something interesting with the {source} in the {environment} env".format(
+        domain=alert.domain,
+        source=alert.source,
+        environment=settings.SERVER_ENVIRONMENT
+    )
+    send_html_email_async(
+        subject,
+        support_email,
+        alert.message
+    )
+
+    if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
+        requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
+            "channel": slack_channel,
+            "username": "Paranormal Usage Bot :ghost:",
+            "text": subject
+        }))
 
 
 def _mass_email_attachment(name, rows):

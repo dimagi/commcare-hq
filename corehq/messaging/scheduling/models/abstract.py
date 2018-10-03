@@ -4,6 +4,7 @@ import jsonfield
 import uuid
 from memoized import memoized
 from django.db import models, transaction
+from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
 from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
 from corehq.apps.sms.models import (
@@ -191,6 +192,9 @@ class Schedule(models.Model):
 
     @property
     def references_parent_case(self):
+        if self.stop_date_case_property_name and property_references_parent(self.stop_date_case_property_name):
+            return True
+
         return False
 
     def delete_related_events(self):
@@ -299,6 +303,11 @@ class Content(models.Model):
     # (i.e., this was scheduled content), this is the ScheduleInstance.
     schedule_instance = None
 
+    # Set to True if any necessary critical section locks have
+    # already been acquired. This is currently only used for SMSSurveyContent
+    # under certain circumstances.
+    critical_section_already_acquired = False
+
     class Meta(object):
         abstract = True
 
@@ -312,12 +321,14 @@ class Content(models.Model):
         """
         raise NotImplementedError()
 
-    def set_context(self, case=None, schedule_instance=None):
+    def set_context(self, case=None, schedule_instance=None, critical_section_already_acquired=False):
         if case:
             self.case = case
 
         if schedule_instance:
             self.schedule_instance = schedule_instance
+
+        self.critical_section_already_acquired = critical_section_already_acquired
 
     @staticmethod
     def get_workflow(logged_event):
@@ -411,7 +422,7 @@ class Content(models.Model):
 
         return result
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
         representing the contact who should receive the content.
@@ -442,7 +453,8 @@ class Content(models.Model):
             send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
                 logged_subevent=logged_subevent)
         else:
-            send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata)
+            send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata,
+                logged_subevent=logged_subevent)
 
 
 class Broadcast(models.Model):

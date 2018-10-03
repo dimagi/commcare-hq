@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import logging
-import pickle
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from django.conf import settings
@@ -37,13 +36,11 @@ from six.moves import filter
 logger = logging.getLogger('export_migration')
 
 
-@task(queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(pickled_export_instances, pickled_filters, download_id, filename=None, expiry=10 * 60):
+@task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
+def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
-    export_instances = pickle.loads(pickled_export_instances)
-    filters = pickle.loads(pickled_filters)
     domain = export_instances[0].domain
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
@@ -92,7 +89,7 @@ def populate_export_download_task(pickled_export_instances, pickled_filters, dow
     email_requests.delete()
 
 
-@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
 def _start_export_task(export_instance_id, last_access_cutoff):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     if should_rebuild_export(export_instance, last_access_cutoff):
@@ -119,7 +116,8 @@ def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=Fal
     if manual:
         if status.not_started() or status.missing():
             # cancel pending task before kicking off a new one
-            download_data.task.revoke()
+            if download_data.task:
+                download_data.task.revoke()
         if status.started():
             return  # noop - make the user wait before starting a new one
     else:
@@ -152,7 +150,7 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
     _cached_add_inferred_export_properties(sender, domain, case_type, properties)
 
 
-@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
 def export_for_group_async(group_config_id):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
@@ -160,7 +158,7 @@ def export_for_group_async(group_config_id):
     export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
-@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"),
+@periodic_task(serializer='pickle', run_every=crontab(hour="23", minute="59", day_of_week="*"),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def saved_exports():
     for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
@@ -212,9 +210,8 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     inferred_schema.save()
 
 
-@task(queue='background_queue', bind=True)
-def generate_schema_for_all_builds(self, pickled_schema_cls, domain, app_id, identifier):
-    schema_cls = pickle.loads(pickled_schema_cls)
+@task(serializer='pickle', queue='background_queue', bind=True)
+def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier):
     schema_cls.generate_schema_from_builds(
         domain,
         app_id,

@@ -373,6 +373,8 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
             ProcessLogoFileUploadView, self
         ).process_upload()
         self.app.logo_refs[self.filename] = ref['ref']
+        if self.app.doc_type == 'LinkedApplication':
+            self.app.linked_app_logo_refs[self.filename] = ref['ref']
         self.app.save()
         return ref
 

@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from django.contrib import messages
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from elasticsearch import TransportError
@@ -27,6 +29,7 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
 from corehq.elastic import ESError
+from corehq.toggles import CASE_LIST_EXPLORER
 
 from .data_sources import CaseInfo, CaseDisplay
 
@@ -63,7 +66,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        if self.request.can_access_all_locations and EMWF.show_all_data(mobile_user_and_group_slugs):
+        if self.request.can_access_all_locations and (EMWF.show_all_data(mobile_user_and_group_slugs) or
+                                                      EMWF.no_filters_selected(mobile_user_and_group_slugs)):
             pass
         elif self.request.can_access_all_locations and EMWF.show_project_data(mobile_user_and_group_slugs):
             # Show everything but stuff we know for sure to exclude
@@ -71,6 +75,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             ids_to_exclude = self.get_special_owner_ids(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
+                web=HQUserType.WEB not in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
                 commtrack=False,
             )
@@ -112,20 +117,20 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                         raise BadRequestError()
             raise e
 
-    def get_special_owner_ids(self, admin, unknown, demo, commtrack):
-        if not any([admin, unknown, demo]):
+    def get_special_owner_ids(self, admin, unknown, web, demo, commtrack):
+        if not any([admin, unknown, web, demo, commtrack]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
             (admin, user_es.admin_users()),
-            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
+            (unknown, filters.OR(user_es.unknown_users())),
+            (web, user_es.web_users()),
             (demo, user_es.demo_users()),
         ] if include]
 
         owner_ids = (user_es.UserES()
                      .domain(self.domain)
                      .OR(*user_filters)
-                     .show_inactive()
                      .get_ids())
 
         if commtrack:
@@ -169,6 +174,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             special_owner_ids = self.get_special_owner_ids(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
+                web=HQUserType.WEB in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=HQUserType.COMMTRACK in user_types,
             )
@@ -258,6 +264,16 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     name = ugettext_lazy('Case List')
     slug = 'case_list'
+
+    @property
+    def view_response(self):
+        if self.request.couch_user.is_dimagi and not CASE_LIST_EXPLORER.enabled(self.domain):
+            messages.warning(
+                self.request,
+                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/ccinternal/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
+                extra_tags='html',
+            )
+        return super(CaseListReport, self).view_response
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):

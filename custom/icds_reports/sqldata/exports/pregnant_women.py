@@ -27,6 +27,11 @@ class PregnantWomenExport(ExportableMixin, SqlData):
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
             columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
+            columns.append(DatabaseColumn(
+                'AWW Phone Number',
+                SimpleColumn('contact_phone_number'),
+                slug='contact_phone_number')
+            )
         return columns
 
     @property

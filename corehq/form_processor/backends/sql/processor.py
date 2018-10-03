@@ -110,6 +110,11 @@ class FormProcessorSQL(object):
         new_form.user_id = user_id
         new_form.domain = existing_form.domain
         new_form.app_id = existing_form.app_id
+        cls.store_attachments(new_form, [Attachment(
+            name=ATTACHMENT_NAME,
+            raw_content=new_xml,
+            content_type='text/xml',
+        )])
 
         existing_form, new_form = apply_deprecation(existing_form, new_form)
         return (existing_form, new_form)
@@ -153,16 +158,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def publish_changes_to_kafka(processed_forms, cases, stock_result):
-        # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
-        if processed_forms.submitted.is_duplicate:
-            # for duplicate forms, also publish changes for the original form since the fact that
-            # we're getting a duplicate indicates that we may not have fully processed/published it
-            # the first time
-            republish_all_changes_for_form(
-                processed_forms.submitted.domain, processed_forms.submitted.orig_id
-            )
-
         cases = cases or []
         for case in cases:
             publish_case_saved(case)

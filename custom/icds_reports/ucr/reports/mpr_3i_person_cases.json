@@ -1,6 +1,7 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-test",
     "icds-test",
     "icds-sql",
     "icds-cas",

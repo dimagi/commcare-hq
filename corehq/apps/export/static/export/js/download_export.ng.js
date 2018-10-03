@@ -11,7 +11,7 @@
         'ngMessages',
     ]);
 
-    download_export.config(['$httpProvider', function($httpProvider) {
+    download_export.config(['$httpProvider', function ($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -108,7 +108,7 @@
         var exportType = $scope.exportList[0].export_type;
         self.exportType = hqImport('export/js/utils').capitalize(exportType);
         if (exportType === 'case') {
-            self.has_case_history_table = _.any($scope.exportList, function(export_) {
+            self.has_case_history_table = _.any($scope.exportList, function (export_) {
                 return export_.has_case_history_table;
             });
         }
@@ -390,7 +390,7 @@
             self._promise = $interval(self._checkDownloadProgress, 2000);
         };
 
-        self.startMultimediaDownload = function(downloadId, exportType) {
+        self.startMultimediaDownload = function (downloadId, exportType) {
             self.isMultimediaDownload = true;
             self.startDownload(downloadId, exportType);
         };

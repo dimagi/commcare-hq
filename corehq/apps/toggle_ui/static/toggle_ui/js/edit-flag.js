@@ -68,7 +68,9 @@ hqDefine('toggle_ui/js/edit-flag', [
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: "You have unsaved changes",
             save: function () {
-                var items = _.map(self.items(), function (item) {
+                var items = _.map(_.filter(self.items(), function (item) {
+                    return item.value();
+                }), function (item) {
                     var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
                         namespace = ns_raw === 'user' ? null : ns_raw,
                         value = namespace === null ? item.value() : namespace + ':' + item.value();
@@ -90,7 +92,7 @@ hqDefine('toggle_ui/js/edit-flag', [
         });
 
         var projectInfoUrl = '<a href="' + initialPageData.reverse('domain_internal_settings') + '">domain</a>';
-        self.getNamespaceHtml = function(namespace, value) {
+        self.getNamespaceHtml = function (namespace, value) {
             if (namespace === 'domain') {
                 return projectInfoUrl.replace('___', value);
             } else {
@@ -101,7 +103,7 @@ hqDefine('toggle_ui/js/edit-flag', [
         return self;
     }
 
-    $(function(){
+    $(function () {
         var $home = $('#toggle_editing_ko');
         var view = toggleViewModel();
         view.init({

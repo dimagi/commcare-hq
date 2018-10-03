@@ -3,7 +3,9 @@ from __future__ import unicode_literals
 import os.path
 from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
+from django.utils.html import format_html
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
+from corehq.apps.app_manager.models import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
@@ -27,9 +29,17 @@ EXCEL_SESSION_ID = "excel_id"
 
 
 def render_error(request, domain, message):
-    """ Load error message and reload page for excel file load errors """
+    """ Load error message and reload page for Excel file load errors """
     messages.error(request, _(message))
     return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
+
+
+def validate_column_names(column_names, invalid_column_names):
+    for column_name in column_names:
+        try:
+            validate_property(column_name, allow_parents=False)
+        except ValueError:
+            invalid_column_names.add(column_name)
 
 
 # Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
@@ -50,7 +60,7 @@ def excel_config(request, domain):
     """
     Step one of three.
 
-    This is the initial post when the user uploads the excel file
+    This is the initial post when the user uploads the Excel file
 
     """
     if request.method != 'POST':
@@ -86,9 +96,19 @@ def excel_config(request, domain):
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
         return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
+    invalid_column_names = set()
     with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
+        validate_column_names(columns, invalid_column_names)
         row_count = spreadsheet.max_row
+
+    if invalid_column_names:
+        error_message = format_html(
+            _("Column names must be <a target='_blank' href='https://www.w3schools.com/xml/xml_elements.asp'>"
+              "valid XML elements</a> and cannot start with a number or contain spaces or most special characters."
+              " Please update the following: {}.").format(
+                ', '.join(invalid_column_names)))
+        return render_error(request, domain, error_message)
 
     if row_count == 0:
         return render_error(request, domain, _(
@@ -145,7 +165,7 @@ def excel_fields(request, domain):
         case id in the upload.
 
     search_column:
-        Which column of the excel file we are using to specify either
+        Which column of the Excel file we are using to specify either
         case ids or external ids. This is, strangely, required. If
         creating new cases only you would expect these to be blank with
         the create_new_cases flag set.
@@ -160,9 +180,8 @@ def excel_fields(request, domain):
         search_column = request.POST['search_column']
     except MultiValueDictKeyError:
         # this is only true if your configuration is messed up in an irreparable way
-        messages.error(request, _('It looks like you may have accessed this page from a stale page. '
-                                  'Please start over.'))
-        return _spreadsheet_expired(request, domain)
+        messages.error(request, _('The Excel file you are trying to import does not have any headers.'))
+        return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
     search_field = request.POST['search_field']
     create_new_cases = request.POST.get('create_new_cases') == 'on'
@@ -229,9 +248,4 @@ def excel_commit(request, domain):
 
     request.session.pop(EXCEL_SESSION_ID, None)
 
-    return HttpResponseRedirect(base.ImportCases.get_url(domain))
-
-
-def _spreadsheet_expired(req, domain):
-    messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))
     return HttpResponseRedirect(base.ImportCases.get_url(domain))

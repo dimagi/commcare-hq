@@ -3,16 +3,20 @@ from __future__ import unicode_literals
 import json
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.specs import PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, \
     FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
-    OrderBySpec, LocationColumn, ExpressionColumn
+    OrderBySpec, LocationColumn, ExpressionColumn, ConditionalAggregationColumn, \
+    SumWhenColumn
 
 
 class ReportColumnFactory(object):
     class_map = {
         'aggregate_date': AggregateDateColumn,
+        'conditional_aggregation': ConditionalAggregationColumn,
+        'sum_when': SumWhenColumn,
         'expanded': ExpandedColumn,
         'field': FieldColumn,
         'percent': PercentageColumn,
@@ -21,7 +25,7 @@ class ReportColumnFactory(object):
     }
 
     @classmethod
-    def from_spec(cls, spec):
+    def from_spec(cls, spec, is_static):
         column_type = spec.get('type') or 'field'
         if column_type not in cls.class_map:
             raise BadSpecError(
@@ -30,8 +34,12 @@ class ReportColumnFactory(object):
                     ', '.join(cls.class_map)
                 )
             )
+        column_class = cls.class_map[column_type]
+        if column_class.restricted_to_static() and not (is_static or settings.UNIT_TESTING):
+            raise BadSpecError("{} columns are only available to static report configs"
+                               .format(column_type))
         try:
-            return cls.class_map[column_type].wrap(spec)
+            return column_class.wrap(spec)
         except BadValueError as e:
             raise BadSpecError(_(
                 'Problem creating column from spec: {}, message is: {}'

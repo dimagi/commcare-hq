@@ -2,12 +2,12 @@ hqDefine("sms/js/settings", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/select2_handler',
+    'hqwebapp/js/select2_handler_v3',
 ], function(
     $,
     ko,
     initialPageData,
-    select2Handler,
+    select2Handler
 ) {
 
     function DayTimeWindow(day, start_time, end_time, time_input_relationship) {

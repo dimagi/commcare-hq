@@ -26,6 +26,13 @@ from six.moves import zip
 from six.moves import map
 
 
+MAX_XLS_COLUMNS = 256
+
+
+class XlsLengthException(Exception):
+    pass
+
+
 class UniqueHeaderGenerator(object):
 
     def __init__(self, max_column_size=None):
@@ -118,7 +125,7 @@ class CsvFileWriter(ExportFileWriter):
         buffer = io.StringIO()
         csvwriter = csv.writer(buffer, csv.excel)
         csvwriter.writerow([
-            col.decode('utf-8') if isinstance(col, six.binary_type) else col
+            col.decode('utf-8') if isinstance(col, bytes) else col
             for col in row
         ])
         self._file.write(buffer.getvalue().encode('utf-8'))
@@ -188,7 +195,7 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            if isinstance(name, six.binary_type):
+            if isinstance(name, bytes):
                 name = name.decode('utf8')
             elif isinstance(name, Promise):
                 # noinspection PyCompatibility
@@ -390,7 +397,7 @@ class Excel2007ExportWriter(ExportWriter):
         def get_write_value(value):
             if isinstance(value, six.integer_types + (float,)):
                 return value
-            if isinstance(value, six.binary_type):
+            if isinstance(value, bytes):
                 value = six.text_type(value, encoding="utf-8")
             elif value is not None:
                 value = six.text_type(value)
@@ -428,6 +435,10 @@ class Excel2003ExportWriter(ExportWriter):
     def _write_row(self, sheet_index, row):
         row_index = self.table_indices[sheet_index]
         sheet = self.tables[sheet_index]
+
+        if hasattr(row, 'data') and len(row.data) >= MAX_XLS_COLUMNS:
+            raise XlsLengthException
+
         # have to deal with primary ids
         for i, val in enumerate(row):
             sheet.write(row_index, i, six.text_type(val))
@@ -480,7 +491,10 @@ class JsonExportWriter(InMemoryExportWriter):
         for tablename, data in self.tables.items():
             new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
 
-        self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
+        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder)
+        if six.PY3:
+            json_dump = json_dump.encode('utf-8')
+        self.file.write(json_dump)
 
 
 class PythonDictWriter(InMemoryExportWriter):

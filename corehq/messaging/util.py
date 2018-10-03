@@ -88,17 +88,6 @@ def use_phone_entries():
     return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
 
 
-def project_is_on_new_reminders(domain_obj):
-    client = get_redis_client()
-    if client.get('USE_NEW_REMINDERS_GLOBALLY'):
-        return True
-
-    if settings.SERVER_ENVIRONMENT in ('production', 'softlayer', 'staging'):
-        return domain_obj.uses_new_reminders
-
-    return True
-
-
 def show_messaging_dashboard(domain, couch_user):
     return (
         not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or

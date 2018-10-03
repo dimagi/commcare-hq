@@ -2,9 +2,9 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/select2_handler',
-    'hqwebapp/js/widgets',  // the public sms page uses a .ko-select2 for country input
-], function(
+    'hqwebapp/js/select2_handler_v4',
+    'hqwebapp/js/widgets_v4',  // the public sms page uses a .ko-select2 for country input
+], function (
     $,
     ko,
     _,
@@ -77,7 +77,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
         return self;
     };
 
-    var PublicSMSRateCalculator = function() {
+    var PublicSMSRateCalculator = function () {
         'use strict';
         var self = {};
 
@@ -90,7 +90,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
             return ! self.hasError();
         });
         self.calculatingRate = ko.observable(false);
-        self.showTable = ko.computed(function (){
+        self.showTable = ko.computed(function () {
             return !self.hasError() && !self.calculatingRate();
         });
         self.showRateInfo = ko.computed(function () {
@@ -134,7 +134,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
             return 'sms_rate_calc';
         };
 
-        self.formatSelection = function (result) {
+        self.templateSelection = function (result) {
             return result.text || (result.name + ' [' + result.rate_type + ']');
         };
 
@@ -145,19 +145,20 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
         return self;
     };
 
-    $(function() {
-        _.each($(".ko-sms-rate-calculator"), function(element) {
+    $(function () {
+        _.each($(".ko-sms-rate-calculator"), function (element) {
             var smsRateCalculator = SMSRateCalculator({
                 country_code: {
                     fieldName: 'country_code',
                     currentValue: '',
+                    placeholder: gettext('Please Select a Country Code'),
                 },
             });
             $(element).koApplyBindings(smsRateCalculator);
             smsRateCalculator.init();
         });
 
-        _.each($(".ko-public-sms-rate-calculator"), function(element) {
+        _.each($(".ko-public-sms-rate-calculator"), function (element) {
             var smsRateCalculator = PublicSMSRateCalculator({
                 country_code: {
                     fieldName: 'country_code',

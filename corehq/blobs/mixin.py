@@ -150,7 +150,7 @@ class BlobMixin(Document):
 
         if isinstance(content, six.text_type):
             content = BytesIO(content.encode("utf-8"))
-        elif isinstance(content, six.binary_type):
+        elif isinstance(content, bytes):
             content = BytesIO(content)
 
         # do we need to worry about BlobDB reading beyond content_length?
@@ -334,6 +334,14 @@ class BlobHelper(object):
         self.external_blobs = {n: BlobMetaRef.wrap(
             BlobMetaRef._normalize_json(database.dbname, self._id, m.copy())
         ) for n, m in six.iteritems(doc.get("external_blobs", {}))}
+
+    def __repr__(self):
+        return "<%s %s domain=%s id=%s>" % (
+            type(self).__name__,
+            self.doc_type,
+            getattr(self, "domain", ""),
+            self._id,
+        )
 
     _atomic_blobs = None
 

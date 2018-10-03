@@ -5,6 +5,7 @@ import copy
 import json
 import os
 import tempfile
+import urllib3
 import zipfile
 from collections import defaultdict
 from wsgiref.util import FileWrapper
@@ -49,7 +50,6 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
     ReportModule,
     app_template_dir,
-    get_template_app_multimedia_paths,
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
@@ -319,14 +319,22 @@ def get_apps_base_context(request, domain, app):
             toggles.APP_BUILDER_ADVANCED.enabled(domain)
             or getattr(app, 'commtrack_enabled', False)
         )
+
+        # ideally this should be loaded on demand
+        practice_users = []
+        if app.enable_practice_users:
+            try:
+                practice_users = get_practice_mode_mobile_workers(request.domain)
+            except ESError:
+                notify_exception(request, 'Error getting practice mode mobile workers')
+
         context.update({
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
-            'practice_users': [
-                {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
+            'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
         })
 
     return context
@@ -397,24 +405,36 @@ def copy_app(request, domain):
 def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
     clear_app_cache(request, domain)
+
+    # Import app itself
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
         'created_from_template': '%s' % slug,
     })
 
-    for path in get_template_app_multimedia_paths(slug):
-        media_class = None
-        with open(os.path.join(app_template_dir(slug), path), "rb") as f:
-            f.seek(0)
-            data = f.read()
-            media_class = CommCareMultimedia.get_class_by_data(data)
-            if media_class:
-                multimedia = media_class.get_by_data(data)
-                multimedia.attach_data(data,
-                                       original_filename=os.path.basename(path),
-                                       username=request.user.username)
-                multimedia.add_domain(domain, owner=True)
-                app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
+    # Fetch multimedia, which is hosted elsewhere
+    multimedia_filename = os.path.join(app_template_dir(slug), 'multimedia.json')
+    if (os.path.exists(multimedia_filename)):
+        with open(multimedia_filename) as f:
+            path_url_map = json.load(f)
+            http = urllib3.PoolManager()
+            for path, url in path_url_map.items():
+                media_class = None
+                try:
+                    req = http.request('GET', url)
+                except Exception:
+                    # If anything goes wrong, just bail. It's not a big deal if a template app is missing a file.
+                    continue
+                if req.status == 200:
+                    data = req.data
+                    media_class = CommCareMultimedia.get_class_by_data(data)
+                    if media_class:
+                        multimedia = media_class.get_by_data(data)
+                        multimedia.attach_data(data,
+                                               original_filename=os.path.basename(path),
+                                               username=request.user.username)
+                        multimedia.add_domain(domain, owner=True)
+                        app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
     build = make_async_build(app, request.user.username, release=True, comment=comment)
@@ -477,7 +497,7 @@ def import_app(request, domain):
                 )
             else:
                 if redirect_domain:
-                    messages.error(request, "We can't find a project called %s." % redirect_domain)
+                    messages.error(request, "We can't find a project called \"%s\"." % redirect_domain)
                 else:
                     messages.error(request, "You left the project name blank.")
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
@@ -719,6 +739,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
         ('mobile_ucr_restore_version', None),
+        ('location_fixture_restore', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

@@ -13,6 +13,7 @@
 {% block page_content %}
     {% initial_page_data 'api_root' api_root %}
     {% initial_page_data 'location_id' location.get_id %}
+    {% initial_page_data 'location_type' location.location_type.name %}
     {% initial_page_data 'hierarchy' hierarchy %}
     {% initial_page_data 'loc_types_with_users' loc_types_with_users %}
     {% initial_page_data 'locations' locations %}

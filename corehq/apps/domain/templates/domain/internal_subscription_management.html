@@ -3,10 +3,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/widgets.js' %}"></script>
-    <script src="{% static 'domain/js/internal_subscription_management.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'domain/js/internal_subscription_management' %}
 
 {% block page_content %}
     {% blocktrans %}

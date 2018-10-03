@@ -249,13 +249,15 @@
                         {% case "path error" %}
                             {% if error.path %}
                                 The case management
-                                {% if request|toggle_enabled:"VISIT_SCHEDULER" %} or visit scheduler {% endif %}
+                                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
                                 in form {% include "app_manager/partials/form_error_message.html" %}
                                 references a question that no longer exists: "{{ error.path }}". It is likely that
                                 this question has been renamed or deleted. Please update or delete this question
                                 reference before you make a new version.
                             {% else %}
-                                {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
+                                You're loading or saving a case property but have not chosen a question
+                                from the form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
+                                Please choose a question from the dropdown next to the case property.
                             {% endif %}
                         {% case "multimedia case property not supported" %}
                             Multimedia case property "{{ error.path }}" is not supported on apps on or before v2.5

@@ -20,7 +20,7 @@ from dimagi.utils.post import simple_post
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView, BaseProjectSettingsView
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.users.models import Permissions
 
@@ -63,8 +63,13 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return {
             'repeaters': self.repeaters,
             'pending_record_count': RepeatRecord.count(self.domain),
-            'gefingerpoken': self.request.couch_user.is_superuser or
-                             toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+            'gefingerpoken': (
+                # Set gefingerpoken_ to whether the user should be allowed to change MOTECH configuration.
+                # .. _gefingerpoken: https://en.wikipedia.org/wiki/Blinkenlights
+                self.request.couch_user.is_superuser or
+                self.request.couch_user.can_edit_motech() or
+                toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+            )
         }
 
 
@@ -194,7 +199,7 @@ class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(AddCaseRepeaterView, self).dispatch(request, *args, **kwargs)
 

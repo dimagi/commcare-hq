@@ -300,6 +300,8 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
+    'corehq.messaging.smsbackends.karix',
+    'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -564,6 +566,9 @@ CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 # Keep messages in the events queue only for 2 hours
 CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 
+CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
+CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
@@ -575,7 +580,6 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
-XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
@@ -588,7 +592,10 @@ CUSTOM_PROJECT_SMS_QUEUES = {
 
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
-SMS_QUEUE_ENABLED = False
+# This should always be set to True in production environments, and the sms_queue
+# celery worker(s) should be deployed. We set this to False for tests and (optionally)
+# for local testing.
+SMS_QUEUE_ENABLED = True
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -695,10 +702,6 @@ OPEN_EXCHANGE_RATES_API_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
-
-# for touchforms authentication
-TOUCHFORMS_API_USER = "changeme"
-TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -852,6 +855,7 @@ ZIPLINE_API_PASSWORD = ''
 ICDS_SMS_INDICATOR_DOMAINS = []
 
 KAFKA_BROKERS = ['localhost:9092']
+KAFKA_API_VERSION = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
@@ -886,6 +890,7 @@ AUTHPROXY_CERT = None
 ASYNC_INDICATORS_TO_QUEUE = 10000
 ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
+NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 
 UCR_COMPARISONS = {}
 
@@ -950,7 +955,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1261,6 +1266,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'kafka': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
     }
 }
 
@@ -1511,6 +1521,8 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
+    'corehq.messaging.smsbackends.karix.models.KarixBackend',
+    'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
 ]
 
 # The number of seconds to use as a timeout when making gateway requests
@@ -1836,7 +1848,23 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile_mpr_2a_deaths.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'asr_2_3_beneficiaries.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a3_children_delivered.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a_deaths.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3_children_registered.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3i_pregnancies.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4a6_preschool_education.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4b_iodized_salt.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_child_nutrition.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_pregnancy_nutrition.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6ac_pse_attendance.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6b_pse_attendance_per_year.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_7_growth_monitored.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_8_immunizations.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_9_vhnd.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10a_children_referred.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10b_pregnancies_referred.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_11_awc_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
@@ -2056,6 +2084,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
+    'reach-test': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

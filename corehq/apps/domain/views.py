@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import datetime
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from decimal import Decimal
 import logging
 import json
@@ -55,6 +55,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
+    use_select2_v4,
     use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
@@ -68,11 +69,11 @@ from corehq.apps.accounting.payment_handlers import (
     InvoiceStripePaymentHandler,
 )
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
-from corehq.apps.accounting.forms import EnterprisePlanContactForm
+from corehq.apps.accounting.forms import EnterprisePlanContactForm, AnnualPlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, domain_has_privilege,
+    log_accounting_error, domain_has_privilege, is_downgrade
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -94,7 +95,7 @@ from corehq.apps.accounting.models import (
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     EntryPoint, WireInvoice,
     StripePaymentMethod, LastPayment,
-    UNLIMITED_FEATURE_USAGE,
+    UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -299,7 +300,7 @@ class BaseProjectSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        return reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
+        return reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
 
 
 class DefaultProjectSettingsView(BaseDomainView):
@@ -629,7 +630,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_end': date_end,
             'cards': cards,
             'next_subscription': next_subscription,
-            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line
+            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
+            'is_annual_plan': plan_version.plan.is_annual_plan
         }
         info['has_account_level_credit'] = (
             any(
@@ -1264,6 +1266,12 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         return not self.slug_to_form[ContractedPartnerForm.slug].is_uneditable
 
 
+PlanOption = namedtuple(
+    'PlanOption',
+    ['name', 'monthly_price', 'annual_price', 'description']
+)
+
+
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
@@ -1271,6 +1279,60 @@ class SelectPlanView(DomainAccountingSettings):
     step_title = ugettext_lazy("Select Plan")
     edition = None
     lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
+
+    @property
+    def plan_options(self):
+        return [
+            PlanOption(
+                SoftwarePlanEdition.STANDARD,
+                "$300",
+                "$250",
+                _("Perfect to prove the value of CommCare in the pilot phase. "
+                  "Access case imports, API integrations, and better support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.PRO,
+                "$600",
+                "$500",
+                _("Ideal for projects that need a complete mobile solution "
+                  "with data management tools, and access to priority email "
+                  "support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.ADVANCED,
+                "$1200",
+                "$1000",
+                _("For our savviest users, working on projects at scale that require advanced levels of data, "
+                  "security and support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.ENTERPRISE,
+                _("Contact Us"),
+                _("Contact Us"),
+                _("A tailor-made plan for organizations with multiple projects. "
+                  "All paid features included in this plan.")
+            )
+        ]
+
+    @property
+    def start_date_after_minimum_subscription(self):
+        if self.current_subscription is None:
+            return ""
+        elif self.current_subscription.is_trial:
+            return ""
+        else:
+            new_start_date = self.current_subscription.date_start + \
+                datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
+            return new_start_date.strftime(USER_DATE_FORMAT)
+
+    @property
+    def next_subscription_edition(self):
+        if self.current_subscription is None:
+            return None
+        elif self.current_subscription.next_subscription is None:
+            return None
+        else:
+            return self.current_subscription.next_subscription.plan_version.plan.edition
 
     @property
     def edition_name(self):
@@ -1312,7 +1374,7 @@ class SelectPlanView(DomainAccountingSettings):
     def page_context(self):
         return {
             'editions': [
-                (edition.lower(), DESC_BY_EDITION[edition])
+                edition.lower()
                 for edition in [
                     SoftwarePlanEdition.COMMUNITY,
                     SoftwarePlanEdition.STANDARD,
@@ -1321,10 +1383,16 @@ class SelectPlanView(DomainAccountingSettings):
                     SoftwarePlanEdition.ENTERPRISE,
                 ]
             ],
+            'plan_options': [p._asdict() for p in self.plan_options],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
+            'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
+            'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
+                                           if self.current_subscription is not None else False),
+            'next_subscription_edition': self.next_subscription_edition,
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL
         }
 
 
@@ -1387,7 +1455,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
     @property
     @memoized
     def is_not_redirect(self):
-        return not 'plan_edition' in self.request.POST
+        return 'plan_edition' not in self.request.POST
 
     @property
     @memoized
@@ -1405,6 +1473,69 @@ class SelectedEnterprisePlanView(SelectPlanView):
     def post(self, request, *args, **kwargs):
         if self.is_not_redirect and self.enterprise_contact_form.is_valid():
             self.enterprise_contact_form.send_message()
+            messages.success(request, _("Your request was sent to Dimagi. "
+                                        "We will follow up shortly."))
+            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class SelectedAnnualPlanView(SelectPlanView):
+    template_name = 'domain/selected_annual_plan.html'
+    urlname = 'annual_plan_request_quote'
+    step_title = ugettext_lazy("Contact Dimagi")
+    edition = None
+
+    @property
+    def steps(self):
+        last_steps = super(SelectedAnnualPlanView, self).steps
+        last_steps.append({
+            'title': _("2. Contact Dimagi"),
+            'url': reverse(SelectedAnnualPlanView.urlname, args=[self.domain]),
+        })
+        return last_steps
+
+    @property
+    def on_annual_plan(self):
+        if self.current_subscription is None:
+            return False
+        else:
+            return self.current_subscription.plan_version.plan.is_annual_plan
+
+    @property
+    @memoized
+    def is_not_redirect(self):
+        return 'plan_edition' not in self.request.POST
+
+    @property
+    @memoized
+    def edition(self):
+        if self.on_annual_plan:
+            return self.current_subscription.plan_version.plan.edition
+        edition = self.request.GET.get('plan_edition').title()
+        if edition not in [e[0] for e in SoftwarePlanEdition.CHOICES]:
+            raise Http404()
+        return edition
+
+    @property
+    @memoized
+    def annual_plan_contact_form(self):
+        if self.request.method == 'POST' and self.is_not_redirect:
+            return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan,
+                                         data=self.request.POST)
+        return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan)
+
+    @property
+    def page_context(self):
+        return {
+            'annual_plan_contact_form': self.annual_plan_contact_form,
+            'on_annual_plan': self.on_annual_plan,
+            'edition': self.edition,
+            'selected_enterprise_plan': self.edition == SoftwarePlanEdition.ENTERPRISE
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.is_not_redirect and self.annual_plan_contact_form.is_valid():
+            self.annual_plan_contact_form.send_message()
             messages.success(request, _("Your request was sent to Dimagi. "
                                         "We will try our best to follow up in a timely manner."))
             return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
@@ -1439,25 +1570,54 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
-    def downgrade_messages(self):
-        subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        downgrades = get_change_status(
-            subscription.plan_version if subscription else None,
-            self.selected_plan_version
-        )[1]
-        downgrade_handler = DomainDowngradeStatusHandler(
-            self.domain_object, self.selected_plan_version, downgrades,
-        )
-        return downgrade_handler.get_response()
+    def is_upgrade(self):
+        if self.current_subscription.is_trial:
+            return True
+        elif self.current_subscription.plan_version.plan.edition == self.edition:
+            return False
+        else:
+            return not is_downgrade(
+                current_edition=self.current_subscription.plan_version.plan.edition,
+                next_edition=self.edition
+            )
+
+    @property
+    def is_downgrade_before_minimum(self):
+        if self.is_upgrade:
+            return False
+        elif self.current_subscription is None or self.current_subscription.is_trial:
+            return False
+        elif self.current_subscription.is_below_minimum_subscription:
+            return True
+        else:
+            return False
+
+    @property
+    def current_subscription_end_date(self):
+        if self.is_downgrade_before_minimum:
+            return self.current_subscription.date_start + \
+                datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
+        else:
+            return datetime.date.today()
+
+    @property
+    def next_invoice_date(self):
+        # Next invoice date is the first day of the next month
+        return datetime.date.today().replace(day=1) + dateutil.relativedelta.relativedelta(months=1)
 
     @property
     def page_context(self):
         return {
-            'downgrade_messages': self.downgrade_messages,
-            'current_plan': (self.current_subscription.plan_version.user_facing_description
+            'is_upgrade': self.is_upgrade,
+            'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
+            'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
             'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
                                       and self.current_subscription is None),
+            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
+            'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
+            'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
+            'new_plan_edition': self.edition
         }
 
     @property
@@ -1527,6 +1687,24 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return 'company_name' in self.request.POST
 
     @property
+    def downgrade_email_note(self):
+        if self.is_upgrade:
+            return None
+
+        downgrade_reason = self.request.POST.get('downgrade_reason')
+        will_project_restart = self.request.POST.get('will_project_restart')
+        new_tool = self.request.POST.get('new_tool')
+        new_tool_reason = self.request.POST.get('new_tool_reason')
+        feedback = self.request.POST.get('feedback')
+        if not downgrade_reason:
+            return None
+        return 'Why are you downgrading your subscription today?:\n' + downgrade_reason + '\n\n' +\
+               'Is there a chance your project may start again?:\n' + will_project_restart + '\n\n' +\
+               'Could you indicate which new tool you are using?\n' + new_tool + '\n\n' +\
+               'Why are you switching to a new tool?\n' + new_tool_reason + '\n\n' +\
+               'Additional feedback:\n' + feedback
+
+    @property
     @memoized
     def billing_account_info_form(self):
         if self.request.method == 'POST' and self.is_form_post:
@@ -1542,31 +1720,68 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return {
             'billing_account_info_form': self.billing_account_info_form,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-            'cards': self.payment_method.all_cards_serialized(self.account)
+            'cards': self.payment_method.all_cards_serialized(self.account),
+            'downgrade_email_note': self.downgrade_email_note
         }
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
-            if not is_saved:
-                messages.error(
-                    request, _(
-                        "It appears there was an issue subscribing your project to the %s Software Plan. You "
-                        "may try resubmitting, but if that doesn't work, rest assured someone will be "
-                        "contacting you shortly."
+            next_subscription = self.current_subscription.next_subscription
+
+            if is_saved:
+                if not request.user.is_superuser and not self.is_upgrade:
+                    self.send_downgrade_email()
+                if next_subscription is not None:
+                    # New subscription has been scheduled for the future
+                    current_subscription = self.current_subscription.plan_version.plan.edition
+                    start_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
+                    message = _(
+                        "You have successfully scheduled your current %s Edition Plan subscription to "
+                        "downgrade to the %s Edition Plan on %s."
+                    ) % (current_subscription, software_plan_name, start_date)
+                else:
+                    message = _(
+                        "Your project has been successfully subscribed to the %s Edition Plan."
                     ) % software_plan_name
-                )
-            else:
                 messages.success(
-                    request, _(
-                        "Your project has been successfully subscribed to the %s Software Plan."
-                    ) % software_plan_name
+                    request, message
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+
+            downgrade_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
+            messages.error(
+                request, _(
+                    "You have already scheduled a downgrade to the %s Software Plan on %s. If this is a "
+                    "mistake, please reach out to billing-support@dimagi.com."
+                ) % (software_plan_name, downgrade_date)
+            )
+
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
+
+    def send_downgrade_email(self):
+        message = '\n'.join([
+            '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}',
+            '',
+            '{note}',
+        ]).format(
+            user=self.request.couch_user.username,
+            domain=self.request.domain,
+            old_plan=self.request.POST.get('old_plan', 'unknown'),
+            new_plan=self.request.POST.get('new_plan', 'unknown'),
+            note=self.request.POST.get('downgrade_email_note', 'none')
+        )
+
+        send_mail_async.delay(
+            '{}Subscription downgrade for {}'.format(
+                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                self.request.domain
+            ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+        )
 
 
 class SubscriptionMixin(object):
@@ -1586,17 +1801,12 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = ugettext_lazy("Renew Plan")
     step_title = ugettext_lazy("Renew or Change Plan")
+    template_name = "domain/renew_plan.html"
 
     @property
     def lead_text(self):
         return ugettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
                              .format(plan=self.current_subscription.plan_version.plan.edition))
-
-    @property
-    def main_context(self):
-        context = super(SubscriptionRenewalView, self).main_context
-        context.update({'is_renewal': True})
-        return context
 
     @property
     def page_context(self):
@@ -2774,7 +2984,7 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
@@ -2801,7 +3011,7 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
 

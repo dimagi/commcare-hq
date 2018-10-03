@@ -22,7 +22,7 @@ import six
 
 _soft_assert = soft_assert(
     to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
-    exponential_backoff=False,
+    exponential_backoff=True,
 )
 
 

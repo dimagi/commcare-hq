@@ -43,29 +43,11 @@ class ABTest(object):
         }
 
 
-APPCUES_TEMPLATE_APP_OPTION_ON = 'appcues_on'
-APPCUES_TEMPLATE_APP_OPTION_OFF = 'appcues_off'
+DEMO_CTA_OPTION_ON = 'demo_on'
+DEMO_CTA_OPTION_OFF = 'demo_off'
 
-
-APPCUES_TEMPLATE_APP = ABTestConfig(
-    'Appcues Template App',
-    'appcues_template_app_june2018',
-    (APPCUES_TEMPLATE_APP_OPTION_ON, APPCUES_TEMPLATE_APP_OPTION_OFF)
+DEMO_CTA = ABTestConfig(
+    'Demo CTA on Signup',
+    'demo_cta_aug2018',
+    (DEMO_CTA_OPTION_ON, DEMO_CTA_OPTION_OFF)
 )
-
-
-@memoized
-def appcues_template_app_test(request):
-    # See if user is in test
-    test = ABTest(APPCUES_TEMPLATE_APP, request)
-    if test.version(assign_if_blank=False) != APPCUES_TEMPLATE_APP_OPTION_ON:
-        return False
-
-    # If the user's trial has run out, they may no longer have access to web apps
-    domain = getattr(request, 'domain', None)
-    if domain:
-        subscription = Subscription.get_active_subscription_by_domain(domain)
-        if not subscription or not subscription.is_trial:
-            return False
-
-    return True
