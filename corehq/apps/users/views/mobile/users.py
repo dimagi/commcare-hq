@@ -782,13 +782,8 @@ def paginate_mobile_workers(request, domain):
             'username': user.raw_username,
             'first_name': user.first_name,
             'last_name': user.last_name,
-            'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
-            'mark_activated': False,
-            'mark_deactivated': False,
-            'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
-            'deactivateUrl': "#",
-            'actionText': _("Deactivate") if user.is_active else _("Activate"),
+            'date_registered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
             'action': 'deactivate' if user.is_active else 'activate',
         }
 
