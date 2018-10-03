@@ -1190,7 +1190,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
               AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
               AND child_health.state_id = person_cases.state_id
-              AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
+              AND lower(substring(person_cases.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
               AND child_health.state_id = cf.state_id
             LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id AND thr.month = %(start_date)s
