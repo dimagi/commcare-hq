@@ -162,7 +162,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             _create_aggregate_functions(cursor)
             _update_aggregate_locations_tables(cursor)
 
-        state_ids = (SQLLocation.objects
+        state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
@@ -218,7 +218,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res.get()
 
             res_child = chain(
-                icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
+                icds_state_aggregation_task.si(
+                    state_id=state_ids, date=calculation_date, func=_child_health_monthly_table
+                ),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
             ).apply_async()
             res_ccs = chain(
@@ -405,12 +407,12 @@ def _update_months_table(day):
 
 
 @track_time
-def _child_health_monthly_table(day):
+def _child_health_monthly_table(state_ids, day):
     with transaction.atomic():
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('child_health_monthly', %s)",
         ], day)
-        ChildHealthMonthly.aggregate(force_to_date(day))
+        ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
 
 @track_time

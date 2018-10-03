@@ -926,7 +926,8 @@ def recalculate_aggregate_table(model_class):
 class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     base_tablename = 'child_health_monthly'
 
-    def __init__(self, month):
+    def __init__(self, state_ids, month):
+        self.state_ids = state_ids
         self.month = transform_day_to_month(month)
 
     @property
@@ -960,7 +961,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
-    def aggregation_query(self):
+    def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
         age_in_days = "({} - child_health.dob)::integer".format(end_month_string)
@@ -1185,14 +1186,25 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             {calculations}
             FROM "{child_health_case_ucr}" child_health
             LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON child_health.doc_id = child_tasks.child_health_case_id
+              AND child_health.state_id = child_tasks.state_id
+              AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
+              AND child_health.state_id = person_cases.state_id
+              AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
+              AND child_health.state_id = cf.state_id
             LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id AND thr.month = %(start_date)s
+              AND child_health.state_id = thr.state_id
             LEFT OUTER JOIN "{agg_gm_table}" gm ON child_health.doc_id = gm.case_id AND gm.month = %(start_date)s
+              AND child_health.state_id = gm.state_id
             LEFT OUTER JOIN "{agg_pnc_table}" pnc ON child_health.doc_id = pnc.case_id AND pnc.month = %(start_date)s
+              AND child_health.state_id = pnc.state_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id AND df.month = %(start_date)s
+              AND child_health.state_id = df.state_id
             WHERE child_health.doc_id IS NOT NULL
-            ORDER BY child_health.awc_id, child_health.case_id
+              AND child_health.state_id = %(state_id)s
+              AND lower(substring(child_health.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
+            ORDER BY child_health.awc_id
         )
         """.format(
             tablename=self.tablename,
@@ -1209,8 +1221,13 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             person_cases_ucr=self.person_case_ucr_tablename,
         ), {
             "start_date": self.month,
-            "next_month": month_formatter(self.month + relativedelta(months=1))
+            "next_month": month_formatter(self.month + relativedelta(months=1)),
+            "state_id": state_id,
+            "state_id_last_3": state_id[-3:],
         }
+
+    def aggregation_queries(self):
+        return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
 
     def indexes(self):
         return [
