@@ -71,7 +71,8 @@ hqDefine("locations/js/location", [
     $(function () {
 
         var location_url = initialPageData.get('api_root');
-        var loc_id = initialPageData.get('location.get_id');
+        var loc_id = initialPageData.get('location_id');
+        var loc_type = initialPageData.get('location_type');
         var hierarchy = initialPageData.get('hierarchy');
         var loc_types_with_users = initialPageData.get('loc_types_with_users');
 
@@ -89,15 +90,7 @@ hqDefine("locations/js/location", [
             var active_loc = (this.selected_location() || this.root());
             return (active_loc ? active_loc.allowed_child_types() : []);
         }, model);
-        model.loc_type = ko.observable();
-        model.loc_type.subscribe(function (val) {
-            var subforms = $('.custom_subform');
-            $.each(subforms, function (i, e) {
-                var $e = $(e);
-                var loc_type = $e.attr('loctype');
-                $e[loc_type === val ? 'show' : 'hide']();
-            });
-        });
+        model.loc_type = ko.observable(loc_type);
 
         model.has_user = ko.computed(function () {
             var loc_type = (

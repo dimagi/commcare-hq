@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from iso8601 import iso8601
 
-from corehq.apps.app_manager.dbaccessors import get_app_cached
+from corehq.apps.app_manager.dbaccessors import get_app_cached, get_latest_released_app_version
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
@@ -27,6 +27,7 @@ from corehq import toggles
 from corehq.const import OPENROSA_VERSION_MAP
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.util import LatestAppInfo
+from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
@@ -369,9 +370,12 @@ def get_recovery_measures_cached(domain, app_id):
 @require_GET
 @toggles.MOBILE_RECOVERY_MEASURES.required_decorator()
 def recovery_measures(request, domain, build_id):
-    response = {"app_id": request.GET.get('app_id')}  # passed through unchanged
     app_id = get_app_cached(domain, build_id).master_id
-    response.update(LatestAppInfo(app_id, domain).get_info())
+    response = {
+        "latest_apk_version": get_default_build_spec().version,
+        "latest_ccz_version": get_latest_released_app_version(domain, app_id),
+        "app_id": request.GET.get('app_id'),  # passed through unchanged
+    }
     measures = get_recovery_measures_cached(domain, app_id)
     if measures:
         response["recovery_measures"] = measures

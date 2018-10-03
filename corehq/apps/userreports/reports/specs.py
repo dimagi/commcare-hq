@@ -5,7 +5,6 @@ from collections import namedtuple
 import json
 
 from datetime import date
-from django.conf import settings
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from sqlalchemy import bindparam
@@ -80,6 +79,10 @@ class BaseReportColumn(JsonObject):
     display = DefaultProperty()
     description = StringProperty()
     visible = BooleanProperty(default=True)
+
+    @classmethod
+    def restricted_to_static(cls):
+        return False
 
     @classmethod
     def wrap(cls, obj):
@@ -367,16 +370,17 @@ class _CaseExpressionColumn(ReportColumn):
     else_ = StringProperty()
     sortable = BooleanProperty(default=False)
 
+    @classmethod
+    def restricted_to_static(cls):
+        # The conditional expressions used here don't have sufficient safety checks,
+        # so this column type is only available for static reports.  To release this,
+        # we should require that conditions be expressed using a PreFilterValue type
+        # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
+        return True
+
     _agg_column_type = None
 
     def get_column_config(self, data_source_config, lang):
-        if not data_source_config.is_static and not settings.UNIT_TESTING:
-            # The conditional expressions used here don't have sufficient safety checks,
-            # so this column type is only available for static reports.  To release this,
-            # we should require that conditions be expressed using a PreFilterValue type
-            # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
-            raise BadSpecError("{} columns are only available to static report configs"
-                               .format(self.type))
         if not self.type and self._agg_column_type:
             raise NotImplementedError("subclasses must define a type and column_type")
         return ColumnConfig(columns=[

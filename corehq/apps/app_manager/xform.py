@@ -1014,7 +1014,7 @@ class XForm(WrappedNode):
             if node.tag_name == 'trigger' and not include_triggers:
                 continue
 
-            if (exclude_select_with_itemsets and cnode.data_type in [u'Select', u'MSelect']
+            if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
                     and cnode.node.find('{f}itemset').exists()):
                 continue
 

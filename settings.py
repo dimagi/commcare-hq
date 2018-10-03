@@ -580,7 +580,6 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
-XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
@@ -703,10 +702,6 @@ OPEN_EXCHANGE_RATES_API_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
-
-# for touchforms authentication
-TOUCHFORMS_API_USER = "changeme"
-TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -1853,7 +1848,23 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile_mpr_2a_deaths.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'asr_2_3_beneficiaries.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a3_children_delivered.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a_deaths.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3_children_registered.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3i_pregnancies.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4a6_preschool_education.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4b_iodized_salt.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_child_nutrition.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_pregnancy_nutrition.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6ac_pse_attendance.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6b_pse_attendance_per_year.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_7_growth_monitored.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_8_immunizations.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_9_vhnd.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10a_children_referred.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10b_pregnancies_referred.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_11_awc_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),

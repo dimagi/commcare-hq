@@ -21,7 +21,7 @@ package "child_health Form Data Sources" {
 }
 
 package "child_health Case Data Sources" {
-  [static-child_cases_monthly_tableau_v2]
+  [static-child_health_cases]
   [static-child_tasks_cases]
 }
 
@@ -61,7 +61,7 @@ package "Dashboard AWC Level Aggregate Tables" {
 [static-postnatal_care_forms] --> [child_health_monthly]
 [static-complementary_feeding_forms] --> [child_health_monthly]
 [static-dashboard_growth_monitoring_forms] --> [child_health_monthly]
-[static-child_cases_monthly_tableau_v2] --> [child_health_monthly]
+[static-child_health_cases] --> [child_health_monthly]
 [static-dashboard_thr_forms] --> [child_health_monthly]
 [static-child_tasks_cases] --> [child_health_monthly]
 
@@ -70,7 +70,6 @@ package "Dashboard AWC Level Aggregate Tables" {
 
 [static-daily_feeding_forms] --> [daily_attendance]
 
-[static-child_cases_monthly_tableau_v2] --> [agg_child_health]
 [child_health_monthly] --> [agg_child_health]
 
 [static-ccs_record_cases_monthly_tableau_v2] --> [agg_ccs_record]

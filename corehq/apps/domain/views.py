@@ -55,6 +55,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
+    use_select2_v4,
     use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
@@ -1726,24 +1727,19 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
-            if not is_saved:
-                downgrade_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
-                messages.error(
-                    request, _(
-                        "You have already scheduled a downgrade to the %s Software Plan on %s. If this is a "
-                        "mistake, please reach out to billing-support@dimagi.com."
-                    ) % (software_plan_name, downgrade_date)
-                )
-            else:
-                if not request.user.is_superuser:
+            next_subscription = self.current_subscription.next_subscription
+
+            if is_saved:
+                if not request.user.is_superuser and not self.is_upgrade:
                     self.send_downgrade_email()
-                if self.current_subscription.next_subscription is not None:
+                if next_subscription is not None:
                     # New subscription has been scheduled for the future
                     current_subscription = self.current_subscription.plan_version.plan.edition
-                    start_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
+                    start_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
                     message = _(
                         "You have successfully scheduled your current %s Edition Plan subscription to "
                         "downgrade to the %s Edition Plan on %s."
@@ -1756,6 +1752,15 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     request, message
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+
+            downgrade_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
+            messages.error(
+                request, _(
+                    "You have already scheduled a downgrade to the %s Software Plan on %s. If this is a "
+                    "mistake, please reach out to billing-support@dimagi.com."
+                ) % (software_plan_name, downgrade_date)
+            )
+
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
 
     def send_downgrade_email(self):
@@ -2979,7 +2984,7 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
@@ -3006,7 +3011,7 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
 

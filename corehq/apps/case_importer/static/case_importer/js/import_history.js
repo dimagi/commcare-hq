@@ -24,6 +24,14 @@ hqDefine('case_importer/js/import_history', [
             return initialPageData.reverse('case_importer_upload_file_download', self.upload_id);
         };
 
+        self.formIdsUrl = function () {
+            return initialPageData.reverse('case_importer_upload_form_ids', self.upload_id);
+        };
+
+        self.caseIdsUrl = function () {
+            return initialPageData.reverse('case_importer_upload_case_ids', self.upload_id);
+        };
+
         return self;
     };
 

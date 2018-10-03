@@ -164,12 +164,7 @@ class FormProcessorInterface(object):
         existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
         existing_form, new_form = self.processor.new_form_from_old(existing_form, xml,
                                                                    value_responses_map, user_id)
-        new_xml = etree.tostring(xml)
-        interface = FormProcessorInterface(xform.domain)
-        interface.store_attachments(new_form, [
-            Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
-        ])
-        interface.save_processed_models([new_form, existing_form])
+        self.save_processed_models([new_form, existing_form])
 
         return errors
 
