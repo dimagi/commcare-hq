@@ -797,9 +797,6 @@ def paginate_mobile_workers(request, domain):
     return json_response({
         'users': [_format_user(user) for user in users_data.hits],
         'total': users_data.total,
-        'page': page,
-        'query': query,
-        'total_records': total_records
     })
 
 
