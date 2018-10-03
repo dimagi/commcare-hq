@@ -936,6 +936,8 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
         'corehq.apps.accounting.interface.IsHiddenFilter',
     ]
 
+    account = None
+
     @property
     def headers(self):
         header = DataTablesHeader(
@@ -1161,6 +1163,9 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             'month': statement_start.strftime("%B"),
             'rows': self.rows,
         })
+
+    def filter_by_account(self, account):
+        self.account = account
 
 
 def _get_domain_from_payment_record(payment_record):
