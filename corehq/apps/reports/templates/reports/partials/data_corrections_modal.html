@@ -88,11 +88,23 @@
                                             <i class="fa fa-pencil-square pull-left" data-bind="visible: dirty()"></i>
                                             <span data-bind="template: $root.propertyTemplate"></span>
                                         </label>
-                                        <div class="col-sm-6">
+                                        <div class="col-sm-6" data-bind="if: !options.length">
                                             <input type="text" class="form-control"
                                                    data-bind="value: value,
                                                               attr: { 'data-name': name },
                                                               event: { change: function() { this.dirty(true); } }" />
+                                        </div>
+                                        <div class="col-sm-6" data-bind="if: options.length">
+                                            <input type="text" class="form-control"
+                                                   data-bind="value: value,
+                                                              attr: { 'data-name': name }" />
+                                            <select class="form-control"
+                                                    data-bind="attr: { 'multiple': type === 'MSelect' },
+                                                               event: { change: function(model, e) { updateSelect(e); } }">
+                                                <!-- ko foreach: options -->
+                                                    <option data-bind="value: id, text: text"></option>
+                                                <!--/ko-->
+                                            </select>
                                         </div>
                                     </div>
                                 <!-- /ko -->
