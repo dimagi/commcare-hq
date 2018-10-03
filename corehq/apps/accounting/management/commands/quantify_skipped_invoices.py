@@ -30,7 +30,7 @@ class Command(BaseCommand):
                         for b in SmsBillable.objects.filter(
                             domain=affected_subcription.subscriber.domain,
                             date_sent__gte=month_end,
-                            date_send__lt=datetime.combine(month_end, datetime.min.time()) + timedelta(days=1)
+                            date_sent__lt=datetime.combine(month_end, datetime.min.time()) + timedelta(days=1)
                         )
                     )
                     print '----------'
