@@ -29,8 +29,8 @@ class Command(BaseCommand):
                         b.gateway_charge + b.usage_charge
                         for b in SmsBillable.objects.filter(
                             domain=affected_subcription.subscriber.domain,
-                            date_sent_gte=month_end,
-                            date_send_lt=datetime.combine(month_end, datetime.min.time()) + timedelta(days=1)
+                            date_sent__gte=month_end,
+                            date_send__lt=datetime.combine(month_end, datetime.min.time()) + timedelta(days=1)
                         )
                     )
                     print '----------'
