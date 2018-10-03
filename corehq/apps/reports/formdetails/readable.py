@@ -602,6 +602,11 @@ def get_data_cleaning_data(form_data, instance):
                     'label': question.label,
                     'icon': question.icon,
                     'value': question.response,
+                    'type': question.type,
+                    'options': [{
+                        'id': option.value,
+                        'text': option.label,
+                    } for option in question.options],
                 }
                 ordered_question_values.append(value)
 
