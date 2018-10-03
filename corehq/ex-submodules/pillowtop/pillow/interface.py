@@ -168,7 +168,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                             changes_chunk = []
                             serial_processing_time = 0
                     else:
-                        self._record_change_in_datadog(change, serial_processing_time)
+                        self._record_change_in_datadog(change, processing_time)
                         self._update_checkpoint(change, context)
                 else:
                     self._update_checkpoint(None, None)
