@@ -43,7 +43,6 @@
         "choice_provider": {
           "include_descendants": true,
           "type": "location",
-          "order_by_hierarchy": true,
           "show_full_path": false
         },
         "show_all": true,
@@ -77,7 +76,6 @@
         "choice_provider": {
           "include_descendants": false,
           "type": "string",
-          "order_by_hierarchy": false,
           "show_full_path": false
         },
         "show_all": true,
@@ -93,7 +91,6 @@
         "choice_provider": {
           "include_descendants": false,
           "type": "string",
-          "order_by_hierarchy": false,
           "show_full_path": false
         },
         "show_all": true,
@@ -109,7 +106,6 @@
         "choice_provider": {
           "include_descendants": false,
           "type": "string",
-          "order_by_hierarchy": false,
           "show_full_path": false
         },
         "show_all": true,
