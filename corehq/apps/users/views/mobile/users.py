@@ -790,7 +790,6 @@ def paginate_mobile_workers(request, domain):
     # backend pages start at 0
     users_query = _user_query(query, page - 1, limit)
     # run with a blank query to fetch total records with same scope as in search
-    total_records = _user_query('', 0, 0).count()
     if deactivated_only:
         users_query = users_query.show_only_inactive()
     users_data = users_query.run()
