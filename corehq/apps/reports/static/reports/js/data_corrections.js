@@ -30,6 +30,7 @@ hqDefine("reports/js/data_corrections", [
     "hqwebapp/js/assert_properties",
     "analytix/js/kissmetrix",
     "hqwebapp/js/components.ko",     // pagination
+    "select2/dist/js/select2.full.min",
 ], function (
     $,
     ko,
@@ -52,6 +53,15 @@ hqDefine("reports/js/data_corrections", [
         self.name = options.name;
         self.value = ko.observable(options.value || '');
         self.dirty = ko.observable(false);
+        self.options = options.options || [];
+
+        self.updateSelect = function (e) {
+            var value = $(e.currentTarget).val();
+            if (_.isArray(value)) {
+                value = value.join(" ");
+            }
+            self.value(value);
+        };
 
         return self;
     };
@@ -288,6 +298,16 @@ hqDefine("reports/js/data_corrections", [
             });
             model = new DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
+            $modal.find("select").each(function() {
+                var $el = $(this),
+                    $input = $el.siblings("input");
+                $el.select2({
+                    width: '100%',
+                    tags: true,     // TODO: this doesn't work for single selects: i see the box but can't type in it
+                });
+                // TODO: add option for anything in value that isn't already in options
+                $el.val($input.val().split(" ")).trigger("change");
+            });
         }
         return model;
     };
