@@ -59,23 +59,23 @@ hqDefine("users/js/mobile_workers", function () {
 
         // Visibility of spinner, messages, and user table
         self.hasError = ko.observable(false);
-        self.notLoaded = ko.observable(true);
+        self.isLoaded = ko.observable(false);
         self.projectHasUsers = ko.observable(true);
 
         self.showProjectHasNoUsers = ko.computed(function () {
-            return !self.notLoaded() && !self.hasError() && !self.projectHasUsers();
+            return self.isLoaded() && !self.hasError() && !self.projectHasUsers();
         });
 
         self.showNoUsers = ko.computed(function () {
-            return !self.notLoaded() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
+            return self.isLoaded() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
         });
 
         self.showSpinner = ko.computed(function () {
-            return self.notLoaded() && !self.hasError();
+            return !self.isLoaded() && !self.hasError();
         });
 
         self.showTable = ko.computed(function () {
-            return !self.notLoaded() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
+            return self.isLoaded() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
         });
 
         self.toggleInactiveOnly = function (inactiveOnly) {
@@ -86,7 +86,7 @@ hqDefine("users/js/mobile_workers", function () {
         self.goToPage = function (page) {
             self.users.removeAll();
             self.hasError(false);
-            self.notLoaded(true);
+            self.isLoaded(false);
             $.ajax({
                 method: 'GET',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_mobile_workers'),
@@ -106,11 +106,11 @@ hqDefine("users/js/mobile_workers", function () {
                     if (!self.query()) {
                         self.projectHasUsers(!!data.users.length);
                     }
-                    self.notLoaded(false);
+                    self.isLoaded(true);
                     self.hasError(false);
                 },
                 error: function () {
-                    self.notLoaded(false);
+                    self.isLoaded(true);
                     self.hasError(true);
                 },
             });
