@@ -413,6 +413,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
         '/a/{domain}/data_dictionary/',
+        '/a/{domain}/importer/'
     )
 
     @property
