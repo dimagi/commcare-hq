@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('cleanup', '0011_merge_couch_sql_pillows'),
-        ('pillowtop', '0005_kafkacheckpoint_doc_modification_time'),
+        ('pillowtop', '0003_auto_20170411_1957'),
     ]
 
     operations = [
