@@ -11,7 +11,9 @@ class Migration(migrations.Migration):
     dependencies = [
         ('pillowtop', '0003_auto_20170411_1957'),
     ]
-
+    run_before = [
+        ('pillowtop', '0005_kafkacheckpoint_doc_modification_time')
+    ]
     operations = [
         migrations.AlterField(
             model_name='kafkacheckpoint',

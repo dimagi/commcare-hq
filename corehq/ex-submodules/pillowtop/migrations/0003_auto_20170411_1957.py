@@ -11,7 +11,9 @@ class Migration(migrations.Migration):
     dependencies = [
         ('pillowtop', '0002_djangopillowcheckpoint_sequence_format'),
     ]
-
+    run_before = [
+        ('pillowtop', '0004_offset_to_big_int'),
+    ]
     operations = [
         migrations.CreateModel(
             name='KafkaCheckpoint',
