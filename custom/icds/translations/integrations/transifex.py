@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from collections import defaultdict
+
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.conf import settings
@@ -9,6 +11,8 @@ from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.app_translations.generators import AppTranslationsGenerator, PoFileGenerator
 from corehq.apps.app_manager.app_translations.parser import TranslationsParser
+from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import get_form_data
 from custom.icds.translations.integrations.client import TransifexApiClient
 
 
@@ -64,6 +68,7 @@ class Transifex(object):
             self.domain, self.app_id_to_build, self.version,
             self.key_lang, self.source_lang, self.lang_prefix,
             self.exclude_if_default, self.use_version_postfix)
+        self._filter_translations(app_trans_generator.translations)
         with PoFileGenerator(app_trans_generator.translations,
                              app_trans_generator.metadata) as po_file_generator:
             generated_files = po_file_generator.generate_translation_files()
@@ -188,3 +193,41 @@ class Transifex(object):
             else:
                 delete_status[resource_slug] = response.content
         return delete_status
+
+    def _filter_translations(self, translations):
+        """Remove translations from questions that have SKIP TRANSIFEX in the comment
+        """
+        labels_to_comments = self._get_labels_to_comments()
+        for module_id, module in labels_to_comments.items():
+            for form_id, form in module.items():
+                if self.use_version_postfix:
+                    form_sheet_name = 'form_{}_v{}'.format(form_id, self.version or self._app.version)
+                else:
+                    form_sheet_name = 'form_{}'.format(form_id)
+                translations[form_sheet_name] = [
+                    trans
+                    for trans in translations[form_sheet_name]
+                    if not any('SKIP TRANSIFEX' in comment for comment in form[trans.msgctxt])
+                ]
+
+    @cached_property
+    def _app(self):
+        return Application.get(self.app_id)
+
+    def _get_labels_to_comments(self):
+        labels_to_comments = {}
+        module_data, errors = get_form_data(self.domain, self._app)
+        for module in module_data:
+            module_dict = {}
+
+            for form in module['forms']:
+                form_dict = defaultdict(list)
+
+                for question in form['questions']:
+                    if question['comment']:
+                        form_dict[question['label_ref']].append(question['comment'])
+
+                module_dict[form['id']] = form_dict
+            labels_to_comments[module['id']] = module_dict
+
+        return labels_to_comments
