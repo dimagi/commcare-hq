@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.data_interfaces.views import DataInterfaceSection
+from django.utils.translation import ugettext_noop, ugettext as _
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
 
@@ -34,3 +35,16 @@ class ImportCases(DataInterface):
             'page_name': cls.name,
             'url': cls.get_url(domain=domain, relative=True),
         }
+
+    @classmethod
+    def get_subpages(cls):
+        return [
+            {
+                'title': _('Case Options'),
+                'urlname': 'excel_config'
+            },
+            {
+                'title': _('Match Excel Columns to Case Properties'),
+                'urlname': 'excel_fields'
+            }
+        ]
