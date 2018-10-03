@@ -1199,14 +1199,14 @@ def get_pregnant_details(case_id, awc_id):
     'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_lactating(order, reversed_order, awc_id):
-    six_months_ago = datetime.utcnow() - relativedelta(months=6, day=1)
+    one_month_ago = datetime.utcnow() - relativedelta(months=1, day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
-        month__gte=six_months_ago,
+        month__gte=one_month_ago,
     ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'lactating').filter(lactating=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
-        month__gte=six_months_ago,
+        month__gte=one_month_ago,
         case_id__in=[case['case_id'] for case in data],
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
