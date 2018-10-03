@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.data_interfaces.views import DataInterfaceSection
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop as _
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
 
