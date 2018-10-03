@@ -8,10 +8,6 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps
 from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
     expected_bulk_app_sheet_rows,
@@ -19,6 +15,11 @@ from corehq.apps.app_manager.app_translations import (
     validate_bulk_app_translation_upload,
     read_uploaded_app_translation_file,
 )
+from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
+    require_can_edit_apps
+from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
 from corehq.util.workbook_json.excel import InvalidExcelFileException
@@ -53,6 +54,8 @@ def upload_bulk_ui_translations(request, domain, app_id):
             messages.error(request, message, extra_tags='html')
         else:
             # update translations only if there were no errors
+            if isinstance(app, LinkedApplication):
+                app.linked_app_translations = dict(trans_dict)
             app.translations = dict(trans_dict)
             app.save()
             success = True

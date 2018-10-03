@@ -319,14 +319,22 @@ def get_apps_base_context(request, domain, app):
             toggles.APP_BUILDER_ADVANCED.enabled(domain)
             or getattr(app, 'commtrack_enabled', False)
         )
+
+        # ideally this should be loaded on demand
+        practice_users = []
+        if app.enable_practice_users:
+            try:
+                practice_users = get_practice_mode_mobile_workers(request.domain)
+            except ESError:
+                notify_exception(request, 'Error getting practice mode mobile workers')
+
         context.update({
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
-            'practice_users': [
-                {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
+            'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
         })
 
     return context
@@ -489,7 +497,7 @@ def import_app(request, domain):
                 )
             else:
                 if redirect_domain:
-                    messages.error(request, "We can't find a project called %s." % redirect_domain)
+                    messages.error(request, "We can't find a project called \"%s\"." % redirect_domain)
                 else:
                     messages.error(request, "You left the project name blank.")
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))

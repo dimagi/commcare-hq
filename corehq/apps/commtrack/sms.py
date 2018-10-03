@@ -12,7 +12,6 @@ from lxml import etree
 import logging
 
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
@@ -105,8 +104,6 @@ class StockReportParser(object):
 
     def parse(self, text):
         """take in a text and return the parsed stock transactions"""
-        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
-
         args = text.split()
 
         if len(args) == 0:

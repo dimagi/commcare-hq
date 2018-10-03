@@ -66,7 +66,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        if self.request.can_access_all_locations and EMWF.show_all_data(mobile_user_and_group_slugs):
+        if self.request.can_access_all_locations and (EMWF.show_all_data(mobile_user_and_group_slugs) or
+                                                      EMWF.no_filters_selected(mobile_user_and_group_slugs)):
             pass
         elif self.request.can_access_all_locations and EMWF.show_project_data(mobile_user_and_group_slugs):
             # Show everything but stuff we know for sure to exclude
@@ -74,6 +75,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             ids_to_exclude = self.get_special_owner_ids(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
+                web=HQUserType.WEB not in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
                 commtrack=False,
             )
@@ -115,13 +117,14 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                         raise BadRequestError()
             raise e
 
-    def get_special_owner_ids(self, admin, unknown, demo, commtrack):
-        if not any([admin, unknown, demo, commtrack]):
+    def get_special_owner_ids(self, admin, unknown, web, demo, commtrack):
+        if not any([admin, unknown, web, demo, commtrack]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
             (admin, user_es.admin_users()),
-            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
+            (unknown, filters.OR(user_es.unknown_users())),
+            (web, user_es.web_users()),
             (demo, user_es.demo_users()),
         ] if include]
 
@@ -171,6 +174,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             special_owner_ids = self.get_special_owner_ids(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
+                web=HQUserType.WEB in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=HQUserType.COMMTRACK in user_types,
             )

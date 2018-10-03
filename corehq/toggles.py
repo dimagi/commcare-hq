@@ -559,13 +559,6 @@ EXPORT_NO_SORT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-DATA_FIND_BY_ID = StaticToggle(
-    'data_find_by_id',
-    "Enable the Data > Find Data by ID page",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',
@@ -1629,9 +1622,14 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-SEARCH_DEACTIVATED_USERS = StaticToggle(
-    'search_deactivated_users',
-    'Allow for searching by deactivating users in form and case reports and exports',
-    TAG_PRODUCT,
+FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
+    'filter_on_groups_and_locations',
+    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
+    'ONSE domain with group and location filters',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    description='For reports filtered by groups and locations, change the OR logic to an AND, so that '
+                '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
+                'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
+                'have group and location filters, such as the Submissions by Form report.',
 )

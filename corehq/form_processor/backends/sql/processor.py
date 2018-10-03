@@ -110,6 +110,11 @@ class FormProcessorSQL(object):
         new_form.user_id = user_id
         new_form.domain = existing_form.domain
         new_form.app_id = existing_form.app_id
+        cls.store_attachments(new_form, [Attachment(
+            name=ATTACHMENT_NAME,
+            raw_content=new_xml,
+            content_type='text/xml',
+        )])
 
         existing_form, new_form = apply_deprecation(existing_form, new_form)
         return (existing_form, new_form)

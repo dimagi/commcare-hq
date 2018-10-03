@@ -42,7 +42,7 @@ from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id, \
-    get_latest_released_app_version
+    get_latest_released_app_version, get_built_app_ids_for_app_id
 from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
@@ -55,7 +55,6 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.es import AppES
 from corehq.apps.users.models import CouchUser
 import six
 
@@ -82,27 +81,40 @@ def paginate_releases(request, domain, app_id):
         limit = int(limit)
     except (TypeError, ValueError):
         limit = 10
+    skip = (page - 1) * limit
 
-    timezone = get_timezone_for_user(request.couch_user, domain)
+    def _get_batch(start_build=None, skip=None):
+        timezone = get_timezone_for_user(request.couch_user, domain)
+        start_build = {} if start_build is None else start_build
+        return Application.get_db().view('app_manager/saved_app',
+            startkey=[domain, app_id, start_build],
+            endkey=[domain, app_id],
+            descending=True,
+            limit=limit,
+            skip=skip,
+            wrapper=lambda x: SavedAppBuild.wrap(x['value'],
+                                                 scrap_old_conventions=False).releases_list_json(timezone),
+        ).all()
 
-    app_es = (
-        AppES()
-        .start((page - 1) * limit)
-        .size(limit)
-        .sort('version', desc=True)
-        .domain(domain)
-        .is_build()
-        .app_id(app_id)
-    )
-    if only_show_released:
-        app_es = app_es.is_released()
-    if build_comment:
-        app_es = app_es.build_comment(build_comment)
-    results = app_es.exclude_source().run()
-    app_ids = results.doc_ids
-    apps = get_docs(Application.get_db(), app_ids)
-    saved_apps = [SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
-                  for app in apps]
+    if not bool(only_show_released or build_comment):
+        # If user is limiting builds by released status or build comment, it's much
+        # harder to be performant with couch. So if they're not doing so, take shortcuts.
+        total_apps = len(get_built_app_ids_for_app_id(domain, app_id))
+        saved_apps = _get_batch(skip=skip)
+    else:
+        saved_apps = []
+        batch = [None]
+        start_build = {}
+        while len(batch):
+            batch = _get_batch(start_build=start_build)
+            if len(batch):
+                start_build = batch[-1]['version'] - 1
+            for app in batch:
+                if not only_show_released or app['is_released']:
+                    if not build_comment or build_comment.lower() in (app['build_comment'] or '').lower():
+                        saved_apps.append(app)
+        total_apps = len(saved_apps)
+        saved_apps = saved_apps[skip:skip + limit]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
@@ -120,7 +132,6 @@ def paginate_releases(request, domain, app_id):
         for app in saved_apps:
             app['num_errors'] = num_errors_dict.get(app['version'], 0)
 
-    total_apps = results.total
     num_pages = int(ceil(total_apps / limit))
 
     return json_response({

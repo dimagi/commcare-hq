@@ -248,7 +248,7 @@ class SubmissionPost(object):
                     self._conditionally_send_device_logs_to_sumologic(instance)
 
                 # ignore temporarily till we migrate DeviceReportEntry id to bigint
-                ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+                ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
                 if instance.xmlns == DEVICE_LOG_XMLNS:
                     submission_type = 'device_log'
                     if not ignore_device_logs:

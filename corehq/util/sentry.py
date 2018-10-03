@@ -24,8 +24,11 @@ RATE_LIMITED_EXCEPTIONS = {
     'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
     'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
 
-    'celery.beat.SchedulingError': 'celery-beat'
+    'celery.beat.SchedulingError': 'celery-beat',
+
+    'corehq.form_processor.exceptions.KafkaPublishingError': 'kafka',
 }
+
 
 def _get_rate_limit_key(exc_info):
     exc_type = exc_info[0]

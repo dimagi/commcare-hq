@@ -2,9 +2,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "scheduling/js/conditional_alert_list.js" %}"></script>
-{% endblock %}
+
+{% requirejs_main "scheduling/js/conditional_alert_list" %}
+
 
 {% block stylesheets %}{{ block.super }}
 <style>
