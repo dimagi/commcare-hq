@@ -545,7 +545,6 @@ class ProjectDataTab(UITab):
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
                 DownloadNewFormExportView,
-                DownloadCaseExportView,
                 DownloadNewCaseExportView,
                 DownloadNewSmsExportView,
                 BulkDownloadNewFormExportView,
@@ -606,10 +605,6 @@ class ProjectDataTab(UITab):
                                 'title': _(CreateNewCustomCaseExportView.page_title),
                                 'urlname': CreateNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
-                            {
-                                'title': _(DownloadCaseExportView.page_title),
-                                'urlname': DownloadCaseExportView.urlname,
-                            },
                             {
                                 'title': _(DownloadNewCaseExportView.page_title),
                                 'urlname': DownloadNewCaseExportView.urlname,

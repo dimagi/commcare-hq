@@ -501,56 +501,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         })
 
 
-class DownloadCaseExportView(BaseDownloadExportView):
-    """View to download a SINGLE Case Export with Filters
-    """
-    urlname = 'export_download_cases'
-    page_title = ugettext_noop("Download Case Data Export")
-    form_or_case = 'case'
-    filter_form_class = FilterCaseCouchExportDownloadForm
-
-    @staticmethod
-    def get_export_schema(domain, export_id):
-        doc = get_document_or_404_lite(CaseExportSchema, export_id)
-        if doc.index[0] == domain:
-            return doc
-        raise Http404(_("Export not found"))
-
-    @property
-    def export_list_url(self):
-        return reverse(CaseExportListView.urlname, args=(self.domain,))
-
-    @property
-    @memoized
-    def download_export_form(self):
-        return self.filter_form_class(
-            self.domain_object,
-            timezone=self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
-        )
-
-    @property
-    def parent_pages(self):
-        return [{
-            'title': CaseExportListView.page_title,
-            'url': reverse(CaseExportListView.urlname, args=(self.domain,)),
-        }]
-
-    def get_filters(self, filter_form_data):
-        filter_form = self._get_filter_form(filter_form_data)
-        return filter_form.get_case_filter()
-
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data,
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
-
 class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
     allow_bulk_export = True
@@ -2080,10 +2030,49 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
 
 
 @location_safe
-class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
+class DownloadNewCaseExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
     export_filter_class = CaseListFilter
+    page_title = ugettext_noop("Download Case Data Export")
+    form_or_case = 'case'
+
+    @staticmethod
+    def get_export_schema(domain, export_id):
+        doc = get_document_or_404_lite(CaseExportSchema, export_id)
+        if doc.index[0] == domain:
+            return doc
+        raise Http404(_("Export not found"))
+
+    @property
+    def export_list_url(self):
+        return reverse(CaseExportListView.urlname, args=(self.domain,))
+
+    @property
+    @memoized
+    def download_export_form(self):
+        return self.filter_form_class(
+            self.domain_object,
+            timezone=self.timezone,
+            initial={
+                'type_or_group': 'type',
+            },
+        )
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': CaseExportListView.page_title,
+            'url': reverse(CaseExportListView.urlname, args=(self.domain,)),
+        }]
+
+    def _get_filter_form(self, filter_form_data):
+        filter_form = self.filter_form_class(
+            self.domain_object, self.timezone, filter_form_data,
+        )
+        if not filter_form.is_valid():
+            raise ExportFormValidationException()
+        return filter_form
 
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
