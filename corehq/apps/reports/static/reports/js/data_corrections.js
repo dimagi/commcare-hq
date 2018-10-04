@@ -303,7 +303,7 @@ hqDefine("reports/js/data_corrections", [
                     $input = $el.siblings("input");
                 $el.select2({
                     width: '100%',
-                    tags: true,     // TODO: this doesn't work for single selects: i see the box but can't type in it
+                    tags: true,
                 });
                 // TODO: add option for anything in value that isn't already in options
                 $el.val($input.val().split(" ")).trigger("change");
