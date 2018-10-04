@@ -55,6 +55,8 @@ hqDefine("reports/js/data_corrections", [
         self.dirty = ko.observable(false);
         self.options = options.options || [];
 
+        // TODO: comment this better
+        // TODO: make inputs actually hidden
         self.updateSelect = function (e) {
             var value = $(e.currentTarget).val();
             if (_.isArray(value)) {
@@ -296,8 +298,9 @@ hqDefine("reports/js/data_corrections", [
             $trigger.click(function () {
                 $modal.modal();
             });
-            model = new DataCorrectionsModel(options);
+            model = DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
+            // TODO: make more knockout-y? new select2v4 binding?
             $modal.find("select").each(function() {
                 var $el = $(this),
                     $input = $el.siblings("input");
