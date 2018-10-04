@@ -46,7 +46,7 @@ def bulk_import_async(config, domain, excel_id):
             result = do_import(spreadsheet, config, domain, task=bulk_import_async,
                                record_form_callback=case_upload.record_form)
 
-        _alert_on_result(result)
+        _alert_on_result(result, domain)
 
         # return compatible with soil
         return {
