@@ -129,6 +129,7 @@ class ESQueryFake(object):
 
     def source(self, fields):
         self._source_fields = fields
+        return self
 
     def run(self):
         result_docs = list(self._result_docs)
