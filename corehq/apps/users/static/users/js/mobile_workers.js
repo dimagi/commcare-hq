@@ -98,10 +98,9 @@ hqDefine("users/js/mobile_workers", function () {
                 },
                 success: function (data) {
                     self.totalItems(data.total);
-                    self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
-                    _.each(data.users, function (user) {
-                        self.users.push(mobileWorker(user));
-                    });
+                    self.users(_.map(data.users, function (user) {
+                        return mobileWorker(user);
+                    }));
 
                     if (!self.query()) {
                         self.projectHasUsers(!!data.users.length);
