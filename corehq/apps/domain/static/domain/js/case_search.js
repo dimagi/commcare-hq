@@ -13,7 +13,7 @@ hqDefine('domain/js/case_search', [
 ) {
     var module = {};
 
-    var property = function (name) {
+    var propertyModel = function (name) {
         var self = {};
         self.name = ko.observable(name);
         return self;
@@ -24,11 +24,11 @@ hqDefine('domain/js/case_search', [
 
         self.caseType = ko.observable(caseType);
         self.properties = ko.observableArray(
-            _.map(properties, function (name) { return property(name); })
+            _.map(properties, function (name) { return propertyModel(name); })
         );
 
         self.addProperty = function () {
-            self.properties.push(property(''));
+            self.properties.push(propertyModel(''));
         };
         self.removeProperty = function (property) {
             self.properties.remove(property);
