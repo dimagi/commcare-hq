@@ -54,6 +54,14 @@ hqDefine("reports/js/data_corrections", [
         self.value = ko.observable(options.value || '');
         self.dirty = ko.observable(false);
         self.options = options.options || [];
+        if (self.options.length && self.value()) {
+            _.each(self.value().split(' '), function (value) {
+                if (!_.find(self.options, function (option) { return value === option.id })) {
+                    self.options.unshift({id: value, text: value});
+                }
+            });
+        }
+        self.multiple = options.multiple === undefined ? false : options.multiple;
 
         // TODO: comment this better
         // TODO: make inputs actually hidden
@@ -308,7 +316,6 @@ hqDefine("reports/js/data_corrections", [
                     width: '100%',
                     tags: true,
                 });
-                // TODO: add option for anything in value that isn't already in options
                 $el.val($input.val().split(" ")).trigger("change");
             });
         }
