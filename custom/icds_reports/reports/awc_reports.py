@@ -1089,9 +1089,9 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
 
 
 @quickcache([
-    'order', 'reversed_order', 'awc_id'
+    'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
-def get_awc_report_pregnant(order, reversed_order, awc_id):
+def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
@@ -1130,6 +1130,7 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
         config['data'].append(base_data(row))
 
     config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    config['data'] = config['data'][start:(start + length)]
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
 
@@ -1196,9 +1197,9 @@ def get_pregnant_details(case_id, awc_id):
 
 
 @quickcache([
-    'order', 'reversed_order', 'awc_id'
+    'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
-def get_awc_report_lactating(order, reversed_order, awc_id):
+def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     one_month_ago = datetime.utcnow() - relativedelta(months=1, day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
@@ -1235,6 +1236,7 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
         config['data'].append(base_data(row))
 
     config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    config['data'] = config['data'][start:(start + length)]
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
 

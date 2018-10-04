@@ -2466,6 +2466,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_pregnant_first_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_pregnant(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a15'
@@ -2490,6 +2492,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_pregnant_second_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_pregnant(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a15'
@@ -2570,6 +2574,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_lactating_first_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_lactating(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a50'
@@ -2592,6 +2598,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_lactating_second_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_lactating(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a50'
@@ -2614,6 +2622,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_lactating_third_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_lactating(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a50'
@@ -2636,6 +2646,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_lactating_forth_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_lactating(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a50'
@@ -2658,6 +2670,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_lactating_fifth_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_lactating(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a50'
@@ -2680,6 +2694,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_lactating_sixth_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_lactating(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a50'
@@ -2702,6 +2718,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_lactating_seventh_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_lactating(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a50'
