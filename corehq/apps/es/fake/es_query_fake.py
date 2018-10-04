@@ -39,7 +39,7 @@ class ESQueryFake(object):
     # just to make ESQuerySet happy
     _exclude_source = None
     _legacy_fields = None
-    _source = None
+    _source_fields = None
 
     def __init__(self, result_docs=None):
         if result_docs is None:
