@@ -73,14 +73,14 @@ hqDefine('locations/js/location_tree', [
         return self;
     }
 
-    function locationSearchViewModel(tree_model, options) {
+    function locationSearchViewModel(treeModel, options) {
         // options should have property:
         //      "can_edit_root"
 
         var self = {};
         self.selected_location = ko.observable();
         self.l__selected_location_id = ko.observable();
-        self.clearLocationSelection = locationUtils.clearLocationSelection.bind(self, tree_model);
+        self.clearLocationSelection = locationUtils.clearLocationSelection.bind(self, treeModel);
 
         self.selected_location_id = ko.computed(function () {
             if (!self.l__selected_location_id()) {
@@ -110,12 +110,12 @@ hqDefine('locations/js/location_tree', [
                 dataType: 'json',
                 error: 'error',
                 success: function (response) {
-                    tree_model.root(self.expand_tree(response.lineage));
+                    treeModel.root(self.expandTree(response.lineage));
                 }.bind(self),
             });
         });
 
-        self.expand_tree = function (lineage) {
+        self.expandTree = function (lineage) {
             var child, level;
             lineage.forEach(function (location, idx) {
                 var data = {
@@ -128,11 +128,11 @@ hqDefine('locations/js/location_tree', [
                     expanded: child ? 'semi' : false,
                     children_status: 'semi_loaded',
                 };
-                level = locationModel(data, tree_model, lineage.length - idx - 1);
+                level = locationModel(data, treeModel, lineage.length - idx - 1);
                 child = Array.of(Object.assign({}, data));
             });
             var root_children = [];
-            tree_model.root().children().forEach(function (location) {
+            treeModel.root().children().forEach(function (location) {
                 if (location.name() === child[0].name) {
                     root_children.push(child[0]);
                 } else {
@@ -152,7 +152,7 @@ hqDefine('locations/js/location_tree', [
                 children: root_children,
                 can_edit: options.can_edit_root,
                 expanded: 'semi',
-            }, tree_model);
+            }, treeModel);
             return level;
         };
         return self;
