@@ -302,18 +302,18 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.75,
+                        "y": 0.6666666666666666,
                         "x": 1491004800000,
-                        "total_weighed": 659,
-                        'total_measured': 8,
-                        'total_height_eligible': 964,
+                        "total_weighed": 691,
+                        'total_measured': 9,
+                        'total_height_eligible': 981,
                     },
                     {
                         "y": 0.7037037037037037,
                         "x": 1493596800000,
-                        "total_weighed": 668,
+                        "total_weighed": 696,
                         'total_measured': 27,
-                        'total_height_eligible': 939,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% normal"
@@ -351,18 +351,18 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0,
                     },
                     {
-                        "y": 0.125,
+                        "y": 0.1111111111111111,
                         "x": 1491004800000,
-                        "total_weighed": 659,
-                        'total_measured': 8,
-                        'total_height_eligible': 964,
+                        "total_weighed": 691,
+                        'total_measured': 9,
+                        'total_height_eligible': 981,
                     },
                     {
                         "y": 0.2962962962962963,
                         "x": 1493596800000,
-                        "total_weighed": 668,
+                        "total_weighed": 696,
                         'total_measured': 27,
-                        'total_height_eligible': 939,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)"
@@ -400,18 +400,18 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.125,
+                        "y": 0.2222222222222222,
                         "x": 1491004800000,
-                        "total_weighed": 659,
-                        'total_measured': 8,
-                        'total_height_eligible': 964,
+                        "total_weighed": 691,
+                        'total_measured': 9,
+                        'total_height_eligible': 981,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
-                        "total_weighed": 668,
+                        "total_weighed": 696,
                         'total_measured': 27,
-                        'total_height_eligible': 939,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% severely wasted (severe acute malnutrition)"
@@ -625,20 +625,20 @@ class TestPrevalenceOfSevere(TestCase):
             data['tooltips_data'],
             {
                 "s2": {
-                    "total_weighed": 84,
+                    "total_weighed": 91,
                     "severe": 0,
                     "moderate": 3,
                     "total_measured": 4,
                     "normal": 1,
-                    "total_height_eligible": 150,
+                    "total_height_eligible": 153,
                 },
                 "s1": {
-                    "total_weighed": 65,
+                    "total_weighed": 67,
                     "severe": 0,
                     "moderate": 0,
                     "total_measured": 0,
                     "normal": 0,
-                    "total_height_eligible": 70,
+                    "total_height_eligible": 71,
                 }
             }
         )
@@ -663,7 +663,7 @@ class TestPrevalenceOfSevere(TestCase):
                     "color": MapColors.BLUE,
                     "classed": "dashed",
                     "strokeWidth": 2,
-                    "values": [["s1", 0.0], ["s2", 0.03571428571428571]],
+                    "values": [["s1", 0.0], ["s2", 0.03296703296703297]],
                     "key": ""
                 }
             ]

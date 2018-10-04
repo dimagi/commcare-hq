@@ -177,10 +177,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
     if 'age_tranche' not in config:
-        if icds_feature_flag:
-            chart_data = chart_data.exclude(age_tranche=72)
-        else:
-            chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
+        chart_data = chart_data.exclude(age_tranche=72)
 
     data = {
         'red': OrderedDict(),
@@ -308,10 +305,7 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
     if not show_test:
         data = apply_exclude(domain, data)
     if 'age_tranche' not in config:
-        if icds_feature_flag:
-            data = data.exclude(age_tranche=72)
-        else:
-            data = data.exclude(age_tranche__in=[0, 6, 72])
+        data = data.exclude(age_tranche=72)
 
     chart_data = {
         'blue': [],
