@@ -20,12 +20,12 @@ hqDefine('locations/js/locations', [
             can_edit_root: can_edit_root,
         };
 
-        var tree_model = locationModels.locationTreeViewModel(hierarchy, options);
+        var treeModel = locationModels.locationTreeViewModel(hierarchy, options);
 
-        $('#location_tree').koApplyBindings(tree_model);
-        tree_model.load(locs);
+        $('#location_tree').koApplyBindings(treeModel);
+        treeModel.load(locs);
 
-        var model = locationModels.locationSearchViewModel(tree_model, options);
+        var model = locationModels.locationSearchViewModel(treeModel, options);
         $('#location_search').koApplyBindings(model);
 
         locationUtils.enableLocationSearchSelect();

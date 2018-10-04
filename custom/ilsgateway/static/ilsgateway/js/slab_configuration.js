@@ -13,9 +13,9 @@ hqDefine('ilsgateway/js/locations', function () {
             can_edit_root: can_edit_root,
         };
 
-        var tree_model = LocationModels.locationTreeViewModel(hierarchy, options);
+        var treeModel = LocationModels.locationTreeViewModel(hierarchy, options);
 
-        $('#location_tree').koApplyBindings(tree_model);
-        tree_model.load(locs);
+        $('#location_tree').koApplyBindings(treeModel);
+        treeModel.load(locs);
     });
 });
