@@ -461,9 +461,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         num_apps = len(cloudcare_enabled_apps)
         return _fmt_alert(
             ungettext(
-                "You have %(num_apps)d application that will lose CloudCare "
+                "You have %(num_apps)d application that will lose Web Apps "
                 "access if you select this plan.",
-                "You have %(num_apps)d applications that will lose CloudCare "
+                "You have %(num_apps)d applications that will lose Web Apps "
                 "access if you select this plan.",
                 num_apps
             ) % {
