@@ -65,7 +65,7 @@ hqDefine("users/js/mobile_workers", function () {
             return self.isLoaded() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
         });
 
-        self.deactivatedOnly.subscribe(function (newValue) {
+        self.deactivatedOnly.subscribe(function () {
             self.goToPage(1);
         });
 
