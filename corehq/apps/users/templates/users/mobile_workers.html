@@ -243,11 +243,11 @@
                     </div>
                     <div class="col-sm-6">
                         <button type="button" class="btn btn-default pull-right"
-                                data-bind="visible: !deactivatedOnly(), click: function() { setDeactivatedOnly(true); }">
+                                data-bind="visible: !deactivatedOnly(), click: function() { deactivatedOnly(true); }">
                             {% trans 'Show Deactivated Mobile Workers' %}
                         </button>
                         <button type="button" class="btn btn-default pull-right"
-                                data-bind="visible: deactivatedOnly(), click: function() { setDeactivatedOnly(false); }">
+                                data-bind="visible: deactivatedOnly(), click: function() { deactivatedOnly(false); }">
                             {% trans 'Show Active Mobile Workers' %}
                         </button>
                     </div>
@@ -294,48 +294,6 @@
                                         <i class="fa fa-exclamation-triangle"></i>
                                         <span data-bind="text: action_error"></span>
                                     </p>
-                                    <div class="modal fade" data-bind="attr: {id: 'activate_' + user_id()}">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <button type="button" class="close" data-dismiss="modal">
-                                                        <span aria-hidden="true">&times;</span>
-                                                        <span class="sr-only">{% trans "Close" %}</span>
-                                                    </button>
-                                                    <h4 class="modal-title">{% trans "Reactivate Mobile Worker" %}</h4>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p class="lead">
-                                                        {% blocktrans %}
-                                                            Are you sure you want to <strong>reactivate</strong> this mobile worker?
-                                                        {% endblocktrans %}
-                                                    </p>
-                                                    <p class="lead">
-                                                        <i class="fa fa-user"></i>
-                                                        <strong data-bind="text: username"></strong>
-                                                    </p>
-                                                    <p>
-                                                        {% blocktrans %}
-                                                            Deactivated mobile workers are not able to log into new devices.<br />
-                                                            Read more about
-                                                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
-                                                                deactivating mobile workers
-                                                            </a> on our Help Site.
-                                                        {% endblocktrans %}
-                                                    </p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                                                        {% trans "Cancel" %}
-                                                    </button>
-                                                    <button type="button" class="btn btn-success"
-                                                            data-bind="click: function(user, e) { modifyStatus(user, e) }">
-                                                        {% trans 'Reactivate' %}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                                 <div data-bind="visible: is_active()">
                                     <button type="button" class="btn btn-default" data-toggle="modal"
@@ -346,45 +304,87 @@
                                         <i class="fa fa-exclamation-triangle"></i>
                                         <span data-bind="text: action_error"></span>
                                     </p>
-                                    <div class="modal fade" data-bind="attr: {id: 'deactivate_' + user_id()}">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <button type="button" class="close" data-dismiss="modal">
-                                                        <span aria-hidden="true">&times;</span>
-                                                        <span class="sr-only">{% trans "Close" %}</span>
-                                                    </button>
-                                                    <h4 class="modal-title">{% trans "Deactivate Mobile Worker" %}</h4>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p class="lead">
-                                                        {% blocktrans %}
-                                                            Are you sure you want to <strong>deactivate</strong> this mobile worker?
-                                                        {% endblocktrans %}
-                                                    </p>
-                                                    <p class="lead">
-                                                        <i class="fa fa-user"></i>
-                                                        <strong data-bind="text: username"></strong>
-                                                    </p>
-                                                    <p>
-                                                        {% blocktrans %}
+                                </div>
+                                    <div class="modal fade" data-bind="attr: {id: 'activate_' + user_id()}">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">
+                                                    <span aria-hidden="true">&times;</span>
+                                                    <span class="sr-only">{% trans "Close" %}</span>
+                                                </button>
+                                                <h4 class="modal-title">{% trans "Reactivate Mobile Worker" %}</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="lead">
+                                                    {% blocktrans %}
+                                                        Are you sure you want to <strong>reactivate</strong> this mobile worker?
+                                                    {% endblocktrans %}
+                                                </p>
+                                                <p class="lead">
+                                                    <i class="fa fa-user"></i>
+                                                    <strong data-bind="text: username"></strong>
+                                                </p>
+                                                <p>
+                                                    {% blocktrans %}
                                                         Deactivated mobile workers are not able to log into new devices.<br />
                                                         Read more about
                                                         <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
                                                             deactivating mobile workers
                                                         </a> on our Help Site.
-                                                        {% endblocktrans %}
-                                                    </p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                                                        {% trans "Cancel" %}
-                                                    </button>
-                                                    <button type="button" class="btn btn-danger"
-                                                            data-bind="click: function(user, e) { modifyStatus(user, e) }">
-                                                        {% trans 'Deactivate' %}
-                                                    </button>
-                                                </div>
+                                                    {% endblocktrans %}
+                                                </p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">
+                                                    {% trans "Cancel" %}
+                                                </button>
+                                                <button type="button" class="btn btn-success"
+                                                        data-bind="click: function(user) { user.is_active(true); }">
+                                                    {% trans 'Reactivate' %}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal fade" data-bind="attr: {id: 'deactivate_' + user_id()}">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">
+                                                    <span aria-hidden="true">&times;</span>
+                                                    <span class="sr-only">{% trans "Close" %}</span>
+                                                </button>
+                                                <h4 class="modal-title">{% trans "Deactivate Mobile Worker" %}</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="lead">
+                                                    {% blocktrans %}
+                                                        Are you sure you want to <strong>deactivate</strong> this mobile worker?
+                                                    {% endblocktrans %}
+                                                </p>
+                                                <p class="lead">
+                                                    <i class="fa fa-user"></i>
+                                                    <strong data-bind="text: username"></strong>
+                                                </p>
+                                                <p>
+                                                    {% blocktrans %}
+                                                    Deactivated mobile workers are not able to log into new devices.<br />
+                                                    Read more about
+                                                    <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
+                                                        deactivating mobile workers
+                                                    </a> on our Help Site.
+                                                    {% endblocktrans %}
+                                                </p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">
+                                                    {% trans "Cancel" %}
+                                                </button>
+                                                <button type="button" class="btn btn-danger"
+                                                        data-bind="click: function(user) { user.is_active(false); }">
+                                                    {% trans 'Deactivate' %}
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

@@ -8,29 +8,29 @@ hqDefine("users/js/mobile_workers", function () {
             return hqImport("hqwebapp/js/initial_page_data").reverse('edit_commcare_user', self.user_id());
         });
 
-        self.modifyStatus = function (user, e) {
-            var urlName = user.is_active() ? 'deactivate_commcare_user' : 'activate_commcare_user',
-                modalId = (user.is_active() ? 'deactivate_' : 'activate_') + self.user_id();
+        self.is_active.subscribe(function (newValue) {
+            var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
+                $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
 
-            $(e.currentTarget).addSpinnerToButton();
+            $modal.find(".btn-danger, .btn-success").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse(urlName, self.user_id()),
                 success: function (data) {
-                    $('#' + modalId).modal('hide');
+                    $modal.modal('hide');
                     if (data.success) {
-                        self.is_active(!self.is_active());
                         self.action_error('');
                     } else {
                         self.action_error(data.error);
                     }
                 },
                 error: function () {
-                    $('#' + modalId).modal('hide');
+                    $modal.modal('hide');
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
             });
-        };
+        });
+
         return self;
     };
 
@@ -65,10 +65,9 @@ hqDefine("users/js/mobile_workers", function () {
             return self.isLoaded() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
         });
 
-        self.setDeactivatedOnly = function (deactivatedOnly) {
-            self.deactivatedOnly(deactivatedOnly);
+        self.deactivatedOnly.subscribe(function (newValue) {
             self.goToPage(1);
-        };
+        });
 
         self.goToPage = function (page) {
             self.users.removeAll();
