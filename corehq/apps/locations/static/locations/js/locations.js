@@ -7,7 +7,7 @@ hqDefine('locations/js/locations', [
     $,
     initialPageData,
     locationUtils,
-    LocationModels
+    locationModels
 ) {
     $(function () {
         var locs = initialPageData.get('locations'),
@@ -20,12 +20,12 @@ hqDefine('locations/js/locations', [
             can_edit_root: can_edit_root,
         };
 
-        var tree_model = new LocationModels.LocationTreeViewModel(hierarchy, options);
+        var tree_model = locationModels.locationTreeViewModel(hierarchy, options);
 
         $('#location_tree').koApplyBindings(tree_model);
         tree_model.load(locs);
 
-        var model = new LocationModels.LocationSearchViewModel(tree_model, options);
+        var model = locationModels.locationSearchViewModel(tree_model, options);
         $('#location_search').koApplyBindings(model);
 
         locationUtils.enableLocationSearchSelect();
