@@ -784,7 +784,7 @@ def paginate_mobile_workers(request, domain):
             'last_name': user.last_name,
             'user_id': user.user_id,
             'date_registered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
-            'action': 'deactivate' if user.is_active else 'activate',
+            'is_active': user.is_active,
         }
 
     # backend pages start at 0

@@ -285,14 +285,11 @@
                             <td data-bind="text: last_name"></td>
                             <td data-bind="text: date_registered"></td>
                             <td>
-                                <div data-bind="visible: showActivate">
+                                <div data-bind="visible: !is_active()">
                                     <button type="button" class="btn btn-default" data-toggle="modal"
-                                            data-bind="visible: !mark_activated(), attr: {'data-target': '#activate_' + user_id()}">
+                                            data-bind="attr: {'data-target': '#activate_' + user_id()}">
                                         {% trans "Reactivate" %}
                                     </button>
-                                    <span data-bind="visible: mark_activated()">
-                                        <i class="fa fa-check"></i> {% trans "ACTIVE" %}
-                                    </span>
                                     <p data-bind="visible: action_error">
                                         <i class="fa fa-exclamation-triangle"></i>
                                         <span data-bind="text: action_error"></span>
@@ -332,7 +329,7 @@
                                                         {% trans "Cancel" %}
                                                     </button>
                                                     <button type="button" class="btn btn-success"
-                                                            data-bind="click: function(data, e) { modifyStatus(true, e.currentTarget) }">
+                                                            data-bind="click: function(user, e) { modifyStatus(user, e) }">
                                                         {% trans 'Reactivate' %}
                                                     </button>
                                                 </div>
@@ -340,14 +337,11 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div data-bind="visible: showDeactivate">
+                                <div data-bind="visible: is_active()">
                                     <button type="button" class="btn btn-default" data-toggle="modal"
-                                            data-bind="attr: {'data-target': '#deactivate_' + user_id()}, visible: !mark_deactivated()">
+                                            data-bind="attr: {'data-target': '#deactivate_' + user_id()}">
                                         {% trans "Deactivate" %}
                                     </button>
-                                    <span data-bind="visible: mark_deactivated">
-                                        <i class="fa fa-check"></i> {% trans "INACTIVE" %}
-                                    </span>
                                     <p data-bind="visible: action_error">
                                         <i class="fa fa-exclamation-triangle"></i>
                                         <span data-bind="text: action_error"></span>
@@ -387,7 +381,7 @@
                                                         {% trans "Cancel" %}
                                                     </button>
                                                     <button type="button" class="btn btn-danger"
-                                                            data-bind="click: function(data, e) { modifyStatus(false, e.currentTarget) }">
+                                                            data-bind="click: function(user, e) { modifyStatus(user, e) }">
                                                         {% trans 'Deactivate' %}
                                                     </button>
                                                 </div>

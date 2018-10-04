@@ -2,37 +2,24 @@ hqDefine("users/js/mobile_workers", function () {
     var mobileWorker = function (options) {
         var self = ko.mapping.fromJS(options);
 
-        self.mark_activated = ko.observable(false);
-        self.mark_deactivated = ko.observable(false);
         self.action_error = ko.observable('');
 
         self.editUrl = ko.computed(function () {
             return hqImport("hqwebapp/js/initial_page_data").reverse('edit_commcare_user', self.user_id());
         });
 
-        self.showActivate = ko.computed(function () {
-            return self.action() === 'activate';
-        });
+        self.modifyStatus = function (user, e) {
+            var urlName = user.is_active() ? 'deactivate_commcare_user' : 'activate_commcare_user',
+                modalId = (user.is_active() ? 'deactivate_' : 'activate_') + self.user_id();
 
-        self.showDeactivate = ko.computed(function () {
-            return self.action() === 'deactivate';
-        });
-
-        self.modifyStatus = function (isActive, button) {
-            var urlName = isActive ? 'activate_commcare_user' : 'deactivate_commcare_user',
-                modalId = (isActive ? 'activate_' : 'deactivate_') + self.user_id();
-            $(button).addSpinnerToButton();
+            $(e.currentTarget).addSpinnerToButton();
             $.ajax({
                 method: 'POST',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse(urlName, self.user_id()),
-                data: {
-                    is_active: isActive,
-                },
                 success: function (data) {
                     $('#' + modalId).modal('hide');
                     if (data.success) {
-                        self.mark_activated(isActive);
-                        self.mark_deactivated(!isActive);
+                        self.is_active(!self.is_active());
                         self.action_error('');
                     } else {
                         self.action_error(data.error);
