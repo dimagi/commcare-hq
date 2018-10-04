@@ -264,11 +264,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         url = reverse('paginate_mobile_workers', args=[self.domain])
         self.client.login(username=self.suffolk_user.username, password="password")
 
-        response = self.client.get(url, data={
-            "limit": 10,
-            "page": 1,
-            "showDeactivatedUsers": False
-        }, content_type="application/json;charset=utf-8")
+        response = self.client.get(url, content_type="application/json;charset=utf-8")
 
         self.assertEqual(response.status_code, 200)
         users = json.loads(response.content)['response']['users']
