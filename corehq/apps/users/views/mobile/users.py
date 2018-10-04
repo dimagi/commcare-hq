@@ -760,6 +760,7 @@ def _modify_user_status(request, domain, user_id, is_active):
 
 @require_can_edit_commcare_users
 @require_GET
+@location_safe
 def paginate_mobile_workers(request, domain):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
