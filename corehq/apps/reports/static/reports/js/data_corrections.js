@@ -64,7 +64,6 @@ hqDefine("reports/js/data_corrections", [
         self.multiple = options.multiple === undefined ? false : options.multiple;
 
         // TODO: comment this better
-        // TODO: make inputs actually hidden
         self.updateSelect = function (e) {
             var value = $(e.currentTarget).val();
             if (_.isArray(value)) {
@@ -308,7 +307,6 @@ hqDefine("reports/js/data_corrections", [
             });
             model = DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
-            // TODO: make more knockout-y? new select2v4 binding?
             $modal.find("select").each(function() {
                 var $el = $(this),
                     $input = $el.siblings("input");
