@@ -19,7 +19,7 @@
                     {% trans 'Edit' %}
                 {% endif %}
             </th>
-            <th ng-if="!export.isLegacy" class="col-sm-1">{% trans 'Copy' %}</th>
+            <th class="col-sm-1">{% trans 'Copy' %}</th>
             {% endif %}
             <th class="col-sm-1">
                 {% if is_daily_saved_export %}
@@ -312,7 +312,7 @@
                 </div>
             </td>
             <td>
-                <div ng-if="isLocationSafeForUser(export) && !export.isLegacy">
+                <div ng-if="isLocationSafeForUser(export)">
                     <a href="{% angularjs %}{{ export.copyUrl }}{% endangularjs %}" class="btn btn-default">
                         <span>{% trans 'Copy' %}</span>
                     </a>

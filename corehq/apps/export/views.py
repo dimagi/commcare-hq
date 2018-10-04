@@ -705,7 +705,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             'exports': self.get_exports_list(),
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
-            'legacy_bulk_download_url': self.legacy_bulk_download_url,
             'bulk_download_url': self.bulk_download_url,
             'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.permissions.has_edit_permissions,
@@ -721,14 +720,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
             'lead_text': self.lead_text,
         }
-
-    @property
-    def legacy_bulk_download_url(self):
-        """Returns url for legacy bulk download
-        """
-        if not self.allow_bulk_export:
-            return None
-        raise NotImplementedError('must implement legacy_bulk_download_url')
 
     @property
     def bulk_download_url(self):
@@ -923,9 +914,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
 
     @allow_remote_invocation
     def toggle_saved_export_enabled_state(self, in_data):
-        if in_data['export']['isLegacy']:
-            format_angular_error('Legacy export not supported', True)
-
         export_instance_id = in_data['export']['id']
         export_instance = get_properly_wrapped_export_instance(export_instance_id)
         export_instance.auto_rebuild_enabled = not in_data['export']['isAutoRebuildEnabled']
@@ -936,8 +924,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
 
     @allow_remote_invocation
     def update_emailed_export_data(self, in_data):
-        if in_data['export']['isLegacy']:
-            raise Exception("I'm pretty sure this doesn't happen")
         export_instance_id = in_data['export']['id']
         rebuild_saved_export(export_instance_id, manual=True)
         return format_angular_success({})
@@ -1039,11 +1025,6 @@ class DailySavedExportListView(BaseExportListView):
         return "Select a model to export"  # could be form or case
 
     @property
-    def legacy_bulk_download_url(self):
-        # Daily Saved exports do not support bulk download
-        return ""
-
-    @property
     def bulk_download_url(self):
         # Daily Saved exports do not support bulk download
         return ""
@@ -1081,7 +1062,6 @@ class DailySavedExportListView(BaseExportListView):
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
-            'isLegacy': False,
             'name': export.name,
             'description': export.description,
             'my_export': export.owner_id == self.request.couch_user.user_id,
@@ -1341,10 +1321,6 @@ class FormExportListView(BaseExportListView):
     form_or_case = 'form'
 
     @property
-    def legacy_bulk_download_url(self):
-        return reverse(BulkDownloadFormExportView.urlname, args=(self.domain,))
-
-    @property
     def bulk_download_url(self):
         return reverse(BulkDownloadNewFormExportView.urlname, args=(self.domain,))
 
@@ -1369,7 +1345,6 @@ class FormExportListView(BaseExportListView):
     def fmt_export_data(self, export):
         if isinstance(export, FormExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
-            is_legacy = True
             can_edit = True
             description = ''
             my_export = None
@@ -1380,7 +1355,6 @@ class FormExportListView(BaseExportListView):
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
-            is_legacy = False
             can_edit = export.can_edit(self.request.couch_user)
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
@@ -1392,7 +1366,6 @@ class FormExportListView(BaseExportListView):
 
         return {
             'id': export.get_id,
-            'isLegacy': is_legacy,
             'isDeid': export.is_safe,
             'name': export.name,
             'description': description,
@@ -1406,16 +1379,12 @@ class FormExportListView(BaseExportListView):
             'emailedExport': emailed_export,
             'editUrl': reverse(EditNewCustomFormExportView.urlname,
                                args=(self.domain, export.get_id)),
-            'downloadUrl': self._get_download_url(export.get_id, is_legacy),
+            'downloadUrl': self._get_download_url(export.get_id),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
-    def _get_download_url(self, export_id, is_legacy):
-        if is_legacy:
-            view_cls = DownloadFormExportView
-        else:
-            view_cls = DownloadNewFormExportView
-        return reverse(view_cls.urlname, args=(self.domain, export_id))
+    def _get_download_url(self, export_id):
+        return reverse(DownloadNewFormExportView.urlname, args=(self.domain, export_id))
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
@@ -1526,7 +1495,6 @@ class CaseExportListView(BaseExportListView):
     def fmt_export_data(self, export):
         if isinstance(export, CaseExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
-            is_legacy = True
             can_edit = True
             description = ''
             my_export = None
@@ -1537,7 +1505,6 @@ class CaseExportListView(BaseExportListView):
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
-            is_legacy = False
             can_edit = export.can_edit(self.request.couch_user)
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
@@ -1550,7 +1517,6 @@ class CaseExportListView(BaseExportListView):
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
-            'isLegacy': is_legacy,
             'name': export.name,
             'case_type': export.case_type,
             'description': description,
@@ -1562,16 +1528,12 @@ class CaseExportListView(BaseExportListView):
             'exportType': export.type,
             'emailedExport': emailed_export,
             'editUrl': reverse(EditNewCustomCaseExportView.urlname, args=(self.domain, export.get_id)),
-            'downloadUrl': self._get_download_url(export._id, is_legacy),
+            'downloadUrl': self._get_download_url(export._id),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
-    def _get_download_url(self, export_id, is_legacy):
-        if is_legacy:
-            view_cls = DownloadCaseExportView
-        else:
-            view_cls = DownloadNewCaseExportView
-        return reverse(view_cls.urlname, args=(self.domain, export_id))
+    def _get_download_url(self, export_id):
+        return reverse(DownloadNewCaseExportView.urlname, args=(self.domain, export_id))
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):

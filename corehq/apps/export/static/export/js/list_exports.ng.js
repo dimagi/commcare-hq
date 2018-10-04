@@ -20,7 +20,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType, $timeout
+        $scope, djangoRMI, bulk_download_url, $rootScope, modelType, $timeout
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -55,7 +55,6 @@
         $scope._ = _;  // allow use of underscore.js within the template
         $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
         $scope.bulk_download_url = bulk_download_url;
-        $scope.legacy_bulk_download_url = legacy_bulk_download_url;
 
         $scope.myExports = $scope.exports.filter(function (val) { return !!val.my_export; });
         $scope.notMyExports = $scope.exports.filter(function (val) { return !val.my_export; });
@@ -78,11 +77,7 @@
             var input = $('input[name="export_list"]');
             input.val(JSON.stringify(selectedExports));
 
-            var useLegacyBulkExportUrl = _.every(selectedExports, function (e) {
-                return e.isLegacy;
-            });
-            var currentUrl = useLegacyBulkExportUrl ? $scope.legacy_bulk_download_url : $scope.bulk_download_url;
-            input.closest("form").attr("action", currentUrl);
+            input.closest("form").attr("action", $scope.bulk_download_url);
         };
         $scope.downloadRequested = function ($event) {
             var $btn = $($event.target);
