@@ -6,7 +6,7 @@
 {% endcomment %}
 
 <!-- class='hide' keeps modal from showing until knockout initializes & removes the class -->
-<div class="hide modal fade data-corrections-modal" tabindex="-1"
+<div class="hide modal fade data-corrections-modal"
      data-bind="css: { 'full-screen-modal': isFullScreenModal(), 'hide': false },
                 event: { 'hidden.bs.modal': function() { $root.init(); }, 'shown.bs.modal': function() { $root.trackOpen(); } }">
     <div class="modal-dialog" data-bind="css: { 'modal-lg': isLargeModal() }">
@@ -99,11 +99,10 @@
                                                    data-bind="value: value,
                                                               attr: { 'data-name': name }" />
                                             <select class="form-control"
-                                                    data-bind="attr: { 'multiple': type === 'MSelect' },
+                                                    data-bind="foreach: options,
+                                                               attr: { 'multiple': type === 'MSelect' },
                                                                event: { change: function(model, e) { updateSelect(e); } }">
-                                                <!-- ko foreach: options -->
                                                     <option data-bind="value: id, text: text"></option>
-                                                <!--/ko-->
                                             </select>
                                         </div>
                                     </div>
