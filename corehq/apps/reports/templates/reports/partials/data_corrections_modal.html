@@ -100,7 +100,7 @@
                                                               attr: { 'data-name': name }" />
                                             <select class="form-control"
                                                     data-bind="foreach: options,
-                                                               attr: { 'multiple': type === 'MSelect' },
+                                                               attr: { 'multiple': multiple },
                                                                event: { change: function(model, e) { updateSelect(e); } }">
                                                     <option data-bind="value: id, text: text"></option>
                                             </select>

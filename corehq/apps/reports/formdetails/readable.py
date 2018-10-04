@@ -602,12 +602,15 @@ def get_data_cleaning_data(form_data, instance):
                     'label': question.label,
                     'icon': question.icon,
                     'value': question.response,
-                    'type': question.type,
                     'options': [{
                         'id': option.value,
                         'text': option.label,
                     } for option in question.options],
                 }
+                if question.type == 'MSelect':
+                    question_response_map[value].update({
+                        'multiple': True,
+                    })
                 ordered_question_values.append(value)
 
     _add_to_question_response_map(form_data)
