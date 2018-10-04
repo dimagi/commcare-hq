@@ -764,7 +764,7 @@ def paginate_mobile_workers(request, domain):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     query = request.GET.get('query')
-    deactivated_only = bool(int(request.GET.get('showDeactivatedUsers', 0)))
+    deactivated_only = json.loads(request.GET.get('showDeactivatedUsers'))
 
     def _user_query(search_string, page, limit):
         user_es = get_search_users_in_domain_es_query(

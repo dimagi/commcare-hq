@@ -52,7 +52,7 @@ hqDefine("users/js/mobile_workers", function () {
         self.users = ko.observableArray([]);
 
         self.query = ko.observable('');
-        self.inactiveOnly = ko.observable(false);
+        self.deactivatedOnly = ko.observable(false);
 
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.observable();
@@ -78,8 +78,8 @@ hqDefine("users/js/mobile_workers", function () {
             return self.isLoaded() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
         });
 
-        self.toggleInactiveOnly = function (inactiveOnly) {
-            self.inactiveOnly(inactiveOnly);
+        self.setDeactivatedOnly = function (deactivatedOnly) {
+            self.deactivatedOnly(deactivatedOnly);
             self.goToPage(1);
         };
 
@@ -94,7 +94,7 @@ hqDefine("users/js/mobile_workers", function () {
                     page: page || 1,
                     query: self.query(),
                     limit: self.itemsPerPage(),
-                    showDeactivatedUsers: self.inactiveOnly() ? 1 : 0,
+                    showDeactivatedUsers: self.deactivatedOnly(),
                 },
                 success: function (data) {
                     self.totalItems(data.total);

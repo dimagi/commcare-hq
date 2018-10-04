@@ -243,11 +243,11 @@
                     </div>
                     <div class="col-sm-6">
                         <button type="button" class="btn btn-default pull-right"
-                                data-bind="visible: !inactiveOnly(), click: function() { toggleInactiveOnly(true); }">
+                                data-bind="visible: !deactivatedOnly(), click: function() { setDeactivatedOnly(true); }">
                             {% trans 'Show Deactivated Mobile Workers' %}
                         </button>
                         <button type="button" class="btn btn-default pull-right"
-                                data-bind="visible: inactiveOnly(), click: function() { toggleInactiveOnly(false); }">
+                                data-bind="visible: deactivatedOnly(), click: function() { setDeactivatedOnly(false); }">
                             {% trans 'Show Active Mobile Workers' %}
                         </button>
                     </div>
