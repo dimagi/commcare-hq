@@ -74,6 +74,7 @@ ISSNIP_MONTHLY_REGISTER_PDF = 7
 AWW_INCENTIVE_REPORT = 8
 
 AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
+AGG_CCS_RECORD_CF_TABLE = 'icds_dashboard_ccs_record_cf_forms'
 AGG_CCS_RECORD_PNC_TABLE = 'icds_dashboard_ccs_record_postnatal_forms'
 AGG_CHILD_HEALTH_PNC_TABLE = 'icds_dashboard_child_health_postnatal_forms'
 AGG_CHILD_HEALTH_THR_TABLE = 'icds_dashboard_child_health_thr_forms'

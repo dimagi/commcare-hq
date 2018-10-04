@@ -1,42 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from datetime import date
 
-from dateutil.relativedelta import relativedelta
-from django.db import connections, models, transaction
-
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.routers import db_for_read_write
-from custom.icds_reports.const import (
-    AGG_COMP_FEEDING_TABLE,
-    AGG_CCS_RECORD_BP_TABLE,
-    AGG_CCS_RECORD_PNC_TABLE,
-    AGG_CCS_RECORD_THR_TABLE,
-    AGG_CHILD_HEALTH_PNC_TABLE,
-    AGG_CHILD_HEALTH_THR_TABLE,
-    AGG_DAILY_FEEDING_TABLE,
-    AGG_GROWTH_MONITORING_TABLE,
-    AGG_CCS_RECORD_DELIVERY_TABLE,
-    AGG_INFRASTRUCTURE_TABLE,
-)
+from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
+    AGG_CCS_RECORD_CF_TABLE, AGG_CCS_RECORD_DELIVERY_TABLE,
+    AGG_CCS_RECORD_PNC_TABLE, AGG_CCS_RECORD_THR_TABLE,
+    AGG_CHILD_HEALTH_PNC_TABLE, AGG_CHILD_HEALTH_THR_TABLE,
+    AGG_COMP_FEEDING_TABLE, AGG_DAILY_FEEDING_TABLE,
+    AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE)
 from custom.icds_reports.utils.aggregation import (
-    BirthPreparednessFormsAggregationHelper,
-    AggChildHealthAggregationHelper,
+    AggCcsRecordAggregationHelper, AggChildHealthAggregationHelper,
     AwcInfrastructureAggregationHelper,
-    ChildHealthMonthlyAggregationHelper,
+    BirthPreparednessFormsAggregationHelper,
+    CcsRecordMonthlyAggregationHelper, ChildHealthMonthlyAggregationHelper,
     ComplementaryFormsAggregationHelper,
     DailyFeedingFormsChildHealthAggregationHelper,
-    GrowthMonitoringFormsAggregationHelper,
-    PostnatalCareFormsChildHealthAggregationHelper,
-    PostnatalCareFormsCcsRecordAggregationHelper,
-    THRFormsChildHealthAggregationHelper,
-    THRFormsCcsRecordAggregationHelper,
+    DeliveryFormsAggregationHelper, GrowthMonitoringFormsAggregationHelper,
     InactiveAwwsAggregationHelper,
-    DeliveryFormsAggregationHelper,
-    AggCcsRecordAggregationHelper,
-    CcsRecordMonthlyAggregationHelper
-)
+    PostnatalCareFormsCcsRecordAggregationHelper,
+    PostnatalCareFormsChildHealthAggregationHelper,
+    THRFormsCcsRecordAggregationHelper, THRFormsChildHealthAggregationHelper)
+from dateutil.relativedelta import relativedelta
+from django.db import connections, models, transaction
 from six.moves import range
 
 
@@ -723,6 +710,49 @@ class AggregateComplementaryFeedingForms(models.Model):
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
 
+        
+class AggregateCcsRecordComplementaryFeedingForms(models.Model):
+    """Aggregated data based on AWW App, Home Visit Scheduler module,
+    Complementary Feeding form.
+
+    A child table exists for each state_id and month.
+
+    A row exists for every ccs_record case that has ever had a Complementary Feeding Form
+    submitted against it.
+    """
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+
+    valid_visits = models.PositiveSmallIntegerField(
+        help_text="number of qualified visits for the incentive report",
+        default=0
+    )
+
+
+    class Meta(object):
+        db_table = AGG_CCS_RECORD_CF_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = ComplementaryFormsCcsRecordAggregationHelper(state_id, month)
+        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(prev_month_query, prev_month_params)
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
 
 class AggregateChildHealthPostnatalCareForms(models.Model):
     """Aggregated data for child health cases based on
@@ -850,6 +880,10 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
     is_ebf = models.PositiveSmallIntegerField(
         null=True,
         help_text="Whether child was exclusively breastfed at last visit"
+    )
+    valid_visits = models.PositiveSmallIntegerField(
+        help_text="number of qualified visits for the incentive report",
+        default=0
     )
 
     class Meta(object):
@@ -1119,6 +1153,10 @@ class AggregateBirthPreparednesForms(models.Model):
         null=True,
         help_text="Last value of anc_details/anc_abnormalities = 'yes'"
     )
+    valid_visits = models.PositiveSmallIntegerField(
+        help_text="number of qualified visits for the incentive report",
+        default=0
+    )
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
@@ -1170,6 +1208,10 @@ class AggregateCcsRecordDeliveryForms(models.Model):
     breastfed_at_birth = models.PositiveSmallIntegerField(
         null=True,
         help_text="whether any child was breastfed at birth"
+    )
+    valid_visits = models.PositiveSmallIntegerField(
+        help_text="number of qualified visits for the incentive report",
+        default=0
     )
 
     class Meta(object):

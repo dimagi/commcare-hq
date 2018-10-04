@@ -14,6 +14,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
+    AGG_CCS_RECORD_CF_TABLE,
     AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CCS_RECORD_THR_TABLE,
@@ -241,6 +242,72 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         }
 
 
+class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-complementary_feeding_forms'
+    aggregate_parent_table = AGG_CCS_RECORD_CF_TABLE
+    aggregate_child_table_prefix = 'icds_db_child_ccs_cf_form_'
+
+    @property
+    def _old_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.child_health_monthly_ucr_id)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    def data_from_ucr_query(self):
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+
+        return """
+        SELECT DISTINCT child_health_case_id AS case_id,
+        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_vists
+        FROM "{ucr_tablename}"
+        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WINDOW w AS (
+            PARTITION BY child_health_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        """.format(ucr_tablename=self.ucr_tablename), {
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+            "state_id": self.state_id
+        }
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query()
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id
+        }
+        query_params.update(ucr_query_params)
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
+          demo_comp_feeding, counselled_pediatric_ifa, play_comp_feeding_vid,
+          comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+          ucr.valid_visits as valid_visits
+          FROM ({ucr_table_query}) ucr
+          FULL OUTER JOIN "{previous_month_tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id
+        )
+        """.format(
+            ucr_table_query=ucr_query,
+            previous_month_tablename=previous_month_tablename,
+            tablename=tablename
+        ), query_params
+
+
 class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-postnatal_care_forms'
     aggregate_parent_table = AGG_CHILD_HEALTH_PNC_TABLE
@@ -387,7 +454,8 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_methods) OVER w AS counsel_methods,
-        LAST_VALUE(is_ebf) OVER w as is_ebf
+        LAST_VALUE(is_ebf) OVER w as is_ebf,
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_vists
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -422,7 +490,8 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
-            ucr.is_ebf as is_ebf
+            ucr.is_ebf as is_ebf,
+            ucr.valid_visits as valid_vists
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -769,7 +838,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(convulsions) OVER w as convulsions,
         LAST_VALUE(rupture) OVER w as rupture,
         LAST_VALUE(anemia) OVER w as anemia,
-        LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities
+        LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities,
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_vists
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -820,7 +890,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             ucr.blurred_vision as blurred_vision,
             ucr.convulsions as convulsions,
             ucr.rupture as rupture,
-            ucr.anc_abnormalities as anc_abnormalities
+            ucr.anc_abnormalities as anc_abnormalities,
+            ucr.valid_visits as valid_visits
           FROM ({ucr_table_query}) ucr
           LEFT JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -887,7 +958,8 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
             %(state_id)s AS state_id,
             %(month)s::DATE AS month,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
-            LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth
+            LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth,
+            SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_vists
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND

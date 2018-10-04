@@ -266,6 +266,15 @@
           "type": "property_path",
           "property_path": ["form", "next_due"]
         }
+      },
+      {
+        "column_id": "ccs_record_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "case_load_ccs_record0", "case", "@case_id"]
+        }
       }
     ],
     "named_expressions": {
