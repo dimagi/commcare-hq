@@ -267,7 +267,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         response = self.client.get(url, content_type="application/json;charset=utf-8")
 
         self.assertEqual(response.status_code, 200)
-        users = json.loads(response.content)['response']['users']
+        users = json.loads(response.content)['users']
         self.assertEqual(len(users), 1)
         self.assertEqual(users[0]['username'], 'boston_worker')
 
