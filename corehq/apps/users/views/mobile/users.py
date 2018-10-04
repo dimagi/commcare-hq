@@ -84,6 +84,7 @@ from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
@@ -777,25 +778,33 @@ def paginate_mobile_workers(request, domain):
             user_es = user_es.location(list(loc_ids))
         return user_es.mobile_users()
 
-    def _format_user(user_json):
-        user = CouchUser.wrap_correctly(user_json)
-        return {
-            'username': user.raw_username,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'user_id': user.user_id,
-            'date_registered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
-            'is_active': user.is_active,
-        }
-
     # backend pages start at 0
     users_query = _user_query(query, page - 1, limit)
     # run with a blank query to fetch total records with same scope as in search
     if deactivated_only:
         users_query = users_query.show_only_inactive()
-    users_data = users_query.run()
+    users_data = users_query.source([
+        '_id',
+        'first_name',
+        'last_name',
+        'base_username',
+        'created_on',
+        'is_active',
+    ]).run()
+    users = users_data.hits
+
+    for user in users:
+        date_registered = user.pop('created_on', '')
+        if date_registered:
+            date_registered = iso_string_to_datetime(date_registered).strftime(USER_DATE_FORMAT)
+        user.update({
+            'username': user.pop('base_username', ''),
+            'user_id': user.pop('_id'),
+            'date_registered': date_registered,
+        })
+
     return json_response({
-        'users': [_format_user(user) for user in users_data.hits],
+        'users': users,
         'total': users_data.total,
     })
 
