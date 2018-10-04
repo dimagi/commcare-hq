@@ -39,6 +39,7 @@ class ESQueryFake(object):
     # just to make ESQuerySet happy
     _exclude_source = None
     _legacy_fields = None
+    _source = None
 
     def __init__(self, result_docs=None):
         if result_docs is None:
@@ -57,6 +58,7 @@ class ESQueryFake(object):
         clone._sort_desc = self._sort_desc
         clone._exclude_source = self._exclude_source
         clone._legacy_fields = self._legacy_fields
+        clone._source_fields = self._source_fields
         return clone
 
     def _filtered(self, filter_function):
@@ -125,6 +127,9 @@ class ESQueryFake(object):
     def get_ids(self):
         return [h['_id'] for h in self.run().hits]
 
+    def source(self, fields):
+        self._source_fields = fields
+
     def run(self):
         result_docs = list(self._result_docs)
         total = len(result_docs)
@@ -136,9 +141,14 @@ class ESQueryFake(object):
         else:
             result_docs = result_docs[self._start:]
 
+        def _get_doc(doc):
+            if self._source_fields:
+                return {key: doc[key] for key in self._source_fields if key in doc}
+            return doc
+
         return ESQuerySet({
             'hits': {
-                'hits': [{'_source': doc} for doc in result_docs],
+                'hits': [{'_source': _get_doc(doc)} for doc in result_docs],
                 'total': total,
             },
         }, self)
