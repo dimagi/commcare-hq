@@ -114,6 +114,7 @@ class CcsRecordMonthly(models.Model):
     last_date_thr = models.DateField(blank=True, null=True)
     num_anc_complete = models.SmallIntegerField(blank=True, null=True)
     opened_on = models.DateField(blank=True, null=True)
+    valid_visits = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -449,6 +450,7 @@ class AggCcsRecord(models.Model):
     institutional_delivery_in_month = models.IntegerField(null=True)
     lactating_all = models.IntegerField(null=True)
     pregnant_all = models.IntegerField(null=True)
+    valid_visits = models.IntegerField(null=True)
 
     class Meta:
         managed = False

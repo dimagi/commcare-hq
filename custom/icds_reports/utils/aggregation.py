@@ -1817,6 +1817,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('last_date_thr', 'case_list.last_date_thr'),
             ('num_anc_complete', 'case_list.num_anc_complete'),
             ('opened_on', 'case_list.opened_on')
+            ('valid_visits', 'agg_cf.valid_visits + agg_bp.valid_visits + agg_pnc.valid_visits')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -1827,6 +1828,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON ucr.doc_id = agg_thr.case_id AND ucr.month = agg_thr.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{agg_bp_table}" agg_bp ON ucr.doc_id = agg_bp.case_id AND ucr.month = agg_bp.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{agg_pnc_table}" agg_pnc ON ucr.doc_id = agg_pnc.case_id AND ucr.month = agg_pnc.month and ucr.valid_in_month = 1
+            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND ucr.month = agg_cf.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON ucr.doc_id = agg_delivery.case_id AND ucr.month = agg_delivery.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{ccs_record_case_ucr}" case_list ON ucr.doc_id = case_list.doc_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON ucr.doc_id = ut.ccs_record_case_id
@@ -1844,6 +1846,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_bp_table=AGG_CCS_RECORD_BP_TABLE,
             agg_delivery_table=AGG_CCS_RECORD_DELIVERY_TABLE,
             pregnant_tasks_case_ucr=self.pregnant_tasks_cases_ucr_tablename,
+            agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             "start_date": self.month,
             "end_date": self.end_date
@@ -1931,6 +1934,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('institutional_delivery_in_month', 'sum(ucr.institutional_delivery_in_month)'),
             ('lactating_all', 'sum(ucr.lactating_all)'),
             ('pregnant_all', 'sum(ucr.pregnant_all)'),
+            ('valid_visits', 'sum(crm.valid_visits)')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -1938,6 +1942,8 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         ) (SELECT
             {calculations}
             FROM "{ucr_ccs_record_table}" ucr
+            LEFT OUTER JOIN "{ccs_record_monthly_table}" as crm
+            ON crm.case_id = ucr.doc_id and crm.month=ucr.month
             WHERE month = %(start_date)s AND state_id != ''
             GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month,
                      ccs_status, coalesce_trimester, caste, coalesce_disabled, coalesce_minority, coalesce_resident
@@ -1946,7 +1952,8 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
-            ucr_ccs_record_table=self.ccs_record_monthly_ucr_tablename
+            ucr_ccs_record_table=self.ccs_record_monthly_ucr_tablename,
+            ccs_record_monthly_table='ccs_record_monthly'
         ), {
             "start_date": self.month
         }
@@ -2004,6 +2011,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('institutional_delivery_in_month', ),
             ('lactating_all', ),
             ('pregnant_all', ),
+            ('valid_visits', ),
         )
 
         def _transform_column(column_tuple):
