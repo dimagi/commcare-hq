@@ -54,6 +54,6 @@ class OtaRestoreBugTest(TestCase):
             restore_user=user.to_ota_restore_user(),
             params=RestoreParams(version=V2),
         )
-        payload = restore_config.get_payload().as_string()
+        payload = restore_config.get_payload().as_string().decode('utf-8')
         self.assertTrue(good_case._id in payload)
         self.assertFalse(bad_case._id in payload)
