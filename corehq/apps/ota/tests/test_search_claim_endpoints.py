@@ -448,7 +448,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(
             score_regex.sub(r'\1xxx\3',
                             re.sub(DATE_PATTERN, FIXED_DATESTAMP,
-                                   re.sub(PATTERN, TIMESTAMP, response.content))),
+                                   re.sub(PATTERN, TIMESTAMP, response.content.decode('utf-8')))),
             known_result)
 
     @patch('corehq.apps.es.es_query.run_query')
