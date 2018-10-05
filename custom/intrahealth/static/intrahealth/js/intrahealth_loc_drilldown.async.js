@@ -1,3 +1,5 @@
+/* global locationModel */
+
 function IntrahealthLocModel(data, root, depth) {
     var loc = this;
     locationModel.apply(this, [data, root, depth, IntrahealthLocModel, false]);
