@@ -6,7 +6,7 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds"
   ],
   "report_id": "static-mpr_2a3_children_delivered",
   "data_source_table": "static-child_delivery_forms",

@@ -55,6 +55,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
+    use_select2_v4,
     use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
@@ -1733,7 +1734,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             next_subscription = self.current_subscription.next_subscription
 
             if is_saved:
-                if not request.user.is_superuser:
+                if not request.user.is_superuser and not self.is_upgrade:
                     self.send_downgrade_email()
                 if next_subscription is not None:
                     # New subscription has been scheduled for the future
@@ -2983,7 +2984,7 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
 
@@ -3010,7 +3011,7 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
 

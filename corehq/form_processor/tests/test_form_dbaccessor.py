@@ -2,12 +2,14 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from datetime import datetime
+from io import BytesIO
 
 from contextlib2 import ExitStack
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 
 import settings
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
@@ -385,7 +387,7 @@ class FormAccessorTestsSQL(TestCase):
         return form
 
 
-class FormAccessorsTests(TestCase):
+class FormAccessorsTests(TestCase, TestXmlMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
@@ -421,7 +423,8 @@ class FormAccessorsTests(TestCase):
             form_id='123',
             form_properties={'breakfast': 'toast', 'lunch': 'sandwich'}
         ).as_xml_string()
-        xform = submit_form_locally(formxml, DOMAIN).xform
+        pic = UploadedFile(BytesIO(b"fake"), 'pic.jpg', content_type='image/jpeg')
+        xform = submit_form_locally(formxml, DOMAIN, attachments={"image": pic}).xform
 
         updates = {'breakfast': 'fruit'}
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
@@ -429,6 +432,12 @@ class FormAccessorsTests(TestCase):
         self.assertEqual(0, len(errors))
         self.assertEqual('fruit', form.form_data['breakfast'])
         self.assertEqual('sandwich', form.form_data['lunch'])
+        self.assertIn("image", form.attachments)
+        self.assertEqual(form.get_attachment("image"), b"fake")
+        self.assertXmlEqual(
+            form.get_attachment("form.xml"),
+            formxml.replace(b"toast", b"fruit"),
+        )
 
     def test_update_responses_error(self):
         formxml = FormSubmissionBuilder(

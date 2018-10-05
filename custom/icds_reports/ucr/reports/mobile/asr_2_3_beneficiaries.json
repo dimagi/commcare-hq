@@ -8,30 +8,22 @@
     "softlayer",
     "icds"
   ],
-  "report_id": "static-mpr_6ac_pse_attendance",
-  "data_source_table": "static-child_cases_monthly_v2",
+  "report_id": "static-asr_2_3_beneficiaries",
+  "data_source_table": "static-person_cases_v2",
   "config": {
-    "title": "MPR 6ac - PSE Attendance 3 to 6 (Static)",
+    "title": "ASR 2,3 - Beneficiaries (Static)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
       "owner_id",
-      "month"
+      "age_group"
     ],
     "filters": [
       {
-        "slug": "age_in_months_in_bounds",
-        "type": "pre",
-        "field": "age_in_months",
-        "pre_operator": "between",
-        "pre_value": [36, 72],
-        "datatype": "integer"
-      },
-      {
-        "display": "Month for Data",
-        "slug": "month",
+        "display": "Date of Birth",
+        "slug": "dob",
         "type": "date",
-        "field": "month",
+        "field": "dob",
         "datatype": "date"
       },
       {
@@ -88,7 +80,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "awc_id",
+        "field": "owner_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -96,133 +88,142 @@
         }
       },
       {
-        "display": "Month",
-        "column_id": "month",
-        "type": "aggregate_date",
-        "field": "month",
-        "format": "%Y-%m"
+        "display": "Age Group",
+        "column_id": "age_group",
+        "type": "conditional_aggregation",
+        "whens": {
+          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 0 and 5": "0_to_5",
+          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 6 and 11": "6_to_11",
+          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 12 and 35": "12_to_35",
+          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 36 and 59": "36_to_59",
+          "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 60 and 71": "60_to_71"
+        }
       },
       {
-        "display": "pse_16_days_male_st",
-        "column_id": "pse_16_days_male_st",
+        "display": "open_count",
+        "column_id": "open_count",
         "type": "field",
-        "field": "pse_16_days_male_st",
+        "field": "open_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_female_st",
-        "column_id": "pse_16_days_female_st",
+        "display": "F_st_count",
+        "column_id": "F_st_count",
         "type": "field",
-        "field": "pse_16_days_female_st",
+        "field": "F_st_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_male_sc",
-        "column_id": "pse_16_days_male_sc",
+        "display": "F_sc_count",
+        "column_id": "F_sc_count",
         "type": "field",
-        "field": "pse_16_days_male_sc",
+        "field": "F_sc_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_female_sc",
-        "column_id": "pse_16_days_female_sc",
+        "display": "F_other_count",
+        "column_id": "F_other_count",
         "type": "field",
-        "field": "pse_16_days_female_sc",
+        "field": "F_other_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_male_others",
-        "column_id": "pse_16_days_male_others",
+        "display": "F_minority_count",
+        "column_id": "F_minority_count",
         "type": "field",
-        "field": "pse_16_days_male_others",
+        "field": "F_minority_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_female_others",
-        "column_id": "pse_16_days_female_others",
+        "display": "F_disabled_count",
+        "column_id": "F_disabled_count",
         "type": "field",
-        "field": "pse_16_days_female_others",
+        "field": "F_disabled_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_male_disabled",
-        "column_id": "pse_16_days_male_disabled",
+        "display": "M_st_count",
+        "column_id": "M_st_count",
         "type": "field",
-        "field": "pse_16_days_male_disabled",
+        "field": "M_st_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_female_disabled",
-        "column_id": "pse_16_days_female_disabled",
+        "display": "M_sc_count",
+        "column_id": "M_sc_count",
         "type": "field",
-        "field": "pse_16_days_female_disabled",
+        "field": "M_sc_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_male_minority",
-        "column_id": "pse_16_days_male_minority",
+        "display": "M_other_count",
+        "column_id": "M_other_count",
         "type": "field",
-        "field": "pse_16_days_male_minority",
+        "field": "M_other_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_16_days_female_minority",
-        "column_id": "pse_16_days_female_minority",
+        "display": "M_minority_count",
+        "column_id": "M_minority_count",
         "type": "field",
-        "field": "pse_16_days_female_minority",
+        "field": "M_minority_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_absent_male",
-        "column_id": "pse_absent_male",
+        "display": "M_disabled_count",
+        "column_id": "M_disabled_count",
         "type": "field",
-        "field": "pse_absent_male",
+        "field": "M_disabled_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "pse_absent_female",
-        "column_id": "pse_absent_female",
+        "display": "disabled_movement_count",
+        "column_id": "disabled_movement_count",
         "type": "field",
-        "field": "pse_absent_female",
+        "field": "disabled_movement_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "column_id": "child_count_female",
+        "display": "disabled_mental_count",
+        "column_id": "disabled_mental_count",
         "type": "field",
-        "field": "child_count_female",
+        "field": "disabled_mental_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "column_id": "child_count_male",
+        "display": "disabled_seeing_count",
+        "column_id": "disabled_seeing_count",
         "type": "field",
-        "field": "child_count_male",
+        "field": "disabled_seeing_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "column_id": "pse_partial_female",
+        "display": "disabled_hearing_count",
+        "column_id": "disabled_hearing_count",
         "type": "field",
-        "field": "pse_partial_female",
+        "field": "disabled_hearing_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "column_id": "pse_partial_male",
+        "display": "disabled_speaking_count",
+        "column_id": "disabled_speaking_count",
         "type": "field",
-        "field": "pse_partial_male",
+        "field": "disabled_speaking_count",
         "aggregation": "sum",
         "calculate_total": true
       }

@@ -120,8 +120,9 @@ def setUpModule():
                 if not table_name.startswith('icds_dashboard_'):
                     postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
-        _aggregate_child_health_pnc_forms('st1', datetime(2017, 3, 31))
-        _aggregate_gm_forms('st1', datetime(2017, 3, 31))
+        for state_id in ('st1', 'st2'):
+            _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
+            _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
