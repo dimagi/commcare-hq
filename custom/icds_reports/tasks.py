@@ -130,7 +130,7 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6, hour=0, minute=0),
                acks_late=True, queue='icds_aggregation_queue')
 def run_weekly_aggregation_of_historical_data():
     date = datetime.utcnow().date().strftime('%Y-%m-%d')
