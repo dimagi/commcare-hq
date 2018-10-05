@@ -227,7 +227,7 @@ class TestBlobMixin(BaseTestCase):
         self.obj.put_attachment(content, name)
         blob = self.get_blob(self.obj.blobs[name].key)
         with blob.open() as fh:
-            self.assertEqual(fh.read(), b"test_blob_directory content")
+            self.assertEqual(fh.read(), "test_blob_directory content")
 
     def test_put_attachment_deletes_replaced_blob(self):
         name = "test.\u4500"
