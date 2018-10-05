@@ -1101,25 +1101,40 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
 
-        test = "foo = 'bar' and baz = 'buzz'"
-        locale_id = "assertion.foo.equals.bar"
-        form.custom_assertions = [CustomAssertion(test=test, locale_id=locale_id)]
+        tests = ["foo = 'bar' and baz = 'buzz'", "count(instance('casedb')/casedb/case[@case_type='friend']) > 0"]
 
+        form.custom_assertions = [
+            CustomAssertion(test=test, text={'en': "en-{}".format(id), "fr": "fr-{}".format(id)})
+            for id, test in enumerate(tests)
+        ]
+        assertions_xml = [
+            """
+                <assert test="{test}">
+                    <text>
+                        <locale id="custom_assertion.m0.f0.{id}"/>
+                    </text>
+                </assert>
+            """.format(test=test, id=id) for id, test in enumerate(tests)
+        ]
         self.assertXmlPartialEqual(
             """
             <partial>
                 <assertions>
-                    <assert test="{test}">
-                        <text>
-                            <locale id="{locale_id}"/>
-                        </text>
-                    </assert>
+                    {assertions}
                 </assertions>
             </partial>
-            """.format(test=test, locale_id=locale_id),
+            """.format(assertions="".join(assertions_xml)),
             factory.app.create_suite(),
             "entry/assertions"
         )
+
+        en_app_strings = commcare_translations.loads(module.get_app().create_app_strings('en'))
+        self.assertEqual(en_app_strings['custom_assertion.m0.f0.0'], "en-0")
+        self.assertEqual(en_app_strings['custom_assertion.m0.f0.1'], "en-1")
+        fr_app_strings = commcare_translations.loads(module.get_app().create_app_strings('fr'))
+        self.assertEqual(fr_app_strings['custom_assertion.m0.f0.0'], "fr-0")
+        self.assertEqual(fr_app_strings['custom_assertion.m0.f0.1'], "fr-1")
+
 
     def test_custom_variables(self):
         factory = AppFactory()

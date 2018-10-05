@@ -2,10 +2,10 @@
 hqDefine('app_manager/js/forms/custom_assertions', function () {
     'use strict';
 
-    var customAssertion = function (test, localeId) {
+    var customAssertion = function (test, text) {
         var self = {};
         self.test = ko.observable(test || '');
-        self.localeId = ko.observable(localeId || '');
+        self.text = ko.observable(text || '');
         return self;
     };
 
@@ -16,7 +16,7 @@ hqDefine('app_manager/js/forms/custom_assertions', function () {
         self.mapping = {
             customAssertions: {
                 create: function (options) {
-                    return customAssertion(options.data.test, options.data.localeId);
+                    return customAssertion(options.data.test, options.data.text);
                 },
             },
         };
@@ -30,9 +30,9 @@ hqDefine('app_manager/js/forms/custom_assertions', function () {
         };
 
         self.addAssertion = function (assertion) {
-            assertion = assertion || {test: null, localeId: null};
+            assertion = assertion || {test: null, text: null};
             self.customAssertions.push(
-                customAssertion(assertion.test, assertion.localeId)
+                customAssertion(assertion.test, assertion.text)
             );
         };
 

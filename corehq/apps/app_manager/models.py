@@ -816,7 +816,7 @@ class CustomAssertion(DocumentSchema):
     locale_id: The id of the localizable string
     """
     test = StringProperty(required=True)
-    locale_id = StringProperty(required=True)
+    text = DictProperty(StringProperty)
 
 
 class CustomInstance(DocumentSchema):

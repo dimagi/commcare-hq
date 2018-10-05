@@ -263,8 +263,9 @@ class EntriesHelper(object):
 
     @staticmethod
     def add_custom_assertions(entry, form):
-        for assertion in form.custom_assertions:
-            entry.assertions.append(EntriesHelper.get_assertion(assertion.test, assertion.locale_id))
+        for id, assertion in enumerate(form.custom_assertions):
+            locale_id = id_strings.custom_assertion_locale(form.get_module(), form, id)
+            entry.assertions.append(EntriesHelper.get_assertion(assertion.test, locale_id))
 
     @staticmethod
     def add_usercase_id_assertion(entry):

@@ -12,11 +12,7 @@
             <tr>
                 <th class="col-sm-4">{% trans "Test" %}</th>
                 <th class="col-sm-6">
-                    <span class="hq-help-template"
-                          data-title="{% trans "Message Locale ID" %}"
-                          data-content="{% blocktrans %}Enter the path to a localizable string (e.g. custom.string.name), then add this path in the CommCare Translations section of the languages tab of this app's settings page.{% endblocktrans %}"
-                    ></span>
-                    {% trans "Message Locale ID" %}
+                    {% trans "Message Text" %}
                 </th>
                 <th class="col-sm-2">&nbsp;</th>
             </tr>
@@ -37,8 +33,8 @@
                         class="form-control"
                         type="text"
                         spellcheck="false"
-                        placeholder="e.g. custom.string.id"
-                        data-bind="value: localeId"
+                        placeholder="e.g. There was a validation error"
+                        data-bind="value: text"
                     /><!-- Not directly sent to server since there is no "name" attribute -->
                 </td>
                 <td class="col-sm-2">
