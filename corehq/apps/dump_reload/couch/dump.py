@@ -69,7 +69,10 @@ class CouchDataDumper(DataDumper):
         for doc in iter_docs(couch_db, doc_ids, chunksize=500):
             count += 1
             doc = _get_doc_with_attachments(couch_db, doc)
-            json.dump(doc, output_stream)
+            json_dump = json.dumps(doc)
+            if six.PY3:
+                json_dump = json_dump.encode('utf-8')
+            output_stream.write(json_dump)
             output_stream.write(b'\n')
         self.stdout.write('Dumped {} {}\n'.format(count, model_label))
         return Counter({model_label: count})
