@@ -635,6 +635,8 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'pregnant':
             if 'awc_id' in config:
+                start = int(request.GET.get('start', 0))
+                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
@@ -642,6 +644,8 @@ class AwcReportsView(BaseReportView):
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_pregnant(
+                    start,
+                    length,
                     order_by_name_column,
                     reversed_order,
                     config['awc_id']
@@ -653,6 +657,8 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'lactating':
             if 'awc_id' in config:
+                start = int(request.GET.get('start', 0))
+                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
@@ -660,6 +666,8 @@ class AwcReportsView(BaseReportView):
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_lactating(
+                    start,
+                    length,
                     order_by_name_column,
                     reversed_order,
                     config['awc_id']

@@ -91,4 +91,3 @@ class Migration(migrations.Migration):
             },
         )
     ]
-    operations.extend(get_view_migrations())
