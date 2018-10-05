@@ -136,11 +136,11 @@ class CaseBugTest(TestCase, TestFileMixin):
             CaseBlock(create=True, case_id=case_id, update={
                 'p1': 'v1',
                 'p2': 'v2',
-            }).as_string(),
+            }).as_string().decode('utf-8'),
             CaseBlock(case_id=case_id, update={
                 'p2': 'v4',
                 'p3': 'v3',
-            }).as_string(),
+            }).as_string().decode('utf-8'),
         ]
         form, [case] = submit_case_blocks(case_blocks, 'test-domain')
         self.assertEqual('v1', case.dynamic_case_properties()['p1'])
