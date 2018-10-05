@@ -149,7 +149,7 @@ def get_connection_slot_from_phone_number(phone_number, max_simultaneous_connect
     This is the connection slot number that will need be reserved in order to send
     the message.
     """
-    hashed_phone_number = hashlib.sha1(phone_number).hexdigest()
+    hashed_phone_number = hashlib.sha1(phone_number.encode('utf-8')).hexdigest()
     return int(hashed_phone_number, base=16) % max_simultaneous_connections
 
 
