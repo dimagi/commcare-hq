@@ -86,7 +86,7 @@ class SavedBasicExportTest(TestCase):
         self.assertIn(name, saved_export.external_blobs)
         self.assertEqual(saved_export.size, 7)
         with saved_export.get_payload(stream=True) as fh:
-            self.assertEqual(fh.read(), "content")
+            self.assertEqual(fh.read(), b"content")
 
 
 def _mk_config(name='some export name', index='dummy_index'):
