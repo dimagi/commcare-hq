@@ -130,7 +130,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
                     "xml_submission_file": f
             })
             self.assertEqual(500, res.status_code)
-            self.assertIn('Invalid XML', res.content)
+            self.assertIn('Invalid XML', res.content.decode('utf-8'))
 
         # make sure we logged it
         [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
