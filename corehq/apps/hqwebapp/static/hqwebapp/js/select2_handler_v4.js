@@ -16,6 +16,7 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
         var self = {};
         self.fieldName = options.fieldName;
         self.placeholder = options.placeholder;
+        self.allowClear = options.allowClear;
         self.multiple = options.multiple || false;
         self.value = ko.observable();
         self.createTags = options.createTags || false;
@@ -72,7 +73,7 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
 
             fieldInput.select2({
                 minimumInputLength: 0,
-                allowClear: true,
+                allowClear: self.allowClear,
                 multiple: self.multiple,
                 placeholder: self.placeholder,
                 ajax: {

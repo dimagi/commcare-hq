@@ -264,10 +264,12 @@ class SettingsForm(Form):
     sms_case_registration_owner_id = CharField(
         required=False,
         label=ugettext_noop("Default Case Owner"),
+        widget=forms.Select(choices=[])
     )
     sms_case_registration_user_id = CharField(
         required=False,
         label=ugettext_noop("Registration Submitter"),
+        widget=forms.Select(choices=[])
     )
     sms_mobile_worker_registration_enabled = ChoiceField(
         required=False,
