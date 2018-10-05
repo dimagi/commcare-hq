@@ -67,7 +67,7 @@ class CouchDumpLoadTest(TestCase):
         self.assertEqual({}, objects_remaining, 'Not all data deleted: {}'.format(objects_remaining))
 
         dump_output = output_stream.getvalue()
-        dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
+        dump_lines = [line.strip() for line in dump_output.split(b'\n') if line.strip()]
 
         with mock_out_couch() as fake_db:
             total_object_count, loaded_object_count = CouchDataLoader().load_objects(dump_lines)
