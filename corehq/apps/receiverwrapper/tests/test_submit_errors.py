@@ -83,14 +83,14 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         _, res_openrosa3 = self._submit('simple_form.xml', open_rosa_header=OPENROSA_VERSION_3)
         self.assertEqual(201, res_openrosa3.status_code)
 
-        self.assertIn("Form is a duplicate", res.content)
+        self.assertIn("Form is a duplicate", res.content.decode('utf-8'))
 
         # make sure we logged it
         [log] = FormAccessors(self.domain.name).get_forms_by_type('XFormDuplicate', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
-        with open(file, encoding='utf-8') as f:
+        with open(file, 'rb') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     def _test_submission_error_post_save(self, openrosa_version):
@@ -144,14 +144,14 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         file, res = self._submit('missing_xmlns.xml')
         self.assertEqual(500, res.status_code)
         message = "Form is missing a required field: XMLNS"
-        self.assertIn(message, res.content)
+        self.assertIn(message, res.content.decode('utf-8'))
 
         # make sure we logged it
         [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn(message, log.problem)
-        with open(file, encoding='utf-8') as f:
+        with open(file, 'rb') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     @flag_enabled('DATA_MIGRATION')
@@ -159,7 +159,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         file, res = self._submit('simple_form.xml')
         self.assertEqual(503, res.status_code)
         message = "Service Temporarily Unavailable"
-        self.assertIn(message, res.content)
+        self.assertIn(message, res.content.decode('utf-8'))
 
     def test_error_saving_normal_form(self):
         sql_patch = patch(
@@ -187,10 +187,10 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         if openrosa_version == OPENROSA_VERSION_3:
             self.assertEqual(422, res.status_code)
-            self.assertIn(ResponseNature.PROCESSING_FAILURE, res.content)
+            self.assertIn(ResponseNature.PROCESSING_FAILURE, res.content.decode('utf-8'))
         else:
             self.assertEqual(201, res.status_code)
-            self.assertIn(ResponseNature.SUBMIT_ERROR, res.content)
+            self.assertIn(ResponseNature.SUBMIT_ERROR, res.content.decode('utf-8'))
 
         form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
         self.assertTrue(form.is_error)
