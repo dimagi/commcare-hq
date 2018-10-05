@@ -74,7 +74,7 @@ class ExplodeCasesDbTest(TestCase):
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type='commcare-user',
-        ).as_string()
+        ).as_string().decode('utf-8')
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
         explode_cases(self.domain.name, self.user_id, 10)
