@@ -217,7 +217,7 @@ class RetireUserTestCase(TestCase):
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         ) for case_id in case_ids]
-        casexmls = [ElementTree.tostring(caseblock.as_xml()) for caseblock in caseblocks]
+        casexmls = [ElementTree.tostring(caseblock.as_xml()).decode('utf-8') for caseblock in caseblocks]
         submit_case_blocks(casexmls, self.domain, user_id=self.other_user._id)
 
         self.other_user.retire()
