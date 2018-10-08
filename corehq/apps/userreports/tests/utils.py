@@ -101,7 +101,7 @@ def doc_to_change(doc):
 
 def domain_lite(name):
     from corehq.apps.callcenter.utils import DomainLite
-    return DomainLite(name, None, None, True, True, True, True)
+    return DomainLite(name, None, None, True)
 
 
 def post_run_with_sql_backend(fn, *args, **kwargs):
