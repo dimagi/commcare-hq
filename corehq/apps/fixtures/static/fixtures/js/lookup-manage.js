@@ -304,7 +304,7 @@ hqDefine("fixtures/js/lookup-manage", [
 
         self.setupDownload = function (response) {
             var keep_polling = true;
-
+            var server_slow_retries = 0;
             function poll() {
                 if (keep_polling) {
                     $.ajax({
@@ -323,9 +323,15 @@ hqDefine("fixtures/js/lookup-manage", [
                                 setTimeout(poll, 2000);
                             }
                         },
-                        error: function () {
-                            self.downloadError();
-                            keep_polling = false;
+                        error: function (resp) {
+                            if (resp.status == 502 && server_slow_retries < 5){
+                                server_slow_retries += 1
+                                setTimeout(poll, 2000);
+                            }
+                            else {
+                                self.downloadError();
+                                keep_polling = false;
+                            }
                         },
                     });
                 }
