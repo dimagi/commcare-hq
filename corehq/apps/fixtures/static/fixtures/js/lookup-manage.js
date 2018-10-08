@@ -325,7 +325,7 @@ hqDefine("fixtures/js/lookup-manage", [
                         },
                         error: function (resp) {
                             if (resp.status === 502 && serverSlowRetries < 5){
-                                serverSlowRetries += 1
+                                serverSlowRetries += 1;
                                 setTimeout(poll, 2000);
                             }
                             else {
