@@ -12,7 +12,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0068_ccsrecordmonthlyview_add_lactating.py')
+        ('icds_reports', '0068_ccsrecordmonthlyview_add_lactating')
     ]
 
     operations = [
