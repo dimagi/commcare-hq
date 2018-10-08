@@ -84,5 +84,6 @@ AGG_CCS_RECORD_DELIVERY_TABLE = 'icds_dashboard_ccs_record_delivery_forms'
 AGG_DAILY_FEEDING_TABLE = 'icds_dashboard_daily_feeding_forms'
 AGG_GROWTH_MONITORING_TABLE = 'icds_dashboard_growth_monitoring_forms'
 AGG_INFRASTRUCTURE_TABLE = 'icds_dashboard_infrastructure_forms'
+AWW_INCENTIVE_TABLE = 'icds_dashboard_aww_incentive'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'softlayer' else 'icds-cas'

@@ -9,7 +9,7 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_PNC_TABLE, AGG_CCS_RECORD_THR_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE, AGG_CHILD_HEALTH_THR_TABLE,
     AGG_COMP_FEEDING_TABLE, AGG_DAILY_FEEDING_TABLE,
-    AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE)
+    AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE)
 from custom.icds_reports.utils.aggregation import (
     AggCcsRecordAggregationHelper, AggChildHealthAggregationHelper,
     AwcInfrastructureAggregationHelper,
@@ -451,6 +451,7 @@ class AggCcsRecord(models.Model):
     lactating_all = models.IntegerField(null=True)
     pregnant_all = models.IntegerField(null=True)
     valid_visits = models.IntegerField(null=True)
+    expected_visits = models.IntegerField(null=True)
 
     class Meta:
         managed = False
@@ -1357,6 +1358,43 @@ class AggregateAwcInfrastructureForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = AwcInfrastructureAggregationHelper(state_id, month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
+class AWWIncentiveReport(models.Model):
+    """Monthly updated table that holds metrics for the incentive report"""
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    awc_id = models.CharField(max_length=40, primary_key=True)
+    block_id = models.CharField(max_length=40)
+    state_name = models.TextField(null=True)
+    district_name = models.TextField(null=True)
+    block_name = models.TextField(null=True)
+    supervisor_name = models.TextField(null=True)
+    awc_name = models.TextField(null=True)
+    aww_name = models.TextField(null=True)
+    contact_phone_number = models.TextField(null=True)
+    wer_weighed = models.SmallIntegerField(null=True)
+    wer_eligible = models.SmallIntegerField(null=True)
+    awc_num_open = models.SmallIntegerField(null=True)
+    valid_visits = models.SmallIntegerField(null=True)
+    expected_visits = models.SmallIntegerField(null=True)
+
+    class Meta(object):
+        db_table = AWW_INCENTIVE_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = AwwIncentiveAggregationHelper(state_id, month)
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_params = helper.aggregation_query()
 

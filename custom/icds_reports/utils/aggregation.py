@@ -24,6 +24,7 @@ from custom.icds_reports.const import (
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
     AGG_INFRASTRUCTURE_TABLE,
+    AWW_INCENTIVE_TABLE,
     DASHBOARD_DOMAIN,
 )
 from six.moves import range
@@ -1934,7 +1935,14 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('institutional_delivery_in_month', 'sum(ucr.institutional_delivery_in_month)'),
             ('lactating_all', 'sum(ucr.lactating_all)'),
             ('pregnant_all', 'sum(ucr.pregnant_all)'),
-            ('valid_visits', 'sum(crm.valid_visits)')
+            ('valid_visits', 'sum(crm.valid_visits)'),
+            ('expected_visits', 'floor(sum('
+             'CASE'
+             'WHEN ucr.pregnant=1 THEN 0.44 '
+             'WHEN ucr.month - ucr.add < 30 THEN 6 '
+             'WHEN ucr.month - ucr.add < 182 THEN 1 '
+             'ELSE 0.39 END'
+             '))'),
         )
         return """
         INSERT INTO "{tablename}" (
@@ -2012,6 +2020,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('lactating_all', ),
             ('pregnant_all', ),
             ('valid_visits', ),
+            ('expected_visits', ),
         )
 
         def _transform_column(column_tuple):
@@ -2177,3 +2186,46 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
             tablename=tablename
         ), query_params
 
+
+class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
+    aggregate_parent_table = AWW_INCENTIVE_TABLE
+    aggregate_child_table_prefix = 'icds_db_aww_incentive_'
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id
+        }
+
+        return """
+        INSERT INTO "{tablename}" (
+            state_id, month, awc_id, block_id, state_name, district_name, block_name, 
+            supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
+            wer_eligible, awc_num_open, valid_visits, expected_visits
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            awc_id,
+            block_id,
+            state_name,
+            district_name,
+            block_name,
+            supervisor_name,
+            awc_name,
+            aww_name,
+            contact_phone_number,
+            wer_weighed,
+            wer_eligible,
+            awc_num_open,
+            valid_visits,
+            expected_visits
+          FROM agg_ccs_record_monthly AS acm
+          WHERE acm.month = %(month)s AND acm.state_id = %(state_id)s
+        )
+        """.format(
+            tablename=tablename
+        ), query_params

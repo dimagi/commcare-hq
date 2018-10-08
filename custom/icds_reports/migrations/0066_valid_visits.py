@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from django.db import migrations, models
 from corehq.sql_db.operations import RawSQLMigration
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
@@ -43,5 +44,30 @@ class Migration(migrations.Migration):
             name='valid_visits',
             field=models.PositiveSmallIntegerField(default=0, help_text='number of qualified visits for the incentive report'),
         ),
+        migrations.CreateModel(
+            name='AWWIncentiveReport',
+            fields=[
+                ('state_id', models.CharField(max_length=40)),
+                ('month', models.DateField(help_text='Will always be YYYY-MM-01')),
+                ('awc_id', models.CharField(max_length=40, primary_key=True, serialize=False)),
+                ('block_id', models.CharField(max_length=40)),
+                ('state_name', models.TextField(null=True)),
+                ('district_name', models.TextField(null=True)),
+                ('block_name', models.TextField(null=True)),
+                ('supervisor_name', models.TextField(null=True)),
+                ('awc_name', models.TextField(null=True)),
+                ('aww_name', models.TextField(null=True)),
+                ('contact_phone_number', models.TextField(null=True)),
+                ('wer_weighed', models.SmallIntegerField(null=True)),
+                ('wer_eligible', models.SmallIntegerField(null=True)),
+                ('awc_num_open', models.SmallIntegerField(null=True)),
+                ('valid_visits', models.SmallIntegerField(null=True)),
+                ('expected_visits', models.SmallIntegerField(null=True)),
+            ],
+            options={
+                'db_table': 'icds_dashboard_aww_incentive',
+            },
+        ),
         migrator.get_migration('update_tables28.sql')
     ]
+    operations.extend(get_view_migrations())
