@@ -2,7 +2,7 @@ hqDefine("sms/js/settings", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/select2_handler',
+    'hqwebapp/js/select2_handler_v3',
 ], function(
     $,
     ko,

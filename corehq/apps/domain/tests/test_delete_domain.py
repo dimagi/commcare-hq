@@ -888,8 +888,3 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
-
-    def test_assert_sql_domain(self):
-        self.domain.delete()
-        with self.assertRaises(AssertionError):
-            call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)

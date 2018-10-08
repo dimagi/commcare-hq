@@ -1,17 +1,18 @@
 {
   "domains": [
     "icds-cas",
-    "icds-dashboard-qa"
+    "icds-dashboard-qa",
+    "reach-test"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds"
   ],
-  "report_id": "static-mobile_mpr_3_children_registered",
-  "data_source_table": "static-person_cases_v2",
+  "report_id": "static-mpr_7_growth_monitored",
+  "data_source_table": "static-gm_forms",
   "config": {
-    "title": "MPR 3 - Children Registered (Static)",
-    "description": "New children registered during month.  Displays person cases grouped by month opened, owner ID, and age group at time of registration",
+    "title": "MPR 7 - Growth Monitored (Static)",
+    "description": "",
     "visible": false,
     "aggregation_columns": [
       "owner_id",
@@ -20,27 +21,19 @@
     ],
     "filters": [
       {
-        "display": "Date Case Opened",
-        "slug": "opened_on",
+        "slug": "age_in_months_in_bounds",
+        "type": "pre",
+        "field": "age_in_months",
+        "pre_operator": "between",
+        "pre_value": [0, 60],
+        "datatype": "integer"
+      },
+      {
+        "display": "Date Last Weighed",
+        "slug": "last_date_gmp",
         "type": "date",
-        "field": "opened_on",
+        "field": "last_date_gmp",
         "datatype": "date"
-      },
-      {
-        "slug": "age_at_registration_exists",
-        "type": "pre",
-        "field": "age_at_reg",
-        "pre_operator": "!=",
-        "pre_value": "",
-        "datatype": "integer"
-      },
-      {
-        "slug": "age_at_registration_in_bounds",
-        "type": "pre",
-        "field": "age_at_reg",
-        "pre_operator": "<=",
-        "pre_value": 6,
-        "datatype": "integer"
       },
       {
         "display": "Filter by AWW",
@@ -96,7 +89,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -107,7 +100,7 @@
         "display": "Month",
         "column_id": "month",
         "type": "aggregate_date",
-        "field": "opened_on",
+        "field": "last_date_gmp",
         "format": "%Y-%m"
       },
       {
@@ -115,39 +108,56 @@
         "column_id": "age_group",
         "type": "conditional_aggregation",
         "whens": {
-            "0 <= age_at_reg AND age_at_reg < 3": "under_3",
-            "3 <= age_at_reg AND age_at_reg <= 6": "over_3"
+            "age_in_months BETWEEN 0 AND 11": "0_to_11",
+            "age_in_months BETWEEN 12 AND 35": "12_to_35",
+            "age_in_months BETWEEN 36 AND 60": "36_to_60"
         }
       },
       {
-        "display": "F_resident_count",
-        "column_id": "F_resident_count",
+        "display": "M_resident_weighed_count",
+        "column_id": "M_resident_weighed_count",
         "type": "field",
-        "field": "F_resident_count",
+        "field": "M_resident_weighed_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "M_resident_count",
-        "column_id": "M_resident_count",
+        "display": "F_resident_weighed_count",
+        "column_id": "F_resident_weighed_count",
         "type": "field",
-        "field": "M_resident_count",
+        "field": "F_resident_weighed_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "F_migrant_count",
-        "column_id": "F_migrant_count",
+        "display": "M_mod_resident_weighed_count",
+        "column_id": "M_mod_resident_weighed_count",
         "type": "field",
-        "field": "F_migrant_count",
+        "field": "M_mod_resident_weighed_count",
         "aggregation": "sum",
         "calculate_total": true
       },
       {
-        "display": "M_migrant_count",
-        "column_id": "M_migrant_count",
+        "display": "F_mod_resident_weighed_count",
+        "column_id": "F_mod_resident_weighed_count",
         "type": "field",
-        "field": "M_migrant_count",
+        "field": "F_mod_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "M_sev_resident_weighed_count",
+        "column_id": "M_sev_resident_weighed_count",
+        "type": "field",
+        "field": "M_sev_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "F_sev_resident_weighed_count",
+        "column_id": "F_sev_resident_weighed_count",
+        "type": "field",
+        "field": "F_sev_resident_weighed_count",
         "aggregation": "sum",
         "calculate_total": true
       }

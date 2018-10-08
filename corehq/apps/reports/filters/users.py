@@ -222,9 +222,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options'
-    search_help_inline = ugettext_lazy(mark_safe(
+    filter_help_inline = ugettext_lazy(mark_safe(
         'See <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
-        ' target="_blank"> Filter Definitions </a>. To quick search for a '
+        ' target="_blank"> Filter Definitions</a>.'
+    ))
+    search_help_inline = ugettext_lazy(mark_safe(
+        'To quick search for a '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
         'target="_blank">Location</a>, write your query as "parent"/descendant.'
     ))
@@ -333,6 +336,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         context = super(ExpandedMobileWorkerFilter, self).filter_context
         url = reverse(self.options_url, args=[self.domain])
         context.update({'endpoint': url})
+        context.update({'filter_help_inline': self.filter_help_inline})
         if self.request.project.uses_locations:
             context.update({'search_help_inline': self.search_help_inline})
         return context

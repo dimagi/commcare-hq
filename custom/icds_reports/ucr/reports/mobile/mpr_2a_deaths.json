@@ -6,10 +6,9 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
-  "report_id": "static-mobile_mpr_2a_deaths",
+  "report_id": "static-mpr_2a_deaths",
   "data_source_table": "static-person_cases_v2",
   "config": {
     "title": "MPR 2a - Deaths by Month  (Static)",

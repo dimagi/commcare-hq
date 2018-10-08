@@ -132,7 +132,7 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6, hour=0, minute=0),
                acks_late=True, queue='icds_aggregation_queue')
 def run_weekly_aggregation_of_historical_data():
     date = datetime.utcnow().date().strftime('%Y-%m-%d')
@@ -140,7 +140,7 @@ def run_weekly_aggregation_of_historical_data():
     res_awc.get()
 
 
-@serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='icds_aggregation_queue')
+@serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     date = date or datetime.utcnow().date()
     monthly_dates = []
@@ -164,7 +164,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             _create_aggregate_functions(cursor)
             _update_aggregate_locations_tables(cursor)
 
-        state_ids = (SQLLocation.objects
+        state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
@@ -220,7 +220,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res.get()
 
             res_child = chain(
-                icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
+                icds_state_aggregation_task.si(
+                    state_id=state_ids, date=calculation_date, func=_child_health_monthly_table
+                ),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
             ).apply_async()
             res_ccs = chain(
@@ -407,12 +409,12 @@ def _update_months_table(day):
 
 
 @track_time
-def _child_health_monthly_table(day):
+def _child_health_monthly_table(state_ids, day):
     with transaction.atomic():
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('child_health_monthly', %s)",
         ], day)
-        ChildHealthMonthly.aggregate(force_to_date(day))
+        ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
 
 @track_time

@@ -12,7 +12,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0065_ccsrecordmonthlyview'),
+        ('icds_reports', '0068_ccsrecordmonthlyview_add_lactating.py')
     ]
 
     operations = [
@@ -68,6 +68,6 @@ class Migration(migrations.Migration):
                 'db_table': 'icds_dashboard_aww_incentive',
             },
         ),
-        migrator.get_migration('update_tables28.sql')
+        migrator.get_migration('update_tables29.sql')
     ]
     operations.extend(get_view_migrations())

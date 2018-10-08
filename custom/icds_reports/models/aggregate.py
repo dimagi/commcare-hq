@@ -114,7 +114,11 @@ class CcsRecordMonthly(models.Model):
     last_date_thr = models.DateField(blank=True, null=True)
     num_anc_complete = models.SmallIntegerField(blank=True, null=True)
     opened_on = models.DateField(blank=True, null=True)
+<<<<<<< HEAD
     valid_visits = models.SmallIntegerField(blank=True, null=True)
+=======
+    dob = models.DateField(blank=True, null=True)
+>>>>>>> master
 
     class Meta(object):
         managed = False
@@ -244,15 +248,16 @@ class ChildHealthMonthly(models.Model):
         db_table = 'child_health_monthly'
 
     @classmethod
-    def aggregate(cls, month):
-        helper = ChildHealthMonthlyAggregationHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
+    def aggregate(cls, state_ids, month):
+        helper = ChildHealthMonthlyAggregationHelper(state_ids, month)
+        agg_queries = helper.aggregation_queries()
         index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
             with transaction.atomic():
                 cursor.execute(helper.drop_table_query())
-                cursor.execute(agg_query, agg_params)
+                for agg_query, agg_params in agg_queries:
+                    cursor.execute(agg_query, agg_params)
                 for query in index_queries:
                     cursor.execute(query)
 

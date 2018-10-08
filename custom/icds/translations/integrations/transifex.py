@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.conf import settings
-from memoized import memoized
 
 from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
@@ -45,8 +45,7 @@ class Transifex(object):
         self.use_version_postfix = use_version_postfix
         self.update_resource = update_resource
 
-    @property
-    @memoized
+    @cached_property
     def app_id_to_build(self):
         return self._find_build_id()
 
@@ -70,8 +69,7 @@ class Transifex(object):
             generated_files = po_file_generator.generate_translation_files()
             return self._send_files_to_transifex(generated_files, app_trans_generator)
 
-    @property
-    @memoized
+    @cached_property
     def client(self):
         transifex_account_details = settings.TRANSIFEX_DETAILS
         if transifex_account_details:
@@ -84,8 +82,7 @@ class Transifex(object):
         else:
             raise Exception(_("Transifex account details not available on this environment."))
 
-    @property
-    @memoized
+    @cached_property
     def transifex_project_source_lang(self):
         return self.client.transifex_lang_code(self.client.get_source_lang())
 
@@ -124,8 +121,7 @@ class Transifex(object):
                 file_uploads[resource_name] = "{}: {}".format(response.status_code, response.content)
         return file_uploads
 
-    @property
-    @memoized
+    @cached_property
     def resource_slugs(self):
         if self._resource_slugs:
             return self._resource_slugs
