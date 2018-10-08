@@ -1,13 +1,10 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+var gtag = hqImport('analytix/js/google').track;
 
 window.angular.module('icdsApp').factory('systemUsageService', ['$http', function($http) {
     return {
         getAwcOpenedData: function(step, params) {
-            window.ga('send', 'event', {
-                'eventCategory': 'System Usage Service',
-                'eventAction': 'Fetching data started',
-                'eventLabel': 'getAwcOpenedData',
-            });
+            gtag.event('System Usage Service', 'Fetching data started', 'getAwcOpenedData');
             var get_url = url('awc_opened', step);
             return  $http({
                 method: "GET",
@@ -15,19 +12,11 @@ window.angular.module('icdsApp').factory('systemUsageService', ['$http', functio
                 params: params,
             }).then(
                 function(response) {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'System Usage Service',
-                        'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getAwcOpenedData',
-                    });
+                    gtag.event('System Usage Service', 'Fetching data succeeded', 'getAwcOpenedData');
                     return response;
                 },
                 function() {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'System Usage Service',
-                        'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getAwcOpenedData',
-                    });
+                    gtag.event('System Usage Service', 'Fetching data failed', 'getAwcOpenedData');
                 }
             );
         },

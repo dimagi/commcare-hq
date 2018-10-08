@@ -1,5 +1,6 @@
 /* global moment, _ */
 
+var gtag = hqImport('analytix/js/google').track;
 
 function MonthModalController($location, $uibModalInstance) {
     var vm = this;
@@ -39,11 +40,7 @@ function MonthModalController($location, $uibModalInstance) {
     }
 
     vm.apply = function() {
-        window.ga('send', 'event', {
-            'eventCategory': 'Date Filter',
-            'eventAction': 'Date Changed',
-            'eventLabel': '',
-        });
+        gtag.event('Date Filter', 'Date Changed', '');
         $uibModalInstance.close({
             month: vm.selectedMonth,
             year: vm.selectedYear,

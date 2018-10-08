@@ -1,4 +1,5 @@
 /* global _, LocationModalController, LocationFilterController */
+var gtag = hqImport('analytix/js/google').track;
 
 var transformLocationTypeName = function(locationTypeName) {
     if (locationTypeName === 'awc') {
@@ -92,11 +93,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     vm.apply = function() {
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
-        window.ga('send', 'event', {
-            'eventCategory': 'Location Filter',
-            'eventAction': 'Location Changed',
-            'eventLabel': vm.selectedLocationId.location_id,
-        });
+        gtag.event('Location Filter', 'Location Changed', vm.selectedLocationId.location_id);
         $uibModalInstance.close(vm.selectedLocations);
     };
 

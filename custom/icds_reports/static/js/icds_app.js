@@ -66,7 +66,9 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
 
     $scope.$on('$routeChangeStart', function() {
         $scope.checkAccessToLocation();
-        $window.ga('send', 'pageview', $location.path());
+        var path = window.location.pathname + $location.path().substr(1);
+        $window.ga('set', 'page', path);
+        $window.ga('send', 'pageview', path);
     });
 
     // hack to have the same width between origin table and fixture headers,
