@@ -1,7 +1,6 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var gtag = hqImport('analytix/js/google').track;
-
 window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', function($http) {
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+    var gtag = hqImport('analytix/js/google').track;
     return {
         getAwcDailyStatusData: function(step, params) {
             gtag.event('ICDS CAS Reach Service', 'Fetching data started', 'Awc Daily Status');

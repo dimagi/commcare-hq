@@ -1,7 +1,6 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var gtag = hqImport('analytix/js/google').track;
-
 window.angular.module('icdsApp').factory('infrastructureService', ['$http', function($http) {
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+    var gtag = hqImport('analytix/js/google').track;
     return {
         getCleanWaterData: function(step, params) {
             gtag.event('Infrastructure Service', 'Fetching data started', 'Clean Water');

@@ -1,7 +1,6 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var gtag = hqImport('analytix/js/google').track;
-
 window.angular.module('icdsApp').factory('systemUsageService', ['$http', function($http) {
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+    var gtag = hqImport('analytix/js/google').track;
     return {
         getAwcOpenedData: function(step, params) {
             gtag.event('System Usage Service', 'Fetching data started', 'getAwcOpenedData');

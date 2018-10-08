@@ -1,7 +1,6 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var gtag = hqImport('analytix/js/google').track;
-
 window.angular.module('icdsApp').factory('maternalChildService', ['$http', function($http) {
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+    var gtag = hqImport('analytix/js/google').track;
     return {
         getUnderweightChildrenData: function(step, params) {
             gtag.event('Maternal Child Service', 'Fetching data started', 'Underweight Children');

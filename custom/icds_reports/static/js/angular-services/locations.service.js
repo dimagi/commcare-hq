@@ -1,7 +1,6 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var gtag = hqImport('analytix/js/google').track;
-
 window.angular.module('icdsApp').factory('locationsService', ['$http', '$location', function($http, $location) {
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+    var gtag = hqImport('analytix/js/google').track;
     return {
         getRootLocations: function() {
             return this.getChildren(null);

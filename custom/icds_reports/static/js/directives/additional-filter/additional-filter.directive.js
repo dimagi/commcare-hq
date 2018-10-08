@@ -1,5 +1,3 @@
-var gtag = hqImport('analytix/js/google').track;
-
 function AdditionalModalController($location, $uibModalInstance, filters, genders, ages, haveAccessToFeatures) {
     var vm = this;
     vm.filters = filters;
@@ -23,7 +21,7 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
 
     vm.apply = function() {
-        gtag.event('Additional Filter', 'Filter Changed', '');
+        hqImport('analytix/js/google').track.event('Additional Filter', 'Filter Changed', '');
         $uibModalInstance.close({
             gender: vm.selectedGender,
             age: vm.selectedAge,
