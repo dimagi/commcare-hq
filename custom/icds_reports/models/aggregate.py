@@ -21,7 +21,9 @@ from custom.icds_reports.utils.aggregation import (
     InactiveAwwsAggregationHelper,
     PostnatalCareFormsCcsRecordAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
-    THRFormsCcsRecordAggregationHelper, THRFormsChildHealthAggregationHelper)
+    THRFormsCcsRecordAggregationHelper, THRFormsChildHealthAggregationHelper,
+    AwwIncentiveAggregationHelper, ComplementaryFormsCcsRecordAggregationHelper
+)
 from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
