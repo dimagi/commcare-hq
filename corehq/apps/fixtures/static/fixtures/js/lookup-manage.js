@@ -304,7 +304,7 @@ hqDefine("fixtures/js/lookup-manage", [
 
         self.setupDownload = function (response) {
             var keep_polling = true;
-            var server_slow_retries = 0;
+            var serverSlowRetries = 0;
             function poll() {
                 if (keep_polling) {
                     $.ajax({
@@ -324,8 +324,8 @@ hqDefine("fixtures/js/lookup-manage", [
                             }
                         },
                         error: function (resp) {
-                            if (resp.status == 502 && server_slow_retries < 5){
-                                server_slow_retries += 1
+                            if (resp.status == 502 && serverSlowRetries < 5){
+                                serverSlowRetries += 1
                                 setTimeout(poll, 2000);
                             }
                             else {
