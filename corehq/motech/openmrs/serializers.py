@@ -69,24 +69,6 @@ def omrs_boolean_to_text(value):
     return 'true' if value else 'false'
 
 
-def to_name(value):
-    """
-    OpenMRS does not accept names that have numbers in them
-
-    >>> to_name('5dbbabc66c12730b') == '-dbbabc--c-----b'
-    True
-
-    """
-    # Replace non-alphanumeric, digits and underscores with "-", but allow spaces and apostrophes
-    def usually_hyphen(match):
-        m = match.group()
-        return m if m in (' ', "'", "ʼ") else '-'
-
-    nonalpha = re.compile(r'[\W\d_]', re.UNICODE)
-    return nonalpha.sub(usually_hyphen, value)
-
-
-
 serializers.update({
     # (from_data_type, to_data_type): function
     (None, OPENMRS_DATA_TYPE_DATE): to_omrs_date,

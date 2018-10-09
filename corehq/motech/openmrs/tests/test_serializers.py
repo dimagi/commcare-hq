@@ -8,7 +8,7 @@ import doctest
 from django.test import SimpleTestCase
 
 import corehq.motech.openmrs.serializers
-from corehq.motech.openmrs.serializers import to_omrs_date, to_omrs_datetime, to_name
+from corehq.motech.openmrs.serializers import to_omrs_date, to_omrs_datetime
 
 
 class SerializerTests(SimpleTestCase):
@@ -51,36 +51,6 @@ class SerializerTests(SimpleTestCase):
         day_int = 1
         openmrs_timestamp = to_omrs_datetime(day_int)
         self.assertIsNone(openmrs_timestamp)
-
-    def test_to_name_numeric(self):
-        commcare_name = 'Bush 2'
-        openmrs_name = to_name(commcare_name)
-        self.assertEqual(openmrs_name, 'Bush -')
-
-    def test_to_name_hyphen(self):
-        commcare_name = 'Jean-Paul'
-        openmrs_name = to_name(commcare_name)
-        self.assertEqual(openmrs_name, commcare_name)
-
-    def test_to_name_spaces(self):
-        commcare_name = 'van der Merwe'
-        openmrs_name = to_name(commcare_name)
-        self.assertEqual(openmrs_name, commcare_name)
-
-    def test_to_name_extendedlatin(self):
-        commcare_name = 'Müller'
-        openmrs_name = to_name(commcare_name)
-        self.assertEqual(openmrs_name, commcare_name)
-
-    def test_to_name_ascii_apostrophe(self):
-        commcare_name = "D'Urban"
-        openmrs_name = to_name(commcare_name)
-        self.assertEqual(openmrs_name, commcare_name)
-
-    def test_to_name_unicode_apostrophe(self):
-        commcare_name = "DʼUrban"  # i.e. 'D\u02bcUrban'
-        openmrs_name = to_name(commcare_name)
-        self.assertEqual(openmrs_name, commcare_name)
 
     def test_to_date_datetime_str(self):
         datetime_str = '2017-06-27T09:36:47.396000Z'
