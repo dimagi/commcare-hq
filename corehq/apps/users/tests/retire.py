@@ -66,7 +66,7 @@ class RetireUserTestCase(TestCase):
                 case_id=case_id,
                 owner_id=owner_id,
                 user_id=owner_id,
-            ).as_string())
+            ).as_string().decode('utf-8'))
         xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         self.commcare_user.retire()
@@ -97,7 +97,7 @@ class RetireUserTestCase(TestCase):
                 case_id=case_id,
                 owner_id=owner_id,
                 user_id=owner_id,
-            ).as_string())
+            ).as_string().decode('utf-8'))
         submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         # submit a system form to update one, and another to update two
@@ -107,7 +107,7 @@ class RetireUserTestCase(TestCase):
                 case_id=case_id,
                 user_id=SYSTEM_USER_ID,
                 update={'foo': 'bar'},
-            ).as_string()
+            ).as_string().decode('utf-8')
             for case_id in case_ids
         ]
         xform_1 = submit_case_blocks(caseblocks[:1], self.domain, user_id=SYSTEM_USER_ID)[0]
@@ -305,13 +305,13 @@ class RetireUserTestCase(TestCase):
             CaseBlock(
                 create=False,
                 case_id=case_id,
-            ).as_string(),
+            ).as_string().decode('utf-8'),
             CaseBlock(
                 create=True,
                 case_id=uuid.uuid4().hex,
                 owner_id=self.other_user._id,
                 user_id=self.other_user._id,
-            ).as_string()
+            ).as_string().decode('utf-8')
         ], self.domain, user_id=self.other_user._id)
 
         self.commcare_user.retire()
