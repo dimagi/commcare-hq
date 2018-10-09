@@ -675,6 +675,11 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
     allow_bulk_export = True
     is_deid = False
 
+    lead_text = ugettext_lazy('''
+        Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
+        for use in third-party data analysis tools.
+    ''')
+
     @use_select2
     @use_angular_js
     @method_decorator(login_and_domain_required)
@@ -713,6 +718,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
+            'lead_text': self.lead_text,
         }
 
     @property
@@ -1190,11 +1196,15 @@ class DailySavedExportListView(BaseExportListView):
 
 @location_safe
 class DashboardFeedListView(DailySavedExportListView):
-    template_name = 'export/dashboard_feed_list.html'
     urlname = 'list_dashboard_feeds'
     page_title = ugettext_lazy("Excel Dashboard Integration")
     form_or_case = None  # This view lists both case and form feeds
     allow_bulk_export = False
+
+    lead_text = ugettext_lazy('''
+        Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data.
+        Data is updated daily.
+    ''')
 
     def _priv_check(self):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)

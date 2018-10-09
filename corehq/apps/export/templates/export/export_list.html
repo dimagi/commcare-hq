@@ -30,15 +30,7 @@
     {% initial_page_data 'model_type' model_type %}
     {% initial_page_data 'static_model_type' static_model_type %}
 
-    <p>
-        {% block lead_text %}
-            {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-                Exports are a way to download data from {{ hq_name }}
-                in a variety of formats (CSV, Excel, etc.) for use in
-                third-party data analysis tools.
-            {% endblocktrans %}
-        {% endblock %}
-    </p>
+    <p>{{ lead_text }}</p>
 
     {% block export_list %}
         <div ng-app="listExportsApp">
