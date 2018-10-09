@@ -20,7 +20,6 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indi
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     date = datetime(*config['month'])
-    config['date'] = date
     del config['month']
 
     def get_data_for(filters):
@@ -38,10 +37,12 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
 
         return queryset
 
-    data = get_data_for(config)
-    if not data:
-        config['date'] = (date - relativedelta(days=1)).date()
+    config['date'] = date.date()
+    first_get = True
+    while first_get or (not data and config['date'].day != 1):
+        first_get = False
         data = get_data_for(config)
+        config['date'] -= relativedelta(days=1)
 
     data_for_map, valid_total, in_day_total, average, total = generate_data_for_map(
         data,
@@ -190,7 +191,6 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
     group_by = ['%s_name' % loc_level]
 
     date = datetime(*config['month'])
-    config['date'] = date
     del config['month']
 
     def get_data_for(filters):
@@ -219,10 +219,12 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
     loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
-    sector_data = get_data_for(config)
-    if not sector_data:
-        config['date'] = (date - relativedelta(days=1)).date()
+    config['date'] = date.date()
+    first_get = True
+    while first_get or (not sector_data and config['date'].day != 1):
+        first_get = False
         sector_data = get_data_for(config)
+        config['date'] -= relativedelta(days=1)
 
     for row in sector_data:
         valid = row['all']
