@@ -1,3 +1,4 @@
+
 # coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
@@ -151,7 +152,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn(message, log.problem)
-        with open(file, 'rb') as f:
+        with open(file, 'r') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     @flag_enabled('DATA_MIGRATION')
