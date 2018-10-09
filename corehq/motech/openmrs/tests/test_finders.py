@@ -6,6 +6,7 @@ import doctest
 from django.test import SimpleTestCase
 
 from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatientFinder
+from corehq.motech.openmrs.openmrs_config import get_property_map
 import corehq.motech.openmrs.finders_utils
 
 
@@ -79,7 +80,7 @@ class PatientFinderTests(SimpleTestCase):
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):
     """
-    Tests WeightedPropertyPatientFinder.set_property_map()
+    Tests get_property_map() for WeightedPropertyPatientFinder.
     """
 
     def setUp(self):
@@ -136,7 +137,7 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
                 {"case_property": "address_2", "weight": 0.2},
             ],
         })
-        self.finder.set_property_map(self.case_config)
+        self.finder._property_map = get_property_map(self.case_config)
 
     def test_person_properties_jsonpath(self):
         for prop in ('sex', 'dob'):
