@@ -25,11 +25,11 @@ hqDefine('locations/js/location_tree', [
         });
     }
 
-    function LocationTreeViewModel(hierarchy, options) {
+    function locationTreeViewModel(hierarchy, options) {
         // options should have property:
         //      "can_edit_root"
 
-        var self = this;
+        var self = {};
         self.show_inactive = options.show_inactive;
         self.root = ko.observable();
 
@@ -63,23 +63,24 @@ hqDefine('locations/js/location_tree', [
 
         // load location hierarchy
         self.load = function (locs) {
-            self.root(new LocationModel({
+            self.root(locationModel({
                 name: '_root',
                 children: locs,
                 can_edit: options.can_edit_root,
                 expanded: true,
             }, self));
         };
+        return self;
     }
 
-    function LocationSearchViewModel(tree_model, options) {
+    function locationSearchViewModel(treeModel, options) {
         // options should have property:
         //      "can_edit_root"
 
-        var self = this;
+        var self = {};
         self.selected_location = ko.observable();
         self.l__selected_location_id = ko.observable();
-        self.clearLocationSelection = locationUtils.clearLocationSelection.bind(self, tree_model);
+        self.clearLocationSelection = locationUtils.clearLocationSelection.bind(self, treeModel);
 
         self.selected_location_id = ko.computed(function () {
             if (!self.l__selected_location_id()) {
@@ -92,7 +93,7 @@ hqDefine('locations/js/location_tree', [
             if (!self.selected_location_id()) {
                 return;
             }
-            return new LocationModel({
+            return locationModel({
                 uuid: self.selected_location_id(),
                 can_edit: options.can_edit_root,
                 is_archived: options.show_inactive,
@@ -109,12 +110,12 @@ hqDefine('locations/js/location_tree', [
                 dataType: 'json',
                 error: 'error',
                 success: function (response) {
-                    tree_model.root(self.expand_tree(response.lineage));
+                    treeModel.root(self.expandTree(response.lineage));
                 }.bind(self),
             });
         });
 
-        self.expand_tree = function (lineage) {
+        self.expandTree = function (lineage) {
             var child, level;
             lineage.forEach(function (location, idx) {
                 var data = {
@@ -127,11 +128,11 @@ hqDefine('locations/js/location_tree', [
                     expanded: child ? 'semi' : false,
                     children_status: 'semi_loaded',
                 };
-                level = new LocationModel(data, tree_model, lineage.length - idx - 1);
+                level = locationModel(data, treeModel, lineage.length - idx - 1);
                 child = Array.of(Object.assign({}, data));
             });
             var root_children = [];
-            tree_model.root().children().forEach(function (location) {
+            treeModel.root().children().forEach(function (location) {
                 if (location.name() === child[0].name) {
                     root_children.push(child[0]);
                 } else {
@@ -146,18 +147,19 @@ hqDefine('locations/js/location_tree', [
                 }
             });
 
-            level = new LocationModel({
+            level = locationModel({
                 name: '_root',
                 children: root_children,
                 can_edit: options.can_edit_root,
                 expanded: 'semi',
-            }, tree_model);
+            }, treeModel);
             return level;
         };
+        return self;
     }
 
-    function LocationModel(data, root, depth) {
-        var self = this;
+    function locationModel(data, root, depth) {
+        var self = {};
 
         self.name = ko.observable();
         self.type = ko.observable();
@@ -219,13 +221,13 @@ hqDefine('locations/js/location_tree', [
                 }
 
                 var model_children = $.map(sortedChildren, function (e) {
-                    return new LocationModel(e, root, self.depth + 1);
+                    return locationModel(e, root, self.depth + 1);
                 });
                 model_children.unshift(self.children()[0]);
                 self.children(model_children);
             } else {
                 self.children($.map(sortedChildren, function (e) {
-                    return new LocationModel(e, root, self.depth + 1);
+                    return locationModel(e, root, self.depth + 1);
                 }));
             }
 
@@ -435,11 +437,12 @@ hqDefine('locations/js/location_tree', [
                 },
             });
         };
+        return self;
     }
 
     return {
-        LocationSearchViewModel: LocationSearchViewModel,
-        LocationTreeViewModel: LocationTreeViewModel,
-        LocationModel: LocationModel,
+        locationSearchViewModel: locationSearchViewModel,
+        locationTreeViewModel: locationTreeViewModel,
+        locationModel: locationModel,
     };
 });

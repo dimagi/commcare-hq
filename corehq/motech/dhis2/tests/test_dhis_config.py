@@ -184,5 +184,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         org_unit_value_source = dict(repeater.dhis2_config.form_configs[0].org_unit_id)
         self.assertDictEqual(org_unit_value_source, {
             'doc_type': 'ConstantString',
-            'value': 'dhis2_location_id'
+            'value': 'dhis2_location_id',
+            'commcare_data_type': None,
+            'external_data_type': None,
         })
