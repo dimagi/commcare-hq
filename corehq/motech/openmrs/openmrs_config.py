@@ -200,7 +200,7 @@ def get_property_map(case_config):
             jsonpath = parse_jsonpath('person.' + person_prop)
             property_map[value_source['case_property']] = (jsonpath, value_source)
 
-    for attr_uuid, value_source in case_config['person_attributes'].items():
+    for attr_type_uuid, value_source in case_config['person_attributes'].items():
         # jsonpath_rw offers programmatic JSONPath expressions. For details on how to create JSONPath
         # expressions programmatically see the
         # `jsonpath_rw documentation <https://github.com/kennknowles/python-jsonpath-rw#programmatic-jsonpath>`__
@@ -209,7 +209,7 @@ def get_property_map(case_config):
         # where a child matches *jsonpath2*. `Cmp` does a comparison in *jsonpath2*. It accepts a
         # comparison operator and a value. The JSONPath expression for matching simple attribute values is::
         #
-        #     (person.attributes[*] where attributeType.uuid eq attr_uuid).value
+        #     (person.attributes[*] where attributeType.uuid eq attr_type_uuid).value
         #
         # This extracts the person attribute values where their attribute type UUIDs match those configured in
         # case_config['person_attributes'].
@@ -219,18 +219,20 @@ def get_property_map(case_config):
         if 'case_property' in value_source:
             jsonpath = Union(
                 # Simple values: Return value if it has no children.
+                # (person.attributes[*] where attributeType.uuid eq attr_type_uuid).(value where not *)
                 Child(
                     Where(
                         Child(Child(Fields('person'), Fields('attributes')), Slice()),
-                        Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid)
+                        Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_type_uuid)
                     ),
                     WhereNot(Fields('value'), Fields('*'))
                 ),
                 # Concept values: Return value.uuid if value.uuid exists:
+                # (person.attributes[*] where attributeType.uuid eq attr_type_uuid).value.uuid
                 Child(
                     Where(
                         Child(Child(Fields('person'), Fields('attributes')), Slice()),
-                        Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid)
+                        Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_type_uuid)
                     ),
                     Child(Fields('value'), Fields('uuid'))
                 )
