@@ -34,7 +34,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     vm.filters = [];
 
     vm.chosenFilters = function() {
-        var defaultAge = vm.haveAccessToFeatures ? '0 - 5 years' : '6 - 60 months';
+        var defaultAge = '0 - 5 years';
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var age = ageIndex > 0 ? ages[ageIndex].name : defaultAge;
         var delimiter = gender && age ? ', ' : '';
