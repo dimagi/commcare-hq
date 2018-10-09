@@ -24,8 +24,8 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
     vm.label = "Prevalence of Wasting (Weight-for-Height)";
     vm.steps = {
-        'map': {route: '/wasting/map', label: 'Map View'},
-        'chart': {route: '/wasting/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/wasting/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/wasting/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',

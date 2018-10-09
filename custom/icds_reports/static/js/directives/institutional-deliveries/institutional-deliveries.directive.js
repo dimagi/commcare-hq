@@ -8,8 +8,8 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     var vm = this;
     vm.label = "Institutional deliveries";
     vm.steps = {
-        'map': {route: '/institutional_deliveries/map', label: 'Map View'},
-        'chart': {route: '/institutional_deliveries/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/institutional_deliveries/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/institutional_deliveries/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',

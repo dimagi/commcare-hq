@@ -15,8 +15,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
 
     vm.label = "Newborns with Low Birth Weight";
     vm.steps = {
-        'map': {route: '/low_birth/map', label: 'Map View'},
-        'chart': {route: '/low_birth/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/low_birth/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/low_birth/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: '% Newborns',

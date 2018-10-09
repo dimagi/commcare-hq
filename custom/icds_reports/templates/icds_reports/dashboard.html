@@ -23,7 +23,7 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
         {% include 'analytics/google.html' %}
         {% javascript_libraries underscore=True hq=True %}
-        <script async src="{% static 'autotrack/autotrack.js' %}"></script>
+        <script src="{% static 'autotrack/autotrack.js' %}"></script>
         <script>
             window.ga('require', 'eventTracker');
             window.ga('require', 'outboundLinkTracker');

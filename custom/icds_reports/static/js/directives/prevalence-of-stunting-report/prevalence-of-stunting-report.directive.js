@@ -25,8 +25,8 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
 
     vm.label = "Prevalence of Stunting (Height-for-Age)";
     vm.steps = {
-        'map': {route: '/stunting/map', label: 'Map View'},
-        'chart': {route: '/stunting/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/stunting/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/stunting/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
