@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from datetime import datetime
 
 from django.db.models.expressions import RawSQL
+from django.forms import model_to_dict
 from django.http import JsonResponse, Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext
@@ -10,6 +11,7 @@ from django.views import View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain
+from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
 from corehq.apps.domain.decorators import login_or_api_key, domain_admin_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView, DomainViewMixin
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
@@ -45,6 +47,24 @@ def custom_data_models(request, domain):
 @require_linked_domain
 def user_roles(request, domain):
     return JsonResponse({'user_roles': get_user_roles(domain)})
+
+
+@login_or_api_key
+@require_linked_domain
+def case_search_config(request, domain):
+    response = {}
+    try:
+        response['config'] = CaseSearchConfig.objects.get(domain=domain).to_json()
+    except CaseSearchConfig.DoesNotExist:
+        pass
+
+    try:
+        addition = model_to_dict(CaseSearchQueryAddition.objects.get(domain=domain))
+        response['addition'] = addition
+    except CaseSearchQueryAddition.DoesNotExist:
+        pass
+
+    return JsonResponse(response)
 
 
 @login_or_api_key
