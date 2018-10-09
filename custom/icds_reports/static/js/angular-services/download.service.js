@@ -7,7 +7,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
             return $http.post(url('icds_export_indicator'),
                 $.param(data),
                 {
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 }
             ).then(
                 function(response) {
