@@ -238,9 +238,9 @@ class CreateVisitTask(WorkflowTask):
 
     def run(self):
         subtasks = []
-        start_datetime = to_timestamp(self.visit_datetime)
+        start_datetime = to_omrs_datetime(self.visit_datetime)
         if self.visit_type:
-            stop_datetime = to_timestamp(
+            stop_datetime = to_omrs_datetime(
                 self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
             )
             visit = {
