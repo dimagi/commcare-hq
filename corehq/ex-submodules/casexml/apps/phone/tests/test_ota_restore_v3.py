@@ -50,32 +50,32 @@ class OtaV3RestoreTest(TestCase):
 class TestRestoreContent(SimpleTestCase):
 
     def _expected(self, username, body, items=None):
-        items_text = (b' items="%s"' % bytes(items)) if items is not None else b''
+        items_text = (' items="%s"' % items) if items is not None else ''
         return (
-            b'<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items)s>'
-            b'<message nature="ota_restore_success">Successfully restored account %(username)s!</message>'
-            b'%(body)s'
-            b'</OpenRosaResponse>'
+            '<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items)s>'
+            '<message nature="ota_restore_success">Successfully restored account %(username)s!</message>'
+            '%(body)s'
+            '</OpenRosaResponse>'
         ) % {
-            b"username": username.encode('utf8'),
-            b"body": body,
-            b"items": items_text,
+            "username": username,
+            "body": body,
+            "items": items_text,
         }
 
     def test_no_items(self):
         user = 'user1'
-        body = b'<elem>data0</elem>'
+        body = '<elem>data0</elem>'
         expected = self._expected(user, body, items=None)
         with RestoreContent(user, False) as response:
-            response.append(body)
+            response.append(body.encode('utf-8'))
             with response.get_fileobj() as fileobj:
-                self.assertEqual(expected, fileobj.read())
+                self.assertEqual(expected, fileobj.read().decode('utf-8'))
 
     def test_items(self):
         user = 'user1'
-        body = b'<elem>data0</elem>'
+        body = '<elem>data0</elem>'
         expected = self._expected(user, body, items=2)
         with RestoreContent(user, True) as response:
-            response.append(body)
+            response.append(body.encode('utf-8'))
             with response.get_fileobj() as fileobj:
-                self.assertEqual(expected, fileobj.read())
+                self.assertEqual(expected, fileobj.read().decode('utf-8'))
