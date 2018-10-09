@@ -22,15 +22,6 @@
         {% endblocktrans %}
     </p>
     {% endif %}
-    <p>
-        {% block lead_text %}
-        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-            Exports are a way to download data from {{ hq_name }}
-            in a variety of formats (CSV, Excel, etc.) for use in
-            third-party data analysis tools.
-        {% endblocktrans %}
-        {% endblock %}
-    </p>
     {% if has_edit_permissions %}
     <p ng-show="!_.isEmpty(exports) || !hasLoaded">
         <a href="#createExportOptionsModal"

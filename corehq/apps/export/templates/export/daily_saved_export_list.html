@@ -10,11 +10,9 @@
     <script src="{% static 'hqwebapp/js/select_2_ajax_widget_v3.js' %}"></script>
 {% endblock js%}
 
-{% block page_content %}
-    {% include 'export/partials/export_list_initial_page_data.html' %}
-
+{% block export_list %}
     <div ng-app="listExportsApp">
-        {% include 'export/partials/daily_saved_export_list_controller.html' %}
+        {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=True %}
         {% include 'export/partials/export_list_create_export_modal.html' %}
         {% include 'export/partials/feed_filter_modal.html' %}
     </div>
