@@ -17,9 +17,10 @@ from corehq.apps.es.case_search import flatten_result
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.v2.models import BaseDataFormatter
-from corehq.apps.reports.v2.utils import report_date_to_json, parse_date
+from corehq.apps.reports.v2.utils import report_date_to_json
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.utils import parse_date
 from corehq.util.view_utils import absolute_reverse
 
 
