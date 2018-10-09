@@ -388,6 +388,9 @@ def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
     # Fetching the patient is the first request sent to the server. If
     # there is a mistake in the server details, or the server is
     # offline, this is where we will discover it.
+    if not patient_identifier:
+        # The case property has no value
+        return None
     try:
         if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
             return get_patient_by_uuid(requests, patient_identifier)
