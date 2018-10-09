@@ -135,7 +135,6 @@ def transform_xform_for_elasticsearch(doc_dict):
 
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
                                       process_num=0, **kwargs):
-    assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, topics.FORM_TOPICS)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
