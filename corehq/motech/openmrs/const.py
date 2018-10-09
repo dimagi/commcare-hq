@@ -5,8 +5,6 @@ import logging
 
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.motech.openmrs.serializers import to_timestamp, to_name
-
 
 LOG_LEVEL_CHOICES = (
     (99, 'Disable logging'),
@@ -55,6 +53,23 @@ LOCATION_OPENMRS_UUID = 'openmrs_uuid'
 #
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
+# A subset of OpenMRS concept data types. Omitted data types ("Coded",
+# "N/A", "Document", "Rule", "Structured Numeric", "Complex") are not
+# currently relevant to CommCare integration
+OPENMRS_DATA_TYPE_NUMERIC = 'omrs_numeric'
+OPENMRS_DATA_TYPE_TEXT = 'omrs_text'
+OPENMRS_DATA_TYPE_DATE = 'omrs_date'
+OPENMRS_DATA_TYPE_TIME = 'omrs_time'
+OPENMRS_DATA_TYPE_DATETIME = 'omrs_datetime'
+OPENMRS_DATA_TYPE_BOOLEAN = 'omrs_boolean'
+OPENMRS_DATA_TYPES = (
+    OPENMRS_DATA_TYPE_NUMERIC,
+    OPENMRS_DATA_TYPE_TEXT,
+    OPENMRS_DATA_TYPE_DATE,
+    OPENMRS_DATA_TYPE_TIME,
+    OPENMRS_DATA_TYPE_DATETIME,
+    OPENMRS_DATA_TYPE_BOOLEAN,
+)
 
 # Standard OpenMRS property names, and serializers
 PERSON_PROPERTIES = {
