@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
 from decimal import Decimal
+from datetime import datetime
 
 
 class TestBirthPreparednessForms(BaseFormsTest):
@@ -36,6 +37,9 @@ class TestBirthPreparednessForms(BaseFormsTest):
                 "blurred_vision": None,
                 "convulsions": None,
                 "rupture": None,
+                "unscheduled_visit": 1,
+                "late_vist": None,
+                "next_visit": datetime(2017, 7, 18)
             }]
         )
 
@@ -68,5 +72,8 @@ class TestBirthPreparednessForms(BaseFormsTest):
                 "blurred_vision": None,
                 "convulsions": None,
                 "rupture": None,
+                "unscheduled_visit": 1,
+                "late_vist": None,
+                "next_visit": datetime(2018, 2, 21)
             }]
         )
