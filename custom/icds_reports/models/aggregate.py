@@ -454,8 +454,8 @@ class AggCcsRecord(models.Model):
     institutional_delivery_in_month = models.IntegerField(null=True)
     lactating_all = models.IntegerField(null=True)
     pregnant_all = models.IntegerField(null=True)
-    valid_visits = models.SmallIntegerField(null=True)
-    expected_visits = models.SmallIntegerField(null=True)
+    valid_visits = models.IntegerField(null=True)
+    expected_visits = models.IntegerField(null=True)
 
     class Meta:
         managed = False

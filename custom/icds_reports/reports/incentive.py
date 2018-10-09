@@ -1,21 +1,14 @@
 from __future__ import unicode_literals, absolute_import
 
-import pytz
 
 from custom.icds_reports.models.aggregate import AWWIncentiveReport
-from custom.icds_reports.utils import india_timezone
+from custom.icds_reports.utils import india_now
 
 class IncentiveReport(object):
 
     def __init__(self, block, month):
         self.block = block
         self.month = month
-
-    @property
-    def india_now(self):
-        utc_now = datetime.datetime.now(pytz.utc)
-        india_now = utc_now.astimezone(india_timezone)
-        return india_now.strftime("%H:%M:%S %d %B %Y")
 
     def get_excel_data(self):
         data = AWWIncentiveReport.objects.filter(aggregation_level=5, month=self.month, block_id=self.block).values('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number', 'wer_weighed', 'wer_eligible', 'awc_num_open', 'valid_visits', 'expected_visits')
@@ -47,7 +40,7 @@ class IncentiveReport(object):
             [
                 'Export Info',
                 [
-                    ['Generated at', self.india_now],
+                    ['Generated at', india_now()],
                     ['Grouped By', 'AWC'],
                     ['Month', self.month.month],
                     ['Year', self.month.year]

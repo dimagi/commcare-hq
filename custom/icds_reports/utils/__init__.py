@@ -770,3 +770,9 @@ def percent_or_not_entered(x, y):
 class ICDSDatabaseColumn(DatabaseColumn):
     def get_raw_value(self, row):
         return (self.view.get_value(row) or '') if row else ''
+
+
+def india_now():
+    utc_now = datetime.now(pytz.utc)
+    india_now = utc_now.astimezone(india_timezone)
+    return india_now.strftime("%H:%M:%S %d %B %Y")
