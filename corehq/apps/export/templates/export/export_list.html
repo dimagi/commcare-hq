@@ -24,13 +24,21 @@
 {% endblock %}
 
 {% block page_content %}
-    {% include 'export/partial/export_list_initial_page_data.html' %}
+    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+    {% initial_page_data 'bulk_download_url' bulk_download_url %}
+    {% initial_page_data 'legacy_bulk_download_url' legacy_bulk_download_url %}
+    {% initial_page_data 'model_type' model_type %}
+    {% initial_page_data 'static_model_type' static_model_type %}
 
-    <div ng-app="listExportsApp">
-        {% include 'export/partial/export_list_controller.html' %}
-        {% include 'export/partial/export_list_create_export_modal.html' %}
-    </div>
-    {% if request.notify_new_daily_saved_export %}
-        {% include 'export/partial/daily_export_move_notifier.html' %}
-    {% endif %}
+    <p>{{ lead_text }}</p>
+
+    {% block export_list %}
+        <div ng-app="listExportsApp">
+            {% include 'export/partial/export_list_controller.html' %}
+            {% include 'export/partial/export_list_create_export_modal.html' %}
+        </div>
+        {% if request.notify_new_daily_saved_export %}
+            {% include 'export/partial/daily_export_move_notifier.html' %}
+        {% endif %}
+    {% endblock %}
 {% endblock %}
