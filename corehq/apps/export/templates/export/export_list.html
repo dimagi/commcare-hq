@@ -37,8 +37,5 @@
             {% include 'export/partial/export_list_controller.html' %}
             {% include 'export/partial/export_list_create_export_modal.html' %}
         </div>
-        {% if request.notify_new_daily_saved_export %}
-            {% include 'export/partial/daily_export_move_notifier.html' %}
-        {% endif %}
     {% endblock %}
 {% endblock %}
