@@ -1,15 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import copy
-import re
 import json
+import re
+
+import six
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.forms import model_to_dict
+from jsonfield.fields import JSONField
 
 from corehq.util.quickcache import quickcache
-from django.db import models
-from jsonfield.fields import JSONField
-from django.contrib.postgres.fields import ArrayField
-import six
-
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
@@ -107,6 +109,47 @@ class CaseSearchConfig(models.Model):
     @classmethod
     def enabled_domains(cls):
         return cls.objects.filter(enabled=True).values_list('domain', flat=True)
+
+    def to_json(self):
+        config = model_to_dict(self)
+        config['fuzzy_properties'] = [
+            model_to_dict(fuzzy_property, exclude=['id']) for fuzzy_property in config['fuzzy_properties']
+        ]
+        config['ignore_patterns'] = [
+            model_to_dict(ignore_pattern, exclude=['id']) for ignore_pattern in config['ignore_patterns']
+        ]
+        return config
+
+    @classmethod
+    def from_json(cls, domain, json_def):
+        try:
+            config = (cls.objects.prefetch_related('ignore_patterns').prefetch_related('fuzzy_properties')
+                      .get(domain=domain))
+        except cls.DoesNotExist:
+            config = cls(domain=domain)
+
+        config.enabled = json_def['enabled']
+        config.ignore_patterns.all().delete()
+        config.fuzzy_properties.all().delete()
+        config.save()
+
+        ignore_patterns = []
+        for ignore_pattern in json_def['ignore_patterns']:
+            ip = IgnorePatterns(**ignore_pattern)
+            ip.domain = domain
+            ip.save()
+            ignore_patterns.append(ip)
+        config.ignore_patterns.set(ignore_patterns)
+
+        fuzzy_properties = []
+        for fuzzy_property in json_def['fuzzy_properties']:
+            fp = FuzzyProperties(**fuzzy_property)
+            fp.domain = domain
+            fp.save()
+            fuzzy_properties.append(fp)
+        config.fuzzy_properties.set(fuzzy_properties)
+
+        return config
 
 
 class CaseSearchQueryAddition(models.Model):
