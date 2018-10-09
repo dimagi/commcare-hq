@@ -132,7 +132,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(form.form_id, attachment_meta.form_id)
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
-        self.assertEqual(form_xml, attachment_meta.read_content())
+        self.assertEqual(form_xml, attachment_meta.read_content().decode('utf-8'))
 
     def test_get_form_operations(self):
         form = create_form_for_test(DOMAIN)
