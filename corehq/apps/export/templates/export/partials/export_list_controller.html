@@ -23,7 +23,7 @@
     </p>
     {% endif %}
     {% if has_edit_permissions %}
-    <p ng-show="!_.isEmpty(exports)">
+    <p>
         <a href="#createExportOptionsModal"
            data-toggle="modal"
            class="btn btn-success new-export-link">
@@ -33,19 +33,6 @@
             {% endblocktrans %}
         </a>
     </p>
-    <div class="alert alert-success" ng-show="_.isEmpty(exports)">
-        <p class="lead"><strong>{% blocktrans %}
-            It seems you haven't created any {{ export_type_plural }} yet!
-        {% endblocktrans %}</strong></p>
-        <p><a href="#createExportOptionsModal"
-              data-toggle="modal"
-              class="btn btn-success new-export-link">
-            <i class="fa fa-plus"></i>
-            {% blocktrans %}
-                Create New {{ export_type_caps }}
-            {% endblocktrans %}
-        </a></p>
-    </div>
     {% endif %}
     {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
     <div class="panel panel-default">
