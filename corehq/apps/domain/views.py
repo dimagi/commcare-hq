@@ -705,6 +705,14 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
     @property
+    def can_change_subscription(self):
+        if not self.account.is_customer_billing_account:
+            return True
+        if self.request.user.is_superuser:
+            return True
+        return self.account.has_enterprise_admin(self.request.user.email)
+
+    @property
     def page_context(self):
         return {
             'plan': self.plan,
@@ -718,7 +726,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'show_account_credits': any(
                 feature['account_credit'].get('is_visible')
                 for feature in self.plan.get('features')
-            )
+            ),
+            'can_change_subscription': self.can_change_subscription
         }
 
 
