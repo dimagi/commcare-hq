@@ -1696,6 +1696,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
     def is_downgrade(self):
         if self.current_subscription is None:
             return False
+        elif self.current_subscription.is_trial:
+            return False
         else:
             return is_downgrade(
                 current_edition=self.current_subscription.plan_version.plan.edition,
