@@ -17,7 +17,6 @@ from corehq.motech.openmrs.const import (
 from corehq.motech.serializers import serializers
 
 
-
 def to_omrs_date(value):
     """
     Drop the time and timezone to export date-only values
