@@ -144,6 +144,13 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
             return True
 
     @property
+    def template_context(self):
+        context = {
+            'user_types': HQUserType.human_readable,
+        }
+        return context
+
+    @property
     def headers(self):
         h = [
             DataTablesColumn(_("View Form"), css_class="view-form-link"),
