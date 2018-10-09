@@ -24,13 +24,13 @@
 {% endblock %}
 
 {% block page_content %}
-    {% include 'export/partial/export_list_initial_page_data.html' %}
+    {% include 'export/partials/export_list_initial_page_data.html' %}
 
     <div ng-app="listExportsApp">
-        {% include 'export/partial/export_list_controller.html' %}
-        {% include 'export/partial/export_list_create_export_modal.html' %}
+        {% include 'export/partials/export_list_controller.html' %}
+        {% include 'export/partials/export_list_create_export_modal.html' %}
     </div>
     {% if request.notify_new_daily_saved_export %}
-        {% include 'export/partial/daily_export_move_notifier.html' %}
+        {% include 'export/partials/daily_export_move_notifier.html' %}
     {% endif %}
 {% endblock %}

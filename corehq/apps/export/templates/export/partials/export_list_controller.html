@@ -61,22 +61,22 @@
     <div class="panel panel-default">
         <div class="panel-heading">{{ my_export_type }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/my_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/my_exports_table.html' %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>
     <div class="panel panel-default">
         <div class="panel-heading">{{ shared_export_type }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/shared_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/shared_exports_table.html' %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>
@@ -84,11 +84,11 @@
     <div class="panel panel-default">
         <div class="panel-heading">{{ export_type_caps_plural }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/original_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/original_exports_table.html' %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>

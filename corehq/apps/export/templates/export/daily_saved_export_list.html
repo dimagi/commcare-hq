@@ -11,11 +11,11 @@
 {% endblock js%}
 
 {% block page_content %}
-    {% include 'export/partial/export_list_initial_page_data.html' %}
+    {% include 'export/partials/export_list_initial_page_data.html' %}
 
     <div ng-app="listExportsApp">
-        {% include 'export/partial/daily_saved_export_list_controller.html' %}
-        {% include 'export/partial/export_list_create_export_modal.html' %}
-        {% include 'export/partial/feed_filter_modal.html' %}
+        {% include 'export/partials/daily_saved_export_list_controller.html' %}
+        {% include 'export/partials/export_list_create_export_modal.html' %}
+        {% include 'export/partials/feed_filter_modal.html' %}
     </div>
 {% endblock %}
