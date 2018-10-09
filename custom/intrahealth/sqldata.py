@@ -2870,7 +2870,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
         loc_names, data = self.get_loss_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_loss_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -3036,7 +3036,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
         loc_names, data = self.get_expiration_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_expiration_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -3270,7 +3270,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
         loc_names, data = self.get_recovery_rate_by_pps_per_month(records)
         rows, value_partials = self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
         self.total_row = self.calculate_total_row(data, value_partials)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
@@ -3421,7 +3421,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
         district_names, data = self.get_recovery_rate_by_district_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_recovery_rate_by_district_to_rows(district_names, data)
-        return sorted(rows, key=lambda x: x[0])
+        return sorted(rows, key=lambda x: x[0]['html'])
 
     @property
     def headers(self):
