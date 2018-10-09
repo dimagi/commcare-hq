@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from itertools import chain
+
+from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.value_source import ValueSource
 from dimagi.ext.couchdbkit import (
@@ -144,6 +147,14 @@ class OpenmrsCaseConfig(DocumentSchema):
             data['patient_identifiers'] = patient_identifiers
             data['match_on_ids'] = list(patient_identifiers)
             data.pop('id_matchers')
+        # Set default data types for known properties
+        for property_, value_source in chain(
+                data['person_properties'].items(),
+                data['person_preferred_name'].items(),
+                data['person_preferred_address'].items(),
+        ):
+            data_type = OPENMRS_PROPERTIES[property_]
+            value_source.setdefault('external_data_type', data_type)
         return super(OpenmrsCaseConfig, cls).wrap(data)
 
 
