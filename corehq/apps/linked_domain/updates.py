@@ -6,10 +6,11 @@ from functools import partial
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
+from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.linked_domain.const import (
     MODEL_FLAGS, MODELS_ROLES, MODEL_LOCATION_DATA, MODEL_PRODUCT_DATA,
-    MODEL_USER_DATA
+    MODEL_USER_DATA, MODEL_CASE_SEARCH
 )
 from corehq.apps.linked_domain.local_accessors import (
     get_toggles_previews as local_toggles_previews,
@@ -20,6 +21,7 @@ from corehq.apps.linked_domain.remote_accessors import (
     get_toggles_previews as remote_toggles_previews,
     get_custom_data_models as remote_custom_data_models,
     get_user_roles as remote_get_user_roles,
+    get_case_search_config as remote_get_case_search_config,
 )
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -37,6 +39,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_LOCATION_DATA: partial(update_custom_data_models, limit_types=[LocationFieldsView.field_type]),
         MODEL_PRODUCT_DATA: partial(update_custom_data_models, limit_types=[ProductFieldsView.field_type]),
         MODEL_USER_DATA: partial(update_custom_data_models, limit_types=[UserFieldsView.field_type]),
+        MODEL_CASE_SEARCH: update_case_search_config,
     }.get(model_type)
 
     kwargs = model_detail or {}
@@ -102,6 +105,20 @@ def update_user_roles(domain_link):
 
         role_json.update(role_def)
         UserRole.wrap(role_json).save()
+
+
+def update_case_search_config(domain_link):
+    if domain_link.is_remote:
+        case_search_config = remote_get_case_search_config(domain_link)['config']
+        if not case_search_config:
+            return
+    else:
+        try:
+            case_search_config = CaseSearchConfig.objects.get(domain=domain_link.master_domain).to_json()
+        except CaseSearchConfig.DoesNotExist:
+            return
+
+    CaseSearchConfig.from_json(domain_link.linked_domain, case_search_config)
 
 
 def _convert_web_apps_permissions(domain_link, master_results):
