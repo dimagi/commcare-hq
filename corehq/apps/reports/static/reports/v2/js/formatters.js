@@ -2,7 +2,7 @@
  * todo add docstring
  */
 
-hqDefine('reports/v2/js/formatter', [
+hqDefine('reports/v2/js/formatters', [
 ], function (
 ) {
     'use strict';
