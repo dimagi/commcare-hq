@@ -304,7 +304,7 @@
         }
       },
       {
-        "column_id": "late_visit",
+        "column_id": "days_visit_late",
         "datatype": "small_integer",
         "type": "expression",
         "expression": {

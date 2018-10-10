@@ -38,7 +38,7 @@ class TestBirthPreparednessForms(BaseFormsTest):
                 "convulsions": None,
                 "rupture": None,
                 "unscheduled_visit": 1,
-                "late_visit": None,
+                "days_visit_late": None,
                 "next_visit": date(2017, 7, 18)
             }]
         )
@@ -73,7 +73,7 @@ class TestBirthPreparednessForms(BaseFormsTest):
                 "convulsions": None,
                 "rupture": None,
                 "unscheduled_visit": 1,
-                "late_visit": None,
+                "days_visit_late": None,
                 "next_visit": date(2018, 2, 21)
             }]
         )

@@ -32,7 +32,7 @@ class TestPNCForms(BaseFormsTest):
                 "eating": 0,
                 "not_breastfeeding": None,
                 "unscheduled_visit": 0,
-                "late_visit": 28,
+                "days_visit_late": 28,
                 "next_visit": date(2017, 6, 17)
             }])
 
@@ -59,6 +59,6 @@ class TestPNCForms(BaseFormsTest):
                 "eating": None,
                 "not_breastfeeding": None,
                 "unscheduled_visit": 0,
-                "late_visit": 2,
+                "days_visit_late": 2,
                 "next_visit": date(2017, 8, 23)
             }])
