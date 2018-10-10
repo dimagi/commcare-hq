@@ -4,7 +4,7 @@ from django.urls import reverse, resolve, Resolver404
 from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
-from corehq.apps.export.views import ExportsPermissionsMixin, user_can_view_deid_exports
+from corehq.apps.export.views import ExportsPermissionsManager
 from corehq.apps.reports.models import ReportConfig, CaseExportSchema, FormExportSchema
 from memoized import memoized
 
@@ -190,7 +190,10 @@ class AppsPaginator(TilePaginator):
                                _get_app_url(a)) for a in apps]
 
 
-class DataPaginator(TilePaginator, ExportsPermissionsMixin):
+class DataPaginator(TilePaginator):
+    def __init__(self, *args, **kwargs):
+        super(DataPaginator, self).__init__(*args, **kwargs)
+        self.permissions = ExportsPermissionsManager(None, self.request.domain, self.request.couch_user)
 
     @property
     def total(self):
@@ -198,25 +201,20 @@ class DataPaginator(TilePaginator, ExportsPermissionsMixin):
 
     @property
     @memoized
-    def has_deid_view_permissions(self):
-        return user_can_view_deid_exports(self.request.domain, self.request.couch_user)
-
-    @property
-    @memoized
     def form_exports(self):
         exports = []
-        if self.has_edit_permissions:
+        if self.permissions.has_edit_permissions:
             from corehq.apps.export.dbaccessors import get_form_exports_by_domain
-            exports = get_form_exports_by_domain(self.request.domain, self.has_deid_view_permissions)
+            exports = get_form_exports_by_domain(self.request.domain, self.permissions.has_deid_view_permissions)
         return exports
 
     @property
     @memoized
     def case_exports(self):
         exports = []
-        if self.has_edit_permissions:
+        if self.permissions.has_edit_permissions:
             from corehq.apps.export.dbaccessors import get_case_exports_by_domain
-            exports = get_case_exports_by_domain(self.request.domain, self.has_deid_view_permissions)
+            exports = get_case_exports_by_domain(self.request.domain, self.permissions.has_deid_view_permissions)
         return exports
 
     def _paginated_items(self, items_per_page, skip):

@@ -152,8 +152,9 @@ def user_can_view_deid_exports(domain, couch_user):
             ))
 
 
-class ExportsPermissionsMixin(object):
-    """For mixing in with a subclass of BaseDomainView
+class ExportsPermissionsManager(object):
+    """
+    Encapsulates some shortcuts for checking export permissions.
 
     Users need to have edit permissions to create or update exports
     Users need the "view reports" permission to download exports
@@ -163,21 +164,26 @@ class ExportsPermissionsMixin(object):
         users do not have the "view reports" permission, they should only be
         able to access deid reports.
     """
-    @property
-    def form_or_case(self):
-        raise NotImplementedError("Does this view operate on forms or cases?")
+
+    def __init__(self, form_or_case, domain, couch_user):
+        super(ExportsPermissionsManager, self).__init__()
+        if form_or_case not in [None, 'form', 'case']:
+            raise ValueError("Unrecognized value for form_or_case")
+        self.form_or_case = form_or_case
+        self.domain = domain
+        self.couch_user = couch_user
 
     @property
     def has_edit_permissions(self):
-        return self.request.couch_user.can_edit_data()
+        return self.couch_user.can_edit_data()
 
     @property
     def has_form_export_permissions(self):
-        return has_permission_to_view_report(self.request.couch_user, self.domain, FORM_EXPORT_PERMISSION)
+        return has_permission_to_view_report(self.couch_user, self.domain, FORM_EXPORT_PERMISSION)
 
     @property
     def has_case_export_permissions(self):
-        return has_permission_to_view_report(self.request.couch_user, self.domain, CASE_EXPORT_PERMISSION)
+        return has_permission_to_view_report(self.couch_user, self.domain, CASE_EXPORT_PERMISSION)
 
     @property
     def has_view_permissions(self):
@@ -192,10 +198,10 @@ class ExportsPermissionsMixin(object):
     @property
     def has_deid_view_permissions(self):
         # just a convenience wrapper around user_can_view_deid_exports
-        return user_can_view_deid_exports(self.domain, self.request.couch_user)
+        return user_can_view_deid_exports(self.domain, self.couch_user)
 
 
-class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
@@ -208,9 +214,11 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
     @use_angular_js
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions
-                or self.has_view_permissions
-                or self.has_deid_view_permissions):
+        self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
+
+        if not (self.permissions.has_edit_permissions
+                or self.permissions.has_view_permissions
+                or self.permissions.has_deid_view_permissions):
             raise Http404()
         return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
 
@@ -304,8 +312,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         elif self.export_id or self.sms_export:
             exports = [self._get_export(self.domain, self.export_id)]
 
-        if not self.has_view_permissions:
-            if self.has_deid_view_permissions:
+        if not self.permissions.has_view_permissions:
+            if self.permissions.has_deid_view_permissions:
                 exports = [x for x in exports if x.is_safe]
             else:
                 raise Http404()
@@ -413,7 +421,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
         # if the export is de-identified (is_safe), check that
         # the requesting domain has access to the deid feature.
-        if export_object.is_safe and not self.has_deid_view_permissions:
+        if export_object.is_safe and not self.permissions.has_deid_view_permissions:
             raise ExportAsyncException(
                 _("You do not have permission to export this "
                   "De-Identified export.")
@@ -527,7 +535,7 @@ class DownloadFormExportView(BaseDownloadExportView):
 
     @property
     def parent_pages(self):
-        if not self.has_edit_permissions:
+        if not self.permissions.has_edit_permissions:
             return [{
                 'title': DeIdFormExportListView.page_title,
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
@@ -669,7 +677,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
         return filter_form
 
 
-class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
+class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
     allow_bulk_export = True
     is_deid = False
@@ -683,8 +691,10 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
     @use_angular_js
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions or self.has_view_permissions
-                or (self.is_deid and self.has_deid_view_permissions)):
+        self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
+
+        if not (self.permissions.has_edit_permissions or self.permissions.has_view_permissions
+                or (self.is_deid and self.permissions.has_deid_view_permissions)):
             raise Http404()
 
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
@@ -697,7 +707,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             'legacy_bulk_download_url': self.legacy_bulk_download_url,
             'bulk_download_url': self.bulk_download_url,
             'allow_bulk_export': self.allow_bulk_export,
-            'has_edit_permissions': self.has_edit_permissions,
+            'has_edit_permissions': self.permissions.has_edit_permissions,
             'is_deid': self.is_deid,
             "export_type_caps": _("Export"),
             "export_type": _("export"),
@@ -909,8 +919,9 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         This form is what will interact with the DrilldownToFormController in
         hq.app_data_drilldown.ng.js
         """
-        if self.has_case_export_permissions or self.has_form_export_permissions:
-            return CreateExportTagForm(self.has_form_export_permissions, self.has_case_export_permissions)
+        if self.permissions.has_case_export_permissions or self.permissions.has_form_export_permissions:
+            return CreateExportTagForm(self.permissions.has_form_export_permissions,
+                                       self.permissions.has_case_export_permissions)
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
@@ -1022,9 +1033,9 @@ class DailySavedExportListView(BaseExportListView):
     def page_context(self):
         context = super(DailySavedExportListView, self).page_context
         model_type = None
-        if self.has_form_export_permissions and not self.has_case_export_permissions:
+        if self.permissions.has_form_export_permissions and not self.permissions.has_case_export_permissions:
             model_type = "form"
-        if not self.has_form_export_permissions and self.has_case_export_permissions:
+        if not self.permissions.has_form_export_permissions and self.permissions.has_case_export_permissions:
             model_type = "case"
         context.update({
             "model_type": model_type,
@@ -1056,10 +1067,12 @@ class DailySavedExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         combined_exports = []
-        if self.has_form_export_permissions:
-            combined_exports.extend(get_form_exports_by_domain(self.domain, self.has_deid_view_permissions))
-        if self.has_case_export_permissions:
-            combined_exports.extend(get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
+        if self.permissions.has_form_export_permissions:
+            combined_exports.extend(get_form_exports_by_domain(self.domain,
+                                                               self.permissions.has_deid_view_permissions))
+        if self.permissions.has_case_export_permissions:
+            combined_exports.extend(get_case_exports_by_domain(self.domain,
+                                                               self.permissions.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return [x for x in combined_exports if x.is_daily_saved_export and not x.export_format == "html"]
 
@@ -1121,8 +1134,8 @@ class DailySavedExportListView(BaseExportListView):
 
     def get_create_export_url(self, form_data):
         create_form = CreateExportTagForm(
-            self.has_form_export_permissions,
-            self.has_case_export_permissions,
+            self.permissions.has_form_export_permissions,
+            self.permissions.has_case_export_permissions,
             form_data
         )
         if not create_form.is_valid():
@@ -1147,7 +1160,7 @@ class DailySavedExportListView(BaseExportListView):
 
     @allow_remote_invocation
     def commit_filters(self, in_data):
-        if not self.has_edit_permissions:
+        if not self.permissions.has_edit_permissions:
             raise Http404
 
         export_id = in_data['export']['id']
@@ -1234,10 +1247,12 @@ class DashboardFeedListView(DailySavedExportListView):
     @memoized
     def get_saved_exports(self):
         combined_exports = []
-        if self.has_form_export_permissions:
-            combined_exports.extend(get_form_exports_by_domain(self.domain, self.has_deid_view_permissions))
-        if self.has_case_export_permissions:
-            combined_exports.extend(get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
+        if self.permissions.has_form_export_permissions:
+            combined_exports.extend(get_form_exports_by_domain(self.domain,
+                                                               self.permissions.has_deid_view_permissions))
+        if self.permissions.has_case_export_permissions:
+            combined_exports.extend(get_case_exports_by_domain(self.domain,
+                                                               self.permissions.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return [x for x in combined_exports if x.is_daily_saved_export and x.export_format == "html"]
 
@@ -1351,7 +1366,7 @@ class FormExportListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        exports = get_form_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
         # New exports display daily saved exports in their own view
         return [x for x in exports if not x.is_daily_saved_export]
 
@@ -1434,8 +1449,8 @@ class FormExportListView(BaseExportListView):
 
     def get_create_export_url(self, form_data):
         create_form = CreateExportTagForm(
-            self.has_form_export_permissions,
-            self.has_case_export_permissions,
+            self.permissions.has_form_export_permissions,
+            self.permissions.has_case_export_permissions,
             form_data
         )
         if not create_form.is_valid():
@@ -1517,7 +1532,7 @@ class CaseExportListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        exports = get_case_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
         return [x for x in exports if not x.is_daily_saved_export]
 
     @property
@@ -1588,8 +1603,8 @@ class CaseExportListView(BaseExportListView):
 
     def get_create_export_url(self, form_data):
         create_form = CreateExportTagForm(
-            self.has_form_export_permissions,
-            self.has_case_export_permissions,
+            self.permissions.has_form_export_permissions,
+            self.permissions.has_case_export_permissions,
             form_data
         )
         if not create_form.is_valid():
@@ -2046,7 +2061,7 @@ class GenericDownloadNewExportMixin(object):
     def _check_deid_permissions(self, export_instances):
         # if any export is de-identified, check that
         # the requesting domain has access to the deid feature.
-        if not self.has_deid_view_permissions:
+        if not self.permissions.has_deid_view_permissions:
             for instance in export_instances:
                 if instance.is_deidentified:
                     raise ExportAsyncException(
