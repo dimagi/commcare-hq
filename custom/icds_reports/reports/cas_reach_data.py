@@ -60,15 +60,13 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
 
     if current_month_selected:
         date = now_date.date()
-        first_get = True
+        daily_yesterday = None
         # keep the record in searched - current - month
-        while first_get or (not daily_yesterday and date.day != 1):
-            first_get = False
+        while daily_yesterday is None or (not daily_yesterday and date.day != 1):
             date -= relativedelta(days=1)
             daily_yesterday = get_data_for_daily_usage(date, config)
-        first_get = True
-        while first_get or (not daily_two_days_ago and date.day != 1):
-            first_get = False
+        daily_two_days_ago = None
+        while daily_two_days_ago is None or (not daily_two_days_ago and date.day != 1):
             date -= relativedelta(days=1)
             daily_two_days_ago = get_data_for_daily_usage(date, config)
         daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)

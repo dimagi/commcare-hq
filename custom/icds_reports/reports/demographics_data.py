@@ -50,15 +50,13 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
 
     if current_month.month == now_date.month and current_month.year == now_date.year:
         config['date'] = now_date.date()
-        first_get = True
+        data = None
         # keep the record in searched - current - month
-        while first_get or (not data and config['date'].day != 1):
-            first_get = False
+        while data is None or (not data and config['date'].day != 1):
             config['date'] -= relativedelta(days=1)
             data = get_data_for(AggAwcDailyView, config)
-        first_get = True
-        while first_get or (not prev_data and config['date'].day != 1):
-            first_get = False
+        prev_data = None
+        while prev_data is None or (not prev_data and config['date'].day != 1):
             config['date'] -= relativedelta(days=1)
             prev_data = get_data_for(AggAwcDailyView, config)
         frequency = 'day'

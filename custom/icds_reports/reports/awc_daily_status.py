@@ -38,9 +38,8 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
         return queryset
 
     config['date'] = date.date()
-    first_get = True
-    while first_get or (not data and config['date'].day != 1):
-        first_get = False
+    data = None
+    while data is None or (not data and config['date'].day != 1):
         data = get_data_for(config)
         config['date'] -= relativedelta(days=1)
 
@@ -220,9 +219,8 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
     result_set = set()
 
     config['date'] = date.date()
-    first_get = True
-    while first_get or (not sector_data and config['date'].day != 1):
-        first_get = False
+    sector_data = None
+    while sector_data is None or (not sector_data and config['date'].day != 1):
         sector_data = get_data_for(config)
         config['date'] -= relativedelta(days=1)
 
