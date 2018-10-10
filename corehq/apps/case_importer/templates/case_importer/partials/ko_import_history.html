@@ -29,7 +29,7 @@
             <!--ko if: task_status().state == $root.states.FAILED-->
             <span class="label label-danger">{% trans "Failed" %}</span>
             <!--/ko-->
-            <!--ko if: task_status().state == $root.states.NOT_STARTED-->
+            <!--ko if: task_status().state == $root.states.MISSING-->
             {% trans "Waiting to start" %}
             <!--/ko-->
             <!--ko if: task_status().state == $root.states.NOT_STARTED-->
