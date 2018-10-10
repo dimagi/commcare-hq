@@ -243,28 +243,37 @@
       {
         "column_id": "unscheduled_visit",
         "datatype": "small_integer",
-        "type": "root_doc",
+        "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "unscheduled_visit"]
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "unscheduled_visit"]
+          }
         }
       },
       {
         "column_id": "late_visit",
         "datatype": "small_integer",
-        "type": "root_doc",
+        "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "days_visit_late"]
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "days_visit_late"]
+          }
         }
       },
       {
         "column_id": "next_visit",
         "datatype": "date",
-        "type": "root_doc",
+        "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "next_due"]
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "next_due"]
+          }
         }
       },
       {
