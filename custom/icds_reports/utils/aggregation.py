@@ -255,7 +255,7 @@ class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         return """
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
-        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_vists
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -450,7 +450,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_methods) OVER w AS counsel_methods,
         LAST_VALUE(is_ebf) OVER w as is_ebf,
-        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_vists
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -486,7 +486,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
             ucr.is_ebf as is_ebf,
-            ucr.valid_visits as valid_vists
+            ucr.valid_visits as valid_visits
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -834,7 +834,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(rupture) OVER w as rupture,
         LAST_VALUE(anemia) OVER w as anemia,
         LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities,
-        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_vists
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -954,7 +954,7 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
             %(month)s::DATE AS month,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
             LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth,
-            SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_vists
+            SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
