@@ -58,32 +58,7 @@ describe('ListExportsController Unit Tests', function () {
             currentScope = $rootScope.$new();
             return $controller('ListExportsController', {'$scope': currentScope});
         };
-
     }));
-
-    describe('Initialization', function () {
-
-        afterEach(function () {
-            $httpBackend.verifyNoOutstandingExpectation();
-            $httpBackend.verifyNoOutstandingRequest();
-        });
-
-        it('registers a non-blank list of exports', function () {
-            $httpBackend
-                .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
-                .respond({
-                    success: true,
-                    exports: [ListExportsTestData.exportSimple],
-                });
-            createController();
-            assert.equal(currentScope.exports.length, 0);
-            assert.isFalse(currentScope.hasLoaded);
-            $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
-            $httpBackend.flush();
-            assert.equal(currentScope.exports.length, 1);
-            assert.isTrue(currentScope.hasLoaded);
-        });
-    });
 
     describe("Actions", function () {
 
