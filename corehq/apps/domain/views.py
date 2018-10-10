@@ -705,14 +705,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
     @property
-    def can_change_subscription(self):
-        if not self.account.is_customer_billing_account:
-            return True
-        if self.request.user.is_superuser:
-            return True
-        return self.account.has_enterprise_admin(self.request.user.email)
-
-    @property
     def page_context(self):
         return {
             'plan': self.plan,
@@ -727,7 +719,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 feature['account_credit'].get('is_visible')
                 for feature in self.plan.get('features')
             ),
-            'can_change_subscription': self.can_change_subscription
+            'can_change_subscription': self.current_subscription.user_can_change_subscription(self.request.user)
         }
 
 
@@ -1755,6 +1747,14 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         if self.async_response is not None:
             return self.async_response
         if self.is_form_post and self.billing_account_info_form.is_valid():
+            if not self.current_subscription.user_can_change_subscription(self.request.user):
+                messages.error(
+                    request, _(
+                        "You do not have permission to change the subscription for this customer-level account. "
+                        "Please reach out to the %s enterprise admin for help."
+                    ) % self.account.name
+                )
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             if not is_saved:
