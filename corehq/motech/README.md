@@ -34,7 +34,7 @@ registration form in CommCare generating a patient and encounter in
 OpenMRS.
 * Aggregate data integration where multiple actions in CommCare are
 aggregated and the result is pushed to a third-party system.  An example
-is CommCare tranactional data being aggregated into a
+is CommCare transactional data being aggregated into a
 [Data Source](../apps/userreports/README.md) and being pushed to DHIS2
 as aggregate data.
 
@@ -116,18 +116,26 @@ built on top of OpenMRS. Integration with Bahmni implies integration
 with OpenMRS.
 
 ### Importing data from OpenMRS to CommCare
-CommCare can import data from OpenMRS using OpenMRS's Reporting API.
+
+CommCare can import data from OpenMRS using OpenMRS's Reporting API and
+OpenMRS's Atom feed API. The Reporting API is used for periodic imports,
+for example monthly. The Atom feed API is for importing data as it is
+added or changed in OpenMRS.
 
 ### Sending data from CommCare to OpenMRS
+
 CommCare sends data to OpenMRS using its Web Services API.
 
 All data sent to OpenMRS relates to what OpenMRS refers to as
-"patients", "visits", "encounters" and "events". In CommCare these
+"patients", "visits", "encounters" and "observations". In CommCare these
 correspond to properties of one or a handful of case types, and values
-of some form questions.
+of form questions.
 
 CommCare uses Repeaters to build and send a workflow of requests to
 OpenMRS, populated using both cases and forms.
+
+Using an OpenMRS Repeater in conjunction with its OpenMRS server's Atom
+feed allows bidirectional live updates.
 
 
 History
