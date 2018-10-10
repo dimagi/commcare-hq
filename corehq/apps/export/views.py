@@ -993,7 +993,6 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 @location_safe
 class DailySavedExportListView(BaseExportListView):
     urlname = 'list_daily_saved_exports'
-    template_name = 'export/daily_saved_export_list.html'
     page_title = ugettext_lazy("Daily Saved Exports")
     form_or_case = None  # This view lists both case and form feeds
     allow_bulk_export = False
@@ -1027,6 +1026,7 @@ class DailySavedExportListView(BaseExportListView):
         if not self.has_form_export_permissions and self.has_case_export_permissions:
             model_type = "case"
         context.update({
+            "is_daily_saved_export": True,
             "model_type": model_type,
             "static_model_type": False,
             "export_filter_form": DashboardFeedFilterForm(
