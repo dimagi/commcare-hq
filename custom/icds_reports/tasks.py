@@ -290,15 +290,15 @@ def icds_aggregation_task(self, date, func):
     try:
         func(date)
     except Error as exc:
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'error': exc}
+        )
         _dashboard_team_soft_assert(
             False,
             "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
                 func.__name__, settings.SERVER_ENVIRONMENT, date
             )
-        )
-        notify_exception(
-            None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name__, 'date': date, 'error': exc}
         )
         self.retry(exc=exc)
 
@@ -316,15 +316,15 @@ def icds_state_aggregation_task(self, state_id, date, func):
     try:
         func(state_id, date)
     except Error as exc:
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
+        )
         _dashboard_team_soft_assert(
             False,
             "{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
                 func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
             )
-        )
-        notify_exception(
-            None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
         )
         self.retry(exc=exc)
 
