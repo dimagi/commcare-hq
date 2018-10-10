@@ -20,8 +20,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType,
-        $timeout
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType, $timeout
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -31,53 +30,18 @@
          */
         var self = {};
         $scope._ = _;  // allow use of underscore.js within the template
-        $scope.hasLoaded = false;
         $scope.exports = [];
-        $scope.exportsListError = null;
         $scope.bulk_download_url = bulk_download_url;
         $scope.legacy_bulk_download_url = legacy_bulk_download_url;
 
-        self._numTries = 0;
-        self._getExportsList = function () {
-            // The method below lives in the subclasses of
-            // BaseExportListView.
-
-            var filterMyExports = function (val) {
-                return !!val.my_export;
-            };
-
-            var filterNotMyExports = function (val) {
-                return !val.my_export;
-            };
-
-            djangoRMI.get_exports_list({})
-                .success(function (data) {
-                    if (data.success) {
-                        $scope.exports = data.exports;
-                        $scope.myExports = data.exports.filter(filterMyExports);
-                        $scope.notMyExports = data.exports.filter(filterNotMyExports);
-                        _.each($scope.exports, function (exp) {
-                            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
-                                $rootScope.pollProgressBar(exp);
-                            }
-                        });
-                    } else {
-                        $scope.exportsListError = data.error;
-                    }
-                    $scope.hasLoaded = true;
-                })
-                .error(function () {
-                    // Retry in case the connection was flaky.
-                    if (self._numTries > 3) {
-                        $scope.hasLoaded = true;
-                        $scope.exportsListError = 'default';
-                        return;
-                    }
-                    self._numTries ++;
-                    self._getExportsList();
-                });
-        };
-        self._getExportsList();
+        $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
+        $scope.myExports = $scope.exports.filter(function (val) { return !!val.my_export; });
+        $scope.notMyExports = $scope.exports.filter(function (val) { return !val.my_export; });
+        _.each($scope.exports, function (exp) {
+            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
+                $rootScope.pollProgressBar(exp);
+            }
+        });
 
         // For Bulk Export
         $scope.showBulkExportDownload = false;

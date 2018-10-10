@@ -692,6 +692,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
     @property
     def page_context(self):
         return {
+            'exports': self.get_exports_list(),
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
             'legacy_bulk_download_url': self.legacy_bulk_download_url,
@@ -865,34 +866,17 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             is_safe=export.is_safe,
         )
 
-    @allow_remote_invocation
-    def get_exports_list(self, in_data):
-        """Called by the ANGULAR.JS controller ListExports controller in
-        exports/list_exports.ng.js on initialization of that controller.
-        :param in_data: dict passed by the  angular js controller.
-        :return: {
-            'success': True,
-            'exports': map(self.fmt_export_data, self.get_saved_exports()),
-        }
-        """
-        try:
-            saved_exports = self.get_saved_exports()
-            if toggles.EXPORT_OWNERSHIP.enabled(self.request.domain):
-                saved_exports = [
-                    export for export in saved_exports
-                    if export.can_view(self.request.couch_user.user_id)
-                ]
-            if self.is_deid:
-                saved_exports = [x for x in saved_exports if x.is_safe]
-            saved_exports = list(map(self.fmt_export_data, saved_exports))
-        except Exception as e:
-            return format_angular_error(
-                _("Issue fetching list of exports: {}").format(e),
-                log_error=True,
-            )
-        return format_angular_success({
-            'exports': saved_exports,
-        })
+    def get_exports_list(self):
+        # Calls self.get_saved_exports and formats each item using self.fmt_export_data
+        saved_exports = self.get_saved_exports()
+        if toggles.EXPORT_OWNERSHIP.enabled(self.request.domain):
+            saved_exports = [
+                export for export in saved_exports
+                if export.can_view(self.request.couch_user.user_id)
+            ]
+        if self.is_deid:
+            saved_exports = [x for x in saved_exports if x.is_safe]
+        return list(map(self.fmt_export_data, saved_exports))
 
     @property
     def create_export_form_title(self):
