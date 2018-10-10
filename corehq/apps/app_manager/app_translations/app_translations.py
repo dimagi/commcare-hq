@@ -874,6 +874,7 @@ def _update_case_list_translations(sheet, rows, app):
             row['id'] = row['case_property']
             condensed_rows.append(row)
 
+    partial_upload = False
     list_rows = [
         row for row in condensed_rows if row['list_or_detail'] == 'list'
     ]
@@ -889,6 +890,13 @@ def _update_case_list_translations(sheet, rows, app):
         (long_details, detail_rows, "detail")
     ]:
         if len(expected_list) != len(received_list):
+            # if a field is not referenced twice in a case list or detail,
+            # then we can perform a partial upload using field (case property)
+            # as a key
+            number_fields = len({detail.field for detail in expected_list})
+            if number_fields == len(expected_list):
+                partial_upload = True
+                continue
             msgs.append((
                 messages.error,
                 "Expected {0} case {3} properties in sheet {2}, found {1}. "
@@ -965,7 +973,22 @@ def _update_case_list_translations(sheet, rows, app):
                 continue
             _update_detail(row, detail)
 
-    _update_details_based_on_position(list_rows, short_details, detail_rows, long_details)
+    if partial_upload:
+        case_list_rows = {
+            row['case_property']: row for row in condensed_rows if row['list_or_detail'] == 'list'
+        }
+        case_detail_rows = {
+            row['case_property']: row for row in condensed_rows if row['list_or_detail'] == 'detail'
+        }
+
+        for detail in short_details:
+            if case_list_rows.get(detail.field):
+                _update_detail(case_list_rows.get(detail.field), detail)
+        for detail in long_details:
+            if case_detail_rows.get(detail.field):
+                _update_detail(case_detail_rows.get(detail.field), detail)
+    else:
+        _update_details_based_on_position(list_rows, short_details, detail_rows, long_details)
 
     for index, tab in enumerate(detail_tab_headers):
         if tab:
