@@ -282,16 +282,14 @@ class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
-          demo_comp_feeding, counselled_pediatric_ifa, play_comp_feeding_vid,
-          comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
+          state_id, month, case_id, latest_time_end_processed, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
-          ucr.valid_visits as valid_visits
+          COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -477,7 +475,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf
+          state_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -486,7 +484,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
             ucr.is_ebf as is_ebf,
-            ucr.valid_visits as valid_visits
+            COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -864,7 +862,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
           state_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
           anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
-          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities
+          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -886,7 +884,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             ucr.convulsions as convulsions,
             ucr.rupture as rupture,
             ucr.anc_abnormalities as anc_abnormalities,
-            ucr.valid_visits as valid_visits
+            COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
           LEFT JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -946,7 +944,7 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth
+          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth, valid_visits
         ) (
           SELECT
             DISTINCT case_load_ccs_record0 AS case_id,
@@ -1828,7 +1826,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
             ('last_date_thr', 'case_list.last_date_thr'),
             ('num_anc_complete', 'case_list.num_anc_complete'),
-            ('valid_visits', 'agg_cf.valid_visits + agg_bp.valid_visits + agg_pnc.valid_visits')
+            ('valid_visits', 'agg_cf.valid_visits + agg_bp.valid_visits + agg_pnc.valid_visits'),
             ('opened_on', 'case_list.opened_on'),
             ('dob', 'case_list.dob')
         )
@@ -1900,11 +1898,11 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('district_id', 'district_id'),
             ('block_id', 'block_id'),
             ('supervisor_id', 'supervisor_id'),
-            ('awc_id', 'awc_id'),
-            ('month', 'month'),
-            ('ccs_status', 'ccs_status'),
+            ('awc_id', 'ucr.awc_id'),
+            ('month', 'ucr.month'),
+            ('ccs_status', 'ucr.ccs_status'),
             ('trimester', "COALESCE(ucr.trimester::text, '') as coalesce_trimester"),
-            ('caste', 'caste'),
+            ('caste', 'ucr.caste'),
             ('disabled', "COALESCE(ucr.disabled, 'no') as coalesce_disabled"),
             ('minority', "COALESCE(ucr.minority, 'no') as coalesce_minority"),
             ('resident', "COALESCE(ucr.resident,'no') as coalesce_resident"),
@@ -1948,8 +1946,8 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('lactating_all', 'sum(ucr.lactating_all)'),
             ('pregnant_all', 'sum(ucr.pregnant_all)'),
             ('valid_visits', 'sum(crm.valid_visits)'),
-            ('expected_visits', 'floor(sum('
-             'CASE'
+            ('expected_visits', 'floor(sum( '
+             'CASE '
              'WHEN ucr.pregnant=1 THEN 0.44 '
              'WHEN ucr.month - ucr.add < 30 THEN 6 '
              'WHEN ucr.month - ucr.add < 182 THEN 1 '
@@ -1964,9 +1962,9 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             FROM "{ucr_ccs_record_table}" ucr
             LEFT OUTER JOIN "{ccs_record_monthly_table}" as crm
             ON crm.case_id = ucr.doc_id and crm.month=ucr.month
-            WHERE month = %(start_date)s AND state_id != ''
-            GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month,
-                     ccs_status, coalesce_trimester, caste, coalesce_disabled, coalesce_minority, coalesce_resident
+            WHERE ucr.month = %(start_date)s AND state_id != ''
+            GROUP BY state_id, district_id, block_id, supervisor_id, ucr.awc_id, ucr.month,
+                     ucr.ccs_status, coalesce_trimester, ucr.caste, coalesce_disabled, coalesce_minority, coalesce_resident
         )
         """.format(
             tablename=self.tablename,
