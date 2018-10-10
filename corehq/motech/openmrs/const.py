@@ -27,6 +27,12 @@ OPENMRS_IMPORTER_DEVICE_ID_PREFIX = 'openmrs-importer-'
 # XMLNS to indicate that a form was imported from OpenMRS
 XMLNS_OPENMRS = 'http://commcarehq.org/openmrs-integration'
 
+OPENMRS_ATOM_FEED_POLL_INTERVAL = {'minute': '*/10'}
+
+# device_id for cases added/updated from OpenMRS Atom feed.
+# OpenmrsRepeater ID is appended to this.
+OPENMRS_ATOM_FEED_DEVICE_ID = 'openmrs-atomfeed-'
+
 # The Location property to store the OpenMRS location UUID in
 LOCATION_OPENMRS_UUID = 'openmrs_uuid'
 
