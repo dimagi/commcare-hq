@@ -243,7 +243,7 @@
       {
         "column_id": "unscheduled_visit",
         "datatype": "small_integer",
-        "type": "expression",
+        "type": "root_doc",
         "expression": {
           "type": "property_path",
           "property_path": ["form", "unscheduled_visit"]
@@ -252,7 +252,7 @@
       {
         "column_id": "late_visit",
         "datatype": "small_integer",
-        "type": "expression",
+        "type": "root_doc",
         "expression": {
           "type": "property_path",
           "property_path": ["form", "days_visit_late"]
@@ -261,7 +261,7 @@
       {
         "column_id": "next_visit",
         "datatype": "date",
-        "type": "expression",
+        "type": "root_doc",
         "expression": {
           "type": "property_path",
           "property_path": ["form", "next_due"]
