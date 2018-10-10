@@ -52,7 +52,6 @@
             tick();
         };
 
-        var self = {};
         $scope._ = _;  // allow use of underscore.js within the template
         $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
         $scope.bulk_download_url = bulk_download_url;
