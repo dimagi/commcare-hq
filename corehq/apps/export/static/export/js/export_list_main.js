@@ -28,8 +28,14 @@ hqDefine("export/js/export_list_main", function () {
     });
 
     /* Knockout */
+    var exportListModel = function() {
+        var self = {};
+        return self;
+    };
+
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
         $("#create-export").koApplyBindings(hqImport("export/js/create_export").createExportModel({
             model_type: initialPageData.get("model_type", true),
             drilldown_fetch_url: initialPageData.reverse('get_app_data_drilldown_values'),
@@ -44,5 +50,7 @@ hqDefine("export/js/export_list_main", function () {
         $('#createExportOptionsModal').on('show.bs.modal', function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
         });
+
+        $("#export-list").koApplyBindings(exportListModel());
     });
 });
