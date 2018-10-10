@@ -28,6 +28,30 @@
          *
          * It also generates a list of exports selected for bulk exports.
          */
+        $rootScope.pollProgressBar = function (exp) {
+            exp.emailedExport.updatingData = false;
+            exp.emailedExport.taskStatus = {
+                'percentComplete': 0,
+                'inProgress': true,
+                'success': false,
+            };
+            var tick = function () {
+                djangoRMI.get_saved_export_progress({
+                    'export_instance_id': exp.id,
+                }).success(function (data) {
+                    exp.emailedExport.taskStatus = data.taskStatus;
+                    if (!data.taskStatus.success) {
+                        // The first few ticks don't yet register the task
+                        exp.emailedExport.taskStatus.inProgress = true;
+                        $timeout(tick, 1500);
+                    } else {
+                        exp.emailedExport.taskStatus.justFinished = true;
+                    }
+                });
+            };
+            tick();
+        };
+
         var self = {};
         $scope._ = _;  // allow use of underscore.js within the template
         $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
@@ -90,30 +114,6 @@
         };
         $scope.sendExportAnalytics = function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
-        };
-
-        $rootScope.pollProgressBar = function (exp) {
-            exp.emailedExport.updatingData = false;
-            exp.emailedExport.taskStatus = {
-                'percentComplete': 0,
-                'inProgress': true,
-                'success': false,
-            };
-            var tick = function () {
-                djangoRMI.get_saved_export_progress({
-                    'export_instance_id': exp.id,
-                }).success(function (data) {
-                    exp.emailedExport.taskStatus = data.taskStatus;
-                    if (!data.taskStatus.success) {
-                        // The first few ticks don't yet register the task
-                        exp.emailedExport.taskStatus.inProgress = true;
-                        $timeout(tick, 1500);
-                    } else {
-                        exp.emailedExport.taskStatus.justFinished = true;
-                    }
-                });
-            };
-            tick();
         };
 
         $scope.updateEmailedExportData = function (component, exp) {
