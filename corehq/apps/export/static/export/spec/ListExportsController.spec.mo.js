@@ -2,23 +2,21 @@ describe('ListExportsController Unit Tests', function () {
     var $httpBackend, createController, $rootScope, currentScope;
 
     var mockBackendUrls = {
-        GET_EXPORTS_LIST: '/fake/exports/list',
         UPDATE_EMAILED_EXPORT_DATA: '/fake/exports/update/data',
         TOGGLE_SAVED_EXPORT_ENABLED_STATE: '/fake/exports/toggle_enabled',
         GET_SAVED_EXPORT_PROGRESS: '/fake/exports/get_progress',
     };
 
+    hqImport("hqwebapp/js/initial_page_data").register("exports", [
+        ListExportsTestData.exportWithFileData,
+        ListExportsTestData.exportDeId,
+        ListExportsTestData.exportSimple,
+    ]);
+
     beforeEach(function () {
         var listExportsTestApp = angular.module('ngtest.ListExportsApp', ['hq.list_exports']);
         listExportsTestApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
             djangoRMIProvider.configure({
-                get_exports_list: {
-                    url: mockBackendUrls.GET_EXPORTS_LIST,
-                    headers: {
-                        'DjNg-Remote-Method': 'get_exports_list',
-                    },
-                    method: 'auto',
-                },
                 update_emailed_export_data: {
                     url: mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA,
                     headers: {
@@ -64,16 +62,6 @@ describe('ListExportsController Unit Tests', function () {
 
         beforeEach(function () {
             $httpBackend
-                .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
-                .respond({
-                    success: true,
-                    exports: [
-                        ListExportsTestData.exportWithFileData,
-                        ListExportsTestData.exportDeId,
-                        ListExportsTestData.exportSimple,
-                    ],
-                });
-            $httpBackend
                 .when('POST', mockBackendUrls.GET_SAVED_EXPORT_PROGRESS)
                 .respond({
                     success: true,
@@ -92,8 +80,6 @@ describe('ListExportsController Unit Tests', function () {
 
         it('selectAll()', function () {
             createController();
-            $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
-            $httpBackend.flush();
 
             assert.equal(currentScope.bulkExportList.length, 2);
             assert.isFalse(currentScope.showBulkExportDownload);
@@ -104,8 +90,6 @@ describe('ListExportsController Unit Tests', function () {
 
         it('selectNone()', function () {
             createController();
-            $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
-            $httpBackend.flush();
 
             assert.equal(currentScope.bulkExportList.length, 2);
             assert.isFalse(currentScope.showBulkExportDownload);
@@ -126,8 +110,6 @@ describe('ListExportsController Unit Tests', function () {
                         success: true,
                     });
                 createController();
-                $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
-                $httpBackend.flush();
                 $httpBackend.expectPOST(mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA);
                 exportToUpdate = currentScope.exports[0];
                 component = exportToUpdate.emailedExport;
@@ -157,8 +139,6 @@ describe('ListExportsController Unit Tests', function () {
                         isAutoRebuildEnabled: false,
                     });
                 createController();
-                $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
-                $httpBackend.flush();
                 $httpBackend.expectPOST(mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE);
                 exportToUpdate = currentScope.exports[0];
                 component = exportToUpdate.emailedExport;

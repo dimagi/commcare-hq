@@ -30,11 +30,10 @@
          */
         var self = {};
         $scope._ = _;  // allow use of underscore.js within the template
-        $scope.exports = [];
+        $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
         $scope.bulk_download_url = bulk_download_url;
         $scope.legacy_bulk_download_url = legacy_bulk_download_url;
 
-        $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
         $scope.myExports = $scope.exports.filter(function (val) { return !!val.my_export; });
         $scope.notMyExports = $scope.exports.filter(function (val) { return !val.my_export; });
         _.each($scope.exports, function (exp) {
