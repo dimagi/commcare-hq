@@ -83,36 +83,6 @@ describe('ListExportsController Unit Tests', function () {
             assert.equal(currentScope.exports.length, 1);
             assert.isTrue(currentScope.hasLoaded);
         });
-
-        it('registers a server-side error', function () {
-            var serverErrorMsg = 'error initializing exports for test';
-            $httpBackend
-                .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
-                .respond({
-                    error: serverErrorMsg,
-                });
-            createController();
-            assert.equal(currentScope.exports.length, 0);
-            assert.isFalse(currentScope.hasLoaded);
-            $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
-            $httpBackend.flush();
-            assert.equal(currentScope.exports.length, 0);
-            assert.isTrue(currentScope.hasLoaded);
-            assert.equal(serverErrorMsg, currentScope.exportsListError);
-        });
-
-        it('registers a connection error', function () {
-            $httpBackend
-                .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
-                .respond(522, '');
-            createController();
-            $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
-            $httpBackend.flush();
-            assert.equal(currentScope.exports.length, 0);
-            assert.isTrue(currentScope.hasLoaded);
-            assert.equal('default', currentScope.exportsListError);
-        });
-
     });
 
     describe("Actions", function () {
