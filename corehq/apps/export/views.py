@@ -22,8 +22,7 @@ from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
-    EmailExportWhenDoneRequest
+from corehq.apps.export.models.new import DatePeriod, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
@@ -688,16 +687,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
                 or (self.is_deid and self.has_deid_view_permissions)):
             raise Http404()
 
-        self.request = request
-
-        if DailySavedExportNotification.user_to_be_notified(self.domain, self.request.couch_user):
-            self.set_notify_new_daily_saved_export()
-
-        return super(BaseExportListView, self).dispatch(self.request, *args, **kwargs)
-
-    def set_notify_new_daily_saved_export(self):
-        self.request.notify_new_daily_saved_export = True
-        DailySavedExportNotification.mark_notified(self.request.couch_user.user_id, self.domain)
+        return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
