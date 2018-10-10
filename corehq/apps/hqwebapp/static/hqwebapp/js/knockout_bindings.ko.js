@@ -1,11 +1,13 @@
-/* global DOMPurify */
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
     'knockout',
+    'DOMPurify/dist/purify.min',
     'jquery-ui/ui/sortable',
+    'select2-3.5.2-legacy/select2',
 ], function (
     $,
-    ko
+    ko,
+    DOMPurify
 ) {
     ko.bindingHandlers.hqbSubmitReady = {
         update: function (element, valueAccessor) {
