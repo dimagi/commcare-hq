@@ -918,24 +918,7 @@ def _update_case_list_translations(sheet, rows, app):
                 " of the case property '%s'" % row['case_property']
             ))
 
-    for row, detail in \
-            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
-
-        # Check that names match (user is not allowed to change property in the
-        # upload). Mismatched names indicate the user probably botched the sheet.
-        if row.get('id', None) != detail.field:
-            msgs.append((
-                messages.error,
-                'A row in sheet {sheet} has an unexpected value of "{field}" '
-                'in the case_property column. Case properties must appear in '
-                'the same order as they do in the bulk app translation '
-                'download. No translations updated for this row.'.format(
-                    sheet=sheet.worksheet.title,
-                    field=row.get('case_property', "")
-                )
-            ))
-            continue
-
+    def _update_detail(row, detail):
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
         for i, enum_value_row in enumerate(row.get('mappings', [])):
@@ -961,6 +944,26 @@ def _update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
                 False
             )
+
+    for row, detail in \
+            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
+
+        # Check that names match (user is not allowed to change property in the
+        # upload). Mismatched names indicate the user probably botched the sheet.
+        if row.get('id', None) != detail.field:
+            msgs.append((
+                messages.error,
+                'A row in sheet {sheet} has an unexpected value of "{field}" '
+                'in the case_property column. Case properties must appear in '
+                'the same order as they do in the bulk app translation '
+                'download. No translations updated for this row.'.format(
+                    sheet=sheet.worksheet.title,
+                    field=row.get('case_property', "")
+                )
+            ))
+            continue
+        _update_detail(row, detail)
+
     for index, tab in enumerate(detail_tab_headers):
         if tab:
             _update_translation(tab, module.case_details.long.tabs[index].header)
