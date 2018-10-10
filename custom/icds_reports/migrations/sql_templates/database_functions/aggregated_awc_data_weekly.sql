@@ -34,7 +34,7 @@ BEGIN
     'CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs, '
     'CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
     'FROM ' || quote_ident(_usage_tablename) || ' ' ||
-    'WHERE month >= ' || quote_literal(__month_start_6m) || ' GROUP BY awc_id, month) ut ' ||
+    'WHERE month >= ' || quote_literal(_month_start_6m) || ' GROUP BY awc_id, month) ut ' ||
   'WHERE ut.month <= agg_awc.month AND ut.awc_id = agg_awc.awc_id AND aggregation_level=5 '||
   'AND agg_awc.num_launched_awcs = 0 AND ut.num_launched_awcs != 0';
 
@@ -56,7 +56,7 @@ BEGIN
     'sum(num_launched_awcs) as sum_num_launched_awcs, '||
     'usage_awc_num_active, ' ||
     'FROM agg_awc  ' ||
-    'WHERE aggregation_level=5 AND month>=' || quote_literal(__month_start_6m) || ' ' ||
+    'WHERE aggregation_level=5 AND month>=' || quote_literal(_month_start_6m) || ' ' ||
     'GROUP BY state_id, district_id, block_id, supervisor_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.supervisor_id = agg_awc.supervisor_id AND aggregation_level=4' ;
 
@@ -79,7 +79,7 @@ BEGIN
     'sum(num_launched_awcs) as sum_num_launched_awcs, '||
     'usage_awc_num_active, ' ||
     'FROM agg_awc  ' ||
-    'WHERE aggregation_level=4 AND month>='|| quote_literal(__month_start_6m) || ' ' ||
+    'WHERE aggregation_level=4 AND month>='|| quote_literal(_month_start_6m) || ' ' ||
     'GROUP BY state_id, district_id, block_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.block_id = agg_awc.block_id AND aggregation_level=3' ;
 
@@ -103,7 +103,7 @@ BEGIN
     'sum(num_launched_awcs) as sum_num_launched_awcs, '||
     'usage_awc_num_active, ' ||
     'FROM agg_awc  ' ||
-    'WHERE aggregation_level=3 AND month>='|| quote_literal(__month_start_6m) || ' ' ||
+    'WHERE aggregation_level=3 AND month>='|| quote_literal(_month_start_6m) || ' ' ||
     'GROUP BY state_id, district_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.district_id = agg_awc.district_id AND aggregation_level=2' ;
 
@@ -128,7 +128,7 @@ BEGIN
     'sum(num_launched_awcs) as sum_num_launched_awcs, '||
     'usage_awc_num_active, ' ||
     'FROM agg_awc  ' ||
-    'WHERE aggregation_level=2 AND month>='|| quote_literal(__month_start_6m) || ' ' ||
+    'WHERE aggregation_level=2 AND month>='|| quote_literal(_month_start_6m) || ' ' ||
     'GROUP BY state_id,month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.state_id = agg_awc.state_id AND aggregation_level=1' ;
 
