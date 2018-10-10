@@ -564,11 +564,11 @@ def create_patient(requests, info, case_config):
     }
     person = {}
     if name:
-        person['names'] = [serialize(name)]
+        person['names'] = [name]
     if address:
-        person['addresses'] = [serialize(address)]
+        person['addresses'] = [address]
     if properties:
-        person.update(serialize(properties))
+        person.update(properties)
     if person:
         identifiers = [
             {'identifierType': patient_identifier_type, 'identifier': value_source.get_value(info)}
