@@ -34,13 +34,11 @@
 
     <p>{{ lead_text }}</p>
 
-    {% block export_list %}
-        <div ng-app="listExportsApp">
-            {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
-            {% include 'export/partials/export_list_create_export_modal.html' %}
-            {% if is_daily_saved_export %}
-                {% include 'export/partials/feed_filter_modal.html' %}
-            {% endif %}
-        </div>
-    {% endblock %}
+    <div ng-app="listExportsApp">
+        {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
+        {% include 'export/partials/export_list_create_export_modal.html' %}
+        {% if is_daily_saved_export %}
+            {% include 'export/partials/feed_filter_modal.html' %}
+        {% endif %}
+    </div>
 {% endblock %}
