@@ -473,7 +473,6 @@ class SubmissionPost(object):
 
     def process_device_log(self, device_log_form):
         self._conditionally_send_device_logs_to_sumologic(device_log_form)
-        # ignore temporarily till we migrate DeviceReportEntry id to bigint
         ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
         if not ignore_device_logs:
             try:
