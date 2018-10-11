@@ -1,4 +1,3 @@
-hqImport("hqwebapp/js/initial_page_data").get('user_types')
 (function (angular, undefined) {
     'use strict';
     // module: hq.download_export
