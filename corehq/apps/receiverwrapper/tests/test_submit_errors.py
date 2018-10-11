@@ -91,7 +91,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
-        with open(file, 'rb') as f:
+        with open(file, 'r') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     def _test_submission_error_post_save(self, openrosa_version):
