@@ -141,9 +141,9 @@ def get_task_status(task, is_multiple_download_task=False):
     elif is_ready:
         state = STATES.success
     elif task and _is_task_pending(task):
-        state = STATES.not_started
-    elif progress.percent is None:
         state = STATES.missing
+    elif progress.percent is None:
+        state = STATES.not_started
     else:
         state = STATES.started
 
