@@ -983,10 +983,19 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     def scheduled_report_form(self):
         web_users = WebUser.view('users/web_users_by_domain', reduce=False,
                                key=self.domain, include_docs=True).all()
-        web_user_emails = [u.get_email() for u in web_users]
         initial = self.report_notification.to_json()
         kwargs = {'initial': initial}
-        args = ((self.request.POST, ) if self.request.method == "POST" else ())
+        if self.request.method == "POST":
+            args = (self.request.POST, )
+            selected_emails = self.request.POST.getlist('recipient_emails', {})
+        else:
+            args = ()
+            selected_emails = kwargs.get('initial', {}).get('recipient_emails', [])
+
+        web_user_emails = [u.get_email() for u in web_users]
+        for email in selected_emails:
+            if email not in web_user_emails:
+                web_user_emails = [email] + web_user_emails
 
         from corehq.apps.reports.forms import ScheduledReportForm
         form = ScheduledReportForm(*args, **kwargs)
