@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
+
+import six
 from django.test import TestCase
 from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.util.test_utils import unit_testing_only
@@ -16,6 +18,7 @@ TEST_LOCATION_TYPE = 'location'
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE,
              parent=None, is_archived=False):
+    assert isinstance(type, six.text_type)
     name = name or code
     loc = make_location(
         site_code=code, name=name, domain=domain, location_type=type,
