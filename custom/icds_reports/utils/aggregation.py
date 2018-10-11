@@ -2234,7 +2234,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
             valid_visits,
             expected_visits
           FROM agg_ccs_record_monthly AS acm
-          WHERE acm.month = %(month)s AND acm.state_id = %(state_id)s
+          WHERE acm.month = %(month)s AND acm.state_id = %(state_id)s and aggregation_level=5
         )
         """.format(
             tablename=tablename
