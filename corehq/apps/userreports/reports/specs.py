@@ -417,7 +417,7 @@ class ConditionalAggregationColumn(_CaseExpressionColumn):
 
 class SumWhenColumn(_CaseExpressionColumn):
     type = TypeProperty("sum_when")
-    else_ = IntegerProperty()
+    else_ = IntegerProperty(default=0)
     _agg_column_type = SumWhen
 
 
