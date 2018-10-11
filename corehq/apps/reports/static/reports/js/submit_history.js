@@ -6,7 +6,7 @@ hqDefine("reports/js/submit_history", ['jquery', 'analytix/js/kissmetrix', 'hqwe
                 kissAnalytics.track.event("Clicked View Form in Submit History Report");
             });
             var userTypes = initialPageData.get('user_types');
-            $(document).on('click', 'button#apply-filters', function () {
+            $(document).on('click', '#apply-filters', function () {
                 kissAnalytics.track.event("Clicked Apply",
                     {"filters": _.map(_.find($('#paramSelectorForm').serializeArray(),
                             function (obj) { return obj.name === "emw"; }).value.split(','),

@@ -6,7 +6,7 @@ hqDefine("reports/js/case_list", ['jquery', 'analytix/js/kissmetrix', 'hqwebapp/
                 kissAnalytics.track.event("Clicked Case Name in Case List Report");
             });
             var userTypes = initialPageData.get('user_types');
-            $(document).on('click', 'button#apply-filters', function () {
+            $(document).on('click', '#apply-filters', function () {
                 kissAnalytics.track.event("Clicked Apply",
                     {"filters": _.map(_.find($('#paramSelectorForm').serializeArray(),
                             function (obj) { return obj.name === "case_list_filter"; }).value.split(','),
