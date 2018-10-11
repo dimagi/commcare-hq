@@ -153,7 +153,7 @@
                         if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
                         { return item; }
                     }
-                )});
+                ).join()});
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
