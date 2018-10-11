@@ -43,24 +43,6 @@ class BootstrapCheckboxInput(CheckboxInput):
                          (flatatt(final_attrs), self.inline_label))
 
 
-class AutocompleteTextarea(forms.Textarea):
-    """
-    Textarea with auto-complete.  Uses a custom extension on top of Twitter
-    Bootstrap's typeahead plugin.
-    """
-
-    def render(self, name, value, attrs=None):
-        if hasattr(self, 'choices') and self.choices:
-            if not attrs:
-                attrs = {}
-            attrs.update({
-                'class': 'hqwebapp-autocomplete form-control',
-                'data-choices': json.dumps([{'text': c, 'id': c} for c in self.choices]),
-            })
-
-        return super(AutocompleteTextarea, self).render(name, value, attrs=attrs)
-
-
 class _Select2Mixin(object):
 
     class Media(object):
