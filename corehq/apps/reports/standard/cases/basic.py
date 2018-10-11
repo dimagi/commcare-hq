@@ -329,10 +329,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             yield data
 
     @property
-    def template_context(self):
-        return {'user_types': HQUserType.human_readable}
-
-    @property
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(_("Case Type"), prop_name="type.exact"),
