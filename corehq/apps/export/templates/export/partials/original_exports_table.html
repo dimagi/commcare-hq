@@ -4,8 +4,7 @@
 {% load djangular_tags %}
 {% load humanize %}
 
-<table class="table table-striped"
-       ng-show="!!hasLoaded && !_.isEmpty(exports)">
+<table class="table table-striped" ng-show="!_.isEmpty(exports)">
     <thead>
         <tr>
             <th class="col-sm-4">{% trans 'Name' %}</th>

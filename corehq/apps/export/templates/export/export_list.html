@@ -26,8 +26,9 @@
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
     {% initial_page_data 'bulk_download_url' bulk_download_url %}
+    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+    {% initial_page_data 'exports' exports %}
     {% initial_page_data 'legacy_bulk_download_url' legacy_bulk_download_url %}
     {% initial_page_data 'model_type' model_type %}
     {% initial_page_data 'static_model_type' static_model_type %}
