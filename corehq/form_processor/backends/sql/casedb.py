@@ -54,4 +54,4 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
 
     def post_process_case(self, case, xform):
         if toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(case.domain, toggles.NAMESPACE_DOMAIN):
-            self.case_update_strategy(case).reconcile_transactions_if_necessary(xform)
+            self.case_update_strategy(case).reconcile_transactions_if_necessary()
