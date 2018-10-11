@@ -121,14 +121,15 @@ class CaseSearchConfig(models.Model):
         return config
 
     @classmethod
-    def create_from_json(cls, domain, json_def):
-        try:
-            config = (cls.objects.prefetch_related('ignore_patterns').prefetch_related('fuzzy_properties')
-                      .get(domain=domain))
-        except cls.DoesNotExist:
-            config = cls(domain=domain)
+    def create_model_and_index_from_json(cls, domain, json_def):
+        if json_def['enabled']:
+            config = enable_case_search(domain)
+        else:
+            config = disable_case_search(domain)
 
-        config.enabled = json_def['enabled']
+        if not config:
+            return None
+
         config.ignore_patterns.all().delete()
         config.fuzzy_properties.all().delete()
         config.save()
@@ -286,6 +287,7 @@ def enable_case_search(domain):
         case_search_enabled_for_domain.clear(domain)
         domains_needing_search_index.clear()
         reindex_case_search_for_domain.delay(domain)
+    return config
 
 
 def disable_case_search(domain):
@@ -296,13 +298,14 @@ def disable_case_search(domain):
         config = CaseSearchConfig.objects.get(pk=domain)
     except CaseSearchConfig.DoesNotExist:
         # CaseSearch was never enabled
-        return
+        return None
     if config.enabled:
         config.enabled = False
         config.save()
         case_search_enabled_for_domain.clear(domain)
         domains_needing_search_index.clear()
         delete_case_search_cases_for_domain.delay(domain)
+    return config
 
 
 def case_search_enabled_domains():

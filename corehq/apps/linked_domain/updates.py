@@ -6,7 +6,10 @@ from functools import partial
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
-from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    CaseSearchQueryAddition,
+)
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.linked_domain.const import (
     MODEL_FLAGS, MODELS_ROLES, MODEL_LOCATION_DATA, MODEL_PRODUCT_DATA,
@@ -125,7 +128,8 @@ def update_case_search_config(domain_link):
         except CaseSearchQueryAddition.DoesNotExist:
             query_addition = None
 
-    CaseSearchConfig.create_from_json(domain_link.linked_domain, case_search_config)
+    CaseSearchConfig.create_model_and_index_from_json(domain_link.linked_domain, case_search_config)
+
     if query_addition:
         CaseSearchQueryAddition.create_from_json(domain_link.linked_domain, query_addition)
 
