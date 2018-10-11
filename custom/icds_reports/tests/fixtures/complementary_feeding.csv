@@ -1,4 +1,4 @@
-doc_id,inserted_at,repeat_iteration,timeend,state_id,received_on,play_comp_feeding_vid,child_health_case_id,comp_feeding,demo_comp_feeding,counselled_pediatric_ifa,diet_diversity,diet_quantity,hand_wash,given_ors,recent_diarrhea,deworming,unscheduled_visit,days_visit_late,next_visit,ccs_record_1
+doc_id,inserted_at,repeat_iteration,timeend,state_id,received_on,play_comp_feeding_vid,child_health_case_id,comp_feeding,demo_comp_feeding,counselled_pediatric_ifa,diet_diversity,diet_quantity,hand_wash,given_ors,recent_diarrhea,deworming,unscheduled_visit,days_visit_late,next_visit,ccs_record_case_id
 6c078082284a11e884d428b2bd3c1db0,3008-04-01 00:00:00,1,2017-04-01 00:00:00,st1,3008-01-01 00:00:00,0,a60e5b3e-31d2-43d7-b66d-9486108a9816,1,1,0,1,1,1,,,,,,,ccs_record_2
 6c086092284a11e884d428b2bd3c1db0,3008-04-01 00:00:00,1,2017-04-01 00:00:00,st1,3008-01-01 00:00:00,0,a975178b-fe28-455d-8ff4-89b68e76cd5b,1,0,0,1,1,1,,,,,,,ccs_record_3
 6c08cf6e284a11e884d428b2bd3c1db0,3008-04-01 00:00:00,1,2017-04-01 00:00:00,st1,3008-01-01 00:00:00,1,c32b1b18-a8c7-4c95-bf95-1b7f16d7dd8e,1,0,0,0,1,1,,,,,,,ccs_record_4
