@@ -121,7 +121,7 @@ class CaseSearchConfig(models.Model):
         return config
 
     @classmethod
-    def from_json(cls, domain, json_def):
+    def create_from_json(cls, domain, json_def):
         try:
             config = (cls.objects.prefetch_related('ignore_patterns').prefetch_related('fuzzy_properties')
                       .get(domain=domain))
@@ -168,6 +168,20 @@ class CaseSearchQueryAddition(models.Model):
                   "ation</a> may also be useful. This JSON will be merged at the `query.filtered.query` path of th"
                   "e query JSON."
     )
+
+    def to_json(self):
+        return {
+            field.name: getattr(self, field.name)
+            for field in self._meta.get_fields()
+            if field.name != 'id'
+        }
+
+    @classmethod
+    def create_from_json(cls, domain, json_def):
+        r = cls(**json_def)
+        r.domain = domain
+        r.save()
+        return r
 
 
 class QueryMergeException(Exception):

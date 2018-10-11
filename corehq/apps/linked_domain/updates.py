@@ -109,16 +109,25 @@ def update_user_roles(domain_link):
 
 def update_case_search_config(domain_link):
     if domain_link.is_remote:
-        case_search_config = remote_get_case_search_config(domain_link)['config']
+        remote_properties = remote_get_case_search_config(domain_link)
+        case_search_config = remote_properties['config']
         if not case_search_config:
             return
+        query_addition = remote_properties['addition']
     else:
         try:
             case_search_config = CaseSearchConfig.objects.get(domain=domain_link.master_domain).to_json()
         except CaseSearchConfig.DoesNotExist:
             return
 
-    CaseSearchConfig.from_json(domain_link.linked_domain, case_search_config)
+        try:
+            query_addition = CaseSearchQueryAddition.objects.get(domain=domain_link.master_domain).to_json()
+        except CaseSearchQueryAddition.DoesNotExist:
+            query_addition = None
+
+    CaseSearchConfig.create_from_json(domain_link.linked_domain, case_search_config)
+    if query_addition:
+        CaseSearchQueryAddition.create_from_json(domain_link.linked_domain, query_addition)
 
 
 def _convert_web_apps_permissions(domain_link, master_results):

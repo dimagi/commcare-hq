@@ -52,19 +52,17 @@ def user_roles(request, domain):
 @login_or_api_key
 @require_linked_domain
 def case_search_config(request, domain):
-    response = {}
     try:
-        response['config'] = CaseSearchConfig.objects.get(domain=domain).to_json()
+        config = CaseSearchConfig.objects.get(domain=domain).to_json()
     except CaseSearchConfig.DoesNotExist:
-        pass
+        config = None
 
     try:
-        addition = model_to_dict(CaseSearchQueryAddition.objects.get(domain=domain))
-        response['addition'] = addition
+        addition = CaseSearchQueryAddition.objects.get(domain=domain).to_json()
     except CaseSearchQueryAddition.DoesNotExist:
-        pass
+        addition = None
 
-    return JsonResponse(response)
+    return JsonResponse({'config': config, 'addition': addition})
 
 
 @login_or_api_key
