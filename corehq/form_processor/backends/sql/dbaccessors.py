@@ -921,7 +921,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         with connections[db].cursor() as cursor:
             cursor.execute(
                 'SELECT compare_server_client_case_transaction_order(%s, %s)',
-                [case_id, CaseTransaction.case_rebuild_types()])
+                [case_id, CaseTransaction.case_rebuild_types() | CaseTransaction.TYPE_CASE_CREATE])
             result = cursor.fetchone()[0]
             return result
 
