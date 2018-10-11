@@ -1,11 +1,11 @@
-hqImport("hqwebapp/js/initial_page_data").get('user_types')
-hqDefine("reports/js/case_list", ['jquery', 'analytix/js/kissmetrix'], function ($, kissAnalytics) {
+hqDefine("reports/js/case_list", ['jquery', 'analytix/js/kissmetrix', 'hqwebapp/js/initial_page_data'],
+    function ($, kissAnalytics, initialPageData) {
     $(function () {
         if (document.location.href.match(/reports\/case_list/)) {
             $(document).on('click', 'td.case-name-link', function () {
                 kissAnalytics.track.event("Clicked Case Name in Case List Report");
             });
-            var userTypes = hqImport("hqwebapp/js/initial_page_data").get('user_types');
+            var userTypes = initialPageData.get('user_types');
             $(document).on('click', 'button#apply-filters', function () {
                 kissAnalytics.track.event("Clicked Apply",
                     {"filters": _.map(_.find($('#paramSelectorForm').serializeArray(),
