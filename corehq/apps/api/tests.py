@@ -373,31 +373,31 @@ class TestXFormInstanceResource(APIResourceTest):
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
 
-    @run_with_all_backends
-    def test_fetching_xform_cases(self):
-        fake_xform_es = FakeXFormES(ESXFormInstance)
-        v0_4.MOCK_XFORM_ES = fake_xform_es
-
-        # Create an xform that touches a case
-        case_id = uuid.uuid4().hex
-        form = submit_case_blocks(
-            CaseBlock(
-                case_id=case_id,
-                create=True,
-            ).as_string(),
-            self.domain.name
-        )[0]
-
-        fake_xform_es.add_doc(form.form_id, transform_xform_for_elasticsearch(form.to_json()))
-
-        # Fetch the xform through the API
-        response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
-        self.assertEqual(response.status_code, 200)
-        cases = json.loads(response.content)['cases']
-
-        # Confirm that the case appears in the resource
-        self.assertEqual(len(cases), 1)
-        self.assertEqual(cases[0]['id'], case_id)
+    # @run_with_all_backends
+    # def test_fetching_xform_cases(self):
+    #     fake_xform_es = FakeXFormES(ESXFormInstance)
+    #     v0_4.MOCK_XFORM_ES = fake_xform_es
+    #
+    #     # Create an xform that touches a case
+    #     case_id = uuid.uuid4().hex
+    #     form = submit_case_blocks(
+    #         CaseBlock(
+    #             case_id=case_id,
+    #             create=True,
+    #         ).as_string(),
+    #         self.domain.name
+    #     )[0]
+    #
+    #     fake_xform_es.add_doc(form.form_id, transform_xform_for_elasticsearch(form.to_json()))
+    #
+    #     # Fetch the xform through the API
+    #     response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
+    #     self.assertEqual(response.status_code, 200)
+    #     cases = json.loads(response.content)['cases']
+    #
+    #     # Confirm that the case appears in the resource
+    #     self.assertEqual(len(cases), 1)
+    #     self.assertEqual(cases[0]['id'], case_id)
 
 
 class TestCommCareCaseResource(APIResourceTest):
