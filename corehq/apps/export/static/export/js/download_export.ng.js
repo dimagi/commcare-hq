@@ -150,7 +150,7 @@
                     $("#exportFiltersFormId input[name=" + getFilterName($scope.exportList[0].export_type) + "]")
                         .serializeArray()[0].value.split(','),
                     function (item) {
-                        if (item[0] === "t") { return userTypes[item.substring(3)]; }
+                        if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
                         else { return item; }
                     }
                 )});
