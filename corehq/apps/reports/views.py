@@ -194,7 +194,7 @@ from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
-    use_select2,
+    use_select2_v4,
     use_datatables,
     use_multiselect,
 )
@@ -890,7 +890,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     template_name = 'reports/edit_scheduled_report.html'
 
     @use_multiselect
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
 
@@ -992,7 +992,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         from corehq.apps.reports.forms import ScheduledReportForm
         form = ScheduledReportForm(*args, **kwargs)
         form.fields['config_ids'].choices = self.config_choices
-        form.fields['recipient_emails'].choices = web_user_emails
+        form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
 
         form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
