@@ -8,8 +8,7 @@ hqDefine("reports/js/case_list", ['jquery', 'analytix/js/kissmetrix', 'hqwebapp/
             var userTypes = initialPageData.get('user_types');
             $(document).on('click', '#apply-filters', function () {
                 kissAnalytics.track.event("Clicked Apply",
-                    {"filters": _.map(_.find($('#paramSelectorForm').serializeArray(),
-                            function (obj) { return obj.name === "case_list_filter"; }).value.split(','),
+                    {"filters": _.map($("#paramSelectorForm input[name='case_list_filter']").serializeArray()[0].value.split(','),
                             function (item) {
                                 if (item[0] === "t") { return userTypes[item.substring(3)]; }
                                 else { return item; }
