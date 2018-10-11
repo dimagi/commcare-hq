@@ -22,6 +22,7 @@ CREATE VIEW agg_ccs_record_monthly AS
         "awc_location_months"."state_map_location_name" AS "state_map_location_name",
         "awc_location_months"."month" AS "month",
         "awc_location_months"."contact_phone_number" AS "contact_phone_number",
+        "awc_location_months"."aww_name" AS "aww_name",
         "agg_ccs_record"."ccs_status" AS "ccs_status",
         "agg_ccs_record"."trimester" AS "trimester",
         "agg_ccs_record"."caste" AS "caste",

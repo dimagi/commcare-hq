@@ -70,4 +70,3 @@ class Migration(migrations.Migration):
         ),
         migrator.get_migration('update_tables29.sql')
     ]
-    operations.extend(get_view_migrations())
