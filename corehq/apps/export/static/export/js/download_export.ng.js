@@ -1,3 +1,4 @@
+hqImport("hqwebapp/js/initial_page_data").get('user_types')
 (function (angular, undefined) {
     'use strict';
     // module: hq.download_export
@@ -140,6 +141,7 @@
                 $('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
+            var user_types = hqImport("hqwebapp/js/initial_page_data").get('user_types');
             hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {"Export type": $scope.exportList[0].export_type});
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
