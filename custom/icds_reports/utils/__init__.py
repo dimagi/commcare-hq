@@ -293,19 +293,19 @@ def get_age_filter_in_months(age_value):
         For that range we want to include 0 and 6 in results.
     """
     if age_value == '6':
-        return {'age_in_months__in': ['0', '6']}
+        return {'age_in_months__range': ['0', '6']}
     elif age_value == '12':
-        return {'age_in_months__in': ['7', '12']}
+        return {'age_in_months__range': ['7', '12']}
     elif age_value == '24':
-        return {'age_in_months__in': ['13', '24']}
+        return {'age_in_months__range': ['13', '24']}
     elif age_value == '36':
-        return {'age_in_months__in': ['25', '36']}
+        return {'age_in_months__range': ['25', '36']}
     elif age_value == '48':
-        return {'age_in_months__in': ['37', '48']}
+        return {'age_in_months__range': ['37', '48']}
     elif age_value == '60':
-        return {'age_in_months__in': ['49', '60']}
+        return {'age_in_months__range': ['49', '60']}
     elif age_value == '72':
-        return {'age_in_months__in': ['61', '72']}
+        return {'age_in_months__range': ['61', '72']}
 
 
 def match_age(age):
