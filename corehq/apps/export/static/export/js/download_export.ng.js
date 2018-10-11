@@ -151,7 +151,7 @@
                         .serializeArray()[0].value.split(','),
                     function (item) {
                         if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
-                        else { return item; }
+                        { return item; }
                     }
                 )});
             djangoRMI.prepare_custom_export({
