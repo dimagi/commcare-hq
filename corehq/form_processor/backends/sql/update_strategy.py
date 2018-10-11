@@ -305,7 +305,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
 
-    def reconcile_transactions_if_necessary(self, xform):
+    def reconcile_transactions_if_necessary(self):
         if self.case.check_transaction_order():
             return
         datadog_counter("form_processor.sql.reconciling_transactions")
