@@ -140,7 +140,7 @@
                 $('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export");
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {"Export type": $scope.exportList[0].export_type});
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
