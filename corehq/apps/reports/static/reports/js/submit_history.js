@@ -5,21 +5,17 @@ hqDefine("reports/js/submit_history", ['jquery', 'analytix/js/kissmetrix'], func
             $(document).on('click', 'td.view-form-link', function () {
                 kissAnalytics.track.event("Clicked View Form in Submit History Report");
             });
-            var user_types = hqImport("hqwebapp/js/initial_page_data").get('user_types');
+            var userTypes = hqImport("hqwebapp/js/initial_page_data").get('user_types');
             $(document).on('click', 'button#apply-filters', function () {
                 kissAnalytics.track.event("Clicked Apply",
                     {"filters": _.map(_.find($('#paramSelectorForm').serializeArray(),
-                            function(obj)
-                            {
-                                return obj.name==="emw"
-                            }).value.split(','),
-                            function(item){if(item[0]==="t")
-                            {
-                                return user_types[item.substring(3)]
-                            } else {
-                                return item
+                            function (obj) { return obj.name === "emw"; }).value.split(','),
+                            function (item) {
+                                if (item[0] === "t") { return userTypes[item.substring(3)]; }
+                                else { return item; }
                             }
-                    })});
+                    )}
+                );
             });
         }
     });

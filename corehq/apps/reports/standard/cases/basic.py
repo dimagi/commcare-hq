@@ -330,10 +330,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     @property
     def template_context(self):
-        context = {
-            'user_types': HQUserType.human_readable,
-        }
-        return context
+        return {'user_types': HQUserType.human_readable}
 
     @property
     def headers(self):
