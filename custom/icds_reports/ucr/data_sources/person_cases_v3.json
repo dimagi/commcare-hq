@@ -257,13 +257,17 @@
               "type": "constant",
               "constant": 2
             },
-            "obc": {
+            "st": {
               "type": "constant",
               "constant": 3
             },
-            "other": {
+            "obc": {
               "type": "constant",
               "constant": 4
+            },
+            "other": {
+              "type": "constant",
+              "constant": 5
             }
           },
           "default": {
