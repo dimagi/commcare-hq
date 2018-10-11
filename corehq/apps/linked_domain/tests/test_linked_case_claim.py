@@ -20,11 +20,10 @@ from corehq.util import reverse
 from corehq.util.view_utils import absolute_reverse
 
 
-class TestLinkedCaseClaim(BaseLinkedAppsTest):
-
+class BaseLinkedCaseClaimTest(BaseLinkedAppsTest):
     @classmethod
     def setUpClass(cls):
-        super(TestLinkedCaseClaim, cls).setUpClass()
+        super(BaseLinkedCaseClaimTest, cls).setUpClass()
         cls.search_config = CaseSearchConfig(domain=cls.domain, enabled=True)
         cls.search_config.save()
         fuzzy_property = FuzzyProperties(domain=cls.domain, case_type='case', properties=['a', 'b', 'c'])
@@ -34,6 +33,13 @@ class TestLinkedCaseClaim(BaseLinkedAppsTest):
         cls.search_config.fuzzy_properties.add(fuzzy_property)
         cls.search_config.ignore_patterns.add(ignore_patterns)
 
+    @classmethod
+    def tearDownClass(cls):
+        CaseSearchConfig.objects.all().delete()
+        super(BaseLinkedCaseClaimTest, cls).tearDownClass()
+
+
+class TestLinkedCaseClaim(BaseLinkedCaseClaimTest):
     def test_link_enables_case_search(self):
         existing_search_config = CaseSearchConfig(domain=self.domain_link.linked_domain, enabled=False)
         existing_search_config.save()
@@ -71,7 +77,7 @@ class TestLinkedCaseClaim(BaseLinkedAppsTest):
         self.assertNotEqual(query_addition.pk, self.query_addition.pk)
 
 
-class TestRemoteLinkedCaseClaim(TestLinkedCaseClaim):
+class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
 
     @classmethod
     def setUpClass(cls):
