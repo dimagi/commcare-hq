@@ -160,9 +160,9 @@ class OpenmrsCaseConfig(DocumentSchema):
             data.pop('id_matchers')
         # Set default data types for known properties
         for property_, value_source in chain(
-                data['person_properties'].items(),
-                data['person_preferred_name'].items(),
-                data['person_preferred_address'].items(),
+                data.get('person_properties', {}).items(),
+                data.get('person_preferred_name', {}).items(),
+                data.get('person_preferred_address', {}).items(),
         ):
             data_type = OPENMRS_PROPERTIES[property_]
             value_source.setdefault('external_data_type', data_type)
