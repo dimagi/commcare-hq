@@ -24,7 +24,7 @@ BEGIN
             WHERE case_id = _case_id
                   AND server_date IS NOT NULL
                   AND client_date IS NOT NULL
-                  AND server_date > rebuild_date
+                  AND server_date >= rebuild_date
         )
 
         SELECT NOT EXISTS (
