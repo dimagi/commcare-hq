@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
+import six
 from lxml import etree
 
 from casexml.apps.phone.utils import MockDevice
@@ -121,6 +122,7 @@ def bootstrap_products(domain):
 
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
+    assert isinstance(type, six.text_type)
     if not Domain.get_by_name(domain):
         raise AssertionError("You can't make a location on a fake domain")
     name = name or code
