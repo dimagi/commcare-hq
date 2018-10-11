@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import re
+import six
 from uuid import UUID
 
 from bulk_update.helper import bulk_update as bulk_update_helper
@@ -154,7 +155,8 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
 
-class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
+@six.python_2_unicode_compatible
+class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
     Each data source can back an arbitrary number of reports.
@@ -183,7 +185,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
         # prevent JsonObject from auto-converting dates etc.
         string_conversions = ()
 
-    def __unicode__(self):
+    def __str__(self):
         return '{} - {}'.format(self.domain, self.display_name)
 
     def save(self, **params):
