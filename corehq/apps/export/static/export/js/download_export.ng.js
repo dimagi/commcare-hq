@@ -1,3 +1,4 @@
+hqImport("hqwebapp/js/initial_page_data").get('user_types')
 (function (angular, undefined) {
     'use strict';
     // module: hq.download_export
@@ -122,6 +123,7 @@
                         return item;
                     }
                 ).join()});
+
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
