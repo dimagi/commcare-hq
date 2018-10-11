@@ -73,10 +73,10 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertTrue(xform.edited_on > deprecated_xform.received_on)
 
         self.assertEqual(
-            deprecated_xform.get_xml(),
+            deprecated_xform.get_xml().decode('utf-8'),
             original_xml.decode('utf-8')
         )
-        self.assertEqual(xform.get_xml(), edit_xml.decode('utf-8'))
+        self.assertEqual(xform.get_xml().decode('utf-8'), edit_xml.decode('utf-8'))
 
     def test_edit_form_with_attachments(self):
         attachment_source = './corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'
