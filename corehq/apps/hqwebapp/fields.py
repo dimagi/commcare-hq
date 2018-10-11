@@ -32,8 +32,6 @@ class MultiCharField(forms.Field):
         """
         choices - a list of choices to use as a source for autocompletion
         """
-        if initial:
-            initial = ', '.join(initial)
         super(MultiCharField, self).__init__(initial=initial, *args, **kwargs)
 
         self.choices = choices
@@ -51,7 +49,6 @@ class MultiCharField(forms.Field):
         if not value:
             return []
 
-        #return [val.strip() for val in value.split(',') if val.strip()]
         return value
 
     def run_validators(self, value):

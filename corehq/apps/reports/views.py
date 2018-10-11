@@ -985,7 +985,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                                key=self.domain, include_docs=True).all()
         web_user_emails = [u.get_email() for u in web_users]
         initial = self.report_notification.to_json()
-        initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
         kwargs = {'initial': initial}
         args = ((self.request.POST, ) if self.request.method == "POST" else ())
 
