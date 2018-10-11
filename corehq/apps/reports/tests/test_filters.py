@@ -176,7 +176,7 @@ class TestCaseListFilter(TestCase):
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
         self.user_assigned_locations = [
-            make_loc('root', domain=self.domain.name, type=self.location_type).sql_location
+            make_loc('root', domain=self.domain.name, type=self.location_type.code).sql_location
         ]
         self.request = RequestFactory()
         self.request.couch_user = WebUser()
