@@ -1148,8 +1148,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "ELSE NULL END"),
             ("height_measured_in_month",
                 "CASE "
-                "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s THEN 1 "
-                "ELSE 0 END"),
+                "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s AND {} THEN 1 "
+                "ELSE 0 END".format(height_eligible)),
             ("current_month_stunting",
                 "CASE "
                 "WHEN NOT {} THEN NULL "
