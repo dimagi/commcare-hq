@@ -13,7 +13,7 @@ hqDefine("reports/js/submit_history", ['jquery', 'analytix/js/kissmetrix', 'hqwe
                                 if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
                                 else { return item; }
                             }
-                        )}
+                        ).join()}
                     );
                 });
             }

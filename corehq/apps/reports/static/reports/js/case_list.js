@@ -13,7 +13,7 @@ hqDefine("reports/js/case_list", ['jquery', 'analytix/js/kissmetrix', 'hqwebapp/
                                 if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
                                 else { return item; }
                             }
-                        )}
+                        ).join()}
                     );
                 });
             }
