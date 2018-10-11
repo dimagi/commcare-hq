@@ -156,7 +156,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     if form:
         template, form_context = get_form_view_context_and_template(
-            request, domain, form, context['langs']
+            request, domain, form, context['langs'], current_lang=lang
         )
         context.update(form_context)
     elif module:

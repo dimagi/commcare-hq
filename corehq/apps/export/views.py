@@ -22,8 +22,7 @@ from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
-    EmailExportWhenDoneRequest
+from corehq.apps.export.models.new import DatePeriod, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
@@ -675,6 +674,11 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
     allow_bulk_export = True
     is_deid = False
 
+    lead_text = ugettext_lazy('''
+        Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
+        for use in third-party data analysis tools.
+    ''')
+
     @use_select2
     @use_angular_js
     @method_decorator(login_and_domain_required)
@@ -683,16 +687,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
                 or (self.is_deid and self.has_deid_view_permissions)):
             raise Http404()
 
-        self.request = request
-
-        if DailySavedExportNotification.user_to_be_notified(self.domain, self.request.couch_user):
-            self.set_notify_new_daily_saved_export()
-
-        return super(BaseExportListView, self).dispatch(self.request, *args, **kwargs)
-
-    def set_notify_new_daily_saved_export(self):
-        self.request.notify_new_daily_saved_export = True
-        DailySavedExportNotification.mark_notified(self.request.couch_user.user_id, self.domain)
+        return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -713,6 +708,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
+            'lead_text': self.lead_text,
         }
 
     @property
@@ -997,7 +993,6 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 @location_safe
 class DailySavedExportListView(BaseExportListView):
     urlname = 'list_daily_saved_exports'
-    template_name = 'export/daily_saved_export_list.html'
     page_title = ugettext_lazy("Daily Saved Exports")
     form_or_case = None  # This view lists both case and form feeds
     allow_bulk_export = False
@@ -1031,6 +1026,7 @@ class DailySavedExportListView(BaseExportListView):
         if not self.has_form_export_permissions and self.has_case_export_permissions:
             model_type = "case"
         context.update({
+            "is_daily_saved_export": True,
             "model_type": model_type,
             "static_model_type": False,
             "export_filter_form": DashboardFeedFilterForm(
@@ -1190,11 +1186,15 @@ class DailySavedExportListView(BaseExportListView):
 
 @location_safe
 class DashboardFeedListView(DailySavedExportListView):
-    template_name = 'export/dashboard_feed_list.html'
     urlname = 'list_dashboard_feeds'
     page_title = ugettext_lazy("Excel Dashboard Integration")
     form_or_case = None  # This view lists both case and form feeds
     allow_bulk_export = False
+
+    lead_text = ugettext_lazy('''
+        Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data.
+        Data is updated daily.
+    ''')
 
     def _priv_check(self):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)

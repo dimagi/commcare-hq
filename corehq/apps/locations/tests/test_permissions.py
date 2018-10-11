@@ -261,34 +261,14 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     def test_cant_edit_worker(self):
         self._assert_edit_user_gives_status(self.cambridge_worker, 404)
 
-    def _call_djangoRMI(self, url, method_name, data):
-        data = json.dumps(data)
-        if six.PY3:
-            data = data.encode('utf-8')
-        return self.client.post(
-            url,
-            content_type="application/json;charset=utf-8",
-            **{
-                'HTTP_DJNG_REMOTE_METHOD': method_name,
-                'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest',
-                'CONTENT_LENGTH': len(data),
-                'wsgi.input': BytesIO(data),
-            })
-
     def test_restricted_worker_list(self):
-        url = reverse(user_views.MobileWorkerListView.urlname, args=[self.domain])
+        url = reverse('paginate_mobile_workers', args=[self.domain])
         self.client.login(username=self.suffolk_user.username, password="password")
 
-        # This is how you test a djangoRMI method...
-        response = self._call_djangoRMI(url, 'get_pagination_data', data={
-            "limit": 10,
-            "page": 1,
-            "customFormFieldNames": [],
-            "showDeactivatedUsers": False
-        })
+        response = self.client.get(url, content_type="application/json;charset=utf-8")
 
         self.assertEqual(response.status_code, 200)
-        users = json.loads(response.content)['response']['itemList']
+        users = json.loads(response.content)['users']
         self.assertEqual(len(users), 1)
         self.assertEqual(users[0]['username'], 'boston_worker')
 

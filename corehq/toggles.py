@@ -898,6 +898,16 @@ CUSTOM_INSTANCES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+CUSTOM_ASSERTIONS = StaticToggle(
+    'custom_assertions',
+    'Inject custom assertions into the suite',
+    TAG_SOLUTIONS,
+    description=(
+        'Enables the insertion of custom assertions into the suite file. '
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',

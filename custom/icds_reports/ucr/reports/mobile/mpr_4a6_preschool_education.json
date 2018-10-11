@@ -6,7 +6,7 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds"
   ],
   "report_id": "static-mpr_4a6_preschool_education",
   "data_source_table": "static-daily_feeding_forms",

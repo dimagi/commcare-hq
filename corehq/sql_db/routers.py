@@ -91,6 +91,11 @@ def db_for_read_write(model, write=True):
         return settings.WAREHOUSE_DATABASE_ALIAS
     elif app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
+    elif app_label in (ICDS_MODEL, ICDS_REPORTS_APP):
+        engine_id = ICDS_UCR_ENGINE_ID
+        if not write:
+            engine_id = connection_manager.get_load_balanced_read_db_alais(ICDS_UCR_ENGINE_ID)
+        return connection_manager.get_django_db_alias(engine_id)
 
     if not settings.USE_PARTITIONED_DATABASE:
         return 'default'
@@ -101,11 +106,6 @@ def db_for_read_write(model, write=True):
         return 'default'
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
-    elif app_label in (ICDS_MODEL, ICDS_REPORTS_APP):
-        engine_id = ICDS_UCR_ENGINE_ID
-        if not write:
-            engine_id = connection_manager.get_load_balanced_read_db_alais(ICDS_UCR_ENGINE_ID)
-        return connection_manager.get_django_db_alias(engine_id)
     else:
         default_db = partition_config.get_main_db()
         if not write:

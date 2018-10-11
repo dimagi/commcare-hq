@@ -9,7 +9,7 @@ hqDefine('domain/js/case_search_main', [
     caseSearch
 ) {
     $(function () {
-        var viewModel = caseSearch.CaseSearchConfig({
+        var viewModel = caseSearch.caseSearchConfig({
             values: initialPageData.get('values'),
             caseTypes: initialPageData.get('case_types'),
         });

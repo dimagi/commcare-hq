@@ -56,7 +56,6 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
 from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AwcLocationMonths
-
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
@@ -636,6 +635,8 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'pregnant':
             if 'awc_id' in config:
+                start = int(request.GET.get('start', 0))
+                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
@@ -643,6 +644,8 @@ class AwcReportsView(BaseReportView):
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_pregnant(
+                    start,
+                    length,
                     order_by_name_column,
                     reversed_order,
                     config['awc_id']
@@ -654,6 +657,8 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'lactating':
             if 'awc_id' in config:
+                start = int(request.GET.get('start', 0))
+                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
@@ -661,6 +666,8 @@ class AwcReportsView(BaseReportView):
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_lactating(
+                    start,
+                    length,
                     order_by_name_column,
                     reversed_order,
                     config['awc_id']

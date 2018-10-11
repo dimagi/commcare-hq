@@ -22,15 +22,6 @@
         {% endblocktrans %}
     </p>
     {% endif %}
-    <p>
-        {% block lead_text %}
-        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-            Exports are a way to download data from {{ hq_name }}
-            in a variety of formats (CSV, Excel, etc.) for use in
-            third-party data analysis tools.
-        {% endblocktrans %}
-        {% endblock %}
-    </p>
     {% if has_edit_permissions %}
     <p ng-show="!_.isEmpty(exports) || !hasLoaded">
         <a href="#createExportOptionsModal"
@@ -61,22 +52,22 @@
     <div class="panel panel-default">
         <div class="panel-heading">{{ my_export_type }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/my_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/my_exports_table.html' %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>
     <div class="panel panel-default">
         <div class="panel-heading">{{ shared_export_type }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/shared_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/shared_exports_table.html' %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>
@@ -84,11 +75,11 @@
     <div class="panel panel-default">
         <div class="panel-heading">{{ export_type_caps_plural }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/original_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/original_exports_table.html' %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>

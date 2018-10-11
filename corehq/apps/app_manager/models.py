@@ -99,7 +99,7 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -811,6 +811,15 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
+class CustomAssertion(DocumentSchema):
+    """Custom assertions to add to the assertions block
+    test: The actual assertion to run
+    locale_id: The id of the localizable string
+    """
+    test = StringProperty(required=True)
+    text = DictProperty(StringProperty)
+
+
 class CustomInstance(DocumentSchema):
     """Custom instances to add to the instance block
     instance_id: 	The ID of the instance
@@ -939,6 +948,7 @@ class FormBase(DocumentSchema):
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
+    custom_assertions = SchemaListProperty(CustomAssertion)
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
     is_release_notes_form = BooleanProperty(default=False)
@@ -6570,6 +6580,11 @@ class LinkedApplication(Application):
     linked_app_translations = DictProperty()  # corresponding property: translations
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
 
+    # if `uses_master_app_form_ids` is True, the form id might match the master's form id
+    # from a bug years ago. These should be fixed when mobile can handle the change
+    # https://manage.dimagi.com/default.asp?283410
+    uses_master_app_form_ids = BooleanProperty(default=False)
+
     @property
     @memoized
     def domain_link(self):
@@ -6594,6 +6609,9 @@ class LinkedApplication(Application):
     def reapply_overrides(self):
         self.translations.update(self.linked_app_translations)
         self.logo_refs.update(self.linked_app_logo_refs)
+        for key, ref in self.logo_refs.items():
+            mm = CommCareMultimedia.get(ref['m_id'])
+            self.create_mapping(mm, ref['path'], save=False)
         self.save()
 
 

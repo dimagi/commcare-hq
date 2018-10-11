@@ -525,7 +525,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def report_columns(self):
-        return [ReportColumnFactory.from_spec(c) for c in self.columns]
+        return [ReportColumnFactory.from_spec(c, self.is_static) for c in self.columns]
 
     @property
     @memoized
@@ -948,7 +948,7 @@ class AsyncIndicator(models.Model):
         # configs_by_docs should be a dict of doc_id -> list of config_ids
         if not configs_by_docs:
             return
-        doc_ids = configs_by_docs.keys()
+        doc_ids = list(configs_by_docs.keys())
 
         current_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
         to_update = []
@@ -1040,6 +1040,8 @@ def report_config_id_is_static(config_id):
     Return True if the given report configuration id refers to a static report
     configuration.
     """
+    if config_id is None:
+        return False
     return any(
         config_id.startswith(prefix)
         for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]

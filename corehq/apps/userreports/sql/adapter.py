@@ -63,7 +63,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             partition = install(
                 'partition', type='range', subtype=config.subtype,
                 constraint=config.constraint, column=config.column, db=self.engine.url,
-                orm='sqlalchemy'
+                orm='sqlalchemy', return_null=True
             )
             mapping = self.get_sqlalchemy_mapping()
             partition(mapping)

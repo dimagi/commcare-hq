@@ -21,35 +21,34 @@
     {% crispy criteria_form criteria_form.case_type_helper %}
     <div data-bind="template: {name: get_ko_template_id, foreach: criteria, afterRender:disableCriteriaField}"></div>
     <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
-        <div class="alert alert-block alert-danger" data-bind="visible: show_add_filter_warning() && selected_case_filter_id() !== 'select-one'">
-            <span class="help-block"><strong>{% trans "Please click Add filter or clear the dropdown" %}</strong></span>
-        </div>
-        <div class="col-xs-3 col-xs-offset-3">
-            <select class="select form-control" data-bind="value: selected_case_filter_id">
-                <option value="select-one">{% trans "(Select one and click Add filter)" %}</option>
-                {% if form.allow_case_modified_filter %}
-                <option value="case-modified-filter">{% trans "Case not modified since" %}</option>
-                {% endif %}
-                {% if form.allow_case_property_filter %}
-                <option value="case-property-filter">{% trans "Case property" %}</option>
-                {% endif %}
-                {% if form.allow_date_case_property_filter %}
-                <option value="date-case-property-filter">{% trans "Date case property" %}</option>
-                <option value="advanced-date-case-property-filter">{% trans "Date case property (advanced)" %}</option>
-                {% endif %}
-                {% if form.allow_parent_case_references %}
-                <option value="parent-closed-filter">{% trans "Parent case is closed" %}</option>
-                {% endif %}
-                {% if form.is_system_admin %}
-                <option value="custom-filter">{% trans "Custom filter" %}</option>
-                {% endif %}
-            </select>
-        </div>
-        <div class="col-xs-2">
-            <button class="btn btn-success" data-bind="click: add_filter">
-                <i class="fa fa-plus"></i>
-                {% trans "Add filter" %}
-            </button>
+        <div class="col-xs-5 col-xs-offset-3">
+            <div class="btn-group">
+                <button class="btn btn-default" type="button" data-toggle="dropdown">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Select a filter" %}
+                </button>
+                <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    {% if form.allow_case_modified_filter %}
+                    <li data-bind="click: function() { add_filter('case-modified-filter'); }"><a>{% trans "Case not modified since" %}</a></li>
+                    {% endif %}
+                    {% if form.allow_case_property_filter %}
+                    <li data-bind="click: function() { add_filter('case-property-filter'); }"><a>{% trans "Case property" %}</a></li>
+                    {% endif %}
+                    {% if form.allow_date_case_property_filter %}
+                    <li data-bind="click: function() { add_filter('date-case-property-filter'); }"><a>{% trans "Date case property" %}</a></li>
+                    <li data-bind="click: function() { add_filter('advanced-date-case-property-filter'); }"><a>{% trans "Date case property (advanced)" %}</a></li>
+                    {% endif %}
+                    {% if form.allow_parent_case_references %}
+                    <li data-bind="click: function() { add_filter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
+                    {% endif %}
+                    {% if form.is_system_admin %}
+                    <li data-bind="click: function() { add_filter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </div>
 </script>
