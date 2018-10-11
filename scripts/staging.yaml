@@ -63,7 +63,8 @@ branches:
   - pv/deac-users-fixes # Preethi Sept 28
   - rn_fix_show_side_nav_bar # rohit Oct 1 
   - jls/data-corrections-select2s  # Jenny Oct 4
-  - np/missing  # Nick P Oct 10
+#  - np/missing  # Nick P Oct 10
+  - revert-22036-np/missing-not_started #  Nick P Oct 11
 submodules:
   submodules/django-digest-src:
     branches: []
