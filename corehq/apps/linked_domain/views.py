@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 from datetime import datetime
 
 from django.db.models.expressions import RawSQL
-from django.forms import model_to_dict
 from django.http import JsonResponse, Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext
