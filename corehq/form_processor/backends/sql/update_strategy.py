@@ -308,7 +308,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def reconcile_transactions_if_necessary(self):
         if self.case.check_transaction_order():
             return False
-        datadog_counter("form_processor.sql.reconciling_transactions")
+        datadog_counter("commcare.form_processor.sql.reconciling_transactions")
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
