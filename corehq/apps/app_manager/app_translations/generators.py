@@ -174,8 +174,10 @@ class AppTranslationsGenerator:
         valid_rows = []
         for i, row in enumerate(rows):
             question_label = row[label_index]
-            if not any('SKIP TRANSIFEX' in comment for comment in form_labels_to_comments[question_label]):
-                valid_rows = rows
+            if question_label in form_labels_to_comments:
+                if any('SKIP TRANSIFEX' in comment for comment in form_labels_to_comments[question_label]):
+                    continue
+            valid_rows.append(row)
         return valid_rows
 
     def _get_translation_for_sheet(self, app, sheet_name, rows):
