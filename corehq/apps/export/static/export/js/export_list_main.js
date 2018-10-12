@@ -32,7 +32,17 @@ hqDefine("export/js/export_list_main", function () {
         hqImport("hqwebapp/js/assert_properties").assert(options, ['exports']);
 
         var self = {};
+
         self.exports = options.exports;
+
+        self.selectAll = function() {
+            console.log("selectAll");
+        };
+
+        self.selectNone = function() {
+            console.log("selectNone");
+        };
+
         return self;
     };
 
