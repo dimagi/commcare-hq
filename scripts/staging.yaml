@@ -61,7 +61,7 @@ branches:
   - pv/no-filter-reports # Preethi Sept 28
   - pv/deac-users-fixes # Preethi Sept 28
   - rn_fix_show_side_nav_bar # rohit Oct 1 
-  - jls/data-corrections-select2s  # Jenny Oct 4
+#  - jls/data-corrections-select2s  # Jenny Oct 4
   - jls/migrate-select2-scheduled-reports  # Jenny Oct 11
   - np/missing  # Nick P Oct 10
 #  - revert-22036-np/missing-not_started #  Nick P Oct 11
