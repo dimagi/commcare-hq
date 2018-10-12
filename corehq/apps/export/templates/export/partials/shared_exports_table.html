@@ -65,29 +65,3 @@
                 </a>
                 {% endif %}
             </td>
-            <td ng-show="export.emailedExport">
-                {% angularjs %}
-                <a class="btn btn-default"
-                        ng-disabled="export.emailedExport.savingAutoRebuildChange"
-                        data-toggle="modal"
-                        data-target="#modalEnableDisableAutoRefresh-{{ export.id }}-{{ export.emailedExport.groupId }}">
-                    <span ng-show="!export.isAutoRebuildEnabled">{% trans "Enable" %}</span>
-                    <span ng-show="export.isAutoRebuildEnabled">{% trans "Disable" %}</span>
-                </a>
-                {% endangularjs %}
-            </td>
-            {% if allow_bulk_export %}
-            {% angularjs %}
-            <td>
-                <div class="checkbox checkbox-table-cell">
-                    <label>
-                        <input type="checkbox"
-                               class="bulk-checkbox"
-                               ng-model="export.addedToBulk"
-                               ng-change="updateBulkStatus()"
-                               id="add-to-bulk-{{ export.id }}" />
-                    </label>
-                </div>
-            </td>
-            {% endangularjs %}
-            {% endif %}
