@@ -12,6 +12,49 @@
 {% endcomment %}
 
 <table class="table table-striped" ng-show="!_.isEmpty(exports)">
+    <thead>
+        <tr>
+            <th class="col-sm-4">{% trans 'Name' %}</th>
+            {% if model_type == "case" %}
+            <th class="col-sm-2">{% trans 'Case Type' %}</th>
+            {% endif %}
+            {% if has_edit_permissions %}
+            <th class="col-sm-1">
+                {% if is_daily_saved_export %}
+                    {% trans "Edit Columns" %}
+                {% else %}
+                    {% trans 'Edit' %}
+                {% endif %}
+            </th>
+            <th class="col-sm-1">{% trans 'Copy' %}</th>
+            {% endif %}
+            <th class="col-sm-1">
+                {% if is_daily_saved_export %}
+                    {% if has_edit_permissions %}
+                        {% trans "Edit Filters" %}
+                    {% endif %}
+                {% else %}
+                    {{ export_type_caps }}
+                {% endif %}
+            </th>
+            {% if is_daily_saved_export %}
+            <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
+            {% endif %}
+            {%  if allow_bulk_export %}
+            <th class="col-sm-3">
+                {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
+                <button type="button"
+                        class="btn btn-xs btn-default"
+                        ng-click="selectAll()">
+                    {% trans 'All' %}
+                </button> {% trans 'or' %}
+                <button type="button"
+                        class="btn btn-xs btn-default"
+                        ng-click="selectNone()">
+                    {% trans 'None' %}
+                </button>
+            </th>
+            {% endif %}
 {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
     {% if MY_EXPORTS %}
         {% include 'export/partials/my_exports_table.html' %}
