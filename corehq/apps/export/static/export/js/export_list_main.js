@@ -39,7 +39,7 @@ hqDefine("export/js/export_list_main", function () {
         var self = ko.mapping.fromJS(options, mapping);
 
         self.isLocationSafeForUser = function () {
-            return !self.emailedExport || self.emailedExport.isLocationSafeForUser;
+            return _.isEmpty(self.emailedExport) || self.emailedExport.isLocationSafeForUser;
         };
 
         return self;
