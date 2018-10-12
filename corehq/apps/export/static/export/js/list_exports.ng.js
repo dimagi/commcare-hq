@@ -79,9 +79,6 @@
             clipboard.onClick($event);
             clipboard.destroy();
         };
-        $scope.sendExportAnalytics = function () {
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
-        };
 
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
@@ -114,10 +111,6 @@
                         component.savingAutoRebuildChange = false;
                     }
                 });
-        };
-        $scope.setFilterModalExport = function (export_) {
-            // The filterModalExport is used as context for the FeedFilterFormController
-            $rootScope.filterModalExport = export_;
         };
 
         trackExportPageEnter();
