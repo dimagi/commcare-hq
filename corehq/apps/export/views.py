@@ -205,8 +205,14 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     http_method_names = ['get', 'post']
     show_date_range = False
     check_for_multimedia = False
+    # Form used for rendering filters
     filter_form_class = None
     sms_export = False
+    # To serve filters for export from mobile_user_and_group_slugs
+    export_filter_class = None
+    mobile_user_and_group_slugs_regex = re.compile(
+        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
+    )
 
     @use_daterangepicker
     @use_select2
@@ -266,7 +272,10 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                 ),
                 'show_no_submissions_warning': True,
             })
-
+        if self.export_filter_class:
+            context['dynamic_filters'] = self.export_filter_class(
+                self.request, self.request.domain
+            ).render()
         return context
 
     @property
@@ -385,15 +394,15 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         return context
 
     def _get_download_task(self, in_data):
-        export_filter, export_specs = self._process_filters_and_specs(in_data)
-        if len(export_specs) > 1:
-            download = self._get_bulk_download_task(export_specs, export_filter)
-        else:
-            max_column_size = int(in_data.get('max_column_size', 2000))
-            download = self._get_single_export_download_task(
-                export_specs[0], export_filter, max_column_size
-            )
-        return download
+        export_filters, export_specs = self._process_filters_and_specs(in_data)
+        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+        self._check_deid_permissions(export_instances)
+        self._check_export_size(export_instances, export_filters)
+        return get_export_download(
+            export_instances=export_instances,
+            filters=export_filters,
+            filename=self._get_filename(export_instances)
+        )
 
     def _get_and_rebuild_export_schema(self, export_id):
         # TODO
@@ -446,8 +455,11 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         """Returns a the export filters and a list of JSON export specs
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(
+            filter_form_data[ExpandedMobileWorkerFilter.slug]
+        )
         try:
-            export_filter = self.get_filters(filter_form_data)
+            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
         except ExportFormValidationException:
             raise ExportAsyncException(
                 _("Form did not validate.")
@@ -490,6 +502,46 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         return format_angular_success({
             'download_id': download.download_id,
         })
+
+    def _get_filename(self, export_instances):
+        if len(export_instances) > 1:
+            return "{}_custom_bulk_export_{}".format(
+                self.domain,
+                date.today().isoformat()
+            )
+        else:
+            return "{} {}".format(
+                export_instances[0].name,
+                date.today().isoformat()
+            )
+
+    def _check_deid_permissions(self, export_instances):
+        # if any export is de-identified, check that
+        # the requesting domain has access to the deid feature.
+        if not self.permissions.has_deid_view_permissions:
+            for instance in export_instances:
+                if instance.is_deidentified:
+                    raise ExportAsyncException(
+                        _("You do not have permission to export this "
+                        "De-Identified export.")
+                    )
+
+    def _check_export_size(self, export_instances, filters):
+        count = 0
+        for instance in export_instances:
+            count += get_export_size(instance, filters)
+        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
+            raise ExportAsyncException(
+                _("This export contains %(row_count)s rows. Please change the "
+                  "filters to be less than %(max_rows)s rows.") % {
+                    'row_count': count,
+                    'max_rows': MAX_EXPORTABLE_ROWS
+                }
+            )
+
+    def _get_mobile_user_and_group_slugs(self, filter_slug):
+        matches = self.mobile_user_and_group_slugs_regex.findall(filter_slug)
+        return [n[1] for n in matches]
 
 
 class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
@@ -1704,99 +1756,8 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
             raise Exception("Export does not match any export list views!")
 
 
-class GenericDownloadNewExportMixin(object):
-    """
-    Supporting class for new style export download views
-    """
-    # Form used for rendering filters
-    filter_form_class = None
-    # To serve filters for export from mobile_user_and_group_slugs
-    export_filter_class = None
-    mobile_user_and_group_slugs_regex = re.compile(
-        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
-    )
-
-    def _get_download_task(self, in_data):
-        export_filters, export_specs = self._process_filters_and_specs(in_data)
-        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
-        self._check_deid_permissions(export_instances)
-        self._check_export_size(export_instances, export_filters)
-        return get_export_download(
-            export_instances=export_instances,
-            filters=export_filters,
-            filename=self._get_filename(export_instances)
-        )
-
-    def _get_filename(self, export_instances):
-        if len(export_instances) > 1:
-            return "{}_custom_bulk_export_{}".format(
-                self.domain,
-                date.today().isoformat()
-            )
-        else:
-            return "{} {}".format(
-                export_instances[0].name,
-                date.today().isoformat()
-            )
-
-    def _check_deid_permissions(self, export_instances):
-        # if any export is de-identified, check that
-        # the requesting domain has access to the deid feature.
-        if not self.permissions.has_deid_view_permissions:
-            for instance in export_instances:
-                if instance.is_deidentified:
-                    raise ExportAsyncException(
-                        _("You do not have permission to export this "
-                        "De-Identified export.")
-                    )
-
-    def _check_export_size(self, export_instances, filters):
-        count = 0
-        for instance in export_instances:
-            count += get_export_size(instance, filters)
-        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
-            raise ExportAsyncException(
-                _("This export contains %(row_count)s rows. Please change the "
-                  "filters to be less than %(max_rows)s rows.") % {
-                    'row_count': count,
-                    'max_rows': MAX_EXPORTABLE_ROWS
-                }
-            )
-
-    @property
-    def page_context(self):
-        parent_context = super(GenericDownloadNewExportMixin, self).page_context
-        if self.export_filter_class:
-            parent_context['dynamic_filters'] = self.export_filter_class(
-                self.request, self.request.domain
-            ).render()
-        return parent_context
-
-    def _get_mobile_user_and_group_slugs(self, filter_slug):
-        matches = self.mobile_user_and_group_slugs_regex.findall(filter_slug)
-        return [n[1] for n in matches]
-
-    def _process_filters_and_specs(self, in_data):
-        """
-        Returns a the export filters and a list of JSON export specs
-        Override to hook fetching mobile_user_and_group_slugs
-        """
-        filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(
-            filter_form_data[ExpandedMobileWorkerFilter.slug]
-        )
-        try:
-            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
-        except ExportFormValidationException:
-            raise ExportAsyncException(
-                _("Form did not validate.")
-            )
-
-        return export_filter, export_specs
-
-
 @location_safe
-class DownloadNewFormExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
+class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
     export_filter_class = SubmitHistoryFilter
@@ -1934,7 +1895,7 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
 
 
 @location_safe
-class DownloadNewCaseExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
+class DownloadNewCaseExportView(BaseDownloadExportView):
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
     export_filter_class = CaseListFilter
@@ -2000,7 +1961,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, BaseDownloadExpor
         return prepare_custom_export
 
 
-class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
+class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
     page_title = ugettext_noop("Export SMS Messages")
     form_or_case = None
