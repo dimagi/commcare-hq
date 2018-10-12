@@ -94,54 +94,60 @@
                         to re-enable automatic updates.
                     {% endblocktrans %}
                 </p>
-<!--
-
                 <div class="alert alert-neutral alert-small"
-                     ng-show="export.emailedExport && isLocationSafeForUser(export)">
+                     data-bind="visible: !_.isEmpty(emailedExport) && isLocationSafeForUser()">
                     <div class="h5">
-                        <span ng-if="export.emailedExport.hasFile">
-                            <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
+                        <span data-bind="if: emailedExport.hasFile()">
+                            <strong>{% trans "Size:" %}</strong>
+                            <span data-bind="text: emailedExport.fileData.size()"></span>
+                            &nbsp;&nbsp;&nbsp;
                             <strong>{% trans "Last Updated:" %}</strong>
-                            <span ng-if="!export.emailedExport.taskStatus.justFinished">
-                                {{ export.emailedExport.fileData.lastUpdated }}&nbsp;&nbsp;&nbsp;
+                            <span data-bind="if: !emailedExport.taskStatus.justFinished()">
+                                <span data-bind="text: emailedExport.fileData.lastUpdated()"></span>
+                                &nbsp;&nbsp;&nbsp;
                             </span>
-                            <span ng-if="export.emailedExport.taskStatus.justFinished">
+                            <span data-bind="if: emailedExport.taskStatus.justFinished()">
                                 {% trans "Just now" %}&nbsp;&nbsp;&nbsp;
                             </span>
-                            <strong>{% trans "Last Downloaded:" %}</strong> {{ export.emailedExport.fileData.lastAccessed }}
+                            <strong>{% trans "Last Downloaded:" %}</strong>
+                            <span data-bind="text: emailedExport.fileData.lastAccessed()"></span>
                         </span>
                         &nbsp;&nbsp;
-                        <div ng-if="isLocationSafeForUser(export)">
+                        <div data-bind="if: isLocationSafeForUser">
                             <button type="button"
                                     class="btn btn-default btn-xs"
-                                    ng-show="!(export.emailedExport.updatingData || export.emailedExport.taskStatus.inProgress)"
-                                    data-toggle="modal"
-                                    data-target="#modalRefreshExportConfirm-{{ export.id }}-{{ export.emailedExport.groupId }}">
+                                    data-bind="
+                                        visible: !(emailedExport.updatingData || emailedExport.taskStatus.inProgress),
+                                        attr: {'data-target': '#modalRefreshExportConfirm-' + id + '-' + emailedExport.groupId}
+                                    "
+                                    data-toggle="modal">
                                 <i class="fa fa-refresh"></i>
                                 {% trans "Update Data" %}
                             </button>
                             <button type="button"
                                     class="btn btn-default btn-xs btn-disabled"
-                                    ng-show="export.emailedExport.updatingData"
+                                    data-bind="visible: emailedExport.updatingData()"
                                     disabled="disabled">
                                 <i class="fa fa-refresh fa-spin"></i>
                                 {% trans "Updating Data, please wait..." %}
                             </button>
-                            <div ng-if="export.emailedExport.taskStatus.inProgress">
+                            <div data-bind="if: emailedExport.taskStatus.inProgress">
                                 <div class="progress">
                                     <div class="progress-bar progress-bar-striped active"
                                          role="progressbar"
                                          aria-valuemin="0"
                                          aria-valuemax="100"
-                                         aria-valuenow="{{ export.emailedExport.taskStatus.percentComplete }}"
-                                         style="width:{{ export.emailedExport.taskStatus.percentComplete }}%">
+                                         data-bind="attr: {
+                                            'aria-valuenow': emailedExport.taskStatus.percentComplete(),
+                                            'style': 'width: ' + emailedExport.taskStatus.percentComplete(),
+                                         }">
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="h5" ng-if="export.emailedExport.hasFile && isLocationSafeForUser(export)">
+                    <!--div class="h5" ng-if="export.emailedExport.hasFile && isLocationSafeForUser(export)">
 
                         <a href="{{ export.emailedExport.fileData.downloadUrl }}"
                            ng-click="downloadRequested($event)"
@@ -274,9 +280,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div-->
                 </div>
--->
             </td>
 
             {% if model_type == "case" %}
