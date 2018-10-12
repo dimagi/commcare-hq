@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from django import forms
 from django.forms import fields
 from django.core.validators import validate_email
-from .widgets import AutocompleteTextarea
 
 
 class CSVListField(fields.CharField):
@@ -25,20 +24,14 @@ class CSVListField(fields.CharField):
 class MultiCharField(forms.Field):
     """
     A text field that expects a comma-separated list of inputs, and by default
-    uses the AutocompleteTextarea widget, which uses a jQuery plugin to provide
-    autocompletion (depends on Bootstrap) based on the 'choices' constructor
-    argument.
-
+    uses select2 widget that allows for multiple selections and accepts free text.
     """
-    widget = AutocompleteTextarea
+    widget = forms.SelectMultiple(attrs={'class': 'hqwebapp-autocomplete form-control'})
 
     def __init__(self, initial=None, choices=(), *args, **kwargs):
         """
         choices - a list of choices to use as a source for autocompletion
-
         """
-        if initial:
-            initial = ', '.join(initial)
         super(MultiCharField, self).__init__(initial=initial, *args, **kwargs)
 
         self.choices = choices
@@ -47,15 +40,16 @@ class MultiCharField(forms.Field):
         return self._choices
 
     def _set_choices(self, value):
-        self._choices = self.widget.choices = value
-    
+        self._choices = value
+        self.widget.choices = value
+
     choices = property(_get_choices, _set_choices)
 
     def to_python(self, value):
         if not value:
             return []
 
-        return [val.strip() for val in value.split(',') if val.strip()]
+        return value
 
     def run_validators(self, value):
         for val in value:
