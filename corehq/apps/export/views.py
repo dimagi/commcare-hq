@@ -93,7 +93,6 @@ from corehq.apps.export.dbaccessors import (
     get_form_exports_by_domain,
 )
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
@@ -402,37 +401,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             export_instances=export_instances,
             filters=export_filters,
             filename=self._get_filename(export_instances)
-        )
-
-    def _get_and_rebuild_export_schema(self, export_id):
-        # TODO
-        raise Exception("this must be failing if it's ever called...")
-
-    def _get_bulk_download_task(self, export_specs, export_filter):
-        for export_spec in export_specs:
-            export_id = export_spec['export_id']
-            self._get_and_rebuild_export_schema(export_id)
-        export_helper = CustomBulkExportHelper(domain=self.domain)
-        return export_helper.get_download_task(export_specs, export_filter)
-
-    def _get_single_export_download_task(self, export_spec, export_filter, max_column_size=2000):
-        export_id = export_spec['export_id']
-        export_object = self._get_and_rebuild_export_schema(export_id)
-
-        # if the export is de-identified (is_safe), check that
-        # the requesting domain has access to the deid feature.
-        if export_object.is_safe and not self.permissions.has_deid_view_permissions:
-            raise ExportAsyncException(
-                _("You do not have permission to export this "
-                  "De-Identified export.")
-            )
-
-        return export_object.get_download_task(
-            filter=export_filter,
-            filename="{}{}".format(export_object.name,
-                                   date.today().isoformat()),
-            previous_export_id=None,
-            max_column_size=max_column_size,
         )
 
     @staticmethod
