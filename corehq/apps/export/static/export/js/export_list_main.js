@@ -30,6 +30,7 @@ hqDefine("export/js/export_list_main", function () {
     /* Knockout */
     var exportModel = function(options) {
         options.isAutoRebuildEnabled = options.isAutoRebuildEnabled || false;
+        options.isDailySaved = options.isDailySaved || false;
         options.emailedExport = options.emailedExport || {};
 
         var mapping = {
@@ -52,6 +53,17 @@ hqDefine("export/js/export_list_main", function () {
         self.exports = _.map(options.exports, function (e) { return exportModel(e); });
         self.myExports = _.filter(self.exports, function (e) { return !!e.my_export; });
         self.notMyExports = _.filter(self.exports, function (e) { return !e.my_export; });
+
+        self.sendExportAnalytics = function () {
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
+            return true;
+        };
+
+        self.setFilterModalExport = function (e) {
+            // TODO: test, since this comment isn't going to be true anymore
+            // The filterModalExport is used as context for the FeedFilterFormController
+            self.filterModalExport = e;
+        };
 
         // Bulk export handling
         self.selectAll = function() {

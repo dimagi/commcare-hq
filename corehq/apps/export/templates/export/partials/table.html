@@ -350,28 +350,22 @@
             </td>
             {% endif %}
 
-            <!-- TODO -->
-            <!--td>
-                <a href="{% angularjs %}{{ export.downloadUrl }}{% endangularjs %}"
-                   ng-show="!export.isDailySaved"
-                   class="btn btn-primary"
-                   ng-click="sendExportAnalytics()"
-                >
+            <td>
+                <a data-bind="attr: {href: downloadUrl}, visible: !isDailySaved(), click: $root.sendExportAnalytics"
+                   class="btn btn-primary">
                     {{ export_type_caps }}
                 </a>
                 {% if has_edit_permissions %}
                 <a class="btn btn-default"
-                   ng-show="export.isDailySaved"
+                   data-bind="visible: isDailySaved() && isLocationSafeForUser(), click: $root.setFilterModalExport"
                    href="#setFeedFiltersModal"
                    data-toggle="modal"
-                   ng-click="setFilterModalExport(export)"
-                   ng-if="isLocationSafeForUser(export)"
                 >
                     <i class="fa fa-filter"></i>
                     {% trans "Edit Filters" %}
                 </a>
                 {% endif %}
-            </td-->
+            </td>
             <td data-bind="visible: !_.isEmpty(emailedExport)">
                 <a class="btn btn-default"
                         data-bind="attr: {disabled: emailedExport.savingAutoRebuildChange}"
