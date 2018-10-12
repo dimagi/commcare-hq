@@ -340,16 +340,14 @@
                     </div>
                 {% endif %}
             </td-->
-
-            <!-- TODO -->
-            <!--td>
-                <div ng-if="isLocationSafeForUser(export)">
-                    <a href="{% angularjs %}{{ export.copyUrl }}{% endangularjs %}" class="btn btn-default">
+            <td>
+                <div data-bind="if: isLocationSafeForUser()">
+                    <a data-bind="attr: {href: copyUrl}" class="btn btn-default">
                         <i class="fa fa-copy"></i>
                         <span>{% trans 'Copy' %}</span>
                     </a>
                 </div>
-            </td-->
+            </td>
             {% endif %}
 
             <!-- TODO -->
