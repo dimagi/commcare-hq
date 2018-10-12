@@ -1,0 +1,24 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+{% load humanize %}
+
+{% comment %}
+    This template renders a table of exports, with three slight variations.
+    If the EXPORT_OWNERSHIP flag is off, it displays the standard "Exports" table.
+    If the EXPORT_OWNERSHIP flag is on, it accepts a MY_EXPORTS boolean that determines
+    whether to show the "My Exports" table or the "Exports Shared with Me" table.
+{% endcomment %}
+
+<table class="table table-striped" ng-show="!_.isEmpty(exports)">
+{% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+    {% if MY_EXPORTS %}
+        {% include 'export/partials/my_exports_table.html' %}
+    {% else %}
+        {% include 'export/partials/shared_exports_table.html' %}
+    {% endif %}
+{% else %}
+    {% include 'export/partials/original_exports_table.html' %}
+{% endif %}
+</table>
