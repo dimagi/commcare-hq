@@ -66,7 +66,7 @@ class AppTranslationsGenerator:
 
             for form in module['forms']:
                 for question in form['questions']:
-                    if question['comment']:
+                    if question['comment'] and 'label_ref' in question:
                         form_dict[question['label_ref']].append(question['comment'])
                 labels_to_comments[form['id']] = form_dict
 
