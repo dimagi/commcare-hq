@@ -95,8 +95,7 @@ from corehq.apps.export.dbaccessors import (
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
-from corehq.apps.reports.models import CaseExportSchema, \
-    HQGroupExportConfiguration
+from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.hqwebapp.decorators import (
@@ -618,41 +617,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             'taskStatus': self._get_task_status_json(export._id),
         }
 
-    def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
-                                has_file=False, saved_basic_export=None, is_safe=False):
-        """
-        Return a dictionary containing details about an emailed export.
-        This will eventually be passed to an Angular controller.
-        """
-        file_data = {}
-        if has_file:
-            if is_safe:
-                saved_download_url = 'hq_deid_download_saved_export'
-            else:
-                saved_download_url = 'hq_download_saved_export'
-
-            file_data = self._fmt_emailed_export_fileData(
-                has_file,
-                saved_basic_export.get_id,
-                saved_basic_export.size,
-                saved_basic_export.last_updated,
-                saved_basic_export.last_accessed,
-                '{}?group_export_id={}'.format(
-                    reverse(saved_download_url, args=[
-                        self.domain, saved_basic_export.get_id
-                    ]),
-                    group_id
-                )
-            )
-
-        return {
-            'groupId': group_id,  # This can be removed when we're off legacy exports
-            'hasFile': has_file,
-            'index': index,  # This can be removed when we're off legacy exports
-            'fileData': file_data,
-            'isLocationSafeForUser': self.request.can_access_all_locations,
-        }
-
     def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
                                      last_accessed, download_url):
         """
@@ -671,23 +635,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             ),
             'downloadUrl': download_url,
         }
-
-    def get_formatted_emailed_export(self, export):
-
-        emailed_exports = [x for x in self.daily_emailed_exports if x.config.index[-1] == export.get_id]
-
-        if not emailed_exports:
-            return None
-        assert len(emailed_exports) == 1
-        emailed_export = emailed_exports[0]
-
-        return self.fmt_legacy_emailed_export_data(
-            group_id=emailed_export.group_id,
-            index=emailed_export.config.index,
-            has_file=emailed_export.saved_version is not None and emailed_export.saved_version.has_file(),
-            saved_basic_export=emailed_export.saved_version,
-            is_safe=export.is_safe,
-        )
 
     def get_exports_list(self):
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
@@ -1302,37 +1249,24 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
-        if isinstance(export, CaseExportSchema):
-            emailed_export = self.get_formatted_emailed_export(export)
-            can_edit = True
-            description = ''
-            my_export = None
-            sharing = None
-            owner_username = UNKNOWN_EXPORT_OWNER
-        else:
-            # New export
-            emailed_export = None
-            if export.is_daily_saved_export:
-                emailed_export = self._get_daily_saved_export_metadata(export)
-            can_edit = export.can_edit(self.request.couch_user)
-            description = export.description
-            my_export = export.owner_id == self.request.couch_user.user_id
-            sharing = export.sharing
-            owner_username = (
-                WebUser.get_by_user_id(export.owner_id).username
-                if export.owner_id else UNKNOWN_EXPORT_OWNER
-            )
+        emailed_export = None
+        if export.is_daily_saved_export:
+            emailed_export = self._get_daily_saved_export_metadata(export)
+        owner_username = (
+            WebUser.get_by_user_id(export.owner_id).username
+            if export.owner_id else UNKNOWN_EXPORT_OWNER
+        )
 
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
             'name': export.name,
             'case_type': export.case_type,
-            'description': description,
-            'my_export': my_export,
-            'sharing': sharing,
+            'description': export.description,
+            'my_export': export.owner_id == self.request.couch_user.user_id,
+            'sharing': export.sharing,
             'owner_username': owner_username,
-            'can_edit': can_edit,
+            'can_edit': export.can_edit(self.request.couch_user),
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
@@ -2014,13 +1948,6 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, BaseDownloadExpor
     export_filter_class = CaseListFilter
     page_title = ugettext_noop("Download Case Data Export")
     form_or_case = 'case'
-
-    @staticmethod
-    def get_export_schema(domain, export_id):
-        doc = get_document_or_404_lite(CaseExportSchema, export_id)
-        if doc.index[0] == domain:
-            return doc
-        raise Http404(_("Export not found"))
 
     @property
     def export_list_url(self):
