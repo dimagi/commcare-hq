@@ -64,6 +64,16 @@
             {% endif %}
         </tr>
     </thead>
+    <tbody>
+    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+        {% if MY_EXPORTS %}
+            <tr ng-repeat="export in myExports">
+        {% else %}
+            <tr ng-repeat="export in notMyExports">
+        {% endif %}
+    {% else %}
+        <tr ng-repeat="export in exports">
+    {% endif %}
 {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
     {% if MY_EXPORTS %}
         {% include 'export/partials/my_exports_table.html' %}

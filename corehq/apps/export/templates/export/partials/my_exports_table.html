@@ -4,8 +4,6 @@
 {% load djangular_tags %}
 {% load humanize %}
 
-    <tbody>
-        <tr ng-repeat="export in myExports">
             <td>
                 {% angularjs %}
                 <h4 ng-class="{'text-muted': export.emailedExport && !export.isAutoRebuildEnabled}">
