@@ -11,7 +11,7 @@
     whether to show the "My Exports" table or the "Exports Shared with Me" table.
 {% endcomment %}
 
-<table class="table table-striped" ng-show="!_.isEmpty(exports)">
+<table class="table table-striped" data-bind="visible: exports.length">
     <thead>
         <tr>
             <th class="col-sm-4">{% trans 'Name' %}</th>
@@ -43,14 +43,10 @@
             {%  if allow_bulk_export %}
             <th class="col-sm-3">
                 {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
-                <button type="button"
-                        class="btn btn-xs btn-default"
-                        ng-click="selectAll()">
+                <button type="button" class="btn btn-xs btn-default" data-bind="click: selectAll">
                     {% trans 'All' %}
                 </button> {% trans 'or' %}
-                <button type="button"
-                        class="btn btn-xs btn-default"
-                        ng-click="selectNone()">
+                <button type="button" class="btn btn-xs btn-default" data-bind="click: selectNone">
                     {% trans 'None' %}
                 </button>
             </th>
@@ -64,7 +60,7 @@
             {% endif %}
         </tr>
     </thead>
-    <tbody>
+    <!--tbody>
     {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
         {% if MY_EXPORTS %}
             <tr ng-repeat="export in myExports">
@@ -434,5 +430,5 @@
             {% endif %}
         {% endif %}
         </tr>
-    </tbody>
+    </tbody-->
 </table>
