@@ -29,7 +29,15 @@ hqDefine("export/js/export_list_main", function () {
 
     /* Knockout */
     var exportModel = function(options) {
-        var self = ko.mapping.fromJS(options);
+        var mapping = {
+            'copy': ["emailedExport"]
+        };
+        var self = ko.mapping.fromJS(options, mapping);
+
+        self.isLocationSafeForUser = function () {
+            return !self.emailedExport || self.emailedExport.isLocationSafeForUser;
+        };
+
         return self;
     };
 
