@@ -297,7 +297,16 @@
                     </div>
                 </div>
             </td>
- 
+
+            {% if model_type == "case" %}
+            {% angularjs %}
+            <td>
+                <h4>
+                    {{ export.case_type }}
+                </h4>
+            </td>
+            {% endangularjs %}
+            {% endif %}
 
 {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
     {% if MY_EXPORTS %}

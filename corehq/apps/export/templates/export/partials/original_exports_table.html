@@ -4,16 +4,6 @@
 {% load djangular_tags %}
 {% load humanize %}
 
-            {% if model_type == "case" %}
-            {% angularjs %}
-            <td>
-                <h4>
-                    {{ export.case_type }}
-                </h4>
-            </td>
-            {% endangularjs %}
-            {% endif %}
-
             {% if has_edit_permissions %}
             {% angularjs %}
             <td>
