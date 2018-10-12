@@ -281,13 +281,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         """
         raise NotImplementedError("You must implement download_export_form.")
 
-    @staticmethod
-    def get_export_schema(domain, export_id):
-        doc = get_document_or_404_lite(SavedExportSchema, export_id)
-        if doc.index[0] == domain:
-            return doc
-        raise Http404(_("Export not found"))
-
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
@@ -325,7 +318,7 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         return exports
 
     def _get_export(self, domain, export_id):
-        return self.get_export_schema(self.domain, export_id)
+        raise NotImplementedError()
 
     @property
     def max_column_size(self):
@@ -403,9 +396,8 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         return download
 
     def _get_and_rebuild_export_schema(self, export_id):
-        export_object = self.get_export_schema(self.domain, export_id)
-        export_object.update_schema()
-        return export_object
+        # TODO
+        raise Exception("this must be failing if it's ever called...")
 
     def _get_bulk_download_task(self, export_specs, export_filter):
         for export_spec in export_specs:
@@ -2015,10 +2007,6 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
     filter_form_class = FilterSmsESExportDownloadForm
     export_id = None
     sms_export = True
-
-    @staticmethod
-    def get_export_schema(domain, include_metadata):
-        return SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
 
     @property
     def export_list_url(self):
