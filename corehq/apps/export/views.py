@@ -60,8 +60,6 @@ from corehq.apps.export.exceptions import (
     ExportAsyncException,
 )
 from corehq.apps.export.forms import (
-    FilterFormCouchExportDownloadForm,
-    FilterCaseCouchExportDownloadForm,
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
     FilterSmsESExportDownloadForm,
@@ -93,7 +91,6 @@ from corehq.apps.export.dbaccessors import (
     get_form_exports_by_domain,
 )
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
@@ -114,11 +111,9 @@ from corehq.apps.users.permissions import (
     has_permission_to_view_report,
 )
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.models import SavedExportSchema, Format
+from couchexport.models import Format
 from couchexport.util import SerializableFunction
-from couchforms.filters import instances
 from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
