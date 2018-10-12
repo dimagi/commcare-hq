@@ -91,16 +91,3 @@
             </td>
             {% endangularjs %}
             {% endif %}
-
-            {% angularjs %}
-            <td>
-                <div ng-if="export.owner_username == 'unknown'">
-                    <div class="label label-default">{% trans 'Unknown' %}</div>
-                </div>
-                <div ng-if="export.owner_username != 'unknown'">
-                    {{ export.owner_username }}
-                </div>
-            </td>
-            {% endangularjs %}
-        </tr>
-    </tbody>

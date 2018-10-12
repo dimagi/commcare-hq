@@ -308,4 +308,35 @@
 {% else %}
     {% include 'export/partials/original_exports_table.html' %}
 {% endif %}
+
+        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+            {% if MY_EXPORTS %}
+                {% angularjs %}
+                <td>
+                    <div ng-if="export.sharing == 'private'">
+                        {% trans 'Private' %}
+                    </div>
+                    <div ng-if="export.sharing == 'export_only'">
+                        {% trans 'Export Only' %}
+                    </div>
+                    <div ng-if="export.sharing == 'edit_and_export'">
+                        {% trans 'Edit & Export' %}
+                    </div>
+                </td>
+                {% endangularjs %}
+            {% else %}
+                {% angularjs %}
+                <td>
+                    <div ng-if="export.owner_username == 'unknown'">
+                        <div class="label label-default">{% trans 'Unknown' %}</div>
+                    </div>
+                    <div ng-if="export.owner_username != 'unknown'">
+                        {{ export.owner_username }}
+                    </div>
+                </td>
+                {% endangularjs %}
+            {% endif %}
+        {% endif %}
+        </tr>
+    </tbody>
 </table>

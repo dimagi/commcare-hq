@@ -23,7 +23,6 @@
                             <i class="fa fa-pencil"></i>
                             <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
                             <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
-
                         </a>
                     </div>
                 </div>
@@ -94,19 +93,3 @@
             </td>
             {% endangularjs %}
             {% endif %}
-
-            {% angularjs %}
-            <td>
-                <div ng-if="export.sharing == 'private'">
-                    {% trans 'Private' %}
-                </div>
-                <div ng-if="export.sharing == 'export_only'">
-                    {% trans 'Export Only' %}
-                </div>
-                <div ng-if="export.sharing == 'edit_and_export'">
-                    {% trans 'Edit & Export' %}
-                </div>
-            </td>
-            {% endangularjs %}
-        </tr>
-    </tbody>
