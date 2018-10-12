@@ -372,18 +372,15 @@
                 </a>
                 {% endif %}
             </td-->
-            <!-- TODO -->
-            <!--td ng-show="export.emailedExport">
-                {% angularjs %}
+            <td data-bind="visible: !_.isEmpty(emailedExport)">
                 <a class="btn btn-default"
-                        ng-disabled="export.emailedExport.savingAutoRebuildChange"
+                        data-bind="attr: {disabled: emailedExport.savingAutoRebuildChange}"
                         data-toggle="modal"
-                        data-target="#modalEnableDisableAutoRefresh-{{ export.id }}-{{ export.emailedExport.groupId }}">
-                    <span ng-show="!export.isAutoRebuildEnabled">{% trans "Enable" %}</span>
-                    <span ng-show="export.isAutoRebuildEnabled">{% trans "Disable" %}</span>
+                        data-target="#modalEnableDisableAutoRefresh-{{ id }}-{{ emailedExport.groupId }}">
+                    <span data-bind="visible: !isAutoRebuildEnabled()">{% trans "Enable" %}</span>
+                    <span data-bind="visible: isAutoRebuildEnabled()">{% trans "Disable" %}</span>
                 </a>
-                {% endangularjs %}
-            </td-->
+            </td>
             {% if allow_bulk_export %}
             <td>
                 <div class="checkbox checkbox-table-cell">
