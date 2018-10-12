@@ -45,12 +45,6 @@ class MultiCharField(forms.Field):
 
     choices = property(_get_choices, _set_choices)
 
-    def to_python(self, value):
-        if not value:
-            return []
-
-        return value
-
     def run_validators(self, value):
         for val in value:
             if val not in self.choices:
