@@ -28,8 +28,11 @@ hqDefine("export/js/export_list_main", function () {
     });
 
     /* Knockout */
-    var exportListModel = function() {
+    var exportListModel = function(options) {
+        hqImport("hqwebapp/js/assert_properties").assert(options, ['exports']);
+
         var self = {};
+        self.exports = options.exports;
         return self;
     };
 
@@ -51,6 +54,8 @@ hqDefine("export/js/export_list_main", function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
         });
 
-        $("#export-list").koApplyBindings(exportListModel());
+        $("#export-list").koApplyBindings(exportListModel({
+            exports: initialPageData.get("exports"),
+        }));
     });
 });
