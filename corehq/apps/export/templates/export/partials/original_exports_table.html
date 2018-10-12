@@ -35,23 +35,3 @@
 
             {% endangularjs %}
             {% endif %}
-            <td>
-                <a href="{% angularjs %}{{ export.downloadUrl }}{% endangularjs %}"
-                   ng-show="!export.isDailySaved"
-                   class="btn btn-primary"
-                   ng-click="sendExportAnalytics()"
-                >
-                    {{ export_type_caps }}
-                </a>
-                {% if has_edit_permissions %}
-                <a class="btn btn-default"
-                   ng-show="export.isDailySaved"
-                   href="#setFeedFiltersModal"
-                   data-toggle="modal"
-                   ng-click="setFilterModalExport(export)"
-                   ng-if="isLocationSafeForUser(export)"
-                >
-                    {% trans "Edit Filters" %}
-                </a>
-                {% endif %}
-            </td>
