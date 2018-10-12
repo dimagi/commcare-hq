@@ -302,44 +302,44 @@
 
             {% if has_edit_permissions %}
 
-            <!-- TODO -->
-            <!--td>
+            <td>
                 {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                    <div ng-if="export.can_edit">
-                        <div ng-if="isLocationSafeForUser(export)">
-                            <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
+                    <div data-bind="if: can_edit">
+                        <div data-bind="if: isLocationSafeForUser">
+                            <a data-bind="attr: {href: editUrl}" class="btn btn-default">
                                 <i class="fa fa-pencil"></i>
-                                <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
-                                <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+                                <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                                <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
                             </a>
                         </div>
                     </div>
-                    <div ng-if="!export.can_edit">
-                        <div ng-if="isLocationSafeForUser(export)">
+                    <div data-bind="if: !can_edit()">
+                        <div data-bind="if: isLocationSafeForUser">
                             {% if MY_EXPORTS %}
                                 <a class="btn btn-default disabled">
                                     <i class="fa fa-pencil"></i>
-                                    <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
-                                    <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+                                    <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                                    <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
                                 </a>
                             {% else %}
-                                <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
-                                    <span ng-show="!export.isDailySaved">{% trans 'View' %}</span>
-                                    <span ng-show="export.isDailySaved">{% trans 'View Columns' %}</span>
+                                <a data-bind="attr: {href: editUrl}" class="btn btn-default">
+                                    <span data-bind="visible: !isDailySaved()">{% trans 'View' %}</span>
+                                    <span data-bind="visible: isDailySaved()">{% trans 'View Columns' %}</span>
                                 </a>
                             {% endif %}
                         </div>
                     </div>
                 {% else %}
-                    <div ng-if="isLocationSafeForUser(export)">
-                        <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
+                    <div data-bind="if: isLocationSafeForUser">
+                        <a data-bind="attr: {href: editUrl}" class="btn btn-default">
                             <i class="fa fa-pencil"></i>
-                            <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
-                            <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+                            <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                            <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
                         </a>
                     </div>
                 {% endif %}
-            </td-->
+            </td>
+
             <td>
                 <div data-bind="if: isLocationSafeForUser()">
                     <a data-bind="attr: {href: copyUrl}" class="btn btn-default">
