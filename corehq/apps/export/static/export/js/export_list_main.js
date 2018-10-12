@@ -34,6 +34,8 @@ hqDefine("export/js/export_list_main", function () {
         var self = {};
 
         self.exports = options.exports;
+        self.myExports = _.filter(self.exports, function (e) { return !!e.my_export; });
+        self.notMyExports = _.filter(self.exports, function (e) { return !e.my_export; });
 
         self.selectAll = function() {
             console.log("selectAll");
