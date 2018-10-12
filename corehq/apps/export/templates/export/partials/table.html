@@ -311,51 +311,34 @@
             {% if has_edit_permissions %}
             {% angularjs %}
 
-            {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                {% if MY_EXPORTS %}
-                    <td>
-                        <div ng-if="export.can_edit">
-                            <div ng-if="isLocationSafeForUser(export)">
+            <td>
+                {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+                    <div ng-if="export.can_edit">
+                        <div ng-if="isLocationSafeForUser(export)">
                                 <a href="{{ export.editUrl }}" class="btn btn-default">
-                                    <i class="fa fa-pencil"></i>
-                                    <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
-                                    <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
-                                </a>
-                            </div>
+                                <i class="fa fa-pencil"></i>
+                                <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
+                                <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+                            </a>
                         </div>
-                        <div ng-if="!export.can_edit">
-                            <div ng-if="isLocationSafeForUser(export)">
+                    </div>
+                    <div ng-if="!export.can_edit">
+                        <div ng-if="isLocationSafeForUser(export)">
+                            {% if MY_EXPORTS %}
                                 <a class="btn btn-default disabled">
                                     <i class="fa fa-pencil"></i>
                                     <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
                                     <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
                                 </a>
-                            </div>
-                        </div>
-                    </td>
-                {% else %}
-                    <td>
-                        <div ng-if="export.can_edit">
-                            <div ng-if="isLocationSafeForUser(export)">
-                                <a href="{{ export.editUrl }}" class="btn btn-default">
-                                    <i class="fa fa-pencil"></i>
-                                    <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
-                                    <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
-                                </a>
-                            </div>
-                        </div>
-                        <div ng-if="!export.can_edit">
-                            <div ng-if="isLocationSafeForUser(export)">
+                            {% else %}
                                 <a href="{{ export.editUrl }}" class="btn btn-default">
                                     <span ng-show="!export.isDailySaved">{% trans 'View' %}</span>
                                     <span ng-show="export.isDailySaved">{% trans 'View Columns' %}</span>
                                 </a>
-                            </div>
+                            {% endif %}
                         </div>
-                    </td>
-                {% endif %}
-            {% else %}
-                <td>
+                    </div>
+                {% else %}
                     <div ng-if="isLocationSafeForUser(export)">
                         <a href="{{ export.editUrl }}" class="btn btn-default">
                             <i class="fa fa-pencil"></i>
@@ -363,8 +346,8 @@
                             <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
                         </a>
                     </div>
-                </td>
-            {% endif %}
+                {% endif %}
+            </td>
 
             <td>
                 <div ng-if="isLocationSafeForUser(export)">
