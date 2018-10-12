@@ -95,7 +95,7 @@ from corehq.apps.export.dbaccessors import (
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
-from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
+from corehq.apps.reports.models import CaseExportSchema, \
     HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
@@ -557,8 +557,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     def get_saved_exports(self):
         """The source of the data that will be processed by fmt_export_data
         for use in the template.
-        :return A list of saved exports that are lists of FormExportSchema
-        or CaseExportSchema.
         """
         raise NotImplementedError("must implement get_saved_exports")
 
@@ -1167,36 +1165,23 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
-        if isinstance(export, FormExportSchema):
-            emailed_export = self.get_formatted_emailed_export(export)
-            can_edit = True
-            description = ''
-            my_export = None
-            sharing = None
-            owner_username = UNKNOWN_EXPORT_OWNER
-        else:
-            # New export
-            emailed_export = None
-            if export.is_daily_saved_export:
-                emailed_export = self._get_daily_saved_export_metadata(export)
-            can_edit = export.can_edit(self.request.couch_user)
-            description = export.description
-            my_export = export.owner_id == self.request.couch_user.user_id
-            sharing = export.sharing
-            owner_username = (
-                WebUser.get_by_user_id(export.owner_id).username
-                if export.owner_id else UNKNOWN_EXPORT_OWNER
-            )
+        emailed_export = None
+        if export.is_daily_saved_export:
+            emailed_export = self._get_daily_saved_export_metadata(export)
+        owner_username = (
+            WebUser.get_by_user_id(export.owner_id).username
+            if export.owner_id else UNKNOWN_EXPORT_OWNER
+        )
 
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
             'name': export.name,
-            'description': description,
-            'my_export': my_export,
-            'sharing': sharing,
+            'description': export.description,
+            'my_export': export.owner_id == self.request.couch_user.user_id,
+            'sharing': export.sharing,
             'owner_username': owner_username,
-            'can_edit': can_edit,
+            'can_edit': export.can_edit(self.request.couch_user),
             'formname': export.formname,
             'addedToBulk': False,
             'exportType': export.type,
@@ -1893,13 +1878,6 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, BaseDownloadExpor
     page_title = ugettext_noop("Download Form Data Export")
     check_for_multimedia = True
     form_or_case = 'form'
-
-    @staticmethod
-    def get_export_schema(domain, export_id):
-        doc = get_document_or_404_lite(FormExportSchema, export_id)
-        if doc.index[0] == domain:
-            return doc
-        raise Http404(_("Export not found"))
 
     @property
     def export_list_url(self):
