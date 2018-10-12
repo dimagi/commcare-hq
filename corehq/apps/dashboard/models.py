@@ -5,7 +5,7 @@ from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
 from corehq.apps.export.views import ExportsPermissionsManager
-from corehq.apps.reports.models import ReportConfig, CaseExportSchema, FormExportSchema
+from corehq.apps.reports.models import ReportConfig, CaseExportSchema
 from memoized import memoized
 
 
@@ -229,8 +229,6 @@ class DataPaginator(TilePaginator):
                 urlname = 'new_export_download_forms'
             elif isinstance(export, CaseExportSchema):
                 urlname = 'export_download_cases'
-            elif isinstance(export, FormExportSchema):
-                urlname = 'export_download_forms'
             if urlname:
                 yield self._fmt_item(
                     export.name,

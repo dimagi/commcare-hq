@@ -520,19 +520,12 @@ class ProjectDataTab(UITab):
         if self.can_only_see_deid_exports:
             from corehq.apps.export.views import (
                 DeIdFormExportListView,
-                DownloadFormExportView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
-                'subpages': [
-                    {
-                        'title': _(DownloadFormExportView.page_title),
-                        'urlname': DownloadFormExportView.urlname,
-                    },
-                ]
             })
             export_data_views.extend([
                 {
@@ -551,12 +544,10 @@ class ProjectDataTab(UITab):
                 CaseExportListView,
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
-                DownloadFormExportView,
                 DownloadNewFormExportView,
                 DownloadCaseExportView,
                 DownloadNewCaseExportView,
                 DownloadNewSmsExportView,
-                BulkDownloadFormExportView,
                 BulkDownloadNewFormExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
@@ -588,16 +579,8 @@ class ProjectDataTab(UITab):
                                 'urlname': CreateNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
-                                'title': _(BulkDownloadFormExportView.page_title),
-                                'urlname': BulkDownloadFormExportView.urlname,
-                            },
-                            {
                                 'title': _(BulkDownloadNewFormExportView.page_title),
                                 'urlname': BulkDownloadNewFormExportView.urlname,
-                            },
-                            {
-                                'title': _(DownloadFormExportView.page_title),
-                                'urlname': DownloadFormExportView.urlname,
                             },
                             {
                                 'title': _(DownloadNewFormExportView.page_title),

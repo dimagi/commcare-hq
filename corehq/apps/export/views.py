@@ -501,132 +501,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         })
 
 
-class DownloadFormExportView(BaseDownloadExportView):
-    """View to download a SINGLE Form Export with filters.
-    """
-    urlname = 'export_download_forms'
-    show_date_range = True
-    page_title = ugettext_noop("Download Form Data Export")
-    check_for_multimedia = True
-    form_or_case = 'form'
-    filter_form_class = FilterFormCouchExportDownloadForm
-
-    @staticmethod
-    def get_export_schema(domain, export_id):
-        doc = get_document_or_404_lite(FormExportSchema, export_id)
-        if doc.index[0] == domain:
-            return doc
-        raise Http404(_("Export not found"))
-
-    @property
-    def export_list_url(self):
-        return reverse(FormExportListView.urlname, args=(self.domain,))
-
-    @property
-    @memoized
-    def download_export_form(self):
-        return self.filter_form_class(
-            self.domain_object,
-            self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
-        )
-
-    @property
-    def parent_pages(self):
-        if not self.permissions.has_edit_permissions:
-            return [{
-                'title': DeIdFormExportListView.page_title,
-                'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
-            }]
-        return [{
-            'title': FormExportListView.page_title,
-            'url': reverse(FormExportListView.urlname, args=(self.domain,)),
-        }]
-
-    def get_filters(self, filter_form_data):
-        filter_form = self._get_filter_form(filter_form_data)
-        form_filter = filter_form.get_form_filter()
-        export_filter = SerializableFunction(default_form_filter,
-                                             filter=form_filter)
-        return export_filter
-
-    @allow_remote_invocation
-    def has_multimedia(self, in_data):
-        """Checks to see if this form export has multimedia available to export
-        """
-        try:
-            export_object = self._get_export(self.domain, self.export_id)
-            if isinstance(export_object, ExportInstance):
-                has_multimedia = export_object.has_multimedia
-            else:
-                has_multimedia = forms_have_multimedia(
-                    self.domain,
-                    export_object.app_id,
-                    getattr(export_object, 'xmlns', '')
-                )
-        except Exception:
-            return format_angular_error(_("There was an error"), log_error=True)
-        return format_angular_success({
-            'hasMultimedia': has_multimedia,
-        })
-
-    @allow_remote_invocation
-    def prepare_form_multimedia(self, in_data):
-        """Gets the download_id for the multimedia zip and sends it to the
-        exportDownloadService in download_export.ng.js to begin polling for the
-        zip file download.
-        """
-        try:
-            filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-            filter_form = self.filter_form_class(
-                self.domain_object, self.timezone, filter_form_data
-            )
-            if not filter_form.is_valid():
-                raise ExportFormValidationException(
-                    _("Please check that you've submitted all required filters.")
-                )
-            download = DownloadBase()
-            export_object = self._get_export(self.domain, export_specs[0]['export_id'])
-            task_kwargs = self.get_multimedia_task_kwargs(in_data, filter_form, export_object,
-                                                          download.download_id)
-            from corehq.apps.reports.tasks import build_form_multimedia_zip
-            download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
-        except Exception:
-            return format_angular_error(_("There was an error"), log_error=True)
-        return format_angular_success({
-            'download_id': download.download_id,
-        })
-
-    def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
-        return filter_form.get_multimedia_task_kwargs(export_object, download_id)
-
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
-
-class BulkDownloadFormExportView(DownloadFormExportView):
-    """View to download a Bulk Form Export with filters.
-    """
-    urlname = 'export_bulk_download_forms'
-    page_title = ugettext_noop("Download Form Data Exports")
-
-    def get_filters(self, filter_form_data):
-        filters = super(BulkDownloadFormExportView, self).get_filters(filter_form_data)
-        filters &= SerializableFunction(instances)
-        return filters
-
-    @allow_remote_invocation
-    def has_multimedia(self, in_data):
-        return False
-
-
 class DownloadCaseExportView(BaseDownloadExportView):
     """View to download a SINGLE Case Export with Filters
     """
@@ -2061,10 +1935,104 @@ class GenericDownloadNewExportMixin(object):
 
 
 @location_safe
-class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
+class DownloadNewFormExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
     export_filter_class = SubmitHistoryFilter
+    show_date_range = True
+    page_title = ugettext_noop("Download Form Data Export")
+    check_for_multimedia = True
+    form_or_case = 'form'
+
+    @staticmethod
+    def get_export_schema(domain, export_id):
+        doc = get_document_or_404_lite(FormExportSchema, export_id)
+        if doc.index[0] == domain:
+            return doc
+        raise Http404(_("Export not found"))
+
+    @property
+    def export_list_url(self):
+        return reverse(FormExportListView.urlname, args=(self.domain,))
+
+    @property
+    @memoized
+    def download_export_form(self):
+        return self.filter_form_class(
+            self.domain_object,
+            self.timezone,
+            initial={
+                'type_or_group': 'type',
+            },
+        )
+
+    @property
+    def parent_pages(self):
+        if not self.permissions.has_edit_permissions:
+            return [{
+                'title': DeIdFormExportListView.page_title,
+                'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
+            }]
+        return [{
+            'title': FormExportListView.page_title,
+            'url': reverse(FormExportListView.urlname, args=(self.domain,)),
+        }]
+
+    @allow_remote_invocation
+    def has_multimedia(self, in_data):
+        """Checks to see if this form export has multimedia available to export
+        """
+        try:
+            export_object = self._get_export(self.domain, self.export_id)
+            if isinstance(export_object, ExportInstance):
+                has_multimedia = export_object.has_multimedia
+            else:
+                has_multimedia = forms_have_multimedia(
+                    self.domain,
+                    export_object.app_id,
+                    getattr(export_object, 'xmlns', '')
+                )
+        except Exception:
+            return format_angular_error(_("There was an error"), log_error=True)
+        return format_angular_success({
+            'hasMultimedia': has_multimedia,
+        })
+
+    @allow_remote_invocation
+    def prepare_form_multimedia(self, in_data):
+        """Gets the download_id for the multimedia zip and sends it to the
+        exportDownloadService in download_export.ng.js to begin polling for the
+        zip file download.
+        """
+        try:
+            filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+            filter_form = self.filter_form_class(
+                self.domain_object, self.timezone, filter_form_data
+            )
+            if not filter_form.is_valid():
+                raise ExportFormValidationException(
+                    _("Please check that you've submitted all required filters.")
+                )
+            download = DownloadBase()
+            export_object = self._get_export(self.domain, export_specs[0]['export_id'])
+            task_kwargs = self.get_multimedia_task_kwargs(in_data, filter_form, export_object,
+                                                          download.download_id)
+            from corehq.apps.reports.tasks import build_form_multimedia_zip
+            download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
+        except Exception:
+            return format_angular_error(_("There was an error"), log_error=True)
+        return format_angular_success({
+            'download_id': download.download_id,
+        })
+
+    def _get_filter_form(self, filter_form_data):
+        filter_form = self.filter_form_class(
+            self.domain_object, self.timezone, filter_form_data
+        )
+        if not filter_form.is_valid():
+            raise ExportFormValidationException()
+        return filter_form
+
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
