@@ -113,7 +113,6 @@ from corehq.apps.users.permissions import (
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import Format
-from couchexport.util import SerializableFunction
 from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
@@ -330,13 +329,8 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         except TypeError:
             return 2000
 
-    def get_filters(self, filter_form_data):
-        """Should return a SerializableFunction object to be passed to the
-        exports framework for filtering the final download.
-        """
-        raise NotImplementedError(
-            "Must return a SerializableFunction for get_filters."
-        )
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
+        raise NotImplementedError("Must return a list of export filter objects")
 
     @allow_remote_invocation
     def get_group_options(self, in_data):
