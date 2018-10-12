@@ -64,21 +64,6 @@
             }
         });
 
-        // For Bulk Export
-        $scope.showBulkExportDownload = false;
-        $scope.bulkExportList = '[]';
-
-        $scope.updateBulkStatus = function () {
-            var selectedExports = _.filter($scope.exports, function (exp) {
-                return !!exp.addedToBulk;
-            });
-            $scope.showBulkExportDownload = !_.isEmpty(selectedExports);
-            $scope.bulkExportList = JSON.stringify(selectedExports);
-            var input = $('input[name="export_list"]');
-            input.val(JSON.stringify(selectedExports));
-
-            input.closest("form").attr("action", $scope.bulk_download_url);
-        };
         $scope.downloadRequested = function ($event) {
             var $btn = $($event.target);
             $btn.addClass('disabled');
@@ -93,18 +78,6 @@
             });
             clipboard.onClick($event);
             clipboard.destroy();
-        };
-        $scope.selectAll = function () {
-            _.each($scope.exports, function (exp) {
-                exp.addedToBulk = true;
-            });
-            $scope.updateBulkStatus();
-        };
-        $scope.selectNone = function () {
-            _.each($scope.exports, function (exp) {
-                exp.addedToBulk = false;
-            });
-            $scope.updateBulkStatus();
         };
         $scope.sendExportAnalytics = function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");

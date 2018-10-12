@@ -387,20 +387,15 @@
                 {% endangularjs %}
             </td-->
             {% if allow_bulk_export %}
-            {% angularjs %}
-            <!-- TODO -->
-            <!--td>
+            <td>
                 <div class="checkbox checkbox-table-cell">
                     <label>
                         <input type="checkbox"
                                class="bulk-checkbox"
-                               ng-model="export.addedToBulk"
-                               ng-change="updateBulkStatus()"
-                               id="add-to-bulk-{{ export.id }}" />
+                               data-bind="checked: addedToBulk" />
                     </label>
                 </div>
-            </td-->
-            {% endangularjs %}
+            </td>
             {% endif %}
         {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
             {% if MY_EXPORTS %}
