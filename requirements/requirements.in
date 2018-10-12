@@ -3,7 +3,7 @@ attrs==18.1.0
 cython==0.27.3
 iso8601==0.1.12
 jsonobject==0.9.4
-jsonobject-couchdbkit==0.9.9
+jsonobject-couchdbkit==0.9.10
 celery==3.1.25
 # required by django-digest
 decorator==4.0.11
@@ -111,4 +111,4 @@ werkzeug==0.11.15
 # git URL installs need to be listed with -e to satisfy pip-compile
 # but once they're in requirements.txt we will strip the -e
 
--e git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
+-e git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3

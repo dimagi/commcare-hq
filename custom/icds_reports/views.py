@@ -52,7 +52,7 @@ from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT
 from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AwcLocationMonths
@@ -635,6 +635,8 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'pregnant':
             if 'awc_id' in config:
+                start = int(request.GET.get('start', 0))
+                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
@@ -642,6 +644,8 @@ class AwcReportsView(BaseReportView):
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_pregnant(
+                    start,
+                    length,
                     order_by_name_column,
                     reversed_order,
                     config['awc_id']
@@ -653,6 +657,8 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'lactating':
             if 'awc_id' in config:
+                start = int(request.GET.get('start', 0))
+                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
@@ -660,6 +666,8 @@ class AwcReportsView(BaseReportView):
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_lactating(
+                    start,
+                    length,
                     order_by_name_column,
                     reversed_order,
                     config['awc_id']
@@ -731,8 +739,11 @@ class ExportIndicatorView(View):
         if indicator == BENEFICIARY_LIST_EXPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
+        if indicator == AWW_INCENTIVE_REPORT:
+            if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
+                return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
-                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT):
+                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,

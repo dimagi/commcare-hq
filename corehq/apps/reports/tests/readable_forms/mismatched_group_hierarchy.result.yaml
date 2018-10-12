@@ -4,6 +4,7 @@
   group: null
   hashtagValue: '#form/need_facility_trigger'
   label: You first need to log a facility before you can record information.
+  label_ref: need_facility_trigger-label
   options:
   - {label: Go back and exit form, value: exit_form}
   relevant: /data/fada_facility_id = ''
@@ -22,6 +23,7 @@
     group: /data/whole_form
     hashtagValue: '#form/current_site_confirm'
     label: 'Registering birth at facility: ____ (____)'
+    label_ref: current_site_confirm-label
     options:
     - {label: 'Yes', value: '1'}
     - {label: 'No', value: '0'}
@@ -34,13 +36,13 @@
     type: Select
     value: /data/current_site_confirm
   - {calculate: null, comment: null, constraint: . >= 0 and .<= 99999, group: /data/whole_form,
-    hashtagValue: '#form/fada_yearly_number', label: Yearly Number, relevant: null,
-    repeat: null, required: true, response: '7', setvalue: null, tag: input, type: Int,
-    value: /data/fada_yearly_number}
+    hashtagValue: '#form/fada_yearly_number', label: Yearly Number, label_ref: fada_yearly_number-label,
+    relevant: null, repeat: null, required: true, response: '7', setvalue: null, tag: input,
+    type: Int, value: /data/fada_yearly_number}
   - {calculate: null, comment: null, constraint: . >= 0 and .<= 99999, group: /data/whole_form,
-    hashtagValue: '#form/fada_monthly_number', label: Monthly Number, relevant: null,
-    repeat: null, required: true, response: '36', setvalue: null, tag: input, type: Int,
-    value: /data/fada_monthly_number}
+    hashtagValue: '#form/fada_monthly_number', label: Monthly Number, label_ref: fada_monthly_number-label,
+    relevant: null, repeat: null, required: true, response: '36', setvalue: null,
+    tag: input, type: Int, value: /data/fada_monthly_number}
   - calculate: null
     comment: null
     constraint: . = '1'
@@ -48,6 +50,7 @@
     hashtagValue: '#form/already_registered'
     label: "A patient with this ID (____) has already been registered.\_ Are you sure\
       \ the entered information is correct?"
+    label_ref: already_registered-label
     options:
     - {label: 'Yes, Continue', value: '1'}
     - {label: 'No, go back and change the values.', value: '0'}
@@ -61,15 +64,16 @@
     type: Select
     value: /data/already_registered
   - {calculate: null, comment: null, constraint: . <= today(), group: /data/whole_form,
-    hashtagValue: '#form/fada_date_admission', label: Date of Admission, relevant: null,
-    repeat: null, required: true, response: '2014-01-01', setvalue: null, tag: input,
-    type: Date, value: /data/fada_date_admission}
+    hashtagValue: '#form/fada_date_admission', label: Date of Admission, label_ref: fada_date_admission-label,
+    relevant: null, repeat: null, required: true, response: '2014-01-01', setvalue: null,
+    tag: input, type: Date, value: /data/fada_date_admission}
   - calculate: null
     comment: null
     constraint: null
     group: /data/whole_form
     hashtagValue: '#form/fada_observation_points_observed'
     label: 'Observation Points Observed:'
+    label_ref: fada_observation_points_observed-label
     options:
     - {label: '1', value: '1'}
     - {label: '2', value: '2'}
@@ -89,6 +93,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_mother_referred'
     label: Was the mother referred out at any point during your observation?
+    label_ref: fada_mother_referred-label
     options:
     - {label: Yes before delivery, value: '2'}
     - {label: Yes after delivery, value: '1'}
@@ -107,6 +112,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_maternal_death'
     label: Was there a maternal death at any point during your observation?
+    label_ref: fada_maternal_death-label
     options:
     - {label: 'Yes', value: '1'}
     - {label: 'No', value: '0'}
@@ -124,6 +130,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_stillbirth_neonatal_death'
     label: 'Was there a stillbirth or neonatal death any point during your observation? '
+    label_ref: fada_stillbirth_neonatal_death-label
     options:
     - {label: 'Yes', value: '1'}
     - {label: 'No', value: '0'}
@@ -141,6 +148,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_csection'
     label: Was a cesarean section performed?
+    label_ref: fada_csection-label
     options:
     - {label: 'Yes', value: '1'}
     - {label: 'No', value: '0'}
@@ -158,6 +166,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_healthworker_assent'
     label: Did health care worker assent to observation?
+    label_ref: fada_healthworker_assent-label
     options:
     - {label: 'Yes', value: '1'}
     - {label: 'No', value: '0'}
@@ -177,6 +186,7 @@
       group: /data/fada_obv1
       hashtagValue: '#form/fada_obv1/fada_assisted_by_obv1'
       label: ' Assisted with woman''s care (check all that apply)'
+      label_ref: fada_assisted_by_obv1-label
       options:
       - {label: Doctor, value: '1'}
       - {label: Nurse, value: '2'}
@@ -196,6 +206,7 @@
       group: /data/fada_obv1
       hashtagValue: '#form/fada_obv1/fada_maternal_temp'
       label: Maternal temperature obtained?
+      label_ref: fada_maternal_temp-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -213,6 +224,7 @@
       group: /data/fada_obv1
       hashtagValue: '#form/fada_obv1/fada_maternal_bp'
       label: Maternal blood pressure obtained?
+      label_ref: fada_maternal_bp-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -230,6 +242,7 @@
       group: /data/fada_obv1
       hashtagValue: '#form/fada_obv1/fada_partograph'
       label: Was partograph started?
+      label_ref: fada_partograph-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -247,6 +260,7 @@
       group: /data/fada_obv1
       hashtagValue: '#form/fada_obv1/fada_checklist_picked_up_obv1'
       label: Was the paper checklist picked up during care ?
+      label_ref: fada_checklist_picked_up_obv1-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -264,6 +278,7 @@
       group: /data/fada_obv1
       hashtagValue: '#form/fada_obv1/fada_checklist_used_after_care_obv1'
       label: Was the paper checklist picked up after the care was given?
+      label_ref: fada_checklist_used_after_care_obv1-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -281,6 +296,7 @@
       group: /data/fada_obv1
       hashtagValue: '#form/fada_obv1/fada_checklist_poster_used_obv1'
       label: Was the checklist poster observed during care?
+      label_ref: fada_checklist_poster_used_obv1-label
       options:
       - {label: 'Yes', value: 'yes'}
       - {label: 'No', value: 'no'}
@@ -298,6 +314,7 @@
       group: /data/fada_obv1
       hashtagValue: '#form/fada_obv1/fada_birth_companion_present_obv1'
       label: Was a birth companion present?
+      label_ref: fada_birth_companion_present_obv1-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -314,6 +331,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_obv1'
     label: 1. On Admission
+    label_ref: fada_obv1-label
     relevant: selected(/data/fada_observation_points_observed, '1')
     repeat: null
     required: false
@@ -330,6 +348,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_assisted_by_obv2'
       label: ' Assisted with woman''s care (check all that apply)'
+      label_ref: fada_assisted_by_obv2-label
       options:
       - {label: Doctor, value: '1'}
       - {label: Nurse, value: '2'}
@@ -349,6 +368,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_oxycotin_administered_obv2'
       label: Was Oxytocin administered?
+      label_ref: fada_oxycotin_administered_obv2-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -366,6 +386,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_oxycotin_administration_location'
       label: Where was oxytocin administered?
+      label_ref: fada_oxycotin_administration_location-label
       options:
       - {label: Intramuscular (IM), value: '1'}
       - {label: Intravenous (IV), value: '2'}
@@ -383,6 +404,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_water_usage'
       label: "Was water used to clean hands\_ just before delivery?"
+      label_ref: fada_water_usage-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -400,6 +422,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_soap_usage'
       label: Was soap used to clean hands just before delivery?
+      label_ref: fada_soap_usage-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -417,6 +440,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_alcohol_rub'
       label: Was alcohol rub used just before delivery?
+      label_ref: fada_alcohol_rub-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -434,6 +458,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_clean_gloves'
       label: Were clean gloves used at the time of delivery?
+      label_ref: fada_clean_gloves-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -451,6 +476,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_clean_towel'
       label: Was clean towel available at the bedside?
+      label_ref: fada_clean_towel-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -468,6 +494,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_scissors_blade'
       label: Were sterile scissors/blade to cut cord available at the bedside?
+      label_ref: fada_scissors_blade-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -485,6 +512,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_cord_tie'
       label: Was a cord ligature/tie available at the bedside?
+      label_ref: fada_cord_tie-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -502,6 +530,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_mucus_extractor'
       label: Was an aspiration bulb or mucus extractor available at the bedside?
+      label_ref: fada_mucus_extractor-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -519,6 +548,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_neonatal_bag'
       label: Was a neonatal bag and mask available at the bedside?
+      label_ref: fada_neonatal_bag-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -536,6 +566,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_pads'
       label: Were pads for the mother available at the bedside?
+      label_ref: fada_pads-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -553,6 +584,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_checklist_picked_up_obv2'
       label: Was the paper checklist picked up during care ?
+      label_ref: fada_checklist_picked_up_obv2-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -570,6 +602,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_checklist_used_after_care_obv2'
       label: Was the paper checklist picked up after the care was given?
+      label_ref: fada_checklist_used_after_care_obv2-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -587,6 +620,7 @@
       group: /data/fada_obv2
       hashtagValue: '#form/fada_obv2/fada_checklist_poster_used_obv2'
       label: Was the checklist poster observed during care?
+      label_ref: fada_checklist_poster_used_obv2-label
       options:
       - {label: 'Yes', value: 'yes'}
       - {label: 'No', value: 'no'}
@@ -603,6 +637,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_obv2'
     label: 2. Just before delivery
+    label_ref: fada_obv2-label
     relevant: selected(/data/fada_observation_points_observed, '2')
     repeat: null
     required: false
@@ -619,6 +654,7 @@
       group: /data/fada_obv3
       hashtagValue: '#form/fada_obv3/fada_assisted_by_obv3'
       label: Assisted with woman's care (check all that apply)
+      label_ref: fada_assisted_by_obv3-label
       options:
       - {label: Doctor, value: '1'}
       - {label: Nurse, value: '2'}
@@ -638,6 +674,7 @@
       group: /data/fada_obv3
       hashtagValue: '#form/fada_obv3/fada_oxycotin_administered_obv3'
       label: Was Oxytocin administered?
+      label_ref: fada_oxycotin_administered_obv3-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -655,6 +692,7 @@
       group: /data/fada_obv3
       hashtagValue: '#form/fada_obv3/fada_neonatal_bag_usage'
       label: Was neonatal bag and mask used on baby?
+      label_ref: baby_intervention-label2
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -672,6 +710,7 @@
       group: /data/fada_obv3
       hashtagValue: '#form/fada_obv3/fada_birth_companion_present_obv3'
       label: Was a birth companion present?
+      label_ref: fada_birth_companion_present_obv3-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -688,6 +727,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_obv3'
     label: 3. At one minute after delivery
+    label_ref: fada_obv3-label
     relevant: selected(/data/fada_observation_points_observed, '3')
     repeat: null
     required: false
@@ -704,6 +744,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_assisted_by_obv4'
       label: Assisted with woman's care (check all that apply)
+      label_ref: fada_assisted_by_obv4-label
       options:
       - {label: Doctor, value: '1'}
       - {label: Nurse, value: '2'}
@@ -723,6 +764,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_baby_wt'
       label: Was newborn weight taken?
+      label_ref: fada_baby_wt-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -740,6 +782,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_baby_temp'
       label: Was newborn temperature taken?
+      label_ref: fada_baby_temp-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -757,6 +800,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_baby_skin_to_skin'
       label: Was baby placed skin-to-skin on mother's abdomen?
+      label_ref: fada_baby_skin_to_skin-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -774,6 +818,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_baby_skin_to_skin_for_1_hour'
       label: Was the baby still skin-to-skin after 1 hour?
+      label_ref: fada_baby_skin_to_skin_for_1_hour-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -791,6 +836,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_breastfeeding'
       label: Was breastfeeding initiated?
+      label_ref: fada_breastfeeding-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -808,6 +854,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_checklist_picked_up_obv4'
       label: Was the paper checklist picked up during care ?
+      label_ref: fada_checklist_picked_up_obv4-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -825,6 +872,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_checklist_used_after_care_obv4'
       label: Was the paper checklist picked up after the care was given?
+      label_ref: fada_checklist_used_after_care_obv4-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -842,6 +890,7 @@
       group: /data/fada_obv4
       hashtagValue: '#form/fada_obv4/fada_checklist_poster_used_obv4'
       label: Was the checklist poster observed during care?
+      label_ref: fada_checklist_poster_used_obv4-label
       options:
       - {label: 'Yes', value: 'yes'}
       - {label: 'No', value: 'no'}
@@ -858,6 +907,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_obv4'
     label: 4. At one hour after delivery
+    label_ref: fada_obv4-label
     relevant: selected(/data/fada_observation_points_observed, '4')
     repeat: null
     required: false
@@ -874,6 +924,7 @@
       group: /data/fada_other_observations
       hashtagValue: '#form/fada_other_observations/fada_maternal_temp_anytime'
       label: Was maternal temperature obtained at any time?
+      label_ref: fada_maternal_temp_anytime-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -891,6 +942,7 @@
       group: /data/fada_other_observations
       hashtagValue: '#form/fada_other_observations/fada_maternal_bp_anytime'
       label: Was maternal blood pressure obtained at any time?
+      label_ref: fada_maternal_bp_anytime-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -908,6 +960,7 @@
       group: /data/fada_other_observations
       hashtagValue: '#form/fada_other_observations/fada_magnesium'
       label: Was magnesium Sulphate given to mother at any time?
+      label_ref: fada_magnesium-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -925,6 +978,7 @@
       group: /data/fada_other_observations
       hashtagValue: '#form/fada_other_observations/fada_ab_mother'
       label: Was antibiotics given to mother at any time?
+      label_ref: fada_ab_mother-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -942,6 +996,7 @@
       group: /data/fada_other_observations
       hashtagValue: '#form/fada_other_observations/fada_ab_baby'
       label: Was antibiotics given to baby at any time?
+      label_ref: fada_ab_baby-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -959,6 +1014,7 @@
       group: /data/fada_other_observations
       hashtagValue: '#form/fada_other_observations/fada_arv_mother'
       label: Was antiretroviral to mother at any time?
+      label_ref: fada_arv_mother-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -976,6 +1032,7 @@
       group: /data/fada_other_observations
       hashtagValue: '#form/fada_other_observations/fada_arv_baby'
       label: Was antiretroviral to baby at any time?
+      label_ref: fada_arv_baby-label
       options:
       - {label: 'Yes', value: '1'}
       - {label: 'No', value: '0'}
@@ -992,6 +1049,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_other_observations'
     label: 5.Were any of the following observed at any time?
+    label_ref: fada_other_observations-label
     relevant: null
     repeat: null
     required: false
@@ -1006,6 +1064,7 @@
     group: /data/whole_form
     hashtagValue: '#form/fada_highlight_record'
     label: Would you like to highlight this record for your team leader?
+    label_ref: fada_highlight_record-label
     options:
     - {label: 1. Yes, value: 'yes'}
     - {label: 2. No, value: 'no'}
@@ -1018,16 +1077,19 @@
     type: Select
     value: /data/fada_highlight_record
   - {calculate: null, comment: null, constraint: null, group: /data/whole_form, hashtagValue: '#form/fada_highlight_comment',
-    label: Comment to supervisor, relevant: /data/fada_highlight_record = 'yes', repeat: null,
-    required: true, response: null, setvalue: null, tag: input, type: Text, value: /data/fada_highlight_comment}
+    label: Comment to supervisor, label_ref: fada_highlight_comment-label, relevant: /data/fada_highlight_record
+      = 'yes', repeat: null, required: true, response: null, setvalue: null, tag: input,
+    type: Text, value: /data/fada_highlight_comment}
   - {calculate: null, comment: null, constraint: null, group: /data/whole_form, hashtagValue: '#form/fada_gps_location',
-    label: GPS Capture, relevant: null, repeat: null, required: false, response: 8.8888888
-      -9.9999999 0.0 30.000, setvalue: null, tag: input, type: Geopoint, value: /data/fada_gps_location}
+    label: GPS Capture, label_ref: fada_gps_location-label, relevant: null, repeat: null,
+    required: false, response: 8.8888888 -9.9999999 0.0 30.000, setvalue: null, tag: input,
+    type: Geopoint, value: /data/fada_gps_location}
   comment: null
   constraint: null
   group: null
   hashtagValue: '#form/whole_form'
   label: ''
+  label_ref: null
   relevant: /data/fada_facility_id != ''
   repeat: null
   required: false

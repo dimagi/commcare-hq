@@ -4,8 +4,7 @@
 {% load djangular_tags %}
 {% load humanize %}
 
-<table class="table table-striped"
-       ng-show="!!hasLoaded && !_.isEmpty(exports)">
+<table class="table table-striped" ng-show="!_.isEmpty(exports)">
     <thead>
         <tr>
             <th class="col-sm-4">{% trans 'Name' %}</th>
@@ -35,7 +34,7 @@
             <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
             {% endif %}
             {%  if allow_bulk_export %}
-            <th class="col-sm-2">
+            <th class="col-sm-3">
                 {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
                 <button type="button"
                         class="btn btn-xs btn-default"
@@ -49,11 +48,10 @@
                 </button>
             </th>
             {% endif %}
-            <th class="col-sm-1">{% trans 'Shared By' %}</th>
         </tr>
     </thead>
     <tbody>
-        <tr ng-repeat="export in notMyExports">
+        <tr ng-repeat="export in exports">
             <td>
                 {% angularjs %}
                 <h4 ng-class="{'text-muted': export.emailedExport && !export.isAutoRebuildEnabled}">
@@ -291,22 +289,12 @@
             {% if has_edit_permissions %}
             {% angularjs %}
             <td>
-                <div ng-if="export.can_edit">
-                    <div ng-if="isLocationSafeForUser(export)">
-                        <a href="{{ export.editUrl }}" class="btn btn-default">
-                            <i class="fa fa-pencil"></i>
-                            <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
-                            <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
-                        </a>
-                    </div>
-                </div>
-                <div ng-if="!export.can_edit">
-                    <div ng-if="isLocationSafeForUser(export)">
-                        <a href="{{ export.editUrl }}" class="btn btn-default">
-                            <span ng-show="!export.isDailySaved">{% trans 'View' %}</span>
-                            <span ng-show="export.isDailySaved">{% trans 'View Columns' %}</span>
-                        </a>
-                    </div>
+                <div ng-if="isLocationSafeForUser(export)">
+                    <a href="{{ export.editUrl }}" class="btn btn-default">
+                        <i class="fa fa-pencil"></i>
+                        <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
+                        <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+                    </a>
                 </div>
             </td>
             <td>
@@ -365,17 +353,6 @@
             </td>
             {% endangularjs %}
             {% endif %}
-
-            {% angularjs %}
-            <td>
-                <div ng-if="export.owner_username == 'unknown'">
-                    <div class="label label-default">{% trans 'Unknown' %}</div>
-                </div>
-                <div ng-if="export.owner_username != 'unknown'">
-                    {{ export.owner_username }}
-                </div>
-            </td>
-            {% endangularjs %}
         </tr>
     </tbody>
 </table>

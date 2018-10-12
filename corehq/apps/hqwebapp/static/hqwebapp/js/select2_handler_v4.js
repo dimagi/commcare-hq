@@ -86,7 +86,7 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
                         var data = self.getExtraData(term);
                         data['handler'] = self.getHandlerSlug();
                         data['action'] = self.fieldName;
-                        data['searchString'] = term;
+                        data['searchString'] = term.term || '';
                         return data;
                     },
                     processResults: self.processResults,

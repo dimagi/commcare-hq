@@ -654,6 +654,14 @@ CASE_LIST_EXPLORER = StaticToggle(
     save_fn=_enable_search_index,
 )
 
+EXPLORE_CASE_DATA = StaticToggle(
+    'explore_case_data',
+    'Show the Explore Case Data report (in dev)',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
@@ -894,6 +902,16 @@ CUSTOM_INSTANCES = StaticToggle(
     description=(
         'Enables the insertion of custom instances into a case list configuration. '
         'Currently used by SimPrints-integrated projects.'
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+CUSTOM_ASSERTIONS = StaticToggle(
+    'custom_assertions',
+    'Inject custom assertions into the suite',
+    TAG_SOLUTIONS,
+    description=(
+        'Enables the insertion of custom assertions into the suite file. '
     ),
     namespaces=[NAMESPACE_DOMAIN],
 )

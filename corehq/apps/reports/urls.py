@@ -168,6 +168,9 @@ urlpatterns = [
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
 
+    # V2 Reports
+    url(r'^v2/', include('corehq.apps.reports.v2.urls')),
+
     # Internal Use
     url(r"^export/forms/all/$", export_all_form_metadata, name="export_all_form_metadata"),
     url(r"^export/forms/all/async/$", export_all_form_metadata_async, name="export_all_form_metadata_async"),

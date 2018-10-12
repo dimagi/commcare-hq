@@ -15,11 +15,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0060_disha_indicators'),
     ]
 
-    operations = [
-        migrator.get_migration('awc_location_months.sql'),
-        migrator.get_migration('agg_awc_daily.sql'),
-        migrator.get_migration('agg_ccs_record_monthly.sql'),
-        migrator.get_migration('agg_child_health_monthly.sql'),
-        migrator.get_migration('child_health_monthly.sql'),
-        migrator.get_migration('daily_attendance.sql'),
-    ]
+    operations = []

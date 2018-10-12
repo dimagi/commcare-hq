@@ -11,7 +11,7 @@ from mock import mock
 
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
-    get_awc_report_beneficiary, get_awc_report_pregnant, get_pregnant_details
+    get_awc_report_beneficiary, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
 from custom.icds_reports.messages import new_born_with_low_weight_help_text, wasting_help_text, \
     exclusive_breastfeeding_help_text, early_initiation_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
@@ -2466,6 +2466,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_pregnant_first_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_pregnant(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a15'
@@ -2490,6 +2492,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_pregnant_second_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_pregnant(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a15'
@@ -2565,4 +2569,172 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][2],
                 []
+            )
+
+    def test_awc_report_lactating_first_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][0],
+                {
+                    'num_rations_distributed': 0,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 20,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '36d5e223-a631-4030-910c-262a1d066fb3',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_second_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][1],
+                {
+                    'num_rations_distributed': 6,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 23,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': 'aefb8fe5-1cd1-4235-9baf-963b1a0b498e',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_third_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][2],
+                {
+                    'num_rations_distributed': 6,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 24,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_forth_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][3],
+                {
+                    'num_rations_distributed': 12,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 26,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '10a53900-f65e-46b7-ae0c-f32a208c0677',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_fifth_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][4],
+                {
+                    'num_rations_distributed': 12,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 26,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '1a6851bc-8172-48fc-80d1-b198f23033ab',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_sixth_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][5],
+                {
+                    'num_rations_distributed': 6,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 26,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_seventh_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][6],
+                {
+                    'num_rations_distributed': 6,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 29,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
             )

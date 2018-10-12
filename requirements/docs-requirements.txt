@@ -4,7 +4,7 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
+git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 alabaster==0.7.11         # via sphinx
 alembic==0.8.6
 amqp==1.4.9
@@ -88,7 +88,7 @@ jinja2==2.10
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.9
+jsonobject-couchdbkit==0.9.10
 jsonobject==0.9.4
 jsonpath-rw==1.4.0
 kafka-python==1.4.3

@@ -39,7 +39,8 @@ from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
-    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT
+    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
+    AWW_INCENTIVE_REPORT
 from custom.icds_reports.models import (
     AggChildHealth,
     AggChildHealthMonthly,
@@ -56,11 +57,15 @@ from custom.icds_reports.models import (
     AggregateAwcInfrastructureForms,
     ChildHealthMonthly,
     CcsRecordMonthly,
-    UcrTableNameMapping)
+    UcrTableNameMapping,
+    AggregateCcsRecordComplementaryFeedingForms,
+    AWWIncentiveReport
+)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
+from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
@@ -130,7 +135,7 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6, hour=0, minute=0),
                acks_late=True, queue='icds_aggregation_queue')
 def run_weekly_aggregation_of_historical_data():
     date = datetime.utcnow().date().strftime('%Y-%m-%d')
@@ -138,7 +143,7 @@ def run_weekly_aggregation_of_historical_data():
     res_awc.get()
 
 
-@serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='icds_aggregation_queue')
+@serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     date = date or datetime.utcnow().date()
     monthly_dates = []
@@ -178,6 +183,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_cf_forms)
+                for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_ccs_cf_forms)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
@@ -290,15 +299,15 @@ def icds_aggregation_task(self, date, func):
     try:
         func(date)
     except Error as exc:
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'error': exc}
+        )
         _dashboard_team_soft_assert(
             False,
             "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
                 func.__name__, settings.SERVER_ENVIRONMENT, date
             )
-        )
-        notify_exception(
-            None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name__, 'date': date, 'error': exc}
         )
         self.retry(exc=exc)
 
@@ -316,15 +325,15 @@ def icds_state_aggregation_task(self, state_id, date, func):
     try:
         func(state_id, date)
     except Error as exc:
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
+        )
         _dashboard_team_soft_assert(
             False,
             "{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
                 func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
             )
-        )
-        notify_exception(
-            None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
         )
         self.retry(exc=exc)
 
@@ -334,6 +343,11 @@ def icds_state_aggregation_task(self, state_id, date, func):
 @track_time
 def _aggregate_cf_forms(state_id, day):
     AggregateComplementaryFeedingForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_ccs_cf_forms(state_id, day):
+    AggregateCcsRecordComplementaryFeedingForms.aggregate(state_id, day)
 
 
 @track_time
@@ -573,6 +587,12 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test,
             beta=beta
         ).get_excel_data(location)
+    elif indicator == AWW_INCENTIVE_REPORT:
+        data_type = 'AWW_Performance'
+        excel_data = IncentiveReport(
+            block=location,
+            month=config['month']
+        ).get_excel_data()
     cache_key = create_excel_file(excel_data, data_type, file_format)
     params = {
         'domain': domain,
@@ -834,3 +854,14 @@ def push_missing_docs_to_es():
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
         )
+
+@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='14'), acks_late=True, queue='icds_aggregation_queue')
+def build_incentive_report(agg_date=None):
+    state_ids = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                 .values_list('location_id', flat=True))
+    if agg_date is None:
+        current_month = date.today().replace(day=1)
+        agg_date = current_month - relativedelta(months=1)
+    for state in state_ids:
+        AWWIncentiveReport.aggregate(state, agg_date)

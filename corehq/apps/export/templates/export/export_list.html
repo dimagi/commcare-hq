@@ -17,6 +17,8 @@
 {% endblock %}
 
 {% block js %}
+<script src="{% static 'clipboard/dist/clipboard.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/select_2_ajax_widget_v3.js' %}"></script>
 <script src="{% static 'export/js/list_exports.ng.js' %}"></script>
 <script src="{% static 'app_manager/js/hq.app_data_drilldown.ng.js' %}"></script>
 <script src="{% static 'export/js/utils.js' %}"></script>
@@ -24,13 +26,20 @@
 {% endblock %}
 
 {% block page_content %}
-    {% include 'export/partial/export_list_initial_page_data.html' %}
+    {% initial_page_data 'bulk_download_url' bulk_download_url %}
+    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+    {% initial_page_data 'exports' exports %}
+    {% initial_page_data 'legacy_bulk_download_url' legacy_bulk_download_url %}
+    {% initial_page_data 'model_type' model_type %}
+    {% initial_page_data 'static_model_type' static_model_type %}
+
+    <p>{{ lead_text }}</p>
 
     <div ng-app="listExportsApp">
-        {% include 'export/partial/export_list_controller.html' %}
-        {% include 'export/partial/export_list_create_export_modal.html' %}
+        {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
+        {% include 'export/partials/export_list_create_export_modal.html' %}
+        {% if is_daily_saved_export %}
+            {% include 'export/partials/feed_filter_modal.html' %}
+        {% endif %}
     </div>
-    {% if request.notify_new_daily_saved_export %}
-        {% include 'export/partial/daily_export_move_notifier.html' %}
-    {% endif %}
 {% endblock %}
