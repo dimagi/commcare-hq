@@ -40,10 +40,10 @@
         <div class="panel-heading">{{ my_export_type }}</div>
         <div class="panel-body">
             {% include 'export/partials/loading_exports.html' %}
-            {#% include 'export/partials/export_bulk_notice.html' %#}
+            {% include 'export/partials/export_bulk_notice.html' %}
             {% include 'export/partials/table.html' with MY_EXPORTS=True %}
             <div data-bind="visible: exports.length > 6">
-                {#% include 'export/partials/export_bulk_notice.html' %#}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>
@@ -51,10 +51,10 @@
         <div class="panel-heading">{{ shared_export_type }}</div>
         <div class="panel-body">
             {% include 'export/partials/loading_exports.html' %}
-            {#% include 'export/partials/export_bulk_notice.html' %#}
+            {% include 'export/partials/export_bulk_notice.html' %}
             {% include 'export/partials/table.html' with MY_EXPORTS=False %}
             <div data-bind="visible: exports.length > 6">
-                {#% include 'export/partials/export_bulk_notice.html' %#}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>
@@ -63,10 +63,10 @@
         <div class="panel-heading">{{ export_type_caps_plural }}</div>
         <div class="panel-body">
             {% include 'export/partials/loading_exports.html' %}
-            {#% include 'export/partials/export_bulk_notice.html' %#}
+            {% include 'export/partials/export_bulk_notice.html' %}
             {% include 'export/partials/table.html' %}
             <div data-bind="visible: exports.length > 6">
-                {#% include 'export/partials/export_bulk_notice.html' %#}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
         {% if is_daily_saved_export %}

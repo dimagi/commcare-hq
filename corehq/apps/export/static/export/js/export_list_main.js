@@ -28,22 +28,48 @@ hqDefine("export/js/export_list_main", function () {
     });
 
     /* Knockout */
+    var exportModel = function(options) {
+        var self = ko.mapping.fromJS(options);
+        return self;
+    };
+
     var exportListModel = function(options) {
         hqImport("hqwebapp/js/assert_properties").assert(options, ['exports']);
 
         var self = {};
 
-        self.exports = options.exports;
+        self.exports = _.map(options.exports, function (e) { return exportModel(e); });
         self.myExports = _.filter(self.exports, function (e) { return !!e.my_export; });
         self.notMyExports = _.filter(self.exports, function (e) { return !e.my_export; });
 
+        // Bulk export handling
         self.selectAll = function() {
-            console.log("selectAll");
+            _.each(self.exports, function (e) { e.addedToBulk(true); });
         };
-
         self.selectNone = function() {
-            console.log("selectNone");
+            _.each(self.exports, function (e) { e.addedToBulk(false); });
         };
+        self.showBulkExportDownload = ko.observable(false);
+        self.bulkExportList = ko.observable('');
+        _.each(self.exports, function (e) {
+            e.addedToBulk.subscribe(function (newValue) {
+                // Determine whether or not to show bulk export download button & message
+                if (newValue !== self.showBulkExportDownload()) {
+                    self.showBulkExportDownload(!!_.find(self.exports, function (e) {
+                        return e.addedToBulk();
+                    }));
+                }
+
+                // Update hidden value of exports to download
+                if (self.showBulkExportDownload()) {
+                    self.bulkExportList(JSON.stringify(_.map(_.filter(self.exports, function (e) {
+                        return e.addedToBulk();
+                    }), function (e) {
+                        return ko.mapping.toJS(e);
+                    })));
+                }
+            });
+        });
 
         return self;
     };
