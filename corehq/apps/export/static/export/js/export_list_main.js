@@ -29,6 +29,9 @@ hqDefine("export/js/export_list_main", function () {
 
     /* Knockout */
     var exportModel = function(options) {
+        options.isAutoRebuildEnabled = options.isAutoRebuildEnabled || false;
+        options.emailedExport = options.emailedExport || {};
+
         var mapping = {
             'copy': ["emailedExport"]
         };
