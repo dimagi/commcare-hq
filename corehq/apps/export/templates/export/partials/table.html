@@ -69,40 +69,35 @@
     {% else %}
         <tbody data-bind="foreach: exports">
     {% endif %}
-            <!-- TODO -->
-            <!--td>
-                {% angularjs %}
-                <h4 ng-class="{'text-muted': export.emailedExport && !export.isAutoRebuildEnabled}">
-                    {{ export.name }}
-                    <label class="label label-default label-default"
-                       ng-show="!!export.isDeid">
-                    {% trans 'De-Identified' %}
-                    </label></h4>
-                <p ng-show="!!export.formname" ng-class="{'text-muted': export.emailedExport && !export.isAutoRebuildEnabled}">
-                    <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
+            <td>
+                <h4 data-bind="css: {'text-muted': hasEmailedExport && !isAutoRebuildEnabled()}">
+                    <span data-bind="text: name"></span>
+                    <label class="label label-default label-default" data-bind="visible: isDeid()">
+                        {% trans 'De-Identified' %}
+                    </label>
+                </h4>
+                <p data-bind="visible: formname, css: {'text-muted': hasEmailedExport && !isAutoRebuildEnabled()}">
+                    <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong>
+                    <span data-bind="text: formname"></span>
                 </p>
-                {% endangularjs %}
+                <p data-bind="text: description"></p>
 
-                {% angularjs %}
-                <p>
-                    {{ export.description }}
-                </p>
-                {% endangularjs %}
-
-                {% angularjs %}
-                <div ng-if="!isLocationSafeForUser(export)" class="text-warning">
+                <div data-bind="if: !isLocationSafeForUser()" class="text-warning">
                     {% blocktrans %}
-                    This export is filtered to data you don't have access to.
+                        This export is filtered to data you don't have access to.
                     {% endblocktrans %}
                 </div>
-                <p class="text-warning"
-                   ng-if="export.emailedExport && !export.isAutoRebuildEnabled">
+
+                <p class="text-warning" data-bind="if: !_.isEmpty(emailedExport) && !isAutoRebuildEnabled()">
                     <i class="fa fa-exclamation-triangle"></i>
                     {% blocktrans %}
                         Automatic updates for this saved {{ export_type }} have been disabled. Click 'Enable'
                         to re-enable automatic updates.
                     {% endblocktrans %}
                 </p>
+<!--
+
+                {% angularjs %}
                 <div class="alert alert-neutral alert-small"
                      ng-show="export.emailedExport && isLocationSafeForUser(export)">
                     <div class="h5">
@@ -292,7 +287,8 @@
                         </div>
                     </div>
                 </div>
-            </td-->
+-->
+            </td>
 
             {% if model_type == "case" %}
             <td>
