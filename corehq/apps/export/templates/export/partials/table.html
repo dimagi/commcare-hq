@@ -308,6 +308,9 @@
             {% endangularjs %}
             {% endif %}
 
+            {% if has_edit_permissions %}
+            {% angularjs %}
+
 {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
     {% if MY_EXPORTS %}
         {% include 'export/partials/my_exports_table.html' %}
@@ -317,6 +320,16 @@
 {% else %}
     {% include 'export/partials/original_exports_table.html' %}
 {% endif %}
+
+            <td>
+                <div ng-if="isLocationSafeForUser(export)">
+                    <a href="{% angularjs %}{{ export.copyUrl }}{% endangularjs %}" class="btn btn-default">
+                        <span>{% trans 'Copy' %}</span>
+                    </a>
+                </div>
+            </td>
+            {% endangularjs %}
+            {% endif %}
 
             <td>
                 <a href="{% angularjs %}{{ export.downloadUrl }}{% endangularjs %}"

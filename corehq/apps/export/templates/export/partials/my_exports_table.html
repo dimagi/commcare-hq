@@ -4,8 +4,6 @@
 {% load djangular_tags %}
 {% load humanize %}
 
-            {% if has_edit_permissions %}
-            {% angularjs %}
             <td>
                 <div ng-if="export.can_edit">
                     <div ng-if="isLocationSafeForUser(export)">
@@ -27,13 +25,3 @@
                     </div>
                 </div>
             </td>
-            <td>
-                <div ng-if="isLocationSafeForUser(export)">
-                    <a href="{% angularjs %}{{ export.copyUrl }}{% endangularjs %}" class="btn btn-default">
-                        <span>{% trans 'Copy' %}</span>
-                    </a>
-                </div>
-            </td>
-
-            {% endangularjs %}
-            {% endif %}
