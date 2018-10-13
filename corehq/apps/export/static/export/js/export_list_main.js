@@ -60,6 +60,22 @@ hqDefine("export/js/export_list_main", function () {
             clipboard.onClick(e);
             clipboard.destroy();
         };
+        self.updateEmailedExportData = function (model) {
+            var component = model.emailedExport;
+            $('#modalRefreshExportConfirm-' + model.id() + '-' + component.groupId).modal('hide');
+            component.updatingData = true;
+            // TODO
+            /*djangoRMI.update_emailed_export_data({
+                'component': component,
+                'export': model,
+            }).success(function (data) {
+                if (data.success) {
+                    var exportType = hqImport('export/js/utils').capitalize(model.exportType());
+                    hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
+                    $rootScope.pollProgressBar(model);
+                }
+            });*/
+        };
 
         return self;
     };
