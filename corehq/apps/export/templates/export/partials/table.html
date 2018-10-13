@@ -117,8 +117,8 @@
                             <button type="button"
                                     class="btn btn-default btn-xs"
                                     data-bind="
-                                        visible: !(emailedExport.updatingData || emailedExport.taskStatus.inProgress),
-                                        attr: {'data-target': '#modalRefreshExportConfirm-' + id + '-' + emailedExport.groupId}
+                                        visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.inProgress()),
+                                        attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}
                                     "
                                     data-toggle="modal">
                                 <i class="fa fa-refresh"></i>
@@ -131,7 +131,7 @@
                                 <i class="fa fa-refresh fa-spin"></i>
                                 {% trans "Updating Data, please wait..." %}
                             </button>
-                            <div data-bind="if: emailedExport.taskStatus.inProgress">
+                            <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.inProgress()">
                                 <div class="progress">
                                     <div class="progress-bar progress-bar-striped active"
                                          role="progressbar"
@@ -147,50 +147,47 @@
                         </div>
                     </div>
 
-                    <!--div class="h5" ng-if="export.emailedExport.hasFile && isLocationSafeForUser(export)">
+                    <div class="h5" data-bind="if: emailedExport.hasFile() && isLocationSafeForUser()">
 
-                        <a href="{{ export.emailedExport.fileData.downloadUrl }}"
-                           ng-click="downloadRequested($event)"
-                           class="btn btn-info btn-xs"
-                           ng-show="!export.isFeed">
+                        <a data-bind="
+                               visible: !isFeed(),
+                               attr: {href: emailedExport.fileData.downloadUrl()},
+                               click: downloadRequested,
+                           "
+                           class="btn btn-info btn-xs">
                             <i class="fa fa-cloud-download"></i>
                             {% trans "Download" %}
                         </a>
 
-                        <div class="input-group" ng-show="export.isFeed">
-                            <span ng-class="{'input-group-btn': export.showLink}" ng-click="copyLinkRequested($event, export)">
+                        <div class="input-group" data-bind="visible: isFeed">
+                            <span data-bind="css: {'input-group-btn': showLink}, click: copyLinkRequested">
                                 <a class="btn btn-info btn-sm">
                                     <i class="fa fa-clipboard"></i>
                                     {% trans "Copy Dashboard Feed Link" %}
                                 </a>
                             </span>
-                            <input ng-show="export.showLink"
-                                   type="text"
-                                   class="form-control input-sm"
-                                   readonly
-                                   value="{{ export.emailedExport.fileData.downloadUrl }}"
-                            >
+                            <input data-bind="visible: showLink, value: emailedExport.fileData.downloadUrl()"
+                                   type="text" class="form-control input-sm" readonly />
                         </div>
                     </div>
 
-                    <div ng-if="isLocationSafeForUser(export)">
-                    <p class="text-warning"
-                       ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered && export.isAutoRebuildEnabled">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        {% blocktrans %}
-                            This saved {{ export_type }} has expired because it has not been used in
-                            the last 35 days. To renew daily updates, click the 'Update Data'
-                            button and download the file.
-                        {% endblocktrans %}
-                    </p>
-                    <p ng-if="export.emailedExport.taskStatus.justFinished">
-                        <i class="fa fa-check"></i>
-                        <strong>{% trans "Data update started." %}</strong><br />
-                        {% trans "Please check back later for updates. (Page refresh required)" %}
-                    </p>
+                    <div data-bind="if: isLocationSafeForUser">
+                        <p class="text-warning" data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning() && isAutoRebuildEnabled()">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            {% blocktrans %}
+                                This saved {{ export_type }} has expired because it has not been used in
+                                the last 35 days. To renew daily updates, click the 'Update Data'
+                                button and download the file.
+                            {% endblocktrans %}
+                        </p>
+                        <p data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished()">
+                            <i class="fa fa-check"></i>
+                            <strong>{% trans "Data update started." %}</strong><br />
+                            {% trans "Please check back later for updates. (Page refresh required)" %}
+                        </p>
                     </div>
 
-                    <div ng-if="isLocationSafeForUser(export)">
+                    <!--div ng-if="isLocationSafeForUser(export)">
                         <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.taskStatus.justFinished">
                             {% blocktrans %}
                             <strong>No data is available yet.</strong><br />
