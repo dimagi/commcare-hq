@@ -187,14 +187,14 @@
                         </p>
                     </div>
 
-                    <!--div ng-if="isLocationSafeForUser(export)">
-                        <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.taskStatus.justFinished">
+                    <div data-bind="if: isLocationSafeForUser">
+                        <p data-bind="if: !emailedExport.hasFile && !emailedExport.taskStatus.justFinished">
                             {% blocktrans %}
-                            <strong>No data is available yet.</strong><br />
+                                <strong>No data is available yet.</strong><br />
                                 Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.
                             {% endblocktrans %}
                         </p>
-                        <div class="modal fade"
+                        <!--div class="modal fade"
                              id="modalRefreshExportConfirm-{{ export.id }}-{{ export.emailedExport.groupId }}">
                             <div class="modal-dialog">
                                 <div class="modal-content">
@@ -239,7 +239,7 @@
                                 </div>
                             </div>
                         </div>
-                    <div class="modal fade"
+                        <div class="modal fade"
                              id="modalEnableDisableAutoRefresh-{{ export.id }}-{{ export.emailedExport.groupId }}">
                             <div class="modal-dialog">
                                 <div class="modal-content">
@@ -276,8 +276,8 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div-->
+                        </div-->
+                    </div>
                 </div>
             </td>
 
