@@ -1,7 +1,6 @@
 /* globals Clipboard */
 (function (angular, undefined) {
     'use strict';
-    // module: hq.list_exports
 
     /* This module is for helping fetching and showing a list of exports,
      * and activating bulk export download, as well as single export download.
@@ -52,35 +51,12 @@
             tick();
         };
 
-        $scope._ = _;  // allow use of underscore.js within the template
-        $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
-        $scope.bulk_download_url = bulk_download_url;
-
-        $scope.myExports = $scope.exports.filter(function (val) { return !!val.my_export; });
-        $scope.notMyExports = $scope.exports.filter(function (val) { return !val.my_export; });
+        // TODO
         _.each($scope.exports, function (exp) {
             if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
                 $rootScope.pollProgressBar(exp);
             }
         });
-
-        trackExportPageEnter();
-
-        /**
-         * Send a Kissmetrics event, depending on model type
-         */
-        function trackExportPageEnter() {
-            switch (modelType) {
-                case 'form':
-                    hqImport('analytix/js/kissmetrix').track.event('Visited Export Forms Page');
-                    break;
-                case 'case':
-                    hqImport('analytix/js/kissmetrix').track.event('Visited Export Cases Page');
-                    break;
-                default:
-                    break;
-            }
-        }
     };
     exportsControllers.FeedFilterFormController = function (
         $scope, $rootScope, djangoRMI, filterFormElements, filterFormModalElement

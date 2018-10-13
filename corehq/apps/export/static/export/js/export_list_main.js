@@ -173,5 +173,12 @@ hqDefine("export/js/export_list_main", function () {
         $("#export-list").koApplyBindings(exportListModel({
             exports: initialPageData.get("exports"),
         }));
+
+        var modelType = initial_page_data("model_type");
+        if (modelType === 'form') {
+            hqImport('analytix/js/kissmetrix').track.event('Visited Export Forms Page');
+        } else if (modelType === 'case') {
+            hqImport('analytix/js/kissmetrix').track.event('Visited Export Cases Page');
+        }
     });
 });
