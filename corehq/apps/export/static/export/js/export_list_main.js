@@ -60,6 +60,7 @@ hqDefine("export/js/export_list_main", function () {
             clipboard.onClick(e);
             clipboard.destroy();
         };
+
         self.updateEmailedExportData = function (model) {
             var component = model.emailedExport;
             $('#modalRefreshExportConfirm-' + model.id() + '-' + component.groupId).modal('hide');
@@ -73,6 +74,25 @@ hqDefine("export/js/export_list_main", function () {
                     var exportType = hqImport('export/js/utils').capitalize(model.exportType());
                     hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
                     $rootScope.pollProgressBar(model);
+                }
+            });*/
+        };
+
+        self.updateDisabledState = function (model) {
+            var component = model.emailedExport;
+            $('#modalEnableDisableAutoRefresh-' + model.id() + '-' + (component.groupId || '')).modal('hide');
+            component.savingAutoRebuildChange = true;
+            // TODO
+            /*djangoRMI.toggle_saved_export_enabled_state({
+                'component': component,
+                'export': model,
+            }).success(function (data) {
+                if (data.success) {
+                    var exportType = hqImport('export/js/utils').capitalize(model.exportType);
+                    var event = (model.isAutoRebuildEnabled ? "Disable" : "Enable") + " Saved Export";
+                    hqImport('analytix/js/google').track.event(exportType + " Exports", event, "Saved");
+                    model.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
+                    component.savingAutoRebuildChange = false;
                 }
             });*/
         };
