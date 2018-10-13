@@ -188,58 +188,57 @@
                     </div>
 
                     <div data-bind="if: isLocationSafeForUser">
-                        <p data-bind="if: !emailedExport.hasFile && !emailedExport.taskStatus.justFinished">
+                        <p data-bind="if: !emailedExport.hasFile() && emailedExport.taskStatus && !emailedExport.taskStatus.justFinished()">
                             {% blocktrans %}
                                 <strong>No data is available yet.</strong><br />
                                 Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.
                             {% endblocktrans %}
                         </p>
-                        <!--div class="modal fade"
-                             id="modalRefreshExportConfirm-{{ export.id }}-{{ export.emailedExport.groupId }}">
+                        <div class="modal fade" data-bind="attr: {id: 'modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                                        <button type="button" class="close" data-dismiss="modal">
+                                            <span aria-hidden="true">&times;</span>
+                                            <span class="sr-only">{% trans 'Close' %}</span>
+                                        </button>
                                         <h4 class="modal-title">{% trans "Confirm data updates." %}</h4>
                                     </div>
-                                    <div class="modal-body" ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning">
+                                    <div class="modal-body" data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning()">
                                         {% blocktrans %}
                                             To renew daily updates, click the Update Data button below and check back in a little
                                             bit once the updates have finished processing.
                                         {% endblocktrans %}
                                     </div>
-                                    <div class="modal-body" ng-if="!(export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning)">
+                                    <div class="modal-body" data-bind="if: !(emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning())">
                                         <p class="lead">
                                             {% blocktrans %}
                                                 <strong>Once the data is updated, a data refresh should occur automatically on a daily basis.</strong>
                                             {% endblocktrans %}
                                         </p>
-                                        <p ng-if="!export.isDailySaved">
+                                        <p data-bind="if: !isDailySaved()">
                                             {% blocktrans %}
                                                 To download data now, please click the Export button instead.
                                             {% endblocktrans %}
                                         </p>
-                                        <p ng-if="export.isDailySaved && export.isFeed">
+                                        <p data-bind="if: isDailySaved() && isFeed()">
                                             To export data now, please copy the dashboard feed link instead.
                                         </p>
-                                        <p ng-if="!export.isFeed">
+                                        <p data-bind="if: !isFeed()">
                                             To export data now, please click the Download button instead.
                                         </p>
                                     </div>
                                     <div class="modal-footer">
-                                        <a href="#"
-                                           class="btn btn-default"
-                                           data-dismiss="modal">{% trans "Cancel" %}</a>
-                                        <button type="button"
-                                                class="btn btn-primary"
-                                                ng-click="updateEmailedExportData(export.emailedExport, export)">
+                                        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+                                        <button type="button" class="btn btn-primary"
+                                                data-bind="click: updateEmailedExportData">
                                             {% trans "Update Data" %}
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="modal fade"
+                        <!--div class="modal fade"
                              id="modalEnableDisableAutoRefresh-{{ export.id }}-{{ export.emailedExport.groupId }}">
                             <div class="modal-dialog">
                                 <div class="modal-content">
