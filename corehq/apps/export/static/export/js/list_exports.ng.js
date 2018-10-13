@@ -64,22 +64,6 @@
             }
         });
 
-        $scope.downloadRequested = function ($event) {
-            var $btn = $($event.target);
-            $btn.addClass('disabled');
-            $btn.text(gettext('Download Requested'));
-        };
-        $scope.copyLinkRequested = function ($event, export_) {
-            export_.showLink = true;
-            var clipboard = new Clipboard($event.target, {
-                target: function (trigger) {
-                    return trigger.nextElementSibling;
-                },
-            });
-            clipboard.onClick($event);
-            clipboard.destroy();
-        };
-
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
             component.updatingData = true;

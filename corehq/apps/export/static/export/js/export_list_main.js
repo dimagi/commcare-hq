@@ -31,6 +31,8 @@ hqDefine("export/js/export_list_main", function () {
     var exportModel = function(options) {
         options.isAutoRebuildEnabled = options.isAutoRebuildEnabled || false;
         options.isDailySaved = options.isDailySaved || false;
+        options.isFeed = options.isFeed || false;
+        options.showLink = options.showLink || false;
         options.emailedExport = options.emailedExport || {};
 
         var mapping = {
@@ -40,6 +42,23 @@ hqDefine("export/js/export_list_main", function () {
 
         self.isLocationSafeForUser = function () {
             return _.isEmpty(self.emailedExport) || self.emailedExport.isLocationSafeForUser;
+        };
+
+        self.downloadRequested = function (model, e) {
+            var $btn = $(e.target);
+            $btn.addClass('disabled');
+            $btn.text(gettext('Download Requested'));
+            return true;    // allow default click action to process so file is downloaded
+        };
+        self.copyLinkRequested = function (model, e) {
+            model.showLink(true);
+            var clipboard = new Clipboard(e.target, {
+                target: function (trigger) {
+                    return trigger.nextElementSibling;
+                },
+            });
+            clipboard.onClick(e);
+            clipboard.destroy();
         };
 
         return self;
