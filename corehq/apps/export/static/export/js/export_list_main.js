@@ -65,36 +65,47 @@ hqDefine("export/js/export_list_main", function () {
             var component = model.emailedExport;
             $('#modalRefreshExportConfirm-' + model.id() + '-' + component.groupId).modal('hide');
             component.updatingData = true;
-            // TODO
-            /*djangoRMI.update_emailed_export_data({
-                'component': component,
-                'export': model,
-            }).success(function (data) {
-                if (data.success) {
-                    var exportType = hqImport('export/js/utils').capitalize(model.exportType());
-                    hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
-                    $rootScope.pollProgressBar(model);
-                }
-            });*/
+            // TODO: test
+            $.ajax({
+                method: 'POST',
+                url: hqImport("hqwebapp/js/initial_page_data").reverse('update_emailed_export_data'),
+                data: {
+                    export_id: model.id(),
+                },
+                success: function (data) {
+                    if (data.success) {
+                        var exportType = hqImport('export/js/utils').capitalize(model.exportType());
+                        hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
+                        // TODO
+                        //$rootScope.pollProgressBar(model);
+                    }
+                },
+            });
         };
 
-        self.updateDisabledState = function (model) {
-            var component = model.emailedExport;
-            $('#modalEnableDisableAutoRefresh-' + model.id() + '-' + (component.groupId || '')).modal('hide');
-            component.savingAutoRebuildChange = true;
-            // TODO
-            /*djangoRMI.toggle_saved_export_enabled_state({
-                'component': component,
-                'export': model,
-            }).success(function (data) {
-                if (data.success) {
-                    var exportType = hqImport('export/js/utils').capitalize(model.exportType);
-                    var event = (model.isAutoRebuildEnabled ? "Disable" : "Enable") + " Saved Export";
-                    hqImport('analytix/js/google').track.event(exportType + " Exports", event, "Saved");
-                    model.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
-                    component.savingAutoRebuildChange = false;
-                }
-            });*/
+        self.updateDisabledState = function (model, e) {
+            var component = model.emailedExport,
+                $button = $(e.currentTarget);
+
+            $button.disableButton();
+            $.ajax({
+                method: 'POST',
+                url: hqImport("hqwebapp/js/initial_page_data").reverse('toggle_saved_export_enabled'),
+                data: {
+                    export_id: model.id(),
+                    is_auto_rebuild_enabled: model.isAutoRebuildEnabled(),
+                },
+                success: function (data) {
+                    if (data.success) {
+                        var exportType = hqImport('export/js/utils').capitalize(model.exportType());
+                        var event = (model.isAutoRebuildEnabled() ? "Disable" : "Enable") + " Saved Export";
+                        hqImport('analytix/js/google').track.event(exportType + " Exports", event, "Saved");
+                        model.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
+                    }
+                    $button.enableButton();
+                    $('#modalEnableDisableAutoRefresh-' + model.id() + '-' + component.groupId).modal('hide');
+                },
+            });
         };
 
         return self;

@@ -655,22 +655,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
-    @allow_remote_invocation
-    def toggle_saved_export_enabled_state(self, in_data):
-        export_instance_id = in_data['export']['id']
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        export_instance.auto_rebuild_enabled = not in_data['export']['isAutoRebuildEnabled']
-        export_instance.save()
-        return format_angular_success({
-            'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
-        })
-
-    @allow_remote_invocation
-    def update_emailed_export_data(self, in_data):
-        export_instance_id = in_data['export']['id']
-        rebuild_saved_export(export_instance_id, manual=True)
-        return format_angular_success({})
-
     @staticmethod
     def _get_task_status_json(export_instance_id):
         status = get_saved_export_task_status(export_instance_id)
@@ -756,6 +740,29 @@ def submit_app_data_drilldown_form(request, domain):
         'success': True,
         'url': reverse(cls.urlname, args=[domain]) + url_params,
     })
+
+
+# TODO: permissions (see BaseExportListView.dispatch)
+@login_and_domain_required
+@require_POST
+def toggle_saved_export_enabled(request, domain):
+    export_instance_id = request.POST.get('export_id')
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    export_instance.auto_rebuild_enabled = not json.loads(request.POST.get('is_auto_rebuild_enabled'))
+    export_instance.save()
+    return json_response({
+        'success': True,
+        'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
+    })
+
+
+# TODO: permissions (see BaseExportListView.dispatch)
+@login_and_domain_required
+@require_POST
+def update_emailed_export_data(request, domain):
+    export_instance_id = request.POST.get('export_id')
+    rebuild_saved_export(export_instance_id, manual=True)
+    return json_response({'success': True})
 
 
 @location_safe
