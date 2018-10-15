@@ -890,7 +890,7 @@ def pull_master_app(request, domain, app_id):
         try:
             update_linked_app(app, request.couch_user.get_id)
         except AppLinkError as e:
-            messages.error(request, str(e))
+            messages.error(request, six.text_type(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
