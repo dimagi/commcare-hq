@@ -312,7 +312,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, e.message)
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % e.message)
         finally:
             return True
 
