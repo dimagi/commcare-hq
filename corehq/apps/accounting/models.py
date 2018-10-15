@@ -1111,7 +1111,7 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
-        Subscription.get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         super(Subscription, self).save(*args, **kwargs)
         try:
             Domain.get_by_name(self.subscriber.domain).save()
