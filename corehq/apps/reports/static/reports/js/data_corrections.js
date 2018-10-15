@@ -64,7 +64,7 @@ hqDefine("reports/js/data_corrections", [
             // Account for select questions where the value is not one of the given options
             if (self.value()) {
                 _.each(self.value().split(' '), function (value) {
-                    if (!_.find(self.options, function (option) { return value === option.id })) {
+                    if (!_.find(self.options, function (option) { return value === option.id; })) {
                         self.options.unshift({id: value, text: value});
                     }
                 });
