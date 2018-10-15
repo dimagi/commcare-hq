@@ -974,16 +974,15 @@ def _update_case_list_translations(sheet, rows, app):
                 continue
             _update_detail(row, detail)
 
-    if partial_upload:
-        case_list_rows = {row['case_property']: row for row in list_rows}
-        case_detail_rows = {row['case_property']: row for row in detail_rows}
+    def _partial_upload(rows, details):
+        rows_by_property = {row['case_property']: row for row in rows}
+        for detail in details:
+            if rows_by_property.get(detail.field):
+                _update_detail(rows_by_property.get(detail.field), detail)
 
-        for detail in short_details:
-            if case_list_rows.get(detail.field):
-                _update_detail(case_list_rows.get(detail.field), detail)
-        for detail in long_details:
-            if case_detail_rows.get(detail.field):
-                _update_detail(case_detail_rows.get(detail.field), detail)
+    if partial_upload:
+        _partial_upload(list_rows, short_details)
+        _partial_upload(detail_rows, long_details)
     else:
         _update_details_based_on_position(list_rows, short_details, detail_rows, long_details)
 
