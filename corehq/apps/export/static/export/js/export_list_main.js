@@ -65,14 +65,13 @@ hqDefine("export/js/export_list_main", function () {
             var component = model.emailedExport;
             $('#modalRefreshExportConfirm-' + model.id() + '-' + component.groupId).modal('hide');
             component.updatingData = true;
-            // TODO: test
             $.ajax({
                 method: 'POST',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('update_emailed_export_data'),
                 data: {
                     export_id: model.id(),
-                    is_deid: hqImport("hqwebapp/js/initial_page_data").get("is_deid"),
-                    model_type: hqImport("hqwebapp/js/initial_page_data").get("model_type"),
+                    is_deid: self.isDeid,
+                    model_type: self.modelType,
                 },
                 success: function (data) {
                     if (data.success) {
@@ -95,8 +94,8 @@ hqDefine("export/js/export_list_main", function () {
                 data: {
                     export_id: model.id(),
                     is_auto_rebuild_enabled: model.isAutoRebuildEnabled(),
-                    is_deid: hqImport("hqwebapp/js/initial_page_data").get("is_deid"),
-                    model_type: hqImport("hqwebapp/js/initial_page_data").get("model_type"),
+                    is_deid: self.isDeid,
+                    model_type: self.modelType,
                 },
                 success: function (data) {
                     if (data.success) {
@@ -115,10 +114,12 @@ hqDefine("export/js/export_list_main", function () {
     };
 
     var exportListModel = function(options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['exports']);
+        hqImport("hqwebapp/js/assert_properties").assert(options, ['exports', 'isDeid', 'modelType']);
 
         var self = {};
 
+        self.modelType = options.modelType;
+        self.isDeid = options.isDeid;
         self.exports = _.map(options.exports, function (e) { return exportModel(e); });
         self.myExports = _.filter(self.exports, function (e) { return !!e.my_export; });
         self.notMyExports = _.filter(self.exports, function (e) { return !e.my_export; });
@@ -126,12 +127,6 @@ hqDefine("export/js/export_list_main", function () {
         self.sendExportAnalytics = function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
             return true;
-        };
-
-        self.setFilterModalExport = function (e) {
-            // TODO: test, since this comment isn't going to be true anymore
-            // The filterModalExport is used as context for the FeedFilterFormController
-            self.filterModalExport = e;
         };
 
         // TODO: test
@@ -149,8 +144,8 @@ hqDefine("export/js/export_list_main", function () {
                     url: hqImport("hqwebapp/js/initial_page_data").reverse("get_saved_export_progress"),
                     data: {
                         export_instance_id: exp.id(),
-                        is_deid: hqImport("hqwebapp/js/initial_page_data").get("is_deid"),
-                        model_type: hqImport("hqwebapp/js/initial_page_data").get("model_type"),
+                        is_deid: self.isDeid,
+                        model_type: self.modelType,
                     },
                     success: function (data) {
                         exp.emailedExport.taskStatus = data.taskStatus;
@@ -201,6 +196,85 @@ hqDefine("export/js/export_list_main", function () {
             });
         });
 
+        // HTML elements from filter form - it's not very knockout-y to manipulate directly
+        self.$filterModal = $("#setFeedFiltersModal");
+        self.$emwfCaseFilter = $("#id_emwf_case_filter");
+        self.$emwfFormFilter = $("#id_emwf_form_filter");
+
+        // Editing filters for a saved export
+        self.formData = {};
+        self.filterModalExportId = ko.observable();
+        self.locationRestrictions = ko.observableArray([]);  // List of location names. Export will be restricted to these locations.
+        self.formSubmitErrorMessage = ko.observable('');
+        self.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
+        self.isSubmittingForm = ko.observable(false);
+
+        self.hasLocationRestrictions = ko.computed(function () {
+            return self.locationRestrictions().length;
+        });
+
+        self.filterModalExportId.subscribe(function (newValue) {
+            if (!newValue) {
+                return;
+            }
+            var newSelectedExport = _.find(self.exports, function (e) { return e.id() === newValue; });
+            self.$filterModal.find("form")[0].reset();
+            self.formData = newSelectedExport.emailedExport.filters;
+            self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions);
+            // select2s require programmatic update
+            self.$emwfCaseFilter.select2("data", newSelectedExport.emailedExport.filters.emwf_case_filter);
+            self.$emwfFormFilter.select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter);
+        });
+        // TODO
+        /*$scope.$watch("formData.date_range", function (newDateRange) {
+            if (!newDateRange) {
+                $scope.formData.date_range = "since";
+            } else {
+                self.formSubmitErrorMessage('');
+            }
+        });*/
+        self.commitFilters = function () {
+            var export_ = _.find(self.exports, function (e) { return e.id() === self.filterModalExportId(); });
+            self.isSubmittingForm(true);
+
+            // Put the data from the select2 into the formData object
+            var exportType = export_.exportType;
+            if (exportType === 'form') {
+                self.formData.emwf_form_filter = self.$emwfFormFilter.select2("data");
+                self.formData.emwf_case_filter = null;
+            } else if (exportType === 'case') {
+                self.formData.emwf_case_filter = self.$emwfCaseFilter.select2("data");
+                self.formData.emwf_form_filter = null;
+            }
+
+            // TODO: test
+            $.ajax({
+                method: 'POST',
+                url: hqImport("hqwebapp/js/initial_page_data").reverse("commit_filters"),
+                data: {
+                    export_id: export_.id(),
+                    form_data: self.formData,
+                    is_deid: hqImport("hqwebapp/js/initial_page_data").get("is_deid"),
+                    model_type: self.modelType,
+                },
+                success: function (data) {
+                    self.isSubmittingForm(false);
+                    if (data.success) {
+                        self.formSubmitErrorMessage('');
+                        export_.emailedExport.filters = self.formData;
+                        self.pollProgressBar(export_);
+                        self.$filterModal.modal('hide');
+                    } else {
+                        self.formSubmitErrorMessage(data.error);
+                    }
+                },
+                error: function () {
+                    self.isSubmittingForm(false);
+                    self.formSubmitErrorMessage(gettext("Problem saving dashboard feed filters"));
+                },
+            });
+        };
+
         return self;
     };
 
@@ -222,11 +296,13 @@ hqDefine("export/js/export_list_main", function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
         });
 
+        var modelType = initialPageData.get("model_type");
         $("#export-list").koApplyBindings(exportListModel({
             exports: initialPageData.get("exports"),
+            modelType: modelType,
+            isDeid: initialPageData.get('is_deid'),
         }));
 
-        var modelType = initial_page_data("model_type");
         if (modelType === 'form') {
             hqImport('analytix/js/kissmetrix').track.event('Visited Export Forms Page');
         } else if (modelType === 'case') {

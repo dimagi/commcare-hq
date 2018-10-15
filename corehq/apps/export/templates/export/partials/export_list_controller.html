@@ -74,4 +74,8 @@
         {% endif %}
     </div>
     {% endif %}
+
+    {% if is_daily_saved_export %}
+        {% include 'export/partials/feed_filter_modal.html' %}
+    {% endif %}
 </div>

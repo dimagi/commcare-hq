@@ -3,15 +3,9 @@
 {% load hq_shared_tags %}
 {% load djangular_tags %}
 
-<div class="modal fade"
-     id="setFeedFiltersModal"
-     ng-controller="FeedFilterFormController"
->
+<div class="modal fade" id="setFeedFiltersModal">
     <div class="modal-dialog">
-        <form name="feedFiltersForm"
-              class="form form-horizontal"
-              ng-submit="commitFilters()"
-        >
+        <form name="feedFiltersForm" class="form form-horizontal" data-bind="submit: commitFilters">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">
@@ -20,34 +14,28 @@
                     <h4 class="modal-title">{% trans "Filter Feed" %}</h4>
                 </div>
 
-                <div class="modal-body">
-                    <div ng-if="locationRestrictions">
+                <div class="modal-body" data-bind="validationOptions: {errorMessageClass: 'help-block'}">
+                    <div data-bind="if: hasLocationRestrictions">
                         {% trans "This export is limited to the following locations:" %}
-                        {% angularjs %}
-                        <ul ng-repeat="location in locationRestrictions">
-                            <li>{{ location }}</li>
+                        <ul data-bind="foreach: locationRestrictions">
+                            <li data-bind="text: $data"></li>
                         </ul>
-                        {% endangularjs %}
                     </div>
                     {% crispy export_filter_form %}
-                    <div class="alert alert-danger" role="alert" ng-show="hasFormSubmitError">
-                        <span>{% angularjs %}{{ formSubmitErrorMessage }}{% endangularjs %}</span>
-                        <span ng-show="!formSubmitErrorMessage">{% trans "There was an unknown saving the filters" %}</span>
+                    <div class="alert alert-danger" role="alert" data-bind="visible: formSubmitErrorMessage">
+                        <span data-bind="text: formSubmitErrorMessage"></span>
+                        <span data-bind="visible: !formSubmitErrorMessage()">{% trans "There was an unknown error saving the filters" %}</span>
                     </div>
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-default"
-                            data-dismiss="modal"
-                            ng-disabled="isSubmittingForm"
-                    >
+                    <button type="button" class="btn btn-default" data-dismiss="modal" data-bind="disabled: isSubmittingForm">
                         {% trans 'Cancel' %}
                     </button>
-                    <button type="submit" class="btn btn-success" ng-show="!isSubmittingForm">
+                    <button type="submit" class="btn btn-success" data-bind="visible: !isSubmittingForm()">
                         {% trans "Save filters"%}
                     </button>
-                    <button class="btn" disabled ng-show="isSubmittingForm">
+                    <button class="btn btn-default" disabled data-bind="visible: isSubmittingForm()">
                         {% trans "Saving..." %}
                     </button>
                 </div>
