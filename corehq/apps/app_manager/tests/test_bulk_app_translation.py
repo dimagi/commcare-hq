@@ -468,6 +468,41 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )
 
+    def test_partial_upload_id_mapping(self):
+        module = self.app.get_module(0)
+        self.assertEqual(
+            module.case_details.long.columns[0].header, {'en': 'Name', 'fra': ''}
+        )
+        self.assertEqual(
+            module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
+        )
+        translation_data = []
+        for sheet in self.upload_no_change_data:
+            if sheet[0] != 'module1':
+                translation_data.append(sheet)
+                continue
+
+            mod1_sheet = []
+            for translation in sheet[1]:
+                if translation[0] == 'foo (ID Mapping Value)':
+                    continue  # remove one of the id mapping values
+                if translation[0] == 'baz (ID Mapping Value)':
+                    mod1_sheet.append(('baz (ID Mapping Value)', 'detail', 'newbaz', ''))
+                    continue  # modify one of the translations
+                mod1_sheet.append(translation)
+
+            translation_data.append(['module1', mod1_sheet])
+
+        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.assertEqual(
+            module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
+        )
+        self.assertEqual(
+            [(e.key, e.value) for e in module.case_details.long.columns[1].enum],
+            [('foo', {'en': 'bar'}),
+             ('baz', {'en': 'newbaz'})]
+        )
+
 
 class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
     """
