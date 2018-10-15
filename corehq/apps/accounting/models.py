@@ -1603,7 +1603,7 @@ class Subscription(models.Model):
         return cls.get_active_subscription_by_domain(domain_name_or_obj)
 
     @classmethod
-    @quickcache(['domain_name'], timeout=60*60)
+    @quickcache(['domain_name'], timeout=60 * 60)
     def _get_active_subscription_by_domain(cls, domain_name):
         try:
             return cls.visible_objects.select_related(
