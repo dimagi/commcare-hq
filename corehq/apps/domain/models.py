@@ -129,11 +129,33 @@ class CallCenterProperties(DocumentSchema):
 
     case_type = StringProperty()
 
+    form_datasource_enabled = BooleanProperty(default=True)
+    case_datasource_enabled = BooleanProperty(default=True)
+    case_actions_datasource_enabled = BooleanProperty(default=True)
+
     def fixtures_are_active(self):
         return self.enabled and self.use_fixtures
 
     def config_is_valid(self):
         return (self.use_user_location_as_owner or self.case_owner_id) and self.case_type
+
+    def update_from_app_config(self, config):
+        """Update datasources enabled based on app config.
+
+        Follows similar logic to CallCenterIndicators
+        :returns: True if changes were made
+        """
+        pre = (self.form_datasource_enabled, self.case_datasource_enabled, self.case_actions_datasource_enabled)
+        self.form_datasource_enabled = config.forms_submitted.enabled or bool(config.custom_form)
+        self.case_datasource_enabled = (
+            config.cases_total.enabled
+            or config.cases_opened.enabled
+            or config.cases_closed.enabled
+        )
+        self.case_actions_datasource_enabled = config.cases_active.enabled
+        post = (self.form_datasource_enabled, self.case_datasource_enabled, self.case_actions_datasource_enabled)
+        return pre != post
+
 
 
 class LicenseAgreement(DocumentSchema):

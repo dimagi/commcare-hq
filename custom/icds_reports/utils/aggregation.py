@@ -14,6 +14,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
+    AGG_CCS_RECORD_CF_TABLE,
     AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CCS_RECORD_THR_TABLE,
@@ -23,6 +24,7 @@ from custom.icds_reports.const import (
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
     AGG_INFRASTRUCTURE_TABLE,
+    AWW_INCENTIVE_TABLE,
     DASHBOARD_DOMAIN,
 )
 from six.moves import range
@@ -241,6 +243,64 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         }
 
 
+class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-complementary_feeding_forms'
+    aggregate_parent_table = AGG_CCS_RECORD_CF_TABLE
+    aggregate_child_table_prefix = 'icds_db_child_ccs_cf_form_'
+
+    def data_from_ucr_query(self):
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+
+        return """
+        SELECT DISTINCT ccs_record_case_id AS case_id,
+        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
+        FROM "{ucr_tablename}"
+        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WINDOW w AS (
+            PARTITION BY ccs_record_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        """.format(ucr_tablename=self.ucr_tablename), {
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+            "state_id": self.state_id
+        }
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query()
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id
+        }
+        query_params.update(ucr_query_params)
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed, valid_visits
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+          COALESCE(ucr.valid_visits, 0) as valid_visits
+          FROM ({ucr_table_query}) ucr
+          FULL OUTER JOIN "{previous_month_tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id
+        )
+        """.format(
+            ucr_table_query=ucr_query,
+            previous_month_tablename=previous_month_tablename,
+            tablename=tablename
+        ), query_params
+
+
 class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-postnatal_care_forms'
     aggregate_parent_table = AGG_CHILD_HEALTH_PNC_TABLE
@@ -387,7 +447,8 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_methods) OVER w AS counsel_methods,
-        LAST_VALUE(is_ebf) OVER w as is_ebf
+        LAST_VALUE(is_ebf) OVER w as is_ebf,
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -414,7 +475,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf
+          state_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -422,7 +483,8 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
-            ucr.is_ebf as is_ebf
+            ucr.is_ebf as is_ebf,
+            COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -769,7 +831,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(convulsions) OVER w as convulsions,
         LAST_VALUE(rupture) OVER w as rupture,
         LAST_VALUE(anemia) OVER w as anemia,
-        LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities
+        LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities,
+        SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -799,7 +862,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
           state_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
           anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
-          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities
+          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -820,7 +883,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             ucr.blurred_vision as blurred_vision,
             ucr.convulsions as convulsions,
             ucr.rupture as rupture,
-            ucr.anc_abnormalities as anc_abnormalities
+            ucr.anc_abnormalities as anc_abnormalities,
+            COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
           LEFT JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -880,14 +944,15 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth
+          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth, valid_visits
         ) (
           SELECT
             DISTINCT case_load_ccs_record0 AS case_id,
             %(state_id)s AS state_id,
             %(month)s::DATE AS month,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
-            LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth
+            LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth,
+            SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
@@ -926,7 +991,8 @@ def recalculate_aggregate_table(model_class):
 class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     base_tablename = 'child_health_monthly'
 
-    def __init__(self, month):
+    def __init__(self, state_ids, month):
+        self.state_ids = state_ids
         self.month = transform_day_to_month(month)
 
     @property
@@ -960,7 +1026,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
-    def aggregation_query(self):
+    def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
         age_in_days = "({} - child_health.dob)::integer".format(end_month_string)
@@ -1185,14 +1251,25 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             {calculations}
             FROM "{child_health_case_ucr}" child_health
             LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON child_health.doc_id = child_tasks.child_health_case_id
+              AND child_health.state_id = child_tasks.state_id
+              AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
+              AND child_health.state_id = person_cases.state_id
+              AND lower(substring(person_cases.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
+              AND child_health.state_id = cf.state_id
             LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id AND thr.month = %(start_date)s
+              AND child_health.state_id = thr.state_id
             LEFT OUTER JOIN "{agg_gm_table}" gm ON child_health.doc_id = gm.case_id AND gm.month = %(start_date)s
+              AND child_health.state_id = gm.state_id
             LEFT OUTER JOIN "{agg_pnc_table}" pnc ON child_health.doc_id = pnc.case_id AND pnc.month = %(start_date)s
+              AND child_health.state_id = pnc.state_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id AND df.month = %(start_date)s
+              AND child_health.state_id = df.state_id
             WHERE child_health.doc_id IS NOT NULL
-            ORDER BY child_health.awc_id, child_health.case_id
+              AND child_health.state_id = %(state_id)s
+              AND lower(substring(child_health.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
+            ORDER BY child_health.awc_id
         )
         """.format(
             tablename=self.tablename,
@@ -1209,8 +1286,13 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             person_cases_ucr=self.person_case_ucr_tablename,
         ), {
             "start_date": self.month,
-            "next_month": month_formatter(self.month + relativedelta(months=1))
+            "next_month": month_formatter(self.month + relativedelta(months=1)),
+            "state_id": state_id,
+            "state_id_last_3": state_id[-3:],
         }
+
+    def aggregation_queries(self):
+        return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
 
     def indexes(self):
         return [
@@ -1744,7 +1826,9 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
             ('last_date_thr', 'case_list.last_date_thr'),
             ('num_anc_complete', 'case_list.num_anc_complete'),
-            ('opened_on', 'case_list.opened_on')
+            ('valid_visits', 'agg_cf.valid_visits + agg_bp.valid_visits + agg_pnc.valid_visits'),
+            ('opened_on', 'case_list.opened_on'),
+            ('dob', 'case_list.dob')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -1755,6 +1839,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON ucr.doc_id = agg_thr.case_id AND ucr.month = agg_thr.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{agg_bp_table}" agg_bp ON ucr.doc_id = agg_bp.case_id AND ucr.month = agg_bp.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{agg_pnc_table}" agg_pnc ON ucr.doc_id = agg_pnc.case_id AND ucr.month = agg_pnc.month and ucr.valid_in_month = 1
+            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND ucr.month = agg_cf.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON ucr.doc_id = agg_delivery.case_id AND ucr.month = agg_delivery.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{ccs_record_case_ucr}" case_list ON ucr.doc_id = case_list.doc_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON ucr.doc_id = ut.ccs_record_case_id
@@ -1772,6 +1857,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_bp_table=AGG_CCS_RECORD_BP_TABLE,
             agg_delivery_table=AGG_CCS_RECORD_DELIVERY_TABLE,
             pregnant_tasks_case_ucr=self.pregnant_tasks_cases_ucr_tablename,
+            agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             "start_date": self.month,
             "end_date": self.end_date
@@ -1812,11 +1898,11 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('district_id', 'district_id'),
             ('block_id', 'block_id'),
             ('supervisor_id', 'supervisor_id'),
-            ('awc_id', 'awc_id'),
-            ('month', 'month'),
-            ('ccs_status', 'ccs_status'),
+            ('awc_id', 'ucr.awc_id'),
+            ('month', 'ucr.month'),
+            ('ccs_status', 'ucr.ccs_status'),
             ('trimester', "COALESCE(ucr.trimester::text, '') as coalesce_trimester"),
-            ('caste', 'caste'),
+            ('caste', 'ucr.caste'),
             ('disabled', "COALESCE(ucr.disabled, 'no') as coalesce_disabled"),
             ('minority', "COALESCE(ucr.minority, 'no') as coalesce_minority"),
             ('resident', "COALESCE(ucr.resident,'no') as coalesce_resident"),
@@ -1859,6 +1945,14 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('institutional_delivery_in_month', 'sum(ucr.institutional_delivery_in_month)'),
             ('lactating_all', 'sum(ucr.lactating_all)'),
             ('pregnant_all', 'sum(ucr.pregnant_all)'),
+            ('valid_visits', 'sum(crm.valid_visits)'),
+            ('expected_visits', 'floor(sum( '
+             'CASE '
+             'WHEN ucr.pregnant=1 THEN 0.44 '
+             'WHEN ucr.month - ucr.add < 30 THEN 6 '
+             'WHEN ucr.month - ucr.add < 182 THEN 1 '
+             'ELSE 0.39 END'
+             '))'),
         )
         return """
         INSERT INTO "{tablename}" (
@@ -1866,15 +1960,18 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         ) (SELECT
             {calculations}
             FROM "{ucr_ccs_record_table}" ucr
-            WHERE month = %(start_date)s AND state_id != ''
-            GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month,
-                     ccs_status, coalesce_trimester, caste, coalesce_disabled, coalesce_minority, coalesce_resident
+            LEFT OUTER JOIN "{ccs_record_monthly_table}" as crm
+            ON crm.case_id = ucr.doc_id and crm.month=ucr.month
+            WHERE ucr.month = %(start_date)s AND state_id != ''
+            GROUP BY state_id, district_id, block_id, supervisor_id, ucr.awc_id, ucr.month,
+                     ucr.ccs_status, coalesce_trimester, ucr.caste, coalesce_disabled, coalesce_minority, coalesce_resident
         )
         """.format(
             tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
-            ucr_ccs_record_table=self.ccs_record_monthly_ucr_tablename
+            ucr_ccs_record_table=self.ccs_record_monthly_ucr_tablename,
+            ccs_record_monthly_table='ccs_record_monthly'
         ), {
             "start_date": self.month
         }
@@ -1932,6 +2029,8 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('institutional_delivery_in_month', ),
             ('lactating_all', ),
             ('pregnant_all', ),
+            ('valid_visits', ),
+            ('expected_visits', ),
         )
 
         def _transform_column(column_tuple):
@@ -2097,3 +2196,46 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
             tablename=tablename
         ), query_params
 
+
+class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
+    aggregate_parent_table = AWW_INCENTIVE_TABLE
+    aggregate_child_table_prefix = 'icds_db_aww_incentive_'
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id
+        }
+
+        return """
+        INSERT INTO "{tablename}" (
+            state_id, month, awc_id, block_id, state_name, district_name, block_name, 
+            supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
+            wer_eligible, awc_num_open, valid_visits, expected_visits
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            awc_id,
+            block_id,
+            state_name,
+            district_name,
+            block_name,
+            supervisor_name,
+            awc_name,
+            aww_name,
+            contact_phone_number,
+            wer_weighed,
+            wer_eligible,
+            awc_num_open,
+            valid_visits,
+            expected_visits
+          FROM agg_ccs_record_monthly AS acm
+          WHERE acm.month = %(month)s AND acm.state_id = %(state_id)s and aggregation_level=5
+        )
+        """.format(
+            tablename=tablename
+        ), query_params

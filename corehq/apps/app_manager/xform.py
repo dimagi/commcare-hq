@@ -921,6 +921,16 @@ class XForm(WrappedNode):
 
         return label
 
+    def get_label_ref(self, prompt):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_ref(prompt.find('..'))
+
+        label_node = prompt.find('{f}label')
+        if label_node.exists():
+            if 'ref' in label_node.attrib:
+                return self._normalize_itext_id(label_node.attrib['ref'])
+        return None
+
     def resolve_path(self, path, path_context=""):
         if path == "":
             return path_context
@@ -1020,6 +1030,7 @@ class XForm(WrappedNode):
 
             question = {
                 "label": self.get_label_text(node, langs),
+                "label_ref": self.get_label_ref(node),
                 "tag": node.tag_name,
                 "value": path,
                 "repeat": repeat,

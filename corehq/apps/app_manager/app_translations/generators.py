@@ -7,10 +7,12 @@ import tempfile
 import re
 
 from django.conf import settings
+from django.utils.functional import cached_property
 from memoized import memoized
 
 from collections import namedtuple, OrderedDict, defaultdict
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.app_manager.util import get_form_data
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
@@ -54,6 +56,21 @@ class AppTranslationsGenerator:
         self.slug_to_name = defaultdict(dict)
         self.slug_to_name[MODULES_AND_FORMS_SHEET_NAME] = {'en': MODULES_AND_FORMS_SHEET_NAME}
         self._build_translations()
+
+    @cached_property
+    def _get_labels_to_comments(self):
+        labels_to_comments = {}
+        module_data, errors = get_form_data(self.domain, self.app)
+        for module in module_data:
+            form_dict = defaultdict(list)
+
+            for form in module['forms']:
+                for question in form['questions']:
+                    if question['comment']:
+                        form_dict[question['label_ref']].append(question['comment'])
+                labels_to_comments[form['id']] = form_dict
+
+        return labels_to_comments
 
     def _translation_data(self, app):
         # get the translations data
@@ -149,6 +166,18 @@ class AppTranslationsGenerator:
                 return index
         raise Exception("Column not found with name {}".format(column_name))
 
+    def _filter_invalid_rows_for_form(self, rows, form_id, label_index):
+        """
+        Remove translations from questions that have SKIP TRANSIFEX in the comment
+        """
+        form_labels_to_comments = self._get_labels_to_comments[form_id]
+        valid_rows = []
+        for i, row in enumerate(rows):
+            question_label = row[label_index]
+            if not any('SKIP TRANSIFEX' in comment for comment in form_labels_to_comments[question_label]):
+                valid_rows = rows
+        return valid_rows
+
     def _get_translation_for_sheet(self, app, sheet_name, rows):
         occurrence = None
         translations_for_sheet = []
@@ -175,6 +204,7 @@ class AppTranslationsGenerator:
                     return ':'.join([case_property, _row[list_or_detail_index]])
             elif type_and_id.type == "Form":
                 label_index = self._get_header_index(sheet_name, 'label')
+                rows = self._filter_invalid_rows_for_form(rows, type_and_id.id, label_index)
 
                 def occurrence(_row):
                     return _row[label_index]

@@ -17,7 +17,7 @@ hqDefine("locations/js/location", [
     initialPageData,
     alertUser,
     googleAnalytics,
-    LocationModels
+    locationModels
 ) {
     var insert_new_user = function (user) {
         var $select = $('#id_users-selected_ids');
@@ -76,7 +76,7 @@ hqDefine("locations/js/location", [
         var hierarchy = initialPageData.get('hierarchy');
         var loc_types_with_users = initialPageData.get('loc_types_with_users');
 
-        var model = new LocationModels.locationSelectViewModel({
+        var model = locationModels.locationSelectViewModel({
             "hierarchy": hierarchy,
             "default_caption": "\u2026",
             "auto_drill": false,

@@ -10,6 +10,7 @@ from django.views import View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain
+from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
 from corehq.apps.domain.decorators import login_or_api_key, domain_admin_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView, DomainViewMixin
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
@@ -45,6 +46,22 @@ def custom_data_models(request, domain):
 @require_linked_domain
 def user_roles(request, domain):
     return JsonResponse({'user_roles': get_user_roles(domain)})
+
+
+@login_or_api_key
+@require_linked_domain
+def case_search_config(request, domain):
+    try:
+        config = CaseSearchConfig.objects.get(domain=domain).to_json()
+    except CaseSearchConfig.DoesNotExist:
+        config = None
+
+    try:
+        addition = CaseSearchQueryAddition.objects.get(domain=domain).to_json()
+    except CaseSearchQueryAddition.DoesNotExist:
+        addition = None
+
+    return JsonResponse({'config': config, 'addition': addition})
 
 
 @login_or_api_key

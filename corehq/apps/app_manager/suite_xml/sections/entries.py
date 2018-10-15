@@ -162,6 +162,8 @@ class EntriesHelper(object):
             if form.uses_usercase():
                 EntriesHelper.add_usercase_id_assertion(e)
 
+            EntriesHelper.add_custom_assertions(e, form)
+
             if (
                 self.app.commtrack_enabled and
                 session_var('supply_point_id') in getattr(form, 'source', "")
@@ -258,6 +260,12 @@ class EntriesHelper(object):
                 'case_autoload.{0}.case_missing'.format(mode),
             )
         ]
+
+    @staticmethod
+    def add_custom_assertions(entry, form):
+        for id, assertion in enumerate(form.custom_assertions):
+            locale_id = id_strings.custom_assertion_locale(form.get_module(), form, id)
+            entry.assertions.append(EntriesHelper.get_assertion(assertion.test, locale_id))
 
     @staticmethod
     def add_usercase_id_assertion(entry):

@@ -520,19 +520,12 @@ class ProjectDataTab(UITab):
         if self.can_only_see_deid_exports:
             from corehq.apps.export.views import (
                 DeIdFormExportListView,
-                DownloadFormExportView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
-                'subpages': [
-                    {
-                        'title': _(DownloadFormExportView.page_title),
-                        'urlname': DownloadFormExportView.urlname,
-                    },
-                ]
             })
             export_data_views.extend([
                 {
@@ -551,12 +544,9 @@ class ProjectDataTab(UITab):
                 CaseExportListView,
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
-                DownloadFormExportView,
                 DownloadNewFormExportView,
-                DownloadCaseExportView,
                 DownloadNewCaseExportView,
                 DownloadNewSmsExportView,
-                BulkDownloadFormExportView,
                 BulkDownloadNewFormExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
@@ -588,16 +578,8 @@ class ProjectDataTab(UITab):
                                 'urlname': CreateNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
-                                'title': _(BulkDownloadFormExportView.page_title),
-                                'urlname': BulkDownloadFormExportView.urlname,
-                            },
-                            {
                                 'title': _(BulkDownloadNewFormExportView.page_title),
                                 'urlname': BulkDownloadNewFormExportView.urlname,
-                            },
-                            {
-                                'title': _(DownloadFormExportView.page_title),
-                                'urlname': DownloadFormExportView.urlname,
                             },
                             {
                                 'title': _(DownloadNewFormExportView.page_title),
@@ -623,10 +605,6 @@ class ProjectDataTab(UITab):
                                 'title': _(CreateNewCustomCaseExportView.page_title),
                                 'urlname': CreateNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
-                            {
-                                'title': _(DownloadCaseExportView.page_title),
-                                'urlname': DownloadCaseExportView.urlname,
-                            },
                             {
                                 'title': _(DownloadNewCaseExportView.page_title),
                                 'urlname': DownloadNewCaseExportView.urlname,
@@ -755,6 +733,20 @@ class ProjectDataTab(UITab):
                     'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
                 })
             items.extend(edit_section)
+
+        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
+            explore_data_views = [
+                {
+                    'title': _(ExploreCaseDataView.page_title),
+                    'url': reverse(ExploreCaseDataView.urlname,
+                                   args=(self.domain,)),
+                    'show_in_dropdown': False,
+                    'icon': 'fa fa-search',
+                    'subpages': [],
+                }
+            ]
+            items.append([_("Explore Data"), explore_data_views])
 
         if self.can_use_lookup_tables:
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
@@ -1356,6 +1348,10 @@ class EnterpriseSettingsTab(UITab):
                 'title': _('Enterprise Settings'),
                 'url': reverse('enterprise_settings', args=[self.domain]),
             },
+            {
+                'title': _('Billing Statements'),
+                'url': reverse('enterprise_billing_statements', args=[self.domain])
+            }
         ]))
         return items
 

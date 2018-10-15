@@ -102,7 +102,7 @@ class RecordListWidget(Widget):
         return data_list
 
     def render(self, name, value, attrs=None):
-        return render_to_string('reminders/partial/record_list_widget.html', {
+        return render_to_string('reminders/partials/record_list_widget.html', {
             'value': value,
             'name': name,
         })

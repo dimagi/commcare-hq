@@ -54,16 +54,14 @@ branches:
 #  - np/celery-4.x-2  # Nick P Aug 22
   - pv/deactivated-users # Preethi Aug 23
   - sr-batch-ucrpillow # Sravan Sept 4
-  - nh/omrs/atom  # Norman Sept 12
   - jls/add-js-to-sentry  # Jenny Sept 18
   - sr-redis-client # Sravan Sept 19
   - mk-282955 # MK Sept 25
-  - rn_upgrade_select2 # Rohit Sept 26
-#  - rn_test_select2 # Rohit Sept 27
   - qa-customer-billing # Gabriella Sept 27
   - pv/no-filter-reports # Preethi Sept 28
   - pv/deac-users-fixes # Preethi Sept 28
-  - rn_fix_show_side_nav_bar # rohit Oct 1 
+  - jls/data-corrections-select2s  # Jenny Oct 4
+  - rn_correct_datefilter_of_ucr # rohit Oct 14
 submodules:
   submodules/django-digest-src:
     branches: []
