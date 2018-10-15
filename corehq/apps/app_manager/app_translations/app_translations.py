@@ -31,6 +31,8 @@ import six
 from six.moves import zip
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
+ID_MAPPING_SUFFIX = " (ID Mapping Value)"
+
 
 def get_unicode_dicts(iterable):
     """
@@ -819,7 +821,7 @@ def _update_case_list_translations(sheet, rows, app):
             index_of_last_enum_in_condensed = len(condensed_rows) - 1
 
         # If it's an enum value, add it to it's parent enum property
-        elif row['case_property'].endswith(" (ID Mapping Value)"):
+        elif row['case_property'].endswith(ID_MAPPING_SUFFIX):
             row['id'] = row['case_property'].split(" ")[0]
             parent = condensed_rows[index_of_last_enum_in_condensed]
             parent['mappings'] = parent.get('mappings', []) + [row]
@@ -927,11 +929,28 @@ def _update_case_list_translations(sheet, rows, app):
                 " of the case property '%s'" % row['case_property']
             ))
 
+    def _update_id_mappings(rows, detail):
+        if len(rows) == len(detail.enum):
+            for row, mapping in zip(rows, detail.enum):
+                _update_translation(row, mapping.value)
+        else:
+            # Not all of the id mappings are described.
+            # If we can identify by key, we can proceed.
+            mappings_by_prop = {mapping.key: mapping for mapping in detail.enum}
+            if len(detail.enum) != len(mappings_by_prop):
+                msgs.append((messages.error,
+                             "You must provide all ID mappings for property '{}'"
+                             .format(detail.field)))
+            else:
+                for row in rows:
+                    prop = row['case_property'].rstrip(ID_MAPPING_SUFFIX)
+                    if prop in mappings_by_prop:
+                        _update_translation(row, mappings_by_prop[prop].value)
+
     def _update_detail(row, detail):
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
-        for i, enum_value_row in enumerate(row.get('mappings', [])):
-            _update_translation(enum_value_row, detail['enum'][i].value)
+        _update_id_mappings(row.get('mappings', []), detail)
         for i, graph_annotation_row in enumerate(row.get('annotations', [])):
             _update_translation(
                 graph_annotation_row,
