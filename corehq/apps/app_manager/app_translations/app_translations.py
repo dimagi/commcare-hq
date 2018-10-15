@@ -908,6 +908,7 @@ def _update_case_list_translations(sheet, rows, app):
                     word
                 )
             ))
+
     if msgs:
         return msgs
 
@@ -974,12 +975,8 @@ def _update_case_list_translations(sheet, rows, app):
             _update_detail(row, detail)
 
     if partial_upload:
-        case_list_rows = {
-            row['case_property']: row for row in condensed_rows if row['list_or_detail'] == 'list'
-        }
-        case_detail_rows = {
-            row['case_property']: row for row in condensed_rows if row['list_or_detail'] == 'detail'
-        }
+        case_list_rows = {row['case_property']: row for row in list_rows}
+        case_detail_rows = {row['case_property']: row for row in detail_rows}
 
         for detail in short_details:
             if case_list_rows.get(detail.field):
