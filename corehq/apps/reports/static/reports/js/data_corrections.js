@@ -10,7 +10,12 @@
  *      Required:
  *          saveUrl
  *          properties: An object, where keys are the property name and values may be either strings or objects.
- *              If strings, they are assumed to be the property values. If objects, they should have a 'value' key
+ *              If strings, they are assumed to be the property values. If objects, they may include the properties
+ *                  value: Required. A string. Space-separated values if this is a multi-select (see below)
+ *                  options: Optional. A list of objects, each with a 'text' and 'id' key. If provided, a select
+ *                      box with a free text option will be displayed instead of a text box.
+ *                  multiple: Optional. If true (and options is provided), a multi-select box with a free text
+ *                      option will be displayed instead of a text box.
  *              with the property value and may then have arbitrary other properties to be used for display (see
  *              displayProperties below).
  *      Optional:
@@ -30,6 +35,7 @@ hqDefine("reports/js/data_corrections", [
     "hqwebapp/js/assert_properties",
     "analytix/js/kissmetrix",
     "hqwebapp/js/components.ko",     // pagination
+    "select2/dist/js/select2.full.min",
 ], function (
     $,
     ko,
@@ -52,6 +58,26 @@ hqDefine("reports/js/data_corrections", [
         self.name = options.name;
         self.value = ko.observable(options.value || '');
         self.dirty = ko.observable(false);
+        self.options = options.options || [];
+
+        // Account for select questions where the value is not one of the given options
+        if (self.options.length && self.value()) {
+            _.each(self.value().split(' '), function (value) {
+                if (!_.find(self.options, function (option) { return value === option.id })) {
+                    self.options.unshift({id: value, text: value});
+                }
+            });
+        }
+        self.multiple = options.multiple === undefined ? false : options.multiple;
+
+        // Update hidden value for multiselects. See data_corrections_modal.html for context.
+        self.updateSpaceSeparatedValue = function (model, e) {
+            var value = $(e.currentTarget).val();
+            if (_.isArray(value)) {
+                value = value.join(" ");
+            }
+            self.value(value);
+        };
 
         return self;
     };
@@ -286,8 +312,21 @@ hqDefine("reports/js/data_corrections", [
             $trigger.click(function () {
                 $modal.modal();
             });
-            model = new DataCorrectionsModel(options);
+            model = DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
+
+            $modal.find(".modal-body select").each(function() {
+                var $el = $(this);
+                $el.select2({
+                    width: '100%',
+                    tags: true,
+                    allowClear: true,
+                });
+                if ($el.attr("multiple")) {
+                    var $input = $el.siblings("input");
+                    $el.val($input.val().split(" ")).trigger("change");
+                }
+            });
         }
         return model;
     };
