@@ -569,7 +569,7 @@ class CcsRecordMonthlyView(models.Model):
     using_ifa = models.IntegerField(blank=True, null=True)
     lactating = models.IntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
-    closed = models.SmallIntegerField(blank=True, null=True)
+    open_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'

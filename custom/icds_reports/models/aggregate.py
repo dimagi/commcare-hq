@@ -129,7 +129,6 @@ class CcsRecordMonthly(models.Model):
     opened_on = models.DateField(blank=True, null=True)
     valid_visits = models.SmallIntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
-    closed = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False

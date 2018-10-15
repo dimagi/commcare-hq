@@ -19,9 +19,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='CcsRecordMonthlyView',
-            name='closed',
+            name='open_in_month',
             field=models.SmallIntegerField(blank=True, null=True),
         ),
-        migrator.get_migration('update_tables30.sql'),
     ]
     operations.extend(get_view_migrations())
