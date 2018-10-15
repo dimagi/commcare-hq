@@ -181,7 +181,7 @@
     <div class="tab-content appmanager-tab-content">
         {% if app.get_doc_type == 'LinkedApplication' %}
         <div class="tab-pane" id="linked-app">
-            <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
+            <div class="panel panel-appmanager panel-appmanager-form">
                 <form action="{% url "pull_master_app" domain app.id %}" method="POST">
                     {% csrf_token %}
                     <legend>Update from master application</legend>
