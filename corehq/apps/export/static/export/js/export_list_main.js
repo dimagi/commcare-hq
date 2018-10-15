@@ -71,6 +71,8 @@ hqDefine("export/js/export_list_main", function () {
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('update_emailed_export_data'),
                 data: {
                     export_id: model.id(),
+                    is_deid: hqImport("hqwebapp/js/initial_page_data").get("is_deid"),
+                    model_type: hqImport("hqwebapp/js/initial_page_data").get("model_type"),
                 },
                 success: function (data) {
                     if (data.success) {
@@ -93,6 +95,8 @@ hqDefine("export/js/export_list_main", function () {
                 data: {
                     export_id: model.id(),
                     is_auto_rebuild_enabled: model.isAutoRebuildEnabled(),
+                    is_deid: hqImport("hqwebapp/js/initial_page_data").get("is_deid"),
+                    model_type: hqImport("hqwebapp/js/initial_page_data").get("model_type"),
                 },
                 success: function (data) {
                     if (data.success) {
@@ -145,6 +149,8 @@ hqDefine("export/js/export_list_main", function () {
                     url: hqImport("hqwebapp/js/initial_page_data").reverse("get_saved_export_progress"),
                     data: {
                         export_instance_id: exp.id(),
+                        is_deid: hqImport("hqwebapp/js/initial_page_data").get("is_deid"),
+                        model_type: hqImport("hqwebapp/js/initial_page_data").get("model_type"),
                     },
                     success: function (data) {
                         exp.emailedExport.taskStatus = data.taskStatus;
