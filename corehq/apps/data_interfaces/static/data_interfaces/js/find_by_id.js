@@ -3,7 +3,7 @@ hqDefine("data_interfaces/js/find_by_id", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'analytix/js/kissmetrix',
+    'analytix/js/kissmetrix'
 ], function (
     $,
     ko,
