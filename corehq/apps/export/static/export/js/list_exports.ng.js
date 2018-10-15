@@ -18,46 +18,6 @@
     }]);
 
     var exportsControllers = {};
-    exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, $rootScope, modelType, $timeout
-    ) {
-        /**
-         * This controller fetches a list of saved exports from
-         * subclasses of BaseExportListView.
-         *
-         * It also generates a list of exports selected for bulk exports.
-         */
-        $rootScope.pollProgressBar = function (exp) {
-            exp.emailedExport.updatingData = false;
-            exp.emailedExport.taskStatus = {
-                'percentComplete': 0,
-                'inProgress': true,
-                'success': false,
-            };
-            var tick = function () {
-                djangoRMI.get_saved_export_progress({
-                    'export_instance_id': exp.id,
-                }).success(function (data) {
-                    exp.emailedExport.taskStatus = data.taskStatus;
-                    if (!data.taskStatus.success) {
-                        // The first few ticks don't yet register the task
-                        exp.emailedExport.taskStatus.inProgress = true;
-                        $timeout(tick, 1500);
-                    } else {
-                        exp.emailedExport.taskStatus.justFinished = true;
-                    }
-                });
-            };
-            tick();
-        };
-
-        // TODO
-        _.each($scope.exports, function (exp) {
-            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
-                $rootScope.pollProgressBar(exp);
-            }
-        });
-    };
     exportsControllers.FeedFilterFormController = function (
         $scope, $rootScope, djangoRMI, filterFormElements, filterFormModalElement
     ) {

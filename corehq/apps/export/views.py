@@ -601,7 +601,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             ),
             'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
             'locationRestrictions': location_restrictions,
-            'taskStatus': self._get_task_status_json(export._id),
+            'taskStatus': _get_task_status_json(export._id),
         }
 
     def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
@@ -653,20 +653,24 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
-    @staticmethod
-    def _get_task_status_json(export_instance_id):
-        status = get_saved_export_task_status(export_instance_id)
-        return {
-            'percentComplete': status.progress.percent or 0,
-            'inProgress': status.started(),
-            'success': status.success(),
-        }
 
-    @allow_remote_invocation
-    def get_saved_export_progress(self, in_data):
-        return format_angular_success({
-            'taskStatus': self._get_task_status_json(in_data['export_instance_id']),
-        })
+def _get_task_status_json(export_instance_id):
+    status = get_saved_export_task_status(export_instance_id)
+    return {
+        'percentComplete': status.progress.percent or 0,
+        'inProgress': status.started(),
+        'success': status.success(),
+    }
+
+
+# TODO: permissions (see BaseExportListView.dispatch)
+@login_and_domain_required
+@require_GET
+def get_saved_export_progress(request, domain):
+    export_instance_id = request.GET.get('export_instance_id')
+    return json_response({
+        'taskStatus': _get_task_status_json(export_instance_id),
+    })
 
 
 @require_GET
