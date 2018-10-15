@@ -60,8 +60,7 @@ branches:
   - qa-customer-billing # Gabriella Sept 27
   - pv/no-filter-reports # Preethi Sept 28
   - pv/deac-users-fixes # Preethi Sept 28
-#  - jls/data-corrections-select2s  # Jenny Oct 4
-  - jls/migrate-select2-scheduled-reports  # Jenny Oct 11
+  - jls/data-corrections-select2s  # Jenny Oct 4
   - rn_correct_datefilter_of_ucr # rohit Oct 14
 submodules:
   submodules/django-digest-src:
