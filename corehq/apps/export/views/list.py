@@ -272,20 +272,24 @@ def _get_task_status_json(export_instance_id):
     }
 
 
-# TODO: permissions (see BaseExportListView.dispatch)
 @login_and_domain_required
 @require_GET
 def get_saved_export_progress(request, domain):
+    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+
     export_instance_id = request.GET.get('export_instance_id')
     return json_response({
         'taskStatus': _get_task_status_json(export_instance_id),
     })
 
 
-# TODO: permissions (see BaseExportListView.dispatch)
 @login_and_domain_required
 @require_POST
 def toggle_saved_export_enabled(request, domain):
+    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+
     export_instance_id = request.POST.get('export_id')
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     export_instance.auto_rebuild_enabled = not json.loads(request.POST.get('is_auto_rebuild_enabled'))
@@ -296,10 +300,12 @@ def toggle_saved_export_enabled(request, domain):
     })
 
 
-# TODO: permissions (see BaseExportListView.dispatch)
 @login_and_domain_required
 @require_POST
 def update_emailed_export_data(request, domain):
+    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+
     export_instance_id = request.POST.get('export_id')
     rebuild_saved_export(export_instance_id, manual=True)
     return json_response({'success': True})
