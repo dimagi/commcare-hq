@@ -9,7 +9,7 @@ hqDefine("data_interfaces/js/find_by_id", [
     ko,
     assertProperties,
     initialPageData,
-    kissmetrics,
+    kissmetrics
 ) {
     var findModel = function (options) {
         assertProperties.assert(options, ['errorMessage', 'eventName', 'header', 'help', 'placeholder', 'successMessage']);
