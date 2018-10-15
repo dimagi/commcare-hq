@@ -5,17 +5,6 @@
 {% load compress %}
 {% load djangular_tags %}
 
-{% block stylesheets %}{{ block.super }}
-    <style>
-        .bulk-checkbox {
-            margin-top: 8px;
-            vertical-align: top;
-            line-height: 20px;
-            display: inline-block;
-        }
-    </style>
-{% endblock %}
-
 {% block js %}
 <script src="{% static 'clipboard/dist/clipboard.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/select_2_ajax_widget_v3.js' %}"></script>
