@@ -309,13 +309,12 @@
             {% endif %}
 
             {% if has_edit_permissions %}
-            {% angularjs %}
 
             <td>
                 {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
                     <div ng-if="export.can_edit">
                         <div ng-if="isLocationSafeForUser(export)">
-                                <a href="{{ export.editUrl }}" class="btn btn-default">
+                            <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
                                 <i class="fa fa-pencil"></i>
                                 <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
                                 <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
@@ -331,7 +330,7 @@
                                     <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
                                 </a>
                             {% else %}
-                                <a href="{{ export.editUrl }}" class="btn btn-default">
+                                <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
                                     <span ng-show="!export.isDailySaved">{% trans 'View' %}</span>
                                     <span ng-show="export.isDailySaved">{% trans 'View Columns' %}</span>
                                 </a>
@@ -340,7 +339,7 @@
                     </div>
                 {% else %}
                     <div ng-if="isLocationSafeForUser(export)">
-                        <a href="{{ export.editUrl }}" class="btn btn-default">
+                        <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
                             <i class="fa fa-pencil"></i>
                             <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
                             <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
@@ -356,7 +355,6 @@
                     </a>
                 </div>
             </td>
-            {% endangularjs %}
             {% endif %}
 
             <td>
