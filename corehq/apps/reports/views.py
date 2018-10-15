@@ -1269,6 +1269,7 @@ class CaseDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
+    @use_select2_v4
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
@@ -2037,6 +2038,7 @@ class FormDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_form_view_permission)
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(FormDataView, self).dispatch(request, *args, **kwargs)
 
