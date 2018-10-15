@@ -60,13 +60,20 @@ hqDefine("reports/js/data_corrections", [
         self.dirty = ko.observable(false);
         self.options = options.options || [];
 
-        // Account for select questions where the value is not one of the given options
-        if (self.options.length && self.value()) {
-            _.each(self.value().split(' '), function (value) {
-                if (!_.find(self.options, function (option) { return value === option.id })) {
-                    self.options.unshift({id: value, text: value});
-                }
-            });
+        if (self.options.length) {
+            // Account for select questions where the value is not one of the given options
+            if (self.value()) {
+                _.each(self.value().split(' '), function (value) {
+                    if (!_.find(self.options, function (option) { return value === option.id; })) {
+                        self.options.unshift({id: value, text: value});
+                    }
+                });
+            }
+
+            // Add blank option so that placeholder and allowClear work properly
+            if (!_.find(self.options, function (o) { return !o.id; })) {
+                self.options.unshift({id: '', text: ''});
+            }
         }
         self.multiple = options.multiple === undefined ? false : options.multiple;
 
@@ -316,12 +323,15 @@ hqDefine("reports/js/data_corrections", [
             $modal.koApplyBindings(model);
 
             $modal.find(".modal-body select").each(function() {
-                var $el = $(this);
+                var $el = $(this),
+                    multiple = !!$el.attr("multiple");
                 $el.select2({
                     width: '100%',
                     tags: true,
+                    allowClear: !multiple,
+                    placeholder: multiple ? undefined : gettext('Select a value'),
                 });
-                if ($el.attr("multiple")) {
+                if (multiple) {
                     var $input = $el.siblings("input");
                     $el.val($input.val().split(" ")).trigger("change");
                 }
