@@ -59,16 +59,21 @@ hqDefine("reports/js/data_corrections", [
         self.value = ko.observable(options.value || '');
         self.dirty = ko.observable(false);
         self.options = options.options || [];
+        self.multiple = options.multiple === undefined ? false : options.multiple;
 
         // Account for select questions where the value is not one of the given options
-        if (self.options.length && self.value()) {
-            _.each(self.value().split(' '), function (value) {
-                if (!_.find(self.options, function (option) { return value === option.id })) {
-                    self.options.unshift({id: value, text: value});
-                }
-            });
+        if (self.options.length) {
+            if (self.value()) {
+                _.each(self.value().split(' '), function (value) {
+                    if (!_.find(self.options, function (option) { return value === option.id; })) {
+                        self.options.unshift({id: value, text: value});
+                    }
+                });
+            }
+            if (!self.multiple || !self.value()) {
+                self.options.unshift({id: '', text: ''});
+            }
         }
-        self.multiple = options.multiple === undefined ? false : options.multiple;
 
         // Update hidden value for multiselects. See data_corrections_modal.html for context.
         self.updateSpaceSeparatedValue = function (model, e) {
@@ -315,13 +320,23 @@ hqDefine("reports/js/data_corrections", [
             model = DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
 
-            $modal.find(".modal-body select").each(function() {
-                var $el = $(this);
-                $el.select2({
-                    width: '100%',
-                    tags: true,
-                });
-                if ($el.attr("multiple")) {
+            $modal.find(".modal-body select").each(function () {
+                var $el = $(this),
+                    multiple = !!$el.attr("multiple"),
+                    select2Options = {
+                        width: '100%',
+                        tags: true,
+                    };
+                if (!multiple) {
+                    // Allow clearing in a single select, including adding a blank option
+                    // so placeholder and allowClear work properly
+                    select2Options = _.extend(select2Options, {
+                        allowClear: true,
+                        placeholder: gettext('Select a value'),
+                    });
+                }
+                $el.select2(select2Options);
+                if (multiple) {
                     var $input = $el.siblings("input");
                     $el.val($input.val().split(" ")).trigger("change");
                 }
