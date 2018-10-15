@@ -60,19 +60,13 @@ hqDefine("reports/js/data_corrections", [
         self.dirty = ko.observable(false);
         self.options = options.options || [];
 
-        if (self.options.length) {
-            // Account for select questions where the value is not one of the given options
-            if (self.value()) {
-                _.each(self.value().split(' '), function (value) {
-                    if (!_.find(self.options, function (option) { return value === option.id })) {
-                        self.options.unshift({id: value, text: value});
-                    }
-                });
-            }
-            // Add blank option so that clearing works properly
-            if (!_.find(self.options, function (o) { return !o.id; })) {
-                self.options.unshift({id: '', text: ''});
-            }
+        // Account for select questions where the value is not one of the given options
+        if (self.options.length && self.value()) {
+            _.each(self.value().split(' '), function (value) {
+                if (!_.find(self.options, function (option) { return value === option.id })) {
+                    self.options.unshift({id: value, text: value});
+                }
+            });
         }
         self.multiple = options.multiple === undefined ? false : options.multiple;
 
@@ -328,6 +322,7 @@ hqDefine("reports/js/data_corrections", [
                     width: '100%',
                     tags: true,
                     allowClear: !multiple,
+                    placeholder: multiple ? undefined : '',
                 });
                 if (multiple) {
                     var $input = $el.siblings("input");
