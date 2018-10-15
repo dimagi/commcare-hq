@@ -320,6 +320,7 @@ hqDefine("reports/js/data_corrections", [
                 $el.select2({
                     width: '100%',
                     tags: true,
+                    allowClear: true,
                 });
                 if ($el.attr("multiple")) {
                     var $input = $el.siblings("input");
