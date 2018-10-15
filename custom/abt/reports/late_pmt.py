@@ -17,8 +17,8 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.sms.models import SMS, INCOMING, MessagingSubEvent, MessagingEvent
 from corehq.apps.userreports.util import get_table_name
-from custom.abt.reports.filters import UsernameFilter, CountryFilter, LevelOneFilter, LevelTwoFilter, LevelThreeFilter, \
-    LevelFourFilter, SubmissionStatusFilter
+from custom.abt.reports.filters import UsernameFilter, CountryFilter, LevelOneFilter, LevelTwoFilter, \
+    LevelThreeFilter, LevelFourFilter, SubmissionStatusFilter
 
 
 class LatePMTUsers(SqlData):
