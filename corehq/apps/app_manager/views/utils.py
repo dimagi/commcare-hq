@@ -296,7 +296,7 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     try:
         update_linked_app(app, user_id)
     except AppLinkError as e:
-        message = str(e)
+        message = six.text_type(e)
     except Exception:
         message = _("Something went wrong! There was an error. Please try again. "
                     "If you see this error repeatedly please report it as issue.")
