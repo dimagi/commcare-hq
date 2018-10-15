@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from datetime import datetime
 import json
 from io import BytesIO
 from contextlib import contextmanager, closing
@@ -232,7 +233,11 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
+        filters = get_filter_values(self.filters, self.request_dict, user=self.request_user)
+        for key in filters:
+            if isinstance(filters[key], DateSpan) and filters[key].inclusive:
+                filters[key].enddate = datetime.combine(filters[key].enddate, datetime.max.time())
+        return filters
 
     @property
     @memoized
