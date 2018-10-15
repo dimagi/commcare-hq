@@ -323,7 +323,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             key=_transaction_sort_key_function(self.case)
         )
         if sorted_transactions:
-            if sorted_transactions[0].type & const.CASE_ACTION_CREATE != sorted_transactions[0].type:
+            if sorted_transactions[0].type | CaseTransaction.TYPE_CASE_CREATE != sorted_transactions[0].type:
                 error = "Case {0} first transaction not create transaction: {1}"
                 raise ReconciliationError(
                     error.format(self.case.case_id, sorted_transactions[0])
@@ -331,7 +331,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         sorted_transactions = CaseAccessorSQL.fetch_case_transaction_forms(sorted_transactions)
         rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
-        rebuild_transaction = CommCareCaseSQL.rebuild_transaction(self.case, rebuild_detail)
+        rebuild_transaction = CaseTransaction.rebuild_transaction(self.case, rebuild_detail)
         self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
 
     def _delete_old_related_models(self, original_models_by_id, models_to_keep, key="identifier"):
@@ -367,7 +367,7 @@ def _transaction_sort_key_function(case):
         if first_transaction.user_id != second_transaction.user_id:
             return cc_cmp(first_transaction.server_date, second_transaction.server_date)
 
-        if first_transaction.xform_id and first_transaction.xform_id == second_transaction.xform_id:
+        if first_transaction.form_id and first_transaction.form_id == second_transaction.form_id:
             # short circuit if they are from the same form
             return cc_cmp(
                 _type_sort(first_transaction.type),
@@ -388,7 +388,7 @@ def _transaction_sort_key_function(case):
             # if the user is the same you should compare with the special logic below
             return (
                 transaction.client_date,
-                form_cmp(transaction.xform_id),
+                form_cmp(transaction.form_id),
                 _type_sort(transaction.type),
             )
 
