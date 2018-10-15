@@ -262,57 +262,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        """Called by the ANGULAR.JS controller DrilldownToFormController in
-        hq.app_data_drilldown.ng.js  Use ApplicationDataRMIHelper to help
-        format the response.
-        """
-        raise NotImplementedError("Must implement get_intial_form_data")
-
-    @allow_remote_invocation
-    def toggle_saved_export_enabled_state(self, in_data):
-        export_instance_id = in_data['export']['id']
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        export_instance.auto_rebuild_enabled = not in_data['export']['isAutoRebuildEnabled']
-        export_instance.save()
-        return format_angular_success({
-            'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
-        })
-
-    @allow_remote_invocation
-    def update_emailed_export_data(self, in_data):
-        export_instance_id = in_data['export']['id']
-        rebuild_saved_export(export_instance_id, manual=True)
-        return format_angular_success({})
-
-    @allow_remote_invocation
-    def submit_app_data_drilldown_form(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            form_data = in_data['formData']
-        except KeyError:
-            return format_angular_error(
-                _("The form's data was not correctly formatted."),
-                log_error=False,
-            )
-        try:
-            create_url = self.get_create_export_url(form_data)
-        except ExportFormValidationException:
-            return format_angular_error(
-                _("The form did not validate."),
-                log_error=False,
-            )
-        except Exception as e:
-            return format_angular_error(
-                _("Problem getting link to custom export form: {}").format(e),
-                log_error=False,
-            )
-        return format_angular_success({
-            'url': create_url,
-        })
-
     @staticmethod
     def _get_task_status_json(export_instance_id):
         status = get_saved_export_task_status(export_instance_id)
@@ -327,6 +276,29 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         return format_angular_success({
             'taskStatus': self._get_task_status_json(in_data['export_instance_id']),
         })
+
+
+# TODO: permissions (see BaseExportListView.dispatch)
+@login_and_domain_required
+@require_POST
+def toggle_saved_export_enabled(request, domain):
+    export_instance_id = request.POST.get('export_id')
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    export_instance.auto_rebuild_enabled = not json.loads(request.POST.get('is_auto_rebuild_enabled'))
+    export_instance.save()
+    return json_response({
+        'success': True,
+        'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
+    })
+
+
+# TODO: permissions (see BaseExportListView.dispatch)
+@login_and_domain_required
+@require_POST
+def update_emailed_export_data(request, domain):
+    export_instance_id = request.POST.get('export_id')
+    rebuild_saved_export(export_instance_id, manual=True)
+    return json_response({'success': True})
 
 
 @location_safe
@@ -435,20 +407,6 @@ class DailySavedExportListView(BaseExportListView):
         }
 
     @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_dual_model_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Daily Saved Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
-
-    @allow_remote_invocation
     def commit_filters(self, in_data):
         if not self.permissions.has_edit_permissions:
             raise Http404
@@ -550,20 +508,6 @@ class FormExportListView(BaseExportListView):
         from corehq.apps.export.views.download import DownloadNewFormExportView
         return reverse(DownloadNewFormExportView.urlname, args=(self.domain, export_id))
 
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_form_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
-
 
 @location_safe
 class CaseExportListView(BaseExportListView):
@@ -627,18 +571,6 @@ class CaseExportListView(BaseExportListView):
     def _get_download_url(self, export_id):
         from corehq.apps.export.views.download import DownloadNewCaseExportView
         return reverse(DownloadNewCaseExportView.urlname, args=(self.domain, export_id))
-
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_case_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
 
 
 @location_safe
