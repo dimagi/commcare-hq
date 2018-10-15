@@ -229,7 +229,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '', ''),
         ))
-     )
+    )
 
     upload_empty_translations = (
         (MODULES_AND_FORMS_SHEET_NAME,
@@ -406,6 +406,66 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
                 'App Translations Updated!'
             ]
+        )
+
+    def test_partial_case_list_translation_upload(self):
+        # note this isn't a "partial" upload because this app only has one case list property
+        module = self.app.get_module(0)
+        self.assertEqual(
+            module.case_details.short.columns[0].header, {'en': 'Name'}
+        )
+        translation_data = []
+        # filter out the case lists translation from the upload
+        for sheet in self.upload_no_change_data:
+            if sheet[0] != 'module1':
+                translation_data.append(sheet)
+                continue
+
+            mod1_sheet = []
+            for translation in sheet[1]:
+                if translation[1] == 'list':
+                    continue
+                mod1_sheet.append(translation)
+
+            translation_data.append(['module1', mod1_sheet])
+        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.assertEqual(
+            module.case_details.short.columns[0].header, {'en': 'Name'}
+        )
+
+    def test_partial_case_detail_translation_upload(self):
+        module = self.app.get_module(0)
+        self.assertEqual(
+            module.case_details.long.columns[0].header, {'en': 'Name', 'fra': ''}
+        )
+        self.assertEqual(
+            module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
+        )
+        translation_data = []
+        for sheet in self.upload_no_change_data:
+            if sheet[0] != 'module1':
+                translation_data.append(sheet)
+                continue
+
+            mod1_sheet = []
+            for translation in sheet[1]:
+                # translate name, remove all other detail translations
+                if translation[1] == 'detail':
+                    if translation[0] == 'name':
+                        new_trans = list(translation)
+                        new_trans[2] = 'English Name'
+                        new_trans[3] = 'French Name'
+                        mod1_sheet.append(new_trans)
+                    continue
+                mod1_sheet.append(translation)
+
+            translation_data.append(['module1', mod1_sheet])
+        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.assertEqual(
+            module.case_details.long.columns[0].header, {'en': 'English Name', 'fra': 'French Name'}
+        )
+        self.assertEqual(
+            module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )
 
 

@@ -921,6 +921,16 @@ class XForm(WrappedNode):
 
         return label
 
+    def get_label_ref(self, prompt):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_ref(prompt.find('..'))
+
+        label_node = prompt.find('{f}label')
+        if label_node.exists():
+            if 'ref' in label_node.attrib:
+                return self._normalize_itext_id(label_node.attrib['ref'])
+        return None
+
     def resolve_path(self, path, path_context=""):
         if path == "":
             return path_context
@@ -946,7 +956,8 @@ class XForm(WrappedNode):
         return list(self.translations().keys())
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False, form=None):
+                      include_groups=False, include_translations=False,
+                      exclude_select_with_itemsets=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -956,6 +967,7 @@ class XForm(WrappedNode):
         :param include_triggers: When set to True will return label questions as well as regular questions
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
+        :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         """
         from corehq.apps.app_manager.util import first_elem
 
@@ -1012,8 +1024,13 @@ class XForm(WrappedNode):
             if node.tag_name == 'trigger' and not include_triggers:
                 continue
 
+            if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
+                    and cnode.node.find('{f}itemset').exists()):
+                continue
+
             question = {
                 "label": self.get_label_text(node, langs),
+                "label_ref": self.get_label_ref(node),
                 "tag": node.tag_name,
                 "value": path,
                 "repeat": repeat,

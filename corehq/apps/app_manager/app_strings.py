@@ -171,6 +171,9 @@ def _create_custom_app_strings(app, lang, for_default=False):
             if custom_icon_form and custom_icon_text:
                 yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, form=form)
 
+            for id, custom_assertion in enumerate(form.custom_assertions):
+                yield id_strings.custom_assertion_locale(module, form, id), trans(custom_assertion.text)
+
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
             yield (
                 id_strings.case_list_form_locale(module),

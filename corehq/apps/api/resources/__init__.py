@@ -114,7 +114,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         else:
             raise ImmediateHttpResponse(HttpResponse(
-                json.dumps({"error": "Your current plan does not have access to this feature"}),
+                json.dumps({"error": "Your current subscription does not have access to this feature"}),
                 content_type="application/json",
                 status=401))
 

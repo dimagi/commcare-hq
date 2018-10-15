@@ -559,13 +559,6 @@ EXPORT_NO_SORT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-DATA_FIND_BY_ID = StaticToggle(
-    'data_find_by_id',
-    "Enable the Data > Find Data by ID page",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',
@@ -657,6 +650,14 @@ CASE_LIST_EXPLORER = StaticToggle(
     'case_list_explorer',
     'Show the case list explorer report',
     TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
+EXPLORE_CASE_DATA = StaticToggle(
+    'explore_case_data',
+    'Show the Explore Case Data report (in dev)',
+    TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_enable_search_index,
 )
@@ -901,6 +902,16 @@ CUSTOM_INSTANCES = StaticToggle(
     description=(
         'Enables the insertion of custom instances into a case list configuration. '
         'Currently used by SimPrints-integrated projects.'
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+CUSTOM_ASSERTIONS = StaticToggle(
+    'custom_assertions',
+    'Inject custom assertions into the suite',
+    TAG_SOLUTIONS,
+    description=(
+        'Enables the insertion of custom assertions into the suite file. '
     ),
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1629,9 +1640,14 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-SEARCH_DEACTIVATED_USERS = StaticToggle(
-    'search_deactivated_users',
-    'Allow for searching by deactivating users in form and case reports and exports',
-    TAG_PRODUCT,
+FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
+    'filter_on_groups_and_locations',
+    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
+    'ONSE domain with group and location filters',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    description='For reports filtered by groups and locations, change the OR logic to an AND, so that '
+                '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
+                'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
+                'have group and location filters, such as the Submissions by Form report.',
 )

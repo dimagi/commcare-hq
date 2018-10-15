@@ -290,7 +290,7 @@ class BaseEditUserView(BaseUserSettingsView):
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
-    page_title = ugettext_noop("Edit User Role")
+    page_title = ugettext_noop("Edit Web User")
 
     @property
     @memoized
@@ -844,7 +844,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
-    page_title = ugettext_lazy("Add Web User to Project")
+    page_title = ugettext_lazy("Invite Web User to Project")
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -1063,7 +1063,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 @sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
 @location_safe
-def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
+def change_password(request, domain, login_id, template="users/partials/reset_password.html"):
     # copied from auth's password_change
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)

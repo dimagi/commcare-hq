@@ -10,7 +10,7 @@ from jsonobject.exceptions import BadValueError
 from sqlalchemy import bindparam
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.userreports import const
-from corehq.apps.userreports.exceptions import InvalidQueryColumn
+from corehq.apps.userreports.exceptions import InvalidQueryColumn, BadSpecError
 from corehq.apps.userreports.expressions import ExpressionFactory
 
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
@@ -79,6 +79,10 @@ class BaseReportColumn(JsonObject):
     display = DefaultProperty()
     description = StringProperty()
     visible = BooleanProperty(default=True)
+
+    @classmethod
+    def restricted_to_static(cls):
+        return False
 
     @classmethod
     def wrap(cls, obj):
@@ -365,6 +369,14 @@ class _CaseExpressionColumn(ReportColumn):
     whens = DictProperty()
     else_ = StringProperty()
     sortable = BooleanProperty(default=False)
+
+    @classmethod
+    def restricted_to_static(cls):
+        # The conditional expressions used here don't have sufficient safety checks,
+        # so this column type is only available for static reports.  To release this,
+        # we should require that conditions be expressed using a PreFilterValue type
+        # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
+        return True
 
     _agg_column_type = None
 

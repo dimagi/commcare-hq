@@ -192,7 +192,7 @@ def get_pillow_json(pillow_config, consumer=None):
         # breaking composition boundaries so that we can use one Kafka connection
         offsets = {
             "{},{}".format(tp.topic, tp.partition): offset
-            for tp, offset in consumer.end_offsets(checkpoint.wrapped_sequence.keys()).items()
+            for tp, offset in consumer.end_offsets(list(checkpoint.wrapped_sequence.keys())).items()
         }
     else:
         offsets = pillow.get_change_feed().get_latest_offsets_json()
@@ -274,7 +274,7 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
     return [_f for _f in payloads if _f]
 
 
-def ensure_matched_revisions(change):
+def ensure_matched_revisions(change, fetched_document):
     """
     This function ensures that the document fetched from a change matches the
     revision at which it was pushed to kafka at.
@@ -284,7 +284,6 @@ def ensure_matched_revisions(change):
     :raises: DocumentMismatchError - Raised when the revisions of the fetched document
         and the change metadata do not match
     """
-    fetched_document = change.get_document()
 
     change_has_rev = change.metadata and change.metadata.document_rev is not None
     doc_has_rev = fetched_document and '_rev' in fetched_document

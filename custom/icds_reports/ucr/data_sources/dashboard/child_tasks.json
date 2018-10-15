@@ -182,7 +182,7 @@
         {
           "column": "state_id",
           "subtype": "string_lastchars",
-          "constraint": "5"
+          "constraint": "3"
         }
       ]
     },

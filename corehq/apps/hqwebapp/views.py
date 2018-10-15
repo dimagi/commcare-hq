@@ -27,6 +27,7 @@ from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+from django.urls import resolve
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
 
@@ -121,6 +122,14 @@ def server_error(request, template_name='500.html'):
     """
     500 error handler.
     """
+    urlname = resolve(request.path).url_name
+    submission_urls = [
+        'receiver_secure_post',
+        'receiver_secure_post_with_app_id',
+        'receiver_post_with_app_id'
+    ]
+    if urlname in submission_urls + ['app_aware_restore']:
+        return HttpResponse(status=500)
 
     domain = get_domain_from_url(request.path) or ''
 
@@ -673,7 +682,8 @@ class BugReportView(View):
             email.attach(filename=filename, content=content)
 
         # only fake the from email if it's an @dimagi.com account
-        if re.search('@dimagi\.com$', report['username']):
+        is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+        if re.search('@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL

@@ -102,7 +102,7 @@ class RecordListWidget(Widget):
         return data_list
 
     def render(self, name, value, attrs=None):
-        return render_to_string('reminders/partial/record_list_widget.html', {
+        return render_to_string('reminders/partials/record_list_widget.html', {
             'value': value,
             'name': name,
         })
@@ -416,7 +416,7 @@ class KeywordForm(Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Save Keyword"),
+                    _("Save"),
                     css_class='btn-primary',
                     type='submit',
                 ),

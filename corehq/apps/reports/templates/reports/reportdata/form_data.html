@@ -18,7 +18,7 @@
     {% initial_page_data 'xform_id' instance.get_id %}
     {% registerurl "edit_form" instance.domain "---" %}
 
-    {% if not instance.initial_processing_complete and request|toggle_enabled:'SUPPORT' %}
+    {% if instance.problem and request|toggle_enabled:'SUPPORT' %}
     <div class="alert alert-danger">
         {% blocktrans %}
             This form's case changes were not processed because of errors that occurred during case processing:

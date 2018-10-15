@@ -9,6 +9,7 @@ from corehq.apps.accounting.models import (
     CreditAdjustmentReason,
     CreditLine,
     Invoice,
+    CustomerInvoice
 )
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
@@ -107,6 +108,98 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
         self.assertEqual(original_credit_balance, sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
+        ))
+
+
+class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAdjustBalanceFormForCustomerAccount, cls).setUpClass()
+        cls.account.is_customer_billing_account = True
+        cls.account.save()
+
+    def setUp(self):
+        super(TestAdjustBalanceFormForCustomerAccount, self).setUp()
+        generate_invoices(self.subscription.date_start + relativedelta(months=1))
+        self.invoice = CustomerInvoice.objects.first()
+
+    def tearDown(self):
+        super(TestAdjustBalanceFormForCustomerAccount, self).tearDown()
+
+    def test_manual_adjustment(self):
+        original_balance = self.invoice.balance
+        adjustment_amount = random.randint(1, 5)
+
+        adjust_balance_form = AdjustBalanceForm(
+            self.invoice,
+            {
+                'adjustment_type': 'credit',
+                'custom_amount': adjustment_amount,
+                'method': CreditAdjustmentReason.MANUAL,
+                'note': 'some text',
+                'invoice_id': self.invoice.id,
+            }
+        )
+        self.assertTrue(adjust_balance_form.is_valid())
+
+        adjust_balance_form.adjust_balance()
+        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
+
+    def test_transfer_credit_with_credit(self):
+        original_credit_balance = random.randint(5, 10)
+        CreditLine.add_credit(
+            original_credit_balance,
+            account=self.account
+        )
+        original_balance = self.invoice.balance
+        adjustment_amount = random.randint(1, 5)
+
+        adjust_balance_form = AdjustBalanceForm(
+            self.invoice,
+            {
+                'adjustment_type': 'credit',
+                'custom_amount': adjustment_amount,
+                'method': CreditAdjustmentReason.TRANSFER,
+                'note': 'some text',
+                'invoice_id': self.invoice.id,
+            }
+        )
+        self.assertTrue(adjust_balance_form.is_valid())
+
+        adjust_balance_form.adjust_balance()
+        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
+        self.assertEqual(original_credit_balance - adjustment_amount, sum(
+            credit_line.balance
+            for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
+        ))
+
+    def test_transfer_credit_without_credit(self):
+        original_credit_balance = 0
+        CreditLine.add_credit(
+            original_credit_balance,
+            account=self.account
+        )
+        original_balance = self.invoice.balance
+        adjustment_amount = random.randint(1, 5)
+
+        adjust_balance_form = AdjustBalanceForm(
+            self.invoice,
+            {
+                'adjustment_type': 'credit',
+                'custom_amount': adjustment_amount,
+                'method': CreditAdjustmentReason.TRANSFER,
+                'note': 'some text',
+                'invoice_id': self.invoice.id,
+            }
+        )
+        self.assertTrue(adjust_balance_form.is_valid())
+
+        adjust_balance_form.adjust_balance()
+        self.assertEqual(original_balance, self.invoice.balance)
+        self.assertEqual(original_credit_balance, sum(
+            credit_line.balance
+            for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
         ))
 
 

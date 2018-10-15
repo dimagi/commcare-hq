@@ -62,7 +62,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             partition = install(
                 'partition', type='range', subtype=config.subtype,
                 constraint=config.constraint, column=config.column, db=self.engine.url,
-                orm='sqlalchemy'
+                orm='sqlalchemy', return_null=True
             )
             mapping = self.get_sqlalchemy_mapping()
             partition(mapping)
@@ -143,13 +143,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def bulk_save(self, docs):
-        rows = []
-        for doc in docs:
-            rows.extend(self.get_all_values(doc))
-        self.save_rows(rows)
-
     def save_rows(self, rows):
+        """
+        Saves rows to a data source after deleting the old rows
+        """
         if not rows:
             return
 
@@ -173,6 +170,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_helper.session_context() as session:
             session.execute(delete)
             session.execute(insert)
+
+    def bulk_save(self, docs):
+        rows = []
+        for doc in docs:
+            rows.extend(self.get_all_values(doc))
+        self.save_rows(rows)
+
+    def bulk_delete(self, doc_ids):
+        table = self.get_table()
+        delete = table.delete(table.c.doc_id.in_(doc_ids))
+        with self.session_helper.session_context() as session:
+            session.execute(delete)
 
     def delete(self, doc):
         table = self.get_table()

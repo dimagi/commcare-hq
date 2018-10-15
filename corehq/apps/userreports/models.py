@@ -9,6 +9,7 @@ import os
 import re
 from uuid import UUID
 
+from bulk_update.helper import bulk_update as bulk_update_helper
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -78,7 +79,7 @@ ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
 
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
-        raise BadValueError("Invalid ID")
+        raise BadValueError("Invalid ID: '{}'".format(value))
 
 
 class SQLColumnIndexes(DocumentSchema):
@@ -524,7 +525,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def report_columns(self):
-        return [ReportColumnFactory.from_spec(c) for c in self.columns]
+        return [ReportColumnFactory.from_spec(c, self.is_static) for c in self.columns]
 
     @property
     @memoized
@@ -941,6 +942,34 @@ class AsyncIndicator(models.Model):
             for doc_id in doc_ids
         ])
 
+    @classmethod
+    def bulk_update_records(cls, configs_by_docs, domain, doc_type_by_id):
+        # type (Dict[str, List[str]], str, Dict[str, str]) -> None
+        # configs_by_docs should be a dict of doc_id -> list of config_ids
+        if not configs_by_docs:
+            return
+        doc_ids = list(configs_by_docs.keys())
+
+        current_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
+        to_update = []
+
+        for indicator in current_indicators:
+            new_configs = set(configs_by_docs[indicator.doc_id])
+            current_configs = set(indicator.indicator_config_ids)
+            if not new_configs.issubset(current_configs):
+                indicator.indicator_config_ids = sorted(current_configs.union(new_configs))
+                indicator.unsuccessful_attempts = 0
+                to_update.append(indicator)
+        if to_update:
+            bulk_update_helper(to_update)
+
+        new_doc_ids = set(doc_ids) - set([i.doc_id for i in current_indicators])
+        AsyncIndicator.objects.bulk_create([
+            AsyncIndicator(doc_id=doc_id, doc_type=doc_type_by_id[doc_id], domain=domain,
+                indicator_config_ids=sorted(configs_by_docs[doc_id]))
+            for doc_id in new_doc_ids
+        ])
+
 
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
@@ -1011,6 +1040,8 @@ def report_config_id_is_static(config_id):
     Return True if the given report configuration id refers to a static report
     configuration.
     """
+    if config_id is None:
+        return False
     return any(
         config_id.startswith(prefix)
         for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]

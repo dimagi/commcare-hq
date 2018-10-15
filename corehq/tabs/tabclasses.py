@@ -114,7 +114,7 @@ class ProjectReportsTab(UITab):
         if self.couch_user.can_edit_data():
             has_access = has_report_builder_access(self._request)
             user_reports = [(
-                _("Create Reports"),
+                _("Report Builder"),
                 [{
                     "title": _('Create New Report'),
                     "url": self._get_create_report_url(),
@@ -293,10 +293,8 @@ class SetupTab(UITab):
         from corehq.apps.programs.views import ProgramListView
         from corehq.apps.products.views import ProductListView
 
-        dropdown_items = []
-
         if self.project.commtrack_enabled:
-            dropdown_items += [(_(view.page_title), view) for view in (
+            dropdown_items = [(_(view.page_title), view) for view in (
                 ProductListView,
                 ProgramListView,
                 SMSSettingsView,
@@ -304,12 +302,17 @@ class SetupTab(UITab):
                 CommTrackSettingsView,
             )]
 
-        return [
-            dropdown_dict(
-                item[0],
-                url=reverse(item[1].urlname, args=[self.domain])
-            ) for item in dropdown_items
-        ]
+            return [
+                dropdown_dict(
+                    item[0],
+                    url=reverse(item[1].urlname, args=[self.domain])
+                ) for item in dropdown_items
+            ] + [
+                dropdown_dict(None, is_divider=True),
+                dropdown_dict(_("View All"), url=ProductListView.urlname),
+            ]
+
+        return []
 
     @property
     def _is_viewable(self):
@@ -341,6 +344,7 @@ class SetupTab(UITab):
             NewProductView,
             EditProductView,
             ProductFieldsView,
+            UploadProductView,
         )
 
         if self.project.commtrack_enabled:
@@ -360,6 +364,10 @@ class SetupTab(UITab):
                         {
                             'title': _(ProductFieldsView.page_name()),
                             'urlname': ProductFieldsView.urlname,
+                        },
+                        {
+                            'title': _(UploadProductView.page_title),
+                            'urlname': UploadProductView.urlname,
                         },
                     ]
                 },
@@ -512,19 +520,12 @@ class ProjectDataTab(UITab):
         if self.can_only_see_deid_exports:
             from corehq.apps.export.views import (
                 DeIdFormExportListView,
-                DownloadFormExportView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
-                'subpages': [
-                    {
-                        'title': _(DownloadFormExportView.page_title),
-                        'urlname': DownloadFormExportView.urlname,
-                    },
-                ]
             })
             export_data_views.extend([
                 {
@@ -543,12 +544,9 @@ class ProjectDataTab(UITab):
                 CaseExportListView,
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
-                DownloadFormExportView,
                 DownloadNewFormExportView,
-                DownloadCaseExportView,
                 DownloadNewCaseExportView,
                 DownloadNewSmsExportView,
-                BulkDownloadFormExportView,
                 BulkDownloadNewFormExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
@@ -580,16 +578,8 @@ class ProjectDataTab(UITab):
                                 'urlname': CreateNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
-                                'title': _(BulkDownloadFormExportView.page_title),
-                                'urlname': BulkDownloadFormExportView.urlname,
-                            },
-                            {
                                 'title': _(BulkDownloadNewFormExportView.page_title),
                                 'urlname': BulkDownloadNewFormExportView.urlname,
-                            },
-                            {
-                                'title': _(DownloadFormExportView.page_title),
-                                'urlname': DownloadFormExportView.urlname,
                             },
                             {
                                 'title': _(DownloadNewFormExportView.page_title),
@@ -616,10 +606,6 @@ class ProjectDataTab(UITab):
                                 'urlname': CreateNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
-                                'title': _(DownloadCaseExportView.page_title),
-                                'urlname': DownloadCaseExportView.urlname,
-                            },
-                            {
                                 'title': _(DownloadNewCaseExportView.page_title),
                                 'urlname': DownloadNewCaseExportView.urlname,
                             },
@@ -640,13 +626,12 @@ class ProjectDataTab(UITab):
                         'subpages': []
                     })
 
-            if toggles.DATA_FIND_BY_ID.enabled_for_request(self._request):
-                if self.can_view_form_exports or self.can_view_case_exports:
-                    export_data_views.append({
-                        'title': _('Find Data by ID'),
-                        'url': reverse('data_find_by_id', args=[self.domain]),
-                        'icon': 'fa fa-search',
-                    })
+            if self.can_view_form_exports or self.can_view_case_exports:
+                export_data_views.append({
+                    'title': _('Find Data by ID'),
+                    'url': reverse('data_find_by_id', args=[self.domain]),
+                    'icon': 'fa fa-search',
+                })
 
             if self.should_see_daily_saved_export_list_view:
                 export_data_views.append({
@@ -749,6 +734,20 @@ class ProjectDataTab(UITab):
                 })
             items.extend(edit_section)
 
+        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
+            explore_data_views = [
+                {
+                    'title': _(ExploreCaseDataView.page_title),
+                    'url': reverse(ExploreCaseDataView.urlname,
+                                   args=(self.domain,)),
+                    'show_in_dropdown': False,
+                    'icon': 'fa fa-search',
+                    'subpages': [],
+                }
+            ]
+            items.append([_("Explore Data"), explore_data_views])
+
         if self.can_use_lookup_tables:
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
@@ -789,12 +788,11 @@ class ProjectDataTab(UITab):
                 _(DownloadNewSmsExportView.page_title),
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
             ))
-        if toggles.DATA_FIND_BY_ID.enabled_for_request(self._request):
-            if self.can_view_form_exports or self.can_view_case_exports:
-                items.append(dropdown_dict(
-                    _('Find Data by ID (Beta)'),
-                    url=reverse('data_find_by_id', args=[self.domain])
-                ))
+        if self.can_view_form_exports or self.can_view_case_exports:
+            items.append(dropdown_dict(
+                _('Find Data by ID (Beta)'),
+                url=reverse('data_find_by_id', args=[self.domain])
+            ))
 
         if items:
             items += [dropdown_dict(None, is_divider=True)]
@@ -1113,14 +1111,14 @@ class MessagingTab(UITab):
             url=reverse(ConditionalAlertListView.urlname, args=[self.domain]),
         ))
 
-        if not self.show_dashboard:
-            if result:
-                result.append(dropdown_dict(None, is_divider=True))
+        if result:
+            result.append(dropdown_dict(None, is_divider=True))
 
-            result.append(dropdown_dict(
-                _("View All"),
-                url=reverse('sms_compose_message', args=[self.domain]),
-            ))
+        view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
+        result.append(dropdown_dict(
+            _("View All"),
+            url=reverse(view_all_view, args=[self.domain]),
+        ))
 
         return result
 
@@ -1256,7 +1254,7 @@ class ProjectUsersTab(UITab):
                     'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                     'subpages': [
                         {
-                            'title': _("Add Web User"),
+                            'title': _("Invite Web User"),
                             'urlname': 'invite_web_user'
                         },
                         {
@@ -1350,6 +1348,10 @@ class EnterpriseSettingsTab(UITab):
                 'title': _('Enterprise Settings'),
                 'url': reverse('enterprise_settings', args=[self.domain]),
             },
+            {
+                'title': _('Billing Statements'),
+                'url': reverse('enterprise_billing_statements', args=[self.domain])
+            }
         ]))
         return items
 
@@ -1437,7 +1439,7 @@ class ProjectSettingsTab(UITab):
         if user_is_admin:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-        if self.couch_user.can_edit_motech:
+        if self.couch_user.can_edit_motech():
             items.append((_('Integration'), _get_integration_section(self.domain)))
 
         feature_flag_items = _get_feature_flag_items(self.domain)
