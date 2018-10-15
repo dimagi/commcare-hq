@@ -689,7 +689,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
-    :return: case_id
+    :return: CommCareCaseSQL
     """
     domain = domain or DOMAIN
     form_id = form_id or uuid.uuid4().hex
@@ -705,21 +705,19 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
         domain=domain
     )
 
-    cases = []
-    if case_id:
-        case = CommCareCaseSQL(
-            case_id=case_id,
-            domain=domain,
-            type=case_type or '',
-            owner_id=user_id,
-            opened_on=utcnow,
-            modified_on=utcnow,
-            modified_by=user_id,
-            server_modified_on=utcnow,
-            closed=closed or False
-        )
-        case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
-        cases = [case]
+    case = CommCareCaseSQL(
+        case_id=case_id,
+        domain=domain,
+        type=case_type or '',
+        owner_id=user_id,
+        opened_on=utcnow,
+        modified_on=utcnow,
+        modified_by=user_id,
+        server_modified_on=utcnow,
+        closed=closed or False
+    )
+    case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
+    cases = [case]
 
     FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return CaseAccessorSQL.get_case(case_id)
