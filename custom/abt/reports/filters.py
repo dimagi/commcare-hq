@@ -39,19 +39,57 @@ class FilterDataSource(SqlData):
         ]
 
 
+class UserFilterDataSource(SqlData):
+    engine_id = 'ucr'
+
+    def __init__(self, domain):
+        self.config = {}
+        self.domain = domain
+
+    @property
+    def table_name(self):
+        return get_table_name(self.domain, "static-late-pmt")
+
+    @property
+    def filters(self):
+        filters = []
+        return filters
+
+    @property
+    def group_by(self):
+        return ['doc_id', 'username']
+
+    @property
+    def order_by(self):
+        return [OrderBy('username')]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('doc_id', SimpleColumn('doc_id')),
+            DatabaseColumn('username', SimpleColumn('username'))
+        ]
+
+
 class VectorLinkLocFilter(BaseSingleOptionFilter):
     default_text = 'All'
 
     @property
     def options(self):
         data = FilterDataSource(self.domain, self.slug).get_data()
-        options = [(x, x) for x in data]
+        options = [(x[self.slug], x[self.slug]) for x in data]
         return options
 
 
 class UsernameFilter(VectorLinkLocFilter):
-    slug = 'username'
+    slug = 'user_id'
     label = ugettext_lazy('Username')
+
+    @property
+    def options(self):
+        data = UserFilterDataSource(self.domain).get_data()
+        options = [(x['doc_id'], x['username']) for x in data]
+        return options
 
 
 class CountryFilter(VectorLinkLocFilter):

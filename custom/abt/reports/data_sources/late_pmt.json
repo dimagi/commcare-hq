@@ -149,19 +149,6 @@
           "type": "property_name",
           "property_name": "phone_number"
         }
-      },
-      {
-        "display_name": "user_id",
-        "transform": {},
-        "datatype": "string",
-        "type": "expression",
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "user_id",
-        "expression": {
-          "type": "property_name",
-          "property_name": "_id"
-        }
       }
     ],
     "description": "",
