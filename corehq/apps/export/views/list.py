@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from corehq.util.download import get_download_response
+from corehq.apps.domain.models import Domain
 from corehq.apps.export.views.utils import ExportsPermissionsManager, user_can_view_deid_exports
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
@@ -416,43 +417,46 @@ class DailySavedExportListView(BaseExportListView):
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
-    @allow_remote_invocation
-    def commit_filters(self, in_data):
-        if not self.permissions.has_edit_permissions:
-            raise Http404
 
-        export_id = in_data['export']['id']
-        form_data = in_data['form_data']
-        try:
-            export = get_properly_wrapped_export_instance(export_id)
-
-            if not export.filters.is_location_safe_for_user(self.request):
-                return location_restricted_response(self.request)
-
-            filter_form = DashboardFeedFilterForm(self.domain_object, form_data)
-            if filter_form.is_valid():
-                old_can_access_all_locations = export.filters.can_access_all_locations
-                old_accessible_location_ids = export.filters.accessible_location_ids
-
-                filters = filter_form.to_export_instance_filters(
-                    # using existing location restrictions prevents a less restricted user from modifying
-                    # restrictions on an export that a more restricted user created (which would mean the more
-                    # restricted user would lose access to the export)
-                    old_can_access_all_locations,
-                    old_accessible_location_ids
-                )
-                if export.filters != filters:
-                    export.filters = filters
-                    export.save()
-                    rebuild_saved_export(export_id, manual=True)
-                return format_angular_success()
-            else:
-                return format_angular_error(
-                    _("Problem saving dashboard feed filters: Invalid form"),
-                    log_error=True)
-        except Exception:
-            return format_angular_error(_("Problem saving dashboard feed filters"),
-                                        log_error=True)
+@require_POST
+@login_and_domain_required
+def commit_filters(request, domain):
+    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    if not permissions.has_edit_permissions:
+        raise Http404
+    export_id = request.POST.get('export_id')
+    form_data = request.POST.get('form_data')
+    export = get_properly_wrapped_export_instance(export_id)
+    if export.is_daily_saved_export and not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
+        raise Http404
+    if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
+        raise Http404
+    if not export.filters.is_location_safe_for_user(request):
+        return location_restricted_response(request)
+    domain_object = Domain.get_by_name(domain)
+    filter_form = DashboardFeedFilterForm(domain_object, form_data)
+    if filter_form.is_valid():
+        old_can_access_all_locations = export.filters.can_access_all_locations
+        old_accessible_location_ids = export.filters.accessible_location_ids
+        filters = filter_form.to_export_instance_filters(
+            # using existing location restrictions prevents a less restricted user from modifying
+            # restrictions on an export that a more restricted user created (which would mean the more
+            # restricted user would lose access to the export)
+            old_can_access_all_locations,
+            old_accessible_location_ids
+        )
+        if export.filters != filters:
+            export.filters = filters
+            export.save()
+            rebuild_saved_export(export_id, manual=True)
+        return json_response({
+            'success': True,
+        })
+    else:
+        return json_response({
+            'success': False,
+            'error': _("Problem saving dashboard feed filters: Invalid form"),
+        })
 
 
 @location_safe
