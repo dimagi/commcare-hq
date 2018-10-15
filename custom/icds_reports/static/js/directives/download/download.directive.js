@@ -116,7 +116,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
         {id: 7, name: 'ICDS-CAS Monthly Register'},
-        {id: 8, name: 'AWW Performance Incentive Report'}
+        {id: 8, name: 'AWW Performance Report'}
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
