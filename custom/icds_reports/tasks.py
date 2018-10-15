@@ -58,7 +58,8 @@ from custom.icds_reports.models import (
     ChildHealthMonthly,
     CcsRecordMonthly,
     UcrTableNameMapping,
-    AggregateCcsRecordComplementaryFeedingForms
+    AggregateCcsRecordComplementaryFeedingForms,
+    AWWIncentiveReport
 )
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
@@ -855,12 +856,12 @@ def push_missing_docs_to_es():
         )
 
 @periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='14'), acks_late=True, queue='icds_aggregation_queue')
-def build_incentive_report(date=None):
+def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                  .values_list('location_id', flat=True))
-    if date is None:
+    if agg_date is None:
         current_month = date.today().replace(day=1)
-        date = current_month - relativedelta(months=1)
+        agg_date = current_month - relativedelta(months=1)
     for state in state_ids:
-        AWWIncentiveReport.aggregate(state, date)
+        AWWIncentiveReport.aggregate(state, agg_date)

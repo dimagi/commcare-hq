@@ -53,7 +53,7 @@
         <div class="panel-body">
             {% include 'export/partials/loading_exports.html' %}
             {% include 'export/partials/export_bulk_notice.html' %}
-            {% include 'export/partials/my_exports_table.html' %}
+            {% include 'export/partials/table.html' with MY_EXPORTS=True %}
             <div ng-show="exports.length > 6">
                 {% include 'export/partials/export_bulk_notice.html' %}
             </div>
@@ -64,7 +64,7 @@
         <div class="panel-body">
             {% include 'export/partials/loading_exports.html' %}
             {% include 'export/partials/export_bulk_notice.html' %}
-            {% include 'export/partials/shared_exports_table.html' %}
+            {% include 'export/partials/table.html' with MY_EXPORTS=False %}
             <div ng-show="exports.length > 6">
                 {% include 'export/partials/export_bulk_notice.html' %}
             </div>
@@ -76,7 +76,7 @@
         <div class="panel-body">
             {% include 'export/partials/loading_exports.html' %}
             {% include 'export/partials/export_bulk_notice.html' %}
-            {% include 'export/partials/original_exports_table.html' %}
+            {% include 'export/partials/table.html' %}
             <div ng-show="exports.length > 6">
                 {% include 'export/partials/export_bulk_notice.html' %}
             </div>
