@@ -2111,6 +2111,138 @@ def download_form(request, domain, instance_id):
     return response
 
 
+@location_safe
+class EditFormInstance(View):
+
+    @method_decorator(require_form_view_permission)
+    @method_decorator(require_permission(Permissions.edit_data))
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditFormInstance, self).dispatch(request, args, kwargs)
+
+    @staticmethod
+    def _get_form_from_instance(instance):
+        try:
+            build = Application.get(instance.build_id)
+        except ResourceNotFound:
+            raise Http404(_('Application not found.'))
+
+        forms = build.get_forms_by_xmlns(instance.xmlns)
+        if not forms:
+            raise Http404(_('Missing module or form information!'))
+        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        return non_shadow_forms[0]
+
+    @staticmethod
+    def _form_instance_to_context_url(domain, instance):
+        form = EditFormInstance._get_form_from_instance(instance)
+        return reverse(
+            'cloudcare_form_context',
+            args=[domain, instance.build_id, form.get_module().id, form.id],
+            params={'instance_id': instance.form_id}
+        )
+
+    def get(self, request, *args, **kwargs):
+        domain = request.domain
+        instance_id = self.kwargs.get('instance_id', None)
+
+        def _error(msg):
+            messages.error(request, mark_safe(msg))
+            url = reverse('render_form_data', args=[domain, instance_id])
+            return HttpResponseRedirect(url)
+
+        if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
+            raise Http404()
+
+        instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+        context = _get_form_context(request, domain, instance)
+        if not instance.app_id or not instance.build_id:
+            deviceID = instance.metadata.deviceID
+            if deviceID and deviceID == FORMPLAYER_DEVICE_ID:
+                return _error(_(
+                    "Could not detect the application or form for this submission. "
+                    "A common cause is that the form was submitted via App or Form preview"
+                ))
+            else:
+                return _error(_('Could not detect the application or form for this submission.'))
+
+        user = CouchUser.get_by_user_id(instance.metadata.userID, domain)
+        if not user:
+            return _error(_('Could not find user for this submission.'))
+
+        edit_session_data = get_user_contributions_to_touchforms_session(user)
+
+        # add usercase to session
+        form = self._get_form_from_instance(instance)
+
+        try:
+            validate_xform_for_edit(form.wrapped_xform())
+        except EditFormValidationError as e:
+            return _error(e)
+
+        if form.uses_usercase():
+            usercase_id = user.get_usercase_id()
+            if not usercase_id:
+                return _error(_('Could not find the user-case for this form'))
+            edit_session_data[USERCASE_ID] = usercase_id
+
+        case_blocks = extract_case_blocks(instance, include_path=True)
+        if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
+            datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
+            for case_block in case_blocks:
+                path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
+                matching_datums = [datum for datum in datums if datum.action.form_element_name == path]
+                if len(matching_datums) == 1:
+                    edit_session_data[matching_datums[0].datum.id] = case_block.caseblock.get(const.CASE_ATTR_ID)
+        else:
+            # a bit hacky - the app manager puts the main case directly in the form, so it won't have
+            # any other path associated with it. This allows us to differentiate from parent cases.
+            # You might think that you need to populate other session variables like parent_id, but those
+            # are never actually used in the form.
+            non_parents = [cb for cb in case_blocks if cb.path == []]
+            if len(non_parents) == 1:
+                edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
+                case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
+                if case.closed:
+                    return _error(_(
+                        'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
+                        'case before editing the form'
+                    ).format(
+                        case_url=reverse('case_data', args=[domain, case.case_id]),
+                        case_name=case.name,
+                    ))
+                elif case.is_deleted:
+                    return _error(
+                        _('Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.').format(
+                            case_url=reverse('case_data', args=[domain, case.case_id]),
+                            case_name=case.name,
+                        )
+                    )
+
+        edit_session_data['is_editing'] = True
+        edit_session_data['function_context'] = {
+            'static-date': [
+                {'name': 'now', 'value': instance.metadata.timeEnd},
+                {'name': 'today', 'value': instance.metadata.timeEnd.date()},
+            ]
+        }
+
+        context.update({
+            'domain': domain,
+            'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
+            'form_name': _('Edit Submission'),  # used in breadcrumbs
+            'use_sqlite_backend': use_sqlite_backend(domain),
+            'username': context.get('user').username,
+            'edit_context': {
+                'formUrl': self._form_instance_to_context_url(domain, instance),
+                'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
+                'sessionData': edit_session_data,
+                'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
+                'domain': domain,
+            }
+        })
+        return render(request, 'reports/form/edit_submission.html', context)
+
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
