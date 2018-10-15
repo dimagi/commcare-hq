@@ -1120,6 +1120,10 @@ class Subscription(models.Model):
             # we don't care the pillow won't be updated
             pass
 
+    def delete(self, *args, **kwargs):
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        super(Subscription, self).delete(*args, **kwargs)
+
     @property
     def allowed_attr_changes(self):
         """
