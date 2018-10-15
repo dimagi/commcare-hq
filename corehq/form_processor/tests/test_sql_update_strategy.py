@@ -1,6 +1,8 @@
 from django.test import TestCase
 from freezegun import freeze_time
 from corehq.form_processor.tests.utils import use_sql_backend
+from mock import patch
+from corehq.util.soft_assert.core import SoftAssert
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -22,7 +24,8 @@ class SqlUpdateStrategyTest(TestCase):
     DOMAIN = 'update-strategy-test-' + uuid.uuid4().hex
     USER_ID = 'mr_wednesday_'
 
-    def test_reconcile_transactions(self):
+    @patch.object(SoftAssert, '_call')
+    def test_reconcile_transactions(self, soft_assert_mock):
         with freeze_time("2018-10-10"):
             case = self._create_case()
 
@@ -30,7 +33,6 @@ class SqlUpdateStrategyTest(TestCase):
             new_old_xform = self._create_form()
         with freeze_time("2018-10-08"):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
-
         with freeze_time("2018-10-11"):
             case.track_create(new_old_trans)
             FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
@@ -38,6 +40,8 @@ class SqlUpdateStrategyTest(TestCase):
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
+        for call in soft_assert_mock.call_args_list:
+            self.assertNotIn('ReconciliationError', call[0][1])
 
         CaseAccessorSQL.save_case(case)
 
