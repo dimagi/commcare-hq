@@ -1597,8 +1597,14 @@ class Subscription(models.Model):
             self.account.save()
 
     @classmethod
+    def get_active_subscription_by_domain(cls, domain_name_or_obj):
+        if isinstance(domain_name_or_obj, Domain):
+            return cls._get_active_subscription_by_domain(domain_name_or_obj.name)
+        return cls.get_active_subscription_by_domain(domain_name_or_obj)
+
+    @classmethod
     @quickcache(['domain_name'], timeout=60*60)
-    def get_active_subscription_by_domain(cls, domain_name):
+    def _get_active_subscription_by_domain(cls, domain_name):
         try:
             return cls.visible_objects.select_related(
                 'plan_version__role'
