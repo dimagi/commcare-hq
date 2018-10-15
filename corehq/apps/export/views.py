@@ -840,7 +840,7 @@ class DailySavedExportListView(BaseExportListView):
                 WebUser.get_by_user_id(export.owner_id).username
                 if export.owner_id else UNKNOWN_EXPORT_OWNER
             ),
-            'can_edit': export.can_edit(self.request.couch_user.user_id),
+            'can_edit': export.can_edit(self.request.couch_user),
             'formname': formname,
             'addedToBulk': False,
             'exportType': export.type,
