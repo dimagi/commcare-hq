@@ -340,7 +340,7 @@
                 </a>
                 {% if has_edit_permissions %}
                 <a class="btn btn-default"
-                   data-bind="visible: isDailySaved() && isLocationSafeForUser(), click: $root.setFilterModalExport"
+                   data-bind="visible: isDailySaved() && isLocationSafeForUser(), click: function (model) { $root.filterModalExportId(model.id()); }"
                    href="#setFeedFiltersModal"
                    data-toggle="modal"
                 >
