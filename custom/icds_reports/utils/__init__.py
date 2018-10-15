@@ -25,7 +25,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import StaticReportConfiguration
+from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
@@ -34,12 +34,14 @@ from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
-from django.db.models import Case, When, Q, F, IntegerField
+from django.db.models import Case, When, Q, F, IntegerField, Max, Min
 import six
 import uuid
 from six.moves import range
 from sqlagg.filters import EQ, NOT, AND
 from io import open
+from pillowtop.models import KafkaCheckpoint
+
 
 OPERATORS = {
     "==": operator.eq,
@@ -291,19 +293,19 @@ def get_age_filter_in_months(age_value):
         For that range we want to include 0 and 6 in results.
     """
     if age_value == '6':
-        return {'age_in_months__in': ['0', '6']}
+        return {'age_in_months__range': ['0', '6']}
     elif age_value == '12':
-        return {'age_in_months__in': ['7', '12']}
+        return {'age_in_months__range': ['7', '12']}
     elif age_value == '24':
-        return {'age_in_months__in': ['13', '24']}
+        return {'age_in_months__range': ['13', '24']}
     elif age_value == '36':
-        return {'age_in_months__in': ['25', '36']}
+        return {'age_in_months__range': ['25', '36']}
     elif age_value == '48':
-        return {'age_in_months__in': ['37', '48']}
+        return {'age_in_months__range': ['37', '48']}
     elif age_value == '60':
-        return {'age_in_months__in': ['49', '60']}
+        return {'age_in_months__range': ['49', '60']}
     elif age_value == '72':
-        return {'age_in_months__in': ['61', '72']}
+        return {'age_in_months__range': ['61', '72']}
 
 
 def match_age(age):
@@ -720,14 +722,33 @@ def track_time(func):
     """A decorator to track the duration an aggregation script takes to execute"""
     from custom.icds_reports.models import AggregateSQLProfile
 
+    def get_async_indicator_time():
+        return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
+            .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
+
+    def get_sync_datasource_time():
+        return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
+            .exclude(doc_modification_time__isnull=True)\
+            .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
+
+        sync_latest_ds_update = get_sync_datasource_time()
+        async_latest_ds_update = get_async_indicator_time()
+
+        if sync_latest_ds_update and async_latest_ds_update:
+            last_included_doc_time = min(sync_latest_ds_update, async_latest_ds_update)
+        else:
+            last_included_doc_time = sync_latest_ds_update or async_latest_ds_update
+
         AggregateSQLProfile.objects.create(
             name=func.__name__,
-            duration=int(end - start)
+            duration=int(end - start),
+            last_included_doc_time=last_included_doc_time
         )
         return result
 
@@ -749,3 +770,9 @@ def percent_or_not_entered(x, y):
 class ICDSDatabaseColumn(DatabaseColumn):
     def get_raw_value(self, row):
         return (self.view.get_value(row) or '') if row else ''
+
+
+def india_now():
+    utc_now = datetime.now(pytz.utc)
+    india_now = utc_now.astimezone(india_timezone)
+    return india_now.strftime("%H:%M:%S %d %B %Y")

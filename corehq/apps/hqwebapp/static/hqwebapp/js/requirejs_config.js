@@ -10,6 +10,8 @@ requirejs.config({
         "datatables": "datatables/media/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
+        "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
+        "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -22,9 +24,22 @@ requirejs.config({
             exports: 'RMI',
         },
         "accounting/js/lib/stripe": { exports: 'Stripe' },
+        "d3/d3.min": {
+            "exports": "d3",
+        },
+        "nvd3/nv.d3.min": {
+            deps: ['d3/d3.min'],
+            exports: 'nv',
+        },
     },
     map: {
         "datatables.fixedColumns": {
+            "datatables.net": "datatables",
+        },
+        "datatables.scroller": {
+            "datatables.net": "datatables",
+        },
+        "datatables.colReorder": {
             "datatables.net": "datatables",
         },
     },

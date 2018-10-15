@@ -74,7 +74,7 @@
             {% endfor %}
         {% endif %}
         <li class="active">
-            <a href="{{ report.url }}" id="report-title">{% trans report.title|default:"Untitled Report"|safe %}</a>
+            {% trans report.title|default:"Untitled Report"|safe %}
         </li>
     </ol>
 {% endblock %}

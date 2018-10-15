@@ -1179,6 +1179,7 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False,
         max_length=256,
         label="New Role Slug",
+        help_text="A slug is a short label containing only letters, numbers, underscores or hyphens.",
     )
     new_role_name = forms.CharField(
         required=False,
@@ -2006,7 +2007,8 @@ class TriggerCustomerInvoiceForm(forms.Form):
                 return datetime.date(year, 1, 1), datetime.date(year, 12, 31)
             else:
                 raise InvoiceError(
-                    "Account %s is set to be invoiced yearly. You may only invoice on January 1"
+                    "%s is set to be invoiced yearly, and you may not invoice in this month. "
+                    "You must select December in the year for which you are triggering an annual invoice."
                     % self.cleaned_data['customer_account']
                 )
         if account.invoicing_plan == InvoicingPlan.QUARTERLY:
@@ -2020,8 +2022,8 @@ class TriggerCustomerInvoiceForm(forms.Form):
                 return datetime.date(year, 10, 1), datetime.date(year, 12, 31)  # Quarter 4
             else:
                 raise InvoiceError(
-                    "Account %s is set to be invoiced quarterly. "
-                    "You may only invoice on April 1, July 1, October 1, or January 1."
+                    "%s is set to be invoiced quarterly, and you may not invoice in this month. "
+                    "You must select the last month of a quarter to trigger a quarterly invoice."
                     % self.cleaned_data['customer_account']
                 )
         else:
@@ -2156,7 +2158,10 @@ class AdjustBalanceForm(forms.Form):
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-4 col-md-3'
         self.helper.field_class = 'col-sm-8 col-md-9'
-        self.helper.form_action = reverse('invoice_summary', args=[self.invoice.id])
+        if invoice.is_customer_invoice:
+            self.helper.form_action = reverse('customer_invoice_summary', args=[self.invoice.id])
+        else:
+            self.helper.form_action = reverse('invoice_summary', args=[self.invoice.id])
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Field(
@@ -2217,35 +2222,54 @@ class AdjustBalanceForm(forms.Form):
     def adjust_balance(self, web_user=None):
         method = self.cleaned_data['method']
         kwargs = {
-            'account': self.invoice.subscription.account,
+            'account': (self.invoice.account if self.invoice.is_customer_invoice
+                        else self.invoice.subscription.account),
             'note': self.cleaned_data['note'],
             'reason': method,
-            'subscription': self.invoice.subscription,
+            'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }
         if method == CreditAdjustmentReason.MANUAL:
-            CreditLine.add_credit(
-                -self.amount,
-                invoice=self.invoice,
-                **kwargs
-            )
+            if self.invoice.is_customer_invoice:
+                CreditLine.add_credit(
+                    -self.amount,
+                    customer_invoice=self.invoice,
+                    **kwargs
+                )
+            else:
+                CreditLine.add_credit(
+                    -self.amount,
+                    invoice=self.invoice,
+                    **kwargs
+                )
             CreditLine.add_credit(
                 self.amount,
                 permit_inactive=True,
                 **kwargs
             )
         elif method == CreditAdjustmentReason.TRANSFER:
-            credit_line_balance = sum(
-                credit_line.balance
-                for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-            )
+            if self.invoice.is_customer_invoice:
+                subscription_invoice = None
+                customer_invoice = self.invoice
+                credit_line_balance = sum(
+                    credit_line.balance
+                    for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
+                )
+            else:
+                subscription_invoice = self.invoice
+                customer_invoice = None
+                credit_line_balance = sum(
+                    credit_line.balance
+                    for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
+                )
             transfer_balance = (
                 min(self.amount, credit_line_balance)
                 if credit_line_balance > 0 else min(0, self.amount)
             )
             CreditLine.add_credit(
                 -transfer_balance,
-                invoice=self.invoice,
+                invoice=subscription_invoice,
+                customer_invoice=customer_invoice,
                 **kwargs
             )
 

@@ -74,7 +74,6 @@
 {% endblock %}
 
 {% block content %}
-{% initial_page_data 'demo_test' demo_test %}
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
@@ -110,7 +109,7 @@
           </div>
         </form>
 
-        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_test %}
+        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
             <div class="form-bubble form-bubble-purple text-center">
                 {% blocktrans %}
                     Want to learn more before signing up?

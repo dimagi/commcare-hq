@@ -27,7 +27,6 @@ from .dispatcher import (
 from .filters import urls as filter_urls
 from .util import get_installed_custom_modules
 from .views import (
-    EditFormInstance,
     AddSavedReportConfigView,
     FormDataView,
     CaseDataView,
@@ -115,7 +114,6 @@ urlpatterns = [
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', FormDataView.as_view(), name=FormDataView.urlname),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', download_form, name='download_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', restore_edit, name='restore_edit'),
     url(r'^form_data/download/media/$',
         form_multimedia_export, name='form_multimedia_export'),
@@ -169,6 +167,9 @@ urlpatterns = [
         send_test_scheduled_report, name='send_test_scheduled_report'),
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
+
+    # V2 Reports
+    url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     # Internal Use
     url(r"^export/forms/all/$", export_all_form_metadata, name="export_all_form_metadata"),

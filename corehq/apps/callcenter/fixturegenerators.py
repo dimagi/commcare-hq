@@ -85,7 +85,7 @@ class IndicatorsFixturesProvider(FixtureProvider):
     def _should_return_no_fixtures(domain, last_sync):
         config = domain.call_center_config
         return (
-            not domain or
+            not config or
             not (config.fixtures_are_active() and config.config_is_valid()) or
             not should_sync(domain, last_sync)
         )

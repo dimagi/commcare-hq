@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 <!--ko if: state() == states.SUCCESS && !_.isEmpty(case_uploads())-->
 <table class="table table-striped">
     <tr>
@@ -8,6 +9,11 @@
         <th class="col-md-4">{% trans "Details" %}</th>
         <th class="col-md-3">{% trans "Comment" %}</th>
         <th class="col-md-2">{% trans "File" %}</th>
+        {% if request|toggle_enabled:"SUPPORT" %}
+            <th>Form IDs</th>
+            <th>Case IDs</th>
+        {% endif %}
+
     </tr>
     <!--ko foreach: case_uploads-->
     <tr>
@@ -23,10 +29,10 @@
             <!--ko if: task_status().state == $root.states.FAILED-->
             <span class="label label-danger">{% trans "Failed" %}</span>
             <!--/ko-->
-            <!--ko if: task_status().state == $root.states.NOT_STARTED-->
+            <!--ko if: task_status().state == $root.states.MISSING-->
             {% trans "Waiting to start" %}
             <!--/ko-->
-            <!--ko if: task_status().state == $root.states.MISSING-->
+            <!--ko if: task_status().state == $root.states.NOT_STARTED-->
             {% trans "Info no longer available" %}
             <!--/ko-->
             <!--ko if: task_status().state == $root.states.STARTED-->
@@ -82,6 +88,18 @@
             <!--/ko-->
             <!--/ko-->
         </td>
+        {% if request|toggle_enabled:"SUPPORT" %}
+            <td>
+                <a data-bind="attr: {href: formIdsUrl()}" target="_blank">
+                    <i class="fa fa-download"></i>
+                </a>
+            </td>
+            <td>
+                <a data-bind="attr: {href: caseIdsUrl()}" target="_blank">
+                    <i class="fa fa-download"></i>
+                </a>
+            </td>
+        {% endif %}
     </tr>
     <!--/ko-->
 </table>

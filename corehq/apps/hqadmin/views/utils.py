@@ -47,7 +47,7 @@ def get_hqadmin_base_context(request):
 
 
 class BaseAdminSectionView(BaseSectionPageView):
-    section_name = ugettext_lazy("Admin Reports")
+    section_name = ugettext_lazy("Admin")
 
     @property
     def section_url(self):

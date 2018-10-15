@@ -33,7 +33,7 @@ from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceError,
 )
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory, CustomerAccountInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -51,7 +51,8 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
-    DomainUserHistory
+    DomainUserHistory,
+    InvoicingPlan
 )
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
@@ -199,6 +200,14 @@ def warn_active_subscriptions_per_domain_not_one():
             log_accounting_error("There is no active subscription for domain %s" % domain_name)
 
 
+def warn_subscriptions_without_domain():
+    domains_with_active_subscription = Subscription.visible_objects.filter(
+        is_active=True,
+    ).values_list('subscriber__domain', flat=True).distinct()
+    for domain_name in set(domains_with_active_subscription) - set(Domain.get_all_names()):
+        log_accounting_error('Domain %s has an active subscription but does not exist.' % domain_name)
+
+
 @periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions(datetime.date.today())
@@ -209,6 +218,7 @@ def update_subscriptions():
     warn_subscriptions_still_active()
     warn_subscriptions_not_active()
     warn_active_subscriptions_per_domain_not_one()
+    warn_subscriptions_without_domain()
 
 
 @periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
@@ -232,6 +242,38 @@ def generate_invoices(based_on_date=None):
                 invoice_start, invoice_end, domain)
             invoice_factory.create_invoices()
             log_accounting_info("Sent invoices for domain %s" % domain.name)
+        except CreditLineError as e:
+            log_accounting_error(
+                "There was an error utilizing credits for "
+                "domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
+            )
+        except InvoiceError as e:
+            log_accounting_error(
+                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
+            )
+        except Exception as e:
+            log_accounting_error(
+                "Error occurred while creating invoice for "
+                "domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
+            )
+    all_customer_billing_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
+    for account in all_customer_billing_accounts:
+        try:
+            if account.invoicing_plan == InvoicingPlan.QUARTERLY:
+                customer_invoice_start = invoice_start - relativedelta(months=2)
+            elif account.invoicing_plan == InvoicingPlan.YEARLY:
+                customer_invoice_start = invoice_start - relativedelta(months=11)
+            else:
+                customer_invoice_start = invoice_start
+            invoice_factory = CustomerAccountInvoiceFactory(
+                account=account,
+                date_start=customer_invoice_start,
+                date_end=invoice_end
+            )
+            invoice_factory.create_invoice()
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "

@@ -3,14 +3,16 @@ hqDefine("data_interfaces/js/find_by_id", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
+    'analytix/js/kissmetrix',
 ], function (
     $,
     ko,
     assertProperties,
-    initialPageData
+    initialPageData,
+    kissmetrics,
 ) {
     var findModel = function (options) {
-        assertProperties.assert(options, ['errorMessage', 'header', 'help', 'placeholder', 'successMessage']);
+        assertProperties.assert(options, ['errorMessage', 'eventName', 'header', 'help', 'placeholder', 'successMessage']);
 
         var self = options;
         self.query = ko.observable('');
@@ -34,11 +36,12 @@ hqDefine("data_interfaces/js/find_by_id", [
             self.loading(true);
             self.link('');
             self.error('');
+            kissmetrics.track.event(options.eventName);
             $.ajax({
                 method: 'GET',
                 url: initialPageData.reverse('global_quick_find'),
                 data: {
-                    q: self.query(),
+                    q: self.query().trim(),
                     redirect: 'false',
                 },
                 success: function (data) {
@@ -59,6 +62,8 @@ hqDefine("data_interfaces/js/find_by_id", [
     };
 
     $(function () {
+        kissmetrics.track.event("[Find data by ID] Visited page");
+
         $("#find-case").koApplyBindings(findModel({
             header: gettext('Find Case'),
             help: _.template(gettext('IDs can be found in a <a href="<%= url %>">case data export</a>'))({
@@ -67,6 +72,7 @@ hqDefine("data_interfaces/js/find_by_id", [
             placeholder: gettext('Case ID'),
             successMessage: gettext('Case found!'),
             errorMessage: gettext('Could not find case'),
+            eventName: "[Find data by ID] Clicked Find for cases",
         }));
 
         $("#find-form").koApplyBindings(findModel({
@@ -77,6 +83,7 @@ hqDefine("data_interfaces/js/find_by_id", [
             errorMessage: gettext('Could not find form submission'),
             placeholder: gettext('Form Submission ID'),
             successMessage: gettext('Form submission found!'),
+            eventName: "[Find data by ID] Clicked Find for forms",
         }));
     });
 });

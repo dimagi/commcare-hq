@@ -21,6 +21,10 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
+
+from corehq.apps.reports.v2.reports.explore_case_data import (
+    ExploreCaseDataReport,
+)
 from corehq.apps.users.permissions import (
     can_view_form_exports,
     can_view_case_exports,
@@ -49,6 +53,7 @@ from corehq.apps.data_interfaces.dispatcher import (
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.hqwebapp.decorators import use_typeahead, use_angular_js
+from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface
@@ -114,7 +119,28 @@ class DataInterfaceSection(BaseDomainView):
         return reverse("data_interfaces_default", args=[self.domain])
 
 
-class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
+class ExploreCaseDataView(BaseDomainView):
+    template_name = "data_interfaces/explore_case_data.html"
+    urlname = "explore_case_data"
+    page_title = ugettext_lazy("Explore Case Data")
+
+    @property
+    def section_url(self):
+        return reverse("data_interfaces_default", args=[self.domain])
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def page_context(self):
+        report_config = ExploreCaseDataReport(self.request, self.domain)
+        return {
+            'report': report_config.context,
+        }
+
+
+class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     template_name = "data_interfaces/list_case_groups.html"
     urlname = 'case_group_list'
     page_title = ugettext_lazy("Case Groups")
@@ -622,9 +648,6 @@ def xform_management_job_poll(request, domain, download_id,
 def find_by_id(request, domain):
     can_view_cases = can_view_case_exports(request.couch_user, domain)
     can_view_forms = can_view_form_exports(request.couch_user, domain)
-
-    if not toggles.DATA_FIND_BY_ID.enabled_for_request(request):
-        raise Http404()
 
     if not can_view_cases and not can_view_forms:
         raise Http403()

@@ -134,10 +134,10 @@ class ProjectSettingsForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.all().wrap_together(crispy.Fieldset, _('Override Project Timezone'))
+        self.helper.all().wrap_together(crispy.Fieldset, _('My Timezone'))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Override Project Timezone'),
+                _('My Timezone'),
                 crispy.Field('global_timezone', css_class='input-xlarge'),
                 twbscrispy.PrependedText(
                     'override_global_tz',
@@ -343,8 +343,8 @@ class SnapshotSettingsForm(forms.Form):
         data_cda = self.cleaned_data['cda_confirmed']
         data_publish = self.data.get('publish_on_submit', "no") == "yes"
         if data_publish and data_cda is False:
-            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your '
-                                        'project.')
+            raise forms.ValidationError(_('You must agree to our Content Distribution Agreement to publish your '
+                                          'project.'))
         return data_cda
 
     def clean_video(self):
@@ -377,8 +377,8 @@ class SnapshotSettingsForm(forms.Form):
 
         v_id = video_id(video)
         if not v_id:
-            raise forms.ValidationError('This is not a correctly formatted YouTube URL. Please use a different '
-                                        'URL.')
+            raise forms.ValidationError(_('This is not a correctly formatted YouTube URL. Please use a different '
+                                          'URL.'))
         return v_id
 
     def clean(self):
@@ -404,10 +404,9 @@ class SnapshotSettingsForm(forms.Form):
                 nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
                 nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
                 if nonexistent_forms:
-                    msg = """
-                        Your reminders reference forms that are not being published.
-                        Make sure the following forms are being published: %s
-                    """ % str([f.default_name() for f in nonexistent_forms]).strip('[]')
+                    forms_str = str([f.default_name() for f in nonexistent_forms]).strip('[]')
+                    msg = _("Your reminders reference forms that are not being published. Make sure the following "
+                            "forms are being published: %s") % forms_str
                     self._errors["share_reminders"] = self.error_class([msg])
 
         return cleaned_data
@@ -1650,7 +1649,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 if self.current_subscription is not None:
-                    if self.is_downgrade() and self.current_subscription.is_below_minimum_subscription:
+                    if self.is_downgrade_from_paid_plan() and \
+                            self.current_subscription.is_below_minimum_subscription:
                         self.current_subscription.update_subscription(
                             date_start=self.current_subscription.date_start,
                             date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
@@ -1694,8 +1694,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             )
             return False
 
-    def is_downgrade(self):
+    def is_downgrade_from_paid_plan(self):
         if self.current_subscription is None:
+            return False
+        elif self.current_subscription.is_trial:
             return False
         else:
             return is_downgrade(

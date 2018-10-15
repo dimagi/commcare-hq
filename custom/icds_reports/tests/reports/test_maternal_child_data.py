@@ -58,8 +58,8 @@ class TestMaternalChildData(TestCase):
                              "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
                              "undernutrition usually as a consequence of insufficient food intake or a high "
                              "incidence of infectious diseases.",
-                "percent": 0,
-                "value": 9,
+                "percent": -11.111111111111109,
+                "value": 8,
                 "label": "Wasting (Weight-for-Height)"
             }
         )

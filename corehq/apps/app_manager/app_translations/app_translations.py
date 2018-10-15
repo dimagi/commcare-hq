@@ -65,7 +65,7 @@ def read_uploaded_app_translation_file(f):
     except JSONReaderError as e:
         msgs.append(
             (messages.error, _(
-                "App Translation Failed! There is an issue with excel columns. Error details: {}."
+                "App Translation Failed! There is an issue with Excel columns. Error details: {}."
             ).format(e))
         )
         return False, msgs
@@ -241,7 +241,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
 def expected_bulk_app_sheet_headers(app):
     '''
     Returns lists representing the expected structure of bulk app translation
-    excel file uploads and downloads.
+    Excel file uploads and downloads.
 
     The list will be in the form:
     [
@@ -874,6 +874,7 @@ def _update_case_list_translations(sheet, rows, app):
             row['id'] = row['case_property']
             condensed_rows.append(row)
 
+    partial_upload = False
     list_rows = [
         row for row in condensed_rows if row['list_or_detail'] == 'list'
     ]
@@ -889,6 +890,13 @@ def _update_case_list_translations(sheet, rows, app):
         (long_details, detail_rows, "detail")
     ]:
         if len(expected_list) != len(received_list):
+            # if a field is not referenced twice in a case list or detail,
+            # then we can perform a partial upload using field (case property)
+            # as a key
+            number_fields = len({detail.field for detail in expected_list})
+            if number_fields == len(expected_list):
+                partial_upload = True
+                continue
             msgs.append((
                 messages.error,
                 "Expected {0} case {3} properties in sheet {2}, found {1}. "
@@ -918,24 +926,7 @@ def _update_case_list_translations(sheet, rows, app):
                 " of the case property '%s'" % row['case_property']
             ))
 
-    for row, detail in \
-            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
-
-        # Check that names match (user is not allowed to change property in the
-        # upload). Mismatched names indicate the user probably botched the sheet.
-        if row.get('id', None) != detail.field:
-            msgs.append((
-                messages.error,
-                'A row in sheet {sheet} has an unexpected value of "{field}" '
-                'in the case_property column. Case properties must appear in '
-                'the same order as they do in the bulk app translation '
-                'download. No translations updated for this row.'.format(
-                    sheet=sheet.worksheet.title,
-                    field=row.get('case_property', "")
-                )
-            ))
-            continue
-
+    def _update_detail(row, detail):
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
         for i, enum_value_row in enumerate(row.get('mappings', [])):
@@ -961,6 +952,44 @@ def _update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
                 False
             )
+
+    def _update_details_based_on_position(list_rows, short_details, detail_rows, long_details):
+        for row, detail in \
+                itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
+
+            # Check that names match (user is not allowed to change property in the
+            # upload). Mismatched names indicate the user probably botched the sheet.
+            if row.get('id', None) != detail.field:
+                msgs.append((
+                    messages.error,
+                    'A row in sheet {sheet} has an unexpected value of "{field}" '
+                    'in the case_property column. Case properties must appear in '
+                    'the same order as they do in the bulk app translation '
+                    'download. No translations updated for this row.'.format(
+                        sheet=sheet.worksheet.title,
+                        field=row.get('case_property', "")
+                    )
+                ))
+                continue
+            _update_detail(row, detail)
+
+    if partial_upload:
+        case_list_rows = {
+            row['case_property']: row for row in condensed_rows if row['list_or_detail'] == 'list'
+        }
+        case_detail_rows = {
+            row['case_property']: row for row in condensed_rows if row['list_or_detail'] == 'detail'
+        }
+
+        for detail in short_details:
+            if case_list_rows.get(detail.field):
+                _update_detail(case_list_rows.get(detail.field), detail)
+        for detail in long_details:
+            if case_detail_rows.get(detail.field):
+                _update_detail(case_detail_rows.get(detail.field), detail)
+    else:
+        _update_details_based_on_position(list_rows, short_details, detail_rows, long_details)
+
     for index, tab in enumerate(detail_tab_headers):
         if tab:
             _update_translation(tab, module.case_details.long.tabs[index].header)

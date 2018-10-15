@@ -27,8 +27,7 @@ class LedgerES(HQESQuery):
             entry,
             location,
             modified_range,
-            filters.domain,
-        ]
+        ] + super(LedgerES, self).builtin_filters
 
 
 def case(case_id):
