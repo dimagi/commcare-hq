@@ -48,6 +48,16 @@
                     <div class='alert alert-warning'>
                         <i class="fa fa-exclamation-triangle"></i>
                         {% blocktrans %}
+                            This feature is replacing the old "Edit this form" functionality, which will be removed in August 2018.
+                        {% endblocktrans %}
+                        <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" id="edit-form">
+                            {% trans 'Click here to access the old "edit this form" page.' %}
+                        </a>
+
+                        <br><br>
+
+                        <i class="fa fa-exclamation-triangle"></i>
+                        {% blocktrans %}
                             This feature will only update the specified questions.
                             It will <strong>not</strong> run any calculations or affect cases.
                             <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Data+Cleaning%3A+Clean+Form+Submission">Read more</a>.
