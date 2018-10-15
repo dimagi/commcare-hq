@@ -76,8 +76,7 @@ hqDefine("export/js/export_list_main", function () {
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(model.exportType());
                         hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
-                        // TODO
-                        //$rootScope.pollProgressBar(model);
+                        self.pollProgressBar(model);
                     }
                 },
             });
@@ -130,6 +129,42 @@ hqDefine("export/js/export_list_main", function () {
             // The filterModalExport is used as context for the FeedFilterFormController
             self.filterModalExport = e;
         };
+
+        // TODO: test
+        // Polling
+        self.pollProgressBar = function (exp) {
+            exp.emailedExport.updatingData = false;
+            exp.emailedExport.taskStatus = {
+                'percentComplete': 0,
+                'inProgress': true,
+                'success': false,
+            };
+            var tick = function () {
+                $.ajax({
+                    method: 'GET',
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse("get_saved_export_progress"),
+                    data: {
+                        export_instance_id: exp.id(),
+                    },
+                    success: function (data) {
+                        exp.emailedExport.taskStatus = data.taskStatus;
+                        if (!data.taskStatus.success) {
+                            // The first few ticks don't yet register the task
+                            exp.emailedExport.taskStatus.inProgress = true;
+                            setTimeout(tick, 1500);
+                        } else {
+                            exp.emailedExport.taskStatus.justFinished = true;
+                        }
+                    },
+                });
+            };
+            tick();
+        };
+        _.each(self.exports, function (exp) {
+            if (exp.emailedExport && exp.emailedExport.taskStatus && exp.emailedExport.taskStatus.inProgress) {
+                self.pollProgressBar(exp);
+            }
+        });
 
         // Bulk export handling
         self.selectAll = function() {
