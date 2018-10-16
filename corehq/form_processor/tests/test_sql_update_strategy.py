@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 from django.test import TestCase
 from freezegun import freeze_time
 from mock import patch
@@ -38,6 +40,7 @@ class SqlUpdateStrategyTest(TestCase):
 
     @patch.object(SoftAssert, '_call')
     def test_reconcile_transactions(self, soft_assert_mock):
+        """ tests a transanction with an early client date and late server date """
         with freeze_time("2018-10-10"):
             case = self._create_case()
 
@@ -52,8 +55,7 @@ class SqlUpdateStrategyTest(TestCase):
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
-        for call in soft_assert_mock.call_args_list:
-            self.assertNotIn('ReconciliationError', call[0][1])
+        self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
 
         CaseAccessorSQL.save_case(case)
 
@@ -106,3 +108,9 @@ class SqlUpdateStrategyTest(TestCase):
         FormProcessorSQL.save_processed_models(ProcessedForms(form, []), [case])
 
         return CaseAccessorSQL.get_case(case_id)
+
+    @staticmethod
+    def _check_for_reconciliation_error_soft_assert(soft_assert_mock):
+        for call in soft_assert_mock.call_args_list:
+            self.assertNotIn('ReconciliationError', call[0][1])
+        soft_assert_mock.reset_mock()
