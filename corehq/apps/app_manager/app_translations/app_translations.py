@@ -200,7 +200,7 @@ def validate_bulk_app_translation_upload(app, workbook, email):
         _email_app_translations_discrepancies(msgs, email, app.name)
         return [(messages.error, _("Issues found. You should receive an email shortly."))]
     else:
-        return [(messages.success, "No issues found.")]
+        return [(messages.success, _("No issues found."))]
 
 
 def _email_app_translations_discrepancies(msgs, email, app_name):
@@ -479,7 +479,7 @@ def _process_modules_and_forms_sheet(rows, app):
         if len(identifying_text) not in (1, 2):
             msgs.append((
                 messages.error,
-                'Invalid sheet_name "%s", skipping row.' % row.get(
+                _('Invalid sheet_name "%s", skipping row.') % row.get(
                     'sheet_name', ''
                 )
             ))
@@ -491,7 +491,7 @@ def _process_modules_and_forms_sheet(rows, app):
         except ModuleNotFoundException:
             msgs.append((
                 messages.error,
-                'Invalid module in row "%s", skipping row.' % row.get(
+                _('Invalid module in row "%s", skipping row.') % row.get(
                     'sheet_name'
                 )
             ))
@@ -503,7 +503,7 @@ def _process_modules_and_forms_sheet(rows, app):
             except FormNotFoundException:
                 msgs.append((
                     messages.error,
-                    'Invalid form in row "%s", skipping row.' % row.get(
+                    _('Invalid form in row "%s", skipping row.') % row.get(
                         'sheet_name'
                     )
                 ))
@@ -561,13 +561,13 @@ def update_form_translations(sheet, rows, missing_cols, app):
     if isinstance(form, ShadowForm):
         msgs.append((
             messages.warning,
-            "Found a ShadowForm at module-{module_index} form-{form_index} with the name {name}."
-            " Cannot translate ShadowForms, skipping.".format(
-                # Add one to revert back to match index in Excel sheet
-                module_index=module_index + 1,
-                form_index=form_index + 1,
-                name=form.default_name(),
-            )
+            _("Found a ShadowForm at module-{module_index} form-{form_index} with the name {name}."
+              " Cannot translate ShadowForms, skipping.").format(
+                  # Add one to revert back to match index in Excel sheet
+                  module_index=module_index + 1,
+                  form_index=form_index + 1,
+                  name=form.default_name(),
+              )
         ))
         return msgs
 
@@ -692,8 +692,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
         for label in skip_label:
             msgs.append((
                 messages.error,
-                "You must provide at least one translation" +
-                " for the label '%s' in sheet '%s'" % (label, sheet.worksheet.title)
+                _("You must provide at least one translation"
+                  " for the label '%s' in sheet '%s'") % (label, sheet.worksheet.title)
             ))
     # Update the translations
     for lang in app.langs:
@@ -708,8 +708,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
             if not text_node.exists():
                 msgs.append((
                     messages.warning,
-                    "Unrecognized translation label {0} in sheet {1}. That row"
-                    " has been skipped". format(label_id, sheet.worksheet.title)
+                    _("Unrecognized translation label {0} in sheet {1}. That row"
+                      " has been skipped").format(label_id, sheet.worksheet.title)
                 ))
                 continue
 
@@ -864,12 +864,12 @@ def _update_case_list_translations(sheet, rows, app):
             else:
                 msgs.append((
                     messages.error,
-                    "Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. "
-                    "No changes were made for sheet {1}.".format(
-                        len(detail_tab_headers),
-                        sheet.worksheet.title,
-                        index
-                    )
+                    _("Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. "
+                      "No changes were made for sheet {1}.").format(
+                          len(detail_tab_headers),
+                          sheet.worksheet.title,
+                          index
+                      )
                 ))
 
         # It's a normal case property
@@ -902,14 +902,14 @@ def _update_case_list_translations(sheet, rows, app):
                 continue
             msgs.append((
                 messages.error,
-                "Expected {0} case {3} properties in sheet {2}, found {1}. "
-                "No case list or detail properties for sheet {2} were "
-                "updated".format(
-                    len(expected_list),
-                    len(received_list),
-                    sheet.worksheet.title,
-                    word
-                )
+                _("Expected {0} case {3} properties in sheet {2}, found {1}. "
+                  "No case list or detail properties for sheet {2} were "
+                  "updated").format(
+                      len(expected_list),
+                      len(received_list),
+                      sheet.worksheet.title,
+                      word
+                  )
             ))
 
     if msgs:
@@ -926,8 +926,8 @@ def _update_case_list_translations(sheet, rows, app):
         else:
             msgs.append((
                 messages.error,
-                "You must provide at least one translation" +
-                " of the case property '%s'" % row['case_property']
+                _("You must provide at least one translation" +
+                  " of the case property '%s'") % row['case_property']
             ))
 
     def _update_id_mappings(rows, detail):
@@ -940,7 +940,7 @@ def _update_case_list_translations(sheet, rows, app):
             mappings_by_prop = {mapping.key: mapping for mapping in detail.enum}
             if len(detail.enum) != len(mappings_by_prop):
                 msgs.append((messages.error,
-                             "You must provide all ID mappings for property '{}'"
+                             _("You must provide all ID mappings for property '{}'")
                              .format(detail.field)))
             else:
                 for row in rows:
@@ -983,13 +983,13 @@ def _update_case_list_translations(sheet, rows, app):
             if row.get('id', None) != detail.field:
                 msgs.append((
                     messages.error,
-                    'A row in sheet {sheet} has an unexpected value of "{field}" '
-                    'in the case_property column. Case properties must appear in '
-                    'the same order as they do in the bulk app translation '
-                    'download. No translations updated for this row.'.format(
-                        sheet=sheet.worksheet.title,
-                        field=row.get('case_property', "")
-                    )
+                    _('A row in sheet {sheet} has an unexpected value of "{field}" '
+                      'in the case_property column. Case properties must appear in '
+                      'the same order as they do in the bulk app translation '
+                      'download. No translations updated for this row.').format(
+                          sheet=sheet.worksheet.title,
+                          field=row.get('case_property', "")
+                      )
                 ))
                 continue
             _update_detail(row, detail)
