@@ -135,6 +135,42 @@ hqDefine("export/js/export_list", function () {
             return false;
         };
 
+        $.ajax({
+            method: 'GET',
+            url: initialPageData.reverse('get_app_data_drilldown_values'),
+            data: {
+                is_deid: initialPageData.get('is_deid'),    // TODO: introduce strictness to ipd?
+                model_type: initialPageData.get('model_type'),
+            },
+            success: function (data) {
+                self.showNoAppsError(data.app_types.length === 1 && data.apps_by_type.all.length === 0);
+                if (!self.showNoAppsError()) {
+                // TODO: load data
+                /*
+                            self._labels = data.labels || {};
+                            self._placeholders = data.placeholders || {};
+                            self._app_types = data.app_types || [];
+                            $scope.hasSpecialAppTypes = data.app_types.length > 1;
+                            self._apps_by_type = data.apps_by_type || {};
+                            self._modules_by_app = data.modules_by_app || {};
+                            self._forms_by_app_by_module = data.forms_by_app_by_module || {};
+                            self._case_types_by_app = data.case_types_by_app || {};
+                            util.setAppTypes();
+                            util.setApps(data.apps_by_type[$scope.formData.app_type]);
+                            util.setModules();
+                            util.setForms();
+                            util.setCaseTypes();
+                */
+                }
+                self.isLoaded(true);
+            },
+            error: function () {
+                // TODO: test
+                self.formLoadError('default');      // TODO: put the generic error directly in here
+                self.isLoaded(true);
+            },
+        });
+
         return self;
     };
 
