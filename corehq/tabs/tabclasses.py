@@ -790,7 +790,7 @@ class ProjectDataTab(UITab):
             ))
         if self.can_view_form_exports or self.can_view_case_exports:
             items.append(dropdown_dict(
-                _('Find Data by ID (Beta)'),
+                _('Find Data by ID'),
                 url=reverse('data_find_by_id', args=[self.domain])
             ))
 
