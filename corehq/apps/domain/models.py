@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 import uuid
 
-from django.contrib.postgres.fields import JSONField
+from django.db.transaction import atomic
 from six.moves import map
 
 from couchdbkit import PreconditionFailed
@@ -29,6 +29,7 @@ from dimagi.ext.couchdbkit import (
 )
 from django.urls import reverse
 from django.db import models
+from django.db.models import F
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import quickcache
@@ -1232,27 +1233,21 @@ class TransferDomainRequest(models.Model):
 
 
 class DomainAuditRecordEntry(models.Model):
-    id = models.UUIDField(unique=True, default=uuid.uuid4, primary_key=True)
     domain = models.TextField(unique=True, db_index=True)
-    calculations = JSONField(default=dict)
+    cp_n_downloads_custom_exports = models.BigIntegerField(default=0)
+    cp_n_viewed_ucr_reports = models.BigIntegerField(default=0)
+    cp_n_viewed_non_ucr_reports = models.BigIntegerField(default=0)
+    cp_n_reports_created = models.BigIntegerField(default=0)
+    cp_n_reports_edited = models.BigIntegerField(default=0)
+    cp_n_saved_scheduled_reports = models.BigIntegerField(default=0)
+    cp_n_click_app_deploy = models.BigIntegerField(default=0)
+    cp_n_form_builder_entered = models.BigIntegerField(default=0)
+    cp_n_saved_app_changes = models.BigIntegerField(default=0)
 
     @classmethod
+    @atomic
     def update_calculations(cls, domain, model, method=None):
         obj, is_new = cls.objects.get_or_create(domain=domain)
-        if is_new:
-            calculations = {
-                "cp_n_downloads_custom_exports": 0,
-                "cp_n_viewed_ucr_reports": 0,
-                "cp_n_viewed_non_ucr_reports": 0,
-                "cp_n_reports_created": 0,
-                "cp_n_reports_edited": 0,
-                "cp_n_saved_scheduled_reports": 0,
-                "cp_n_click_app_deploy": 0,
-                "cp_n_form_builder_entered": 0,
-                "cp_n_saved_app_changes": 0
-            }
-        else:
-            calculations = obj.calculations
 
         config = {
             ('retrieve_download', None): "cp_n_downloads_custom_exports",
@@ -1269,6 +1264,5 @@ class DomainAuditRecordEntry(models.Model):
         }
 
         property_to_update = config.get((model, method))
-        calculations[property_to_update] += 1
-        obj.calculations = calculations
+        setattr(obj, property_to_update, F(property_to_update) + 1)
         obj.save()

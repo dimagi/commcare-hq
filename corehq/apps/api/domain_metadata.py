@@ -71,19 +71,21 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
                 for prop_name in es_data if prop_name[:3] == 'cp_'
             }
             try:
-                extra_properties = DomainAuditRecordEntry.objects.get(domain=domain.name)
+                audit_record = DomainAuditRecordEntry.objects.get(domain=domain.name)
             except DomainAuditRecordEntry.DoesNotExist:
-                extra_properties = {
-                    "cp_n_downloads_custom_exports": 0,
-                    "cp_n_viewed_ucr_reports": 0,
-                    "cp_n_viewed_non_ucr_reports": 0,
-                    "cp_n_reports_created": 0,
-                    "cp_n_reports_edited": 0,
-                    "cp_n_saved_scheduled_reports": 0,
-                    "cp_n_click_app_deploy": 0,
-                    "cp_n_saved_app_changes": 0
-                }
-            base_properties.update(extra_properties)
+                audit_record = None
+            extra_properties = [
+                "cp_n_downloads_custom_exports",
+                "cp_n_viewed_ucr_reports",
+                "cp_n_viewed_non_ucr_reports",
+                "cp_n_reports_created",
+                "cp_n_reports_edited",
+                "cp_n_saved_scheduled_reports",
+                "cp_n_click_app_deploy",
+                "cp_n_saved_app_changes",
+            ]
+            for prop in extra_properties:
+                base_properties.update({prop: getattr(audit_record, prop, 0)})
             return base_properties
         except IndexError:
             logging.exception('Problem getting calculated properties for {}'.format(domain.name))
