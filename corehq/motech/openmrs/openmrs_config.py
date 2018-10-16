@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
 from itertools import chain
 from operator import eq
 
@@ -160,9 +161,9 @@ class OpenmrsCaseConfig(DocumentSchema):
             data.pop('id_matchers')
         # Set default data types for known properties
         for property_, value_source in chain(
-                data['person_properties'].items(),
-                data['person_preferred_name'].items(),
-                data['person_preferred_address'].items(),
+            six.iteritems(data.get('person_properties', {})),
+            six.iteritems(data.get('person_preferred_name', {})),
+            six.iteritems(data.get('person_preferred_address', {})),
         ):
             data_type = OPENMRS_PROPERTIES[property_]
             value_source.setdefault('external_data_type', data_type)

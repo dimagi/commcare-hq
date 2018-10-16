@@ -45,7 +45,6 @@ from corehq.apps.hqwebapp.widgets import (
     Select2AjaxV3,
 )
 from corehq.pillows import utils
-from couchexport.util import SerializableFunction
 
 from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
@@ -393,11 +392,6 @@ class BaseFilterExportDownloadForm(forms.Form):
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
-    def _get_group(self):
-        group = self.cleaned_data['group']
-        if group:
-            return Group.get(group)
-
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
         :param export: FormExportSchema instance or CaseExportSchema instance
@@ -733,39 +727,6 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
         })
         return export_data
-
-
-class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
-    # This class will be removed when the switch over to ES exports is complete
-
-    def get_form_filter(self):
-        form_filter = SerializableFunction(app_export_filter, app_id=None)
-        datespan_filter = self._get_datespan_filter()
-        if datespan_filter:
-            form_filter &= datespan_filter
-        form_filter &= self._get_user_or_group_filter()
-        return form_filter
-
-    def _get_user_or_group_filter(self):
-        group = self._get_group()
-        if group:
-            # filter by groups
-            return SerializableFunction(group_filter, group=group)
-        # filter by users
-        return SerializableFunction(users_filter,
-                                    users=self._get_filtered_users())
-
-    def _get_datespan_filter(self):
-        datespan = self.cleaned_data['date_range']
-        if datespan.is_valid():
-            datespan.set_timezone(self.timezone)
-            return SerializableFunction(datespan_export_filter,
-                                        datespan=datespan)
-
-    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
-        kwargs = super(FilterFormCouchExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
-        kwargs['export_is_legacy'] = True
-        return kwargs
 
 
 class EmwfFilterExportMixin(object):
@@ -1168,27 +1129,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         return kwargs
 
 
-class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
-    def __init__(self, domain_object, timezone, *args, **kwargs):
-        super(GenericFilterCaseExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
-
-
-class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
-    _export_type = 'case'
-    # This class will be removed when the switch over to ES exports is complete
-
-    def get_case_filter(self):
-        group = self._get_group()
-        if group:
-            return SerializableFunction(case_group_filter, group=group)
-        case_sharing_groups = [g.get_id for g in
-                               Group.get_case_sharing_groups(self.domain_object.name)]
-        return SerializableFunction(case_users_filter,
-                                    users=self._get_filtered_users(),
-                                    groups=case_sharing_groups)
-
-
-class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExportDownloadForm):
+class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDownloadForm):
     export_user_filter = OwnerFilter
     dynamic_filter_class = CaseListFilter
 
@@ -1203,7 +1144,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
     def __init__(self, domain_object, timezone, *args, **kwargs):
         self.timezone = timezone
         self.skip_layout = True
-        super(FilterCaseESExportDownloadForm, self).__init__(domain_object, timezone, *args, **kwargs)
+        super(FilterCaseESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'

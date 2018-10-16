@@ -20,8 +20,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType,
-        $timeout
+        $scope, djangoRMI, bulk_download_url, $rootScope, modelType, $timeout
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -29,55 +28,41 @@
          *
          * It also generates a list of exports selected for bulk exports.
          */
-        var self = {};
-        $scope._ = _;  // allow use of underscore.js within the template
-        $scope.hasLoaded = false;
-        $scope.exports = [];
-        $scope.exportsListError = null;
-        $scope.bulk_download_url = bulk_download_url;
-        $scope.legacy_bulk_download_url = legacy_bulk_download_url;
-
-        self._numTries = 0;
-        self._getExportsList = function () {
-            // The method below lives in the subclasses of
-            // BaseExportListView.
-
-            var filterMyExports = function (val) {
-                return !!val.my_export;
+        $rootScope.pollProgressBar = function (exp) {
+            exp.emailedExport.updatingData = false;
+            exp.emailedExport.taskStatus = {
+                'percentComplete': 0,
+                'inProgress': true,
+                'success': false,
             };
-
-            var filterNotMyExports = function (val) {
-                return !val.my_export;
-            };
-
-            djangoRMI.get_exports_list({})
-                .success(function (data) {
-                    if (data.success) {
-                        $scope.exports = data.exports;
-                        $scope.myExports = data.exports.filter(filterMyExports);
-                        $scope.notMyExports = data.exports.filter(filterNotMyExports);
-                        _.each($scope.exports, function (exp) {
-                            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
-                                $rootScope.pollProgressBar(exp);
-                            }
-                        });
+            var tick = function () {
+                djangoRMI.get_saved_export_progress({
+                    'export_instance_id': exp.id,
+                }).success(function (data) {
+                    exp.emailedExport.taskStatus = data.taskStatus;
+                    if (!data.taskStatus.success) {
+                        // The first few ticks don't yet register the task
+                        exp.emailedExport.taskStatus.inProgress = true;
+                        $timeout(tick, 1500);
                     } else {
-                        $scope.exportsListError = data.error;
+                        exp.emailedExport.taskStatus.justFinished = true;
                     }
-                    $scope.hasLoaded = true;
-                })
-                .error(function () {
-                    // Retry in case the connection was flaky.
-                    if (self._numTries > 3) {
-                        $scope.hasLoaded = true;
-                        $scope.exportsListError = 'default';
-                        return;
-                    }
-                    self._numTries ++;
-                    self._getExportsList();
                 });
+            };
+            tick();
         };
-        self._getExportsList();
+
+        $scope._ = _;  // allow use of underscore.js within the template
+        $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
+        $scope.bulk_download_url = bulk_download_url;
+
+        $scope.myExports = $scope.exports.filter(function (val) { return !!val.my_export; });
+        $scope.notMyExports = $scope.exports.filter(function (val) { return !val.my_export; });
+        _.each($scope.exports, function (exp) {
+            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
+                $rootScope.pollProgressBar(exp);
+            }
+        });
 
         // For Bulk Export
         $scope.showBulkExportDownload = false;
@@ -92,11 +77,7 @@
             var input = $('input[name="export_list"]');
             input.val(JSON.stringify(selectedExports));
 
-            var useLegacyBulkExportUrl = _.every(selectedExports, function (e) {
-                return e.isLegacy;
-            });
-            var currentUrl = useLegacyBulkExportUrl ? $scope.legacy_bulk_download_url : $scope.bulk_download_url;
-            input.closest("form").attr("action", currentUrl);
+            input.closest("form").attr("action", $scope.bulk_download_url);
         };
         $scope.downloadRequested = function ($event) {
             var $btn = $($event.target);
@@ -127,30 +108,6 @@
         };
         $scope.sendExportAnalytics = function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
-        };
-
-        $rootScope.pollProgressBar = function (exp) {
-            exp.emailedExport.updatingData = false;
-            exp.emailedExport.taskStatus = {
-                'percentComplete': 0,
-                'inProgress': true,
-                'success': false,
-            };
-            var tick = function () {
-                djangoRMI.get_saved_export_progress({
-                    'export_instance_id': exp.id,
-                }).success(function (data) {
-                    exp.emailedExport.taskStatus = data.taskStatus;
-                    if (!data.taskStatus.success) {
-                        // The first few ticks don't yet register the task
-                        exp.emailedExport.taskStatus.inProgress = true;
-                        $timeout(tick, 1500);
-                    } else {
-                        exp.emailedExport.taskStatus.justFinished = true;
-                    }
-                });
-            };
-            tick();
         };
 
         $scope.updateEmailedExportData = function (component, exp) {

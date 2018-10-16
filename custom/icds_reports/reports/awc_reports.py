@@ -730,17 +730,17 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    yesterday = now_date - relativedelta(days=1)
-    two_days_ago = yesterday - relativedelta(days=1)
     previous_month = selected_month - relativedelta(months=1)
     if selected_month.month == now_date.month and selected_month.year == now_date.year:
-        config['date'] = yesterday
-        data = get_data_for(AggAwcDailyView, config)
-        config['date'] = two_days_ago
-        prev_data = get_data_for(AggAwcDailyView, config)
-        if not data:
-            data = prev_data
-            config['date'] = (two_days_ago - relativedelta(days=1)).date()
+        config['date'] = now_date.date()
+        data = None
+        # keep the record in searched - current - month
+        while data is None or (not data and config['date'].day != 1):
+            config['date'] -= relativedelta(days=1)
+            data = get_data_for(AggAwcDailyView, config)
+        prev_data = None
+        while prev_data is None or (not prev_data and config['date'].day != 1):
+            config['date'] -= relativedelta(days=1)
             prev_data = get_data_for(AggAwcDailyView, config)
         frequency = 'day'
     else:

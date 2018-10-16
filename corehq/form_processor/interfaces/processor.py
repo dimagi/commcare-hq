@@ -95,7 +95,7 @@ class FormProcessorInterface(object):
             return LedgerDBCouch()
 
     def acquire_lock_for_xform(self, xform_id):
-        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=5 * 60)
+        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=15 * 60)
         try:
             lock.acquire()
         except RedisError:
