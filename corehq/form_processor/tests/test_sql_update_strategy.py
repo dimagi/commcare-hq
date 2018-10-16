@@ -28,15 +28,15 @@ class SqlUpdateStrategyTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(SqlUpdateStrategyTest, cls).tearDownClass()
+        super(SqlUpdateStrategyTest, cls).setUpClass()
         FormProcessorTestUtils.delete_all_sql_forms()
         FormProcessorTestUtils.delete_all_sql_cases()
 
     @classmethod
     def tearDownClass(cls):
-        super(SqlUpdateStrategyTest, cls).tearDownClass()
         FormProcessorTestUtils.delete_all_sql_forms()
         FormProcessorTestUtils.delete_all_sql_cases()
+        super(SqlUpdateStrategyTest, cls).tearDownClass()
 
     @patch.object(SoftAssert, '_call')
     def test_reconcile_transactions(self, soft_assert_mock):
