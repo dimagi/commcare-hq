@@ -2119,6 +2119,8 @@ DOMAIN_MODULE_MAP = {
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
+
+    #vectorlink domains
     'abtmali': 'custom.abt',
     'airs': 'custom.abt',
     'airs-testing': 'custom.abt',
