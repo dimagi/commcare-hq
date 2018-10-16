@@ -1,0 +1,160 @@
+{
+  "domains": [
+    "abtmali",
+    "airs",
+    "airs-testing",
+    "airsbenin",
+    "airsethiopia",
+    "airskenya",
+    "airsmadagascar",
+    "airsmozambique",
+    "airsrwanda",
+    "airstanzania",
+    "airszambia",
+    "airszimbabwe",
+    "vectorlink-benin",
+    "vectorlink-burkina-faso",
+    "vectorlink-ethiopia",
+    "vectorlink-ghana",
+    "vectorlink-kenya",
+    "vectorlink-madagascar",
+    "vectorlink-malawi",
+    "vectorlink-mali",
+    "vectorlink-mozambique",
+    "vectorlink-rwanda",
+    "vectorlink-tanzania",
+    "vectorlink-uganda",
+    "vectorlink-zambia",
+    "vectorlink-zimbabwe"
+  ],
+  "server_environment": ["production"],
+  "config": {
+    "engine_id": "default",
+    "base_item_expression": {},
+    "configured_filter": {
+      "expression": {
+          "type": "property_path",
+          "property_path": [
+            "user_data",
+            "usertype"
+          ]
+      },
+      "operator": "eq",
+      "property_value": "pmt",
+      "type": "boolean_expression"
+    },
+    "configured_indicators": [
+      {
+        "display_name": "country",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "country",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "user_data",
+            "country"
+          ]
+        }
+      },
+      {
+        "display_name": "level_1",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "level_1",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "user_data",
+            "level_1_name"
+          ]
+        }
+      },
+      {
+        "display_name": "level_2",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "level_2",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "user_data",
+            "level_2_name"
+          ]
+        }
+      },
+      {
+        "display_name": "level_3",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "level_3",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "user_data",
+            "level_3_name"
+          ]
+        }
+      },
+      {
+        "display_name": "level_4",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "level_4",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "user_data",
+            "level_4_name"
+          ]
+        }
+      },
+      {
+        "display_name": "username",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "username",
+        "expression": {
+          "type": "property_name",
+          "property_name": "username"
+        }
+      },
+      {
+        "display_name": "phone_number",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "phone_number",
+        "expression": {
+          "type": "property_name",
+          "property_name": "phone_number"
+        }
+      }
+    ],
+    "description": "",
+    "display_name": "Late PMT (static)",
+    "named_filters": {},
+    "referenced_doc_type": "CommCareUser",
+    "table_id": "static-late-pmt"
+  }
+}

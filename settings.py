@@ -1923,6 +1923,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
@@ -2118,6 +2119,34 @@ DOMAIN_MODULE_MAP = {
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
+
+    #vectorlink domains
+    'abtmali': 'custom.abt',
+    'airs': 'custom.abt',
+    'airs-testing': 'custom.abt',
+    'airsbenin': 'custom.abt',
+    'airsethiopia': 'custom.abt',
+    'airskenya': 'custom.abt',
+    'airsmadagascar': 'custom.abt',
+    'airsmozambique': 'custom.abt',
+    'airsrwanda': 'custom.abt',
+    'airstanzania': 'custom.abt',
+    'airszambia': 'custom.abt',
+    'airszimbabwe': 'custom.abt',
+    'vectorlink-benin': 'custom.abt',
+    'vectorlink-burkina-faso': 'custom.abt',
+    'vectorlink-ethiopia': 'custom.abt',
+    'vectorlink-ghana': 'custom.abt',
+    'vectorlink-kenya': 'custom.abt',
+    'vectorlink-madagascar': 'custom.abt',
+    'vectorlink-malawi': 'custom.abt',
+    'vectorlink-mali': 'custom.abt',
+    'vectorlink-mozambique': 'custom.abt',
+    'vectorlink-rwanda': 'custom.abt',
+    'vectorlink-tanzania': 'custom.abt',
+    'vectorlink-uganda': 'custom.abt',
+    'vectorlink-zambia': 'custom.abt',
+    'vectorlink-zimbabwe': 'custom.abt',
 }
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
