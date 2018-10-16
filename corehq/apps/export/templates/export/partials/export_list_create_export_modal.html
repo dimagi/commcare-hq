@@ -13,11 +13,10 @@
                     </button>
                     <h4 class="modal-title">{{ create_export_form_title }}</h4>
                 </div>
-                <!--div class="modal-body"
-                     ng-show="!isLoaded">
+                <div class="modal-body" data-bind="visible: !isLoaded()">
                     <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
                 </div>
-                <div class="modal-body"
+                <!--div class="modal-body"
                      ng-show="!showNoAppsError && !formLoadError && !!isLoaded && !isSubmittingForm">
                     <div class="alert alert-warning"
                          ng-show="!!formSubmissionError">
@@ -98,9 +97,8 @@
                             {% endangularjs %}
                         </div>
                     {% endif %}
-                </div>
-                <div class="modal-body"
-                     ng-show="!!isSubmittingForm">
+                </div-->
+                <div class="modal-body" data-bind="visible: isSubmittingForm">
                     <p class="lead">
                         <i class="fa fa-spinner fa-spin"></i>
                         {% blocktrans %}
@@ -114,15 +112,14 @@
                         {% endblocktrans %}
                     </p>
                 </div>
-                <div class="modal-body"
-                     ng-show="!!formLoadError">
+                <div class="modal-body" data-bind="visible: formLoadError">
                     <div class="alert alert-warning">
                         <i class="fa fa-exclamation-triangle"></i>
-                        <span ng-if="formLoadError === 'default'">
+                        <span data-bind="if: defaultFormLoadError">
                             {% trans "There is an issue communicating with the server at this time." %}
                         </span>
-                        <span ng-if="formLoadError !== 'default'">
-                            {% angularjs %}{{ formLoadError }}{% endangularjs %}
+                        <span data-bind="ifnot: defaultFormLoadError">
+                            <span data-bind="text: formLoadError"></span>
                         </span>
                     </div>
                     <p>
@@ -139,12 +136,11 @@
                         {% endblocktrans %}
                     </p>
                 </div>
-                <div class="modal-body"
-                     ng-show="!!showNoAppsError">
+                <div class="modal-body" data-bind="visible: showNoAppsError">
                     <p class="lead">
                     {% blocktrans %}
                         It seems as though you haven't submitted any data to CommCare HQ.
-                        Please deploy an Application and submit data before creating any {{ export_type_plural }}.
+                        Please deploy an application and submit data before creating any {{ export_type_plural }}.
                     {% endblocktrans %}
                     </p>
                     <a href="https://confluence.dimagi.com/display/commcarepublic/Application+Building"
@@ -152,7 +148,7 @@
                         <i class="fa fa-info-circle"></i>
                         {% trans 'How to Create and Deploy a CommCare Application.' %}
                     </a>
-                </div-->
+                </div>
                 <div class="modal-footer">
                     <button type="button"
                             class="btn btn-default"
