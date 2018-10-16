@@ -35,6 +35,29 @@ hqDefine("export/js/export_list", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     var createExportModel = function () {
         var self = {};
+
+        self.isLoaded = ko.observable(false);
+        self.isSubmittingForm = ko.observable(false);
+        self.showNoAppsError = ko.observable(false);
+        self.formLoadError = ko.observable(false);
+
+        self.isValid = ko.computed(function () {
+            // TODO
+            return true;
+        });
+
+        self.showSubmit = ko.computed(function () {
+            return !self.showNoAppsError() && !self.formLoadError();
+        });
+        self.disableSubmit = ko.computed(function () {
+            return !self.isValid() || self.isSubmittingForm();
+        });
+
+        self.handleSubmitForm = function () {
+            // TODO
+            return false;
+        };
+
         return self;
     };
 
