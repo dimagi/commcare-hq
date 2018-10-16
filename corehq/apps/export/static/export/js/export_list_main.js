@@ -29,11 +29,11 @@ hqDefine("export/js/export_list_main", function () {
 
     /* Knockout */
     var exportModel = function(options) {
-        options.isAutoRebuildEnabled = options.isAutoRebuildEnabled || false;
-        options.isDailySaved = options.isDailySaved || false;
-        options.isFeed = options.isFeed || false;
-        options.showLink = options.showLink || false;
+        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'showLink'], function (key) {
+            options[key] = options[key] || false;
+        });
         options.emailedExport = options.emailedExport || {};
+        options.formname = options.formname || '';
 
         var mapping = {
             'copy': ["emailedExport"]
