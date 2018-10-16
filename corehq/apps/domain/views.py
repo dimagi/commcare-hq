@@ -1757,12 +1757,17 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     self.send_downgrade_email()
                 if next_subscription is not None:
                     # New subscription has been scheduled for the future
-                    current_subscription = self.current_subscription.plan_version.plan.edition
+                    current_subscription_edition = self.current_subscription.plan_version.plan.edition
                     start_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
                     message = _(
-                        "You have successfully scheduled your current %s Edition Plan subscription to "
-                        "downgrade to the %s Edition Plan on %s."
-                    ) % (current_subscription, software_plan_name, start_date)
+                        "You have successfully scheduled your current %(current_subscription_edition)s "
+                        "Edition Plan subscription to downgrade to the %(software_plan_name)s Edition Plan "
+                        "on %(start_date)s."
+                    ) % {
+                        'current_subscription_edition': current_subscription_edition,
+                        'software_plan_name': software_plan_name,
+                        'start_date': start_date,
+                    }
                 else:
                     message = _(
                         "Your project has been successfully subscribed to the %s Edition Plan."
@@ -1775,9 +1780,12 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             downgrade_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
             messages.error(
                 request, _(
-                    "You have already scheduled a downgrade to the %s Software Plan on %s. If this is a "
-                    "mistake, please reach out to billing-support@dimagi.com."
-                ) % (software_plan_name, downgrade_date)
+                    "You have already scheduled a downgrade to the %(software_plan_name)s Software Plan on "
+                    "%(downgrade_date)s. If this is a mistake, please reach out to billing-support@dimagi.com."
+                ) % {
+                    'software_plan_name': software_plan_name,
+                    'downgrade_date': downgrade_date,
+                }
             )
 
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
