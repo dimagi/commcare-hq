@@ -2547,7 +2547,7 @@ class TestAWCReport(TestCase):
                         'edd': None,
                         'home_visit_date': None,
                         'ifa_consumed_last_seven_days': 'Y',
-                        'mobile_number': None,
+                        'contact_phone_number': None,
                         'opened_on': None,
                         'person_name': None,
                         'preg_order': None,

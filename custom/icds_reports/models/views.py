@@ -553,7 +553,7 @@ class CcsRecordMonthlyView(models.Model):
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
     is_ebf = models.SmallIntegerField(blank=True, null=True)
     last_date_thr = models.DateField(blank=True, null=True)
-    mobile_number = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
     num_anc_complete = models.SmallIntegerField(blank=True, null=True)
     num_pnc_visits = models.SmallIntegerField(blank=True, null=True)
     num_rations_distributed = models.IntegerField(blank=True, null=True)
