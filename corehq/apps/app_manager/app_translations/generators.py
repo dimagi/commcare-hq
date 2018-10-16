@@ -58,19 +58,15 @@ class AppTranslationsGenerator:
         self._build_translations()
 
     @cached_property
-    def _get_labels_to_comments(self):
-        labels_to_comments = {}
+    def _get_labels_to_skip(self):
+        labels_to_skip = defaultdict(list)
         module_data, errors = get_form_data(self.domain, self.app)
         for module in module_data:
-            form_dict = defaultdict(list)
-
             for form in module['forms']:
                 for question in form['questions']:
-                    if question['comment']:
-                        form_dict[question['label_ref']].append(question['comment'])
-                labels_to_comments[form['id']] = form_dict
-
-        return labels_to_comments
+                    if 'SKIP TRANSIFEX' in question['comment'] and 'label_ref' in question:
+                        labels_to_skip[form['id']].append(question['label_ref'])
+        return labels_to_skip
 
     def _translation_data(self, app):
         # get the translations data
@@ -170,12 +166,12 @@ class AppTranslationsGenerator:
         """
         Remove translations from questions that have SKIP TRANSIFEX in the comment
         """
-        form_labels_to_comments = self._get_labels_to_comments[form_id]
+        labels_to_skip = self._get_labels_to_skip[form_id]
         valid_rows = []
         for i, row in enumerate(rows):
             question_label = row[label_index]
-            if not any('SKIP TRANSIFEX' in comment for comment in form_labels_to_comments[question_label]):
-                valid_rows = rows
+            if question_label not in labels_to_skip:
+                valid_rows.append(row)
         return valid_rows
 
     def _get_translation_for_sheet(self, app, sheet_name, rows):
