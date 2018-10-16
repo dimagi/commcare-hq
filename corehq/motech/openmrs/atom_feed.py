@@ -99,7 +99,8 @@ def get_updated_patients(repeater):
         repeater.domain,
         repeater.url,
         repeater.username,
-        repeater.password
+        repeater.password,
+        verify=repeater.verify
     )
     # The OpenMRS Atom Feed's timestamps are timezone-aware. So when we
     # compare timestamps in has_new_entries_since(), this timestamp
@@ -214,7 +215,8 @@ def update_patient(repeater, patient_uuid, updated_at):
         repeater.domain,
         repeater.url,
         repeater.username,
-        repeater.password
+        repeater.password,
+        verify=repeater.verify
     )
     patient = get_patient_by_uuid(requests, patient_uuid)
     case, error = importer_util.lookup_case(
