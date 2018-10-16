@@ -1,6 +1,5 @@
 from django.test import TestCase
 from freezegun import freeze_time
-from corehq.form_processor.tests.utils import use_sql_backend
 from mock import patch
 from corehq.util.soft_assert.core import SoftAssert
 
@@ -13,6 +12,7 @@ from corehq.form_processor.models import (
     CaseTransaction,
 )
 from corehq.form_processor.utils import TestFormMetadata
+from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 from corehq.util.test_utils import get_form_ready_to_save
 
 import uuid
@@ -23,6 +23,18 @@ from datetime import datetime
 class SqlUpdateStrategyTest(TestCase):
     DOMAIN = 'update-strategy-test-' + uuid.uuid4().hex
     USER_ID = 'mr_wednesday_'
+
+    @classmethod
+    def setUpClass(cls):
+        super(SqlUpdateStrategyTest, cls).setUpClass()
+        FormProcessorTestUtils.delete_all_sql_forms()
+        FormProcessorTestUtils.delete_all_sql_cases()
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_sql_forms()
+        FormProcessorTestUtils.delete_all_sql_cases()
+        super(SqlUpdateStrategyTest, cls).tearDownClass()
 
     @patch.object(SoftAssert, '_call')
     def test_reconcile_transactions(self, soft_assert_mock):
