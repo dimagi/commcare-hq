@@ -12,6 +12,7 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (
     CommCareCaseSQL,
     CaseTransaction,
+    RebuildWithReason,
 )
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
@@ -73,6 +74,31 @@ class SqlUpdateStrategyTest(TestCase):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
             case.track_create(new_old_trans)
             FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+
+        case = CaseAccessorSQL.get_case(case.case_id)
+        update_strategy = SqlCaseUpdateStrategy(case)
+        self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
+
+    def test_ignores_before_rebuild_transaction(self):
+        with freeze_time("2018-10-10"):
+            case = self._create_case()
+
+        with freeze_time("2018-10-11"):
+            new_old_xform = self._create_form()
+        with freeze_time("2018-10-08"):
+            new_old_trans = self._create_case_transaction(case, new_old_xform)
+        with freeze_time("2018-10-11"):
+            case.track_create(new_old_trans)
+            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+
+        self.assertFalse(case.check_transaction_order())
+
+        with freeze_time("2018-10-13"):
+            new_rebuild_xform = self._create_form()
+            rebuild_detail = RebuildWithReason(reason="shadow's golden coin")
+            rebuild_transaction = CaseTransaction.rebuild_transaction(case, rebuild_detail)
+            case.track_create(rebuild_transaction)
+            FormProcessorSQL.save_processed_models(ProcessedForms(new_rebuild_xform, []), [case])
 
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
