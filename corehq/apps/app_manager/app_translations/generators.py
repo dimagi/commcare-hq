@@ -59,13 +59,13 @@ class AppTranslationsGenerator:
 
     @cached_property
     def _get_labels_to_skip(self):
-        labels_to_skip = []
+        labels_to_skip = defaultdict(list)
         module_data, errors = get_form_data(self.domain, self.app)
         for module in module_data:
             for form in module['forms']:
                 for question in form['questions']:
                     if 'SKIP TRANSIFEX' in question['comment'] and 'label_ref' in question:
-                        labels_to_skip.append(question['label_ref'])
+                        labels_to_skip[form['id']].append(question['label_ref'])
         return labels_to_skip
 
     def _translation_data(self, app):
@@ -166,7 +166,7 @@ class AppTranslationsGenerator:
         """
         Remove translations from questions that have SKIP TRANSIFEX in the comment
         """
-        labels_to_skip = self._get_labels_to_skip
+        labels_to_skip = self._get_labels_to_skip[form_id]
         valid_rows = []
         for i, row in enumerate(rows):
             question_label = row[label_index]
