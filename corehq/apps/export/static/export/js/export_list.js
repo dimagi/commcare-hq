@@ -39,7 +39,11 @@ hqDefine("export/js/export_list", function () {
         self.isLoaded = ko.observable(false);
         self.isSubmittingForm = ko.observable(false);
         self.showNoAppsError = ko.observable(false);
-        self.formLoadError = ko.observable(false);
+        self.formLoadError = ko.observable('');
+
+        self.defaultFormLoadError = ko.computed(function () {
+            return self.formLoadError() === 'default';
+        });
 
         self.isValid = ko.computed(function () {
             // TODO
