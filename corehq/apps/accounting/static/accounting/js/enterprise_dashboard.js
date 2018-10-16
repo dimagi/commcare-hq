@@ -2,13 +2,16 @@ hqDefine("accounting/js/enterprise_dashboard", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
+    'analytix/js/kissmetrix',
     'hqwebapp/js/hq.helpers',
 ], function (
     $,
     initialPageData,
-    alertUser
+    alertUser,
+    kissmetrics
 ) {
     $(function () {
+        kissmetrics.track.event("[Enterprise Dashboard] Visited page");
         $(".report-panel").each(function () {
             var $element = $(this),
                 slug = $element.data("slug");
@@ -22,6 +25,7 @@ hqDefine("accounting/js/enterprise_dashboard", [
             });
 
             $element.find(".btn-success").click(function () {
+                kissmetrics.track.event("[Enterprise Dashboard] Clicked Email Report for " + slug);
                 var $button = $(this);
                 $button.disableButton();
                 $.ajax({
