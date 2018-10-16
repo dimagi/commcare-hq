@@ -82,6 +82,7 @@ hqDefine("reports/js/data_corrections", [
                 value = value.join(" ");
             }
             self.value(value);
+            self.dirty(true);
         };
 
         return self;
