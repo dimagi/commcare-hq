@@ -1,5 +1,7 @@
 hqDefine("export/js/export_list", function () {
     'use strict';
+
+    /* Angular; to be deprecated */
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
         listExportsApp = window.angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
     listExportsApp.config(["$httpProvider", function ($httpProvider) {
@@ -27,5 +29,16 @@ hqDefine("export/js/export_list", function () {
     });
     listExportsApp.constant('filterFormModalElement', function () {
         return $('#setFeedFiltersModal');
+    });
+
+    /* Knockout */
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+    var createExportModel = function () {
+        var self = {};
+        return self;
+    };
+
+    $(function () {
+        $("#create-export").koApplyBindings(createExportModel());
     });
 });
