@@ -70,7 +70,9 @@ hqDefine("reports/js/data_corrections", [
                     }
                 });
             }
-            if (!self.multiple || !self.value()) {
+
+            // Single selects need to include a blank option for the allowClear and placeholder options to work
+            if (!self.multiple) {
                 self.options.unshift({id: '', text: ''});
             }
         }
@@ -82,6 +84,7 @@ hqDefine("reports/js/data_corrections", [
                 value = value.join(" ");
             }
             self.value(value);
+            self.dirty(true);
         };
 
         return self;
