@@ -235,7 +235,7 @@ class AppTranslationsGenerator:
                 translation,
                 [(occurrence_row, index)],
                 occurrence_row)
-        return translations.values()
+        return list(translations.values())
 
     @property
     @memoized
