@@ -60,6 +60,21 @@ class SqlUpdateStrategyTest(TestCase):
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
+        self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
+
+    def test_reconcile_not_necessary(self):
+        with freeze_time("2018-10-10"):
+            case = self._create_case()
+
+        with freeze_time("2018-10-11"):
+            new_old_xform = self._create_form()
+            new_old_trans = self._create_case_transaction(case, new_old_xform)
+            case.track_create(new_old_trans)
+            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+
+        case = CaseAccessorSQL.get_case(case.case_id)
+        update_strategy = SqlCaseUpdateStrategy(case)
+        self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
 
     def _create_form(self, user_id=None, received_on=None):
         """
@@ -106,3 +121,8 @@ class SqlUpdateStrategyTest(TestCase):
         FormProcessorSQL.save_processed_models(ProcessedForms(form, []), [case])
 
         return CaseAccessorSQL.get_case(case_id)
+
+    def _check_for_reconciliation_error_soft_assert(self, soft_assert_mock):
+        for call in soft_assert_mock.call_args_list:
+            self.assertNotIn('ReconciliationError', call[0][1])
+        soft_assert_mock.reset_mock()
