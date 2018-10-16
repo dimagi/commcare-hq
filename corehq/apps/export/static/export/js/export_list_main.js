@@ -36,6 +36,39 @@ hqDefine("export/js/export_list_main", function () {
             clipboard.destroy();
         };
 
+        // TODO: test
+        // Polling
+        self.pollProgressBar = function () {
+            self.emailedExport.updatingData = false;
+            self.emailedExport.taskStatus = {
+                'percentComplete': 0,
+                'inProgress': true,
+                'success': false,
+            };
+            var tick = function () {
+                $.ajax({
+                    method: 'GET',
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse("get_saved_export_progress"),
+                    data: {
+                        export_instance_id: self.id(),
+                        is_deid: self.isDeid,
+                        model_type: self.modelType,
+                    },
+                    success: function (data) {
+                        self.emailedExport.taskStatus = data.taskStatus;
+                        if (!data.taskStatus.success) {
+                            // The first few ticks don't yet register the task
+                            self.emailedExport.taskStatus.inProgress = true;
+                            setTimeout(tick, 1500);
+                        } else {
+                            self.emailedExport.taskStatus.justFinished = true;
+                        }
+                    },
+                });
+            };
+            tick();
+        };
+
         self.updateEmailedExportData = function (model) {
             var component = model.emailedExport;
             $('#modalRefreshExportConfirm-' + model.id() + '-' + component.groupId).modal('hide');
@@ -52,7 +85,7 @@ hqDefine("export/js/export_list_main", function () {
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(model.exportType());
                         hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
-                        self.pollProgressBar(model);
+                        model.pollProgressBar();
                     }
                 },
             });
@@ -109,41 +142,9 @@ hqDefine("export/js/export_list_main", function () {
             return true;
         };
 
-        // TODO: test
-        // Polling
-        self.pollProgressBar = function (exp) {
-            exp.emailedExport.updatingData = false;
-            exp.emailedExport.taskStatus = {
-                'percentComplete': 0,
-                'inProgress': true,
-                'success': false,
-            };
-            var tick = function () {
-                $.ajax({
-                    method: 'GET',
-                    url: hqImport("hqwebapp/js/initial_page_data").reverse("get_saved_export_progress"),
-                    data: {
-                        export_instance_id: exp.id(),
-                        is_deid: self.isDeid,
-                        model_type: self.modelType,
-                    },
-                    success: function (data) {
-                        exp.emailedExport.taskStatus = data.taskStatus;
-                        if (!data.taskStatus.success) {
-                            // The first few ticks don't yet register the task
-                            exp.emailedExport.taskStatus.inProgress = true;
-                            setTimeout(tick, 1500);
-                        } else {
-                            exp.emailedExport.taskStatus.justFinished = true;
-                        }
-                    },
-                });
-            };
-            tick();
-        };
         _.each(self.exports, function (exp) {
             if (exp.emailedExport && exp.emailedExport.taskStatus && exp.emailedExport.taskStatus.inProgress) {
-                self.pollProgressBar(exp);
+                exp.pollProgressBar();
             }
         });
 
@@ -242,7 +243,7 @@ hqDefine("export/js/export_list_main", function () {
                     if (data.success) {
                         self.formSubmitErrorMessage('');
                         export_.emailedExport.filters = self.formData;
-                        self.pollProgressBar(export_);
+                        export_.pollProgressBar();
                         self.$filterModal.modal('hide');
                     } else {
                         self.formSubmitErrorMessage(data.error);
