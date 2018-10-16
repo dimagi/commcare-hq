@@ -60,12 +60,33 @@ class TranslationsParser(object):
             _type, _sheet_name, _unique_id = re.match(context_regex, context).groups()
             ws.append([_type, _sheet_name, po_entry.msgid, po_entry.msgstr, _unique_id])
 
+    @staticmethod
+    def _get_rows_for_module_sheet(consolidated_po_entries):
+        """
+        get po_entries listed according to their expected order in the final set
+        by using occurrences
+        """
+        rows = {}
+        po_entries = []
+        # align entries in a dict with their index as the key
+        for po_entry in consolidated_po_entries:
+            occurrences = po_entry.occurrences
+            for occurrence in occurrences:
+                index = int(occurrence[1])
+                rows[index] = po_entry
+        # ensure the number of final translations is same as the highest index
+        if rows:
+            assert len(rows) == int(max(rows.keys()))
+        # sort by index to have the expected order
+        for index in sorted(rows.keys()):
+            po_entries.append(rows[index])
+        return po_entries
+
     def _add_module_sheet(self, ws, po_entries):
         context_regex = CONTEXT_REGEXS['module_sheet']
         # add header
         ws.append(["case_property", "list_or_detail", self.key_lang_str, self.source_lang_str])
-        # add rows
-        for po_entry in po_entries:
+        for po_entry in self._get_rows_for_module_sheet(po_entries):
             context = po_entry.msgctxt
             _case_property, _list_or_detail = re.match(context_regex, context).groups()
             ws.append([_case_property, _list_or_detail, po_entry.msgid, po_entry.msgstr])

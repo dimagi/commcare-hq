@@ -180,7 +180,10 @@ class AppTranslationsGenerator:
 
     def _get_translation_for_sheet(self, app, sheet_name, rows):
         occurrence = None
-        translations_for_sheet = []
+        # a dict mapping of a context to a Translation object with
+        # clubbed occurrences
+        translations = OrderedDict()
+        type_and_id = None
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
         default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + app.default_language)
@@ -208,20 +211,29 @@ class AppTranslationsGenerator:
 
                 def occurrence(_row):
                     return _row[label_index]
+        is_module = type_and_id and type_and_id.type == "Module"
         for i, row in enumerate(rows):
+            index = i + 1
             source = row[key_lang_index]
             translation = row[source_lang_index]
             if self.exclude_if_default:
                 if translation == row[default_lang_index]:
                     translation = ''
             occurrence_row = occurrence(row)
-            translations_for_sheet.append(Translation(
+            if is_module:
+                # if there is already a translation with the same context, just add this occurrence
+                if occurrence_row in translations:
+                    translations[occurrence_row].occurrences.append(
+                        (occurrence_row, index)
+                    )
+                    continue
+
+            translations[occurrence_row] = Translation(
                 source,
                 translation,
-                [(occurrence_row, '')],
+                [(occurrence_row, index)],
                 occurrence_row)
-            )
-        return translations_for_sheet
+        return translations.values()
 
     @property
     @memoized
