@@ -34,11 +34,5 @@
 
     <p>{{ lead_text }}</p>
 
-    <div ng-app="listExportsApp">
-        {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
-        {% include 'export/partials/export_list_create_export_modal.html' %}
-        {% if is_daily_saved_export %}
-            {% include 'export/partials/feed_filter_modal.html' %}
-        {% endif %}
-    </div>
+    {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
 {% endblock %}
