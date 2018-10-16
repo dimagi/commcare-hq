@@ -62,6 +62,7 @@ branches:
   - pv/deac-users-fixes # Preethi Sept 28
   - jls/data-corrections-select2s  # Jenny Oct 4
   - rn_correct_datefilter_of_ucr # rohit Oct 14
+  - rn_test_report_export # rohit #oct 16 
 submodules:
   submodules/django-digest-src:
     branches: []
