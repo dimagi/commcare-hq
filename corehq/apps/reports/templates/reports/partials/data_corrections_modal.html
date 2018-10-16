@@ -100,7 +100,8 @@
                                                     <select class="form-control"
                                                             data-bind="foreach: options,
                                                                        value: value,
-                                                                       attr: { 'data-name': name }">
+                                                                       attr: { 'data-name': name },
+                                                                       event: { change: function() { this.dirty(true); } }">
                                                             <option data-bind="value: id, text: text"></option>
                                                     </select>
                                                 <!-- /ko -->

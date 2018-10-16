@@ -57,6 +57,7 @@ hqDefine("reports/js/data_corrections", [
 
         self.name = options.name;
         self.value = ko.observable(options.value || '');
+console.log('self.value() initialized to ' + self.value());
         self.dirty = ko.observable(false);
         self.options = options.options || [];
         self.multiple = options.multiple === undefined ? false : options.multiple;
@@ -70,18 +71,29 @@ hqDefine("reports/js/data_corrections", [
                     }
                 });
             }
-            if (!self.multiple || !self.value()) {
+
+            // Single selects need to include a blank option for the allowClear and placeholder options to work
+            if (!self.multiple) {
                 self.options.unshift({id: '', text: ''});
             }
         }
 
         // Update hidden value for multiselects. See data_corrections_modal.html for context.
         self.updateSpaceSeparatedValue = function (model, e) {
-            var value = $(e.currentTarget).val();
-            if (_.isArray(value)) {
-                value = value.join(" ");
+            var newValue = $(e.currentTarget).val(),
+                oldValue = self.value(),
+                dirty = self.dirty();
+
+            if (_.isArray(newValue)) {
+                oldValue = oldValue.split(" ");
+                dirty = dirty || oldValue.length !== newValue.length ||
+                        oldValue.length !== _.intersection(oldValue, newValue).length;
+                newValue = newValue.join(" ");
+            } else {
+                dirty = dirty || oldValue !== newValue;
             }
-            self.value(value);
+            self.dirty(dirty);
+            self.value(newValue);
         };
 
         return self;
