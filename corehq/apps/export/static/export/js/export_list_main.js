@@ -1,8 +1,9 @@
 hqDefine("export/js/export_list_main", function () {
     'use strict';
 
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-    var exportModel = function(options) {
+    var exportModel = function(options, pageOptions) {
+        hqImport("hqwebapp/js/assert_properties").assert(pageOptions, ['is_deid', 'model_type']);
+
         _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'showLink'], function (key) {
             options[key] = options[key] || false;
         });
@@ -44,8 +45,8 @@ hqDefine("export/js/export_list_main", function () {
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('update_emailed_export_data'),
                 data: {
                     export_id: model.id(),
-                    is_deid: self.isDeid,
-                    model_type: self.modelType,
+                    is_deid: pageOptions.is_deid,
+                    model_type: pageOptions.model_type,
                 },
                 success: function (data) {
                     if (data.success) {
@@ -68,8 +69,8 @@ hqDefine("export/js/export_list_main", function () {
                 data: {
                     export_id: model.id(),
                     is_auto_rebuild_enabled: model.isAutoRebuildEnabled(),
-                    is_deid: self.isDeid,
-                    model_type: self.modelType,
+                    is_deid: pageOptions.is_deid,
+                    model_type: pageOptions.model_type,
                 },
                 success: function (data) {
                     if (data.success) {
@@ -94,7 +95,12 @@ hqDefine("export/js/export_list_main", function () {
 
         self.modelType = options.modelType;
         self.isDeid = options.isDeid;
-        self.exports = _.map(options.exports, function (e) { return exportModel(e); });
+        self.exports = _.map(options.exports, function (e) {
+            return exportModel(e, {
+                is_deid: self.isDeid,
+                model_type: self.modelType,
+            });
+        });
         self.myExports = _.filter(self.exports, function (e) { return !!e.my_export; });
         self.notMyExports = _.filter(self.exports, function (e) { return !e.my_export; });
 
@@ -228,7 +234,7 @@ hqDefine("export/js/export_list_main", function () {
                 data: {
                     export_id: export_.id(),
                     form_data: self.formData,
-                    is_deid: hqImport("hqwebapp/js/initial_page_data").get("is_deid"),
+                    is_deid: self.isDeid,
                     model_type: self.modelType,
                 },
                 success: function (data) {
