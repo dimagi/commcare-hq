@@ -1111,6 +1111,7 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         super(Subscription, self).save(*args, **kwargs)
         try:
             Domain.get_by_name(self.subscriber.domain).save()
@@ -1118,6 +1119,10 @@ class Subscription(models.Model):
             # If a subscriber doesn't have a valid domain associated with it
             # we don't care the pillow won't be updated
             pass
+
+    def delete(self, *args, **kwargs):
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        super(Subscription, self).delete(*args, **kwargs)
 
     @property
     def allowed_attr_changes(self):
@@ -1596,7 +1601,14 @@ class Subscription(models.Model):
             self.account.save()
 
     @classmethod
-    def get_active_subscription_by_domain(cls, domain_name):
+    def get_active_subscription_by_domain(cls, domain_name_or_obj):
+        if isinstance(domain_name_or_obj, Domain):
+            return cls._get_active_subscription_by_domain(domain_name_or_obj.name)
+        return cls._get_active_subscription_by_domain(domain_name_or_obj)
+
+    @classmethod
+    @quickcache(['domain_name'], timeout=60 * 60)
+    def _get_active_subscription_by_domain(cls, domain_name):
         try:
             return cls.visible_objects.select_related(
                 'plan_version__role'
