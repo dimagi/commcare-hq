@@ -314,32 +314,32 @@ hqDefine("reports/js/data_corrections", [
     var init = function ($trigger, $modal, options) {
         var model = undefined;
         if ($trigger.length && $modal.length) {
-            $trigger.click(function () {
-                $modal.modal();
-            });
             model = DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
+            $trigger.click(function () {
+                $modal.modal();
 
-            $modal.find(".modal-body select").each(function () {
-                var $el = $(this),
-                    multiple = !!$el.attr("multiple"),
-                    select2Options = {
-                        width: '100%',
-                        tags: true,
-                    };
-                if (!multiple) {
-                    // Allow clearing in a single select, including adding a blank option
-                    // so placeholder and allowClear work properly
-                    select2Options = _.extend(select2Options, {
-                        allowClear: true,
-                        placeholder: gettext('Select a value'),
-                    });
-                }
-                $el.select2(select2Options);
-                if (multiple) {
-                    var $input = $el.siblings("input");
-                    $el.val($input.val().split(" ")).trigger("change");
-                }
+                $modal.find(".modal-body select").each(function () {
+                    var $el = $(this),
+                        multiple = !!$el.attr("multiple"),
+                        select2Options = {
+                            width: '100%',
+                            tags: true,
+                        };
+                    if (!multiple) {
+                        // Allow clearing in a single select, including adding a blank option
+                        // so placeholder and allowClear work properly
+                        select2Options = _.extend(select2Options, {
+                            allowClear: true,
+                            placeholder: gettext('Select a value'),
+                        });
+                    }
+                    $el.select2(select2Options);
+                    if (multiple) {
+                        var $input = $el.siblings("input");
+                        $el.val($input.val().split(" ")).trigger("change");
+                    }
+                });
             });
         }
         return model;
