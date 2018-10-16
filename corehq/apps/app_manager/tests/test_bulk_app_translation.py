@@ -14,6 +14,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
 from couchexport.models import Format
+from corehq.util.test_utils import flag_enabled
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.app_translations import (
@@ -408,6 +409,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             ]
         )
 
+    @flag_enabled('ICDS')
     def test_partial_case_list_translation_upload(self):
         # note this isn't a "partial" upload because this app only has one case list property
         module = self.app.get_module(0)
@@ -433,6 +435,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             module.case_details.short.columns[0].header, {'en': 'Name'}
         )
 
+    @flag_enabled('ICDS')
     def test_partial_case_detail_translation_upload(self):
         module = self.app.get_module(0)
         self.assertEqual(
@@ -468,6 +471,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )
 
+    @flag_enabled('ICDS')
     def test_partial_upload_id_mapping(self):
         module = self.app.get_module(0)
         self.assertEqual(

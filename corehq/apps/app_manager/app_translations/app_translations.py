@@ -13,6 +13,7 @@ import re
 from lxml.etree import XMLSyntaxError, Element
 from celery.task import task
 
+from corehq import toggles
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.exceptions import (
@@ -896,7 +897,7 @@ def _update_case_list_translations(sheet, rows, app):
             # then we can perform a partial upload using field (case property)
             # as a key
             number_fields = len({detail.field for detail in expected_list})
-            if number_fields == len(expected_list):
+            if number_fields == len(expected_list) and toggles.ICDS.enabled(app.domain):
                 partial_upload = True
                 continue
             msgs.append((
@@ -930,7 +931,7 @@ def _update_case_list_translations(sheet, rows, app):
             ))
 
     def _update_id_mappings(rows, detail):
-        if len(rows) == len(detail.enum):
+        if len(rows) == len(detail.enum) or not toggles.ICDS.enabled(app.domain):
             for row, mapping in zip(rows, detail.enum):
                 _update_translation(row, mapping.value)
         else:
