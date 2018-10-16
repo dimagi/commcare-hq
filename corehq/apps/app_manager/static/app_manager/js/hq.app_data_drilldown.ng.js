@@ -50,8 +50,6 @@
         $scope.staticModelType = staticModelType;
 
         $scope.showNoAppsError = false;
-        $scope.formLoadError = null;
-        $scope.isLoaded = false;
 
         $scope.hasSpecialAppTypes = false;
         $scope.hasNoCaseTypes = false;
@@ -148,46 +146,6 @@
                 hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
             });
         }
-
-        self._numRetries = 0;
-        self._handleError = function () {
-            if (self._numRetries > 3) {
-                $scope.formLoadError = 'default';
-                $scope.isLoaded = true;
-                return;
-            }
-            self._numRetries ++;
-            self._initializeForm();
-        };
-
-        self._initializeForm = function () {
-            djangoRMI.get_app_data_drilldown_values({})
-                .success(function (data) {
-                    if (data.success) {
-                        $scope.showNoAppsError = data.app_types.length === 1 && data.apps_by_type.all.length === 0;
-                        if (!$scope.showNoAppsError) {
-                            self._labels = data.labels || {};
-                            self._placeholders = data.placeholders || {};
-                            self._app_types = data.app_types || [];
-                            $scope.hasSpecialAppTypes = data.app_types.length > 1;
-                            self._apps_by_type = data.apps_by_type || {};
-                            self._modules_by_app = data.modules_by_app || {};
-                            self._forms_by_app_by_module = data.forms_by_app_by_module || {};
-                            self._case_types_by_app = data.case_types_by_app || {};
-                            util.setAppTypes();
-                            util.setApps(data.apps_by_type[$scope.formData.app_type]);
-                            util.setModules();
-                            util.setForms();
-                            util.setCaseTypes();
-                        }
-                    } else {
-                        $scope.formLoadError = data.error;
-                    }
-                    $scope.isLoaded = true;
-                })
-                .error(self._handleError);
-        };
-        self._initializeForm();
 
         $scope.updateAppChoices = function () {
             var app_choices = self._apps_by_type[$scope.formData.app_type];

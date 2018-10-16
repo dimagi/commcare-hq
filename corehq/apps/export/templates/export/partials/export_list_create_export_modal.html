@@ -31,8 +31,7 @@
                             If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.
                         </p>
                     </div>
-                    <h3>TODO: form</h3>
-                    {#% crispy create_export_form %#}
+                    {% crispy create_export_form %}
                     <div class="alert alert-info" data-bind="visible: showHasNoCaseTypes">
                         {% blocktrans %}
                             This application does not appear to be using

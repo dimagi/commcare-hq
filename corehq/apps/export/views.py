@@ -192,6 +192,11 @@ class ExportsPermissionsManager(object):
         # just a convenience wrapper around user_can_view_deid_exports
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
+    def access_list_exports_or_404(self, is_deid=False):
+        if not (self.has_edit_permissions or self.has_view_permissions
+                or (is_deid and self.has_deid_view_permissions)):
+            raise Http404()
+
 
 class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
@@ -668,14 +673,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        """Called by the ANGULAR.JS controller DrilldownToFormController in
-        hq.app_data_drilldown.ng.js  Use ApplicationDataRMIHelper to help
-        format the response.
-        """
-        raise NotImplementedError("Must implement get_intial_form_data")
-
     def get_create_export_url(self, form_data):
         """Returns url to the custom export creation form with the export
         tag appended.
@@ -739,6 +736,27 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         return format_angular_success({
             'taskStatus': self._get_task_status_json(in_data['export_instance_id']),
         })
+
+
+@require_GET
+@login_and_domain_required
+def get_app_data_drilldown_values(request, domain):
+    if json.loads(request.GET.get('is_deid')):
+        raise Http404()
+
+    model_type = request.GET.get('model_type')
+    permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=False)
+
+    rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
+    if model_type == 'form':
+        response = rmi_helper.get_form_rmi_response()
+    elif model_type == 'case':
+        response = rmi_helper.get_case_rmi_response()
+    else:
+        response = rmi_helper.get_dual_model_rmi_response()
+
+    return json_response(response)
 
 
 @location_safe
@@ -851,20 +869,6 @@ class DailySavedExportListView(BaseExportListView):
             'downloadUrl': reverse(download_view.urlname, args=(self.domain, export.get_id)),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
-
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_dual_model_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Daily Saved Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
         create_form = CreateExportTagForm(
@@ -1143,20 +1147,6 @@ class FormExportListView(BaseExportListView):
     def _get_download_url(self, export_id):
         return reverse(DownloadNewFormExportView.urlname, args=(self.domain, export_id))
 
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_form_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
-
     def get_create_export_url(self, form_data):
         create_form = CreateExportTagForm(
             self.permissions.has_form_export_permissions,
@@ -1278,18 +1268,6 @@ class CaseExportListView(BaseExportListView):
 
     def _get_download_url(self, export_id):
         return reverse(DownloadNewCaseExportView.urlname, args=(self.domain, export_id))
-
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_case_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
         create_form = CreateExportTagForm(
