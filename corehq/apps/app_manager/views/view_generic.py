@@ -31,6 +31,7 @@ from corehq.apps.hqmedia.views import (
     ProcessImageFileUploadView,
     ProcessAudioFileUploadView,
 )
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.app_manager.util import (get_commcare_versions)
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -262,7 +263,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     # Pass form for Copy Application to template
-    domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
+    domain_names = [
+        d.name for d in Domain.active_for_user(request.couch_user)
+        if not (get_domain_master_link(request.domain)
+                and get_domain_master_link(request.domain).master_domain == d.name)
+    ]
     domain_names.sort()
     if app and copy_app_form is None:
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
