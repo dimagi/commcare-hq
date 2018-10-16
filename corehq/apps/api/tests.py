@@ -144,6 +144,7 @@ class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
         cls.user.delete()
 
         for domain in Domain.get_all():
+            Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)
             domain.delete()
 
         super(APIResourceTest, cls).tearDownClass()
