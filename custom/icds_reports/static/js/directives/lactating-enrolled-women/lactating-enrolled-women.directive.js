@@ -8,8 +8,8 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     var vm = this;
     vm.label = "Lactating Mothers enrolled for Anganwadi Services";
     vm.steps = {
-        'map': {route: '/lactating_enrolled_women/map', label: 'Map View'},
-        'chart': {route: '/lactating_enrolled_women/chart', label: 'Chart View'},
+        'map': {route: '/demographics/lactating_enrolled_women/map', label: 'Map View'},
+        'chart': {route: '/demographics/lactating_enrolled_women/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',

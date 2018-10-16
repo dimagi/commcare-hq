@@ -23,6 +23,12 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
         {% include 'analytics/google.html' %}
         {% javascript_libraries underscore=True hq=True %}
+        <script src="{% static 'autotrack/autotrack.js' %}"></script>
+        <script>
+            window.ga('require', 'eventTracker');
+            window.ga('require', 'outboundLinkTracker');
+            window.ga('require', 'urlChangeTracker');
+        </script>
         <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
         <script src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
