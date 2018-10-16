@@ -13,6 +13,7 @@ import re
 from lxml.etree import XMLSyntaxError, Element
 from celery.task import task
 
+from corehq import toggles
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.exceptions import (
@@ -30,6 +31,8 @@ from django.utils.translation import ugettext as _
 import six
 from six.moves import zip
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+
+ID_MAPPING_SUFFIX = " (ID Mapping Value)"
 
 
 def get_unicode_dicts(iterable):
@@ -819,7 +822,7 @@ def _update_case_list_translations(sheet, rows, app):
             index_of_last_enum_in_condensed = len(condensed_rows) - 1
 
         # If it's an enum value, add it to it's parent enum property
-        elif row['case_property'].endswith(" (ID Mapping Value)"):
+        elif row['case_property'].endswith(ID_MAPPING_SUFFIX):
             row['id'] = row['case_property'].split(" ")[0]
             parent = condensed_rows[index_of_last_enum_in_condensed]
             parent['mappings'] = parent.get('mappings', []) + [row]
@@ -894,7 +897,7 @@ def _update_case_list_translations(sheet, rows, app):
             # then we can perform a partial upload using field (case property)
             # as a key
             number_fields = len({detail.field for detail in expected_list})
-            if number_fields == len(expected_list):
+            if number_fields == len(expected_list) and toggles.ICDS.enabled(app.domain):
                 partial_upload = True
                 continue
             msgs.append((
@@ -908,6 +911,7 @@ def _update_case_list_translations(sheet, rows, app):
                     word
                 )
             ))
+
     if msgs:
         return msgs
 
@@ -926,11 +930,28 @@ def _update_case_list_translations(sheet, rows, app):
                 " of the case property '%s'" % row['case_property']
             ))
 
+    def _update_id_mappings(rows, detail):
+        if len(rows) == len(detail.enum) or not toggles.ICDS.enabled(app.domain):
+            for row, mapping in zip(rows, detail.enum):
+                _update_translation(row, mapping.value)
+        else:
+            # Not all of the id mappings are described.
+            # If we can identify by key, we can proceed.
+            mappings_by_prop = {mapping.key: mapping for mapping in detail.enum}
+            if len(detail.enum) != len(mappings_by_prop):
+                msgs.append((messages.error,
+                             "You must provide all ID mappings for property '{}'"
+                             .format(detail.field)))
+            else:
+                for row in rows:
+                    prop = row['case_property'].rstrip(ID_MAPPING_SUFFIX)
+                    if prop in mappings_by_prop:
+                        _update_translation(row, mappings_by_prop[prop].value)
+
     def _update_detail(row, detail):
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
-        for i, enum_value_row in enumerate(row.get('mappings', [])):
-            _update_translation(enum_value_row, detail['enum'][i].value)
+        _update_id_mappings(row.get('mappings', []), detail)
         for i, graph_annotation_row in enumerate(row.get('annotations', [])):
             _update_translation(
                 graph_annotation_row,
@@ -973,20 +994,15 @@ def _update_case_list_translations(sheet, rows, app):
                 continue
             _update_detail(row, detail)
 
-    if partial_upload:
-        case_list_rows = {
-            row['case_property']: row for row in condensed_rows if row['list_or_detail'] == 'list'
-        }
-        case_detail_rows = {
-            row['case_property']: row for row in condensed_rows if row['list_or_detail'] == 'detail'
-        }
+    def _partial_upload(rows, details):
+        rows_by_property = {row['case_property']: row for row in rows}
+        for detail in details:
+            if rows_by_property.get(detail.field):
+                _update_detail(rows_by_property.get(detail.field), detail)
 
-        for detail in short_details:
-            if case_list_rows.get(detail.field):
-                _update_detail(case_list_rows.get(detail.field), detail)
-        for detail in long_details:
-            if case_detail_rows.get(detail.field):
-                _update_detail(case_detail_rows.get(detail.field), detail)
+    if partial_upload:
+        _partial_upload(list_rows, short_details)
+        _partial_upload(detail_rows, long_details)
     else:
         _update_details_based_on_position(list_rows, short_details, detail_rows, long_details)
 
