@@ -3,13 +3,9 @@
 {% load hq_shared_tags %}
 {% load djangular_tags %}
 
-<div class="modal fade"
-     id="createExportOptionsModal"
-     ng-controller="DrilldownToFormController">
+<div class="modal fade" id="createExportOptionsModal">
     <div class="modal-dialog">
-        <form name="exportOptionsForm"
-              class="form form-horizontal"
-              ng-submit="handleSubmitForm()">
+        <form name="exportOptionsForm" class="form form-horizontal" data-bind="submit: handleSubmitForm">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">
@@ -17,7 +13,7 @@
                     </button>
                     <h4 class="modal-title">{{ create_export_form_title }}</h4>
                 </div>
-                <div class="modal-body"
+                <!--div class="modal-body"
                      ng-show="!isLoaded">
                     <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
                 </div>
@@ -156,22 +152,21 @@
                         <i class="fa fa-info-circle"></i>
                         {% trans 'How to Create and Deploy a CommCare Application.' %}
                     </a>
-                 </div>
+                </div-->
                 <div class="modal-footer">
                     <button type="button"
                             class="btn btn-default"
                             data-dismiss="modal"
-                            ng-disabled="!!isSubmittingForm">{% trans 'Cancel' %}</button>
+                            data-bind="disabled: isSubmittingForm">{% trans 'Cancel' %}</button>
                     <button type="submit"
                             class="btn btn-success"
-                            ng-show="!showNoAppsError && !formLoadError"
-                            ng-disabled="!!exportOptionsForm.$invalid || !!isSubmittingForm">
+                            data-bind="visible: showSubmit, disable: disableSubmit">
                         {% blocktrans %}
                             Create {{ export_type_caps }}
                         {% endblocktrans %}
                     </button>
                 </div>
-            </div>
+            </div-->
         </form>
     </div>
 </div>
