@@ -220,15 +220,17 @@ class AppTranslationsGenerator:
                 if translation == row[default_lang_index]:
                     translation = ''
             occurrence_row = occurrence(row)
+            occurrence_row_and_source = "%s %s" % (occurrence_row, source)
             if is_module:
-                # if there is already a translation with the same context, just add this occurrence
-                if occurrence_row in translations:
-                    translations[occurrence_row].occurrences.append(
+                # if there is already a translation with the same context and source,
+                # just add this occurrence
+                if occurrence_row_and_source in translations:
+                    translations[occurrence_row_and_source].occurrences.append(
                         (occurrence_row, index)
                     )
                     continue
 
-            translations[occurrence_row] = Translation(
+            translations[occurrence_row_and_source] = Translation(
                 source,
                 translation,
                 [(occurrence_row, index)],
