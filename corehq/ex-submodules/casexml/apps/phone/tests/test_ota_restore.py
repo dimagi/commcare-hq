@@ -66,7 +66,7 @@ class SimpleOtaRestoreTest(TestCase):
                 template = '<data key="{prefix}_{key}">{val}</data>'
             self.assertIn(
                 template.format(prefix=SYSTEM_PREFIX, key=key, val=val),
-                payload,
+                payload.decode('utf-8'),
             )
 
         assertRegistrationData("first_name", "mclovin")
