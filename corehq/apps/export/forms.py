@@ -160,7 +160,6 @@ class CreateExportTagForm(forms.Form):
                     placeholder=_('Select model type'),
                     data_bind="value: modelType",
                     #ng_change='resetForm()',   # TODO
-                    #ng_required="true",        # TODO
                 ),
                 data_bind="visible: !staticModelType",
             ),
@@ -170,7 +169,6 @@ class CreateExportTagForm(forms.Form):
                         'app_type',
                         placeholder=_("Select Application Type"),
                         data_bind="value: appType, event: {change: updateAppChoices}",
-                        #ng_required="true",    # TODO
                     ),
                     data_bind="visible: showAppType()",
                 ),
@@ -178,14 +176,12 @@ class CreateExportTagForm(forms.Form):
                     'application',
                     placeholder=_("Select Application"),
                     data_bind="value: application",
-                    #ng_required="true",    # TODO
                 ),
                 crispy.Div(  # Form export fields
                     crispy.Field(
                         'module',
                         placeholder=_("Select Menu"),
                         data_bind="value: module, disable: !application()",
-                        #ng_required="formData.model_type === 'form'",  # TODO
                     ),
                     crispy.Field(
                         'form',
@@ -194,7 +190,6 @@ class CreateExportTagForm(forms.Form):
                             value: form,
                             disable: !module(),
                         ''',
-                        #ng_required="formData.model_type === 'form'",  # TODO
                     ),
                     data_bind="visible: isFormModel()",
                 ),
@@ -206,7 +201,6 @@ class CreateExportTagForm(forms.Form):
                             value: caseType,
                             disable: !application(),
                         ''',
-                        #ng_required="formData.model_type === 'case'",      # TODO
                     ),
                     data_bind="visible: isCaseModel()",
                 ),

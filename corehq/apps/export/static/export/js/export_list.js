@@ -144,8 +144,12 @@ hqDefine("export/js/export_list", function () {
         });
 
         self.isValid = ko.computed(function () {
-            // TODO
-            return true;
+            return self.modelType()
+                && self.appType()
+                && self.application()
+                && (self.module() || self.isCaseModel())
+                && (self.form() || self.isCaseModel())
+                && (self.caseType() || self.isFormModel());
         });
 
         self.showSubmit = ko.computed(function () {
