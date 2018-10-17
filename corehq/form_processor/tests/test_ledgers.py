@@ -231,7 +231,7 @@ class LedgerTestsSQL(LedgerTests):
         self.assertTrue(transactions[1].is_ledger_transaction)
 
         submit_case_blocks([
-            CaseBlock(case_id=self.case.case_id).as_string()],
+            CaseBlock(case_id=self.case.case_id).as_string().decode('utf-8')],
             DOMAIN,
             form_id=form_id
         )
