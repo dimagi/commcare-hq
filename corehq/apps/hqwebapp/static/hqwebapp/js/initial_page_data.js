@@ -39,9 +39,12 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     /*
      * Fetch a named value.
      */
-    var get = function (name) {
+    var get = function (name, strict) {
         if (_initData[name] === undefined) {
             _initData = gather(data_selector, _initData);
+        }
+        if (strict && _initData[name] === undefined) {
+            throw new Error("Missing key in initial page data: " + name);
         }
         return _initData[name];
     };

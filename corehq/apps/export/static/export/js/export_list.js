@@ -154,10 +154,10 @@ hqDefine("export/js/export_list", function () {
                 method: 'POST',
                 url: initialPageData.reverse('submit_app_data_drilldown_form'),
                 data: {
-                    is_daily_saved_export: initialPageData.get('is_daily_saved_export') || false,
-                    is_feed: initialPageData.get('is_feed') || false,
-                    is_deid: initialPageData.get('is_deid'),    // TODO: introduce strictness to ipd?
-                    model_type: initialPageData.get('model_type'),
+                    is_daily_saved_export: initialPageData.get('is_daily_saved_export', true),
+                    is_feed: initialPageData.get('is_feed', true),
+                    is_deid: initialPageData.get('is_deid', true),
+                    model_type: initialPageData.get('model_type', true),
                     form_data: JSON.stringify({
                         model_type: self.modelType(),
                         app_type: self.appType(),
@@ -310,8 +310,8 @@ hqDefine("export/js/export_list", function () {
             method: 'GET',
             url: initialPageData.reverse('get_app_data_drilldown_values'),
             data: {
-                is_deid: initialPageData.get('is_deid'),    // TODO: introduce strictness to ipd?
-                model_type: initialPageData.get('model_type'),
+                is_deid: initialPageData.get('is_deid', true),
+                model_type: initialPageData.get('model_type', true),
             },
             success: function (data) {
                 self.showNoAppsError(data.app_types.length === 1 && data.apps_by_type.all.length === 0);
@@ -345,7 +345,7 @@ hqDefine("export/js/export_list", function () {
 
     $(function () {
         $("#create-export").koApplyBindings(createExportModel({
-            model_type: initialPageData.get("model_type"),
+            model_type: initialPageData.get("model_type", true),
         }));
         $('#createExportOptionsModal').on('show.bs.modal', function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
