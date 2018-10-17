@@ -212,8 +212,7 @@ class AppTranslationsGenerator:
                 def occurrence(_row):
                     return _row[label_index]
         is_module = type_and_id and type_and_id.type == "Module"
-        for i, row in enumerate(rows):
-            index = i + 1
+        for index, row in enumerate(rows, 1):
             source = row[key_lang_index]
             translation = row[source_lang_index]
             if self.exclude_if_default:
