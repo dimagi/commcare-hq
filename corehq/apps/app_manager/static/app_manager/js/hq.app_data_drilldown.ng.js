@@ -16,7 +16,6 @@
     ]);
 
     // defaults
-    app_drilldown.constant('djangoRMICallbackName', 'submit_app_data_drilldown_form');
     app_drilldown.constant('processApplicationDataFormSuccessCallback', function (data) {
         console.log('success');
         console.log(data);
@@ -45,31 +44,6 @@
         if (modelType) {
             $scope.formData['model_type'] = modelType;
         }
-
-
-        $scope.handleSubmitForm = function () {
-            $scope.isSubmittingForm = true;
-
-            // Immediately copy form data object so that if modal is
-            // accidentally dismissed, data is still properly sent
-            var formData = _.clone($scope.formData);
-
-            djangoRMI[djangoRMICallbackName]({
-                formData: formData,
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        processApplicationDataFormSuccessCallback(data);
-                    } else {
-                        $scope.isSubmittingForm = false;
-                        $scope.formSubmissionError = data.error;
-                    }
-                })
-                .error(function () {
-                    $scope.isSubmittingForm = false;
-                    $scope.formSubmissionError = 'default';
-                });
-        };
 
         $scope.selectedAppData = {};
         $scope.$watch('formData.application', function (curAppId) {

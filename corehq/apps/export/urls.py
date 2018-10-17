@@ -35,6 +35,7 @@ from corehq.apps.export.views import (
     DataFileDownloadDetail,
     add_export_email_request,
     get_app_data_drilldown_values,
+    submit_app_data_drilldown_form,
 )
 
 urlpatterns = [
@@ -132,6 +133,9 @@ urlpatterns = [
     url(r'^get_app_data_drilldown_values/$',
         get_app_data_drilldown_values,
         name='get_app_data_drilldown_values'),
+    url(r'^submit_app_data_drilldown_form/$',
+        submit_app_data_drilldown_form,
+        name='submit_app_data_drilldown_form'),
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
