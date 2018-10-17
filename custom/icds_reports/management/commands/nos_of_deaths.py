@@ -2,7 +2,6 @@ from __future__ import absolute_import, print_function
 
 from __future__ import unicode_literals
 import csv342 as csv
-import codecs
 import os
 
 from django.core.management.base import BaseCommand
@@ -47,14 +46,7 @@ class Command(BaseCommand):
                 }
             )
 
-            utf_decoded_rows = []
-            for row in rows:
-                temp_row = []
-                for elem in row:
-                    temp_row.append(str(elem).decode("utf-8"))
-                utf_decoded_rows.append(temp_row)
-
-            with codecs.open(file_path, 'w', encoding='utf-8') as file_object:
+            with open(file_path, 'w', encoding='utf-8') as file_object:
                 writer = csv.writer(file_object)
                 writer.writerow([
                     'State',
@@ -63,4 +55,4 @@ class Command(BaseCommand):
                     'Month',
                     'Deaths',
                 ])
-                writer.writerows(utf_decoded_rows)
+                writer.writerows(rows)
