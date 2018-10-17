@@ -54,7 +54,7 @@ branches:
 #  - np/celery-4.x-2  # Nick P Aug 22
   - pv/deactivated-users # Preethi Aug 23
   - sr-batch-ucrpillow # Sravan Sept 4
-  - jls/add-js-to-sentry  # Jenny Sept 18
+#  - jls/add-js-to-sentry  # Jenny Sept 18
   - sr-redis-client # Sravan Sept 19
   - mk-282955 # MK Sept 25
   - qa-customer-billing # Gabriella Sept 27
