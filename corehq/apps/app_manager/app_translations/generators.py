@@ -177,7 +177,10 @@ class AppTranslationsGenerator:
 
     def _get_translation_for_sheet(self, app, sheet_name, rows):
         occurrence = None
-        translations_for_sheet = []
+        # a dict mapping of a context to a Translation object with
+        # multiple occurrences
+        translations = OrderedDict()
+        type_and_id = None
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
         default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + app.default_language)
@@ -205,20 +208,30 @@ class AppTranslationsGenerator:
 
                 def occurrence(_row):
                     return _row[label_index]
-        for i, row in enumerate(rows):
+        is_module = type_and_id and type_and_id.type == "Module"
+        for index, row in enumerate(rows, 1):
             source = row[key_lang_index]
             translation = row[source_lang_index]
             if self.exclude_if_default:
                 if translation == row[default_lang_index]:
                     translation = ''
             occurrence_row = occurrence(row)
-            translations_for_sheet.append(Translation(
+            occurrence_row_and_source = "%s %s" % (occurrence_row, source)
+            if is_module:
+                # if there is already a translation with the same context and source,
+                # just add this occurrence
+                if occurrence_row_and_source in translations:
+                    translations[occurrence_row_and_source].occurrences.append(
+                        (occurrence_row, index)
+                    )
+                    continue
+
+            translations[occurrence_row_and_source] = Translation(
                 source,
                 translation,
-                [(occurrence_row, '')],
+                [(occurrence_row, index)],
                 occurrence_row)
-            )
-        return translations_for_sheet
+        return list(translations.values())
 
     @property
     @memoized
