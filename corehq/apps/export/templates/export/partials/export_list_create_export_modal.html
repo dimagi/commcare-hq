@@ -18,15 +18,7 @@
                 <div class="modal-body" data-bind="visible: showDrilldown">
                     <div class="alert alert-warning" data-bind="visible: formSubmissionError">
                         <i class="fa fa-exclamation-triangle"></i>
-                        <strong data-bind="if: defaultFormSubmissionError">
-                            {% blocktrans %}
-                                There was an issue fetching the {{ export_type }} data.
-                                Please check your internet connection.
-                            {% endblocktrans %}
-                        </strong>
-                        <strong data-bind="ifnot: defaultFormSubmissionError">
-                            <span data-bind="text: formSubmissionError"></span>
-                        </strong>
+                        <strong data-bind="text: formSubmissionError"></strong>
                         <p>
                             If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.
                         </p>
@@ -92,24 +84,13 @@
                 <div class="modal-body" data-bind="visible: formLoadError">
                     <div class="alert alert-warning">
                         <i class="fa fa-exclamation-triangle"></i>
-                        <span data-bind="if: defaultFormLoadError">
-                            {% trans "There is an issue communicating with the server at this time." %}
-                        </span>
-                        <span data-bind="ifnot: defaultFormLoadError">
-                            <span data-bind="text: formLoadError"></span>
-                        </span>
+                        <span data-bind="text: formLoadError"></span>
                     </div>
                     <p>
                         {% blocktrans %}
                             If this problem persists, please <a href="#modalReportIssue"
                                 data-toggle="modal">Report an Issue</a> and include this error
                                 message in the description.
-                        {% endblocktrans %}
-                    </p>
-                    <p>
-                        {% blocktrans %}
-                            We apologize for the inconvenience, and thank you for your patience. Someone
-                            on our development team is quickly working to resolve this issue.
                         {% endblocktrans %}
                     </p>
                 </div>
