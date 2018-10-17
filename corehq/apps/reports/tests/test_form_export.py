@@ -21,10 +21,10 @@ from couchexport.models import Format
 from couchforms.models import XFormInstance
 from django_digest.test import Client
 
-XMLNS = b'http://www.commcarehq.org/example/hello-world'
-XFORM_ID = b'50fa6deb-91f3-4f9b-9d4c-f5ed312457fa'
+XMLNS = 'http://www.commcarehq.org/example/hello-world'
+XFORM_ID = '50fa6deb-91f3-4f9b-9d4c-f5ed312457fa'
 
-XML_DATA = b"""<?xml version='1.0' ?>
+XML_DATA = """<?xml version='1.0' ?>
 <data uiVersion="1" version="63" name="Hello World" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="{xmlns}">
     <name>S</name>
     <color>1</color>
