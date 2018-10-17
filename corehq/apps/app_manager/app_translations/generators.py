@@ -64,7 +64,8 @@ class AppTranslationsGenerator:
         for module in module_data:
             for form in module['forms']:
                 for question in form['questions']:
-                    if 'SKIP TRANSIFEX' in question['comment'] and 'label_ref' in question:
+                    if (question['comment'] and 'SKIP TRANSIFEX' in question['comment']
+                            and 'label_ref' in question):
                         labels_to_skip[form['id']].append(question['label_ref'])
         return labels_to_skip
 
