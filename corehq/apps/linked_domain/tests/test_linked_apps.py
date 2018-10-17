@@ -71,10 +71,10 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_overwrite_app_maintain_ids(self):
         module = self.plain_master_app.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form'))
+        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         module = self.linked_app.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form'))
+        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         id_map_before = _get_form_id_map(self.linked_app)
 
