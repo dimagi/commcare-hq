@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<div class="modal fade" id="createExportOptionsModal">
+<div class="modal fade" id="createExportOptionsModal" data-bind="event: {'hidden.bs.modal': resetForm}">
     <div class="modal-dialog">
         <form name="exportOptionsForm" class="form form-horizontal" data-bind="submit: handleSubmitForm">
             <div class="modal-content">
