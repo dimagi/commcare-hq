@@ -111,7 +111,6 @@ class CreateExportTagForm(forms.Form):
                     'model_type',
                     placeholder=_('Select model type'),
                     data_bind="value: modelType",
-                    #ng_change='resetForm()',   # TODO
                 ),
                 data_bind="visible: !staticModelType",
             ),

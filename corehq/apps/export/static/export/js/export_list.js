@@ -209,6 +209,20 @@ hqDefine("export/js/export_list", function () {
         self.setModules = self._formSelect2Setter(self.module, 'module');
         self.setForms = self._formSelect2Setter(self.form, 'form');
         self.setCaseTypes = self._formSelect2Setter(self.caseType, 'case_type');
+        self.resetForm = function () {
+            if (!self.isLoaded()) {
+                return;
+            }
+
+            self.setAppTypes();
+            self.setApps(self._apps_by_type.all || []);
+            self.setModules();
+            self.setForms();
+            self.setCaseTypes();
+            self.selectedAppData({});
+            self.selectedFormData({});
+            self.hasNoCaseTypes(false);
+        };
 
         // Helper functions for handling drilldown
         self.updateAppChoices = function () {
@@ -221,6 +235,7 @@ hqDefine("export/js/export_list", function () {
             self.setForms();
             self.setCaseTypes();
         };
+        self.modelType.subscribe(self.resetForm);
         self.application.subscribe(function (newValue) {
             if (newValue) {
                 if (self.modelType() === 'form') {
@@ -315,5 +330,8 @@ hqDefine("export/js/export_list", function () {
         $("#create-export").koApplyBindings(createExportModel({
             model_type: initialPageData.get("model_type"),
         }));
+        $('#createExportOptionsModal').on('show.bs.modal', function () {
+            hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
+        });
     });
 });
