@@ -46,26 +46,6 @@
             $scope.formData['model_type'] = modelType;
         }
 
-        $scope.resetForm = function () {
-            util.setAppTypes();
-            util.setApps(self._apps_by_type.all || []);
-            util.setModules();
-            util.setForms();
-            util.setCaseTypes();
-            $scope.selectedAppData = {};
-            $scope.selectedFormData = {};
-            $scope.hasNoCaseTypes = false;
-        };
-
-        if (formModalSelector) {
-            $(formModalSelector).on('hidden.bs.modal', function () {
-                $scope.resetForm();
-            });
-            $(formModalSelector).on('show.bs.modal', function () {
-                hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
-            });
-        }
-
 
         $scope.handleSubmitForm = function () {
             $scope.isSubmittingForm = true;
