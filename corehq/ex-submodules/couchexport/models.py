@@ -548,7 +548,7 @@ class DefaultExportSchema(BaseSavedExportSchema):
             def _human_readable_key(tag, prev_export_id, format, max_column_size):
                 return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)
             return hashlib.md5(_human_readable_key(tag, prev_export_id,
-                format, max_column_size)).hexdigest()
+                format, max_column_size).encode('utf-8')).hexdigest()
 
         # check cache, only supported for filterless queries, currently
         cache_key = _build_cache_key(export_tag, previous_export_id, format, max_column_size)
