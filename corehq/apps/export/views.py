@@ -666,8 +666,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         """Returns a django form that gets the information necessary to create
         an export tag, which is the first step in creating a new export.
 
-        This form is what will interact with the DrilldownToFormController in
-        hq.app_data_drilldown.ng.js
+        This form is what will interact with the createExportModel in export/js/export_list.js
         """
         if self.permissions.has_case_export_permissions or self.permissions.has_form_export_permissions:
             return CreateExportTagForm(self.permissions.has_form_export_permissions,

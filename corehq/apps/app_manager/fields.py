@@ -165,14 +165,9 @@ def get_app_sources(domain):
 
 
 class ApplicationDataRMIHelper(object):
-    """ApplicationDataRMIHelper is meant to generate the response for the
-    djangoRMI methods required to initialize form controlled by
-    hq.app_data_drilldown.ng.js.
-
-    Note / todo: This Helper should be merged with ApplicationDataSourceUIHelper.
-    Holding off to a different PR, as I want to isolate QA to just the exports
-    (the first thing to use this) --Biyeun
-
+    """
+    ApplicationDataRMIHelper is meant to generate the response for
+    corehq.apps.export.views.get_app_data_drilldown_values
     """
     UNKNOWN_SOURCE = '_unknown'
 
@@ -482,9 +477,9 @@ class ApplicationDataRMIHelper(object):
         return modules_by_app, forms_by_app_by_module
 
     def get_form_rmi_response(self):
-        """Use this to generate the response that initializes the form
-        controlled by hq.app_data_drilldown.ng.js if you are drilling down
-        to an XForm + app_id pair"""
+        """
+        Used for creating form-based exports (XForm + app id pair).
+        """
         modules_by_app, forms_by_app_by_module = self._get_modules_and_forms(self.as_dict)
         response = AppFormRMIResponse(
             app_types=self._get_app_type_choices_for_forms(self.as_dict),
@@ -543,9 +538,8 @@ class ApplicationDataRMIHelper(object):
         return case_types_by_app
 
     def get_case_rmi_response(self):
-        """Use this to generate a response that initializes the form
-        controlled by hq.app_data_drilldown.ng.js if you are drilling down to
-        a Case Type.
+        """
+        Used for creating case-based exports.
         """
         apps_by_type = self._get_applications_by_type(as_dict=False)
         case_types_by_app = self._get_cases_for_apps(apps_by_type, self.as_dict)

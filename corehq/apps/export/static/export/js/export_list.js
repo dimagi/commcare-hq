@@ -3,7 +3,7 @@ hqDefine("export/js/export_list", function () {
 
     /* Angular; to be deprecated */
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-        listExportsApp = window.angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
+        listExportsApp = window.angular.module('listExportsApp', ['hq.list_exports']);
     listExportsApp.config(["$httpProvider", function ($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -12,7 +12,6 @@ hqDefine("export/js/export_list", function () {
     listExportsApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
         djangoRMIProvider.configure(initial_page_data("djng_current_rmi"));
     }]);
-    listExportsApp.constant('formModalSelector', '#createExportOptionsModal');
     listExportsApp.constant('bulk_download_url', initial_page_data("bulk_download_url"));
     listExportsApp.constant('modelType', initial_page_data("model_type"));
     listExportsApp.constant('staticModelType', initial_page_data("static_model_type"));
