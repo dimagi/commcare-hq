@@ -32,7 +32,7 @@ class TestBlobDownload(TestCase):
         self.db.put(BytesIO(b'content'), meta=new_meta(key=ref.download_id))
 
         response = BlobDownload.get(ref.download_id).toHttpResponse()
-        self.assertEqual(next(response.streaming_content), 'content')
+        self.assertEqual(next(response.streaming_content), b'content')
 
     def test_expose_blob_download_with_legacy_download_id(self):
         self.db.put(BytesIO(b'legacy-blob'), self.identifier)
@@ -46,4 +46,4 @@ class TestBlobDownload(TestCase):
         ref.save(60)
 
         response = BlobDownload.get(ref.download_id).toHttpResponse()
-        self.assertEqual(next(response.streaming_content), 'legacy-blob')
+        self.assertEqual(next(response.streaming_content), b'legacy-blob')
