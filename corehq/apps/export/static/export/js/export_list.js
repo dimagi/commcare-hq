@@ -183,7 +183,6 @@ hqDefine("export/js/export_list", function () {
         };
 
         // Helper functions for initializing form
-        self._select2Test = {};
         self._formSelect2Setter = function (observable, fieldSlug) {
             return function (field_data) {
                 if (fieldSlug) {
@@ -199,11 +198,6 @@ hqDefine("export/js/export_list", function () {
                             .find('.select2-choice').addClass('select2-default')
                             .find('.select2-chosen').text(self._placeholders[fieldSlug]);
                     }
-                    self._select2Test[fieldSlug] = {    // TODO: what is this? code for running tests?
-                        data: field_data,
-                        placeholder: self._placeholders[fieldSlug],
-                        defaults: formDefaults[fieldSlug],
-                    };
                 }
             };
         };
@@ -217,11 +211,6 @@ hqDefine("export/js/export_list", function () {
                     triggerChange: true,
                 }).select2('val', formDefaults.app_type).trigger('change');
             }
-            self._select2Test.app_type = {
-                data: self._app_types || [],
-                placeholder: null,
-                defaults: formDefaults.app_type,
-            };
         },
         self.setApps = self._formSelect2Setter(self.application, 'application');
         self.setModules = self._formSelect2Setter(self.module, 'module');
