@@ -443,7 +443,7 @@ class RegistrationAPITestCase(TestCase):
 
     def make_api_post(self, domain, username, password, payload):
         c = Client()
-        auth = 'Basic ' + base64.b64encode('{}:{}'.format(username, password))
+        auth = 'Basic ' + base64.b64encode('{}:{}'.format(username, password).encode('utf-8')).decode('utf-8')
         return c.post('/a/{}/api/v0_5/sms_user_registration/'.format(domain.name), json.dumps(payload),
             HTTP_AUTHORIZATION=auth, content_type='application/json')
 
