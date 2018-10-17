@@ -101,7 +101,8 @@ class DateFilterValue(FilterValue):
             sql_values.update({'%s_startdate' % self.filter['slug']: startdate})
         if enddate is not None:
             sql_values.update({'%s_enddate' % self.filter['slug']: enddate})
-
+        print "||||||||||||||"
+        print sql_values
         return sql_values
 
     def _offset_enddate(self, enddate):
