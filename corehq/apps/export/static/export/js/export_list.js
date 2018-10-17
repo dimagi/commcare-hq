@@ -33,25 +33,50 @@ hqDefine("export/js/export_list", function () {
 
     /* Knockout */
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    var createExportModel = function () {
+    var formDefaults = {
+        model_type: '',
+        app_type: 'all',
+        application: null,
+        module: null,
+        form: null,
+        case_type: null,
+    };
+
+    // Interaction for the entire modal
+    var createExportModel = function (options) {
+        hqImport("hqwebapp/js/assert_properties").assert(options, [], ['model_type']);
+
         var self = {};
 
         self.isLoaded = ko.observable(false);
         self.isSubmittingForm = ko.observable(false);
         self.showNoAppsError = ko.observable(false);
         self.hasNoCaseTypes = ko.observable(false);
-        self.hasSpecialAppTypes = ko.observable(false); // TODO: test
+        self.hasSpecialAppTypes = ko.observable(false);
         self.formLoadError = ko.observable('');
         self.formSubmissionError = ko.observable('');   // TODO: test
 
         // Form Data
-        self.modelType = ko.observable();
+        self.modelType = ko.observable(options.model_type);
+        self.staticModelType = !!options.model_type;
         self.appType = ko.observable();
         self.application = ko.observable();
+        self.caseType = ko.observable();
+        self.module = ko.observable();
         self.form = ko.observable();
         self.selectedAppData = ko.observable({});
         self.selectedFormData = ko.observable({});
         self.selectedFormName = ko.observable('');
+
+        self.isCaseModel = ko.computed(function () {
+            return self.modelType() === 'case';
+        });
+        self.isFormModel = ko.computed(function () {
+            return self.modelType() === 'form';
+        });
+        self.showAppType = ko.computed(function () {
+            return self.hasSpecialAppTypes() || self.isFormModel();
+        });
 
         self.showMislabeled = ko.observable(false);
         self.showSuggestions = ko.observable(false);
@@ -135,6 +160,115 @@ hqDefine("export/js/export_list", function () {
             return false;
         };
 
+        // Helper functions for initializing form
+        self._select2Test = {};
+        self._formSelect2Setter = function (observable, fieldSlug) {
+            return function (field_data) {
+                if (fieldSlug) {
+                    observable('');
+                    $('#div_id_' + fieldSlug).find("label").text(self._labels[fieldSlug]); 
+                    var $formElem = $('#id_' + fieldSlug);
+                    if ($formElem.length > 0) {
+                        $formElem.select2({
+                            data: field_data || [],
+                            triggerChange: true,
+                        }).select2('val', formDefaults[fieldSlug]).trigger('change');
+                        $('#s2id_id_' + fieldSlug)
+                            .find('.select2-choice').addClass('select2-default')
+                            .find('.select2-chosen').text(self._placeholders[fieldSlug]);
+                    }
+                    self._select2Test[fieldSlug] = {    // TODO: what is this? code for running tests?
+                        data: field_data,
+                        placeholder: self._placeholders[fieldSlug],
+                        defaults: formDefaults[fieldSlug],
+                    };
+                }
+            };
+        };
+        self.setAppTypes = function () {
+            self.appType(formDefaults.app_type);
+
+            var $formElem = $('#id_app_type');
+            if ($formElem.length > 0) {
+                $formElem.select2({
+                    data: self._app_types || [],
+                    triggerChange: true,
+                }).select2('val', formDefaults.app_type).trigger('change');
+            }
+            self._select2Test.app_type = {
+                data: self._app_types || [],
+                placeholder: null,
+                defaults: formDefaults.app_type,
+            };
+        },
+        self.setApps = self._formSelect2Setter(self.application, 'application');
+        self.setModules = self._formSelect2Setter(self.module, 'module');
+        self.setForms = self._formSelect2Setter(self.form, 'form');
+        self.setCaseTypes = self._formSelect2Setter(self.caseType, 'case_type');
+
+        // Helper functions for handling drilldown
+        self.updateAppChoices = function () {
+            var app_choices = self._apps_by_type[self.appType()];
+            self.setApps(app_choices);
+            self.selectedAppData({});
+            self.selectedFormData({});
+            self.hasNoCaseTypes(false);
+            self.setModules();
+            self.setForms();
+            self.setCaseTypes();
+        };
+        self.application.subscribe(function (newValue) {
+            if (newValue) {
+                if (self.modelType() === 'form') {
+                    var module_choices = self._modules_by_app[newValue];
+                    self.setModules(module_choices);
+                    self.selectedFormData({});
+                    self.setForms();
+                } else {
+                    var case_type_choices = self._case_types_by_app[newValue];
+                    self.setCaseTypes(case_type_choices);
+                    self.hasNoCaseTypes(_.isEmpty(case_type_choices));
+                }
+            } else {
+                self.caseType('');
+                self.module('');
+            }
+
+            var currentApp = _.find(self._apps_by_type[self.appType()], function (app) {
+                return app.id === newValue;
+            });
+            if (!currentApp) {
+                self.selectedAppData({});
+            } else {
+                self.selectedAppData(_.extend(currentApp.data, {
+                    name: currentApp.text,
+                }));
+            }
+        });
+        self.module.subscribe(function (newValue) {
+            if (newValue) {
+                var form_choices = self._forms_by_app_by_module[self.application()][newValue];
+                self.setForms(form_choices);
+            } else {
+                self.form('');
+            }
+        });
+        self.form.subscribe(function (newValue) {
+            if (self.application() && self.module()) {
+                var currentForm = _.find(self._forms_by_app_by_module[self.application()][self.module()], function (form) {
+                    return form.id === newValue;
+                });
+                if (!currentForm) {
+                    self.selectedFormData({});
+                } else {
+                    self.selectedFormData(_.extend(currentForm.data, {
+                        name: currentForm.text,
+                    }));
+                }
+            }
+        });
+
+        // Fetch form values on page load
         $.ajax({
             method: 'GET',
             url: initialPageData.reverse('get_app_data_drilldown_values'),
@@ -145,22 +279,21 @@ hqDefine("export/js/export_list", function () {
             success: function (data) {
                 self.showNoAppsError(data.app_types.length === 1 && data.apps_by_type.all.length === 0);
                 if (!self.showNoAppsError()) {
-                // TODO: load data
-                /*
-                            self._labels = data.labels || {};
-                            self._placeholders = data.placeholders || {};
-                            self._app_types = data.app_types || [];
-                            $scope.hasSpecialAppTypes = data.app_types.length > 1;
-                            self._apps_by_type = data.apps_by_type || {};
-                            self._modules_by_app = data.modules_by_app || {};
-                            self._forms_by_app_by_module = data.forms_by_app_by_module || {};
-                            self._case_types_by_app = data.case_types_by_app || {};
-                            util.setAppTypes();
-                            util.setApps(data.apps_by_type[$scope.formData.app_type]);
-                            util.setModules();
-                            util.setForms();
-                            util.setCaseTypes();
-                */
+                    self.hasSpecialAppTypes(data.app_types.length > 1);
+
+                    self._labels = data.labels || {};
+                    self._placeholders = data.placeholders || {};
+                    self._app_types = data.app_types || [];
+                    self._apps_by_type = data.apps_by_type || {};
+                    self._modules_by_app = data.modules_by_app || {};
+                    self._forms_by_app_by_module = data.forms_by_app_by_module || {};
+                    self._case_types_by_app = data.case_types_by_app || {};
+
+                    self.setAppTypes();
+                    self.setApps(data.apps_by_type[self.appType()]);
+                    self.setModules();
+                    self.setForms();
+                    self.setCaseTypes();
                 }
                 self.isLoaded(true);
             },
@@ -175,6 +308,8 @@ hqDefine("export/js/export_list", function () {
     };
 
     $(function () {
-        $("#create-export").koApplyBindings(createExportModel());
+        $("#create-export").koApplyBindings(createExportModel({
+            model_type: initialPageData.get("model_type"),
+        }));
     });
 });
