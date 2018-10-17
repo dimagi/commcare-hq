@@ -78,9 +78,7 @@ class TranslationsParser(object):
         if rows:
             assert len(rows) == int(max(rows.keys()))
         # sort by index to have the expected order
-        for index in sorted(rows.keys()):
-            po_entries.append(rows[index])
-        return po_entries
+        return [po_entry for index, po_entry in sorted(rows.items())]
 
     def _add_module_sheet(self, ws, po_entries):
         context_regex = CONTEXT_REGEXS['module_sheet']
