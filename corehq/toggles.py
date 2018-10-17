@@ -654,6 +654,14 @@ CASE_LIST_EXPLORER = StaticToggle(
     save_fn=_enable_search_index,
 )
 
+EXPLORE_CASE_DATA = StaticToggle(
+    'explore_case_data',
+    'Show the Explore Case Data report (in dev)',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',

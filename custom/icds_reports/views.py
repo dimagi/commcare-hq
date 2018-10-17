@@ -52,7 +52,7 @@ from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT
 from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AwcLocationMonths
@@ -739,8 +739,11 @@ class ExportIndicatorView(View):
         if indicator == BENEFICIARY_LIST_EXPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
+        if indicator == AWW_INCENTIVE_REPORT:
+            if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
+                return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
-                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT):
+                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,

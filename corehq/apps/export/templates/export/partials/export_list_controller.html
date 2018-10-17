@@ -23,7 +23,7 @@
     </p>
     {% endif %}
     {% if has_edit_permissions %}
-    <p ng-show="!_.isEmpty(exports) || !hasLoaded">
+    <p ng-show="!_.isEmpty(exports)">
         <a href="#createExportOptionsModal"
            data-toggle="modal"
            class="btn btn-success new-export-link">
@@ -33,8 +33,7 @@
             {% endblocktrans %}
         </a>
     </p>
-    <div class="alert alert-success"
-         ng-show="_.isEmpty(exports) && !!hasLoaded">
+    <div class="alert alert-success" ng-show="_.isEmpty(exports)">
         <p class="lead"><strong>{% blocktrans %}
             It seems you haven't created any {{ export_type_plural }} yet!
         {% endblocktrans %}</strong></p>
@@ -52,22 +51,22 @@
     <div class="panel panel-default">
         <div class="panel-heading">{{ my_export_type }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/my_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/table.html' with MY_EXPORTS=True %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>
     <div class="panel panel-default">
         <div class="panel-heading">{{ shared_export_type }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/shared_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/table.html' with MY_EXPORTS=False %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>
@@ -75,11 +74,11 @@
     <div class="panel panel-default">
         <div class="panel-heading">{{ export_type_caps_plural }}</div>
         <div class="panel-body">
-            {% include 'export/partial/loading_exports.html' %}
-            {% include 'export/partial/export_bulk_notice.html' %}
-            {% include 'export/partial/original_exports_table.html' %}
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/table.html' %}
             <div ng-show="exports.length > 6">
-                {% include 'export/partial/export_bulk_notice.html' %}
+                {% include 'export/partials/export_bulk_notice.html' %}
             </div>
         </div>
     </div>

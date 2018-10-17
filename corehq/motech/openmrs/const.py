@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import logging
+import six
 from itertools import chain
 
 from django.utils.translation import ugettext_lazy as _
@@ -26,6 +27,12 @@ OPENMRS_IMPORTER_DEVICE_ID_PREFIX = 'openmrs-importer-'
 
 # XMLNS to indicate that a form was imported from OpenMRS
 XMLNS_OPENMRS = 'http://commcarehq.org/openmrs-integration'
+
+OPENMRS_ATOM_FEED_POLL_INTERVAL = {'minute': '*/10'}
+
+# device_id for cases added/updated from OpenMRS Atom feed.
+# OpenmrsRepeater ID is appended to this.
+OPENMRS_ATOM_FEED_DEVICE_ID = 'openmrs-atomfeed-'
 
 # The Location property to store the OpenMRS location UUID in
 LOCATION_OPENMRS_UUID = 'openmrs_uuid'
@@ -111,9 +118,7 @@ ADDRESS_PROPERTIES = {
     'endDate': OPENMRS_DATA_TYPE_DATETIME,
 }
 OPENMRS_PROPERTIES = dict(chain(
-    # pylint: disable=W1654
-    # Disable "dict.items referenced when not iterating" warning, because `chain` is iterating
-    PERSON_PROPERTIES.items(),
-    NAME_PROPERTIES.items(),
-    ADDRESS_PROPERTIES.items(),
+    six.iteritems(PERSON_PROPERTIES),
+    six.iteritems(NAME_PROPERTIES),
+    six.iteritems(ADDRESS_PROPERTIES),
 ))

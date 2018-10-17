@@ -20,4 +20,4 @@ class Migration(migrations.Migration):
     operations = [
         migrator.get_migration('update_tables28.sql')
     ]
-    operations.extend(get_view_migrations())  # todo remove when adding new migration that alters views
+
