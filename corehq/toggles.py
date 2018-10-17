@@ -1640,6 +1640,13 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
+    'sort_out_of_order_form_submissions_sql',
+    'Sort out of order form submissions in the SQL update strategy',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
     'filter_on_groups_and_locations',
     '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
