@@ -32,7 +32,8 @@ from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
 from corehq.apps.groups.models import Group
 from corehq.motech.repeaters.models import Repeater
-from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain
+from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain, \
+    get_export_count_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.messaging.scheduling.util import domain_has_reminders
@@ -409,6 +410,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_apps_with_icon": num_apps_with_icon(dom),
         "cp_n_apps": len(_get_domain_apps(dom)),
         "cp_n_apps_with_multi_lang": num_apps_with_multi_languages(dom),
+        "cp_n_saved_custom_exports": get_export_count_by_domain(dom),
     }
 
 

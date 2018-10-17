@@ -13,8 +13,8 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     }
     vm.label = "AWCs that reported having a source of clean drinking water";
     vm.steps = {
-        'map': {route: '/clean_water/map', label: 'Map View'},
-        'chart': {route: '/clean_water/chart', label: 'Chart View'},
+        'map': {route: '/awc_infrastructure/clean_water/map', label: 'Map View'},
+        'chart': {route: '/awc_infrastructure/clean_water/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
