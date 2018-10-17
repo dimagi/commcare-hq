@@ -13,9 +13,6 @@ hqDefine("export/js/export_list", function () {
         djangoRMIProvider.configure(initial_page_data("djng_current_rmi"));
     }]);
     listExportsApp.constant('formModalSelector', '#createExportOptionsModal');
-    listExportsApp.constant('processApplicationDataFormSuccessCallback', function (data) {
-        window.location = data.url;
-    });
     listExportsApp.constant('bulk_download_url', initial_page_data("bulk_download_url"));
     listExportsApp.constant('modelType', initial_page_data("model_type"));
     listExportsApp.constant('staticModelType', initial_page_data("static_model_type"));
@@ -160,8 +157,37 @@ hqDefine("export/js/export_list", function () {
         });
 
         self.handleSubmitForm = function () {
-            // TODO
-            return false;
+            self.isSubmittingForm(true);
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse('submit_app_data_drilldown_form'),
+                data: {
+                    is_daily_saved_export: initialPageData.get('is_daily_saved_export') || false,
+                    is_feed: initialPageData.get('is_feed') || false,
+                    is_deid: initialPageData.get('is_deid'),    // TODO: introduce strictness to ipd?
+                    model_type: initialPageData.get('model_type'),
+                    form_data: JSON.stringify({
+                        model_type: self.modelType(),
+                        app_type: self.appType(),
+                        application: self.application(),
+                        module: self.module(),
+                        form: self.form(),
+                        case_type: self.caseType(),
+                    }),
+                },
+                success: function (data) {
+                    if (data.success) {
+                        window.location = data.url;
+                    } else {
+                        self.isSubmittingForm(false);
+                        self.formSubmissionError(data.error);
+                    }
+                },
+                error: function () {
+                    self.isSubmittingForm(false);
+                    self.formSubmissionError('default');      // TODO: put the generic error directly in here
+                },
+            });
         };
 
         // Helper functions for initializing form
