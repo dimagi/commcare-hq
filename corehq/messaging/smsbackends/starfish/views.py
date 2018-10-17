@@ -2,19 +2,19 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.views import IncomingBackendView
-from corehq.messaging.smsbackends.push.models import PushBackend
+from corehq.messaging.smsbackends.starfish.models import StarfishBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 from lxml import etree
 from xml.sax.saxutils import unescape
 import six
 
 
-class PushIncomingView(IncomingBackendView):
-    urlname = 'push_sms_in'
+class StarfishIncomingView(IncomingBackendView):
+    urlname = 'starfish_sms_in'
 
     @property
     def backend_class(self):
-        return PushBackend
+        return StarfishBackend
 
     def clean_value(self, value):
         if isinstance(value, six.string_types):
@@ -47,7 +47,7 @@ class PushIncomingView(IncomingBackendView):
         incoming(
             number,
             text,
-            PushBackend.get_api_id(),
+            StarfishBackend.get_api_id(),
             domain_scope=self.domain,
             backend_id=self.backend_couch_id
         )

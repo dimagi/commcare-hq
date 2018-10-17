@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import requests
 from corehq.apps.sms.models import SQLSMSBackend
-from corehq.messaging.smsbackends.push.forms import PushBackendForm
+from corehq.messaging.smsbackends.starfish.forms import StarfishBackendForm
 from django.conf import settings
 from lxml import etree
 from xml.sax.saxutils import escape
@@ -43,11 +43,11 @@ OUTBOUND_REQUEST_XML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-class PushException(Exception):
+class StarfishException(Exception):
     pass
 
 
-class PushBackend(SQLSMSBackend):
+class StarfishBackend(SQLSMSBackend):
 
     class Meta(object):
         app_label = 'sms'
@@ -67,21 +67,21 @@ class PushBackend(SQLSMSBackend):
 
     @classmethod
     def get_api_id(cls):
-        return 'PUSH'
+        return 'STARFISH'
 
     @classmethod
     def get_generic_name(cls):
-        return "Push"
+        return "Starfish"
 
     @classmethod
     def get_form_class(cls):
-        return PushBackendForm
+        return StarfishBackendForm
 
     def response_is_error(self, response):
         return response.status_code != 200
 
     def handle_error(self, response, msg):
-        raise PushException("Received HTTP response %s from push backend" % response.status_code)
+        raise StarfishException("Received HTTP response %s from starfish backend" % response.status_code)
 
     def handle_success(self, response, msg):
         response.encoding = 'utf-8'
