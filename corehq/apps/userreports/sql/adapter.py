@@ -214,7 +214,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 def get_indicator_table(indicator_config, custom_metadata=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
     table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
-    columns_by_col_id = {col.database_column_name for col in indicator_config.get_columns()}
+    columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
     for index in indicator_config.sql_column_indexes:
         if set(index.column_ids).issubset(columns_by_col_id):
