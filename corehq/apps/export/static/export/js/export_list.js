@@ -50,7 +50,7 @@ hqDefine("export/js/export_list", function () {
         self.hasNoCaseTypes = ko.observable(false);
         self.hasSpecialAppTypes = ko.observable(false);
         self.formLoadError = ko.observable('');
-        self.formSubmissionError = ko.observable('');   // TODO: test
+        self.formSubmissionError = ko.observable('');
 
         // Form Data
         self.modelType = ko.observable(options.model_type);
@@ -81,13 +81,6 @@ hqDefine("export/js/export_list", function () {
         self.duplicatePossibilities = ko.observableArray();
         self.restoreAppText = ko.observable('');
         self.restoreAppLink = ko.observable('');
-
-        self.defaultFormLoadError = ko.computed(function () {
-            return self.formLoadError() === 'default';
-        });
-        self.defaultFormSubmissionError = ko.computed(function () {
-            return self.formSubmissionError() === 'default';
-        });
 
         self.showHasNoCaseTypes = ko.computed(function () {
             return self.hasNoCaseTypes() && self.application();
@@ -184,7 +177,7 @@ hqDefine("export/js/export_list", function () {
                 },
                 error: function () {
                     self.isSubmittingForm(false);
-                    self.formSubmissionError('default');      // TODO: put the generic error directly in here
+                    self.formSubmissionError(gettext("There was an issue fetching data. Please check your internet connection."));
                 },
             });
         };
@@ -342,8 +335,7 @@ hqDefine("export/js/export_list", function () {
                 self.isLoaded(true);
             },
             error: function () {
-                // TODO: test
-                self.formLoadError('default');      // TODO: put the generic error directly in here
+                self.formLoadError(gettext('There is an issue communicating with the server at this time.'));
                 self.isLoaded(true);
             },
         });
