@@ -181,7 +181,7 @@ class AppTranslationsGenerator:
     def _get_translation_for_sheet(self, app, sheet_name, rows):
         occurrence = None
         # a dict mapping of a context to a Translation object with
-        # clubbed occurrences
+        # multiple occurrences
         translations = OrderedDict()
         type_and_id = None
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
