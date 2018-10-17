@@ -48,7 +48,7 @@ class SimpleOtaRestoreTest(TestCase):
 
     def test_username_doesnt_have_domain(self):
         user = create_restore_user(username=normalize_username('withdomain', domain='thedomain'))
-        restore_payload = get_registration_xml(user)
+        restore_payload = get_registration_xml(user).decode('utf-8')
         self.assertTrue('thedomain' not in restore_payload)
 
     def test_name_and_number(self):
