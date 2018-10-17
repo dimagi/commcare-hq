@@ -381,7 +381,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @memoized
     def get_xml(self):
-        return self.get_attachment('form.xml')
+        return self.get_attachment('form.xml').decode('utf-8')
 
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').md5
