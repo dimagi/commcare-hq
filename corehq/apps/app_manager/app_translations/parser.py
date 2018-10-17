@@ -67,7 +67,6 @@ class TranslationsParser(object):
         by using occurrences
         """
         rows = {}
-        po_entries = []
         # align entries in a dict with their index as the key
         for po_entry in consolidated_po_entries:
             occurrences = po_entry.occurrences
@@ -78,7 +77,7 @@ class TranslationsParser(object):
         if rows:
             assert len(rows) == int(max(rows.keys()))
         # sort by index to have the expected order
-        return [po_entry for index, po_entry in sorted(rows.items())]
+        return [po_entry for i, po_entry in sorted(rows.items())]
 
     def _add_module_sheet(self, ws, po_entries):
         context_regex = CONTEXT_REGEXS['module_sheet']
