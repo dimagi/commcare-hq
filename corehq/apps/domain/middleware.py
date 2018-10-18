@@ -100,5 +100,7 @@ class DomainAuditMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if view_func.func_name in DOMAIN_AUDIT_VIEWS:
             domain = view_kwargs.get('domain', None)
-            DomainAuditRecordEntry.update_calculations(domain, view_func.func_name)
+            # skipping  audit if domain=None/''
+            if domain:
+                DomainAuditRecordEntry.update_calculations(domain, view_func.func_name)
         return None
