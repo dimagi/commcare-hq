@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext
 
 from corehq import toggles
+from corehq.util.quickcache import quickcache
 from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -155,6 +156,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     prop.save()
 
 
+@quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
 def get_data_dict_props_by_case_type(domain):
     return {
         case_type: {prop.name for prop in props} for case_type, props in groupby(
