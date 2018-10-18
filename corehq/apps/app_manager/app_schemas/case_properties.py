@@ -519,7 +519,7 @@ def get_usercase_properties(app):
 
 
 def all_case_properties_by_domain(domain, case_types=None, include_parent_properties=True):
-    result = {}
+    result = defaultdict(set)
     get_case_types_from_apps = case_types is None
 
     for app in all_apps_by_domain(domain):
@@ -533,18 +533,12 @@ def all_case_properties_by_domain(domain, case_types=None, include_parent_proper
             defaults=('name',), include_parent_properties=include_parent_properties)
 
         for case_type, properties in six.iteritems(property_map):
-            if case_type in result:
-                result[case_type].extend(properties)
-            else:
-                result[case_type] = properties
+            result[case_type].update(properties)
 
-    cleaned_result = {}
-    for case_type, properties in six.iteritems(result):
-        properties = list(set(properties))
-        properties.sort()
-        cleaned_result[case_type] = properties
-
-    return cleaned_result
+    return {
+        case_type: sorted(properties)
+        for case_type, properties in result.items()
+    }
 
 
 def get_per_type_defaults(domain, case_types=None):
