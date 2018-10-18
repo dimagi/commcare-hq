@@ -92,6 +92,14 @@ class ReportExport(object):
                 [headers] + rows + total_rows
             ]
         ]
+        print "><<<<<<<<<ASdfasdfasdfasdds"
+        print rows
+        for filter in self.filter_values:
+            print ">>>>>"
+            print getattr(self.filter_values[filter],"startdate",'---')
+            print "<<<<<<"
+            print getattr(self.filter_values[filter], "enddate", '---')
+            print "done"
 
         if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.domain):
             time_zone = get_timezone_for_domain(self.domain)
@@ -100,7 +108,7 @@ class ReportExport(object):
                 [
                     [_('Report Name'), self.title],
                     [_('Generated On'), datetime.now(time_zone).strftime('%Y-%m-%d %H:%M')],
-                ] + list(self._get_filter_values())
+                ] + [(filter,str(getattr(self.filter_values[filter],"startdate",'---'))+"|||||||"+str(getattr(self.filter_values[filter],"enddate",'---'))) for filter in self.filter_values]
             ])
 
         return export_table
