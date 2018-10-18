@@ -51,7 +51,7 @@ def send_gateway_fee_report_out():
 
     send_HTML_email(
         subject,
-        settings.ACCOUNTS_EMAIL,
+        'npellegrino' + '@' + 'dimagi' + '.com',
         ''.join(
             '<p>{}: {}</p>'.format(
                 backend_api_id, '; '.join(
