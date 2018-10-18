@@ -1949,7 +1949,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('expected_visits', 'floor(sum( '
              'CASE '
              'WHEN ucr.pregnant=1 THEN 0.44 '
-             'WHEN ucr.month - ucr.add < 30 THEN 6 '
+             'WHEN ucr.month - ucr.add < 0 THEN 6 '
              'WHEN ucr.month - ucr.add < 182 THEN 1 '
              'ELSE 0.39 END'
              '))'),
