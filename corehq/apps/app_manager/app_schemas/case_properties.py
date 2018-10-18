@@ -2,16 +2,14 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import print_function
 from collections import defaultdict, deque, namedtuple
-import functools
-from itertools import chain, groupby
-from operator import attrgetter
+from itertools import chain
 import logging
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_case_sharing_apps_in_domain
 from corehq.apps.app_manager.util import is_usercase_in_use, all_apps_by_domain
-from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 import six
@@ -301,19 +299,6 @@ class ParentCasePropertyBuilder(object):
                 all_case_updates[case_type].update(case_properties)
         return all_case_updates
 
-    @memoized
-    def _get_data_dictionary_properties_by_case_type(self):
-        return {
-            case_type: {prop.name for prop in props} for case_type, props in groupby(
-                CaseProperty.objects
-                .filter(case_type__domain=self.app.domain, deprecated=False)
-                .select_related("case_type")
-                .order_by('case_type__name'),
-                key=attrgetter('case_type.name')
-
-            )
-        }
-
     def get_case_relationships_for_case_type(self, case_type):
         """
         Like get_case_relationships, but filters down to a single case type
@@ -402,7 +387,7 @@ class ParentCasePropertyBuilder(object):
         _zip_update(case_properties_by_case_type, self.per_type_defaults)
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
-            _zip_update(case_properties_by_case_type, self._get_data_dictionary_properties_by_case_type())
+            _zip_update(case_properties_by_case_type, get_data_dict_props_by_case_type(self.app.domain))
 
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)

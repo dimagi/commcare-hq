@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from itertools import groupby
+from operator import attrgetter
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext
 
@@ -149,3 +153,15 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     except ValidationError as e:
         return six.text_type(e)
     prop.save()
+
+
+def get_data_dict_props_by_case_type(domain):
+    return {
+        case_type: {prop.name for prop in props} for case_type, props in groupby(
+            CaseProperty.objects
+            .filter(case_type__domain=domain, deprecated=False)
+            .select_related("case_type")
+            .order_by('case_type__name'),
+            key=attrgetter('case_type.name')
+        )
+    }
