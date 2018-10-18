@@ -10,6 +10,7 @@
     {% initial_page_data "wire_email" user_email %}
     {% initial_page_data "plan" plan %}
     {% initial_page_data "can_purchase_credits" can_purchase_credits %}
+    {% initial_page_data "can_change_subscription" can_change_subscription %}
     {% registerurl "domain_credits_payment" domain %}
     {% registerurl "domain_wire_payment" domain %}
 
@@ -37,21 +38,23 @@
                             {% endblocktrans %}
                             </div>
                         {% endif %}
-                        {% if plan.is_annual_plan %}
-                        <form action="{% url 'annual_plan_request_quote' domain %}">
-                            <div style="margin-top:10px;">
-                                <label class="control-label">{% trans "Got questions about your plan?" %}</label>
-                                <button class="btn btn-primary btn-lg">
-                                    {% trans 'Talk to Sales' %}
-                                </button>
-                            </div>
-                        </form>
-                        {% else %}
-                            <p>
-                                <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
-                                    {% trans "Change Plan" %}
-                                </a>
-                            </p>
+                        {% if can_change_subscription %}
+                            {% if plan.is_annual_plan %}
+                            <form action="{% url 'annual_plan_request_quote' domain %}">
+                                <div style="margin-top:10px;">
+                                    <label class="control-label">{% trans "Got questions about your plan?" %}</label>
+                                    <button class="btn btn-primary btn-lg">
+                                        {% trans 'Talk to Sales' %}
+                                    </button>
+                                </div>
+                            </form>
+                            {% else %}
+                                <p>
+                                    <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+                                        {% trans "Change Plan" %}
+                                    </a>
+                                </p>
+                            {% endif %}
                         {% endif %}
 
                         {% if plan.is_trial %}
