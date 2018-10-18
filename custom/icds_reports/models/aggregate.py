@@ -38,6 +38,7 @@ from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_he
 from custom.icds_reports.utils.aggregation_helpers.thr_forms_child_health import \
     THRFormsChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
 
 
 class CcsRecordMonthly(models.Model):
@@ -615,6 +616,22 @@ class AggAwcDaily(models.Model):
     class Meta:
         managed = False
         db_table = 'agg_awc_daily'
+
+    @classmethod
+    def aggregate(cls,day):
+        helper = AggAwcDailyAggregationHelper(day)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+        daily_attendance_query, daily_params = helper.aggregation_daily_attendance_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+            cursor.execute(daily_attendance_query, daily_params)
+            for iterator in range(4, 0, -1):
+                rollup_query, rollup_params = helper.rollup_query(iterator)
+                cursor.execute(rollup_query, rollup_params)
 
 
 class DailyAttendance(models.Model):
