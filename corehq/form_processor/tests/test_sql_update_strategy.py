@@ -5,6 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 from corehq.util.soft_assert.core import SoftAssert
 
+from casexml.apps.case.exceptions import ReconciliationError
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
@@ -14,6 +15,7 @@ from corehq.form_processor.models import (
     CaseTransaction,
     RebuildWithReason,
 )
+
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 from corehq.util.test_utils import get_form_ready_to_save
@@ -103,6 +105,22 @@ class SqlUpdateStrategyTest(TestCase):
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
+
+    def test_first_transaction_not_create(self):
+        with freeze_time("2018-10-10"):
+            case = self._create_case()
+
+        with freeze_time("2018-10-08"):
+            new_old_xform = self._create_form()
+            new_old_trans = self._create_case_transaction(case, new_old_xform)
+            case.track_create(new_old_trans)
+            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+
+        self.assertTrue(case.check_transaction_order())
+
+        case = CaseAccessorSQL.get_case(case.case_id)
+        update_strategy = SqlCaseUpdateStrategy(case)
+        self.assertRaises(ReconciliationError, update_strategy.reconcile_transactions)
 
     def _create_form(self, user_id=None, received_on=None):
         """
