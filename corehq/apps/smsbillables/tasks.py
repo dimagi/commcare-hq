@@ -55,7 +55,12 @@ def send_gateway_fee_report_out():
         ''.join(
             '<p>{}: {}</p>'.format(
                 backend_api_id, '; '.join(
-                    '%.2f %s' % (cost, currency) for (cost, currency) in cost_by_backend
+                    '%.2f %s (%.2f %s)' % (
+                        cost,
+                        currency_code,
+                        cost / Currency.objects.get(code=currency_code).rate_to_default,
+                        Currency.get_default().code
+                    ) for (cost, currency_code) in cost_by_backend
                 )
             )
             for (backend_api_id, cost_by_backend) in costs_by_backend.items()
