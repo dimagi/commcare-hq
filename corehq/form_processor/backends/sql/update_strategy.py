@@ -323,7 +323,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             key=_transaction_sort_key_function(self.case)
         )
         if sorted_transactions:
-            if sorted_transactions[0].type | CaseTransaction.TYPE_CASE_CREATE != sorted_transactions[0].type:
+            if not sorted_transactions[0].is_case_create:
                 error = "Case {0} first transaction not create transaction: {1}"
                 raise ReconciliationError(
                     error.format(self.case.case_id, sorted_transactions[0])
