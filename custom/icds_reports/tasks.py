@@ -61,7 +61,7 @@ from custom.icds_reports.models import (
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport
 )
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -126,8 +126,7 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
-]
+    ]
 
 
 @periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
@@ -295,21 +294,21 @@ def icds_aggregation_task(self, date, func):
         return
 
     celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
-
-    try:
-        func(date)
-    except Error as exc:
-        notify_exception(
-            None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name__, 'date': date, 'error': exc}
-        )
-        _dashboard_team_soft_assert(
-            False,
-            "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, date
-            )
-        )
-        self.retry(exc=exc)
+    func(date)
+    # try:
+    #     func(date)
+    # except Error as exc:
+    #     notify_exception(
+    #         None, message="Error occurred during ICDS aggregation",
+    #         details={'func': func.__name__, 'date': date, 'error': exc}
+    #     )
+    #     _dashboard_team_soft_assert(
+    #         False,
+    #         "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
+    #             func.__name__, settings.SERVER_ENVIRONMENT, date
+    #         )
+    #     )
+    #     self.retry(exc=exc)
 
     celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
 
@@ -411,8 +410,10 @@ def _run_custom_sql_script(commands, day=None):
             cursor.execute(command, [day])
 
 
+@track_time
 def aggregate_awc_daily(day):
-    _run_custom_sql_script(["SELECT aggregate_awc_daily(%s)"], day)
+    with transaction.atomic():
+        AggAwcDaily.aggregate(force_to_date(day))
 
 
 @track_time
