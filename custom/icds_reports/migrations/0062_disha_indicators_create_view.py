@@ -32,4 +32,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0061_added_phone_number_to_views'),
     ]
 
-    operations = get_view_migrations()
+    operations = []

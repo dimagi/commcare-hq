@@ -143,15 +143,8 @@ class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
         cls.api_key.delete()
         cls.user.delete()
 
-        SubscriptionAdjustment.objects.all().delete()
-
-        if cls.subscription:
-            cls.subscription.delete()
-
-        if cls.account:
-            cls.account.delete()
-
         for domain in Domain.get_all():
+            Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)
             domain.delete()
 
         super(APIResourceTest, cls).tearDownClass()

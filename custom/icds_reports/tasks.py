@@ -39,7 +39,8 @@ from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
-    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT
+    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
+    AWW_INCENTIVE_REPORT
 from custom.icds_reports.models import (
     AggChildHealth,
     AggChildHealthMonthly,
@@ -56,11 +57,15 @@ from custom.icds_reports.models import (
     AggregateAwcInfrastructureForms,
     ChildHealthMonthly,
     CcsRecordMonthly,
-    UcrTableNameMapping)
+    UcrTableNameMapping,
+    AggregateCcsRecordComplementaryFeedingForms,
+    AWWIncentiveReport
+)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
+from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
@@ -178,6 +183,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_cf_forms)
+                for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_ccs_cf_forms)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
@@ -334,6 +343,11 @@ def icds_state_aggregation_task(self, state_id, date, func):
 @track_time
 def _aggregate_cf_forms(state_id, day):
     AggregateComplementaryFeedingForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_ccs_cf_forms(state_id, day):
+    AggregateCcsRecordComplementaryFeedingForms.aggregate(state_id, day)
 
 
 @track_time
@@ -573,6 +587,12 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test,
             beta=beta
         ).get_excel_data(location)
+    elif indicator == AWW_INCENTIVE_REPORT:
+        data_type = 'AWW_Performance'
+        excel_data = IncentiveReport(
+            block=location,
+            month=config['month']
+        ).get_excel_data()
     cache_key = create_excel_file(excel_data, data_type, file_format)
     params = {
         'domain': domain,
@@ -834,3 +854,14 @@ def push_missing_docs_to_es():
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
         )
+
+@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='14'), acks_late=True, queue='icds_aggregation_queue')
+def build_incentive_report(agg_date=None):
+    state_ids = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                 .values_list('location_id', flat=True))
+    if agg_date is None:
+        current_month = date.today().replace(day=1)
+        agg_date = current_month - relativedelta(months=1)
+    for state in state_ids:
+        AWWIncentiveReport.aggregate(state, agg_date)

@@ -238,6 +238,9 @@ class TestSubscriptionForm(BaseAccountingTest):
         self.customer_plan.plan.is_customer_software_plan = True
 
     def tearDown(self):
+        self.domain.delete()
+        self.domain2.delete()
+
         super(TestSubscriptionForm, self).tearDown()
 
     def test_regular_plan_not_added_to_customer_account(self):

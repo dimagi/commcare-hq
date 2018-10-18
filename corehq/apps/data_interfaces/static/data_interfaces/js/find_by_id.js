@@ -9,7 +9,7 @@ hqDefine("data_interfaces/js/find_by_id", [
     ko,
     assertProperties,
     initialPageData,
-    kissmetrics,
+    kissmetrics
 ) {
     var findModel = function (options) {
         assertProperties.assert(options, ['errorMessage', 'eventName', 'header', 'help', 'placeholder', 'successMessage']);
@@ -22,7 +22,7 @@ hqDefine("data_interfaces/js/find_by_id", [
 
         self.linkMessage = ko.computed(function () {
             if (self.link()) {
-                var redirectTemplate = _.template(gettext("<a href='<%= link %>'>Click here</a> if you are not redirected."));
+                var redirectTemplate = _.template(gettext("<a href='<%= link %>' target='_blank'>View <i class='fa fa-external-link'></i></a>"));
                 return self.successMessage + " " + redirectTemplate({link: self.link()});
             }
             return '';
@@ -47,9 +47,6 @@ hqDefine("data_interfaces/js/find_by_id", [
                 success: function (data) {
                     self.loading(false);
                     self.link(data.link);
-                    _.delay(function () {
-                        document.location = data.link;
-                    }, 2000);
                 },
                 error: function () {
                     self.loading(false);

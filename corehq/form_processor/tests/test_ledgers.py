@@ -20,6 +20,8 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_ba
 from corehq.form_processor.utils.general import should_use_sql_backend
 from six.moves import zip
 
+from corehq.util.test_utils import softer_assert
+
 DOMAIN = 'ledger-tests'
 TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delta', 'updated_balance'])
 
@@ -212,6 +214,7 @@ class LedgerTests(TestCase):
 
 
 @use_sql_backend
+@softer_assert()
 class LedgerTestsSQL(LedgerTests):
     def test_edit_form_that_removes_ledgers(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block

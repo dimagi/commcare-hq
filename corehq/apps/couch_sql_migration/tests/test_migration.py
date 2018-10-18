@@ -31,8 +31,8 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
 from corehq.util.test_utils import (
     create_and_save_a_form, create_and_save_a_case, set_parent_case,
-    trap_extra_setup, TestFileMixin
-)
+    trap_extra_setup, TestFileMixin,
+    softer_assert)
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import patch_datadog
 from mock import patch, MagicMock
@@ -223,6 +223,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_form_ids('XFormDuplicate')))
         self._compare_diffs([])
 
+    @softer_assert()
     def test_deprecated_form_migration(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex

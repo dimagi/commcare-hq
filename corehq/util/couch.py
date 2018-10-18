@@ -77,16 +77,6 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
         raise Http404("{}\n\n{}".format(e, traceback.format_exc()))
 
 
-def get_document_or_404_lite(cls, doc_id):
-    """
-    Like `get_document_or_404` but without the domain and doc_type checks.
-    """
-    try:
-        return get_document_or_not_found_lite(cls, doc_id)
-    except DocumentNotFound as e:
-        raise Http404("{}\n\n{}".format(e, traceback.format_exc()))
-
-
 @memoized
 def get_classes_by_doc_type():
     queue = [Document]

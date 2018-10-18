@@ -21,6 +21,7 @@ from corehq.util.test_utils import TestFileMixin, softer_assert
 from io import open
 
 
+@softer_assert()
 class EditFormTest(TestCase, TestFileMixin):
     ID = '7H46J37FGH3'
     domain = 'test-form-edits'
@@ -340,7 +341,6 @@ class EditFormTest(TestCase, TestFileMixin):
                 [a.xform_id for a in case.actions]
             )
 
-    @softer_assert()
     def test_edit_different_xmlns(self):
         form_id = uuid.uuid4().hex
         case1_id = uuid.uuid4().hex

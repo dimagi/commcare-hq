@@ -14,7 +14,6 @@ from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
-from custom.icds_reports.utils.mixins import ExportableMixin
 
 
 class TestExportData(TestCase):
@@ -23,10 +22,9 @@ class TestExportData(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestExportData, cls).setUpClass()
-        cls.india_now_mock = mock.patch.object(
-            ExportableMixin,
-            'india_now',
-            new_callable=mock.PropertyMock(return_value='16:21:11 15 November 2017')
+        cls.india_now_mock = mock.patch(
+            'custom.icds_reports.utils.mixins.india_now',
+            new=mock.Mock(return_value='16:21:11 15 November 2017')
         )
         cls.india_now_mock.start()
 
@@ -120,7 +118,7 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.51 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
@@ -154,7 +152,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 '67.39 %',
-                '1.51 %',
+                '1.40 %',
                 317,
                 '2.60 %',
                 '23.21 %',
@@ -188,7 +186,7 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.51 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
@@ -222,7 +220,7 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.51 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
@@ -256,7 +254,7 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.51 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",

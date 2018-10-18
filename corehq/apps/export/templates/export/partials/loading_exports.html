@@ -4,15 +4,7 @@
 {% load djangular_tags %}
 {% load humanize %}
 
-<div class="alert alert-info"
-     ng-show="!hasLoaded">
-    <p>
-        <i class="fa fa-spinner fa-spin"></i>
-        <strong>{% blocktrans %}Fetching List of {{ export_type_caps_plural }}...{% endblocktrans %}</strong>
-    </p>
-</div>
-<div class="alert alert-info"
-     ng-show="_.isEmpty(exports) && !!hasLoaded && !exportsListError">
+<div class="alert alert-info" ng-show="_.isEmpty(exports)">
     <p>
         {% if is_deid %}
             {% blocktrans %}
@@ -24,20 +16,4 @@
             {% endblocktrans %}
         {% endif %}
     </p>
-</div>
-<div class="alert alert-warning"
-     ng-show="!!exportsListError">
-    <strong ng-if="exportsListError === 'default'">
-        {% blocktrans %}
-            Issue fetching list of {{ export_type_plural }}. Please check your Internet connection.
-        {% endblocktrans %}
-    </strong>
-    <strong ng-if="exportsListError !== 'default'">
-        {% angularjs %}{{ exportsListError }}{% endangularjs %}
-    </strong>
-    {% blocktrans %}
-        If this problem persists, please
-        <a href="#modalReportIssue"
-           data-toggle="modal">Report an Issue</a>.
-    {% endblocktrans %}
 </div>

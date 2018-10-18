@@ -70,16 +70,9 @@ class trap_extra_setup(ContextDecorator):
             raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
 
 
-class softer_assert(ContextDecorator):
-    """A decorator/context manager to disable hardened soft_assert for tests"""
-    def __enter__(self):
-        self.patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
-                           new=lambda: False)
-        self.patch.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.patch.stop()
+def softer_assert():
+    """A shortcut function to get the patch for disabling hardened soft_assert for tests"""
+    return mock.patch("corehq.util.soft_assert.core.is_hard_mode", new=lambda: False)
 
 
 class TestFileMixin(object):

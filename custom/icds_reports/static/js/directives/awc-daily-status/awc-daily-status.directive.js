@@ -8,8 +8,8 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     var vm = this;
     vm.label = "AWC Daily Status";
     vm.steps = {
-        'map': {route: '/awc_daily_status/map', label: 'Map View'},
-        'chart': {route: '/awc_daily_status/chart', label: 'Chart View'},
+        'map': {route: '/icds_cas_reach/awc_daily_status/map', label: 'Map View'},
+        'chart': {route: '/icds_cas_reach/awc_daily_status/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage AWCs',

@@ -8,8 +8,8 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     var vm = this;
     vm.label = "AWCs Launched";
     vm.steps = {
-        'map': {route: '/awcs_covered/map', label: 'Map View'},
-        'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
+        'map': {route: '/icds_cas_reach/awcs_covered/map', label: 'Map View'},
+        'chart': {route: '/icds_cas_reach/awcs_covered/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS-CAS. ' +

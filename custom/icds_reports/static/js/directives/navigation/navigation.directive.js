@@ -22,8 +22,6 @@ function NavigationController($window, $scope, $route, $routeParams, $location) 
         $window.location.href = path;
     };
 
-
-
     $scope.goToStep = function(path, params) {
         var page_path = "#/" + path;
         if (Object.keys(params).length > 0) {

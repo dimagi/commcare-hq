@@ -380,6 +380,8 @@ hqDefine('accounting/js/payment_method_handler', [
         self.reset =  function () {
             initData.paginatedListModel.refreshList();
         };
+
+        return self;
     };
 
     totalCostItem.prototype = Object.create(chargedCostItem.prototype);

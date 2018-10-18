@@ -495,6 +495,8 @@ class AggCcsRecordMonthly(models.Model):
     counsel_fp_vid = models.IntegerField(blank=True, null=True)
     counsel_immediate_conception = models.IntegerField(blank=True, null=True)
     counsel_accessible_postpartum_fp = models.IntegerField(blank=True, null=True)
+    valid_visits = models.SmallIntegerField(blank=True, null=True)
+    expected_visits = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
