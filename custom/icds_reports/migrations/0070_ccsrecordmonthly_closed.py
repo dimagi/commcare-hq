@@ -17,10 +17,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='CcsRecordMonthlyView',
-            name='open_in_month',
-            field=models.SmallIntegerField(blank=True, null=True),
-        ),
     ]
     operations.extend(get_view_migrations())
