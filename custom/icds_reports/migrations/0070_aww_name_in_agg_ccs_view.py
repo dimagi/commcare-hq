@@ -16,4 +16,3 @@ class Migration(migrations.Migration):
 
     operations = [
     ]
-    operations.extend(get_view_migrations())
