@@ -84,7 +84,7 @@ hqDefine("reports/js/data_corrections", [
                 dirty = self.dirty();
 
             if (_.isArray(newValue)) {
-                oldValue = oldValue.split(" ");
+                oldValue = oldValue ? oldValue.split(" ") : [];
                 dirty = dirty || oldValue.length !== newValue.length ||
                         oldValue.length !== _.intersection(oldValue, newValue).length;
                 newValue = newValue.join(" ");
