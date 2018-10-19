@@ -79,8 +79,6 @@ hqDefine("export/js/export_list", function () {
         self.showAppDoesNotExist = ko.observable(false);
         self.showDuplicate = ko.observable(false);
         self.duplicatePossibilities = ko.observableArray();
-        self.restoreAppText = ko.observable('');
-        self.restoreAppLink = ko.observable('');
 
         self.showHasNoCaseTypes = ko.computed(function () {
             return self.hasNoCaseTypes() && self.application();
@@ -90,17 +88,6 @@ hqDefine("export/js/export_list", function () {
             return self.modelType() === 'form' && !_.isEmpty(self.selectedFormData());
         });
         self.submissionCountText = ko.observable('');
-
-        // TODO: test
-        self.selectedAppData.subscribe(function (newValue) {
-            if (self.appType() === 'deleted' && self.application()) {
-                self.restoreAppText(_.template(gettext("<%= name %> has been deleted."))({ name: newValue.name }));
-                self.restoreAppLink(newValue.restoreUrl);
-            } else {
-                self.restoreAppText('');
-                self.restoreAppLink('');
-            }
-        });
 
         self.selectedFormData.subscribe(function (newValue) {
             // Update form submission count message
