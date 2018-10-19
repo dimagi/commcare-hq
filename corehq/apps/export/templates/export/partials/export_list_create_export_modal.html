@@ -56,16 +56,6 @@
                             </ul>
                         </div>
                      </div>
-                    {% if request.couch_user.can_edit_apps %}
-                        <div class="well" data-bind="visible: restoreAppText">
-                            <h4 data-bind="text: restoreAppText"></h4>
-                            <p>
-                                <a class="btn btn-default" data-bind="attr: {href: restoreAppLink}">
-                                    {% trans "Restore" %}
-                                </a>
-                            </p>
-                        </div>
-                    {% endif %}
                 </div>
                 <div class="modal-body" data-bind="visible: isSubmittingForm">
                     <p class="lead">
