@@ -305,7 +305,6 @@ class ParentCasePropertyBuilder(object):
             forms.extend(_get_forms(app))
         return forms
 
-    @memoized
     def _get_all_case_updates(self):
         all_case_updates = defaultdict(set)
         for form in self._get_relevant_forms():
