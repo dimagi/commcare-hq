@@ -1,5 +1,4 @@
 hqDefine("export/js/create_export", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     var formDefaults = {
         model_type: '',
         app_type: 'all',
@@ -10,9 +9,13 @@ hqDefine("export/js/create_export", function () {
     };
 
     var createExportModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, [], ['model_type']);
+        var assertProperties = hqImport("hqwebapp/js/assert_properties");
+        assertProperties.assert(options, ['drilldown_fetch_url', 'drilldown_submit_url', 'page'], ['model_type']);
+        assertProperties.assert(options.page, ['is_daily_saved_export', 'is_feed', 'is_deid', 'model_type']);
 
         var self = {};
+
+        self.pageOptions = options.page;
 
         self.isLoaded = ko.observable(false);
         self.isSubmittingForm = ko.observable(false);
@@ -109,12 +112,12 @@ hqDefine("export/js/create_export", function () {
             self.isSubmittingForm(true);
             $.ajax({
                 method: 'POST',
-                url: initialPageData.reverse('submit_app_data_drilldown_form'),
+                url: options.submit_app_data_drilldown_form,
                 data: {
-                    is_daily_saved_export: initialPageData.get('is_daily_saved_export', true),
-                    is_feed: initialPageData.get('is_feed', true),
-                    is_deid: initialPageData.get('is_deid', true),
-                    model_type: initialPageData.get('model_type', true),
+                    is_daily_saved_export: self.pageOptions.is_daily_saved_export,
+                    is_feed: self.pageOptions.is_feed,
+                    is_deid: self.pageOptions.is_deid,
+                    model_type: self.pageOptions.model_type,
                     form_data: JSON.stringify({
                         model_type: self.modelType(),
                         app_type: self.appType(),
@@ -254,10 +257,10 @@ hqDefine("export/js/create_export", function () {
         // Fetch form values on page load
         $.ajax({
             method: 'GET',
-            url: initialPageData.reverse('get_app_data_drilldown_values'),
+            url: options.drilldown_fetch_url,
             data: {
-                is_deid: initialPageData.get('is_deid', true),
-                model_type: initialPageData.get('model_type', true),
+                is_deid: self.pageOptions.is_deid,
+                model_type: self.pageOptions.model_type,
             },
             success: function (data) {
                 self.showNoAppsError(data.app_types.length === 1 && data.apps_by_type.all.length === 0);
