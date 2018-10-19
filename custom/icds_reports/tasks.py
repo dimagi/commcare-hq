@@ -126,10 +126,11 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
-    ]
+]
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23),
+               acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 

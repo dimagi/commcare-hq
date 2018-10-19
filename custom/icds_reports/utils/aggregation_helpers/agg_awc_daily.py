@@ -199,29 +199,6 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             'aggregation_level': aggregation_level + 1
         }
 
-        return """
-            INSERT INTO "{tablename}"
-              '( '|| _table_columns || ') '
-              '(SELECT ' ||
-            'state_id, ' ||
-            'district_id, ' ||
-            'block_id, ' ||
-            'supervisor_id, ' ||
-            quote_literal(_all_text) || ', ' ||
-            '4, ' ||
-            'date, ' ||
-            _rollup_text ||
-            'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
-            'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
-            'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
-            'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
-            'sum(num_launched_awcs), ' ||
-            _rollup_text_2 ||
-            'FROM ' || quote_ident(_tablename) || ' ' ||
-            'WHERE aggregation_level = 5 ' ||
-            'GROUP BY state_id, district_id, block_id, supervisor_id, date)'
-        """
-
     def indexes(self):
         col_indx1 = '(state_id, district_id, block_id, supervisor_id, awc_id)'
         indexes = [
