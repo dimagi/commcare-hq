@@ -1,4 +1,4 @@
-hqDefine("export/js/export_list", function () {
+hqDefine("export/js/export_list_main", function () {
     'use strict';
 
     /* Angular; to be deprecated */
