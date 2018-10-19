@@ -269,26 +269,42 @@ class ParentCasePropertyBuilder(object):
     Full functionality is documented in the individual methods.
 
     """
-    def __init__(self, app, defaults=(), per_type_defaults=None,
-                 include_parent_properties=True, exclude_invalid_properties=False,
-                 traverse_apps=True):
-        self.app = app
+    def __init__(self, domain, apps, defaults=(), per_type_defaults=None,
+                 include_parent_properties=True, exclude_invalid_properties=False):
+        self.domain = domain
+        self.apps = apps
         self.defaults = defaults
-        self.traverse_apps = traverse_apps
         self.per_type_defaults = per_type_defaults or {}
         self.include_parent_properties = include_parent_properties
         self.exclude_invalid_properties = exclude_invalid_properties
 
-    def _get_relevant_apps(self):
-        apps = [self.app]
-        if self.traverse_apps and self.app.case_sharing:
-            apps.extend(self._get_other_case_sharing_apps_in_domain())
-        return apps
+    @classmethod
+    def for_app(cls, app, defaults=(), include_parent_properties=True,
+                exclude_invalid_properties=False):
+        apps = [app]
+        if app.case_sharing:
+            apps.extend(get_case_sharing_apps_in_domain(app.domain, app.id))
+        return cls(app.domain,
+                   apps,
+                   defaults=defaults,
+                   per_type_defaults=get_per_type_defaults(app.domain),
+                   include_parent_properties=include_parent_properties,
+                   exclude_invalid_properties=exclude_invalid_properties)
+
+    @classmethod
+    def for_domain(cls, domain, include_parent_properties=True):
+        apps = [app for app in all_apps_by_domain(domain) if app.is_remote_app()]
+        return cls(domain,
+                   apps,
+                   defaults=('name',),
+                   per_type_defaults=get_per_type_defaults(domain),
+                   include_parent_properties=include_parent_properties,
+                   exclude_invalid_properties=False)
 
     @memoized
     def _get_relevant_forms(self):
         forms = []
-        for app in self._get_relevant_apps():
+        for app in self.apps:
             forms.extend(_get_forms(app))
         return forms
 
@@ -344,10 +360,6 @@ class ParentCasePropertyBuilder(object):
         return set(p[0] for p in parent_types)
 
     @memoized
-    def _get_other_case_sharing_apps_in_domain(self):
-        return get_case_sharing_apps_in_domain(self.app.domain, self.app.id)
-
-    @memoized
     def get_properties(self, case_type):
         """
         Get all possible properties of case_type
@@ -388,8 +400,8 @@ class ParentCasePropertyBuilder(object):
 
         _zip_update(case_properties_by_case_type, self.per_type_defaults)
 
-        if toggles.DATA_DICTIONARY.enabled(self.app.domain):
-            _zip_update(case_properties_by_case_type, get_data_dict_props_by_case_type(self.app.domain))
+        if toggles.DATA_DICTIONARY.enabled(self.domain):
+            _zip_update(case_properties_by_case_type, get_data_dict_props_by_case_type(self.domain))
 
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
@@ -438,8 +450,8 @@ class ParentCasePropertyBuilder(object):
                 if if_multiple_parents_arbitrarily_pick_one:
                     if len(types) > 1:
                         logger.error(
-                            "Case Type '%s' in app '%s' has multiple parents for relationship '%s': %s",
-                            case_type, self.app.id, relationship, types
+                            "Case Type '%s' in has multiple parents for relationship '%s': %s",
+                            case_type, relationship, types
                         )
                     parent_map[case_type][relationship] = types[0]
                 else:
@@ -469,19 +481,20 @@ class ParentCasePropertyBuilder(object):
 
 
 def get_parent_type_map(app, if_multiple_parents_arbitrarily_pick_one=False):
-    builder = ParentCasePropertyBuilder(app)
+    builder = ParentCasePropertyBuilder.for_app(app)
     return builder.get_parent_type_map(
         app.get_case_types(),
         if_multiple_parents_arbitrarily_pick_one=if_multiple_parents_arbitrarily_pick_one)
 
 
 def get_case_properties(app, case_types, defaults=(), include_parent_properties=True,
-                        exclude_invalid_properties=False, traverse_apps=True):
-    per_type_defaults = get_per_type_defaults(app.domain, case_types)
-    builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults,
-                                        include_parent_properties=include_parent_properties,
-                                        exclude_invalid_properties=exclude_invalid_properties,
-                                        traverse_apps=traverse_apps)
+                        exclude_invalid_properties=False):
+    builder = ParentCasePropertyBuilder.for_app(
+        app,
+        defaults=defaults,
+        include_parent_properties=include_parent_properties,
+        exclude_invalid_properties=exclude_invalid_properties
+    )
     return builder.get_case_property_map(case_types)
 
 
@@ -506,25 +519,11 @@ def get_usercase_properties(app):
 
 
 def all_case_properties_by_domain(domain, include_parent_properties=True):
-    result = defaultdict(set)
-    per_type_defaults = get_per_type_defaults(domain)
-
-    for app in all_apps_by_domain(domain):
-        if app.is_remote_app():
-            continue
-
-        builder = ParentCasePropertyBuilder(
-            app, defaults=('name'), per_type_defaults=per_type_defaults,
-            include_parent_properties=include_parent_properties, traverse_apps=False
-        )
-        property_map = builder.get_properties_by_case_type()
-
-        for case_type, properties in six.iteritems(property_map):
-            result[case_type].update(properties)
-
+    builder = ParentCasePropertyBuilder.for_domain(
+        domain, include_parent_properties=include_parent_properties)
     return {
         case_type: sorted(properties)
-        for case_type, properties in result.items()
+        for case_type, properties in builder.get_properties_by_case_type().items()
     }
 
 
