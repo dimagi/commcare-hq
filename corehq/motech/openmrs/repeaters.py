@@ -48,6 +48,8 @@ class OpenmrsRepeater(CaseRepeater):
     atom_feed_enabled = BooleanProperty(default=False)
     patients_last_polled_at = DateTimeProperty(default=None)
     patients_last_page = StringProperty(default=None)
+    encounters_last_polled_at = DateTimeProperty(default=None)
+    encounters_last_page = StringProperty(default=None)
 
     def __eq__(self, other):
         return (
