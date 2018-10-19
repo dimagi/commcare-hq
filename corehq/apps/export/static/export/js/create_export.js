@@ -83,7 +83,7 @@ hqDefine("export/js/create_export", function () {
                 } else {
                     text = gettext('<%= count %> form submissions available.');
                 }
-                text = _.template(text)({ count: newValue.submissions, });
+                text = _.template(text)({ count: newValue.submissions });
             }
             self.submissionCountText(text);
 
@@ -117,14 +117,14 @@ hqDefine("export/js/create_export", function () {
             }
         },
         self._initSelect2 = function (observable, fieldSlug) {
-            return function (field_data) {
+            return function (fieldData) {
                 if (fieldSlug) {
                     observable('');
                     $('#div_id_' + fieldSlug).find("label").text(self._labels[fieldSlug]); 
                     var $formElem = $('#id_' + fieldSlug);
                     if ($formElem.length > 0) {
                         $formElem.select2({
-                            data: field_data || [],
+                            data: fieldData || [],
                             triggerChange: true,
                         }).select2('val', drilldownDefaults[fieldSlug]).trigger('change');
                         $('#s2id_id_' + fieldSlug)
@@ -141,8 +141,8 @@ hqDefine("export/js/create_export", function () {
 
         // Behavior of drilldown itself (interactions between the dropdowns)
         self.updateAppChoices = function () {
-            var app_choices = self._apps_by_type[self.appType()];
-            self.setApps(app_choices);
+            var appChoices = self._apps_by_type[self.appType()];
+            self.setApps(appChoices);
             self.selectedAppData({});
             self.selectedFormData({});
             self.hasNoCaseTypes(false);
@@ -153,14 +153,14 @@ hqDefine("export/js/create_export", function () {
         self.application.subscribe(function (newValue) {
             if (newValue) {
                 if (self.modelType() === 'form') {
-                    var module_choices = self._modules_by_app[newValue];
-                    self.setModules(module_choices);
+                    var moduleChoices = self._modules_by_app[newValue];
+                    self.setModules(moduleChoices);
                     self.selectedFormData({});
                     self.setForms();
                 } else {
-                    var case_type_choices = self._case_types_by_app[newValue];
-                    self.setCaseTypes(case_type_choices);
-                    self.hasNoCaseTypes(_.isEmpty(case_type_choices));
+                    var caseTypeChoices = self._case_types_by_app[newValue];
+                    self.setCaseTypes(caseTypeChoices);
+                    self.hasNoCaseTypes(_.isEmpty(caseTypeChoices));
                 }
             } else {
                 self.caseType('');
@@ -180,8 +180,8 @@ hqDefine("export/js/create_export", function () {
         });
         self.module.subscribe(function (newValue) {
             if (newValue) {
-                var form_choices = self._forms_by_app_by_module[self.application()][newValue];
-                self.setForms(form_choices);
+                var formChoices = self._forms_by_app_by_module[self.application()][newValue];
+                self.setForms(formChoices);
             } else {
                 self.form('');
             }
