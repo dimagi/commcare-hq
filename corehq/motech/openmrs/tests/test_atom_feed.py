@@ -72,14 +72,14 @@ class GetPatientUuidTests(SimpleTestCase):
         xml = re.sub(r'<content.*</content>', '', self.feed_xml, flags=re.DOTALL)
         feed_elem = etree.XML(xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
-        with self.assertRaisesRegex(ValueError, r'^patient UUID not found$'):
+        with self.assertRaisesRegex(ValueError, r'^Patient UUID not found$'):
             get_patient_uuid(entry_elem)
 
     def test_bad_cdata(self):
         xml = re.sub(r'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4', 'mary-mallon', self.feed_xml)
         feed_elem = etree.XML(xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
-        with self.assertRaisesRegex(ValueError, r'^patient UUID not found$'):
+        with self.assertRaisesRegex(ValueError, r'^Patient UUID not found$'):
             get_patient_uuid(entry_elem)
 
     def test_success(self):

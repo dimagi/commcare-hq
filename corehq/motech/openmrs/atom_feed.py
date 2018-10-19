@@ -30,14 +30,15 @@ UuidUpdatedAt = namedtuple('UuidUpdatedAt', 'uuid updated_at')
 _assert = soft_assert(['@'.join(('nhooper', 'dimagi.com'))])
 
 
-def get_patient_feed_xml(requests, page):
+def get_feed_xml(requests, feed_name, page):
     if not page:
         # If this is the first time the patient feed is polled, just get
         # the most recent changes. This shows updating patients
         # successfully, but does not replay all OpenMRS changes.
         page = 'recent'
-    patient_feed_url = '/ws/atomfeed/patient/' + page
-    resp = requests.get(patient_feed_url)
+    assert feed_name in ('patient', 'encounter')
+    feed_url = '/'.join(('/ws/atomfeed', feed_name, page))
+    resp = requests.get(feed_url)
     root = etree.fromstring(resp.content)
     return root
 
@@ -85,10 +86,33 @@ def get_patient_uuid(element):
         matches = pattern.search(cdata)
         if matches:
             return matches.group(1)
-    raise ValueError('patient UUID not found')
+    raise ValueError('Patient UUID not found')
 
 
-def get_updated_patients(repeater):
+def get_encounter_uuid(element):
+    """
+    Extracts the UUID of a patient from an entry's "content" node.
+
+    >>> element = etree.XML('''<entry>
+    ...     <content type="application/vnd.atomfeed+xml">
+    ...         <![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]>
+    ...     </content>
+    ... </entry>''')
+    >>> get_encounter_uuid(element) == '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
+    True
+
+    """
+    content = element.xpath("./*[local-name()='content']")
+    pattern = re.compile(r'/bahmniencounter/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b')
+    if content and len(content) == 1:
+        cdata = content[0].text
+        matches = pattern.search(cdata)
+        if matches:
+            return matches.group(1)
+    raise ValueError('Encounter UUID not found')
+
+
+def get_feed_updates(repeater, feed_name):
     """
     Iterates over a paginated atom feed, yields patients updated since
     repeater.patients_last_polled_at, and updates the repeater.
@@ -96,6 +120,7 @@ def get_updated_patients(repeater):
     def has_new_entries_since(last_polled_at, element, xpath='./atom:updated'):
         return not last_polled_at or get_timestamp(element, xpath) > last_polled_at
 
+    assert feed_name in ('patient', 'encounter')
     requests = Requests(
         repeater.domain,
         repeater.url,
@@ -103,23 +128,27 @@ def get_updated_patients(repeater):
         repeater.password,
         verify=repeater.verify
     )
-    # The OpenMRS Atom Feed's timestamps are timezone-aware. So when we
+    if feed_name == 'patient':
+        last_polled_at = repeater.patients_last_polled_at
+        page = repeater.patients_last_page
+    else:
+        last_polled_at = repeater.encounters_last_polled_at
+        page = repeater.encounters_last_page
+    # The OpenMRS Atom feeds' timestamps are timezone-aware. So when we
     # compare timestamps in has_new_entries_since(), this timestamp
     # must also be timezone-aware. repeater.patients_last_polled_at is
     # set to a UTC timestamp (datetime.utcnow()), but the timezone gets
     # dropped because it is stored as a jsonobject DateTimeProperty.
     # This sets it as a UTC timestamp again:
-    last_polled_at = pytz.utc.localize(repeater.patients_last_polled_at) \
-        if repeater.patients_last_polled_at else None
-    page = repeater.patients_last_page
+    last_polled_at = pytz.utc.localize(last_polled_at) if last_polled_at else None
     try:
         while True:
-            feed_xml = get_patient_feed_xml(requests, page)
+            feed_xml = get_feed_xml(requests, feed_name, page)
             if has_new_entries_since(last_polled_at, feed_xml):
                 for entry in feed_xml.xpath('./atom:entry', namespaces={'atom': 'http://www.w3.org/2005/Atom'}):
                     if has_new_entries_since(last_polled_at, entry, './atom:published'):
                         yield UuidUpdatedAt(
-                            get_patient_uuid(entry),
+                            get_patient_uuid(entry) if feed_name == 'patient' else get_encounter_uuid(entry),
                             get_timestamp(entry)
                         )
             next_page = feed_xml.xpath(
@@ -142,8 +171,12 @@ def get_updated_patients(repeater):
         # Don't update repeater if OpenMRS is offline
         return
     else:
-        repeater.patients_last_polled_at = datetime.utcnow()
-        repeater.patients_last_page = page
+        if feed_name == 'patient':
+            repeater.patients_last_polled_at = datetime.utcnow()
+            repeater.patients_last_page = page
+        else:
+            repeater.encounters_last_polled_at = datetime.utcnow()
+            repeater.encounters_last_page = page
         repeater.save()
 
 
