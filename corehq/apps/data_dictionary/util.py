@@ -26,18 +26,16 @@ def generate_data_dictionary(domain):
     return True
 
 
-def _get_all_case_properties(domain, case_types=None):
+def _get_all_case_properties(domain):
     # moved here to avoid circular import
     from corehq.apps.export.models.new import CaseExportDataSchema
 
     case_type_to_properties = {}
     case_properties_from_apps = all_case_properties_by_domain(
-        domain, case_types=case_types, include_parent_properties=False
+        domain, case_types=None, include_parent_properties=False
     )
 
-    if case_types is None:
-        case_types = get_case_types_from_apps(domain)
-    for case_type in case_types:
+    for case_type in get_case_types_from_apps(domain):
         properties = set()
         schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
 
