@@ -60,7 +60,8 @@ branches:
   - pv/no-filter-reports # Preethi Sept 28
   - pv/deac-users-fixes # Preethi Sept 28
 #  - rn_correct_datefilter_of_ucr # rohit Oct 14
-  - rn_test_report_export # rohit #oct 16 
+  - rn_test_report_export # rohit #oct 16
+  - qa-customer-billing # Gabriella Oct 19
 submodules:
   submodules/django-digest-src:
     branches: []
