@@ -81,21 +81,20 @@
                 </p>
                 <p data-bind="text: description"></p>
 
-                <div data-bind="if: !isLocationSafeForUser()" class="text-warning">
+                <div data-bind="ifnot: isLocationSafeForUser()" class="text-warning">
                     {% blocktrans %}
                         This export is filtered to data you don't have access to.
                     {% endblocktrans %}
                 </div>
 
-                <p class="text-warning" data-bind="if: !_.isEmpty(emailedExport) && !isAutoRebuildEnabled()">
+                <p class="text-warning" data-bind="if: hasEmailedExport && !isAutoRebuildEnabled()">
                     <i class="fa fa-exclamation-triangle"></i>
                     {% blocktrans %}
                         Automatic updates for this saved {{ export_type }} have been disabled. Click 'Enable'
                         to re-enable automatic updates.
                     {% endblocktrans %}
                 </p>
-                <div class="alert alert-neutral alert-small"
-                     data-bind="visible: !_.isEmpty(emailedExport) && isLocationSafeForUser()">
+                <div class="alert alert-neutral alert-small" data-bind="if: hasEmailedExport && isLocationSafeForUser()">
                     <div class="h5">
                         <span data-bind="if: emailedExport.hasFile()">
                             <strong>{% trans "Size:" %}</strong>
@@ -113,7 +112,7 @@
                             <span data-bind="text: emailedExport.fileData.lastAccessed()"></span>
                         </span>
                         &nbsp;&nbsp;
-                        <div data-bind="if: isLocationSafeForUser">
+                        <div data-bind="if: isLocationSafeForUser()">
                             <button type="button"
                                     class="btn btn-default btn-xs"
                                     data-bind="
@@ -216,7 +215,7 @@
                                                 <strong>Once the data is updated, a data refresh should occur automatically on a daily basis.</strong>
                                             {% endblocktrans %}
                                         </p>
-                                        <p data-bind="if: !isDailySaved()">
+                                        <p data-bind="ifnot: isDailySaved()">
                                             {% blocktrans %}
                                                 To download data now, please click the Export button instead.
                                             {% endblocktrans %}
@@ -224,7 +223,7 @@
                                         <p data-bind="if: isDailySaved() && isFeed()">
                                             To export data now, please copy the dashboard feed link instead.
                                         </p>
-                                        <p data-bind="if: !isFeed()">
+                                        <p data-bind="ifnot: isFeed()">
                                             To export data now, please click the Download button instead.
                                         </p>
                                     </div>
@@ -265,7 +264,7 @@
                                             <span data-bind="if: isAutoRebuildEnabled()">
                                                 {% trans "Disable auto update" %}
                                             </span>
-                                            <span data-bind="if: !isAutoRebuildEnabled()">
+                                            <span data-bind="ifnot: isAutoRebuildEnabled()">
                                                 {% trans "Enable auto update" %}
                                             </span>
                                         </button>
@@ -287,7 +286,7 @@
 
             <td>
                 {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                    <div data-bind="if: can_edit">
+                    <div data-bind="if: can_edit()">
                         <div data-bind="if: isLocationSafeForUser">
                             <a data-bind="attr: {href: editUrl}" class="btn btn-default">
                                 <i class="fa fa-pencil"></i>
@@ -296,7 +295,7 @@
                             </a>
                         </div>
                     </div>
-                    <div data-bind="if: !can_edit()">
+                    <div data-bind="ifnot: can_edit()">
                         <div data-bind="if: isLocationSafeForUser">
                             {% if MY_EXPORTS %}
                                 <a class="btn btn-default disabled">
