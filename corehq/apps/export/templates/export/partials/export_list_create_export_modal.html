@@ -16,9 +16,9 @@
                     <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
                 </div>
                 <div class="modal-body" data-bind="visible: showDrilldown">
-                    <div class="alert alert-warning" data-bind="visible: formSubmissionError">
+                    <div class="alert alert-warning" data-bind="visible: drilldownSubmissionError">
                         <i class="fa fa-exclamation-triangle"></i>
-                        <strong data-bind="text: formSubmissionError"></strong>
+                        <strong data-bind="text: drilldownSubmissionError"></strong>
                         <p>
                             If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.
                         </p>
@@ -57,7 +57,7 @@
                         </div>
                      </div>
                 </div>
-                <div class="modal-body" data-bind="visible: isSubmittingForm">
+                <div class="modal-body" data-bind="visible: isSubmitting">
                     <p class="lead">
                         <i class="fa fa-spinner fa-spin"></i>
                         {% blocktrans %}
@@ -71,10 +71,10 @@
                         {% endblocktrans %}
                     </p>
                 </div>
-                <div class="modal-body" data-bind="visible: formLoadError">
+                <div class="modal-body" data-bind="visible: drilldownLoadError">
                     <div class="alert alert-warning">
                         <i class="fa fa-exclamation-triangle"></i>
-                        <span data-bind="text: formLoadError"></span>
+                        <span data-bind="text: drilldownLoadError"></span>
                     </div>
                     <p>
                         {% blocktrans %}
@@ -101,7 +101,7 @@
                     <button type="button"
                             class="btn btn-default"
                             data-dismiss="modal"
-                            data-bind="disabled: isSubmittingForm">{% trans 'Cancel' %}</button>
+                            data-bind="disabled: isSubmitting">{% trans 'Cancel' %}</button>
                     <button type="submit"
                             class="btn btn-success"
                             data-bind="visible: showSubmit, disable: disableSubmit">
