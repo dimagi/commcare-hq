@@ -482,8 +482,7 @@ def get_case_properties(app, case_types, defaults=(), include_parent_properties=
                                         include_parent_properties=include_parent_properties,
                                         exclude_invalid_properties=exclude_invalid_properties,
                                         traverse_apps=traverse_apps)
-    properties = builder.get_case_property_map(case_types)
-    return properties
+    return builder.get_case_property_map(case_types)
 
 
 @quickcache(vary_on=['app.get_id'])
@@ -492,7 +491,7 @@ def get_all_case_properties(app):
 
 
 def get_all_case_properties_for_case_type(domain, case_type):
-    return all_case_properties_by_domain(domain, [case_type]).get(case_type, [])
+    return all_case_properties_by_domain(domain).get(case_type, [])
 
 
 @quickcache(vary_on=['app.get_id'])
@@ -506,21 +505,19 @@ def get_usercase_properties(app):
     return {USERCASE_TYPE: []}
 
 
-def all_case_properties_by_domain(domain, case_types=None, include_parent_properties=True):
+def all_case_properties_by_domain(domain, include_parent_properties=True):
     result = defaultdict(set)
-    get_case_types_from_apps = case_types is None
+    per_type_defaults = get_per_type_defaults(domain)
 
     for app in all_apps_by_domain(domain):
         if app.is_remote_app():
             continue
 
-        if get_case_types_from_apps:
-            case_types = app.get_case_types()
-
-        property_map = get_case_properties(
-            app, case_types, defaults=('name',),
+        builder = ParentCasePropertyBuilder(
+            app, defaults=('name'), per_type_defaults=per_type_defaults,
             include_parent_properties=include_parent_properties, traverse_apps=False
         )
+        property_map = builder.get_properties_by_case_type()
 
         for case_type, properties in six.iteritems(property_map):
             result[case_type].update(properties)

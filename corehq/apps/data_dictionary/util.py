@@ -32,7 +32,7 @@ def _get_all_case_properties(domain):
 
     case_type_to_properties = {}
     case_properties_from_apps = all_case_properties_by_domain(
-        domain, case_types=None, include_parent_properties=False
+        domain, include_parent_properties=False
     )
 
     for case_type in get_case_types_from_apps(domain):
