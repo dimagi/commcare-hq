@@ -3,9 +3,6 @@ from __future__ import unicode_literals
 
 import six
 
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.util import get_table_name
-
 from custom.icds_reports.utils.aggregation import BaseICDSAggregationHelper, transform_day_to_month, month_formatter
 
 
@@ -14,12 +11,6 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
 
     def __init__(self, day):
         self.day = day
-
-    @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
 
     def _tablename_func(self):
         return "{}_{}".format(self.base_tablename, self.day.strftime("%Y-%m-%d"))
