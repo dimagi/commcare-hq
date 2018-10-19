@@ -171,20 +171,21 @@ class InvoiceTemplate(object):
             while len(items) > 0:
                 items_to_draw = items[12:]
                 items = items[:12]
-                self.draw_header()
-                self.draw_table(items)
-                self.canvas.showPage()
-                self.canvas.save()
+                if len(items) <= 4:
+                    self.draw_table_and_footer(items)
+                else:
+                    self.draw_header()
+                    self.draw_table(items)
+                    if len(items_to_draw) == 0:
+                        self.canvas.showPage()
+                        self.canvas.save()
+                        self.draw_totals_on_new_page()
+                    else:
+                        self.canvas.showPage()
+                        self.canvas.save()
                 items = items_to_draw
-            self.draw_totals_on_new_page()
         else:
-            self.draw_header()
-            if not self.is_wire or self.is_prepayment:
-                self.draw_table(self.items)
-            self.draw_totals(totals_x=inches(5.85), line_height=inches(0.25), subtotal_y=inches(3.5))
-            self.draw_footer()
-            self.canvas.showPage()
-            self.canvas.save()
+            self.draw_table_and_footer(self.items)
 
     def draw_logo(self):
         self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
@@ -558,6 +559,15 @@ class InvoiceTemplate(object):
         ]), ParagraphStyle(''))
         payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
         payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))
+
+    def draw_table_and_footer(self, items):
+        self.draw_header()
+        if not self.is_wire or self.is_prepayment:
+            self.draw_table(items)
+        self.draw_totals(totals_x=inches(5.85), line_height=inches(0.25), subtotal_y=inches(3.5))
+        self.draw_footer()
+        self.canvas.showPage()
+        self.canvas.save()
 
     def draw_totals_on_new_page(self):
         self.canvas.setStrokeColor(STROKE_COLOR)
