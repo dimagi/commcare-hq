@@ -617,6 +617,7 @@ class AggAwcDaily(models.Model):
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_params = helper.aggregation_query()
         daily_attendance_query, daily_params = helper.aggregation_daily_attendance_query()
+        indexes_query = helper.indexes()
 
         with get_cursor(cls) as cursor:
             cursor.execute(helper.drop_table_query())
@@ -626,6 +627,8 @@ class AggAwcDaily(models.Model):
             for iterator in range(4, 0, -1):
                 rollup_query, rollup_params = helper.rollup_query(iterator)
                 cursor.execute(rollup_query, rollup_params)
+            for index_query in indexes_query:
+                cursor.execute(index_query)
 
 
 class DailyAttendance(models.Model):
