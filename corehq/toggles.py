@@ -654,6 +654,14 @@ CASE_LIST_EXPLORER = StaticToggle(
     save_fn=_enable_search_index,
 )
 
+EXPLORE_CASE_DATA = StaticToggle(
+    'explore_case_data',
+    'Show the Explore Case Data report (in dev)',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
@@ -894,6 +902,16 @@ CUSTOM_INSTANCES = StaticToggle(
     description=(
         'Enables the insertion of custom instances into a case list configuration. '
         'Currently used by SimPrints-integrated projects.'
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+CUSTOM_ASSERTIONS = StaticToggle(
+    'custom_assertions',
+    'Inject custom assertions into the suite',
+    TAG_SOLUTIONS,
+    description=(
+        'Enables the insertion of custom assertions into the suite file. '
     ),
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1622,16 +1640,10 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-SEARCH_DEACTIVATED_USERS = StaticToggle(
-    'search_deactivated_users',
-    'Allow for searching by deactivating users in form and case reports and exports',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
     'filter_on_groups_and_locations',
-    'Filter on groups AND locations in all reports with group and location filters',
+    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
+    'ONSE domain with group and location filters',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='For reports filtered by groups and locations, change the OR logic to an AND, so that '

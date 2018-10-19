@@ -47,7 +47,7 @@ from corehq.apps.data_interfaces.models import (
     DomainCaseRuleRun,
 )
 from corehq.apps.domain.models import Domain, TransferDomainRequest
-from corehq.apps.export.models.new import DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
+from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
@@ -532,7 +532,6 @@ class TestDeleteDomain(TestCase):
 
     def _assert_export_counts(self, domain_name, count):
         self._assert_queryset_count([
-            DailySavedExportNotification.objects.filter(domain=domain_name),
             DataFile.meta_query(domain_name),
             EmailExportWhenDoneRequest.objects.filter(domain=domain_name),
         ], count)
@@ -541,7 +540,6 @@ class TestDeleteDomain(TestCase):
         blobdb = get_blob_db()
         data_files = []
         for domain_name in [self.domain.name, self.domain2.name]:
-            DailySavedExportNotification.objects.create(domain=domain_name)
             data_files.append(DataFile.save_blob(
                 BytesIO((domain_name + " csv").encode('utf-8')),
                 domain=domain_name,
@@ -888,8 +886,3 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
-
-    def test_assert_sql_domain(self):
-        self.domain.delete()
-        with self.assertRaises(AssertionError):
-            call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)

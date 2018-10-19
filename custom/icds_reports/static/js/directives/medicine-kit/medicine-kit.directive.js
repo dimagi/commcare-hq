@@ -8,8 +8,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     var vm = this;
     vm.label = "AWCs Reported Medicine Kit";
     vm.steps = {
-        'map': {route: '/medicine_kit/map', label: 'Map View'},
-        'chart': {route: '/medicine_kit/chart', label: 'Chart View'},
+        'map': {route: '/awc_infrastructure/medicine_kit/map', label: 'Map View'},
+        'chart': {route: '/awc_infrastructure/medicine_kit/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',

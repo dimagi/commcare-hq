@@ -5,7 +5,6 @@ import time
 
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 
-from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
@@ -14,6 +13,7 @@ from .interface import PillowProcessor
 
 def identity(x):
     return x
+
 
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
@@ -38,9 +38,13 @@ class ElasticProcessor(PillowProcessor):
         doc = change.get_document()
 
         ensure_document_exists(change)
-        ensure_matched_revisions(change)
+        ensure_matched_revisions(change, doc)
 
         if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
+            return
+
+        if doc.get('doc_type') is not None and doc['doc_type'].endswith("-Deleted"):
+            self._delete_doc_if_exists(change.id)
             return
 
         # prepare doc for es

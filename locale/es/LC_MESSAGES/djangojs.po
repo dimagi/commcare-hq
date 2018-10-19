@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-09-25 21:08+0000\n"
+"POT-Creation-Date: 2018-10-16 21:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -101,7 +101,7 @@ msgstr "Por favor ingrese un correo electrónico válido."
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:76
-#: corehq/apps/locations/static/locations/js/location_types.js:365
+#: corehq/apps/locations/static/locations/js/location_types.js:367
 msgid "You have unsaved changes."
 msgstr "Tiene cambios sin guardar."
 
@@ -128,15 +128,25 @@ msgstr ""
 "Vaya, ocurrió un problema al cargar esta sección. Por favor intente otra "
 "vez. "
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:96
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:45
+#, fuzzy
+#| msgid "Select File"
+msgid "Select All"
+msgstr "Seleccionar Archivo"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:45
+msgid "<span class='label label-default'>"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:105
 msgid "Application name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:106
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:115
 msgid "Invalid Project Selected"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:109
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:118
 msgid "Project name is required"
 msgstr ""
 
@@ -585,10 +595,8 @@ msgid "[unknown]"
 msgstr "[desconocido]"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js:5
-#, fuzzy
-#| msgid "Relevant"
 msgid "Releases"
-msgstr "Relevante"
+msgstr "Publicaciones"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:25
 msgid "You have unsaved changes to your application profiles"
@@ -610,17 +618,17 @@ msgstr "Seleccione un usuario"
 msgid "(Default)"
 msgstr "(Predeterminado)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:369
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:372
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Lo sentimos, eso no se envió. Por favor cargue nuevamente su página e "
 "intente de nuevo"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:403
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:406
 msgid "The versions list has changed since you loaded the page."
 msgstr "La lista de versiones ha cambiado desde que cargó la página."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:408
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:411
 msgid "No new changes!"
 msgstr "¡No hay nuevos cambios!"
 
@@ -2197,7 +2205,7 @@ msgid "Case Type"
 msgstr "Tipo de Caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:67
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:72
 msgid "Case ID"
 msgstr "ID del Caso"
 
@@ -2625,61 +2633,60 @@ msgid ""
 "continue?"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:164
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:168
 msgid "Case Reassignment (via HQ)"
 msgstr "Reasignación de Caso (vía HQ)"
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:172
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:176
 msgid "Search for users or groups"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:23
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:25
 msgid "<a href='<%= link %>'>Click here</a> if you are not redirected."
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:63
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:68
 msgid "Find Case"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:64
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:69
 msgid "IDs can be found in a <a href=\"<%= url %>\">case data export</a>"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:68
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:73
 msgid "Case found!"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:69
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:74
 msgid "Could not find case"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:73
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:79
 msgid "Find Form Submission"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:74
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:80
 msgid "IDs can be found in a <a href=\"<%= url %>\">form data export</a>"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:77
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:83
 msgid "Could not find form submission"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:78
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:84
 msgid "Form Submission ID"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:79
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:85
 msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:446
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:464
+#: corehq/apps/users/static/users/js/mobile_workers.js:29
 msgid "Issue communicating with server. Try again."
 msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:40
+#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:48
 msgid "Sorry, it looks like the upload failed."
 msgstr "Lo sentimos, parece que la carga falló."
 
@@ -2751,7 +2758,7 @@ msgstr "El archivo de datos URL fue copiado al portapapeles."
 msgid "Data file deleted."
 msgstr "Archivo de datos borrado."
 
-#: corehq/apps/export/static/export/js/list_exports.ng.js:104
+#: corehq/apps/export/static/export/js/list_exports.ng.js:85
 msgid "Download Requested"
 msgstr "Descarga Solicitada"
 
@@ -2942,7 +2949,8 @@ msgstr ""
 msgid "We could not turn off the new feature. Please try again later."
 msgstr "No pudimos apagar la nueva función. Por favor intente más tarde."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:82
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler_v3.js:82
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler_v4.js:99
 msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""
@@ -3032,17 +3040,17 @@ msgstr ""
 msgid "Error saving user"
 msgstr "Error al guardar el usuario"
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:299
+#: corehq/apps/locations/static/locations/js/location_tree.js:301
 msgid "You have successfully archived the location <%=name%>"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:302
+#: corehq/apps/locations/static/locations/js/location_tree.js:304
 msgid ""
 "You have successfully deleted the location <%=name%> and all of its child "
 "locations"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:305
+#: corehq/apps/locations/static/locations/js/location_tree.js:307
 msgid ""
 "An error occurred while deleting your location. If the problem persists, "
 "please report an issue"
@@ -3188,8 +3196,12 @@ msgid "That do not have phone numbers"
 msgstr "Que no tengan números de teléfono"
 
 #: corehq/apps/reports/static/reports/js/hq_report.js:70
+#, fuzzy
+#| msgid ""
+#| "Your requested excel report will be sent to the email address defined in "
+#| "your account settings."
 msgid ""
-"Your requested excel report will be sent to the email address defined in "
+"Your requested Excel report will be sent to the email address defined in "
 "your account settings."
 msgstr ""
 "El reporte de Excel que solicitó será enviado al correo electrónico definido "
@@ -3304,6 +3316,10 @@ msgstr "Falló"
 msgid "Failed to re-process"
 msgstr "Reproceso fallido"
 
+#: corehq/apps/reports/static/reports/v2/js/views/case_search.js:55
+msgid "add column"
+msgstr ""
+
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
@@ -3357,6 +3373,10 @@ msgstr "(filtrado de _MAX_ total de contactos)"
 #: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:120
 msgid "There was an error fetching the SMS rate."
 msgstr "Se produjo un error al buscar la tarifa de SMS."
+
+#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:154
+msgid "Please Select a Country Code"
+msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js:28
 msgid "Delete Translation"
@@ -3516,37 +3536,21 @@ msgstr "El nombre de usuario está disponible."
 msgid "Sorry, there was an issue communicating with the server."
 msgstr "Lo sentimos, ocurrió un problema al comunicarnos con el servidor."
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:474
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:433
 msgid "Username"
 msgstr "Nombre de Usuario"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:475
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:434
 msgid "First Name"
 msgstr "Nombre"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:476
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:435
 msgid "Last Name"
 msgstr "Apellido"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:477
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:436
 msgid "Status"
 msgstr "Estatus"
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:482
-msgid "Show 10 Mobile Workers"
-msgstr "Mostrar 10 Usuarios Móviles"
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:483
-msgid "Show 25 Mobile Workers"
-msgstr "Mostrar 25 Usuarios Móviles"
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:484
-msgid "Show 50 Mobile Workers"
-msgstr "Mostrar 50 Usuarios Móviles"
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:485
-msgid "Show 100 Mobile Workers"
-msgstr "Mostrar 100 Usuarios Móviles"
 
 #: corehq/apps/users/static/users/js/roles.js:117
 msgid "New Role"
@@ -3853,5 +3857,14 @@ msgstr ""
 msgid "Search Locations..."
 msgstr ""
 
-#~ msgid "Publish"
-#~ msgstr "Publicar"
+#~ msgid "Show 10 Mobile Workers"
+#~ msgstr "Mostrar 10 Usuarios Móviles"
+
+#~ msgid "Show 25 Mobile Workers"
+#~ msgstr "Mostrar 25 Usuarios Móviles"
+
+#~ msgid "Show 50 Mobile Workers"
+#~ msgstr "Mostrar 50 Usuarios Móviles"
+
+#~ msgid "Show 100 Mobile Workers"
+#~ msgstr "Mostrar 100 Usuarios Móviles"
