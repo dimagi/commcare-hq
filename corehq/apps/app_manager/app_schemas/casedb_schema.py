@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq import toggles
-from corehq.apps.app_manager.app_schemas.case_properties import get_shared_case_types, \
-    ParentCasePropertyBuilder, get_usercase_properties
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
+    get_usercase_properties
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import is_usercase_in_use
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
@@ -15,10 +15,9 @@ def get_casedb_schema(form):
     """
     app = form.get_app()
     base_case_type = form.get_module().case_type if form.requires_case() else None
-    case_types = app.get_case_types() | get_shared_case_types(app)
     builder = ParentCasePropertyBuilder.for_app(app, ['case_name'], include_parent_properties=False)
-    related = builder.get_parent_type_map(case_types)
-    map = builder.get_case_property_map(case_types)
+    related = builder.get_parent_type_map(None)
+    map = builder.get_properties_by_case_type()
     descriptions_dict = get_case_property_description_dict(app.domain)
 
     if base_case_type:

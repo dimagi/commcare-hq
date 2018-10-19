@@ -541,17 +541,6 @@ def get_per_type_defaults(domain):
     return per_type_defaults
 
 
-def get_shared_case_types(app):
-    shared_case_types = set()
-
-    if app.case_sharing:
-        apps = get_case_sharing_apps_in_domain(app.domain, app.id)
-        for app in apps:
-            shared_case_types |= set(chain(*[m.get_case_types() for m in app.get_modules()]))
-
-    return shared_case_types
-
-
 @quickcache(['domain'])
 def _get_usercase_default_properties(domain):
     from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
