@@ -177,28 +177,24 @@ class ApplicationDataRMIHelper(object):
     APP_TYPE_NONE = 'no_app'
     APP_TYPE_UNKNOWN = 'unknown'
 
-    def __init__(self, domain, user, as_dict=True, form_placeholders=None,
-                 case_placeholders=None, form_labels=None):
+    def __init__(self, domain, user, as_dict=True):
         self.domain = domain
         self.user = user
         self.as_dict = as_dict
-        default_form_labels = AppFormRMIPlaceholder(
+        self.form_labels = AppFormRMIPlaceholder(
             application=_("Application"),
             module=_("Menu"),
             form=_("Form"),
         )
-        self.form_labels = form_labels or default_form_labels
-        default_form_placeholder = AppFormRMIPlaceholder(
+        self.form_placeholders = AppFormRMIPlaceholder(
             application=_("Select Application"),
             module=_("Select Menu"),
             form=_("Select Form"),
         )
-        self.form_placeholders = form_placeholders or default_form_placeholder
-        default_case_placeholder = AppCaseRMIPlaceholder(
+        self.case_placeholders = AppCaseRMIPlaceholder(
             application=_("Select Application"),
             case_type=_("Select Case Type"),
         )
-        self.case_placeholders = case_placeholders or default_case_placeholder
         if self.as_dict:
             self.form_labels = self.form_labels._asdict()
             self.form_placeholders = self.form_placeholders._asdict()
