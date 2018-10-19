@@ -46,8 +46,8 @@ class OpenmrsRepeater(CaseRepeater):
     # owner is set to the first CommCareUser instance found at that
     # location.
     atom_feed_enabled = BooleanProperty(default=False)
-    atom_feed_last_polled_at = DateTimeProperty(default=None)
-    atom_feed_last_page = StringProperty(default=None)
+    patients_last_polled_at = DateTimeProperty(default=None)
+    patients_last_page = StringProperty(default=None)
 
     def __eq__(self, other):
         return (

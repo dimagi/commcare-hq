@@ -91,7 +91,7 @@ def get_patient_uuid(element):
 def get_updated_patients(repeater):
     """
     Iterates over a paginated atom feed, yields patients updated since
-    repeater.atom_feed_last_polled_at, and updates the repeater.
+    repeater.patients_last_polled_at, and updates the repeater.
     """
     def has_new_entries_since(last_polled_at, element, xpath='./atom:updated'):
         return not last_polled_at or get_timestamp(element, xpath) > last_polled_at
@@ -105,13 +105,13 @@ def get_updated_patients(repeater):
     )
     # The OpenMRS Atom Feed's timestamps are timezone-aware. So when we
     # compare timestamps in has_new_entries_since(), this timestamp
-    # must also be timezone-aware. repeater.atom_feed_last_polled_at is
+    # must also be timezone-aware. repeater.patients_last_polled_at is
     # set to a UTC timestamp (datetime.utcnow()), but the timezone gets
     # dropped because it is stored as a jsonobject DateTimeProperty.
     # This sets it as a UTC timestamp again:
-    last_polled_at = pytz.utc.localize(repeater.atom_feed_last_polled_at) \
-        if repeater.atom_feed_last_polled_at else None
-    page = repeater.atom_feed_last_page
+    last_polled_at = pytz.utc.localize(repeater.patients_last_polled_at) \
+        if repeater.patients_last_polled_at else None
+    page = repeater.patients_last_page
     try:
         while True:
             feed_xml = get_patient_feed_xml(requests, page)
@@ -142,8 +142,8 @@ def get_updated_patients(repeater):
         # Don't update repeater if OpenMRS is offline
         return
     else:
-        repeater.atom_feed_last_polled_at = datetime.utcnow()
-        repeater.atom_feed_last_page = page
+        repeater.patients_last_polled_at = datetime.utcnow()
+        repeater.patients_last_page = page
         repeater.save()
 
 

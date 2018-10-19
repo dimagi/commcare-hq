@@ -540,7 +540,7 @@ start of the feed. A `<link rel="next-archive" ...` tag indicates that
 there is a next page.
 
 MOTECH stores the last page number polled in the
-`OpenmrsRepeater.atom_feed_last_page` property. When it polls again, it
+`OpenmrsRepeater.patients_last_page` property. When it polls again, it
 starts at this page, and iterates "next-archive" links until all have
 been fetched.
 
