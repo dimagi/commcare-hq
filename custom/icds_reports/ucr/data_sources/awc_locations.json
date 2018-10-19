@@ -483,6 +483,103 @@
             "name": "state_id"
           }
         }
+      },
+      {
+        "display_name": null,
+        "datatype": "small_integer",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "state_is_test",
+        "expression": {
+          "value_expression": {
+            "type": "named",
+            "name": "is_test"
+          },
+          "type": "related_doc",
+          "related_doc_type": "Location",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "state_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "datatype": "small_integer",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "district_is_test",
+        "expression": {
+          "value_expression": {
+            "type": "named",
+            "name": "is_test"
+          },
+          "type": "related_doc",
+          "related_doc_type": "Location",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "district_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "datatype": "small_integer",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "block_is_test",
+        "expression": {
+          "value_expression": {
+            "type": "named",
+            "name": "is_test"
+          },
+          "type": "related_doc",
+          "related_doc_type": "Location",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "block_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "datatype": "small_integer",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "supervisor_is_test",
+        "expression": {
+          "value_expression": {
+            "type": "named",
+            "name": "is_test"
+          },
+          "type": "related_doc",
+          "related_doc_type": "Location",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "supervisor_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "datatype": "small_integer",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "awc_is_test",
+        "expression": {
+          "type": "named",
+          "name": "is_test"
+        }
       }
     ],
     "description": "",
@@ -521,6 +618,29 @@
           "name": "district_id"
         },
         "type": "location_parent_id"
+      },
+      "is_test": {
+        "type": "conditional",
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "metadata",
+              "is_test_location"
+            ]
+          },
+          "type": "boolean_expression",
+          "property_value": "test"
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "1"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "0"
+        }
       }
     },
     "referenced_doc_type": "Location",

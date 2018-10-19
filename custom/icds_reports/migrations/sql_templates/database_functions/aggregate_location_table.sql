@@ -29,7 +29,12 @@ BEGIN
      district_map_location_name,
      state_map_location_name,
      aww_name,
-     contact_phone_number
+     contact_phone_number,
+     state_is_test,
+     district_is_test,
+     block_is_test,
+     supervisor_is_test,
+     awc_is_test
     )
     (SELECT ' ||
     quote_nullable(all_text) || ', ' ||
@@ -50,12 +55,21 @@ BEGIN
     '4, ' ||
     'block_map_location_name, ' ||
     'district_map_location_name, ' ||
-    'state_map_location_name, NULL, NULL FROM awc_location GROUP BY ' ||
+    'state_map_location_name,' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'state_is_test, ' ||
+    'district_is_test, ' ||
+    'block_is_test, ' ||
+    'supervisor_is_test, ' ||
+    '0 ' ||
+    'FROM awc_location GROUP BY ' ||
     'supervisor_id, supervisor_name, supervisor_site_code, ' ||
     'block_id, block_name, block_site_code,' ||
     'district_id, district_name, district_site_code,' ||
     'state_id, state_name, state_site_code, ' ||
-    'block_map_location_name, district_map_location_name, state_map_location_name ' ||
+    'block_map_location_name, district_map_location_name, state_map_location_name, ' ||
+    'state_is_test, district_is_test, block_is_test, supervisor_is_test' ||
     ')';
 
   EXECUTE 'INSERT INTO awc_location 
@@ -80,7 +94,12 @@ BEGIN
      district_map_location_name,
      state_map_location_name,
      aww_name,
-     contact_phone_number
+     contact_phone_number,
+     state_is_test,
+     district_is_test,
+     block_is_test,
+     supervisor_is_test,
+     awc_is_test
     )
     (SELECT ' ||
     quote_nullable(all_text) || ', ' ||
@@ -101,11 +120,20 @@ BEGIN
     '3, ' ||
     'block_map_location_name, ' ||
     'district_map_location_name, ' ||
-    'state_map_location_name, NULL, NULL FROM awc_location GROUP BY ' ||
+    'state_map_location_name, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'state_is_test, ' ||
+    'district_is_test, ' ||
+    'block_is_test, ' ||
+    '0, ' ||
+    '0 ' ||
+    'FROM awc_location GROUP BY ' ||
     'block_id, block_name, block_site_code,' ||
     'district_id, district_name, district_site_code,' ||
     'state_id, state_name, state_site_code, ' ||
-    'block_map_location_name, district_map_location_name, state_map_location_name ' ||
+    'block_map_location_name, district_map_location_name, state_map_location_name, ' ||
+    'state_is_test, district_is_test, block_is_test' ||
     ')';
 
   EXECUTE 'INSERT INTO awc_location 
@@ -130,7 +158,12 @@ BEGIN
      district_map_location_name,
      state_map_location_name,
      aww_name,
-     contact_phone_number
+     contact_phone_number,
+     state_is_test,
+     district_is_test,
+     block_is_test,
+     supervisor_is_test,
+     awc_is_test
     )
     (SELECT ' ||
     quote_nullable(all_text) || ', ' ||
@@ -151,10 +184,19 @@ BEGIN
     '2, ' ||
     quote_nullable(null_value) || ', ' ||
     'district_map_location_name, ' ||
-    'state_map_location_name, NULL, NULL FROM awc_location GROUP BY ' ||
+    'state_map_location_name,' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'state_is_test, ' ||
+    'district_is_test, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0 ' ||
+    'FROM awc_location GROUP BY ' ||
     'district_id, district_name, district_site_code,' ||
     'state_id, state_name, state_site_code, ' ||
-    'district_map_location_name, state_map_location_name ' ||
+    'district_map_location_name, state_map_location_name, ' ||
+    'state_is_test, district_is_test' ||
     ')';
 
   EXECUTE 'INSERT INTO awc_location 
@@ -179,7 +221,12 @@ BEGIN
      district_map_location_name,
      state_map_location_name,
      aww_name,
-     contact_phone_number
+     contact_phone_number,
+     state_is_test,
+     district_is_test,
+     block_is_test,
+     supervisor_is_test,
+     awc_is_test
     )
     (SELECT ' ||
     quote_nullable(all_text) || ', ' ||
@@ -200,8 +247,17 @@ BEGIN
     '1, ' ||
     quote_nullable(null_value) || ', ' ||
     quote_nullable(null_value) || ', ' ||
-    'state_map_location_name, NULL, NULL FROM awc_location GROUP BY ' ||
-    'state_id, state_name, state_site_code, state_map_location_name ' ||
+    'state_map_location_name,' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'state_is_test, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0 ' ||
+    'FROM awc_location GROUP BY ' ||
+    'state_id, state_name, state_site_code, state_map_location_name, ' ||
+    'state_is_test' ||
     ')';
 END;
 $BODY$

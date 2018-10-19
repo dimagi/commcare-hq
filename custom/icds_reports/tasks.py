@@ -294,21 +294,20 @@ def icds_aggregation_task(self, date, func):
         return
 
     celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
-    func(date)
-    # try:
-    #     func(date)
-    # except Error as exc:
-    #     notify_exception(
-    #         None, message="Error occurred during ICDS aggregation",
-    #         details={'func': func.__name__, 'date': date, 'error': exc}
-    #     )
-    #     _dashboard_team_soft_assert(
-    #         False,
-    #         "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
-    #             func.__name__, settings.SERVER_ENVIRONMENT, date
-    #         )
-    #     )
-    #     self.retry(exc=exc)
+    try:
+        func(date)
+    except Error as exc:
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'error': exc}
+        )
+        _dashboard_team_soft_assert(
+            False,
+            "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
+                func.__name__, settings.SERVER_ENVIRONMENT, date
+            )
+        )
+        self.retry(exc=exc)
 
     celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
 
