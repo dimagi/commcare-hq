@@ -269,12 +269,11 @@ class ParentCasePropertyBuilder(object):
     Full functionality is documented in the individual methods.
 
     """
-    def __init__(self, domain, apps, defaults=(), per_type_defaults=None,
-                 include_parent_properties=True, exclude_invalid_properties=False):
+    def __init__(self, domain, apps, defaults=(), include_parent_properties=True,
+                 exclude_invalid_properties=False):
         self.domain = domain
         self.apps = apps
         self.defaults = defaults
-        self.per_type_defaults = per_type_defaults or {}
         self.include_parent_properties = include_parent_properties
         self.exclude_invalid_properties = exclude_invalid_properties
 
@@ -287,7 +286,6 @@ class ParentCasePropertyBuilder(object):
         return cls(app.domain,
                    apps,
                    defaults=defaults,
-                   per_type_defaults=get_per_type_defaults(app.domain),
                    include_parent_properties=include_parent_properties,
                    exclude_invalid_properties=exclude_invalid_properties)
 
@@ -297,7 +295,6 @@ class ParentCasePropertyBuilder(object):
         return cls(domain,
                    apps,
                    defaults=('name',),
-                   per_type_defaults=get_per_type_defaults(domain),
                    include_parent_properties=include_parent_properties,
                    exclude_invalid_properties=False)
 
@@ -382,7 +379,8 @@ class ParentCasePropertyBuilder(object):
         - the app given
         - all other case sharing apps if app.case_sharing
         - the Data Dictionary case properties if toggles.DATA_DICTIONARY
-        - the `defaults` and `per_type_defaults` passed in to the class
+        - the `defaults` passed in to the class
+        - the `per_type_defaults` for usercases and call center cases, if applicable
 
         Notably, it propagates parent/<property> on a child up to the <property> on the parent,
         and, only if `include_parent_properties` was not passed in as False to the class,
@@ -398,7 +396,7 @@ class ParentCasePropertyBuilder(object):
 
         _zip_update(case_properties_by_case_type, self._get_all_case_updates())
 
-        _zip_update(case_properties_by_case_type, self.per_type_defaults)
+        _zip_update(case_properties_by_case_type, get_per_type_defaults(self.domain))
 
         if toggles.DATA_DICTIONARY.enabled(self.domain):
             _zip_update(case_properties_by_case_type, get_data_dict_props_by_case_type(self.domain))
@@ -527,18 +525,18 @@ def all_case_properties_by_domain(domain, include_parent_properties=True):
     }
 
 
-def get_per_type_defaults(domain, case_types=None):
+def get_per_type_defaults(domain):
     """Get default properties for callcenter and usercases"""
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
     per_type_defaults = {}
-    if (not case_types and is_usercase_in_use(domain)) or USERCASE_TYPE in case_types:
+    if is_usercase_in_use(domain):
         per_type_defaults = {
             USERCASE_TYPE: _get_usercase_default_properties(domain)
         }
 
     callcenter_case_type = get_call_center_case_type_if_enabled(domain)
-    if callcenter_case_type and (not case_types or callcenter_case_type in case_types):
+    if callcenter_case_type:
         per_type_defaults[callcenter_case_type] = _get_usercase_default_properties(domain)
 
     return per_type_defaults
