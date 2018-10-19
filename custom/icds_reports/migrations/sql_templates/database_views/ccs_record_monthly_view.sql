@@ -49,7 +49,7 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."institutional_delivery_in_month" AS "institutional_delivery_in_month",
         "ccs_record_monthly"."is_ebf" AS "is_ebf",
         "ccs_record_monthly"."last_date_thr" AS "last_date_thr",
-        "awc_location_months"."contact_phone_number" AS "contact_phone_number",
+        "ccs_record_monthly"."mobile_number" AS "mobile_number",
         "ccs_record_monthly"."num_anc_complete" AS "num_anc_complete",
         "ccs_record_monthly"."num_pnc_visits" AS "num_pnc_visits",
         "ccs_record_monthly"."num_rations_distributed" AS "num_rations_distributed",

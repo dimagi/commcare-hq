@@ -2499,7 +2499,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     trimester: null,
                     person_name: null,
                     age: null,
-                    contact_phone_number: null,
+                    mobile_number: null,
                     edd: null,
                     opened_on: null,
                     preg_order: null,

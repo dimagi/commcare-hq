@@ -1145,12 +1145,12 @@ def get_pregnant_details(case_id, awc_id):
         awc_id=awc_id,
         month__gte=ten_months_ago,
     ).order_by('home_visit_date', '-month').distinct('home_visit_date').values(
-        'case_id', 'trimester', 'person_name', 'age_in_months', 'contact_phone_number', 'edd', 'opened_on',
-        'preg_order', 'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe',
-        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision',
-        'convulsions', 'rupture', 'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation',
-        'counsel_fp_vid', 'counsel_immediate_conception', 'counsel_accessible_postpartum_fp',
-        'counsel_fp_methods', 'using_ifa', 'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month'
+        'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
+        'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
+        'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
+        'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
+        'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
+        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month'
     )
 
     config = {
@@ -1169,7 +1169,7 @@ def get_pregnant_details(case_id, awc_id):
                 trimester=row_data['trimester'],
                 person_name=row_data['person_name'],
                 age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
-                contact_phone_number=row_data['contact_phone_number'],
+                mobile_number=row_data['mobile_number'],
                 edd=row_data['edd'],
                 opened_on=row_data['opened_on'],
                 preg_order=row_data['preg_order'],
