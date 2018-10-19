@@ -96,21 +96,6 @@ class TimingMiddleware(object):
         return response
 
 
-class LogLongRequestMiddleware(MiddlewareMixin):
-
-    def process_request(self, request):
-        request._profile_starttime = datetime.datetime.utcnow()
-
-    def process_response(self, request, response):
-        if hasattr(request, '_profile_starttime'):
-            duration = datetime.datetime.utcnow() - request._profile_starttime
-            if duration > datetime.timedelta(minutes=10):
-                notify_exception(request, "Request took a very long time.", details={
-                    'duration': duration.total_seconds(),
-                })
-        return response
-
-
 class TimeoutMiddleware(MiddlewareMixin):
 
     @staticmethod
