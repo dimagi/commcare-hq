@@ -42,7 +42,7 @@ class DataValueMap(DocumentSchema):
 class DataSetMap(Document):
     # domain and UCR uniquely identify a DataSetMap
     domain = StringProperty()
-    ucr_id = StringProperty()
+    ucr_id = StringProperty()  # UCR ReportConfig id
 
     description = StringProperty()
     frequency = StringProperty(choices=SEND_FREQUENCIES, default=SEND_FREQUENCY_MONTHLY)
