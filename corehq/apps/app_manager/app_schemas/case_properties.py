@@ -9,7 +9,6 @@ from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_case_sharing_apps_in_domain
 from corehq.apps.app_manager.util import is_usercase_in_use, all_apps_by_domain
-from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 import six
@@ -380,6 +379,7 @@ class ParentCasePropertyBuilder(object):
 
         :return: {<case_type>: set([<property>])} for all case types found
         """
+        from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
         case_properties_by_case_type = defaultdict(set)
 
         _zip_update(case_properties_by_case_type, self._get_all_case_updates())
