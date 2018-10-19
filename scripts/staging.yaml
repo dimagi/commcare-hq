@@ -63,7 +63,6 @@ branches:
   - rn_test_report_export # rohit #oct 16
   - qa-customer-billing # Gabriella Oct 19
   - jls/ko-exports-create  # Jenny Oct 19
-  - jls/ko-exports-list  # Jenny Oct 19
 submodules:
   submodules/django-digest-src:
     branches: []
