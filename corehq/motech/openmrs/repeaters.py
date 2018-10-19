@@ -51,11 +51,27 @@ class OpenmrsRepeater(CaseRepeater):
     encounters_last_polled_at = DateTimeProperty(default=None)
     encounters_last_page = StringProperty(default=None)
 
+    def __init__(self, *args, **kwargs):
+        super(OpenmrsRepeater, self).__init__(*args, **kwargs)
+        self._requests = None
+
     def __eq__(self, other):
         return (
             isinstance(other, self.__class__) and
             self.get_id == other.get_id
         )
+
+    @property
+    def requests(self):
+        if self._requests is None:
+            self._requests = Requests(
+                self.domain,
+                self.url,
+                self.username,
+                self.plaintext_password,
+                verify=self.verify
+            )
+        return self._requests
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -129,7 +145,7 @@ class OpenmrsRepeater(CaseRepeater):
         form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(
-            Requests(self.domain, self.url, self.username, self.plaintext_password, verify=self.verify),
+            self.requests,
             self.domain,
             payload,
             self.openmrs_config,

@@ -22,7 +22,6 @@ from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.openmrs.const import XMLNS_OPENMRS, OPENMRS_ATOM_FEED_DEVICE_ID
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
-from corehq.motech.requests import Requests
 from corehq.util.soft_assert import soft_assert
 
 
@@ -121,13 +120,6 @@ def get_feed_updates(repeater, feed_name):
         return not last_polled_at or get_timestamp(element, xpath) > last_polled_at
 
     assert feed_name in ('patient', 'encounter')
-    requests = Requests(
-        repeater.domain,
-        repeater.url,
-        repeater.username,
-        repeater.password,
-        verify=repeater.verify
-    )
     if feed_name == 'patient':
         last_polled_at = repeater.patients_last_polled_at
         page = repeater.patients_last_page
@@ -143,7 +135,7 @@ def get_feed_updates(repeater, feed_name):
     last_polled_at = pytz.utc.localize(last_polled_at) if last_polled_at else None
     try:
         while True:
-            feed_xml = get_feed_xml(requests, feed_name, page)
+            feed_xml = get_feed_xml(repeater.requests, feed_name, page)
             if has_new_entries_since(last_polled_at, feed_xml):
                 for entry in feed_xml.xpath('./atom:entry', namespaces={'atom': 'http://www.w3.org/2005/Atom'}):
                     if has_new_entries_since(last_polled_at, entry, './atom:published'):
@@ -249,14 +241,7 @@ def update_patient(repeater, patient_uuid, updated_at):
         )
     )
     case_type = repeater.white_listed_case_types[0]
-    requests = Requests(
-        repeater.domain,
-        repeater.url,
-        repeater.username,
-        repeater.password,
-        verify=repeater.verify
-    )
-    patient = get_patient_by_uuid(requests, patient_uuid)
+    patient = get_patient_by_uuid(repeater.requests, patient_uuid)
     case, error = importer_util.lookup_case(
         EXTERNAL_ID,
         patient_uuid,
