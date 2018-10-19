@@ -269,17 +269,19 @@ class ParentCasePropertyBuilder(object):
     Full functionality is documented in the individual methods.
 
     """
-    def __init__(self, app, defaults=(), per_type_defaults=None, include_parent_properties=True,
-            exclude_invalid_properties=False):
+    def __init__(self, app, defaults=(), per_type_defaults=None,
+                 include_parent_properties=True, exclude_invalid_properties=False,
+                 traverse_apps=True):
         self.app = app
         self.defaults = defaults
+        self.traverse_apps = traverse_apps
         self.per_type_defaults = per_type_defaults or {}
         self.include_parent_properties = include_parent_properties
         self.exclude_invalid_properties = exclude_invalid_properties
 
     def _get_relevant_apps(self):
         apps = [self.app]
-        if self.app.case_sharing:
+        if self.traverse_apps and self.app.case_sharing:
             apps.extend(self._get_other_case_sharing_apps_in_domain())
         return apps
 
@@ -474,11 +476,12 @@ def get_parent_type_map(app, if_multiple_parents_arbitrarily_pick_one=False):
 
 
 def get_case_properties(app, case_types, defaults=(), include_parent_properties=True,
-        exclude_invalid_properties=False):
+                        exclude_invalid_properties=False, traverse_apps=True):
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults,
                                         include_parent_properties=include_parent_properties,
-                                        exclude_invalid_properties=exclude_invalid_properties)
+                                        exclude_invalid_properties=exclude_invalid_properties,
+                                        traverse_apps=traverse_apps)
     properties = builder.get_case_property_map(case_types)
     return properties
 
@@ -514,8 +517,10 @@ def all_case_properties_by_domain(domain, case_types=None, include_parent_proper
         if get_case_types_from_apps:
             case_types = app.get_case_types()
 
-        property_map = get_case_properties(app, case_types,
-            defaults=('name',), include_parent_properties=include_parent_properties)
+        property_map = get_case_properties(
+            app, case_types, defaults=('name',),
+            include_parent_properties=include_parent_properties, traverse_apps=False
+        )
 
         for case_type, properties in six.iteritems(property_map):
             result[case_type].update(properties)
@@ -527,6 +532,7 @@ def all_case_properties_by_domain(domain, case_types=None, include_parent_proper
 
 
 def get_per_type_defaults(domain, case_types=None):
+    """Get default properties for callcenter and usercases"""
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
     per_type_defaults = {}
