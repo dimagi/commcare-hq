@@ -202,15 +202,15 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
     def indexes(self):
         col_indx1 = '(state_id, district_id, block_id, supervisor_id, awc_id)'
         indexes = [
-            'CREATE INDEX {tablename}_indx1 ON {tablename} {col_indx1}'.format(
+            'CREATE INDEX "{tablename}_indx1" ON "{tablename}" ({col_indx1})'.format(
                 tablename=self.tablename,
                 col_indx1=col_indx1
             ),
-            'CREATE INDEX {tablename}_indx2 ON {tablename} (date)'.format(tablename=self.tablename),
-            'CREATE INDEX {tablename}_indx3 ON {tablename} (awc_id)'.format(tablename=self.tablename),
-            'CREATE INDEX {tablename}_indx4 ON {tablename} (supervisor_id)'.format(tablename=self.tablename),
-            'CREATE INDEX {tablename}_indx5 ON {tablename} (block_id)'.format(tablename=self.tablename),
-            'CREATE INDEX {tablename}_indx6 ON {tablename} (district_id)'.format(tablename=self.tablename),
-            'CREATE INDEX {tablename}_indx7 ON {tablename} (aggregation_level)'.format(tablename=self.tablename),
+            'CREATE INDEX "{tablename}_indx2" ON "{tablename}" (date)'.format(tablename=self.tablename),
+            'CREATE INDEX "{tablename}_indx3" ON "{tablename}" (awc_id)'.format(tablename=self.tablename),
+            'CREATE INDEX "{tablename}_indx4" ON "{tablename}" (supervisor_id)'.format(tablename=self.tablename),
+            'CREATE INDEX "{tablename}_indx5" ON "{tablename}" (block_id)'.format(tablename=self.tablename),
+            'CREATE INDEX "{tablename}_indx6" ON "{tablename}" (district_id)'.format(tablename=self.tablename),
+            'CREATE INDEX "{tablename}_indx7" ON "{tablename}" (aggregation_level)'.format(tablename=self.tablename),
         ]
         return indexes
