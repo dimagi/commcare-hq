@@ -368,7 +368,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
         # TODO - remove if
         if isinstance(xml, six.text_type):
-            xml = xml.encode('utf-8', errors='replace')
+            xml = xml.encode('utf-8', errors='replace')  # TODO - remove errors
 
         return etree.fromstring(xml)
 
