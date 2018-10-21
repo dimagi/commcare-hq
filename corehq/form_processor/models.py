@@ -315,7 +315,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         from corehq.form_processor.utils.metadata import scrub_form_meta
         xml = self.get_xml()
         try:
-            form_json = convert_xform_to_json(xml)
+            form_json = convert_xform_to_json(xml.encode('utf-8'))
         except XMLSyntaxError:
             return {}
         # we can assume all sql domains are new timezone domains
