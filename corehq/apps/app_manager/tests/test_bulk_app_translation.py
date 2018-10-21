@@ -452,13 +452,16 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
             mod1_sheet = []
             for translation in sheet[1]:
-                # translate name, remove all other detail translations
+                # translate name, and one prop, remove all other detail translations
                 if translation[1] == 'detail':
                     if translation[0] == 'name':
                         new_trans = list(translation)
                         new_trans[2] = 'English Name'
                         new_trans[3] = 'French Name'
                         mod1_sheet.append(new_trans)
+                    if translation[0] == 'other-prop (ID Mapping Text)':
+                        mod1_sheet.append(
+                            ('other-prop (ID Mapping Text)', 'detail', 'New Value!', 'Autre Prop'))
                     continue
                 mod1_sheet.append(translation)
 
@@ -468,7 +471,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             module.case_details.long.columns[0].header, {'en': 'English Name', 'fra': 'French Name'}
         )
         self.assertEqual(
-            module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
+            module.case_details.long.columns[1].header, {'en': 'New Value!', 'fra': 'Autre Prop'}
         )
 
     @flag_enabled('ICDS')
