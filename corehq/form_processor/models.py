@@ -366,6 +366,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if not xml:
             return None
 
+        # TODO - remove if
         if isinstance(xml, six.text_type):
             xml = xml.encode('utf-8', errors='replace')
 
