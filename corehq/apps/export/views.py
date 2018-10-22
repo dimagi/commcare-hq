@@ -91,7 +91,6 @@ from corehq.apps.export.dbaccessors import (
     get_case_exports_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
@@ -333,20 +332,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         raise NotImplementedError("Must return a list of export filter objects")
-
-    @allow_remote_invocation
-    def get_group_options(self, in_data):
-        """Returns list of groups for the group filters
-        :param in_data: dict passed by the  angular js controller.
-        :return: {
-            'success': True,
-            'groups': [<..list of groups..>],
-        }
-        """
-        groups = [{'id': g._id, 'text': g.name} for g in Group.get_reporting_groups(self.domain)]
-        return format_angular_success({
-            'groups': groups,
-        })
 
     @allow_remote_invocation
     def poll_custom_export_download(self, in_data):
