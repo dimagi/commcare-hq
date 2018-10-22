@@ -32,7 +32,7 @@
                     <button type="button" class="btn btn-default" data-dismiss="modal" data-bind="disabled: isSubmittingForm">
                         {% trans 'Cancel' %}
                     </button>
-                    <button type="submit" class="btn btn-success" data-bind="visible: !isSubmittingForm()">
+                    <button type="submit" class="btn btn-success" data-bind="visible: !isSubmittingForm(), disable: disableSubmit">
                         {% trans "Save filters"%}
                     </button>
                     <button class="btn btn-default" disabled data-bind="visible: isSubmittingForm()">

@@ -188,8 +188,18 @@ hqDefine("export/js/export_list", function () {
         self.emwfFormFilter = ko.observableArray();
         self.dateRange = ko.observable();
         self.days = ko.observable();
-        self.startDate = ko.observable();
-        self.endDate = ko.observable();
+        self.startDate = ko.observable().extend({
+            pattern: {
+                message: gettext('Invalid date format'),
+                params: '^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$',
+            },
+        });
+        self.endDate = ko.observable().extend({
+            pattern: {
+                message: gettext('Invalid date format'),
+                params: '^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$',
+            },
+        });
 
         // Editing filters for a saved export
         self.selectedExportModelType = ko.observable();
@@ -230,16 +240,21 @@ hqDefine("export/js/export_list", function () {
         self.showDays = ko.computed(function () {
             return self.dateRange() === 'lastn';
         });
-        self.showDateRange = ko.computed(function () {
+        self.showStartDate = ko.computed(function () {
+            return self.dateRange() === 'range' || self.dateRange() === 'since';
+        });
+        self.showEndDate = ko.computed(function () {
             return self.dateRange() === 'range';
         });
-        self.dateRange.subscribe(function (newValue) {
-            // TODO: test
-            if (!newValue) {
-                self.dateRange("since");
-            } else {
-                self.formSubmitErrorMessage('');
-            }
+        self.startDateHasError = ko.computed(function () {
+            return !self.startDate.isValid();
+        });
+        self.endDateHasError = ko.computed(function () {
+            return !self.endDate.isValid();
+        });
+        self.disableSubmit = ko.computed(function () {
+            return self.showStartDate() && self.startDateHasError()
+                || self.showEndDate() && self.endDateHasError();
         });
         self.commitFilters = function () {
             var export_ = _.find(self.exports, function (e) { return e.id() === self.filterModalExportId(); });
