@@ -309,9 +309,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         """
         return []
 
-    def _get_selected_user_types(self, mobile_user_and_groups_slugs=None):
-        return self.cleaned_data['user_types']
-
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
         :param export: FormExportSchema instance or CaseExportSchema instance
@@ -1002,9 +999,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             self.cleaned_data['date_range'],
         )
 
-    def _get_selected_user_types(self, mobile_user_and_group_slugs):
-        return self._get_mapped_user_types(self._get_selected_es_user_types(mobile_user_and_group_slugs))
-
     def _get_mapped_user_types(self, selected_user_types):
         user_types = []
         if HQUserType.ACTIVE in selected_user_types:
@@ -1030,7 +1024,9 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         export user types.
         """
         es_user_types = []
-        export_user_types = self._get_selected_user_types(mobile_user_and_groups_slugs)
+        export_user_types = self._get_mapped_user_types(
+            self._get_selected_es_user_types(mobile_user_and_group_slugs)
+        )
         export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
         for type_ in export_user_types:
             es_user_types.extend(export_to_es_user_types_map[type_])
