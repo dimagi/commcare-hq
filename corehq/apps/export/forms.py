@@ -655,24 +655,6 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
     def get_form_filter(self):
         raise NotImplementedError
 
-    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
-        """These are the kwargs for the Multimedia Download task,
-        specific only to forms.
-        """
-        datespan = self.cleaned_data['date_range']
-        return {
-            'domain': self.domain_object.name,
-            'startdate': datespan.startdate.isoformat(),
-            'enddate': (datespan.enddate + timedelta(days=1)).isoformat(),
-            'app_id': export.app_id,
-            'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
-            'export_id': export.get_id,
-            'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
-            'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
-            'group': self.data['group'],
-            'download_id': download_id
-        }
-
     def format_export_data(self, export):
         export_data = super(GenericFilterFormExportDownloadForm, self).format_export_data(export)
         export_data.update({
@@ -1073,11 +1055,24 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
 
-    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs):
-        kwargs = (super(EmwfFilterFormExport, self)
-                  .get_multimedia_task_kwargs(export, download_id, mobile_user_and_group_slugs))
-        kwargs['export_is_legacy'] = False
-        return kwargs
+    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
+        """These are the kwargs for the Multimedia Download task,
+        specific only to forms.
+        """
+        datespan = self.cleaned_data['date_range']
+        return {
+            'domain': self.domain_object.name,
+            'startdate': datespan.startdate.isoformat(),
+            'enddate': (datespan.enddate + timedelta(days=1)).isoformat(),
+            'app_id': export.app_id,
+            'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
+            'export_id': export.get_id,
+            'export_is_legacy': False,
+            'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
+            'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
+            'group': self.data['group'],
+            'download_id': download_id
+        }
 
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDownloadForm):
