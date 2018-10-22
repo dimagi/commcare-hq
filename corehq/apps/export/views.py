@@ -31,6 +31,7 @@ from corehq.apps.locations.permissions import location_safe, location_restricted
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter
 from corehq.apps.reports.views import should_update_export
+from corehq.apps.reports.models import HQUserType
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
@@ -241,6 +242,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             'show_date_range': self.show_date_range,
             'check_for_multimedia': self.check_for_multimedia,
             'is_sms_export': self.sms_export,
+            'user_types': HQUserType.human_readable
         }
         if (
             self.default_datespan.startdate is not None
