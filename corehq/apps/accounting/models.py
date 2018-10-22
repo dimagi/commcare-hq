@@ -3077,7 +3077,7 @@ class CreditLine(ValidateModelMixin, models.Model):
             web_user=web_user,
         )
         credit_adjustment.save()
-        self.balance += amount
+        self.balance = F('balance') + amount
         self.save()
 
     @classmethod
