@@ -38,11 +38,7 @@ from corehq.apps.reports.util import (
     datespan_from_beginning,
 )
 from corehq.apps.hqwebapp.crispy import B3MultiField, CrispyTemplate
-from corehq.apps.hqwebapp.widgets import (
-    Select2MultipleChoiceWidget,
-    DateRangePickerWidget,
-    Select2AjaxV3,
-)
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2AjaxV3
 from corehq.pillows import utils
 
 from crispy_forms.bootstrap import InlineField
@@ -55,49 +51,6 @@ from dimagi.utils.dates import DateSpan
 from corehq.util import flatten_non_iterable_list
 
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
-
-
-class UserTypesField(forms.MultipleChoiceField):
-    _USER_MOBILE = 'mobile'
-    _USER_DEMO = 'demo_user'
-    _USER_WEB = 'web'
-    _USER_UNKNOWN = 'unknown'
-    _USER_SUPPLY = 'supply'
-
-    _USER_TYPES_CHOICES = [
-        (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
-        (_USER_DEMO, ugettext_lazy("Demo User")),
-        (_USER_WEB, ugettext_lazy("Web Users")),
-        (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
-        (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
-    ]
-
-    widget = Select2MultipleChoiceWidget
-
-    def __init__(self, *args, **kwargs):
-        if len(args) == 0 and "choices" not in kwargs:  # choices is the first arg, and a kwarg
-            kwargs['choices'] = self._USER_TYPES_CHOICES
-        super(UserTypesField, self).__init__(*args, **kwargs)
-
-    def clean(self, value):
-        """
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        es_user_types = []
-        export_user_types = super(UserTypesField, self).clean(value)
-        export_to_es_user_types_map = {
-            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
-            self._USER_DEMO: [utils.DEMO_USER_TYPE],
-            self._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-            ],
-            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-        }
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
 
 
 class DateSpanField(forms.CharField):
