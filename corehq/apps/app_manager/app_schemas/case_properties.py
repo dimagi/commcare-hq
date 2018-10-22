@@ -291,7 +291,7 @@ class ParentCasePropertyBuilder(object):
 
     @classmethod
     def for_domain(cls, domain, include_parent_properties=True):
-        apps = [app for app in all_apps_by_domain(domain) if app.is_remote_app()]
+        apps = [app for app in all_apps_by_domain(domain) if not app.is_remote_app()]
         return cls(domain,
                    apps,
                    defaults=('name',),
