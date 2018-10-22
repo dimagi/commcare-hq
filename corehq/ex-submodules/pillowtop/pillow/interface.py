@@ -356,8 +356,9 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         unique = []
         for change in reversed(changes_chunk):
             if change.id not in seen:
-                unique.insert(0, change)
+                unique.append(change)
                 seen.add(change.id)
+        unique.reverse()
         return unique
 
 
