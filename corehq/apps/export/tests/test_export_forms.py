@@ -95,11 +95,6 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
         self.assertFalse(form.is_valid())
 
 
-class TestBaseFilterExportDownloadForm(SimpleTestCase):
-    def test_skip_layout_default(self):
-        self.assertFalse(BaseFilterExportDownloadForm.skip_layout)
-
-
 class TestEmwfFilterFormExport(TestCase):
     form = EmwfFilterFormExport
     filter = form.dynamic_filter_class
@@ -113,7 +108,6 @@ class TestEmwfFilterFormExport(TestCase):
     def test_attributes(self):
         self.export_filter = self.subject(self.domain, pytz.utc)
 
-        self.assertTrue(self.export_filter.skip_layout)
         self.assertEqual(self.subject.export_user_filter, FormSubmittedByFilter)
         self.assertEqual(self.subject.dynamic_filter_class, SubmitHistoryFilter)
 
@@ -199,7 +193,6 @@ class TestEmwfFilterFormExportFilters(TestCase):
     def test_attributes(self):
         export_filter = self.subject(self.domain, pytz.utc)
 
-        self.assertTrue(export_filter.skip_layout)
         self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
         self.assertEqual(export_filter.dynamic_filter_class, SubmitHistoryFilter)
 
@@ -389,7 +382,6 @@ class TestFilterCaseESExportDownloadForm(TestCase):
     def test_attributes(self, *patches):
         self.export_filter = self.subject(self.domain, pytz.utc)
 
-        self.assertTrue(self.export_filter.skip_layout)
         self.assertEqual(self.export_filter.export_user_filter, OwnerFilter)
         self.assertEqual(self.export_filter.dynamic_filter_class, CaseListFilter)
 

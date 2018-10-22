@@ -294,7 +294,7 @@ class BaseFilterExportDownloadForm(forms.Form):
     }
 
     # To be used by subclasses when rendering their own layouts using filters and extra_fields
-    skip_layout = False
+    skip_layout = True
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
@@ -1061,7 +1061,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
-        self.skip_layout = True
         super(EmwfFilterFormExport, self).__init__(domain_object, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
@@ -1143,7 +1142,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
         self.timezone = timezone
-        self.skip_layout = True
         super(FilterCaseESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
@@ -1203,7 +1201,6 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
         self.timezone = timezone
-        self.skip_layout = True
         super(FilterSmsESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
