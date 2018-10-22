@@ -67,7 +67,6 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
 
     def test_good_data(self):
         data = {
-            'type_or_group': 'group',
             'date_range': 'range',
             'start_date': '1992-01-30',
             'end_date': '2016-10-01',
@@ -77,7 +76,6 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
 
     def test_missing_fields(self):
         data = {
-            'type_or_group': 'group',
             'date_range': 'range',
             'start_date': '1992-01-30',
         }
@@ -86,7 +84,6 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
 
     def test_bad_dates(self):
         data = {
-            'type_or_group': 'group',
             'date_range': 'range',
             'start_date': '1992-01-30',
             'end_date': 'banana',
