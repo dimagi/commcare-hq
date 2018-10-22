@@ -12,7 +12,6 @@ from io import open
 TEST_DOMAIN = 'test-domain'
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseExclusionTest(TestCase):
     """
     Tests the exclusion of device logs from case processing

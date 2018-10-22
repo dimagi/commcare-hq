@@ -9,7 +9,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from io import open
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class MultiCaseTest(TestCase):
 
     def setUp(self):
