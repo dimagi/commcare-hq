@@ -32,6 +32,7 @@ class TestXmlMixin(TestFileMixin):
         if normalize:
             expected = parse_normalize(expected)
             actual = parse_normalize(actual)
+        print(expected == actual)
         _check_shared(expected, actual, LXMLOutputChecker(), "xml")
 
     def assertXmlHasXpath(self, element, xpath):

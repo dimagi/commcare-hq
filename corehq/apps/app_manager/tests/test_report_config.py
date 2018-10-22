@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
+from collections import OrderedDict
 from xml.etree import cElementTree as ElementTree
 from django.test import SimpleTestCase, TestCase
 import mock
@@ -142,10 +143,10 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                         )],
                     )
                 },
-                filters={
-                    'computed_owner_name_40cc88a0_1': MobileSelectFilter(),
-                    'fav_fruit_abc123_1': MobileSelectFilter()
-                },
+                filters=OrderedDict([
+                    ('fav_fruit_abc123_1', MobileSelectFilter()),
+                    ('computed_owner_name_40cc88a0_1', MobileSelectFilter()),
+                ]),
                 uuid=cls.report_config_uuid,
             )
         )
