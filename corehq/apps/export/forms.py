@@ -252,6 +252,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         }
 
 
+# TODO
 def _date_help_text(field):
     return """
         <small class="label label-default">{fmt}</small>
@@ -300,13 +301,13 @@ class DashboardFeedFilterForm(forms.Form):
     start_date = forms.DateField(
         label=ugettext_lazy("Begin Date"),
         required=False,
-        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}), # TODO: ng-pattern
         help_text=_date_help_text("start_date")
     )
     end_date = forms.DateField(
         label=ugettext_lazy("End Date"),
         required=False,
-        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}), # TODO: ng-pattern
         help_text=_date_help_text("end_date"),
     )
 
@@ -363,46 +364,44 @@ class DashboardFeedFilterForm(forms.Form):
             crispy.Div(
                 crispy.Field(
                     'emwf_case_filter',
-                    # ng_model='formData.emwf_case_filter',
-                    # ng_model_options="{ getterSetter: true }",
                 ),
-                ng_show="modelType === 'case'"
+                data_bind="visible: showEmwfCaseFilter",
             ),
             crispy.Div(
                 crispy.Field(
                     'emwf_form_filter',
-                    # ng_model='formData.emwf_form_filter',
-                    # ng_model_options="{ getterSetter: true }",
                 ),
-                ng_show="modelType === 'form'"
+                data_bind="visible: showEmwfFormFilter",
             ),
             crispy.Field(
                 'date_range',
-                ng_model='formData.date_range',
-                ng_required='true',
+                data_bind='value: dateRange',
+                #ng_required='true',    # TODO
             ),
             crispy.Div(
-                crispy.Field("days", ng_model="formData.days"),
-                ng_show="formData.date_range === 'lastn'"
+                crispy.Field("days", data_bind="value: days"),
+                data_bind="visible: showDays",
             ),
             crispy.Div(
                 crispy.Field(
                     "start_date",
-                    ng_model="formData.start_date",
-                    ng_required="formData.date_range === 'since' || formData.date_range === 'range'"
+                    data_bind="value: startDate",
+                    #ng_required="formData.date_range === 'since' || formData.date_range === 'range'"   # TODO
                 ),
-                ng_show="formData.date_range === 'range' || formData.date_range === 'since'",
-                ng_class=
-                    "{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
+                data_bind="visible: showDateRange",
+                # TODO
+                #ng_class=
+                #    "{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
             ),
             crispy.Div(
                 crispy.Field(
                     "end_date",
-                    ng_model="formData.end_date",
-                    ng_required="formData.date_range === 'range'"
+                    data_bind="value: endDate",
+                    #ng_required="formData.date_range === 'range'"  # TODO
                 ),
-                ng_show="formData.date_range === 'range'",
-                ng_class="{'has-error': feedFiltersForm.end_date.$invalid && !feedFiltersForm.end_date.$pristine}",
+                data_bind="visible: showDateRange",
+                # TODO
+                #ng_class="{'has-error': feedFiltersForm.end_date.$invalid && !feedFiltersForm.end_date.$pristine}",
             )
         ]
 
