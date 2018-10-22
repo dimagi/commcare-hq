@@ -151,8 +151,10 @@
                         + getFilterName($scope.exportList[0].export_type) + "]")
                         .val().split(','),
                     function (item) {
-                        if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
-                        { return item; }
+                        if (item.substring(0,3) === "t__") {
+                            return userTypes[item.substring(3)];
+                        }
+                        return item;
                     }
                 ).join()});
             djangoRMI.prepare_custom_export({
