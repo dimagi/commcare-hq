@@ -293,9 +293,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         _USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
     }
 
-    # To be used by subclasses when rendering their own layouts using filters and extra_fields
-    skip_layout = True
-
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
@@ -311,43 +308,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3'
         self.helper.field_class = 'col-sm-5'
-        if not self.skip_layout:
-            self.helper.layout = Layout(
-                crispy.Field(
-                    'type_or_group',
-                    ng_model="formData.type_or_group",
-                    ng_required='false',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'user_types',
-                        ng_model='formData.user_types',
-                        ng_required='false',
-                    ),
-                    ng_show="formData.type_or_group === 'type'",
-                ),
-                crispy.Div(
-                    B3MultiField(
-                        _("Group"),
-                        crispy.Div(
-                            crispy.Div(
-                                InlineField(
-                                    'group',
-                                    ng_model='formData.group',
-                                    ng_required='false',
-                                    style="width: 98%",
-                                ),
-                                ng_show="hasGroups",
-                            ),
-                        ),
-                        CrispyTemplate('export/crispy_html/groups_help.html', {
-                            'domain': self.domain_object.name,
-                        }),
-                    ),
-                    ng_show="formData.type_or_group === 'group'",
-                ),
-                *self.extra_fields
-            )
 
     @property
     def extra_fields(self):
