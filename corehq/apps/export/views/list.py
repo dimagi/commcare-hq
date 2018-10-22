@@ -425,7 +425,7 @@ def commit_filters(request, domain):
     if not permissions.has_edit_permissions:
         raise Http404
     export_id = request.POST.get('export_id')
-    form_data = request.POST.get('form_data')
+    form_data = json.loads(request.POST.get('form_data'))
     export = get_properly_wrapped_export_instance(export_id)
     if export.is_daily_saved_export and not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
         raise Http404

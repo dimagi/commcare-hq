@@ -183,8 +183,16 @@ hqDefine("export/js/export_list", function () {
         self.$emwfCaseFilter = $("#id_emwf_case_filter");
         self.$emwfFormFilter = $("#id_emwf_form_filter");
 
+        // Data from filter form
+        self.emwfCaseFilter = ko.observableArray();
+        self.emwfFormFilter = ko.observableArray();
+        self.dateRange = ko.observable();
+        self.days = ko.observable();
+        self.startDate = ko.observable();
+        self.endDate = ko.observable();
+
         // Editing filters for a saved export
-        self.formData = {};
+        self.selectedExportModelType = ko.observable();
         self.filterModalExportId = ko.observable();
         self.locationRestrictions = ko.observableArray([]);  // List of location names. Export will be restricted to these locations.
         self.formSubmitErrorMessage = ko.observable('');
@@ -213,26 +221,37 @@ hqDefine("export/js/export_list", function () {
             self.$emwfCaseFilter.select2("data", newSelectedExport.emailedExport.filters.emwf_case_filter());
             self.$emwfFormFilter.select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter());
         });
-        // TODO
-        /*$scope.$watch("formData.date_range", function (newDateRange) {
-            if (!newDateRange) {
-                $scope.formData.date_range = "since";
+        self.showEmwfCaseFilter = ko.computed(function () {
+            return self.selectedExportModelType() === 'case';
+        });
+        self.showEmwfFormFilter = ko.computed(function () {
+            return self.selectedExportModelType() === 'form';
+        });
+        self.showDays = ko.computed(function () {
+            return self.dateRange() === 'lastn';
+        });
+        self.showDateRange = ko.computed(function () {
+            return self.dateRange() === 'range';
+        });
+        self.dateRange.subscribe(function (newValue) {
+            // TODO: test
+            if (!newValue) {
+                self.dateRange("since");
             } else {
                 self.formSubmitErrorMessage('');
             }
-        });*/
+        });
         self.commitFilters = function () {
             var export_ = _.find(self.exports, function (e) { return e.id() === self.filterModalExportId(); });
             self.isSubmittingForm(true);
 
-            // Put the data from the select2 into the formData object
-            var exportType = export_.exportType;
+            var exportType = export_.exportType();
             if (exportType === 'form') {
-                self.formData.emwf_form_filter = self.$emwfFormFilter.select2("data");
-                self.formData.emwf_case_filter = null;
+                self.emwfFormFilter(self.$emwfFormFilter.select2("data"));
+                self.emwfCaseFilter(null);
             } else if (exportType === 'case') {
-                self.formData.emwf_case_filter = self.$emwfCaseFilter.select2("data");
-                self.formData.emwf_form_filter = null;
+                self.emwfCaseFilter(self.$emwfCaseFilter.select2("data"));
+                self.emwfFormFilter(null);
             }
 
             $.ajax({
@@ -240,7 +259,14 @@ hqDefine("export/js/export_list", function () {
                 url: self.urls.commitFilters,
                 data: {
                     export_id: export_.id(),
-                    form_data: self.formData,
+                    form_data: JSON.stringify({
+                        emwf_case_filter: self.emwfCaseFilter(),
+                        emwf_form_filter: self.emwfFormFilter(),
+                        date_range: self.dateRange(),
+                        days: self.days(),
+                        start_date: self.startDate(),
+                        end_date: self.endDate(),
+                    }),
                     is_deid: self.isDeid,
                     model_type: self.modelType,
                 },
