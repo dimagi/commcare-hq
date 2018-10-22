@@ -383,7 +383,10 @@ def _transaction_sort_key_function(case):
 
         def _sortkey(transaction):
             def form_cmp(form_id):
-                return xform_ids.index(form_id) if form_id in xform_ids else sys.maxsize
+                try:
+                    return xform_ids.index(form_id)
+                except ValueError:
+                    return sys.maxsize
 
             # if the user is the same you should compare with the special logic below
             return (
