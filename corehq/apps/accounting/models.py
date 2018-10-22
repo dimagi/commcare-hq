@@ -1294,7 +1294,7 @@ class Subscription(models.Model):
         assert self.is_active
         assert date_end is None or date_end >= today
 
-        if new_plan_version.plan.at_max_domains():
+        if new_plan_version.plan.at_max_domains() and self.plan_version.plan != new_plan_version.plan:
             raise SubscriptionAdjustmentError(
                 'The maximum number of project spaces has been reached for %(new_plan_version)s. ' % {
                     'new_plan_version': new_plan_version,
