@@ -96,7 +96,12 @@
           "mar": "नांव",
           "tel": "పేరు",
           "hin": "नाम",
-          "en": "Name"
+          "en": "Name",
+          "tam": "பெயர்",
+          "lus": "Hming",
+          "pan": "ਨਾਮ",
+          "grt": "Bimung",
+          "kha": "Kyrteng"
         }
       },
       {
@@ -109,7 +114,12 @@
           "mar": "वय",
           "tel": "వయస్సు",
           "hin": "उम्र",
-          "en": "Age"
+          "en": "Age",
+          "tam": "வயது",
+          "lus": "Kum",
+          "pan": "ਉਮਰ",
+          "grt": "Bilsi",
+          "kha": "Kyrta"
         }
       },
       {
@@ -122,19 +132,34 @@
               "mar": "प्रसूति",
               "tel": "కాన్పు వివరాలు ",
               "hin": "प्रसव",
-              "en": "Delivery"
+              "en": "Delivery",
+              "tam": "பிரசவம்",
+              "lus": "Nau neih",
+              "pan": "ਡਿਲੀਵਰੀ",
+              "grt": "An·paka",
+              "kha": "Ka jingkha khyllung"
             },
             "pnc": {
               "mar": "प्रसुतीनंतरची देखभाल",
               "tel": "కాన్పు తరువాత సంరక్షణ ",
               "hin": "प्रसव के बाद देख-रेख",
-              "en": "PNC"
+              "en": "PNC",
+              "tam": "பிரவேசத்திற்கு பின் பராமரிப்பு",
+              "lus": "Nau neih hnu a in enkawl dan",
+              "pan": "ਜਣੇਪੇ ਤੋਂ ਬਾਅਦ ਜਾਂਚ",
+              "grt": "PNC",
+              "kha": "PNC"
             },
             "pregnant": {
               "mar": "गरोदर",
               "tel": "గర్భవతా",
               "hin": "गर्भवती",
-              "en": "Pregnant"
+              "en": "Pregnant",
+              "tam": "கர்ப்பிணி",
+              "lus": "Naupai",
+              "pan": "ਗਰਭਵਤੀ",
+              "grt": "An·o kegipa",
+              "kha": "Ar Met"
             }
           }
         },
@@ -145,7 +170,12 @@
           "mar": "प्रकार",
           "tel": "రకం",
           "hin": "प्रकार",
-          "en": "Type"
+          "en": "Type",
+          "tam": "வகை",
+          "lus": "Thih chhan",
+          "pan": "ਕਿਸਮ",
+          "grt": "Rokom",
+          "kha": "Ka rukom"
         },
         "aggregation": "simple"
       },
@@ -159,13 +189,23 @@
               "mar": "होय",
               "tel": "అవును",
               "hin": "हाँ",
-              "en": "Yes"
+              "en": "Yes",
+              "tam": "ஆம்",
+              "lus": "Aw",
+              "pan": "ਹਾਂ",
+              "grt": "Ong·a",
+              "kha": "Hooid"
             },
             "no": {
               "mar": "नाही",
               "tel": "కాదు",
               "hin": "नहीं",
-              "en": "No"
+              "en": "No",
+              "tam": "இல்லை",
+              "lus": "Aih",
+              "pan": "ਨਹੀਂ",
+              "grt": "Ong·ja",
+              "kha": "Em"
             }
           }
         },
@@ -176,7 +216,12 @@
           "mar": "निवासी",
           "tel": "నివాసితుడు",
           "hin": "निवासी",
-          "en": "Resident"
+          "en": "Resident",
+          "tam": "வசிப்பவர்",
+          "lus": "Chenna",
+          "pan": "ਨਿਵਾਸੀ",
+          "grt": "Songtangni",
+          "kha": "Nongshong shnong"
         },
         "aggregation": "simple"
       },
@@ -190,7 +235,12 @@
           "mar": "मृत्युची  तारीख",
           "tel": "మరణించిన తేదీ",
           "hin": "मृत्यु की तारीख",
-          "en": "Date Death"
+          "en": "Date Death",
+          "tam": "இறந்த தேதி",
+          "lus": "Thih ni",
+          "pan": "ਮੌਤ ਦੀ ਮਿਤੀ",
+          "grt": "Siani tarik",
+          "kha": "Sngi Khlad"
         }
       }
     ],
