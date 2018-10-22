@@ -147,7 +147,8 @@
             hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
                 "Export type": $scope.exportList[0].export_type,
                 "filters": _.map(
-                    $("#exportFiltersFormId input[name=" + getFilterName($scope.exportList[0].export_type) + "]")
+                    $("#exportFiltersFormId").find("input[name="
+                        + getFilterName($scope.exportList[0].export_type) + "]")
                         .val().split(','),
                     function (item) {
                         if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
