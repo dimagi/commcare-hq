@@ -162,14 +162,14 @@
                            ng-click="downloadRequested($event)"
                            class="btn btn-info btn-xs"
                            ng-show="!export.isFeed">
-                            <i class="fa fa-download"></i>
+                            <i class="fa fa-cloud-download"></i>
                             {% trans "Download" %}
                         </a>
 
                         <div class="input-group" ng-show="export.isFeed">
                             <span ng-class="{'input-group-btn': export.showLink}" ng-click="copyLinkRequested($event, export)">
                                 <a class="btn btn-info btn-sm">
-                                    <i class="fa fa-download"></i>
+                                    <i class="fa fa-clipboard"></i>
                                     {% trans "Copy Dashboard Feed Link" %}
                                 </a>
                             </span>
@@ -351,6 +351,7 @@
             <td>
                 <div ng-if="isLocationSafeForUser(export)">
                     <a href="{% angularjs %}{{ export.copyUrl }}{% endangularjs %}" class="btn btn-default">
+                        <i class="fa fa-copy"></i>
                         <span>{% trans 'Copy' %}</span>
                     </a>
                 </div>
@@ -373,6 +374,7 @@
                    ng-click="setFilterModalExport(export)"
                    ng-if="isLocationSafeForUser(export)"
                 >
+                    <i class="fa fa-filter"></i>
                     {% trans "Edit Filters" %}
                 </a>
                 {% endif %}
