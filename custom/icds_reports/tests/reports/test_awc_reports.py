@@ -2473,10 +2473,6 @@ class TestAWCReport(TestCase):
                 awc_id='a15'
             )
             self.assertEqual(
-                len(data['data']),
-                1
-            )
-            self.assertEqual(
                 data['data'][0],
                 {
                     'age': 23,
@@ -2490,6 +2486,32 @@ class TestAWCReport(TestCase):
                     'opened_on': None,
                     'person_name': None,
                     'trimester': 2,
+                }
+            )
+
+    def test_awc_report_pregnant_second_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_pregnant(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a15'
+            )
+            self.assertEqual(
+                data['data'][1],
+                {
+                    'age': 28,
+                    'anemic': 'Unknown',
+                    'beneficiary': 'Yes',
+                    'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
+                    'edd': None,
+                    'last_date_thr': None,
+                    'num_anc_complete': None,
+                    'number_of_thrs_given': 21,
+                    'opened_on': None,
+                    'person_name': None,
+                    'trimester': 3,
                 }
             )
 
