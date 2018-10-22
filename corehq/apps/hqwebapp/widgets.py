@@ -63,10 +63,6 @@ class _Select2Mixin(object):
         return mark_safe(output)
 
 
-class Select2(_Select2Mixin, forms.Select):
-    pass
-
-
 class Select2MultipleChoiceWidget(_Select2Mixin, forms.SelectMultiple):
     pass
 
