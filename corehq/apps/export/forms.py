@@ -331,19 +331,6 @@ class BaseFilterExportDownloadForm(forms.Form):
     def _get_selected_user_types(self, mobile_user_and_groups_slugs=None):
         return self.cleaned_data['user_types']
 
-    def _get_es_user_types(self, mobile_user_and_groups_slugs=None):
-        """
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        es_user_types = []
-        export_user_types = self._get_selected_user_types(mobile_user_and_groups_slugs)
-        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
-
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
         :param export: FormExportSchema instance or CaseExportSchema instance
@@ -1054,6 +1041,20 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         from corehq.apps.export.views import EditNewCustomFormExportView
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
+
+    def _get_es_user_types(self, mobile_user_and_groups_slugs=None):
+        """
+        Return a list of elastic search user types (each item in the return list
+        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
+        export user types.
+        """
+        es_user_types = []
+        export_user_types = self._get_selected_user_types(mobile_user_and_groups_slugs)
+        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
+        for type_ in export_user_types:
+            es_user_types.extend(export_to_es_user_types_map[type_])
+        return es_user_types
+
 
     def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
         """These are the kwargs for the Multimedia Download task,
