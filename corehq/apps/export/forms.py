@@ -284,6 +284,10 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.helper.label_class = 'col-sm-3'
         self.helper.field_class = 'col-sm-5'
 
+        self.helper.layout = Layout(
+            *self.extra_fields
+        )
+
     @property
     def extra_fields(self):
         """
@@ -947,9 +951,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
-        self.helper.layout = Layout(
-            *super(EmwfFilterFormExport, self).extra_fields
-        )
 
     def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
         """
@@ -1060,9 +1061,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
         )
-        self.helper.layout = Layout(
-            *self.extra_fields
-        )
 
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditNewCustomCaseExportView
@@ -1118,9 +1116,6 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
-        )
-        self.helper.layout = Layout(
-            *self.extra_fields
         )
 
     def get_edit_url(self, export):
