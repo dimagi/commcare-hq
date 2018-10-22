@@ -382,7 +382,7 @@ def _transaction_sort_key_function(case):
             return cc_cmp(first_transaction.server_date, second_transaction.server_date)
 
         def _sortkey(transaction):
-            def form_cmp(form_id):
+            def form_index(form_id):
                 try:
                     return xform_ids.index(form_id)
                 except ValueError:
@@ -391,7 +391,7 @@ def _transaction_sort_key_function(case):
             # if the user is the same you should compare with the special logic below
             return (
                 transaction.client_date,
-                form_cmp(transaction.form_id),
+                form_index(transaction.form_id),
                 _type_sort(transaction.type),
             )
 
