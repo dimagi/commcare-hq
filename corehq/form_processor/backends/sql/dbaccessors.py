@@ -1258,16 +1258,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
 
         transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
-        return CaseAccessorSQL.fetch_case_transaction_forms(transactions, updated_xforms)
+        CaseAccessorSQL.fetch_case_transaction_forms(transactions, updated_xforms)
+        return transactions
 
     @staticmethod
     def fetch_case_transaction_forms(transactions, updated_xforms=None):
         """
-        Fetches the forms for a list of transactions
+        Fetches the forms for a list of transactions, caching them onto each transaction
 
         :param transactions: list of ``CaseTransaction`` objects:
         :param updated_xforms: list of forms that have been changed.
-        :return: list of ``CaseTransaction`` objects with their associated forms attached.
         """
 
         form_ids = {tx.form_id for tx in transactions}
@@ -1296,9 +1296,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     case_transaction.cached_form = get_form(case_transaction.form_id)
                 except XFormNotFound:
                     logging.error('Form not found during rebuild: %s', case_transaction.form_id)
-
-        return transactions
-
 
 
 class LedgerReindexAccessor(ReindexAccessor):

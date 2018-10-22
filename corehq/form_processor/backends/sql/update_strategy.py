@@ -329,7 +329,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     error.format(self.case.case_id, sorted_transactions[0])
                 )
 
-        sorted_transactions = CaseAccessorSQL.fetch_case_transaction_forms(sorted_transactions)
+        CaseAccessorSQL.fetch_case_transaction_forms(sorted_transactions)
         rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
         rebuild_transaction = CaseTransaction.rebuild_transaction(self.case, rebuild_detail)
         self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
