@@ -252,20 +252,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         }
 
 
-# TODO
-def _date_help_text(field):
-    return """
-        <small class="label label-default">{fmt}</small>
-        <div ng-show="feedFiltersForm.{field}.$invalid && !feedFiltersForm.{field}.$pristine" class="help-block">
-            {msg}
-        </div>
-    """.format(
-        field=field,
-        fmt=ugettext_lazy("YYYY-MM-DD"),
-        msg=ugettext_lazy("Invalid date format"),
-    )
-
-
 class DashboardFeedFilterForm(forms.Form):
     """
     A form used to configure the filters on a Dashboard Feed export
@@ -301,14 +287,14 @@ class DashboardFeedFilterForm(forms.Form):
     start_date = forms.DateField(
         label=ugettext_lazy("Begin Date"),
         required=False,
-        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}), # TODO: ng-pattern
-        help_text=_date_help_text("start_date")
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
+        help_text="<small class='label label-default'>{}</small>".format(ugettext_lazy("YYYY-MM-DD")),
     )
     end_date = forms.DateField(
         label=ugettext_lazy("End Date"),
         required=False,
-        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}), # TODO: ng-pattern
-        help_text=_date_help_text("end_date"),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
+        help_text="<small class='label label-default'>{}</small>".format(ugettext_lazy("YYYY-MM-DD")),
     )
 
     def __init__(self, domain_object, *args, **kwargs):
@@ -376,7 +362,6 @@ class DashboardFeedFilterForm(forms.Form):
             crispy.Field(
                 'date_range',
                 data_bind='value: dateRange',
-                #ng_required='true',    # TODO
             ),
             crispy.Div(
                 crispy.Field("days", data_bind="value: days"),
@@ -386,22 +371,15 @@ class DashboardFeedFilterForm(forms.Form):
                 crispy.Field(
                     "start_date",
                     data_bind="value: startDate",
-                    #ng_required="formData.date_range === 'since' || formData.date_range === 'range'"   # TODO
                 ),
-                data_bind="visible: showDateRange",
-                # TODO
-                #ng_class=
-                #    "{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
+                data_bind="visible: showStartDate, css: {'has-error': startDateHasError}",
             ),
             crispy.Div(
                 crispy.Field(
                     "end_date",
                     data_bind="value: endDate",
-                    #ng_required="formData.date_range === 'range'"  # TODO
                 ),
-                data_bind="visible: showDateRange",
-                # TODO
-                #ng_class="{'has-error': feedFiltersForm.end_date.$invalid && !feedFiltersForm.end_date.$pristine}",
+                data_bind="visible: showEndDate, css: {'has-error': endDateHasError}",
             )
         ]
 
