@@ -954,7 +954,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
 
-    def _get_es_user_types(self, mobile_user_and_groups_slugs=None):
+    def _get_es_user_types(self, mobile_user_and_group_slugs=None):
         """
         Return a list of elastic search user types (each item in the return list
         is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
@@ -968,7 +968,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         for type_ in export_user_types:
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
-
 
     def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
         """These are the kwargs for the Multimedia Download task,
