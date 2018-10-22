@@ -151,7 +151,8 @@
                         + getFilterName($scope.exportList[0].export_type) + "]")
                         .val().split(','),
                     function (item) {
-                        if (item.substring(0,3) === "t__") {
+                        var prefix = "t__";
+                        if (item.substring(prefix.length) === prefix) {
                             return userTypes[item.substring(3)];
                         }
                         return item;
