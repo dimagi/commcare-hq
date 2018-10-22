@@ -12,12 +12,6 @@
             edit_url: '/a/test-export/data/export/custom/form/edit/uuid-simpleFormExport/',
             filename: 'simpleformexport',
         },
-        groupList: [
-            {
-                test: 'A Group',
-                id: 'uuid-agroup',
-            },
-        ],
         getPollResponseProgress: function (downloadId) {
             return {
                 allow_dropbox_sync: false,
@@ -114,7 +108,6 @@
         },
         mockBackendUrls: {
             HAS_MULTIMEDIA: '/fake/exports/multimedia/check',
-            GET_GROUP_OPTIONS: '/fake/exports/groups',
             PREPARE_CUSTOM_EXPORT: '/fake/exports/prepare',
             PREPARE_FORM_MULTIMEDIA: '/fake/exports/prepare/multimedia',
             POLL_EXPORT_DOWNLOAD: '/fake/exports/poll/download',
@@ -130,13 +123,6 @@
                         url: DnldExpData.mockBackendUrls.HAS_MULTIMEDIA,
                         headers: {
                             'DjNg-Remote-Method': 'has_multimedia',
-                        },
-                        method: 'auto',
-                    },
-                    get_group_options: {
-                        url: DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS,
-                        headers: {
-                            'DjNg-Remote-Method': 'get_group_options',
                         },
                         method: 'auto',
                     },
@@ -215,14 +201,7 @@
                     success: true,
                     hasMultimedia: true,
                 });
-            DnldExpData.$httpBackend
-                .when('POST', DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS)
-                .respond({
-                    success: true,
-                    groups: DnldExpData.groupList,
-                });
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.HAS_MULTIMEDIA);
-            DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS);
         });
 
         afterEach(function () {
