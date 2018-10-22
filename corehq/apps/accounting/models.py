@@ -3270,7 +3270,6 @@ class CreditLine(ValidateModelMixin, models.Model):
             if adjustment_amount > Decimal('0.0000'):
                 credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
-        return balance
 
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):
