@@ -1545,28 +1545,74 @@ class Subscription(models.Model):
                 "This subscription has no Dimagi contact."
             )
 
-        domain = self.subscriber.domain
-        end_date = self.date_end.strftime(USER_DATE_FORMAT)
-        email = self.account.dimagi_contact
-        subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
-                  domain=domain,
-                  end_date=end_date)
-        template = 'accounting/email/subscription_ending_reminder_dimagi.html'
-        template_plaintext = 'accounting/email/subscription_ending_reminder_dimagi.txt'
-        context = {
-            'domain': domain,
-            'end_date': end_date,
-            'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(USER_DATE_FORMAT),
-            'contacts': ', '.join(self._reminder_email_contacts(domain)),
-            'dimagi_contact': email,
-        }
-        email_html = render_to_string(template, context)
-        email_plaintext = render_to_string(template_plaintext, context)
+        subject = self.dimagi_ending_reminder_subject
+        context = self.dimagi_ending_reminder_context
+        email_html = render_to_string(self.dimagi_ending_reminder_email_html, context)
+        email_plaintext = render_to_string(self.dimagi_ending_reminder_email_text, context)
         send_html_email_async.delay(
-            subject, email, email_html,
+            subject, self.account.dimagi_contact, email_html,
             text_content=email_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL,
         )
+
+    @property
+    def dimagi_ending_reminder_email_html(self):
+        if self.account.is_customer_billing_account:
+            return 'accounting/email/customer_subscription_ending_reminder_dimagi.html'
+        else:
+            return 'accounting/email/subscription_ending_reminder_dimagi.html'
+
+    @property
+    def dimagi_ending_reminder_email_text(self):
+        if self.account.is_customer_billing_account:
+            return 'accounting/email/customer_subscription_ending_reminder_dimagi.txt'
+        else:
+            return 'accounting/email/subscription_ending_reminder_dimagi.txt'
+
+    @property
+    def dimagi_ending_reminder_subject(self):
+        if self.account.is_customer_billing_account:
+            return "Alert: {account}'s subscriptions are ending on {end_date}".format(
+                account=self.account.name,
+                end_date=self.date_end.strftime(USER_DATE_FORMAT))
+        else:
+            return "Alert: {domain}'s subscription is ending on {end_date}".format(
+                domain=self.subscriber.domain,
+                end_date=self.date_end.strftime(USER_DATE_FORMAT))
+
+    @property
+    def dimagi_ending_reminder_context(self):
+        end_date = self.date_end.strftime(USER_DATE_FORMAT)
+        email = self.account.dimagi_contact
+        if self.account.is_customer_billing_account:
+            account = self.account.name
+            subscriptions = self.account.subscription_set.filter(
+                plan_version=self.plan_version,
+                date_end=self.date_end,
+                is_active=True,
+                is_trial=False
+            )
+            domains = [subscription.subscriber.domain for subscription in subscriptions]
+            context = {
+                'account': account,
+                'domains': ", ".join(domains),
+                'end_date': end_date,
+                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
+                    USER_DATE_FORMAT),
+                'contacts': ', '.join(self._reminder_email_contacts(self.subscriber.domain)),
+                'dimagi_contact': email,
+            }
+        else:
+            domain = self.subscriber.domain
+            context = {
+                'domain': domain,
+                'end_date': end_date,
+                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
+                    USER_DATE_FORMAT),
+                'contacts': ', '.join(self._reminder_email_contacts(domain)),
+                'dimagi_contact': email,
+            }
+        return context
 
     def _reminder_email_contacts(self, domain_name):
         emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
