@@ -266,10 +266,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
-    user_types = UserTypesField(
-        label=ugettext_lazy("Select User Types"),
-        required=False,
-    )
     group = forms.ChoiceField(
         label=ugettext_lazy("Select Group"),
         required=False,
@@ -290,11 +286,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
 
         self.fields['group'].choices = [("", "")] + [(g._id, g.name) for g in Group.get_reporting_groups(self.domain_object.name)]
-
-        if not self.domain_object.uses_locations:
-            # don't use CommCare Supply as a user_types choice if the domain
-            # is not a CommCare Supply domain.
-            self.fields['user_types'].choices = self.fields['user_types'].choices[:-1]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
