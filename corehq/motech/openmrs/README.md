@@ -499,3 +499,45 @@ patient:
 The **name of cases** updated from the Atom feed are set to the display
 name of the *person* (not the display name of patient because it often
 includes punctuation and an identifier).
+
+
+Data Types
+----------
+
+Integrating structured data with OpenMRS can involve converting data
+from one format or data type to another.
+
+For standard OpenMRS properties, MOTECH will set data types correctly,
+and integrators do not need to worry about them.
+
+But OpenMRS administrators may expect a value that is a date in CommCare
+to a datetime in OpenMRS, or vice-versa. To convert from one to the
+other, set data types for values in the Repeater configuration.
+
+The default is for both the CommCare data type and the external data
+type not to be set. e.g.
+
+    {
+      "expectedDeliveryDate": {
+        "doc_type": "CaseProperty",
+        "case_property": "edd",
+        "commcare_data_type": null,
+        "external_data_type": null
+      }
+    }
+
+To set the CommCare data type to a date and the OpenMRS data type to a
+datetime for example, use the following:
+
+    {
+      "expectedDeliveryDate": {
+        "doc_type": "CaseProperty",
+        "case_property": "edd",
+        "commcare_data_type": "cc_date",
+        "external_data_type": "omrs_datetime"
+      }
+    }
+
+For the complete list of CommCare data types, see
+[MOTECH constants](../const.py). For the complete list of OpenMRS data
+types, see [OpenMRS constants](./const.py).

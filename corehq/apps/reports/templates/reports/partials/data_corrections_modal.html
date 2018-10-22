@@ -6,7 +6,7 @@
 {% endcomment %}
 
 <!-- class='hide' keeps modal from showing until knockout initializes & removes the class -->
-<div class="hide modal fade data-corrections-modal" tabindex="-1"
+<div class="hide modal fade data-corrections-modal"
      data-bind="css: { 'full-screen-modal': isFullScreenModal(), 'hide': false },
                 event: { 'hidden.bs.modal': function() { $root.init(); }, 'shown.bs.modal': function() { $root.trackOpen(); } }">
     <div class="modal-dialog" data-bind="css: { 'modal-lg': isLargeModal() }">
@@ -48,6 +48,16 @@
                     <div class='alert alert-warning'>
                         <i class="fa fa-exclamation-triangle"></i>
                         {% blocktrans %}
+                            This feature is replacing the old "Edit this form" functionality, which will be removed in November 2018.
+                        {% endblocktrans %}
+                        <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" id="edit-form">
+                            {% trans 'Click here to access the old "edit this form" page.' %}
+                        </a>
+
+                        <br><br>
+
+                        <i class="fa fa-exclamation-triangle"></i>
+                        {% blocktrans %}
                             This feature will only update the specified questions.
                             It will <strong>not</strong> run any calculations or affect cases.
                             <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Data+Cleaning%3A+Clean+Form+Submission">Read more</a>.
@@ -79,10 +89,41 @@
                                             <span data-bind="template: $root.propertyTemplate"></span>
                                         </label>
                                         <div class="col-sm-6">
-                                            <input type="text" class="form-control"
-                                                   data-bind="value: value,
-                                                              attr: { 'data-name': name },
-                                                              event: { change: function() { this.dirty(true); } }" />
+                                            <!-- ko ifnot: options.length -->
+                                                <input type="text" class="form-control"
+                                                       data-bind="value: value,
+                                                                  attr: { 'data-name': name },
+                                                                  event: { change: function() { this.dirty(true); } }" />
+                                            <!-- /ko -->
+                                            <!-- ko if: options.length -->
+                                                <!-- ko ifnot: multiple -->
+                                                    <select class="form-control"
+                                                            data-bind="foreach: options,
+                                                                       value: value,
+                                                                       attr: { 'data-name': name },
+                                                                       event: { change: function() { this.dirty(true); } }">
+                                                            <option data-bind="value: id, text: text"></option>
+                                                    </select>
+                                                <!-- /ko -->
+                                                <!-- ko if: multiple -->
+                                                    {% comment %}
+                                                       Multiselect values are based on a space-separated string, because
+                                                       that's how form submissions work. Making this work with select2's
+                                                       comma-separated multiselect option is non-trivial, so instead we
+                                                       have a hidden input with a space-separated value that stays in sync
+                                                       with updates on the select2.
+                                                    {% endcomment %}
+                                                    <input type="hidden" class="form-control"
+                                                           data-bind="value: value,
+                                                                      attr: { 'data-name': name }" />
+                                                    <select class="form-control"
+                                                            multiple="multiple"
+                                                            data-bind="foreach: options,
+                                                                       event: { change: updateSpaceSeparatedValue }">
+                                                            <option data-bind="value: id, text: text"></option>
+                                                    </select>
+                                                <!-- /ko -->
+                                            <!-- /ko -->
                                         </div>
                                     </div>
                                 <!-- /ko -->

@@ -10,7 +10,6 @@ from corehq.util.test_utils import softer_assert
 from io import open
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OutOfOrderCaseTest(TestCase):
 
     def setUp(self):

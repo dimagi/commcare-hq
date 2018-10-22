@@ -68,7 +68,7 @@ class SubmissionPost(object):
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
                  partial_submission=False, case_db=None):
-        assert domain, domain
+        assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
         self.domain = domain
@@ -91,6 +91,8 @@ class SubmissionPost(object):
         # always None except in the case where a system form is being processed as part of another submission
         # e.g. for closing extension cases
         self.case_db = case_db
+        if case_db:
+            assert case_db.domain == domain
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
 
@@ -219,50 +221,30 @@ class SubmissionPost(object):
 
         self._post_process_form(submitted_form)
         self._invalidate_caches(submitted_form)
-        submission_type = None
 
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
+        if submitted_form.xmlns == DEVICE_LOG_XMLNS:
+            return self.process_device_log(submitted_form)
+
         cases = []
         ledgers = []
         submission_type = 'unknown'
         openrosa_kwargs = {}
         with result.get_locked_forms() as xforms:
-            from casexml.apps.case.xform import get_and_check_xform_domain
-            domain = get_and_check_xform_domain(xforms[0])
             if self.case_db:
-                assert self.case_db.domain == domain
                 case_db_cache = self.case_db
                 case_db_cache.cached_xforms.extend(xforms)
             else:
-                case_db_cache = self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms)
+                case_db_cache = self.interface.casedb_cache(domain=self.domain, lock=True, deleted_ok=True, xforms=xforms)
 
             with case_db_cache as case_db:
                 instance = xforms[0]
 
-                if instance.xmlns == DEVICE_LOG_XMLNS:
-                    submission_type = 'device_log'
-                    self._conditionally_send_device_logs_to_sumologic(instance)
-
-                # ignore temporarily till we migrate DeviceReportEntry id to bigint
-                ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
-                if instance.xmlns == DEVICE_LOG_XMLNS:
-                    submission_type = 'device_log'
-                    if not ignore_device_logs:
-                        try:
-                            process_device_log(self.domain, instance)
-                        except Exception as e:
-                            notify_exception(None, "Error processing device log", details={
-                                'xml': self.instance,
-                                'domain': self.domain
-                            })
-                            e.sentry_capture = False
-                            raise
-
-                elif instance.is_duplicate:
+                if instance.is_duplicate:
                     submission_type = 'duplicate'
                     existing_form = xforms[1]
                     stub = UnfinishedSubmissionStub.objects.filter(
@@ -486,6 +468,23 @@ class SubmissionPost(object):
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
         ).response()
+
+    def process_device_log(self, device_log_form):
+        self._conditionally_send_device_logs_to_sumologic(device_log_form)
+        ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
+        if not ignore_device_logs:
+            try:
+                process_device_log(self.domain, device_log_form)
+            except Exception as e:
+                notify_exception(None, "Error processing device log", details={
+                    'xml': self.instance,
+                    'domain': self.domain
+                })
+                e.sentry_capture = False
+                raise
+
+        response = self._get_open_rosa_response(device_log_form)
+        return FormProcessingResult(response, device_log_form, [], [], 'device-log')
 
 
 def _transform_instance_to_error(interface, exception, instance):

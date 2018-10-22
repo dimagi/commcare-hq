@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 from datetime import datetime
 import time
 import uuid
+
+from django.db.transaction import atomic
 from six.moves import map
 
 from couchdbkit import PreconditionFailed
@@ -27,6 +29,7 @@ from dimagi.ext.couchdbkit import (
 )
 from django.urls import reverse
 from django.db import models
+from django.db.models import F
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import quickcache
@@ -1249,3 +1252,39 @@ class TransferDomainRequest(models.Model):
             'deactivate_url': self.deactivate_url(),
             'activate_url': self.activate_url(),
         }
+
+
+class DomainAuditRecordEntry(models.Model):
+    domain = models.TextField(unique=True, db_index=True)
+    cp_n_downloads_custom_exports = models.BigIntegerField(default=0)
+    cp_n_viewed_ucr_reports = models.BigIntegerField(default=0)
+    cp_n_viewed_non_ucr_reports = models.BigIntegerField(default=0)
+    cp_n_reports_created = models.BigIntegerField(default=0)
+    cp_n_reports_edited = models.BigIntegerField(default=0)
+    cp_n_saved_scheduled_reports = models.BigIntegerField(default=0)
+    cp_n_click_app_deploy = models.BigIntegerField(default=0)
+    cp_n_form_builder_entered = models.BigIntegerField(default=0)
+    cp_n_saved_app_changes = models.BigIntegerField(default=0)
+
+    @classmethod
+    @atomic
+    def update_calculations(cls, domain, model, method=None):
+        obj, is_new = cls.objects.get_or_create(domain=domain)
+
+        config = {
+            ('retrieve_download', None): "cp_n_downloads_custom_exports",
+            ('ConfigurableReportView', None): "cp_n_viewed_ucr_reports",
+            ('ProjectReportDispatcher', None): "cp_n_viewed_non_ucr_reports",
+            ('ReportConfiguration', 'create'): "cp_n_reports_created",
+            ('ReportConfiguration', 'update'): "cp_n_reports_edited",
+            ('ReportNotification', None): "cp_n_saved_scheduled_reports",
+            ('release_build', None): "cp_n_click_app_deploy",
+            ('form_source', None): "cp_n_form_builder_entered",
+            ('patch_xform', None): "cp_n_saved_app_changes",
+            ('edit_module_attr', None): "cp_n_saved_app_changes",
+            ('edit_app_attr', None): "cp_n_saved_app_changes"
+        }
+
+        property_to_update = config.get((model, method))
+        setattr(obj, property_to_update, F(property_to_update) + 1)
+        obj.save()

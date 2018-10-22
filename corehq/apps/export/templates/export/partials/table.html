@@ -4,8 +4,14 @@
 {% load djangular_tags %}
 {% load humanize %}
 
-<table class="table table-striped"
-       ng-show="!!hasLoaded && !_.isEmpty(exports)">
+{% comment %}
+    This template renders a table of exports, with three slight variations.
+    If the EXPORT_OWNERSHIP flag is off, it displays the standard "Exports" table.
+    If the EXPORT_OWNERSHIP flag is on, it accepts a MY_EXPORTS boolean that determines
+    whether to show the "My Exports" table or the "Exports Shared with Me" table.
+{% endcomment %}
+
+<table class="table table-striped" ng-show="!_.isEmpty(exports)">
     <thead>
         <tr>
             <th class="col-sm-4">{% trans 'Name' %}</th>
@@ -20,7 +26,7 @@
                     {% trans 'Edit' %}
                 {% endif %}
             </th>
-            <th ng-if="!export.isLegacy" class="col-sm-1">{% trans 'Copy' %}</th>
+            <th class="col-sm-1">{% trans 'Copy' %}</th>
             {% endif %}
             <th class="col-sm-1">
                 {% if is_daily_saved_export %}
@@ -35,7 +41,7 @@
             <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
             {% endif %}
             {%  if allow_bulk_export %}
-            <th class="col-sm-2">
+            <th class="col-sm-3">
                 {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
                 <button type="button"
                         class="btn btn-xs btn-default"
@@ -49,11 +55,25 @@
                 </button>
             </th>
             {% endif %}
-            <th class="col-sm-1">{% trans 'Share' %}</th>
+            {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+                {% if MY_EXPORTS %}
+                    <th class="col-sm-1">{% trans 'Share' %}</th>
+                {% else %}
+                    <th class="col-sm-1">{% trans 'Shared By' %}</th>
+                {% endif %}
+            {% endif %}
         </tr>
     </thead>
     <tbody>
-        <tr ng-repeat="export in myExports">
+    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+        {% if MY_EXPORTS %}
+            <tr ng-repeat="export in myExports">
+        {% else %}
+            <tr ng-repeat="export in notMyExports">
+        {% endif %}
+    {% else %}
+        <tr ng-repeat="export in exports">
+    {% endif %}
             <td>
                 {% angularjs %}
                 <h4 ng-class="{'text-muted': export.emailedExport && !export.isAutoRebuildEnabled}">
@@ -142,14 +162,14 @@
                            ng-click="downloadRequested($event)"
                            class="btn btn-info btn-xs"
                            ng-show="!export.isFeed">
-                            <i class="fa fa-download"></i>
+                            <i class="fa fa-cloud-download"></i>
                             {% trans "Download" %}
                         </a>
 
                         <div class="input-group" ng-show="export.isFeed">
                             <span ng-class="{'input-group-btn': export.showLink}" ng-click="copyLinkRequested($event, export)">
                                 <a class="btn btn-info btn-sm">
-                                    <i class="fa fa-download"></i>
+                                    <i class="fa fa-clipboard"></i>
                                     {% trans "Copy Dashboard Feed Link" %}
                                 </a>
                             </span>
@@ -289,39 +309,55 @@
             {% endif %}
 
             {% if has_edit_permissions %}
-            {% angularjs %}
+
             <td>
-                <div ng-if="export.can_edit">
+                {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+                    <div ng-if="export.can_edit">
+                        <div ng-if="isLocationSafeForUser(export)">
+                            <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
+                                <i class="fa fa-pencil"></i>
+                                <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
+                                <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div ng-if="!export.can_edit">
+                        <div ng-if="isLocationSafeForUser(export)">
+                            {% if MY_EXPORTS %}
+                                <a class="btn btn-default disabled">
+                                    <i class="fa fa-pencil"></i>
+                                    <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
+                                    <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+                                </a>
+                            {% else %}
+                                <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
+                                    <span ng-show="!export.isDailySaved">{% trans 'View' %}</span>
+                                    <span ng-show="export.isDailySaved">{% trans 'View Columns' %}</span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
                     <div ng-if="isLocationSafeForUser(export)">
-                        <a href="{{ export.editUrl }}" class="btn btn-default">
+                        <a href="{% angularjs %}{{ export.editUrl }}{% endangularjs %}" class="btn btn-default">
                             <i class="fa fa-pencil"></i>
                             <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
                             <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
-
                         </a>
                     </div>
-                </div>
-                <div ng-if="!export.can_edit">
-                    <div ng-if="isLocationSafeForUser(export)">
-                        <a class="btn btn-default disabled">
-                            <i class="fa fa-pencil"></i>
-                            <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
-                            <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
-
-                        </a>
-                    </div>
-                </div>
+                {% endif %}
             </td>
+
             <td>
-                <div ng-if="isLocationSafeForUser(export) && !export.isLegacy">
+                <div ng-if="isLocationSafeForUser(export)">
                     <a href="{% angularjs %}{{ export.copyUrl }}{% endangularjs %}" class="btn btn-default">
+                        <i class="fa fa-copy"></i>
                         <span>{% trans 'Copy' %}</span>
                     </a>
                 </div>
             </td>
-
-            {% endangularjs %}
             {% endif %}
+
             <td>
                 <a href="{% angularjs %}{{ export.downloadUrl }}{% endangularjs %}"
                    ng-show="!export.isDailySaved"
@@ -338,6 +374,7 @@
                    ng-click="setFilterModalExport(export)"
                    ng-if="isLocationSafeForUser(export)"
                 >
+                    <i class="fa fa-filter"></i>
                     {% trans "Edit Filters" %}
                 </a>
                 {% endif %}
@@ -368,20 +405,34 @@
             </td>
             {% endangularjs %}
             {% endif %}
-
-            {% angularjs %}
-            <td>
-                <div ng-if="export.sharing == 'private'">
-                    {% trans 'Private' %}
-                </div>
-                <div ng-if="export.sharing == 'export_only'">
-                    {% trans 'Export Only' %}
-                </div>
-                <div ng-if="export.sharing == 'edit_and_export'">
-                    {% trans 'Edit & Export' %}
-                </div>
-            </td>
-            {% endangularjs %}
+        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+            {% if MY_EXPORTS %}
+                {% angularjs %}
+                <td>
+                    <div ng-if="export.sharing == 'private'">
+                        {% trans 'Private' %}
+                    </div>
+                    <div ng-if="export.sharing == 'export_only'">
+                        {% trans 'Export Only' %}
+                    </div>
+                    <div ng-if="export.sharing == 'edit_and_export'">
+                        {% trans 'Edit & Export' %}
+                    </div>
+                </td>
+                {% endangularjs %}
+            {% else %}
+                {% angularjs %}
+                <td>
+                    <div ng-if="export.owner_username == 'unknown'">
+                        <div class="label label-default">{% trans 'Unknown' %}</div>
+                    </div>
+                    <div ng-if="export.owner_username != 'unknown'">
+                        {{ export.owner_username }}
+                    </div>
+                </td>
+                {% endangularjs %}
+            {% endif %}
+        {% endif %}
         </tr>
     </tbody>
 </table>
