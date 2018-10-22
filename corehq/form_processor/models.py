@@ -1218,6 +1218,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         return bool(self.type & self.case_rebuild_types())
 
     @classmethod
+    @memoized
     def case_rebuild_types(cls):
         """ returns an int of all rebuild types reduced using a bitwise or """
         return functools.reduce(lambda x, y: x | y, [
