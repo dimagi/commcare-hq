@@ -191,7 +191,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
         }
 
     def indexes(self):
-        col_indx1 = '(state_id, district_id, block_id, supervisor_id, awc_id)'
+        col_indx1 = 'state_id, district_id, block_id, supervisor_id, awc_id'
         indexes = [
             'CREATE INDEX "{tablename}_indx1" ON "{tablename}" ({col_indx1})'.format(
                 tablename=self.tablename,
