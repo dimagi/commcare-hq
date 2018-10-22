@@ -60,7 +60,7 @@ class EntryInstances(PostProcessor):
                     for datum in frame.datums:
                         xpaths.add(datum.value)
         xpaths.discard(None)
-        return xpaths
+        return [xpath if isinstance(xpath, six.text_type) else xpath.decode('utf-8') for xpath in xpaths]
 
     @memoized
     def _get_detail_mapping(self):

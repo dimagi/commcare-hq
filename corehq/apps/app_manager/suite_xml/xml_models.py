@@ -575,7 +575,7 @@ class GraphTemplate(Template):
                                     for k, v in six.iteritems(s.config)
                                 ] + [
                                     ConfigurationItem(id=k, locale_id=locale_series_config(index, k))
-                                    for k, v in six.iteritems(s.locale_specific_config)
+                                    for k in sorted(s.locale_specific_config)
                                 ]
                             )
                         )
@@ -602,7 +602,8 @@ class GraphTemplate(Template):
                     )
                     for i, a in enumerate(
                         graph.annotations
-                    )]
+                    )
+                ]
             )
         )
 
