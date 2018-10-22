@@ -501,7 +501,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     ''')
 
     @use_select2
-    @use_angular_js
+    @use_ko_validation
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
