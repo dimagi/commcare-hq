@@ -89,4 +89,9 @@ AGG_GROWTH_MONITORING_TABLE = 'icds_dashboard_growth_monitoring_forms'
 AGG_INFRASTRUCTURE_TABLE = 'icds_dashboard_infrastructure_forms'
 AWW_INCENTIVE_TABLE = 'icds_dashboard_aww_incentive'
 
+AWC_LOCATION_TABLE_ID = 'static-awc_location'
+USAGE_TABLE_ID = 'static-usage_forms'
+PERSON_TABLE_ID = 'static-person_cases_v2'
+HOUSEHOLD_TABLE_ID = 'static-household_cases'
+
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'softlayer' else 'icds-cas'

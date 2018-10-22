@@ -28,6 +28,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
+from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
 
 
@@ -403,10 +404,56 @@ class AggAwc(models.Model):
     cases_person_adolescent_girls_11_14_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_15_18_all = models.IntegerField(null=True)
     infra_infant_weighing_scale = models.IntegerField(null=True)
+    state_is_test = models.SmallIntegerField(blank=True, null=True)
+    district_is_test = models.SmallIntegerField(blank=True, null=True)
+    block_is_test = models.SmallIntegerField(blank=True, null=True)
+    supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
+    awc_is_test = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'agg_awc'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggAwcAggregationHelper(month)
+        agg_query, agg_params = helper.aggregate_query()
+        daily_attendance_query, daily_attendance_params = helper.aggregate_daily_attendance_query()
+        monthly_child_query, monthly_child_params = helper.aggregate_monthly_child_health_query()
+        ccs_record_query, ccs_record_params = helper.aggregate_ccs_record_query()
+        household_query, household_params = helper.aggregate_household_query()
+        person_query, person_params = helper.aggregate_person_query()
+        children_immunized_query, children_immunized_params = helper.children_immunized_query()
+        number_anc_visits_query, number_anc_visits_params = helper.number_anc_visits_query()
+        usage_table_query, usage_table_params = helper.usage_table_query()
+        number_launched_awcs_query, number_launched_awcs_params = helper.number_launched_awcs_query()
+        latest_infrastructure_query, latest_infrastructure_params = helper.latest_infrastructure_query()
+        infra_last_update_query, infra_last_update_params = helper.infra_last_update_query()
+        # location_is_test_query, location_is_test_params = helper.location_is_test_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                cursor.execute(daily_attendance_query, daily_attendance_params)
+                cursor.execute(monthly_child_query, monthly_child_params)
+                cursor.execute(ccs_record_query, ccs_record_params)
+                cursor.execute(household_query, household_params)
+                cursor.execute(person_query, person_params)
+                cursor.execute(children_immunized_query, children_immunized_params)
+                cursor.execute(number_anc_visits_query, number_anc_visits_params)
+                cursor.execute(usage_table_query, usage_table_params)
+                cursor.execute(number_launched_awcs_query, number_launched_awcs_params)
+                cursor.execute(latest_infrastructure_query, latest_infrastructure_params)
+                cursor.execute(infra_last_update_query, infra_last_update_params)
+                # cursor.execute(location_is_test_query, location_is_test_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class AggCcsRecord(models.Model):

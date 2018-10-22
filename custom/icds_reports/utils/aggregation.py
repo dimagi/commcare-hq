@@ -39,6 +39,10 @@ def month_formatter(day):
     return transform_day_to_month(day).strftime('%Y-%m-%d')
 
 
+def date_to_string(date):
+    return date.strftime('%Y-%m-%d')
+
+
 class BaseICDSAggregationHelper(object):
     """Defines an interface for aggregating data from UCRs to specific tables
     for the dashboard.
