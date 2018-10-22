@@ -266,14 +266,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
-    type_or_group = forms.ChoiceField(
-        label=ugettext_lazy("User Types or Group"),
-        required=False,
-        choices=(
-            ('type', ugettext_lazy("User Types")),
-            ('group', ugettext_lazy("Group")),
-        )
-    )
     user_types = UserTypesField(
         label=ugettext_lazy("Select User Types"),
         required=False,

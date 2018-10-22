@@ -404,10 +404,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                 _("Request requires a list of exports and filters.")
             )
 
-        if filter_form_data['type_or_group'] != 'group':
-            # make double sure that group is none
-            filter_form_data['group'] = ''
-
         return filter_form_data, export_specs
 
     def _process_filters_and_specs(self, in_data):
@@ -784,9 +780,6 @@ class DailySavedExportListView(BaseExportListView):
             "static_model_type": False,
             "export_filter_form": DashboardFeedFilterForm(
                 self.domain_object,
-                initial={
-                    'type_or_group': 'type',
-                },
             )
         })
         return context
@@ -1735,9 +1728,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property
@@ -1871,9 +1861,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             timezone=self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property
@@ -1938,9 +1925,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             timezone=self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property

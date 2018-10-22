@@ -52,7 +52,6 @@
                 });
         }
 
-        $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
         $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
             $('form[name="exportFiltersForm"]'));
@@ -129,9 +128,6 @@
         };
 
         $scope.isFormInvalid = function () {
-            if ($scope.formData.type_or_group === 'group') {
-                return _.isEmpty($scope.formData.group);
-            }
             return _.isEmpty($scope.formData.user_types);
         };
 
