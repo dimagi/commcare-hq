@@ -41,7 +41,6 @@ from corehq.apps.hqwebapp.crispy import B3MultiField, CrispyTemplate
 from corehq.apps.hqwebapp.widgets import (
     Select2MultipleChoiceWidget,
     DateRangePickerWidget,
-    Select2,
     Select2AjaxV3,
 )
 from corehq.pillows import utils
@@ -266,11 +265,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
-    group = forms.ChoiceField(
-        label=ugettext_lazy("Select Group"),
-        required=False,
-        widget=Select2()
-    )
 
     _EXPORT_TO_ES_USER_TYPES_MAP = {
         _USER_MOBILE: [utils.MOBILE_USER_TYPE],
@@ -284,8 +278,6 @@ class BaseFilterExportDownloadForm(forms.Form):
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
-
-        self.fields['group'].choices = [("", "")] + [(g._id, g.name) for g in Group.get_reporting_groups(self.domain_object.name)]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
