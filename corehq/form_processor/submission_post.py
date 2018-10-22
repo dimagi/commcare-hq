@@ -68,7 +68,7 @@ class SubmissionPost(object):
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
                  partial_submission=False, case_db=None):
-        assert domain, domain
+        assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
         self.domain = domain
@@ -91,6 +91,8 @@ class SubmissionPost(object):
         # always None except in the case where a system form is being processed as part of another submission
         # e.g. for closing extension cases
         self.case_db = case_db
+        if case_db:
+            assert case_db.domain == domain
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
 
@@ -225,9 +227,6 @@ class SubmissionPost(object):
             response = self.get_exception_response_and_log(submitted_form, self.path)
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
-        from casexml.apps.case.xform import get_and_check_xform_domain
-        domain = get_and_check_xform_domain(submitted_form)
-
         if submitted_form.xmlns == DEVICE_LOG_XMLNS:
             return self.process_device_log(submitted_form)
 
@@ -237,11 +236,10 @@ class SubmissionPost(object):
         openrosa_kwargs = {}
         with result.get_locked_forms() as xforms:
             if self.case_db:
-                assert self.case_db.domain == domain
                 case_db_cache = self.case_db
                 case_db_cache.cached_xforms.extend(xforms)
             else:
-                case_db_cache = self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms)
+                case_db_cache = self.interface.casedb_cache(domain=self.domain, lock=True, deleted_ok=True, xforms=xforms)
 
             with case_db_cache as case_db:
                 instance = xforms[0]
