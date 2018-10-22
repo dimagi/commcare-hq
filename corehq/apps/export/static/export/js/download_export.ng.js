@@ -140,7 +140,21 @@
                 $('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export");
+            var userTypes = hqImport("hqwebapp/js/initial_page_data").get('user_types');
+            function getFilterName(exportType) {
+                return (exportType === "form" ? "emw" : "case_list_filter");
+            }
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
+                "Export type": $scope.exportList[0].export_type,
+                "filters": _.map(
+                    $("#exportFiltersFormId").find("input[name="
+                        + getFilterName($scope.exportList[0].export_type) + "]")
+                        .val().split(','),
+                    function (item) {
+                        if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
+                        { return item; }
+                    }
+                ).join()});
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
