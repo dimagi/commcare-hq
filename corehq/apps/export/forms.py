@@ -309,25 +309,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         """
         return []
 
-    def _get_filtered_users(self):
-        user_types = self.cleaned_data['user_types']
-        user_filter_toggles = [
-            self._USER_MOBILE in user_types,
-            self._USER_DEMO in user_types,
-            # The following line results in all users who match the
-            # HQUserType.ADMIN filter to be included if the unknown users
-            # filter is selected.
-            self._USER_UNKNOWN in user_types,
-            self._USER_UNKNOWN in user_types,
-            self._USER_SUPPLY in user_types
-        ]
-        # todo refactor HQUserType
-        user_filters = HQUserType._get_manual_filterset(
-            (True,) * HQUserType.count,
-            user_filter_toggles
-        )
-        return users_matching_filter(self.domain_object.name, user_filters)
-
     def _get_selected_user_types(self, mobile_user_and_groups_slugs=None):
         return self.cleaned_data['user_types']
 
