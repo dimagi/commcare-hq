@@ -148,7 +148,7 @@
                 "Export type": $scope.exportList[0].export_type,
                 "filters": _.map(
                     $("#exportFiltersFormId input[name=" + getFilterName($scope.exportList[0].export_type) + "]")
-                        .serializeArray()[0].value.split(','),
+                        .val().split(','),
                     function (item) {
                         if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
                         { return item; }
