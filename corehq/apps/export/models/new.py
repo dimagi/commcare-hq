@@ -2609,34 +2609,6 @@ class ExportMigrationMeta(Document):
         app_label = 'export'
 
 
-class DailySavedExportNotification(models.Model):
-    user_id = models.CharField(max_length=255, db_index=True)
-    domain = models.CharField(max_length=255, db_index=True)
-
-    @classmethod
-    def notified(cls, user_id, domain):
-        return bool(cls.objects.filter(user_id=user_id, domain=domain).count())
-
-    @classmethod
-    def mark_notified(cls, user_id, domain):
-        cls.objects.get_or_create(user_id=user_id, domain=domain)
-
-    @classmethod
-    def user_added_before_feature_release(cls, user_added_on):
-        return user_added_on < datetime(2017, 1, 25)
-
-    @classmethod
-    def user_to_be_notified(cls, domain, user):
-        return (
-            cls.user_added_before_feature_release(user.created_on) and
-            not DailySavedExportNotification.notified(user.user_id, domain) and
-            (
-                domain_has_daily_saved_export_access(domain) or
-                domain_has_excel_dashboard_access(domain)
-            )
-        )
-
-
 def _meta_property(name):
     def fget(self):
         return getattr(self._meta, name)
