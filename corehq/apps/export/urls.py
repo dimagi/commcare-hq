@@ -7,6 +7,7 @@ from corehq.apps.export.views.download import (
     DownloadNewCaseExportView,
     DownloadNewSmsExportView,
     add_export_email_request,
+    poll_custom_export_download,
 )
 from corehq.apps.export.views.edit import (
     EditNewCustomFormExportView,
@@ -41,7 +42,6 @@ from corehq.apps.export.views.utils import (
     DailySavedExportPaywall,
     DataFileDownloadList,
     DataFileDownloadDetail,
-    GenerateSchemaFromAllBuildsView,
 )
 
 urlpatterns = [
@@ -133,9 +133,8 @@ urlpatterns = [
     url(r"^custom/copy/(?P<export_id>[\w\-]+)/$",
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
-    url(r'^add_export_email_request/$',
-        add_export_email_request,
-        name='add_export_email_request'),
+    url(r'^add_export_email_request/$', add_export_email_request, name='add_export_email_request'),
+    url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
