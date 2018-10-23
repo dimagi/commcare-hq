@@ -7,6 +7,7 @@ from corehq.apps.export.views.download import (
     DownloadNewCaseExportView,
     DownloadNewSmsExportView,
     add_export_email_request,
+    has_multimedia,
     poll_custom_export_download,
 )
 from corehq.apps.export.views.edit import (
@@ -48,6 +49,7 @@ from corehq.apps.export.views.utils import (
     DailySavedExportPaywall,
     DataFileDownloadList,
     DataFileDownloadDetail,
+    GenerateSchemaFromAllBuildsView,
 )
 
 urlpatterns = [
@@ -143,6 +145,7 @@ urlpatterns = [
     url(r'^commit_filters/$', commit_filters, name='commit_filters'),
     url(r'^get_app_data_drilldown_values/$', get_app_data_drilldown_values, name='get_app_data_drilldown_values'),
     url(r'^get_saved_export_progress/$', get_saved_export_progress, name='get_saved_export_progress'),
+    url(r'^has_multimedia/$', has_multimedia, name='has_multimedia'),
     url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
     url(r'^submit_app_data_drilldown_form/$', submit_app_data_drilldown_form,
         name='submit_app_data_drilldown_form'),
