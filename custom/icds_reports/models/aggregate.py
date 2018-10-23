@@ -30,6 +30,7 @@ from six.moves import range
 
 from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.awc_location import LocationAggregationHelper
 
 
 class CcsRecordMonthly(models.Model):
@@ -172,6 +173,22 @@ class AwcLocation(models.Model):
         managed = False
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
+
+    @classmethod
+    def aggregate(cls):
+        helper = LocationAggregationHelper()
+        drop_table_query = helper.drop_table_query()
+        agg_query = helper.aggregate_query()
+        aww_query = helper.aww_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(drop_table_query)
+                cursor.execute(agg_query)
+                cursor.execute(aww_query)
+                for rollup_query in rollup_queries:
+                    cursor.execute(rollup_query)
 
 
 class ChildHealthMonthly(models.Model):

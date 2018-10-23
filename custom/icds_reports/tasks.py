@@ -60,7 +60,7 @@ from custom.icds_reports.models import (
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport,
-    AggAwc)
+    AggAwc, AwcLocation)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
@@ -119,11 +119,9 @@ UCR_TABLE_NAME_MAPPING = [
 
 SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
 ]
 
 
@@ -163,7 +161,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
-            _update_aggregate_locations_tables(cursor)
+
+        _update_aggregate_locations_tables()
 
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -264,13 +263,10 @@ def _create_aggregate_functions(cursor):
         raise
 
 
-def _update_aggregate_locations_tables(cursor):
+def _update_aggregate_locations_tables():
     try:
-        path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
         celery_task_logger.info("Starting icds reports update_location_tables")
-        with open(path, "r", encoding='utf-8') as sql_file:
-            sql_to_execute = sql_file.read()
-            cursor.execute(sql_to_execute)
+        AwcLocation.aggregate()
         celery_task_logger.info("Ended icds reports update_location_tables_sql")
     except IntegrityError:
         # This has occurred when there's a location upload, but not all locations were updated.
