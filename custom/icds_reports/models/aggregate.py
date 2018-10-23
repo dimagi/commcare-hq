@@ -687,7 +687,7 @@ class AggAwcDaily(models.Model):
         db_table = 'agg_awc_daily'
 
     @classmethod
-    def aggregate(cls,day):
+    def aggregate(cls, day):
         helper = AggAwcDailyAggregationHelper(day)
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_params = helper.aggregation_query()

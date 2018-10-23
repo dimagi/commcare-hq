@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import six
 
-from custom.icds_reports.utils.aggregation import BaseICDSAggregationHelper, transform_day_to_month, month_formatter
+from custom.icds_reports.utils.aggregation import BaseICDSAggregationHelper, month_formatter
 
 
 class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):

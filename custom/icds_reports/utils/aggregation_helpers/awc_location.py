@@ -169,4 +169,3 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by)
         )
-

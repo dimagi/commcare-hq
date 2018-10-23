@@ -155,7 +155,7 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
         ), {
             "start_date": date_to_string(self.month)
         }
-    
+
     def aggregate_ccs_record_query(self):
         return """
             UPDATE "{tablename}" agg_awc SET  
