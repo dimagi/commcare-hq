@@ -560,10 +560,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
             raise ExportFormValidationException()
         return filter_form
 
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        filter_form = self._get_filter_form(filter_form_data)
-        return filter_form.get_filter()
-
 
 
 
