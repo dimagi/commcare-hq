@@ -349,22 +349,11 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             filename=self._get_filename(export_instances)
         )
 
-    @staticmethod
-    def _get_form_data_and_specs(in_data):
-        try:
-            export_specs = in_data['exports']
-            filter_form_data = in_data['form_data']
-        except (KeyError, TypeError):
-            raise ExportAsyncException(
-                _("Request requires a list of exports and filters.")
-            )
-
-        return filter_form_data, export_specs
-
     def _process_filters_and_specs(self, in_data):
         """Returns a the export filters and a list of JSON export specs
         """
-        filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+        filter_form_data = in_data['form_data']
+        export_specs = in_data['exports']
         mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(
             filter_form_data[ExpandedMobileWorkerFilter.slug]
         )
@@ -1793,7 +1782,8 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         zip file download.
         """
         try:
-            filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+            filter_form_data = in_data['form_data']
+            export_specs = in_data['exports']
             filter_form = self.filter_form_class(
                 self.domain_object, self.timezone, filter_form_data
             )
