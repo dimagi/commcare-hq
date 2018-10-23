@@ -125,6 +125,14 @@ from soil.progress import get_task_status
 from six.moves import map
 
 
+def _get_mobile_user_and_group_slugs(filter_slug):
+    mobile_user_and_group_slugs_regex = re.compile(
+        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
+    )
+    matches = mobile_user_and_group_slugs_regex.findall(filter_slug)
+    return [n[1] for n in matches]
+
+
 def _get_timezone(domain, couch_user):
     if not domain:
         return pytz.utc
@@ -207,9 +215,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     sms_export = False
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
-    mobile_user_and_group_slugs_regex = re.compile(
-        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
-    )
 
     @use_daterangepicker
     @use_select2
@@ -362,7 +367,7 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         """Returns a the export filters and a list of JSON export specs
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(
+        mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(
             filter_form_data[ExpandedMobileWorkerFilter.slug]
         )
         try:
@@ -456,10 +461,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                     'max_rows': MAX_EXPORTABLE_ROWS
                 }
             )
-
-    def _get_mobile_user_and_group_slugs(self, filter_slug):
-        matches = self.mobile_user_and_group_slugs_regex.findall(filter_slug)
-        return [n[1] for n in matches]
 
 
 @require_GET
@@ -1822,7 +1823,7 @@ class DownloadNewFormExportView(BaseDownloadExportView):
 
     def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
         filter_slug = in_data['form_data'][ExpandedMobileWorkerFilter.slug]
-        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
+        mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(filter_slug)
         return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
 
 
