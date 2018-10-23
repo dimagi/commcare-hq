@@ -91,7 +91,6 @@ from corehq.apps.export.dbaccessors import (
     get_case_exports_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
@@ -335,20 +334,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         raise NotImplementedError("Must return a list of export filter objects")
 
     @allow_remote_invocation
-    def get_group_options(self, in_data):
-        """Returns list of groups for the group filters
-        :param in_data: dict passed by the  angular js controller.
-        :return: {
-            'success': True,
-            'groups': [<..list of groups..>],
-        }
-        """
-        groups = [{'id': g._id, 'text': g.name} for g in Group.get_reporting_groups(self.domain)]
-        return format_angular_success({
-            'groups': groups,
-        })
-
-    @allow_remote_invocation
     def poll_custom_export_download(self, in_data):
         """Polls celery to see how the export download task is going.
         :param in_data: dict passed by the  angular js controller.
@@ -403,10 +388,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             raise ExportAsyncException(
                 _("Request requires a list of exports and filters.")
             )
-
-        if filter_form_data['type_or_group'] != 'group':
-            # make double sure that group is none
-            filter_form_data['group'] = ''
 
         return filter_form_data, export_specs
 
@@ -784,9 +765,6 @@ class DailySavedExportListView(BaseExportListView):
             "static_model_type": False,
             "export_filter_form": DashboardFeedFilterForm(
                 self.domain_object,
-                initial={
-                    'type_or_group': 'type',
-                },
             )
         })
         return context
@@ -1735,9 +1713,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property
@@ -1871,9 +1846,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             timezone=self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property
@@ -1938,9 +1910,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             timezone=self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property

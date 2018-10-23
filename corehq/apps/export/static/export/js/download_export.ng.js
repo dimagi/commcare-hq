@@ -52,7 +52,6 @@
                 });
         }
 
-        $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
         $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
             $('form[name="exportFiltersForm"]'));
@@ -64,46 +63,7 @@
 
         $scope.preparingExport = false;
 
-        $scope.hasGroups = false;
-        $scope.groupsLoading = true;
-        $scope.groupsError = false;
-        self._groupRetries = 0;
-
         $scope.prepareExportError = null;
-
-        self._handleGroupError = function () {
-            $scope.groupsLoading = false;
-            $scope.groupsError = true;
-        };
-
-        self._handleGroupRetry = function () {
-            if (self._groupRetries > 3) {
-                self._handleGroupError();
-            } else {
-                self._groupRetries ++;
-                self._getGroups();
-            }
-        };
-
-        self._updateGroups = function (data) {
-            if (data.success) {
-                $scope.groupsLoading = false;
-                $scope.hasGroups = data.groups.length > 0;
-                if (formElement.group()) formElement.group().select2({
-                    data: data.groups,
-                });
-            } else {
-                self._handleGroupRetry();
-            }
-        };
-
-        self._getGroups = function () {
-            djangoRMI.get_group_options({})
-                .success(self._updateGroups)
-                .error(self._handleGroupRetry);
-        };
-
-        self._getGroups();
 
         var exportType = $scope.exportList[0].export_type;
         self.exportType = hqImport('export/js/utils').capitalize(exportType);
@@ -129,9 +89,6 @@
         };
 
         $scope.isFormInvalid = function () {
-            if ($scope.formData.type_or_group === 'group') {
-                return _.isEmpty($scope.formData.group);
-            }
             return _.isEmpty($scope.formData.user_types);
         };
 
