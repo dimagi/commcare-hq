@@ -147,10 +147,10 @@
 
             var filterNamesAsString = $("#exportFiltersFormId").find("input[name="
                         + getFilterName($scope.exportList[0].export_type) + "]")
-                        .val()
+                .val();
 
             function getFilterNames() {
-              return (filterNamesAsString ? filterNamesAsString.split(',') : "");
+                return (filterNamesAsString ? filterNamesAsString.split(',') : "");
             }
 
             hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
