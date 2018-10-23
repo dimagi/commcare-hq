@@ -1540,6 +1540,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain_name,
             'plan_name': plan_name,
+            'account': self.account.name,
             'ending_on': ending_on,
             'subscription_url': absolute_reverse(
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
@@ -1548,13 +1549,6 @@ class Subscription(models.Model):
         }
 
         if self.account.is_customer_billing_account:
-            subscriptions = self.account.subscription_set.filter(
-                plan_version=self.plan_version,
-                date_end=self.date_end,
-                is_active=True,
-                is_trial=False
-            )
-            domains = [subscription.subscriber.domain for subscription in subscriptions]
             subject = _(
                 "CommCare Alert: %(account_name)s's subscription to "
                 "%(plan_name)s ends %(ending_on)s"
@@ -1563,10 +1557,6 @@ class Subscription(models.Model):
                 'plan_name': plan_name,
                 'ending_on': ending_on,
             }
-            context.update({
-                'account': self.account.name,
-                'domains': ", ".join(domains)
-            })
         elif self.is_trial:
             subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s") % {
@@ -1636,16 +1626,10 @@ class Subscription(models.Model):
         email = self.account.dimagi_contact
         if self.account.is_customer_billing_account:
             account = self.account.name
-            subscriptions = self.account.subscription_set.filter(
-                plan_version=self.plan_version,
-                date_end=self.date_end,
-                is_active=True,
-                is_trial=False
-            )
-            domains = [subscription.subscriber.domain for subscription in subscriptions]
+            plan = self.plan_version.plan.edition
             context = {
                 'account': account,
-                'domains': ", ".join(domains),
+                'plan': plan,
                 'end_date': end_date,
                 'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
                     USER_DATE_FORMAT),
