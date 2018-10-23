@@ -150,7 +150,7 @@
                 .val();
 
             function getFilterNames() {
-                return (filterNamesAsString ? filterNamesAsString.split(',') : "");
+                return (filterNamesAsString ? filterNamesAsString.split(',') : []);
             }
 
             hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
