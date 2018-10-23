@@ -159,7 +159,7 @@ class ExportsPermissionsManager(object):
 
     def __init__(self, form_or_case, domain, couch_user):
         super(ExportsPermissionsManager, self).__init__()
-        if form_or_case not in [None, 'form', 'case']:
+        if form_or_case and form_or_case not in ['form', 'case']:
             raise ValueError("Unrecognized value for form_or_case")
         self.form_or_case = form_or_case
         self.domain = domain
@@ -192,6 +192,10 @@ class ExportsPermissionsManager(object):
         # just a convenience wrapper around user_can_view_deid_exports
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
+    def access_download_export_or_404(self):
+        if not (self.has_edit_permissions or self.has_view_permissions or self.has_deid_view_permissions):
+            raise Http404()
+
 
 class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
@@ -213,11 +217,8 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
+        self.permissions.access_download_export_or_404()
 
-        if not (self.permissions.has_edit_permissions
-                or self.permissions.has_view_permissions
-                or self.permissions.has_deid_view_permissions):
-            raise Http404()
         return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -242,6 +243,7 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
             'export_list_url': self.export_list_url,
+            'form_or_case': self.form_or_case,
             'max_column_size': self.max_column_size,
             'show_date_range': self.show_date_range,
             'check_for_multimedia': self.check_for_multimedia,
@@ -332,41 +334,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         raise NotImplementedError("Must return a list of export filter objects")
-
-    @allow_remote_invocation
-    def poll_custom_export_download(self, in_data):
-        """Polls celery to see how the export download task is going.
-        :param in_data: dict passed by the  angular js controller.
-        :return: final response: {
-            'success': True,
-            'dropbox_url': '<url>',
-            'download_url: '<url>',
-            <task info>
-        }
-        """
-        try:
-            download_id = in_data['download_id']
-        except KeyError:
-            return format_angular_error(_("Requires a download id"), log_error=False)
-        try:
-            context = get_download_context(download_id)
-        except TaskFailedError:
-            notify_exception(self.request, "Export download failed",
-                             details={'download_id': download_id})
-            return format_angular_error(
-                _("Download Task Failed to Start. It seems that the server "
-                  "might be under maintenance."),
-                log_error=False,
-            )
-        if context.get('is_ready', False):
-            context.update({
-                'dropbox_url': reverse('dropbox_upload', args=(download_id,)),
-                'download_url': "{}?get_file".format(
-                    reverse('retrieve_download', args=(download_id,))
-                ),
-            })
-        context['is_poll_successful'] = True
-        return context
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
@@ -482,6 +449,41 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     def _get_mobile_user_and_group_slugs(self, filter_slug):
         matches = self.mobile_user_and_group_slugs_regex.findall(filter_slug)
         return [n[1] for n in matches]
+
+
+@require_GET
+@login_and_domain_required
+def poll_custom_export_download(request, domain):
+    """Polls celery to see how the export download task is going.
+    :return: final response: {
+        'success': True,
+        'dropbox_url': '<url>',
+        'download_url: '<url>',
+        <task info>
+    }
+    """
+    form_or_case = request.GET.get('form_or_case')
+    permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
+    permissions.access_download_export_or_404()
+
+    download_id = request.GET.get('download_id')
+    try:
+        context = get_download_context(download_id)
+    except TaskFailedError:
+        notify_exception(request, "Export download failed",
+                         details={'download_id': download_id})
+        return json_response({
+            'error': _("Download task failed to start."),
+        })
+    if context.get('is_ready', False):
+        context.update({
+            'dropbox_url': reverse('dropbox_upload', args=(download_id,)),
+            'download_url': "{}?get_file".format(
+                reverse('retrieve_download', args=(download_id,))
+            ),
+        })
+    context['is_poll_successful'] = True
+    return json_response(context)
 
 
 class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
