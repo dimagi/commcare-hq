@@ -153,7 +153,7 @@
                     function (item) {
                         var prefix = "t__";
                         if (item.substring(prefix.length) === prefix) {
-                            return userTypes[item.substring(3)];
+                             return userTypes[item.substring(prefix.length)];
                         }
                         return item;
                     }
