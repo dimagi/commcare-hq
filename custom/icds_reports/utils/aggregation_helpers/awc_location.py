@@ -142,16 +142,16 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
 
         columns = list(map(_transform_column, columns))
 
-        end_text_column = ["_id", "_name", "_site_code", "_map_location_name", "_is_test"]
+        end_text_column = ["id", "name", "site_code", "map_location_name", "is_test"]
 
-        group_by = ["state{}".format(name) for name in end_text_column]
+        group_by = ["state_{}".format(name) for name in end_text_column]
         if aggregation_level > 1:
-            group_by.extend(["district{}".format(name) for name in end_text_column])
+            group_by.extend(["district_{}".format(name) for name in end_text_column])
         if aggregation_level > 2:
-            group_by.extend(["block{}".format(name) for name in end_text_column])
+            group_by.extend(["block_{}".format(name) for name in end_text_column])
         if aggregation_level > 3:
             group_by.extend(
-                ["supervisor{}".format(name) for name in end_text_column if name is not "_map_location_name"]
+                ["supervisor_{}".format(name) for name in end_text_column if name is not "map_location_name"]
             )
 
         return """
