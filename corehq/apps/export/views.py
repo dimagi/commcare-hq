@@ -411,6 +411,17 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
         send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
+
+        # Analytics
+        if self.form_or_case:
+            capitalized = self.form_or_case[0].upper() + self.form_or_case[1:]
+            if self.check_if_export_has_data(in_data):
+                track_workflow(self.request.couch_user.username,
+                               'Downloaded {} Exports With Data'.format(capitalized))
+            else:
+                track_workflow(self.request.couch_user.username,
+                               'Downloaded {} Exports With No Data'.format(capitalized))
+
         return format_angular_success({
             'download_id': download.download_id,
         })
@@ -1816,17 +1827,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
         return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
 
-    @allow_remote_invocation
-    def prepare_custom_export(self, in_data):
-        prepare_custom_export = super(DownloadNewFormExportView, self).prepare_custom_export(in_data)
-
-        if self.check_if_export_has_data(in_data):
-            track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With Data')
-        else:
-            track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With No Data')
-
-        return prepare_custom_export
-
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
@@ -1887,17 +1887,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
             mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
         )
         return form_filters
-
-    @allow_remote_invocation
-    def prepare_custom_export(self, in_data):
-        prepare_custom_export = super(DownloadNewCaseExportView, self).prepare_custom_export(in_data)
-
-        if self.check_if_export_has_data(in_data):
-            track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With Data')
-        else:
-            track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With No Data')
-
-        return prepare_custom_export
 
 
 class DownloadNewSmsExportView(BaseDownloadExportView):
