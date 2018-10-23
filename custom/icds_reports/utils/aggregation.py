@@ -1123,7 +1123,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "WHEN NOT {} THEN NULL "
                 "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
                 "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
-                "WHEN gm.zscore_grading_wfa IN (2, 3) THEN 'normal' "
+                "WHEN gm.zscore_grading_wfa IN (3, 4) THEN 'normal' "
                 "ELSE 'unknown' END".format(wer_eligible)),
             ("current_month_nutrition_status",
                 "CASE "
