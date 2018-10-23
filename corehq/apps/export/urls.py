@@ -137,14 +137,10 @@ urlpatterns = [
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
     url(r'^add_export_email_request/$', add_export_email_request, name='add_export_email_request'),
-<<<<<<< HEAD
     url(r'^has_multimedia/$', has_multimedia, name='has_multimedia'),
     url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
     url(r'^prepare_custom_export/$', prepare_custom_export, name='prepare_custom_export'),
     url(r'^prepare_form_multimedia/$', prepare_form_multimedia, name='prepare_form_multimedia'),
-=======
-    url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
->>>>>>> 0594d936aad... Migrated poll_custom_export_download
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
