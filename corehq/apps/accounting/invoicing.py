@@ -677,9 +677,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
     @property
     def unit_description(self):
-        periodic_invoice = self.invoice.is_customer_invoice and \
+        non_monthly_invoice = self.invoice.is_customer_invoice and \
             self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
-        if self.num_excess_users > 0 or (periodic_invoice and self.num_excess_users_over_period > 0):
+        if self.num_excess_users > 0 or (non_monthly_invoice and self.num_excess_users_over_period > 0):
             return ungettext(
                 "Per User fee exceeding monthly limit of %(monthly_limit)s user.",
                 "Per User fee exceeding monthly limit of %(monthly_limit)s users.",
