@@ -532,11 +532,11 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),
             ('num_anc_visits', 'COALESCE(sum(num_anc_visits), 0)'),
             ('num_children_immunized', 'COALESCE(sum(num_children_immunized), 0)'),
-            # ('state_is_test', 'state_is_test'),
-            # ('district_is_test', 'district_is_test'),
-            # ('block_is_test', 'block_is_test'),
-            # ('supervisor_is_test', 'supervisor_is_test'),
-            # ('awc_is_test', 'awc_is_test')
+            ('state_is_test', lambda col: col if aggregation_level > 1 else "0"),
+            ('district_is_test', lambda col: col if aggregation_level > 2 else "0"),
+            ('block_is_test', lambda col: col if aggregation_level > 3 else "0"),
+            ('supervisor_is_test', lambda col: col if aggregation_level > 4 else "0"),
+            ('awc_is_test', lambda col: col if aggregation_level > 5 else "0")
         )
 
         def _transform_column(column_tuple):
@@ -553,13 +553,13 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
         columns = list(map(_transform_column, columns))
 
-        group_by = ["state_id"]
+        group_by = ["state_id", "state_is_test"]
         if aggregation_level > 1:
-            group_by.extend(["district_id"])
+            group_by.extend(["district_id", "district_is_test"])
         if aggregation_level > 2:
-            group_by.extend(["block_id"])
+            group_by.extend(["block_id", "block_is_test"])
         if aggregation_level > 3:
-            group_by.extend(["supervisor_id"])
+            group_by.extend(["supervisor_id", "supervisor_is_test"])
 
         group_by.append("month")
 

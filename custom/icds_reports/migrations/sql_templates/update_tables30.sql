@@ -3,3 +3,8 @@ ALTER TABLE awc_location ADD COLUMN district_is_test smallint;
 ALTER TABLE awc_location ADD COLUMN block_is_test smallint;
 ALTER TABLE awc_location ADD COLUMN supervisor_is_test smallint;
 ALTER TABLE awc_location ADD COLUMN awc_is_test smallint;
+ALTER TABLE agg_awc ADD COLUMN state_is_test smallint;
+ALTER TABLE agg_awc ADD COLUMN district_is_test smallint;
+ALTER TABLE agg_awc ADD COLUMN block_is_test smallint;
+ALTER TABLE agg_awc ADD COLUMN supervisor_is_test smallint;
+ALTER TABLE agg_awc ADD COLUMN awc_is_test smallint;
