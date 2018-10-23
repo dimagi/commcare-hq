@@ -429,7 +429,7 @@ class AggAwc(models.Model):
         number_launched_awcs_query, number_launched_awcs_params = helper.number_launched_awcs_query()
         latest_infrastructure_query, latest_infrastructure_params = helper.latest_infrastructure_query()
         infra_last_update_query, infra_last_update_params = helper.infra_last_update_query()
-        # location_is_test_query, location_is_test_params = helper.location_is_test_query()
+        location_is_test_query, location_is_test_params = helper.location_is_test_query()
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
         index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
         index_queries = [query for index_list in index_queries for query in index_list]
@@ -449,7 +449,7 @@ class AggAwc(models.Model):
                 cursor.execute(number_launched_awcs_query, number_launched_awcs_params)
                 cursor.execute(latest_infrastructure_query, latest_infrastructure_params)
                 cursor.execute(infra_last_update_query, infra_last_update_params)
-                # cursor.execute(location_is_test_query, location_is_test_params)
+                cursor.execute(location_is_test_query, location_is_test_params)
                 for query in rollup_queries:
                     cursor.execute(query)
                 for query in index_queries:
