@@ -46,10 +46,15 @@
 {% block page_content %}
     {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
     {% initial_page_data 'export_list' export_list %}
+    {% initial_page_data 'form_or_case' form_or_case %}
     {% initial_page_data 'max_column_size' max_column_size %}
     {% initial_page_data 'default_date_range' default_date_range %}
     {% initial_page_data 'check_for_multimedia' check_for_multimedia %}
     {% initial_page_data 'user_types' user_types %}
+
+    {% registerurl 'add_export_email_request' domain %}
+    {% registerurl 'poll_custom_export_download' domain %}
+
     <div ng-app="downloadExportsApp">
         <div ng-controller="DownloadExportFormController"
              ng-cloak>
