@@ -337,18 +337,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         except TypeError:
             return 2000
 
-
-    def _get_download_task(self, in_data):
-        export_filters, export_specs = self._process_filters_and_specs(in_data)
-        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
-        self._check_deid_permissions(export_instances)
-        self._check_export_size(export_instances, export_filters)
-        return get_export_download(
-            export_instances=export_instances,
-            filters=export_filters,
-            filename=self._get_filename(export_instances)
-        )
-
     def _process_filters_and_specs(self, in_data):
         """Returns a the export filters and a list of JSON export specs
         """
@@ -407,7 +395,15 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         }
         """
         try:
-            download = self._get_download_task(in_data)
+            export_filters, export_specs = self._process_filters_and_specs(in_data)
+            export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+            self._check_deid_permissions(export_instances)
+            self._check_export_size(export_instances, export_filters)
+            download = get_export_download(
+                export_instances=export_instances,
+                filters=export_filters,
+                filename=self._get_filename(export_instances)
+            )
         except ExportAsyncException as e:
             return format_angular_error(e.message, log_error=True)
         except XlsLengthException:
