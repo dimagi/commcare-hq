@@ -61,7 +61,7 @@ from custom.icds_reports.models import (
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport,
     AggAwc, AwcLocation)
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -432,12 +432,10 @@ def _ccs_record_monthly_table(day):
         ], day)
         CcsRecordMonthly.aggregate(force_to_date(day))
 
+
 @track_time
 def _daily_attendance_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_table_for_month('daily_attendance', %s)",
-        "SELECT insert_into_daily_attendance(%s)"
-    ], day)
+    DailyAttendance.aggregate(force_to_date(day))
 
 
 @track_time

@@ -31,6 +31,12 @@ from six.moves import range
 from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_location import LocationAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.daily_attendance import DailyAttendanceAggregationHelper
+
+
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
 
 
 class CcsRecordMonthly(models.Model):
@@ -719,10 +725,18 @@ class DailyAttendance(models.Model):
         managed = False
         db_table = 'daily_attendance'
 
+    @classmethod
+    def aggregate(cls, month):
+        helper = DailyAttendanceAggregationHelper(month=month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregate_query()
+        indexes_query = helper.indexes()
 
-def get_cursor(model):
-    db = db_for_read_write(model)
-    return connections[db].cursor()
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+            cursor.execute(indexes_query)
 
 
 class AggregateComplementaryFeedingForms(models.Model):
