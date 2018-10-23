@@ -45,7 +45,7 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
-##### Mac OSX Notes
+##### macOS Notes
 
 - You may need to use `sudo` to for some of the above setup:
 ```
@@ -148,7 +148,7 @@ you'll need to install `bower` and run `bower install`. Follow these steps to in
         $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
 
-    For Mac OSX: Install with Homebrew:
+    For macOS: Install with Homebrew:
 
         $ brew install node
 
