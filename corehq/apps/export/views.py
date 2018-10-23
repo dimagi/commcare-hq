@@ -398,7 +398,20 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             export_filters, export_specs = self._process_filters_and_specs(in_data)
             export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
             self._check_deid_permissions(export_instances)
-            self._check_export_size(export_instances, export_filters)
+
+            # Check export isn't too big to download
+            count = 0
+            for instance in export_instances:
+                count += get_export_size(instance, export_filters)
+            if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
+                raise ExportAsyncException(
+                    _("This export contains %(row_count)s rows. Please change the "
+                      "filters to be less than %(max_rows)s rows.") % {
+                        'row_count': count,
+                        'max_rows': MAX_EXPORTABLE_ROWS
+                    }
+                )
+
             download = get_export_download(
                 export_instances=export_instances,
                 filters=export_filters,
@@ -451,19 +464,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                         _("You do not have permission to export this "
                         "De-Identified export.")
                     )
-
-    def _check_export_size(self, export_instances, filters):
-        count = 0
-        for instance in export_instances:
-            count += get_export_size(instance, filters)
-        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
-            raise ExportAsyncException(
-                _("This export contains %(row_count)s rows. Please change the "
-                  "filters to be less than %(max_rows)s rows.") % {
-                    'row_count': count,
-                    'max_rows': MAX_EXPORTABLE_ROWS
-                }
-            )
 
 
 @require_GET
