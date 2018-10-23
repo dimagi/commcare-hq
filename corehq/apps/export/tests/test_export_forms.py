@@ -108,14 +108,6 @@ class TestEmwfFilterFormExport(TestCase):
         self.assertEqual(self.subject.export_user_filter, FormSubmittedByFilter)
         self.assertEqual(self.subject.dynamic_filter_class, SubmitHistoryFilter)
 
-    def test_export_to_es_user_types_map(self):
-        mapping = {'mobile': ['mobile'], 'demo_user': ['demo'], 'supply': ['supply'],
-                   'unknown': ['unknown', 'system', 'web']}
-        self.assertEqual(
-            self.subject._EXPORT_TO_ES_USER_TYPES_MAP,
-            mapping
-        )
-
 
 class TestEmwfFilterExportMixin(TestCase):
     form = EmwfFilterFormExport

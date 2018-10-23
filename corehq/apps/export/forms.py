@@ -219,15 +219,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
 
-    _EXPORT_TO_ES_USER_TYPES_MAP = {
-        _USER_MOBILE: [utils.MOBILE_USER_TYPE],
-        _USER_DEMO: [utils.DEMO_USER_TYPE],
-        _USER_UNKNOWN: [
-            utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-        ],
-        _USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-    }
-
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
@@ -964,7 +955,14 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         export_user_types = self._get_mapped_user_types(
             self._get_selected_es_user_types(mobile_user_and_group_slugs)
         )
-        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
+        export_to_es_user_types_map = {
+            BaseFilterExportDownloadForm._USER_MOBILE: [utils.MOBILE_USER_TYPE],
+            BaseFilterExportDownloadForm._USER_DEMO: [utils.DEMO_USER_TYPE],
+            BaseFilterExportDownloadForm._USER_UNKNOWN: [
+                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
+            ],
+            BaseFilterExportDownloadForm._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
+        }
         for type_ in export_user_types:
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
