@@ -34,6 +34,7 @@ from corehq.apps.export.views import (
     DataFileDownloadList,
     DataFileDownloadDetail,
     add_export_email_request,
+    has_multimedia,
     poll_custom_export_download,
 )
 
@@ -127,6 +128,7 @@ urlpatterns = [
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
     url(r'^add_export_email_request/$', add_export_email_request, name='add_export_email_request'),
+    url(r'^has_multimedia/$', has_multimedia, name='has_multimedia'),
     url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
 
     # Delete export views
