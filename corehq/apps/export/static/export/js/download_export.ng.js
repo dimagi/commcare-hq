@@ -308,10 +308,14 @@
         self.resetDownload();
 
         self._checkDownloadProgress = function () {
-            djangoRMI.poll_custom_export_download({
-                download_id: self.downloadId,
-            })
-                .success(function (data) {
+            $.ajax({
+                method: 'GET',
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('poll_custom_export_download'),
+                data: {
+                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
+                    download_id: self.downloadId,
+                },
+                success: function (data) {
                     if (data.is_poll_successful) {
                         self.downloadStatusData = data;
                         if (data.has_file && data.is_ready) {
@@ -338,8 +342,9 @@
                     if (_.isNull(data.is_alive)) {
                         self._dealWithCeleryErrors();
                     }
-                })
-                .error(self._dealWithErrors);
+                },
+                error: self._dealWithErrors,
+            });
         };
 
         self._dealWithCeleryErrors = function () {

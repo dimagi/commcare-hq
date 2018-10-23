@@ -33,7 +33,8 @@ from corehq.apps.export.views import (
     CopyExportView,
     DataFileDownloadList,
     DataFileDownloadDetail,
-    add_export_email_request
+    add_export_email_request,
+    poll_custom_export_download,
 )
 
 urlpatterns = [
@@ -125,9 +126,8 @@ urlpatterns = [
     url(r"^custom/copy/(?P<export_id>[\w\-]+)/$",
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
-    url(r'^add_export_email_request/$',
-        add_export_email_request,
-        name='add_export_email_request'),
+    url(r'^add_export_email_request/$', add_export_email_request, name='add_export_email_request'),
+    url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
