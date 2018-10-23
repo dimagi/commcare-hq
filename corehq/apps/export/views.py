@@ -417,10 +417,16 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                     }
                 )
 
+            # Generate filename
+            if len(export_instances) > 1:
+                filename = "{}_custom_bulk_export_{}".format(self.domain, date.today().isoformat())
+            else:
+                filename = "{} {}".format(export_instances[0].name, date.today().isoformat())
+
             download = get_export_download(
                 export_instances=export_instances,
                 filters=export_filters,
-                filename=self._get_filename(export_instances)
+                filename=filename,
             )
         except ExportAsyncException as e:
             return format_angular_error(e.message, log_error=True)
@@ -446,18 +452,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         return format_angular_success({
             'download_id': download.download_id,
         })
-
-    def _get_filename(self, export_instances):
-        if len(export_instances) > 1:
-            return "{}_custom_bulk_export_{}".format(
-                self.domain,
-                date.today().isoformat()
-            )
-        else:
-            return "{} {}".format(
-                export_instances[0].name,
-                date.today().isoformat()
-            )
 
     def _check_deid_permissions(self, export_instances):
         # if any export is de-identified, check that
