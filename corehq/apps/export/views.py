@@ -458,6 +458,33 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
 
 @require_GET
 @login_and_domain_required
+def has_multimedia(request, domain):
+    """Checks to see if this form export has multimedia available to export
+    """
+    form_or_case = request.GET.get('form_or_case')
+    if form_or_case != 'form':
+        raise ValueError("has_multimedia is only available for form exports")
+
+    permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
+    permissions.access_download_export_or_404()
+
+    export_object = FormExportInstance.get(request.GET.get('export_id'))
+    if isinstance(export_object, ExportInstance):
+        has_multimedia = export_object.has_multimedia
+    else:
+        has_multimedia = forms_have_multimedia(
+            domain,
+            export_object.app_id,
+            getattr(export_object, 'xmlns', '')
+        )
+    return json_response({
+        'success': True,
+        'hasMultimedia': has_multimedia,
+    })
+
+
+@require_GET
+@login_and_domain_required
 def poll_custom_export_download(request, domain):
     """Polls celery to see how the export download task is going.
     :return: final response: {
@@ -1732,26 +1759,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         }]
 
     @allow_remote_invocation
-    def has_multimedia(self, in_data):
-        """Checks to see if this form export has multimedia available to export
-        """
-        try:
-            export_object = self._get_export(self.domain, self.export_id)
-            if isinstance(export_object, ExportInstance):
-                has_multimedia = export_object.has_multimedia
-            else:
-                has_multimedia = forms_have_multimedia(
-                    self.domain,
-                    export_object.app_id,
-                    getattr(export_object, 'xmlns', '')
-                )
-        except Exception:
-            return format_angular_error(_("There was an error"), log_error=True)
-        return format_angular_success({
-            'hasMultimedia': has_multimedia,
-        })
-
-    @allow_remote_invocation
     def prepare_form_multimedia(self, in_data):
         """Gets the download_id for the multimedia zip and sends it to the
         exportDownloadService in download_export.ng.js to begin polling for the
@@ -1826,10 +1833,7 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     page_title = ugettext_noop("Download Form Data Exports")
     filter_form_class = EmwfFilterFormExport
     export_filter_class = ExpandedMobileWorkerFilter
-
-    @allow_remote_invocation
-    def has_multimedia(self, in_data):
-        return False
+    check_for_multimedia = False
 
 
 @location_safe
