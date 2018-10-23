@@ -8,8 +8,8 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, USAGE_TABLE_ID, PERSON_TABLE_ID, HOUSEHOLD_TABLE_ID
 
-from custom.icds_reports.utils.aggregation import BaseICDSAggregationHelper, date_to_string, month_formatter, \
-    transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, date_to_string, \
+    month_formatter, transform_day_to_month
 
 
 class AggAwcAggregationHelper(BaseICDSAggregationHelper):
@@ -155,7 +155,7 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
         ), {
             "start_date": date_to_string(self.month)
         }
-    
+
     def aggregate_ccs_record_query(self):
         return """
             UPDATE "{tablename}" agg_awc SET  
