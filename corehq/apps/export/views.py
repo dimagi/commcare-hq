@@ -418,7 +418,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             else:
                 filename = "{} {}".format(export_instances[0].name, date.today().isoformat())
 
-
             download = get_export_download(
                 export_instances=export_instances,
                 filters=export_filters,
