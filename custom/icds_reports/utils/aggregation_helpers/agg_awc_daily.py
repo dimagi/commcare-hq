@@ -171,12 +171,16 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
         columns = list(map(_transform_column, columns))
 
         group_by = ["state_id", "state_is_test"]
+        child_is_test = 'district_is_test'
         if aggregation_level > 1:
             group_by.extend(["district_id", "district_is_test"])
+            child_is_test = 'block_is_test'
         if aggregation_level > 2:
             group_by.extend(["block_id", "block_is_test"])
+            child_is_test = 'supervisor_is_test'
         if aggregation_level > 3:
             group_by.extend(["supervisor_id", "supervisor_is_test"])
+            child_is_test = 'awc_is_test'
 
         group_by.append("date")
 
@@ -186,7 +190,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
                 ) (
                     SELECT {calculations}
                     FROM "{from_tablename}"
-                    WHERE aggregation_level = %(aggregation_level)s
+                    WHERE aggregation_level = %(aggregation_level)s AND {child_is_test} = '0'
                     GROUP BY {group_by}
                     ORDER BY {group_by}
                 )
@@ -196,6 +200,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by),
+            child_is_test=child_is_test
         ), {
             'aggregation_level': aggregation_level + 1
         }
