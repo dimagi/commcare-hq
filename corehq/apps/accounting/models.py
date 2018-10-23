@@ -1666,6 +1666,9 @@ class Subscription(models.Model):
                     )
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
+        if self.account.is_customer_billing_account:
+            enterprise_admin_emails = self.account.enterprise_admin_emails
+            emails |= {enterprise_admin_email for enterprise_admin_email in enterprise_admin_emails}
         return emails
 
     def set_billing_account_entry_point(self):
