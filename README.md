@@ -297,11 +297,6 @@ Create a superuser for your local environment
 
     $ ./manage.py make_superuser <email>
 
-If you want to use CloudCare you will also need to run the Touchforms server.
-
-    # run Touchforms server
-    > jython submodules/touchforms-src/touchforms/backend/xformserver.py
-
 Running Formdesigner in Development mode
 ----------------------------------------
 By default, HQ uses vellum minified build files to render form-designer. To use files from Vellum directly, do following
