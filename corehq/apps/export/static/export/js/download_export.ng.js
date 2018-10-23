@@ -44,12 +44,19 @@
 
         $scope.hasMultimedia = false;
         if (checkForMultimedia) {
-            djangoRMI.has_multimedia({})
-                .success(function (data) {
+            $.ajax({
+                method: 'GET',
+                url: hqImport("hqwebapp/js/initial_page_data").reverse("has_multimedia"),
+                data: {
+                    export_id: $scope.exportList[0].export_id,
+                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
+                },
+                success: function (data) {
                     if (data.success) {
                         $scope.hasMultimedia = data.hasMultimedia;
                     }
-                });
+                },
+            });
         }
 
         $scope.formData.user_types = ['mobile'];
