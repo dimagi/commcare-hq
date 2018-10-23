@@ -337,8 +337,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         except TypeError:
             return 2000
 
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        raise NotImplementedError("Must return a list of export filter objects")
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
@@ -371,7 +369,27 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             filter_form_data[ExpandedMobileWorkerFilter.slug]
         )
         try:
-            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
+            # Determine export filter
+            filter_form = self._get_filter_form(filter_form_data)
+            if self.form_or_case:
+                if not self.request.can_access_all_locations:
+                    accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                        self.request.domain,
+                        self.request.couch_user)
+                    )
+                else:
+                    accessible_location_ids = None
+
+                if self.form_or_case == 'form':
+                    export_filter = filter_form.get_form_filter(
+                        mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
+                    )
+                elif self.form_or_case == 'case':
+                    export_filter = filter_form.get_case_filter(
+                        mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
+                    )
+            else:
+                export_filter = filter_form.get_filter()
         except ExportFormValidationException:
             raise ExportAsyncException(
                 _("Form did not validate.")
@@ -1807,20 +1825,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        filter_form = self._get_filter_form(filter_form_data)
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain,
-                self.request.couch_user)
-            )
-        else:
-            accessible_location_ids = None
-        form_filters = filter_form.get_form_filter(
-            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
-        )
-        return form_filters
-
     def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
         filter_slug = in_data['form_data'][ExpandedMobileWorkerFilter.slug]
         mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(filter_slug)
@@ -1873,20 +1877,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        filter_form = self._get_filter_form(filter_form_data)
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain,
-                self.request.couch_user)
-            )
-        else:
-            accessible_location_ids = None
-        form_filters = filter_form.get_case_filter(
-            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
-        )
-        return form_filters
-
 
 class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
@@ -1925,10 +1915,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
         return SMSExportInstance._new_from_schema(
             SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
         )
-
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        filter_form = self._get_filter_form(filter_form_data)
-        return filter_form.get_filter()
 
 
 class GenerateSchemaFromAllBuildsView(View):
