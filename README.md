@@ -60,8 +60,9 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 
 #### Setup virtualenv
 
-Run the following command:
+Run the following commands:
 
+    $ source /usr/local/bin/virtualenvwrapper.sh
     $ mkvirtualenv --no-site-packages commcare-hq -p python2.7
 
 #### Clone and setup repo / requirements
