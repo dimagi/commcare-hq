@@ -144,12 +144,19 @@
             function getFilterName(exportType) {
                 return (exportType === "form" ? "emw" : "case_list_filter");
             }
+
+            var filterNamesAsString = $("#exportFiltersFormId").find("input[name="
+                        + getFilterName($scope.exportList[0].export_type) + "]")
+                .val();
+
+            function getFilterNames() {
+                return (filterNamesAsString ? filterNamesAsString.split(',') : []);
+            }
+
             hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
                 "Export type": $scope.exportList[0].export_type,
                 "filters": _.map(
-                    $("#exportFiltersFormId").find("input[name="
-                        + getFilterName($scope.exportList[0].export_type) + "]")
-                        .val().split(','),
+                    getFilterNames(),
                     function (item) {
                         if (item.substring(0,3) === "t__") {
                             return userTypes[item.substring(3)];
