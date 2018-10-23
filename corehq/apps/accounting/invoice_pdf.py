@@ -176,13 +176,10 @@ class InvoiceTemplate(object):
                 else:
                     self.draw_header()
                     self.draw_table(items)
+                    self.canvas.showPage()
+                    self.canvas.save()
                     if len(items_to_draw) == 0:
-                        self.canvas.showPage()
-                        self.canvas.save()
                         self.draw_totals_on_new_page()
-                    else:
-                        self.canvas.showPage()
-                        self.canvas.save()
                 items = items_to_draw
         else:
             self.draw_table_and_footer(self.items)
