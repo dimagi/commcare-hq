@@ -264,12 +264,17 @@ class ChildHealthMonthly(models.Model):
         index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
+            cursor.execute(helper.create_temporary_table())
+            for agg_query, agg_params in agg_queries:
+                cursor.execute(agg_query, agg_params)
+
             with transaction.atomic():
                 cursor.execute(helper.drop_table_query())
-                for agg_query, agg_params in agg_queries:
-                    cursor.execute(agg_query, agg_params)
+                cursor.execute(helper.real_query())
                 for query in index_queries:
                     cursor.execute(query)
+
+            cursor.execute(helper.drop_temporary_table())
 
 
 class AggAwc(models.Model):
