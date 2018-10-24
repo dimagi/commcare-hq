@@ -91,6 +91,17 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
 
 
+# Form used for rendering filters
+def _get_filter_form_class(form_or_case, sms_export=False):
+    if sms_export:
+        return FilterSmsESExportDownloadForm
+    if form_or_case == 'form':
+        return EmwfFilterFormExport
+    if form_or_case == 'case':
+        return FilterCaseESExportDownloadForm
+    raise ValueError("Could not find filter form class")
+
+
 def _get_mobile_user_and_group_slugs(filter_slug):
     mobile_user_and_group_slugs_regex = re.compile(
         '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
@@ -104,8 +115,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     http_method_names = ['get', 'post']
     show_date_range = False
     check_for_multimedia = False
-    # Form used for rendering filters
-    filter_form_class = None
     sms_export = False
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
@@ -181,7 +190,8 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     @property
     @memoized
     def download_export_form(self):
-        return self.filter_form_class(self.domain_object, timezone=self.timezone)
+        form_class = _get_filter_form_class(self.form_or_case, self.sms_export)
+        return form_class(self.domain_object, timezone=self.timezone)
 
     @property
     def export_id(self):
@@ -247,9 +257,8 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             )
             try:
                 # Determine export filter
-                filter_form = self.filter_form_class(
-                    self.domain_object, self.timezone, filter_form_data
-                )
+                form_class = _get_filter_form_class(self.form_or_case, self.sms_export)
+                filter_form = form_class(self.domain_object, self.timezone, filter_form_data)
                 if not filter_form.is_valid():
                     raise ExportFormValidationException()
                 if self.form_or_case:
@@ -381,7 +390,6 @@ def poll_custom_export_download(request, domain):
 @location_safe
 class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
-    filter_form_class = EmwfFilterFormExport
     export_filter_class = ExpandedMobileWorkerFilter
     show_date_range = True
     page_title = ugettext_noop("Download Form Data Export")
@@ -415,9 +423,8 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         try:
             filter_form_data = in_data['form_data']
             export_specs = in_data['exports']
-            filter_form = self.filter_form_class(
-                self.domain_object, self.timezone, filter_form_data
-            )
+            form_class = _get_filter_form_class(self.form_or_class, self.sms_export)
+            filter_form = form_class(self.domain_object, self.timezone, filter_form_data)
             if not filter_form.is_valid():
                 raise ExportFormValidationException(
                     _("Please check that you've submitted all required filters.")
@@ -469,7 +476,6 @@ def has_multimedia(request, domain):
 @location_safe
 class DownloadNewCaseExportView(BaseDownloadExportView):
     urlname = 'new_export_download_cases'
-    filter_form_class = FilterCaseESExportDownloadForm
     export_filter_class = CaseListFilter
     page_title = ugettext_noop("Download Case Data Export")
     form_or_case = 'case'
@@ -503,7 +509,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
     page_title = ugettext_noop("Export SMS Messages")
     form_or_case = None
-    filter_form_class = FilterSmsESExportDownloadForm
     export_id = None
     sms_export = True
 
@@ -539,7 +544,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = ugettext_noop("Download Form Data Exports")
-    filter_form_class = EmwfFilterFormExport
     export_filter_class = ExpandedMobileWorkerFilter
     check_for_multimedia = False
 
