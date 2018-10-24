@@ -17,7 +17,7 @@ from six.moves import range
 from io import open
 
 from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
-from custom.icds_reports.utils.aggregation import InactiveAwwsAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.inactive_awws import InactiveAwwsAggregationHelper
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 

@@ -15,7 +15,6 @@ from custom.icds_reports.utils.aggregation import (
     AwcInfrastructureAggregationHelper,
     CcsRecordMonthlyAggregationHelper,
     DailyFeedingFormsChildHealthAggregationHelper,
-    InactiveAwwsAggregationHelper,
     AwwIncentiveAggregationHelper
 )
 from dateutil.relativedelta import relativedelta
@@ -30,6 +29,7 @@ from custom.icds_reports.utils.aggregation_helpers.complementary_forms_ccs_recor
     ComplementaryFormsCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.delivery_forms import DeliveryFormsAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.growth_monitoring_forms import GrowthMonitoringFormsAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.inactive_awws import InactiveAwwsAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_ccs_record import \
     PostnatalCareFormsCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_health import \
