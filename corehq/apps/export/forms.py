@@ -110,59 +110,52 @@ class CreateExportTagForm(forms.Form):
                 crispy.Field(
                     'model_type',
                     placeholder=_('Select model type'),
-                    ng_model='formData.model_type',
-                    ng_change='resetForm()',
-                    ng_required="true",
+                    data_bind="value: modelType",
                 ),
-                ng_show="!staticModelType"
+                data_bind="visible: !staticModelType",
             ),
             crispy.Div(
                 crispy.Div(
                     crispy.Field(
                         'app_type',
                         placeholder=_("Select Application Type"),
-                        ng_model="formData.app_type",
-                        ng_change="updateAppChoices()",
-                        ng_required="true",
+                        data_bind="value: appType, event: {change: updateAppChoices}",
                     ),
-                    ng_show="hasSpecialAppTypes || formData.model_type === 'case'",
+                    data_bind="visible: showAppType()",
                 ),
                 crispy.Field(
                     'application',
                     placeholder=_("Select Application"),
-                    ng_model="formData.application",
-                    ng_change="formData.model_type === 'case' ? updateCaseTypeChoices() : updateModuleChoices()",
-                    ng_required="true",
+                    data_bind="value: application",
                 ),
                 crispy.Div(  # Form export fields
                     crispy.Field(
                         'module',
                         placeholder=_("Select Menu"),
-                        ng_model="formData.module",
-                        ng_disabled="!formData.application",
-                        ng_change="updateFormChoices()",
-                        ng_required="formData.model_type === 'form'",
+                        data_bind="value: module, disable: !application()",
                     ),
                     crispy.Field(
                         'form',
                         placeholder=_("Select Form"),
-                        ng_model="formData.form",
-                        ng_disabled="!formData.module",
-                        ng_required="formData.model_type === 'form'",
+                        data_bind='''
+                            value: form,
+                            disable: !module(),
+                        ''',
                     ),
-                    ng_show="formData.model_type === 'form'"
+                    data_bind="visible: isFormModel()",
                 ),
                 crispy.Div(  # Case export fields
                     crispy.Field(
                         'case_type',
                         placeholder=_("Select Case Type"),
-                        ng_model="formData.case_type",
-                        ng_disabled="!formData.application",
-                        ng_required="formData.model_type === 'case'",
+                        data_bind='''
+                            value: caseType,
+                            disable: !application(),
+                        ''',
                     ),
-                    ng_show="formData.model_type === 'case'",
+                    data_bind="visible: isCaseModel()",
                 ),
-                ng_show="formData.model_type"
+                data_bind="visible: modelType()",
             )
         )
 
