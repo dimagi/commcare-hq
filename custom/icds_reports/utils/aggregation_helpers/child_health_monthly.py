@@ -326,7 +326,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return "CREATE TABLE \"tmp_{}\" (LIKE child_health_monthly INCLUDING INDEXES)".format(self.tablename)
 
     def drop_temporary_table(self):
-        return "DROP TABLE \"tmp_{}\"".format(self.tablename)
+        return "DROP TABLE IF EXISTS \"tmp_{}\"".format(self.tablename)
 
     def real_query(self):
         return "INSERT INTO \"{tablename}\" (SELECT * FROM \"tmp_{tablename}\")".format(tablename=self.tablename)
