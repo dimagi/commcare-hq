@@ -260,21 +260,13 @@ class ChildHealthMonthly(models.Model):
     @classmethod
     def aggregate(cls, state_ids, month):
         helper = ChildHealthMonthlyAggregationHelper(state_ids, month)
-        agg_queries = helper.aggregation_queries()
         index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            cursor.execute(helper.create_temporary_table())
-            for agg_query, agg_params in agg_queries:
-                cursor.execute(agg_query, agg_params)
-
-            with transaction.atomic():
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(helper.real_query())
-                for query in index_queries:
-                    cursor.execute(query)
-
-            cursor.execute(helper.drop_temporary_table())
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(helper.real_query())
+            for query in index_queries:
+                cursor.execute(query)
 
 
 class AggAwc(models.Model):
