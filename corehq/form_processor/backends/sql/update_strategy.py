@@ -1,22 +1,40 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
-from collections import defaultdict
+import sys
+import datetime
+from functools import cmp_to_key
 
 from iso8601 import iso8601
-
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
-from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported, CaseValueError
+from casexml.apps.case.exceptions import (
+    UsesReferrals,
+    VersionNotSupported,
+    CaseValueError,
+    ReconciliationError,
+    MissingServerDate
+)
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
+from corehq.form_processor.models import (
+    CommCareCaseSQL,
+    CommCareCaseIndexSQL,
+    CaseTransaction,
+    CaseAttachmentSQL,
+    RebuildWithReason
+)
 from corehq.form_processor.update_strategy_base import UpdateStrategy
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL
+)
 from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.gauges import datadog_counter
+reconciliation_soft_assert = soft_assert('jroth@dimagi.com', include_breadcrumbs=True)
 
 
 def _validate_length(length):
@@ -73,7 +91,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     @staticmethod
     def add_transaction_for_form(case, case_update, form):
         types = [CaseTransaction.type_from_action_type_slug(a.action_type_slug) for a in case_update.actions]
-        transaction = CaseTransaction.form_transaction(case, form, types)
+        transaction = CaseTransaction.form_transaction(case, form, case_update.guess_modified_on(), types)
         for trans in case.get_tracked_models_to_create(CaseTransaction):
             if transaction == trans:
                 trans.type |= transaction.type
@@ -287,6 +305,35 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
 
+    def reconcile_transactions_if_necessary(self):
+        if self.case.check_transaction_order():
+            return False
+        datadog_counter("commcare.form_processor.sql.reconciling_transactions")
+        try:
+            self.reconcile_transactions()
+        except ReconciliationError as e:
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % e.message)
+
+        return True
+
+    def reconcile_transactions(self):
+        transactions = self.case.transactions
+        sorted_transactions = sorted(
+            transactions,
+            key=_transaction_sort_key_function(self.case)
+        )
+        if sorted_transactions:
+            if not sorted_transactions[0].is_case_create:
+                error = "Case {0} first transaction not create transaction: {1}"
+                raise ReconciliationError(
+                    error.format(self.case.case_id, sorted_transactions[0])
+                )
+
+        CaseAccessorSQL.fetch_case_transaction_forms(sorted_transactions)
+        rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
+        rebuild_transaction = CaseTransaction.rebuild_transaction(self.case, rebuild_detail)
+        self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
+
     def _delete_old_related_models(self, original_models_by_id, models_to_keep, key="identifier"):
         for model in models_to_keep:
             original_models_by_id.pop(getattr(model, key), None)
@@ -302,3 +349,59 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             filtered_updates = [u for u in case_updates if u.id == self.case.case_id]
             for case_update in filtered_updates:
                 self._apply_case_update(case_update, form)
+
+
+def _transaction_sort_key_function(case):
+    xform_ids = list(case.xform_ids)
+    fudge_factor = datetime.timedelta(hours=12)
+
+    def cc_cmp(first, second):
+        if first > second:
+            return 1
+        if first < second:
+            return -1
+        return 0
+
+    def _transaction_cmp(first_transaction, second_transaction):
+        # if the forms aren't submitted by the same user, just default to server dates
+        if first_transaction.user_id != second_transaction.user_id:
+            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+
+        if first_transaction.form_id and first_transaction.form_id == second_transaction.form_id:
+            # short circuit if they are from the same form
+            return cc_cmp(
+                _type_sort(first_transaction.type),
+                _type_sort(second_transaction.type)
+            )
+
+        if not (first_transaction.server_date and second_transaction.server_date):
+            raise MissingServerDate()
+
+        # checks if the dates received are within a particular range
+        if abs(first_transaction.server_date - second_transaction.server_date) > fudge_factor:
+            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+
+        def _sortkey(transaction):
+            def form_index(form_id):
+                try:
+                    return xform_ids.index(form_id)
+                except ValueError:
+                    return sys.maxsize
+
+            # if the user is the same you should compare with the special logic below
+            return (
+                transaction.client_date,
+                form_index(transaction.form_id),
+                _type_sort(transaction.type),
+            )
+
+        return cc_cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+
+    return cmp_to_key(_transaction_cmp)
+
+
+def _type_sort(action_type):
+    """
+    Consistent ordering for action types
+    """
+    return const.CASE_ACTIONS.index(action_type)
