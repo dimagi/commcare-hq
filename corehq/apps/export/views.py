@@ -355,7 +355,12 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             )
             try:
                 # Determine export filter
-                filter_form = self._get_filter_form(filter_form_data)
+                filter_form = self.filter_form_class(
+                    self.domain_object, self.timezone, filter_form_data
+                )
+                if not filter_form.is_valid():
+                    raise ExportFormValidationException()
+
                 if self.form_or_case:
                     if not self.request.can_access_all_locations:
                         accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
@@ -1783,15 +1788,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
             'download_id': download.download_id,
         })
 
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
-
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
@@ -1836,14 +1832,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
             'url': reverse(CaseExportListView.urlname, args=(self.domain,)),
         }]
 
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data,
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
 
@@ -1871,14 +1859,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
     @property
     def parent_pages(self):
         return []
-
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data,
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
 
     def _get_export(self, domain, export_id):
         include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
