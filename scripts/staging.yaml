@@ -62,7 +62,7 @@ branches:
 #  - rn_correct_datefilter_of_ucr # rohit Oct 14
 #  - rn_test_report_export # rohit #oct 16
   - qa-customer-billing # Gabriella Oct 19
-#  - jls/ko-exports-create  # Jenny Oct 19
+  - jls/ko-exports-create  # Jenny Oct 19
   - jls/export-dl-views  # Jenny Oct 23
   - rn_update_msg_hist_filt_value # rohit Oct 22
 submodules:
