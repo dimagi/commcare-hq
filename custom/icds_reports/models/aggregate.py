@@ -15,7 +15,6 @@ from custom.icds_reports.utils.aggregation import (
     AwcInfrastructureAggregationHelper,
     BirthPreparednessFormsAggregationHelper,
     CcsRecordMonthlyAggregationHelper, ChildHealthMonthlyAggregationHelper,
-    ComplementaryFormsAggregationHelper,
     DailyFeedingFormsChildHealthAggregationHelper,
     DeliveryFormsAggregationHelper, GrowthMonitoringFormsAggregationHelper,
     InactiveAwwsAggregationHelper,
@@ -27,6 +26,8 @@ from custom.icds_reports.utils.aggregation import (
 from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
+
+from custom.icds_reports.utils.aggregation_helpers.complementary_forms import ComplementaryFormsAggregationHelper
 
 
 class CcsRecordMonthly(models.Model):
