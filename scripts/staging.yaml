@@ -60,11 +60,11 @@ branches:
 #  - rn_correct_datefilter_of_ucr # rohit Oct 14
 #  - rn_test_report_export # rohit #oct 16
   - qa-customer-billing # Gabriella Oct 19
-  - jls/ko-export-dl-views+jls/ko-exports-create  # Jenny Oct 24
-  - jls/ko-exports-create  # Jenny Oct 19
-  - jls/ko-exports-list+jls/ko-export-dl-views  # Jenny Oct 24
-  - jls/ko-export-dl-views  # Jenny Oct 23
-  - jls/ko-exports-list  # Jenny Oct 24
+#  - jls/ko-export-dl-views+jls/ko-exports-create  # Jenny Oct 24
+#  - jls/ko-exports-create  # Jenny Oct 19
+#  - jls/ko-exports-list+jls/ko-export-dl-views  # Jenny Oct 24
+#  - jls/ko-export-dl-views  # Jenny Oct 23
+#  - jls/ko-exports-list  # Jenny Oct 24
   - dm/gevent # daniel Oct 24
   - np/testing-OData # Nick P Oct 24
 submodules:
