@@ -230,6 +230,11 @@ class ExportsPermissionsManager(object):
         if not (self.has_edit_permissions or self.has_view_permissions or self.has_deid_view_permissions):
             raise Http404()
 
+    def access_list_exports_or_404(self, is_deid=False):
+        if not (self.has_edit_permissions or self.has_view_permissions
+                or (is_deid and self.has_deid_view_permissions)):
+            raise Http404()
+
 
 class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
@@ -709,26 +714,11 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         """Returns a django form that gets the information necessary to create
         an export tag, which is the first step in creating a new export.
 
-        This form is what will interact with the DrilldownToFormController in
-        hq.app_data_drilldown.ng.js
+        This form is what will interact with the createExportModel in export/js/export_list.js
         """
         if self.permissions.has_case_export_permissions or self.permissions.has_form_export_permissions:
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
-
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        """Called by the ANGULAR.JS controller DrilldownToFormController in
-        hq.app_data_drilldown.ng.js  Use ApplicationDataRMIHelper to help
-        format the response.
-        """
-        raise NotImplementedError("Must implement get_intial_form_data")
-
-    def get_create_export_url(self, form_data):
-        """Returns url to the custom export creation form with the export
-        tag appended.
-        """
-        raise NotImplementedError("Must implement generate_create_form_url")
 
     @allow_remote_invocation
     def toggle_saved_export_enabled_state(self, in_data):
@@ -746,33 +736,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         rebuild_saved_export(export_instance_id, manual=True)
         return format_angular_success({})
 
-    @allow_remote_invocation
-    def submit_app_data_drilldown_form(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            form_data = in_data['formData']
-        except KeyError:
-            return format_angular_error(
-                _("The form's data was not correctly formatted."),
-                log_error=False,
-            )
-        try:
-            create_url = self.get_create_export_url(form_data)
-        except ExportFormValidationException:
-            return format_angular_error(
-                _("The form did not validate."),
-                log_error=False,
-            )
-        except Exception as e:
-            return format_angular_error(
-                _("Problem getting link to custom export form: {}").format(e),
-                log_error=False,
-            )
-        return format_angular_success({
-            'url': create_url,
-        })
-
     @staticmethod
     def _get_task_status_json(export_instance_id):
         status = get_saved_export_task_status(export_instance_id)
@@ -789,6 +752,77 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         })
 
 
+@require_GET
+@login_and_domain_required
+def get_app_data_drilldown_values(request, domain):
+    if json.loads(request.GET.get('is_deid')):
+        raise Http404()
+
+    model_type = request.GET.get('model_type')
+    permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=False)
+
+    rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
+    if model_type == 'form':
+        response = rmi_helper.get_form_rmi_response()
+    elif model_type == 'case':
+        response = rmi_helper.get_case_rmi_response()
+    else:
+        response = rmi_helper.get_dual_model_rmi_response()
+
+    return json_response(response)
+
+
+@require_POST
+@login_and_domain_required
+def submit_app_data_drilldown_form(request, domain):
+    if json.loads(request.POST.get('is_deid')):
+        raise Http404()
+
+    model_type = request.POST.get('model_type')
+    permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=False)
+
+    form_data = json.loads(request.POST.get('form_data'))
+    is_daily_saved_export = json.loads(request.POST.get('is_daily_saved_export'))
+    is_feed = json.loads(request.POST.get('is_feed'))
+
+    create_form = CreateExportTagForm(
+        permissions.has_form_export_permissions,
+        permissions.has_case_export_permissions,
+        form_data
+    )
+    if not create_form.is_valid():
+        return json_response({
+            'success': False,
+            'error': _("The form did not validate."),
+        })
+
+    if is_daily_saved_export:
+        if create_form.cleaned_data['model_type'] == "case":
+            export_tag = create_form.cleaned_data['case_type']
+            cls = CreateNewCaseFeedView if is_feed else CreateNewDailySavedCaseExport
+        else:
+            export_tag = create_form.cleaned_data['form']
+            cls = CreateNewFormFeedView if is_feed else CreateNewDailySavedFormExport
+    elif model_type == 'form':
+        export_tag = create_form.cleaned_data['form']
+        cls = CreateNewCustomFormExportView
+    elif model_type == 'case':
+        export_tag = create_form.cleaned_data['case_type']
+        cls = CreateNewCustomCaseExportView
+
+    url_params = '?export_tag="{}"'.format(export_tag)
+    app_id = create_form.cleaned_data['application']
+    if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE:
+        url_params += '&app_id={}'.format(app_id)
+
+    return json_response({
+        'success': True,
+        'url': reverse(cls.urlname, args=[domain]) + url_params,
+    })
+
+
 @location_safe
 class DailySavedExportListView(BaseExportListView):
     urlname = 'list_daily_saved_exports'
@@ -803,12 +837,6 @@ class DailySavedExportListView(BaseExportListView):
 
     def _priv_check(self):
         return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
-
-    def _get_create_export_class(self, model):
-        return {
-            "form": CreateNewDailySavedFormExport,
-            "case": CreateNewDailySavedCaseExport,
-        }[model]
 
     def _get_edit_export_class(self, model):
         return {
@@ -898,46 +926,6 @@ class DailySavedExportListView(BaseExportListView):
         }
 
     @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_dual_model_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Daily Saved Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
-
-    def get_create_export_url(self, form_data):
-        create_form = CreateExportTagForm(
-            self.permissions.has_form_export_permissions,
-            self.permissions.has_case_export_permissions,
-            form_data
-        )
-        if not create_form.is_valid():
-            raise ExportFormValidationException()
-
-        if create_form.cleaned_data['model_type'] == "case":
-            export_tag = create_form.cleaned_data['case_type']
-            cls = self._get_create_export_class('case')
-        else:
-            export_tag = create_form.cleaned_data['form']
-            cls = self._get_create_export_class('form')
-        app_id = create_form.cleaned_data['application']
-        app_id_param = '&app_id={}'.format(app_id) if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE else ""
-
-        return reverse(
-            cls.urlname,
-            args=[self.domain],
-        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
-            app_id_param=app_id_param,
-            export_tag=export_tag,
-        ))
-
-    @allow_remote_invocation
     def commit_filters(self, in_data):
         if not self.permissions.has_edit_permissions:
             raise Http404
@@ -991,12 +979,6 @@ class DashboardFeedListView(DailySavedExportListView):
     def _priv_check(self):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
-    def _get_create_export_class(self, model):
-        return {
-            "form": CreateNewFormFeedView,
-            "case": CreateNewCaseFeedView,
-        }[model]
-
     def _get_edit_export_class(self, model):
         return {
             "form": EditFormFeedView,
@@ -1007,6 +989,7 @@ class DashboardFeedListView(DailySavedExportListView):
     def page_context(self):
         context = super(DashboardFeedListView, self).page_context
         context.update({
+            "is_dashboard_feed": True,
             "export_type_caps": _("Dashboard Feed"),
             "export_type": _("dashboard feed"),
             "export_type_caps_plural": _("Dashboard Feeds"),
@@ -1188,40 +1171,6 @@ class FormExportListView(BaseExportListView):
     def _get_download_url(self, export_id):
         return reverse(DownloadNewFormExportView.urlname, args=(self.domain, export_id))
 
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_form_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
-
-    def get_create_export_url(self, form_data):
-        create_form = CreateExportTagForm(
-            self.permissions.has_form_export_permissions,
-            self.permissions.has_case_export_permissions,
-            form_data
-        )
-        if not create_form.is_valid():
-            raise ExportFormValidationException()
-
-        app_id = create_form.cleaned_data['application']
-        form_xmlns = create_form.cleaned_data['form']
-        return reverse(
-            CreateNewCustomFormExportView.urlname,
-            args=[self.domain],
-        ) + ('?export_tag="{export_tag}"{app_id}'.format(
-            app_id=('&app_id={}'.format(app_id)
-                    if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE else ""),
-            export_tag=form_xmlns,
-        ))
-
 
 class DeIdFormExportListView(FormExportListView):
     page_title = ugettext_noop("Export De-Identified Form Data")
@@ -1323,41 +1272,6 @@ class CaseExportListView(BaseExportListView):
 
     def _get_download_url(self, export_id):
         return reverse(DownloadNewCaseExportView.urlname, args=(self.domain, export_id))
-
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_case_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
-
-    def get_create_export_url(self, form_data):
-        create_form = CreateExportTagForm(
-            self.permissions.has_form_export_permissions,
-            self.permissions.has_case_export_permissions,
-            form_data
-        )
-        if not create_form.is_valid():
-            raise ExportFormValidationException()
-        case_type = create_form.cleaned_data['case_type']
-        app_id = create_form.cleaned_data['application']
-        if app_id == ApplicationDataRMIHelper.UNKNOWN_SOURCE:
-            app_id_param = ''
-        else:
-            app_id_param = '&app_id={}'.format(app_id)
-
-        return reverse(
-            CreateNewCustomCaseExportView.urlname,
-            args=[self.domain],
-        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
-            export_tag=case_type,
-            app_id_param=app_id_param,
-        ))
 
 
 class BaseNewExportView(BaseProjectDataView):
