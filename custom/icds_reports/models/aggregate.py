@@ -11,7 +11,7 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
     AGG_COMP_FEEDING_TABLE, AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE)
 from custom.icds_reports.utils.aggregation import (
-    AggCcsRecordAggregationHelper, AggChildHealthAggregationHelper,
+    AggCcsRecordAggregationHelper,
     AwcInfrastructureAggregationHelper,
     CcsRecordMonthlyAggregationHelper,
     AwwIncentiveAggregationHelper
@@ -20,6 +20,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
+from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.birth_preparedness_forms import \
     BirthPreparednessFormsAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
