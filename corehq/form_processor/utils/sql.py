@@ -153,6 +153,7 @@ def case_transaction_adapter(transaction):
         transaction.id,
         transaction.form_id,
         transaction.server_date,
+        transaction.client_date,
         transaction.type,
         transaction.case_id,
         transaction.revoked,

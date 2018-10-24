@@ -42,7 +42,7 @@ class EventTypeFilter(BaseMultipleOptionFilter):
     options = [
         (MessagingEvent.SOURCE_BROADCAST, ugettext_noop('Broadcast')),
         (MessagingEvent.SOURCE_KEYWORD, ugettext_noop('Keyword')),
-        (MessagingEvent.SOURCE_REMINDER, ugettext_noop('Reminder')),
+        (MessagingEvent.SOURCE_REMINDER, ugettext_noop('Conditional Alert')),
         (MessagingEvent.CONTENT_SMS_SURVEY, ugettext_noop('Survey')),
         (MessagingEvent.CONTENT_SMS_CALLBACK, ugettext_noop('Callback')),
         (MessagingEvent.SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),

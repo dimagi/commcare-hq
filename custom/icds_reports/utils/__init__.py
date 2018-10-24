@@ -426,9 +426,9 @@ def get_counseling(value):
 def get_tt_dates(value):
     tt_dates = []
     if value['tt_1']:
-        tt_dates.append(value['tt_1'])
+        tt_dates.append(str(value['tt_1']))
     if value['tt_2']:
-        tt_dates.append(value['tt_2'])
+        tt_dates.append(str(value['tt_2']))
     if tt_dates:
         return '; '.join(tt_dates)
     else:

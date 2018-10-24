@@ -38,12 +38,7 @@ from corehq.apps.reports.util import (
     datespan_from_beginning,
 )
 from corehq.apps.hqwebapp.crispy import B3MultiField, CrispyTemplate
-from corehq.apps.hqwebapp.widgets import (
-    Select2MultipleChoiceWidget,
-    DateRangePickerWidget,
-    Select2,
-    Select2AjaxV3,
-)
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2AjaxV3
 from corehq.pillows import utils
 
 from crispy_forms.bootstrap import InlineField
@@ -56,49 +51,6 @@ from dimagi.utils.dates import DateSpan
 from corehq.util import flatten_non_iterable_list
 
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
-
-
-class UserTypesField(forms.MultipleChoiceField):
-    _USER_MOBILE = 'mobile'
-    _USER_DEMO = 'demo_user'
-    _USER_WEB = 'web'
-    _USER_UNKNOWN = 'unknown'
-    _USER_SUPPLY = 'supply'
-
-    _USER_TYPES_CHOICES = [
-        (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
-        (_USER_DEMO, ugettext_lazy("Demo User")),
-        (_USER_WEB, ugettext_lazy("Web Users")),
-        (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
-        (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
-    ]
-
-    widget = Select2MultipleChoiceWidget
-
-    def __init__(self, *args, **kwargs):
-        if len(args) == 0 and "choices" not in kwargs:  # choices is the first arg, and a kwarg
-            kwargs['choices'] = self._USER_TYPES_CHOICES
-        super(UserTypesField, self).__init__(*args, **kwargs)
-
-    def clean(self, value):
-        """
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        es_user_types = []
-        export_user_types = super(UserTypesField, self).clean(value)
-        export_to_es_user_types_map = {
-            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
-            self._USER_DEMO: [utils.DEMO_USER_TYPE],
-            self._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-            ],
-            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-        }
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
 
 
 class DateSpanField(forms.CharField):
@@ -259,88 +211,19 @@ class BaseFilterExportDownloadForm(forms.Form):
         (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
         (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
-    type_or_group = forms.ChoiceField(
-        label=ugettext_lazy("User Types or Group"),
-        required=False,
-        choices=(
-            ('type', ugettext_lazy("User Types")),
-            ('group', ugettext_lazy("Group")),
-        )
-    )
-    user_types = UserTypesField(
-        label=ugettext_lazy("Select User Types"),
-        required=False,
-    )
-    group = forms.ChoiceField(
-        label=ugettext_lazy("Select Group"),
-        required=False,
-        widget=Select2()
-    )
-
-    _EXPORT_TO_ES_USER_TYPES_MAP = {
-        _USER_MOBILE: [utils.MOBILE_USER_TYPE],
-        _USER_DEMO: [utils.DEMO_USER_TYPE],
-        _USER_UNKNOWN: [
-            utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-        ],
-        _USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-    }
-
-    # To be used by subclasses when rendering their own layouts using filters and extra_fields
-    skip_layout = False
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
 
-        self.fields['group'].choices = [("", "")] + [(g._id, g.name) for g in Group.get_reporting_groups(self.domain_object.name)]
-
-        if not self.domain_object.uses_locations:
-            # don't use CommCare Supply as a user_types choice if the domain
-            # is not a CommCare Supply domain.
-            self.fields['user_types'].choices = self.fields['user_types'].choices[:-1]
-
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3'
         self.helper.field_class = 'col-sm-5'
-        if not self.skip_layout:
-            self.helper.layout = Layout(
-                crispy.Field(
-                    'type_or_group',
-                    ng_model="formData.type_or_group",
-                    ng_required='false',
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'user_types',
-                        ng_model='formData.user_types',
-                        ng_required='false',
-                    ),
-                    ng_show="formData.type_or_group === 'type'",
-                ),
-                crispy.Div(
-                    B3MultiField(
-                        _("Group"),
-                        crispy.Div(
-                            crispy.Div(
-                                InlineField(
-                                    'group',
-                                    ng_model='formData.group',
-                                    ng_required='false',
-                                    style="width: 98%",
-                                ),
-                                ng_show="hasGroups",
-                            ),
-                        ),
-                        CrispyTemplate('export/crispy_html/groups_help.html', {
-                            'domain': self.domain_object.name,
-                        }),
-                    ),
-                    ng_show="formData.type_or_group === 'group'",
-                ),
-                *self.extra_fields
-            )
+
+        self.helper.layout = Layout(
+            *self.extra_fields
+        )
 
     @property
     def extra_fields(self):
@@ -349,41 +232,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         depending on type of export.
         """
         return []
-
-    def _get_filtered_users(self):
-        user_types = self.cleaned_data['user_types']
-        user_filter_toggles = [
-            self._USER_MOBILE in user_types,
-            self._USER_DEMO in user_types,
-            # The following line results in all users who match the
-            # HQUserType.ADMIN filter to be included if the unknown users
-            # filter is selected.
-            self._USER_UNKNOWN in user_types,
-            self._USER_UNKNOWN in user_types,
-            self._USER_SUPPLY in user_types
-        ]
-        # todo refactor HQUserType
-        user_filters = HQUserType._get_manual_filterset(
-            (True,) * HQUserType.count,
-            user_filter_toggles
-        )
-        return users_matching_filter(self.domain_object.name, user_filters)
-
-    def _get_selected_user_types(self, mobile_user_and_groups_slugs=None):
-        return self.cleaned_data['user_types']
-
-    def _get_es_user_types(self, mobile_user_and_groups_slugs=None):
-        """
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        es_user_types = []
-        export_user_types = self._get_selected_user_types(mobile_user_and_groups_slugs)
-        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
 
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
@@ -695,24 +543,6 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
 
     def get_form_filter(self):
         raise NotImplementedError
-
-    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
-        """These are the kwargs for the Multimedia Download task,
-        specific only to forms.
-        """
-        datespan = self.cleaned_data['date_range']
-        return {
-            'domain': self.domain_object.name,
-            'startdate': datespan.startdate.isoformat(),
-            'enddate': (datespan.enddate + timedelta(days=1)).isoformat(),
-            'app_id': export.app_id,
-            'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
-            'export_id': export.get_id,
-            'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
-            'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
-            'group': self.data['group'],
-            'download_id': download_id
-        }
 
     def format_export_data(self, export):
         export_data = super(GenericFilterFormExportDownloadForm, self).format_export_data(export)
@@ -1054,14 +884,10 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
-        self.skip_layout = True
         super(EmwfFilterFormExport, self).__init__(domain_object, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
-        self.helper.layout = Layout(
-            *super(EmwfFilterFormExport, self).extra_fields
-        )
 
     def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
         """
@@ -1094,9 +920,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             self.cleaned_data['date_range'],
         )
 
-    def _get_selected_user_types(self, mobile_user_and_group_slugs):
-        return self._get_mapped_user_types(self._get_selected_es_user_types(mobile_user_and_group_slugs))
-
     def _get_mapped_user_types(self, selected_user_types):
         user_types = []
         if HQUserType.ACTIVE in selected_user_types:
@@ -1115,11 +938,45 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
 
-    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs):
-        kwargs = (super(EmwfFilterFormExport, self)
-                  .get_multimedia_task_kwargs(export, download_id, mobile_user_and_group_slugs))
-        kwargs['export_is_legacy'] = False
-        return kwargs
+    def _get_es_user_types(self, mobile_user_and_group_slugs=None):
+        """
+        Return a list of elastic search user types (each item in the return list
+        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
+        export user types.
+        """
+        es_user_types = []
+        export_user_types = self._get_mapped_user_types(
+            self._get_selected_es_user_types(mobile_user_and_group_slugs)
+        )
+        export_to_es_user_types_map = {
+            BaseFilterExportDownloadForm._USER_MOBILE: [utils.MOBILE_USER_TYPE],
+            BaseFilterExportDownloadForm._USER_DEMO: [utils.DEMO_USER_TYPE],
+            BaseFilterExportDownloadForm._USER_UNKNOWN: [
+                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
+            ],
+            BaseFilterExportDownloadForm._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
+        }
+        for type_ in export_user_types:
+            es_user_types.extend(export_to_es_user_types_map[type_])
+        return es_user_types
+
+    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
+        """These are the kwargs for the Multimedia Download task,
+        specific only to forms.
+        """
+        datespan = self.cleaned_data['date_range']
+        return {
+            'domain': self.domain_object.name,
+            'startdate': datespan.startdate.isoformat(),
+            'enddate': (datespan.enddate + timedelta(days=1)).isoformat(),
+            'app_id': export.app_id,
+            'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
+            'export_id': export.get_id,
+            'export_is_legacy': False,
+            'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
+            'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
+            'download_id': download_id
+        }
 
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDownloadForm):
@@ -1136,7 +993,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
         self.timezone = timezone
-        self.skip_layout = True
         super(FilterCaseESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
@@ -1146,9 +1002,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
-        )
-        self.helper.layout = Layout(
-            *self.extra_fields
         )
 
     def get_edit_url(self, export):
@@ -1196,7 +1049,6 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
         self.timezone = timezone
-        self.skip_layout = True
         super(FilterSmsESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
@@ -1206,9 +1058,6 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
-        )
-        self.helper.layout = Layout(
-            *self.extra_fields
         )
 
     def get_edit_url(self, export):
