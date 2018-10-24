@@ -45,10 +45,24 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
+##### macOS Notes
+
+- You may need to use `sudo` to for some of the above setup:
+```
+    $ sudo python get-pip.py
+    $ sudo pip install virtualenv
+    $ sudo pip install virtualenvwrapper --ignore-installed six
+```
+
+- Additional requirements:
+  - [Homebrew](https://brew.sh)
+  - [libmagic](macappstore.org/libmagic)
+
 #### Setup virtualenv
 
-Run the following command:
+Run the following commands:
 
+    $ source /usr/local/bin/virtualenvwrapper.sh
     $ mkvirtualenv --no-site-packages commcare-hq -p python2.7
 
 #### Clone and setup repo / requirements
@@ -134,7 +148,11 @@ you'll need to install `bower` and run `bower install`. Follow these steps to in
         $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
 
-    For non-Ubuntu: install [npm](https://www.npmjs.com/)
+    For macOS: Install with Homebrew:
+
+        $ brew install node
+
+    For others: install [npm](https://www.npmjs.com/)
 
 2. Install bower:
 
@@ -278,11 +296,6 @@ Then run the following separately:
 Create a superuser for your local environment
 
     $ ./manage.py make_superuser <email>
-
-If you want to use CloudCare you will also need to run the Touchforms server.
-
-    # run Touchforms server
-    > jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
 Running Formdesigner in Development mode
 ----------------------------------------

@@ -1994,7 +1994,8 @@ class CaseExportDataSchema(ExportDataSchema):
             [case_type],
             include_parent_properties=False
         )
-        parent_types = ParentCasePropertyBuilder(app).get_case_relationships_for_case_type(case_type)
+        parent_types = (ParentCasePropertyBuilder.for_app(app)
+                        .get_case_relationships_for_case_type(case_type))
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
@@ -2606,34 +2607,6 @@ class ExportMigrationMeta(Document):
 
     class Meta(object):
         app_label = 'export'
-
-
-class DailySavedExportNotification(models.Model):
-    user_id = models.CharField(max_length=255, db_index=True)
-    domain = models.CharField(max_length=255, db_index=True)
-
-    @classmethod
-    def notified(cls, user_id, domain):
-        return bool(cls.objects.filter(user_id=user_id, domain=domain).count())
-
-    @classmethod
-    def mark_notified(cls, user_id, domain):
-        cls.objects.get_or_create(user_id=user_id, domain=domain)
-
-    @classmethod
-    def user_added_before_feature_release(cls, user_added_on):
-        return user_added_on < datetime(2017, 1, 25)
-
-    @classmethod
-    def user_to_be_notified(cls, domain, user):
-        return (
-            cls.user_added_before_feature_release(user.created_on) and
-            not DailySavedExportNotification.notified(user.user_id, domain) and
-            (
-                domain_has_daily_saved_export_access(domain) or
-                domain_has_excel_dashboard_access(domain)
-            )
-        )
 
 
 def _meta_property(name):

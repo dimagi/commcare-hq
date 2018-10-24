@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-10-16 21:07+0000\n"
+"POT-Creation-Date: 2018-10-23 19:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise."
 "org>, 2018\n"
@@ -54,7 +54,7 @@ msgstr ""
 msgid "Other"
 msgstr "Autre"
 
-#: corehq/apps/accounting/static/accounting/js/enterprise_dashboard.js:34
+#: corehq/apps/accounting/static/accounting/js/enterprise_dashboard.js:38
 msgid ""
 "Error sending email, please try again or report an issue if this persists."
 msgstr ""
@@ -128,10 +128,8 @@ msgid "Oops, there was a problem loading this section. Please try again."
 msgstr "Il semble qu'une erreur se soit glissée. Veuillez essayer à nouveau."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:45
-#, fuzzy
-#| msgid "Select File"
 msgid "Select All"
-msgstr "Sélectionner un fichier"
+msgstr "Tout sélectionner"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:45
 msgid "<span class='label label-default'>"
@@ -324,7 +322,7 @@ msgstr ""
 "'-', et '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js:6
-#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js:343
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js:349
 msgid ""
 "Sorry, something went wrong with the download. If you see this repeatedly "
 "please report an issue."
@@ -2098,7 +2096,7 @@ msgid "Case Type"
 msgstr "Type de Dossier"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:72
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:69
 msgid "Case ID"
 msgstr "Identifiant de dossier"
 
@@ -2523,42 +2521,44 @@ msgid "Search for users or groups"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:25
-msgid "<a href='<%= link %>'>Click here</a> if you are not redirected."
+msgid ""
+"<a href='<%= link %>' target='_blank'>View <i class='fa fa-external-link'></"
+"i></a>"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:68
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:65
 msgid "Find Case"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:69
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:66
 msgid "IDs can be found in a <a href=\"<%= url %>\">case data export</a>"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:73
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:70
 msgid "Case found!"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:74
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:71
 msgid "Could not find case"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:79
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:76
 msgid "Find Form Submission"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:80
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:77
 msgid "IDs can be found in a <a href=\"<%= url %>\">form data export</a>"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:83
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:80
 msgid "Could not find form submission"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:84
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:81
 msgid "Form Submission ID"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:85
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:82
 msgid "Form submission found!"
 msgstr ""
 
@@ -3024,6 +3024,12 @@ msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/data_corrections.js:345
+#, fuzzy
+#| msgid "Select a user"
+msgid "Select a value"
+msgstr "Sélectionner un utilisateur"
+
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:104
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:8
 msgid "Select a language..."
@@ -3229,7 +3235,7 @@ msgstr ""
 
 #: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:154
 msgid "Please Select a Country Code"
-msgstr ""
+msgstr "Sélectionnez un code pays"
 
 #: corehq/apps/translations/static/translations/js/translations.js:28
 msgid "Delete Translation"
@@ -3691,15 +3697,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "Show 10 Mobile Workers"
-#~ msgstr "Afficher 10 utilisateurs mobiles"
-
-#~ msgid "Show 25 Mobile Workers"
-#~ msgstr "Afficher 25 utilisateurs mobiles"
-
-#~ msgid "Show 50 Mobile Workers"
-#~ msgstr "Afficher 50 utilisateurs mobiles"
-
-#~ msgid "Show 100 Mobile Workers"
-#~ msgstr "Afficher 100 utilisateurs mobiles"
