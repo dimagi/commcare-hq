@@ -91,12 +91,12 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_daily_attendance_query(self):
         return """
-        UPDATE "{tablename}" agg_awc SET 
+        UPDATE "{tablename}" agg_awc SET
           daily_attendance_open = ut.daily_attendance_open
         FROM (SELECT
-          awc_id, 
-          pse_date, 
-          sum(awc_open_count) AS daily_attendance_open 
+          awc_id,
+          pse_date,
+          sum(awc_open_count) AS daily_attendance_open
           FROM daily_attendance WHERE pse_date = %(start_date)s
           GROUP BY awc_id, pse_date) ut
         WHERE ut.pse_date = agg_awc.date AND ut.awc_id = agg_awc.awc_id;

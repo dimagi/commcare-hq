@@ -67,9 +67,9 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
 
         return """
             INSERT INTO "{tablename}" (
-              {columns} 
+              {columns}
             ) (
-              SELECT 
+              SELECT
                 {calculations}
               FROM "{ucr_location_tablename}"
             )
@@ -83,15 +83,15 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
     def aww_query(self):
         return """
             UPDATE "{tablename}" awc_loc SET
-              aww_name = ut.aww_name, 
-              contact_phone_number = ut.contact_phone_number 
+              aww_name = ut.aww_name,
+              contact_phone_number = ut.contact_phone_number
             FROM (
-              SELECT 
-                commcare_location_id, 
-                aww_name, 
-                contact_phone_number 
+              SELECT
+                commcare_location_id,
+                aww_name,
+                contact_phone_number
               FROM "{ucr_aww_tablename}"
-            ) ut 
+            ) ut
             WHERE ut.commcare_location_id = awc_loc.doc_id
         """.format(
             tablename=self.base_tablename,
@@ -158,7 +158,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             INSERT INTO "{tablename}" (
               {columns}
             ) (
-              SELECT 
+              SELECT
                 {calculations}
               FROM "{tablename}"
               GROUP BY {group_by}

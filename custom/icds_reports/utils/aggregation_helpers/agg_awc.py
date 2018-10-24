@@ -93,7 +93,7 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
             INSERT INTO "{tablename}" (
               {columns}
             ) (
-              SELECT {calculations} 
+              SELECT {calculations}
               FROM "{awc_location_tablename}"
             )
         """.format(
@@ -106,16 +106,16 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
     def aggregate_daily_attendance_query(self):
         return """
             UPDATE "{tablename}" agg_awc SET
-              awc_days_open = ut.awc_days_open, 
-              awc_num_open = ut.awc_num_open, 
-              awc_days_pse_conducted = ut.awc_days_pse_conducted 
+              awc_days_open = ut.awc_days_open,
+              awc_num_open = ut.awc_num_open,
+              awc_days_pse_conducted = ut.awc_days_pse_conducted
             FROM (
               SELECT
-                awc_id, 
-                month, 
-                sum(awc_open_count) as awc_days_open, 
-                CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open, 
-                sum(pse_conducted) as awc_days_pse_conducted 
+                awc_id,
+                month,
+                sum(awc_open_count) as awc_days_open,
+                CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open,
+                sum(pse_conducted) as awc_days_pse_conducted
               FROM "{daily_attendance_tablename}"
               WHERE month = %(start_date)s
               GROUP BY awc_id, month
@@ -131,19 +131,19 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
     def aggregate_monthly_child_health_query(self):
         return """
             UPDATE "{tablename}" agg_awc SET
-              cases_child_health = ut.cases_child_health, 
-              cases_child_health_all = ut.cases_child_health_all, 
-              wer_weighed = ut.wer_weighed, 
-              wer_eligible = ut.wer_eligible, 
-              cases_person_beneficiary_v2 = ut.cases_child_health 
+              cases_child_health = ut.cases_child_health,
+              cases_child_health_all = ut.cases_child_health_all,
+              wer_weighed = ut.wer_weighed,
+              wer_eligible = ut.wer_eligible,
+              cases_person_beneficiary_v2 = ut.cases_child_health
             FROM (
               SELECT
-                awc_id, 
-                month, 
-                sum(valid_in_month) AS cases_child_health, 
-                sum(valid_all_registered_in_month) AS cases_child_health_all, 
-                sum(nutrition_status_weighed) AS wer_weighed, 
-                sum(wer_eligible) AS wer_eligible 
+                awc_id,
+                month,
+                sum(valid_in_month) AS cases_child_health,
+                sum(valid_all_registered_in_month) AS cases_child_health_all,
+                sum(nutrition_status_weighed) AS wer_weighed,
+                sum(wer_eligible) AS wer_eligible
               FROM "{child_health_tablename}"
               WHERE month = %(start_date)s and aggregation_level = 5
               GROUP BY awc_id, month
@@ -158,21 +158,23 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregate_ccs_record_query(self):
         return """
-            UPDATE "{tablename}" agg_awc SET  
-              cases_ccs_pregnant = ut.cases_ccs_pregnant, 
-              cases_ccs_lactating = ut.cases_ccs_lactating, 
-              cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all, 
-              cases_ccs_lactating_all = ut.cases_ccs_lactating_all, 
-              cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating 
-            FROM (SELECT  
-              awc_id,  
-              month,  
-              sum(pregnant) AS cases_ccs_pregnant, 
-              sum(lactating) AS cases_ccs_lactating, 
-              sum(pregnant_all) AS cases_ccs_pregnant_all, 
-              sum(lactating_all) AS cases_ccs_lactating_all 
-              FROM "{ccs_record_tablename}" 
-              WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month) ut 
+            UPDATE "{tablename}" agg_awc SET
+              cases_ccs_pregnant = ut.cases_ccs_pregnant,
+              cases_ccs_lactating = ut.cases_ccs_lactating,
+              cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
+              cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
+              cases_person_beneficiary_v2 = (
+                COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating
+              )
+            FROM (SELECT
+              awc_id,
+              month,
+              sum(pregnant) AS cases_ccs_pregnant,
+              sum(lactating) AS cases_ccs_lactating,
+              sum(pregnant_all) AS cases_ccs_pregnant_all,
+              sum(lactating_all) AS cases_ccs_lactating_all
+              FROM "{ccs_record_tablename}"
+              WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month) ut
             WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
@@ -183,13 +185,13 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregate_household_query(self):
         return """
-            UPDATE "{tablename}" agg_awc SET 
-              cases_household = ut.cases_household 
+            UPDATE "{tablename}" agg_awc SET
+              cases_household = ut.cases_household
             FROM (
-              SELECT 
-                owner_id, 
-                sum(open_count) as cases_household 
-              FROM "{household_tablename}" 
+              SELECT
+                owner_id,
+                sum(open_count) as cases_household
+              FROM "{household_tablename}"
               GROUP BY owner_id
             ) ut
             WHERE ut.owner_id = agg_awc.awc_id
@@ -205,26 +207,45 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
         month_end_15yr = end_month - relativedelta(years=15)
         month_start_18yr = self.month - relativedelta(years=18)
         return """
-            UPDATE "{tablename}" agg_awc SET 
-              cases_person = ut.cases_person, 
-              cases_person_all = ut.cases_person_all, 
-              cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, 
-              cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all, 
-              cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18, 
-              cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all, 
-              cases_person_referred = ut.cases_person_referred 
+            UPDATE "{tablename}" agg_awc SET
+              cases_person = ut.cases_person,
+              cases_person_all = ut.cases_person_all,
+              cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14,
+              cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all,
+              cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18,
+              cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all,
+              cases_person_referred = ut.cases_person_referred
             FROM (
               SELECT
-                awc_id, 
-                sum(seeking_services) AS cases_person, 
-                sum(count) AS cases_person_all, 
-                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, 
-                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, 
-                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, 
-                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all, 
-                sum(CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) as cases_person_referred 
-              FROM "{person_tablename}" 
-              WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s)) 
+                awc_id,
+                sum(seeking_services) AS cases_person,
+                sum(count) AS cases_person_all,
+                sum(
+                  CASE (
+                    WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F'
+                    ) THEN seeking_services 
+                  ELSE 0 END
+                ) as cases_person_adolescent_girls_11_14,
+                sum(
+                  CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 
+                  ELSE 0 END
+                ) as cases_person_adolescent_girls_11_14_all,
+                sum(
+                  CASE (
+                    WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
+                    ) THEN seeking_services 
+                  ELSE 0 END
+                ) as cases_person_adolescent_girls_15_18,
+                sum(
+                  CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 
+                  ELSE 0 END
+                ) as cases_person_adolescent_girls_15_18_all,
+                sum(
+                  CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 
+                  ELSE 0 END
+                ) as cases_person_referred
+              FROM "{person_tablename}"
+              WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s))
               GROUP BY awc_id
             ) ut 
             WHERE ut.awc_id = agg_awc.awc_id
@@ -242,18 +263,18 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
     def children_immunized_query(self):
         return """
-            UPDATE "{tablename}" agg_awc SET 
-              cases_person_has_aadhaar_v2 = ut.child_has_aadhar, 
-              num_children_immunized = ut.num_children_immunized 
+            UPDATE "{tablename}" agg_awc SET
+              cases_person_has_aadhaar_v2 = ut.child_has_aadhar,
+              num_children_immunized = ut.num_children_immunized
             FROM (
-              SELECT 
-                awc_id, 
-                sum(has_aadhar_id) as child_has_aadhar, 
-                sum(immunization_in_month) AS num_children_immunized 
-              FROM "{child_health_monthly_tablename}" 
-              WHERE valid_in_month = 1 
-              GROUP BY awc_id 
-            ) ut 
+              SELECT
+                awc_id,
+                sum(has_aadhar_id) as child_has_aadhar,
+                sum(immunization_in_month) AS num_children_immunized
+              FROM "{child_health_monthly_tablename}"
+              WHERE valid_in_month = 1
+              GROUP BY awc_id
+            ) ut
             WHERE ut.awc_id = agg_awc.awc_id
         """.format(
             tablename=self.tablename,
@@ -262,18 +283,18 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
     def number_anc_visits_query(self):
         return """
-            UPDATE "{tablename}" agg_awc SET 
-              num_anc_visits = ut.num_anc_visits, 
-              cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar 
+            UPDATE "{tablename}" agg_awc SET
+              num_anc_visits = ut.num_anc_visits,
+              cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar
             FROM (
-              SELECT 
-                awc_id, 
-                sum(anc_in_month) AS num_anc_visits, 
-                sum(has_aadhar_id) AS ccs_has_aadhar 
-              FROM "{ccs_record_monthly_tablename}" 
-              WHERE pregnant = 1 OR lactating = 1 
+              SELECT
+                awc_id,
+                sum(anc_in_month) AS num_anc_visits,
+                sum(has_aadhar_id) AS ccs_has_aadhar
+              FROM "{ccs_record_monthly_tablename}"
+              WHERE pregnant = 1 OR lactating = 1
               GROUP BY awc_id
-            ) ut 
+            ) ut
             WHERE ut.awc_id = agg_awc.awc_id
         """.format(
             tablename=self.tablename,
@@ -282,57 +303,67 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
     def usage_table_query(self):
         return """
-            UPDATE "{tablename}" agg_awc SET 
-              usage_num_pse = ut.usage_num_pse, 
-              usage_num_gmp = ut.usage_num_gmp, 
-              usage_num_thr = ut.usage_num_thr, 
-              usage_num_hh_reg = ut.usage_num_hh_reg, 
-              is_launched = ut.is_launched, 
-              num_launched_states = ut.num_launched_awcs, 
-              num_launched_districts = ut.num_launched_awcs, 
-              num_launched_blocks = ut.num_launched_awcs, 
-              num_launched_supervisors = ut.num_launched_awcs, 
-              num_launched_awcs = ut.num_launched_awcs, 
-              usage_num_add_person = ut.usage_num_add_person, 
-              usage_num_add_pregnancy = ut.usage_num_add_pregnancy, 
-              usage_num_home_visit = ut.usage_num_home_visit, 
-              usage_num_bp_tri1 = ut.usage_num_bp_tri1, 
-              usage_num_bp_tri2 = ut.usage_num_bp_tri2, 
-              usage_num_bp_tri3 = ut.usage_num_bp_tri3, 
-              usage_num_pnc = ut.usage_num_pnc, 
-              usage_num_ebf = ut.usage_num_ebf, 
-              usage_num_cf = ut.usage_num_cf, 
-              usage_num_delivery = ut.usage_num_delivery, 
-              usage_awc_num_active = ut.usage_awc_num_active, 
-              usage_num_due_list_ccs = ut.usage_num_due_list_ccs, 
-              usage_num_due_list_child_health = ut.usage_num_due_list_child_health 
+            UPDATE "{tablename}" agg_awc SET
+              usage_num_pse = ut.usage_num_pse,
+              usage_num_gmp = ut.usage_num_gmp,
+              usage_num_thr = ut.usage_num_thr,
+              usage_num_hh_reg = ut.usage_num_hh_reg,
+              is_launched = ut.is_launched,
+              num_launched_states = ut.num_launched_awcs,
+              num_launched_districts = ut.num_launched_awcs,
+              num_launched_blocks = ut.num_launched_awcs,
+              num_launched_supervisors = ut.num_launched_awcs,
+              num_launched_awcs = ut.num_launched_awcs,
+              usage_num_add_person = ut.usage_num_add_person,
+              usage_num_add_pregnancy = ut.usage_num_add_pregnancy,
+              usage_num_home_visit = ut.usage_num_home_visit,
+              usage_num_bp_tri1 = ut.usage_num_bp_tri1,
+              usage_num_bp_tri2 = ut.usage_num_bp_tri2,
+              usage_num_bp_tri3 = ut.usage_num_bp_tri3,
+              usage_num_pnc = ut.usage_num_pnc,
+              usage_num_ebf = ut.usage_num_ebf,
+              usage_num_cf = ut.usage_num_cf,
+              usage_num_delivery = ut.usage_num_delivery,
+              usage_awc_num_active = ut.usage_awc_num_active,
+              usage_num_due_list_ccs = ut.usage_num_due_list_ccs,
+              usage_num_due_list_child_health = ut.usage_num_due_list_child_health
             FROM (
-              SELECT 
-                awc_id, 
-                month, 
-                sum(pse) AS usage_num_pse, 
-                sum(gmp) AS usage_num_gmp, 
-                sum(thr) AS usage_num_thr, 
-                sum(add_household) AS usage_num_hh_reg, 
-                CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched, 
-                CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs, 
-                sum(add_person) AS usage_num_add_person, 
-                sum(add_pregnancy) AS usage_num_add_pregnancy, 
-                sum(home_visit) AS usage_num_home_visit, 
-                sum(bp_tri1) AS usage_num_bp_tri1, 
-                sum(bp_tri2) AS usage_num_bp_tri2, 
-                sum(bp_tri3) AS usage_num_bp_tri3, 
-                sum(pnc) AS usage_num_pnc, 
-                sum(ebf) AS usage_num_ebf, 
-                sum(cf) AS usage_num_cf, 
-                sum(delivery) AS usage_num_delivery, 
-                CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, 
-                sum(due_list_ccs) AS usage_num_due_list_ccs, 
-                sum(due_list_child) AS usage_num_due_list_child_health 
-              FROM "{usage_tablename}" 
-              WHERE month = %(start_date)s 
+              SELECT
+                awc_id,
+                month,
+                sum(pse) AS usage_num_pse,
+                sum(gmp) AS usage_num_gmp,
+                sum(thr) AS usage_num_thr,
+                sum(add_household) AS usage_num_hh_reg,
+                CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
+                CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
+                sum(add_person) AS usage_num_add_person,
+                sum(add_pregnancy) AS usage_num_add_pregnancy,
+                sum(home_visit) AS usage_num_home_visit,
+                sum(bp_tri1) AS usage_num_bp_tri1,
+                sum(bp_tri2) AS usage_num_bp_tri2,
+                sum(bp_tri3) AS usage_num_bp_tri3,
+                sum(pnc) AS usage_num_pnc,
+                sum(ebf) AS usage_num_ebf,
+                sum(cf) AS usage_num_cf,
+                sum(delivery) AS usage_num_delivery,
+                CASE WHEN (
+                  sum(due_list_ccs) +
+                  sum(due_list_child) +
+                  sum(pse) +
+                  sum(gmp) +
+                  sum(thr) +
+                  sum(home_visit) +
+                  sum(add_pregnancy) +
+                  sum(add_household)
+                ) >= 15 THEN 1 
+                ELSE 0 END AS usage_awc_num_active,
+                sum(due_list_ccs) AS usage_num_due_list_ccs,
+                sum(due_list_child) AS usage_num_due_list_child_health
+              FROM "{usage_tablename}"
+              WHERE month = %(start_date)s
               GROUP BY awc_id, month
-            ) ut 
+            ) ut
             WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id
         """.format(
             tablename=self.tablename,
@@ -344,16 +375,16 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
     def number_launched_awcs_query(self):
         # Update num launched AWCs based on previous month as well
         return """
-            UPDATE "{tablename}" agg_awc SET 
-              is_launched = 'yes', 
-              num_launched_awcs = 1 
+            UPDATE "{tablename}" agg_awc SET
+              is_launched = 'yes',
+              num_launched_awcs = 1
             FROM (
-              SELECT 
-                DISTINCT (awc_id) 
-              FROM "agg_awc" 
+              SELECT
+                DISTINCT (awc_id)
+              FROM "agg_awc"
               WHERE month = %(previous_month)s AND num_launched_awcs > 0 AND aggregation_level = 5
               GROUP BY awc_id
-            ) ut 
+            ) ut
             WHERE ut.awc_id = agg_awc.awc_id
         """.format(
             tablename=self.tablename,
@@ -363,44 +394,46 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
     def latest_infrastructure_query(self):
         return """
-            UPDATE "{tablename}" agg_awc SET 
-              infra_last_update_date = ut.infra_last_update_date, 
-              infra_type_of_building = ut.infra_type_of_building, 
-              infra_clean_water = ut.infra_clean_water, 
-              infra_functional_toilet = ut.infra_functional_toilet, 
-              infra_baby_weighing_scale = ut.infra_baby_weighing_scale, 
-              infra_adult_weighing_scale = ut.infra_adult_weighing_scale, 
-              infra_infant_weighing_scale = ut.infra_infant_weighing_scale, 
-              infra_cooking_utensils = ut.infra_cooking_utensils, 
-              infra_medicine_kits = ut.infra_medicine_kits, 
-              infra_adequate_space_pse = ut.infra_adequate_space_pse, 
-              electricity_awc = ut.electricity_awc, 
-              infantometer = ut.infantometer, 
-              stadiometer = ut.stadiometer 
+            UPDATE "{tablename}" agg_awc SET
+              infra_last_update_date = ut.infra_last_update_date,
+              infra_type_of_building = ut.infra_type_of_building,
+              infra_clean_water = ut.infra_clean_water,
+              infra_functional_toilet = ut.infra_functional_toilet,
+              infra_baby_weighing_scale = ut.infra_baby_weighing_scale,
+              infra_adult_weighing_scale = ut.infra_adult_weighing_scale,
+              infra_infant_weighing_scale = ut.infra_infant_weighing_scale,
+              infra_cooking_utensils = ut.infra_cooking_utensils,
+              infra_medicine_kits = ut.infra_medicine_kits,
+              infra_adequate_space_pse = ut.infra_adequate_space_pse,
+              electricity_awc = ut.electricity_awc,
+              infantometer = ut.infantometer,
+              stadiometer = ut.stadiometer
             FROM (
-              SELECT 
+              SELECT
                 awc_id,
                 month,
-                latest_time_end_processed::date AS infra_last_update_date, 
+                latest_time_end_processed::date AS infra_last_update_date,
                 CASE
-                  WHEN awc_building = 1 THEN 'pucca' 
-                  WHEN awc_building = 2 THEN 'semi_pucca' 
-                  WHEN awc_building = 3 THEN 'kuccha' 
-                  WHEN awc_building = 4 THEN 'partial_covered_space' 
-                ELSE NULL END AS infra_type_of_building, 
-                CASE WHEN source_drinking_water IN (1, 2, 3) THEN 1 ELSE 0 END AS infra_clean_water, 
-                toilet_functional AS infra_functional_toilet, 
-                baby_scale_usable AS infra_baby_weighing_scale, 
-                GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale, 
-                GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable, 0) AS infra_infant_weighing_scale, 
-                cooking_utensils_usable AS infra_cooking_utensils, 
-                medicine_kits_usable AS infra_medicine_kits, 
-                CASE WHEN adequate_space_pse = 1 THEN 1 ELSE 0 END AS infra_adequate_space_pse, 
-                electricity_awc AS electricity_awc, 
-                infantometer_usable AS infantometer, 
-                stadiometer_usable AS stadiometer 
-              FROM "{infra_tablename}" 
-              WHERE month = %(start_date)s 
+                  WHEN awc_building = 1 THEN 'pucca'
+                  WHEN awc_building = 2 THEN 'semi_pucca'
+                  WHEN awc_building = 3 THEN 'kuccha'
+                  WHEN awc_building = 4 THEN 'partial_covered_space'
+                ELSE NULL END AS infra_type_of_building,
+                CASE WHEN source_drinking_water IN (1, 2, 3) THEN 1 ELSE 0 END AS infra_clean_water,
+                toilet_functional AS infra_functional_toilet,
+                baby_scale_usable AS infra_baby_weighing_scale,
+                GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale,
+                GREATEST(
+                  baby_scale_available, flat_scale_available, baby_scale_usable, 0
+                ) AS infra_infant_weighing_scale,
+                cooking_utensils_usable AS infra_cooking_utensils,
+                medicine_kits_usable AS infra_medicine_kits,
+                CASE WHEN adequate_space_pse = 1 THEN 1 ELSE 0 END AS infra_adequate_space_pse,
+                electricity_awc AS electricity_awc,
+                infantometer_usable AS infantometer,
+                stadiometer_usable AS stadiometer
+              FROM "{infra_tablename}"
+              WHERE month = %(start_date)s
               GROUP BY awc_id
             ) ut
             WHERE ut.awc_id = agg_awc.awc_id
@@ -413,21 +446,21 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
     def location_is_test_query(self):
         return """
-            UPDATE "{tablename}" agg_awc SET 
-              state_is_test = ut.state_is_test, 
-              district_is_test = ut.district_is_test, 
-              block_is_test = ut.block_is_test, 
-              supervisor_is_test = ut.supervisor_is_test, 
+            UPDATE "{tablename}" agg_awc SET
+              state_is_test = ut.state_is_test,
+              district_is_test = ut.district_is_test,
+              block_is_test = ut.block_is_test,
+              supervisor_is_test = ut.supervisor_is_test,
               awc_is_test = ut.awc_is_test
             FROM (
               SELECT
                 doc_id as awc_id,
-                state_is_test, 
-                district_is_test, 
-                block_is_test, 
-                supervisor_is_test, 
-                awc_is_test 
-              FROM "{awc_location_tablename}" 
+                state_is_test,
+                district_is_test,
+                block_is_test,
+                supervisor_is_test,
+                awc_is_test
+              FROM "{awc_location_tablename}"
               GROUP BY awc_id
             ) ut
             WHERE ut.awc_id = agg_awc.awc_id
@@ -571,8 +604,8 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
                 INSERT INTO "{to_tablename}" (
                     {columns}
                 ) (
-                    SELECT {calculations} 
-                    FROM "{from_tablename}" 
+                    SELECT {calculations}
+                    FROM "{from_tablename}"
                     WHERE {child_is_test} = '0'
                     GROUP BY {group_by}
                 )

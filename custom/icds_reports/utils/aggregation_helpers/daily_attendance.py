@@ -42,22 +42,22 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
     def aggregate_query(self):
         return """
             INSERT INTO "{tablename}" (
-              SELECT DISTINCT ON (awc_id, submitted_on) 
-                doc_id, 
-                awc_id, 
-                month, 
+              SELECT DISTINCT ON (awc_id, submitted_on)
+                doc_id,
+                awc_id,
+                month,
                 submitted_on as pse_date,
                 awc_open_count,
                 1,
-                eligible_children, 
-                attended_children, 
-                attended_children_percent, 
-                form_location, 
-                form_location_lat, 
-                form_location_long, 
-                image_name, 
-                pse_conducted 
-              FROM "{ucr_daily_attendance_tablename}" 
+                eligible_children,
+                attended_children,
+                attended_children_percent,
+                form_location,
+                form_location_lat,
+                form_location_long,
+                image_name,
+                pse_conducted
+              FROM "{ucr_daily_attendance_tablename}"
               WHERE month = %(start_month)s
               ORDER BY awc_id, submitted_on, inserted_at DESC
             ) 
