@@ -36,6 +36,8 @@ from corehq.apps.export.views import (
     add_export_email_request,
     has_multimedia,
     poll_custom_export_download,
+    prepare_custom_export,
+    prepare_form_multimedia,
 )
 
 urlpatterns = [
@@ -130,6 +132,8 @@ urlpatterns = [
     url(r'^add_export_email_request/$', add_export_email_request, name='add_export_email_request'),
     url(r'^has_multimedia/$', has_multimedia, name='has_multimedia'),
     url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
+    url(r'^prepare_custom_export/$', prepare_custom_export, name='prepare_custom_export'),
+    url(r'^prepare_form_multimedia/$', prepare_form_multimedia, name='prepare_form_multimedia'),
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
