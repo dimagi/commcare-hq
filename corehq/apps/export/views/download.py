@@ -528,14 +528,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
             'url': reverse(CaseExportListView.urlname, args=(self.domain,)),
         }]
 
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data,
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
 
 class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
@@ -551,16 +543,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
     @property
     def parent_pages(self):
         return []
-
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data,
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
-
 
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
