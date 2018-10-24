@@ -221,33 +221,33 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
                 sum(seeking_services) AS cases_person,
                 sum(count) AS cases_person_all,
                 sum(
-                  CASE (
-                    WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F'
-                    ) THEN seeking_services 
+                  CASE WHEN (
+                    %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F'
+                  ) THEN seeking_services
                   ELSE 0 END
                 ) as cases_person_adolescent_girls_11_14,
                 sum(
-                  CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 
+                  CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1
                   ELSE 0 END
                 ) as cases_person_adolescent_girls_11_14_all,
                 sum(
-                  CASE (
-                    WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
-                    ) THEN seeking_services 
+                  CASE WHEN (
+                    %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
+                  ) THEN seeking_services
                   ELSE 0 END
                 ) as cases_person_adolescent_girls_15_18,
                 sum(
-                  CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 
+                  CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1
                   ELSE 0 END
                 ) as cases_person_adolescent_girls_15_18_all,
                 sum(
-                  CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 
+                  CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1
                   ELSE 0 END
                 ) as cases_person_referred
               FROM "{person_tablename}"
               WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s))
               GROUP BY awc_id
-            ) ut 
+            ) ut
             WHERE ut.awc_id = agg_awc.awc_id
         """.format(
             tablename=self.tablename,
@@ -356,7 +356,7 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
                   sum(home_visit) +
                   sum(add_pregnancy) +
                   sum(add_household)
-                ) >= 15 THEN 1 
+                ) >= 15 THEN 1
                 ELSE 0 END AS usage_awc_num_active,
                 sum(due_list_ccs) AS usage_num_due_list_ccs,
                 sum(due_list_child) AS usage_num_due_list_child_health
@@ -473,8 +473,8 @@ class AggAwcAggregationHelper(BaseICDSAggregationHelper):
 
     def infra_last_update_query(self):
         month_start_6m = self.month - relativedelta(months=6)
-        infra_sql = 'CASE WHEN {inf_column} IS NOT NULL AND {month_start_6m} < {inf_column} THEN 1 ELSE 0 END'.format(
-            inf_column="infra_last_update_date",
+        infra_sql = 'CASE WHEN {inf_col} IS NOT NULL AND {month_start_6m} < {inf_col} THEN 1 ELSE 0 END'.format(
+            inf_col="infra_last_update_date",
             month_start_6m=month_start_6m.strftime("'%Y-%m-%d'")
         )
         return """

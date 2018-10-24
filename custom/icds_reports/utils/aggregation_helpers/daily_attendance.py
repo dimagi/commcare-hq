@@ -60,7 +60,7 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
               FROM "{ucr_daily_attendance_tablename}"
               WHERE month = %(start_month)s
               ORDER BY awc_id, submitted_on, inserted_at DESC
-            ) 
+            )
         """.format(
             tablename=self.tablename,
             ucr_daily_attendance_tablename=self.ucr_daily_attendance_tablename

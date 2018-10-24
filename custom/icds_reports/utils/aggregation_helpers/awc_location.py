@@ -99,7 +99,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         )
 
     def rollup_query(self, aggregation_level):
-        columns =(
+        columns = (
             ('doc_id', lambda col: col if aggregation_level > 4 else "'All'"),
             ('awc_name', lambda col: col if aggregation_level > 4 else "NULL"),
             ('awc_site_code', lambda col: col if aggregation_level > 4 else "'All'"),
@@ -162,7 +162,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
                 {calculations}
               FROM "{tablename}"
               GROUP BY {group_by}
-            ) 
+            )
         """.format(
             tablename=self.base_tablename,
             columns=", ".join([col[0] for col in columns]),
