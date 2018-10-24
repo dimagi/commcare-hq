@@ -148,9 +148,9 @@
                                 </div>
                             </div>
                         </div>
-    
+
                         <div class="h5" data-bind="if: emailedExport.hasFile() && isLocationSafeForUser()">
-    
+
                             <a data-bind="
                                    visible: !isFeed(),
                                    attr: {href: emailedExport.fileData.downloadUrl()},
@@ -160,7 +160,7 @@
                                 <i class="fa fa-cloud-download"></i>
                                 {% trans "Download" %}
                             </a>
-    
+
                             <div class="input-group" data-bind="visible: isFeed">
                                 <span data-bind="css: {'input-group-btn': showLink}, click: copyLinkRequested">
                                     <a class="btn btn-info btn-sm">
@@ -172,7 +172,7 @@
                                        type="text" class="form-control input-sm" readonly />
                             </div>
                         </div>
-    
+
                         <div data-bind="if: isLocationSafeForUser">
                             <p class="text-warning" data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning() && isAutoRebuildEnabled()">
                                 <i class="fa fa-exclamation-triangle"></i>
@@ -188,7 +188,7 @@
                                 {% trans "Please check back later for updates. (Page refresh required)" %}
                             </p>
                         </div>
-    
+
                         <div data-bind="if: isLocationSafeForUser">
                             <p data-bind="if: !emailedExport.hasFile() && emailedExport.taskStatus && !emailedExport.taskStatus.justFinished()">
                                 {% blocktrans %}
@@ -206,13 +206,13 @@
                                             </button>
                                             <h4 class="modal-title">{% trans "Confirm data updates" %}</h4>
                                         </div>
-                                        <div class="modal-body" data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning()">
+                                        <div class="modal-body" data-bind="visible: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning()">
                                             {% blocktrans %}
                                                 To renew daily updates, click the Update Data button below and check back in a little
                                                 bit once the updates have finished processing.
                                             {% endblocktrans %}
                                         </div>
-                                        <div class="modal-body" data-bind="if: !(emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning())">
+                                        <div class="modal-body" data-bind="visible: !(emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning())">
                                             <p class="lead">
                                                 {% blocktrans %}
                                                     <strong>Once the data is updated, a data refresh should occur automatically on a daily basis.</strong>
