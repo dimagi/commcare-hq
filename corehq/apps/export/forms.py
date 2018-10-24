@@ -24,7 +24,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstanceFilters,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
-from corehq.apps.reports.filters.users import SubmitHistoryFilter, SubmitHistoryUtils
+from corehq.apps.reports.filters.users import SubmitHistoryFilter, EmwfUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -492,7 +492,7 @@ class DashboardFeedFilterForm(forms.Form):
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
-                SubmitHistoryUtils
+                EmwfUtils
             emwf_data = []
             for item in selected_items:
                 choice_tuple = emwf_utils_class(domain).id_to_choice_tuple(str(item))

@@ -186,21 +186,6 @@ class EmwfUtils(object):
         return ret
 
 
-class SubmitHistoryUtils(EmwfUtils):
-    @property
-    @memoized
-    def static_options(self):
-        static_options = [("t__0", _("[Active Mobile Workers]"))]
-        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
-        if Domain.get_by_name(self.domain).commtrack_enabled:
-            types.append('COMMTRACK')
-        for t in types:
-            user_type = getattr(HQUserType, t)
-            static_options.append(self.user_type_tuple(user_type))
-
-        return static_options
-
-
 class UsersUtils(EmwfUtils):
 
     def user_tuple(self, u):
@@ -208,6 +193,7 @@ class UsersUtils(EmwfUtils):
         uid = "%s" % user['user_id']
         name = "%s" % user['username_in_report']
         return (uid, name)
+
 
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
@@ -468,4 +454,4 @@ class SubmitHistoryFilter(ExpandedMobileWorkerFilter):
     @property
     @memoized
     def utils(self):
-        return SubmitHistoryUtils(self.domain)
+        return EmwfUtils(self.domain)
