@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime
 import json
 from io import BytesIO
 from contextlib import contextmanager, closing
