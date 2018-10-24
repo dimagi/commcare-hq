@@ -1798,30 +1798,26 @@ def prepare_form_multimedia(request, domain):
     permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
     permissions.access_download_export_or_404()
 
-    try:
-        filter_form_data = json.loads(request.POST.get('form_data'))
-        export_specs = json.loads(request.POST.get('exports'))
-        form_class = _get_filter_form_class(form_or_case, sms_export)
-        domain_object = Domain.get_by_name(domain)
-        timezone = _get_timezone(domain, request.couch_user)
-        filter_form = form_class(domain_object, timezone, filter_form_data)
-        if not filter_form.is_valid():
-            raise ExportFormValidationException(
-                _("Please check that you've submitted all required filters.")
-            )
-        download = DownloadBase()
-        export_object = _get_export(request, domain=domain, export_id=export_specs[0]['export_id'],
-                                    form_or_case=form_or_case, sms_export=sms_export)
-        filter_slug = filter_form_data[ExpandedMobileWorkerFilter.slug]
-        mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(filter_slug)
-        task_kwargs = filter_form.get_multimedia_task_kwargs(export_object, download.download_id,
-                                                             mobile_user_and_group_slugs)
-        from corehq.apps.reports.tasks import build_form_multimedia_zip
-        download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
-    except Exception:
+    filter_form_data = json.loads(request.POST.get('form_data'))
+    export_specs = json.loads(request.POST.get('exports'))
+    form_class = _get_filter_form_class(form_or_case, sms_export)
+    domain_object = Domain.get_by_name(domain)
+    timezone = _get_timezone(domain, request.couch_user)
+    filter_form = form_class(domain_object, timezone, filter_form_data)
+    if not filter_form.is_valid():
         return json_response({
-            'error': _("There was an error"),
+            'error': _("Please check that you've submitted all required filters."),
         })
+    download = DownloadBase()
+    export_object = _get_export(request, domain=domain, export_id=export_specs[0]['export_id'],
+                                form_or_case=form_or_case, sms_export=sms_export)
+    filter_slug = filter_form_data[ExpandedMobileWorkerFilter.slug]
+    mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(filter_slug)
+    task_kwargs = filter_form.get_multimedia_task_kwargs(export_object, download.download_id,
+                                                         mobile_user_and_group_slugs)
+    from corehq.apps.reports.tasks import build_form_multimedia_zip
+    download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
+
     return json_response({
         'success': True,
         'download_id': download.download_id,
