@@ -40,6 +40,10 @@ from corehq.apps.export.views import (
     submit_app_data_drilldown_form,
     toggle_saved_export_enabled,
     update_emailed_export_data,
+    has_multimedia,
+    poll_custom_export_download,
+    prepare_custom_export,
+    prepare_form_multimedia,
 )
 
 urlpatterns = [
@@ -139,6 +143,10 @@ urlpatterns = [
         name='submit_app_data_drilldown_form'),
     url(r'^toggle_saved_export_enabled/$', toggle_saved_export_enabled, name='toggle_saved_export_enabled'),
     url(r'^update_emailed_export_data/$', update_emailed_export_data, name='update_emailed_export_data'),
+    url(r'^has_multimedia/$', has_multimedia, name='has_multimedia'),
+    url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
+    url(r'^prepare_custom_export/$', prepare_custom_export, name='prepare_custom_export'),
+    url(r'^prepare_form_multimedia/$', prepare_form_multimedia, name='prepare_form_multimedia'),
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
