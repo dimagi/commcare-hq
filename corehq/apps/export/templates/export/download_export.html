@@ -50,16 +50,19 @@
     {% initial_page_data 'max_column_size' max_column_size %}
     {% initial_page_data 'default_date_range' default_date_range %}
     {% initial_page_data 'check_for_multimedia' check_for_multimedia %}
+    {% initial_page_data 'sms_export' sms_export %}
     {% initial_page_data 'user_types' user_types %}
 
     {% registerurl 'add_export_email_request' domain %}
     {% registerurl 'has_multimedia' domain %}
     {% registerurl 'poll_custom_export_download' domain %}
+    {% registerurl 'prepare_custom_export' domain %}
+    {% registerurl 'prepare_form_multimedia' domain %}
 
     <div ng-app="downloadExportsApp">
         <div ng-controller="DownloadExportFormController"
              ng-cloak>
-            {% if not is_sms_export %}
+            {% if not sms_export %}
             <div class="alert alert-info">
                 {% blocktrans %}
                     You are downloading the following exports:
