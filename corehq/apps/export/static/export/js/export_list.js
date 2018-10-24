@@ -10,8 +10,21 @@ hqDefine("export/js/export_list", function () {
         hqImport("hqwebapp/js/assert_properties").assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
         var self = ko.mapping.fromJS(options);
-
         self.hasEmailedExport = !!options.emailedExport;
+
+        // Unwrap the values in the EMWF filters, turning them into plain {id: ..., text: ...} objects for use with select2
+        if (self.hasEmailedExport) {
+            self.emailedExport.filters.emwf_case_filter(_.map(self.emailedExport.filters.emwf_case_filter(), function (mw) {
+                return _.mapObject(mw, function (observable) {
+                    return observable();
+                });
+            }));
+            self.emailedExport.filters.emwf_form_filter(_.map(self.emailedExport.filters.emwf_form_filter(), function (mw) {
+                return _.mapObject(mw, function (observable) {
+                    return observable();
+                });
+            }));
+        }
 
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();
@@ -228,8 +241,8 @@ hqDefine("export/js/export_list", function () {
             self.endDate(newSelectedExport.emailedExport.filters.end_date());
             self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
             // select2s require programmatic update
-            self.$emwfCaseFilter.select2("data", newSelectedExport.emailedExport.filters.emwf_case_filter());
-            self.$emwfFormFilter.select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter());
+            self.$emwfCaseFilter.select2("data", self.emwfCaseFilter());
+            self.$emwfFormFilter.select2("data", self.emwfFormFilter());
         });
         self.showEmwfCaseFilter = ko.computed(function () {
             return self.selectedExportModelType() === 'case';
