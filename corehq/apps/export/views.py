@@ -290,11 +290,9 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         raise NotImplementedError("You must implement export_list_url")
 
     @property
+    @memoized
     def download_export_form(self):
-        """Should return a memoized instance that is a subclass of
-        FilterExportDownloadForm.
-        """
-        raise NotImplementedError("You must implement download_export_form.")
+        return self.filter_form_class(self.domain_object, timezone=self.timezone)
 
     @property
     def export_id(self):
@@ -1739,14 +1737,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         return reverse(FormExportListView.urlname, args=(self.domain,))
 
     @property
-    @memoized
-    def download_export_form(self):
-        return self.filter_form_class(
-            self.domain_object,
-            self.timezone,
-        )
-
-    @property
     def parent_pages(self):
         if not self.permissions.has_edit_permissions:
             return [{
@@ -1816,14 +1806,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
         return reverse(CaseExportListView.urlname, args=(self.domain,))
 
     @property
-    @memoized
-    def download_export_form(self):
-        return self.filter_form_class(
-            self.domain_object,
-            timezone=self.timezone,
-        )
-
-    @property
     def parent_pages(self):
         return [{
             'title': CaseExportListView.page_title,
@@ -1845,14 +1827,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
     @property
     def export_list_url(self):
         return None
-
-    @property
-    @memoized
-    def download_export_form(self):
-        return self.filter_form_class(
-            self.domain_object,
-            timezone=self.timezone,
-        )
 
     @property
     def parent_pages(self):
