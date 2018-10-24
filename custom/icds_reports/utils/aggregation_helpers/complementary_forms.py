@@ -13,12 +13,6 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AGG_COMP_FEEDING_TABLE
     aggregate_child_table_prefix = 'icds_db_child_cf_form_'
 
-    @property
-    def _old_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.child_health_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
@@ -100,33 +94,3 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
             previous_month_tablename=previous_month_tablename,
             tablename=tablename
         ), query_params
-
-    def compare_with_old_data_query(self):
-        """Compares data from the complementary feeding forms aggregate table
-        to the the old child health monthly UCR table that current aggregate
-        script uses
-        """
-        month = self.month.replace(day=1)
-        return """
-        SELECT agg.case_id
-        FROM "{child_health_monthly_ucr}" chm_ucr
-        FULL OUTER JOIN "{new_agg_table}" agg
-        ON chm_ucr.doc_id = agg.case_id AND chm_ucr.month = agg.month AND agg.state_id = chm_ucr.state_id
-        WHERE chm_ucr.month = %(month)s and agg.state_id = %(state_id)s AND (
-              (chm_ucr.cf_eligible = 1 AND (
-                  chm_ucr.cf_in_month != agg.comp_feeding_latest OR
-                  chm_ucr.cf_diet_diversity != agg.diet_diversity OR
-                  chm_ucr.cf_diet_quantity != agg.diet_quantity OR
-                  chm_ucr.cf_handwashing != agg.hand_wash OR
-                  chm_ucr.cf_demo != agg.demo_comp_feeding OR
-                  chm_ucr.counsel_pediatric_ifa != agg.counselled_pediatric_ifa OR
-                  chm_ucr.counsel_comp_feeding_vid != agg.play_comp_feeding_vid
-              )) OR (chm_ucr.cf_initiation_eligible = 1 AND chm_ucr.cf_initiated != agg.comp_feeding_ever)
-        )
-        """.format(
-            child_health_monthly_ucr=self._old_ucr_tablename,
-            new_agg_table=self.aggregate_parent_table,
-        ), {
-            "month": month.strftime('%Y-%m-%d'),
-            "state_id": self.state_id
-        }
