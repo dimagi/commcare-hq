@@ -57,7 +57,7 @@
     {% registerurl 'prepare_custom_export' domain %}
     {% registerurl 'prepare_form_multimedia' domain %}
 
-    <div id="download-export">
+    <div id="download-export-form">
         {% if not sms_export %}
             <div class="alert alert-info">
                 {% blocktrans %}
@@ -101,8 +101,7 @@
                 </p>
             </div>
         {% else %}
-            {# TODO #}
-            {#% include 'export/partials/export_download_prepare.html' %#}
+            {% include 'export/partials/export_download_prepare.html' %}
         {% endif %}
         {# TODO #}
         {#% include 'export/partials/export_download_progress.html' %#}

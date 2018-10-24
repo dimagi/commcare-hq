@@ -23,7 +23,6 @@
         user_type: function () { return null; },
     });
 
-    download_export.constant('exportList', []);
     download_export.constant('maxColumnSize', 2000);
     download_export.constant('defaultDateRange', null);
     download_export.constant('checkForMultimedia', false);
@@ -36,11 +35,6 @@
         var self = {};
         $scope._ = _;   // make underscore.js available
         self._maxColumnSize = maxColumnSize;
-        $scope.formData = {};
-        $scope.exportList = _.map(exportList, function (exportData) {
-            exportData.filename = encodeURIComponent(exportData.name);
-            return exportData;
-        });
 
         $scope.hasMultimedia = false;
         if (checkForMultimedia) {
@@ -68,101 +62,14 @@
             $scope.formData.date_range = defaultDateRange;
         }
 
-        $scope.preparingExport = false;
-
-        $scope.prepareExportError = null;
-
-        var exportType = $scope.exportList[0].export_type;
-        self.exportType = hqImport('export/js/utils').capitalize(exportType);
         if (exportType === 'case') {
             self.has_case_history_table = _.any($scope.exportList, function (export_) {
                 return export_.has_case_history_table;
             });
         }
 
-        self.sendAnalytics = function () {
-            _.each($scope.formData.user_types, function (user_type) {
-                hqImport('analytix/js/google').track.event("Download Export", 'Select "user type"', user_type);
-            });
-            var action = ($scope.exportList.length > 1) ? "Bulk" : "Regular";
-            hqImport('analytix/js/google').track.event("Download Export", self.exportType, action);
-            if (self.has_case_history_table) {
-                _.each($scope.exportList, function (export_) {
-                    if (export_.has_case_history_table) {
-                        hqImport('analytix/js/google').track.event("Download Case History Export", export_.domain, export_.export_id);
-                    }
-                });
-            }
-        };
-
         $scope.isFormInvalid = function () {
             return _.isEmpty($scope.formData.user_types);
-        };
-
-        $scope.prepareExport = function () {
-            $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
-                $('form[name="exportFiltersForm"]'));
-            $scope.prepareExportError = null;
-            $scope.preparingExport = true;
-            var userTypes = hqImport("hqwebapp/js/initial_page_data").get('user_types');
-            function getFilterName(exportType) {
-                return (exportType === "form" ? "emw" : "case_list_filter");
-            }
-
-            var filterNamesAsString = $("#exportFiltersFormId").find("input[name="
-                        + getFilterName($scope.exportList[0].export_type) + "]")
-                .val();
-
-            function getFilterNames() {
-                return (filterNamesAsString ? filterNamesAsString.split(',') : []);
-            }
-
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
-                "Export type": $scope.exportList[0].export_type,
-                "filters": _.map(
-                    getFilterNames(),
-                    function (item) {
-                        var prefix = "t__";
-                        if (item.substring(prefix.length) === prefix) {
-                            return userTypes[item.substring(prefix.length)];
-                        }
-                        return item;
-                    }
-                ).join()});
-            $.ajax({
-                method: 'POST',
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('prepare_custom_export'),
-                data: {
-                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
-                    sms_export: hqImport('hqwebapp/js/initial_page_data').get("sms_export"),
-                    exports: JSON.stringify($scope.exportList),
-                    max_column_size: self._maxColumnSize,
-                    form_data: JSON.stringify($scope.formData),
-                },
-                success: function (data) {
-                    if (data.success) {
-                        self.sendAnalytics();
-                        $scope.preparingExport = false;
-                        $scope.downloadInProgress = true;
-                        exportDownloadService.startDownload(data.download_id, self.exportType);
-                    } else {
-                        self._handlePrepareError(data);
-                    }
-                },
-                error: self._handlePrepareError,
-            });
-        };
-
-        self._handlePrepareError = function (data) {
-            if (data && data.error) {
-                // The server returned an error message.
-                $scope.prepareExportError = data.error;
-            } else {
-                $scope.prepareExportError = "default";
-            }
-            $scope.preparingExport = false;
-            $scope.preparingMultimediaExport = false;
-            $scope.$apply();
         };
 
         $scope.preparingMultimediaExport = false;
