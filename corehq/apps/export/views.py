@@ -374,16 +374,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
 
         return export_filter, export_specs
 
-    def check_if_export_has_data(self, in_data):
-        export_filters, export_specs = self._process_filters_and_specs(in_data)
-        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
-
-        for instance in export_instances:
-            if (get_export_size(instance, export_filters) > 0):
-                return True
-
-        return False
-
     @allow_remote_invocation
     def prepare_custom_export(self, in_data):
         """Uses the current exports download framework (with some nasty filters)
@@ -436,8 +426,14 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
 
         # Analytics
         if self.form_or_case:
+            def _check_if_export_has_data(instances):
+                for instance in instances:
+                    if (get_export_size(instance, export_filters) > 0):
+                        return True
+                return False
+
             capitalized = self.form_or_case[0].upper() + self.form_or_case[1:]
-            if self.check_if_export_has_data(in_data):
+            if _check_if_export_has_data(export_instances):
                 track_workflow(self.request.couch_user.username,
                                'Downloaded {} Exports With Data'.format(capitalized))
             else:
