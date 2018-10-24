@@ -19,7 +19,6 @@ from custom.icds_reports.utils.aggregation import (
     DeliveryFormsAggregationHelper, GrowthMonitoringFormsAggregationHelper,
     InactiveAwwsAggregationHelper,
     PostnatalCareFormsCcsRecordAggregationHelper,
-    PostnatalCareFormsChildHealthAggregationHelper,
     THRFormsCcsRecordAggregationHelper, THRFormsChildHealthAggregationHelper,
     AwwIncentiveAggregationHelper
 )
@@ -30,6 +29,8 @@ from six.moves import range
 from custom.icds_reports.utils.aggregation_helpers.complementary_forms import ComplementaryFormsAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.complementary_forms_ccs_record import \
     ComplementaryFormsCcsRecordAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_health import \
+    PostnatalCareFormsChildHealthAggregationHelper
 
 
 class CcsRecordMonthly(models.Model):
