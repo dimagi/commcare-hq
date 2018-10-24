@@ -982,7 +982,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             'export_is_legacy': False,
             'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
             'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
-            'group': self.data['group'],
             'download_id': download_id
         }
 
