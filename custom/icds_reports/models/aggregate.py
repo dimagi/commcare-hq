@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from datetime import date
+import logging
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.routers import db_for_read_write
@@ -27,6 +28,8 @@ from custom.icds_reports.utils.aggregation import (
 from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
+
+celery_task_logger = logging.getLogger('celery.task')
 
 
 class CcsRecordMonthly(models.Model):
@@ -256,8 +259,10 @@ class ChildHealthMonthly(models.Model):
             with transaction.atomic():
                 cursor.execute(helper.drop_table_query())
                 for agg_query, agg_params in agg_queries:
+                    celery_task_logger.info('child_health_monthly %s', agg_params)
                     cursor.execute(agg_query, agg_params)
                 for query in index_queries:
+                    celery_task_logger.info('child_health_monthly %s', query)
                     cursor.execute(query)
 
 
