@@ -386,7 +386,14 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                 )
             export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
 
-            self._check_deid_permissions(export_instances)
+            # If any export is de-identified, check that
+            # the requesting domain has access to the deid feature.
+            if not self.permissions.has_deid_view_permissions:
+                for instance in export_instances:
+                    if instance.is_deidentified:
+                        raise ExportAsyncException(
+                            _("You do not have permission to export de-identified exports.")
+                        )
 
             # Check export isn't too big to download
             count = 0
@@ -442,17 +449,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         return format_angular_success({
             'download_id': download.download_id,
         })
-
-    def _check_deid_permissions(self, export_instances):
-        # if any export is de-identified, check that
-        # the requesting domain has access to the deid feature.
-        if not self.permissions.has_deid_view_permissions:
-            for instance in export_instances:
-                if instance.is_deidentified:
-                    raise ExportAsyncException(
-                        _("You do not have permission to export this "
-                        "De-Identified export.")
-                    )
 
 
 @require_GET
