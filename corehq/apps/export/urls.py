@@ -33,7 +33,17 @@ from corehq.apps.export.views import (
     CopyExportView,
     DataFileDownloadList,
     DataFileDownloadDetail,
-    add_export_email_request
+    add_export_email_request,
+    commit_filters,
+    get_app_data_drilldown_values,
+    get_saved_export_progress,
+    submit_app_data_drilldown_form,
+    toggle_saved_export_enabled,
+    update_emailed_export_data,
+    has_multimedia,
+    poll_custom_export_download,
+    prepare_custom_export,
+    prepare_form_multimedia,
 )
 
 urlpatterns = [
@@ -125,9 +135,18 @@ urlpatterns = [
     url(r"^custom/copy/(?P<export_id>[\w\-]+)/$",
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
-    url(r'^add_export_email_request/$',
-        add_export_email_request,
-        name='add_export_email_request'),
+    url(r'^add_export_email_request/$', add_export_email_request, name='add_export_email_request'),
+    url(r'^commit_filters/$', commit_filters, name='commit_filters'),
+    url(r'^get_app_data_drilldown_values/$', get_app_data_drilldown_values, name='get_app_data_drilldown_values'),
+    url(r'^get_saved_export_progress/$', get_saved_export_progress, name='get_saved_export_progress'),
+    url(r'^submit_app_data_drilldown_form/$', submit_app_data_drilldown_form,
+        name='submit_app_data_drilldown_form'),
+    url(r'^toggle_saved_export_enabled/$', toggle_saved_export_enabled, name='toggle_saved_export_enabled'),
+    url(r'^update_emailed_export_data/$', update_emailed_export_data, name='update_emailed_export_data'),
+    url(r'^has_multimedia/$', has_multimedia, name='has_multimedia'),
+    url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
+    url(r'^prepare_custom_export/$', prepare_custom_export, name='prepare_custom_export'),
+    url(r'^prepare_form_multimedia/$', prepare_form_multimedia, name='prepare_form_multimedia'),
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
