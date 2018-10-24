@@ -454,12 +454,12 @@ def prepare_custom_export(request, domain):
         )
     except ExportAsyncException as e:
         return json_response({
-            'error': e.message,
+            'error': str(e),
         })
     except XlsLengthException:
         return json_response({
             'error': _('This file has more than 256 columns, which is not supported by xls. '
-                        'Please change the output type to csv or xlsx to export this file.')
+                       'Please change the output type to csv or xlsx to export this file.')
         })
     except Exception:
         return json_response({
