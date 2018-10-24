@@ -433,6 +433,7 @@ def _child_health_monthly_table(state_ids, day):
     agg_queries = helper.aggregation_queries()
 
     with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
         for agg_query, agg_params in agg_queries:
             cursor.execute(agg_query, agg_params)
