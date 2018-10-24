@@ -1,7 +1,7 @@
 hqDefine('export/js/download_export', function () {
     'use strict';
 
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
+    /*var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
     var downloadExportsApp = window.angular.module('downloadExportsApp', ['hq.download_export']);
     downloadExportsApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
         djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
@@ -20,9 +20,22 @@ hqDefine('export/js/download_export', function () {
         user_type: function () {
             return $('#id_user_types');
         },
-    });
+    });*/
+
+    var downloadExportModel = function (options) {
+        var self = {};
+
+        self.exportList = options.exportList;
+
+        return self;
+    };
 
     $(function () {
         hqImport("reports/js/filters/main").init();
+
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        $("#download-export").koApplyBindings(downloadExportModel({
+            exportList: initialPageData.get('export_list'),
+        }));
     });
 });
