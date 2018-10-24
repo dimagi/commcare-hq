@@ -571,7 +571,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     def _get_daily_saved_export_metadata(self, export):
         """
         Return a dictionary containing details about an emailed export.
-        This will eventually be passed to an Angular controller.
+        This will eventually be passed to javascript.
         """
 
         has_file = export.has_file()
@@ -603,6 +603,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
             'locationRestrictions': location_restrictions,
             'taskStatus': _get_task_status_json(export._id),
+            'updatingData': False,
         }
 
     def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
@@ -661,6 +662,7 @@ def _get_task_status_json(export_instance_id):
         'percentComplete': status.progress.percent or 0,
         'inProgress': status.started(),
         'success': status.success(),
+        'justFinished': False,
     }
 
 
