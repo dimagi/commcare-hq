@@ -129,12 +129,17 @@
                         return item;
                     }
                 ).join()});
-            djangoRMI.prepare_custom_export({
-                exports: $scope.exportList,
-                max_column_size: self._maxColumnSize,
-                form_data: $scope.formData,
-            })
-                .success(function (data) {
+            $.ajax({
+                method: 'POST',
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('prepare_custom_export'),
+                data: {
+                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
+                    sms_export: hqImport('hqwebapp/js/initial_page_data').get("sms_export"),
+                    exports: JSON.stringify($scope.exportList),
+                    max_column_size: self._maxColumnSize,
+                    form_data: JSON.stringify($scope.formData),
+                },
+                success: function (data) {
                     if (data.success) {
                         self.sendAnalytics();
                         $scope.preparingExport = false;
@@ -143,8 +148,9 @@
                     } else {
                         self._handlePrepareError(data);
                     }
-                })
-                .error(self._handlePrepareError);
+                },
+                error: self._handlePrepareError,
+            });
         };
 
         self._handlePrepareError = function (data) {
@@ -162,11 +168,16 @@
         $scope.prepareMultimediaExport = function () {
             $scope.prepareExportError = null;
             $scope.preparingMultimediaExport = true;
-            djangoRMI.prepare_form_multimedia({
-                exports: $scope.exportList,
-                form_data: $scope.formData,
-            })
-                .success(function (data) {
+            $.ajax({
+                method: 'POST',
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('prepare_form_multimedia'),
+                data: {
+                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
+                    sms_export: hqImport('hqwebapp/js/initial_page_data').get("sms_export"),
+                    exports: JSON.stringify($scope.exportList),
+                    form_data: JSON.stringify($scope.formData),
+                },
+                success: function (data) {
                     if (data.success) {
                         self.sendAnalytics();
                         $scope.preparingMultimediaExport = false;
@@ -175,8 +186,9 @@
                     } else {
                         self._handlePrepareError(data);
                     }
-                })
-                .error(self._handlePrepareError);
+                },
+                error: self._handlePrepareError,
+            });
         };
 
         $scope.$watch(function () {
