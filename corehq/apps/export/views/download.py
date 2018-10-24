@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
+from corehq.apps.export.exceptions import ExportNotFound
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.export.views.utils import ExportsPermissionsManager, get_timezone
@@ -89,6 +90,19 @@ from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
+
+
+def _get_export(request, domain=None, export_id=None, form_or_case=None, sms_export=False):
+    if sms_export:
+        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(request)
+        return SMSExportInstance._new_from_schema(
+            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
+        )
+    if form_or_case == 'form':
+        return FormExportInstance.get(export_id)
+    if form_or_case == 'case':
+        return CaseExportInstance.get(export_id)
+    raise ExportNotFound("Could not get export")
 
 
 # Form used for rendering filters
@@ -212,9 +226,13 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             and not self.request.is_ajax()
         ):
             raw_export_list = json.loads(self.request.POST['export_list'])
-            exports = [self._get_export(self.domain, e['id']) for e in raw_export_list]
+            exports = [_get_export(
+                self.request, domain=self.domain, export_id=e['id'],
+                form_or_case=self.form_or_case, sms_export=self.sms_export
+            ) for e in raw_export_list]
         elif self.export_id or self.sms_export:
-            exports = [self._get_export(self.domain, self.export_id)]
+            exports = [_get_export(self.request, domain=self.domain, export_id=self.export_id,
+                                   form_or_case=self.form_or_case, sms_export=self.sms_export)]
 
         if not self.permissions.has_view_permissions:
             if self.permissions.has_deid_view_permissions:
@@ -228,9 +246,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
 
         exports = [self.download_export_form.format_export_data(e) for e in exports]
         return exports
-
-    def _get_export(self, domain, export_id):
-        raise NotImplementedError()
 
     @property
     def max_column_size(self):
@@ -286,7 +301,10 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                 raise ExportAsyncException(
                     _("Form did not validate.")
                 )
-            export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+            export_instances = [_get_export(
+                self.request, domain=self.domain, export_id=spec['export_id'],
+                form_or_case=self.form_or_case, sms_export=self.sms_export
+            ) for spec in export_specs]
 
             # If any export is de-identified, check that
             # the requesting domain has access to the deid feature.
@@ -430,7 +448,8 @@ class DownloadNewFormExportView(BaseDownloadExportView):
                     _("Please check that you've submitted all required filters.")
                 )
             download = DownloadBase()
-            export_object = self._get_export(self.domain, export_specs[0]['export_id'])
+            export_object = _get_export(self.request, domain=self.domain, export_id=export_specs[0]['export_id'],
+                                        form_or_case=self.form_or_case, sms_export=self.sms_export)
             filter_slug = in_data['form_data'][ExpandedMobileWorkerFilter.slug]
             mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(filter_slug)
             task_kwargs = filter_form.get_multimedia_task_kwargs(export_object, download.download_id,
@@ -442,10 +461,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         return format_angular_success({
             'download_id': download.download_id,
         })
-
-
-    def _get_export(self, domain, export_id):
-        return FormExportInstance.get(export_id)
 
 
 @require_GET
@@ -501,9 +516,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
             raise ExportFormValidationException()
         return filter_form
 
-    def _get_export(self, domain, export_id):
-        return CaseExportInstance.get(export_id)
-
 
 class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
@@ -527,12 +539,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
         if not filter_form.is_valid():
             raise ExportFormValidationException()
         return filter_form
-
-    def _get_export(self, domain, export_id):
-        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
-        return SMSExportInstance._new_from_schema(
-            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
-        )
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
