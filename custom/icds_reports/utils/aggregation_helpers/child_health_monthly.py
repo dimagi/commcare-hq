@@ -273,7 +273,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             """),
         )
         return """
-        INSERT INTO "{tablename}" (
+        INSERT INTO "tmp_{tablename}" (
             {columns}
         ) (SELECT
             {calculations}
@@ -321,6 +321,15 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_queries(self):
         return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
+
+    def create_temporary_table(self):
+        return "CREATE TABLE \"tmp_{}\" (LIKE child_health_monthly INCLUDING INDEXES)".format(self.tablename)
+
+    def drop_temporary_table(self):
+        return "DROP TABLE \"tmp_{}\"".format(self.tablename)
+
+    def real_query(self):
+        return "INSERT INTO \"{tablename}\" (SELECT * FROM \"tmp_{tablename}\")".format(tablename=self.tablename)
 
     def indexes(self):
         return [
