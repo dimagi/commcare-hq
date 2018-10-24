@@ -34,46 +34,48 @@
     </div>
 {% endif %}
 
-<div ng-app="listExportsApp">
-    <div ng-controller="ListExportsController" ng-cloak>
-        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-        <div class="panel panel-default">
-            <div class="panel-heading">{{ my_export_type }}</div>
-            <div class="panel-body">
-                {% include 'export/partials/loading_exports.html' %}
+<div id="export-list">
+    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+    <div class="panel panel-default">
+        <div class="panel-heading">{{ my_export_type }}</div>
+        <div class="panel-body">
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/table.html' with MY_EXPORTS=True %}
+            <div data-bind="visible: exports.length > 6">
                 {% include 'export/partials/export_bulk_notice.html' %}
-                {% include 'export/partials/table.html' with MY_EXPORTS=True %}
-                <div ng-show="exports.length > 6">
-                    {% include 'export/partials/export_bulk_notice.html' %}
-                </div>
             </div>
         </div>
-        <div class="panel panel-default">
-            <div class="panel-heading">{{ shared_export_type }}</div>
-            <div class="panel-body">
-                {% include 'export/partials/loading_exports.html' %}
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">{{ shared_export_type }}</div>
+        <div class="panel-body">
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/table.html' with MY_EXPORTS=False %}
+            <div data-bind="visible: exports.length > 6">
                 {% include 'export/partials/export_bulk_notice.html' %}
-                {% include 'export/partials/table.html' with MY_EXPORTS=False %}
-                <div ng-show="exports.length > 6">
-                    {% include 'export/partials/export_bulk_notice.html' %}
-                </div>
             </div>
         </div>
-        {% else %}
-        <div class="panel panel-default">
-            <div class="panel-heading">{{ export_type_caps_plural }}</div>
-            <div class="panel-body">
-                {% include 'export/partials/loading_exports.html' %}
+    </div>
+    {% else %}
+    <div class="panel panel-default">
+        <div class="panel-heading">{{ export_type_caps_plural }}</div>
+        <div class="panel-body">
+            {% include 'export/partials/loading_exports.html' %}
+            {% include 'export/partials/export_bulk_notice.html' %}
+            {% include 'export/partials/table.html' %}
+            <div data-bind="visible: exports.length > 6">
                 {% include 'export/partials/export_bulk_notice.html' %}
-                {% include 'export/partials/table.html' %}
-                <div ng-show="exports.length > 6">
-                    {% include 'export/partials/export_bulk_notice.html' %}
-                </div>
             </div>
         </div>
-        {% endif %}
         {% if is_daily_saved_export %}
             {% include 'export/partials/feed_filter_modal.html' %}
         {% endif %}
     </div>
+    {% endif %}
+
+    {% if is_daily_saved_export %}
+        {% include 'export/partials/feed_filter_modal.html' %}
+    {% endif %}
 </div>

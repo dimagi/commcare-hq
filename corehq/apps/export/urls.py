@@ -34,8 +34,12 @@ from corehq.apps.export.views import (
     DataFileDownloadList,
     DataFileDownloadDetail,
     add_export_email_request,
+    commit_filters,
     get_app_data_drilldown_values,
+    get_saved_export_progress,
     submit_app_data_drilldown_form,
+    toggle_saved_export_enabled,
+    update_emailed_export_data,
 )
 
 urlpatterns = [
@@ -127,15 +131,14 @@ urlpatterns = [
     url(r"^custom/copy/(?P<export_id>[\w\-]+)/$",
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
-    url(r'^add_export_email_request/$',
-        add_export_email_request,
-        name='add_export_email_request'),
-    url(r'^get_app_data_drilldown_values/$',
-        get_app_data_drilldown_values,
-        name='get_app_data_drilldown_values'),
-    url(r'^submit_app_data_drilldown_form/$',
-        submit_app_data_drilldown_form,
+    url(r'^add_export_email_request/$', add_export_email_request, name='add_export_email_request'),
+    url(r'^commit_filters/$', commit_filters, name='commit_filters'),
+    url(r'^get_app_data_drilldown_values/$', get_app_data_drilldown_values, name='get_app_data_drilldown_values'),
+    url(r'^get_saved_export_progress/$', get_saved_export_progress, name='get_saved_export_progress'),
+    url(r'^submit_app_data_drilldown_form/$', submit_app_data_drilldown_form,
         name='submit_app_data_drilldown_form'),
+    url(r'^toggle_saved_export_enabled/$', toggle_saved_export_enabled, name='toggle_saved_export_enabled'),
+    url(r'^update_emailed_export_data/$', update_emailed_export_data, name='update_emailed_export_data'),
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
