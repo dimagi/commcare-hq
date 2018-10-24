@@ -13,7 +13,6 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
 from custom.icds_reports.utils.aggregation import (
     AggCcsRecordAggregationHelper,
     AwcInfrastructureAggregationHelper,
-    CcsRecordMonthlyAggregationHelper,
     AwwIncentiveAggregationHelper
 )
 from dateutil.relativedelta import relativedelta
@@ -23,6 +22,7 @@ from six.moves import range
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.birth_preparedness_forms import \
     BirthPreparednessFormsAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.ccs_record_monthly import CcsRecordMonthlyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.complementary_forms import ComplementaryFormsAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.complementary_forms_ccs_record import \
