@@ -64,6 +64,7 @@ branches:
   - jls/ko-exports-create  # Jenny Oct 19
   - jls/ko-export-dl-views  # Jenny Oct 23
   - dm/gevent # daniel Oct 24
+  - np/testing-OData # Nick P Oct 24
 submodules:
   submodules/django-digest-src:
     branches: []
