@@ -209,7 +209,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     default_options = None
     placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
-    options_url = 'emwf_options'
+    options_url = 'emwf_options_all_users'
     filter_help_inline = ugettext_lazy(mark_safe(
         'See <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
         ' target="_blank"> Filter Definitions</a>.'
@@ -333,7 +333,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
         q = user_es.UserES().domain(domain)
-        if SubmitHistoryFilter.no_filters_selected(mobile_user_and_group_slugs):
+        if ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs):
             return q
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
@@ -446,12 +446,3 @@ def get_user_toggle(request):
     elif group or individual:
         show_filter = False
     return toggle, show_filter
-
-
-class SubmitHistoryFilter(ExpandedMobileWorkerFilter):
-    options_url = 'emwf_options_all_users'
-
-    @property
-    @memoized
-    def utils(self):
-        return EmwfUtils(self.domain)

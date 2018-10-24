@@ -16,7 +16,7 @@ from corehq.apps.export.filters import (
 from corehq.apps.export.forms import (
     BaseFilterExportDownloadForm,
     EmwfFilterFormExport,
-    SubmitHistoryFilter,
+    ExpandedMobileWorkerFilter,
     FilterCaseESExportDownloadForm,
     CaseExportFilterBuilder,
     FormExportFilterBuilder,
@@ -106,7 +106,7 @@ class TestEmwfFilterFormExport(TestCase):
         self.export_filter = self.subject(self.domain, pytz.utc)
 
         self.assertEqual(self.subject.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(self.subject.dynamic_filter_class, SubmitHistoryFilter)
+        self.assertEqual(self.subject.dynamic_filter_class, ExpandedMobileWorkerFilter)
 
 
 class TestEmwfFilterExportMixin(TestCase):
@@ -183,7 +183,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         export_filter = self.subject(self.domain, pytz.utc)
 
         self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(export_filter.dynamic_filter_class, SubmitHistoryFilter)
+        self.assertEqual(export_filter.dynamic_filter_class, ExpandedMobileWorkerFilter)
 
     @patch('corehq.apps.export.filters.get_groups_user_ids')
     def test_get_group_filter(self, patch_object):
