@@ -162,6 +162,7 @@
             }
             $scope.preparingExport = false;
             $scope.preparingMultimediaExport = false;
+            $scope.$apply();
         };
 
         $scope.preparingMultimediaExport = false;
