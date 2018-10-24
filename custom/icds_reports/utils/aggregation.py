@@ -1269,7 +1269,6 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             WHERE child_health.doc_id IS NOT NULL
               AND child_health.state_id = %(state_id)s
               AND lower(substring(child_health.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
-            ORDER BY child_health.awc_id
         )
         """.format(
             tablename=self.tablename,
