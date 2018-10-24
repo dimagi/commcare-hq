@@ -337,43 +337,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         except TypeError:
             return 2000
 
-    def _process_filters_and_specs(self, in_data):
-        """Returns a the export filters and a list of JSON export specs
-        """
-        filter_form_data = in_data['form_data']
-        export_specs = in_data['exports']
-        mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(
-            filter_form_data[ExpandedMobileWorkerFilter.slug]
-        )
-        try:
-            # Determine export filter
-            filter_form = self._get_filter_form(filter_form_data)
-            if self.form_or_case:
-                if not self.request.can_access_all_locations:
-                    accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-                        self.request.domain,
-                        self.request.couch_user)
-                    )
-                else:
-                    accessible_location_ids = None
-
-                if self.form_or_case == 'form':
-                    export_filter = filter_form.get_form_filter(
-                        mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
-                    )
-                elif self.form_or_case == 'case':
-                    export_filter = filter_form.get_case_filter(
-                        mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
-                    )
-            else:
-                export_filter = filter_form.get_filter()
-        except ExportFormValidationException:
-            raise ExportAsyncException(
-                _("Form did not validate.")
-            )
-
-        return export_filter, export_specs
-
     @allow_remote_invocation
     def prepare_custom_export(self, in_data):
         """Uses the current exports download framework (with some nasty filters)
@@ -385,8 +348,39 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         }
         """
         try:
-            export_filters, export_specs = self._process_filters_and_specs(in_data)
+            filter_form_data = in_data['form_data']
+            export_specs = in_data['exports']
+            mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(
+                filter_form_data[ExpandedMobileWorkerFilter.slug]
+            )
+            try:
+                # Determine export filter
+                filter_form = self._get_filter_form(filter_form_data)
+                if self.form_or_case:
+                    if not self.request.can_access_all_locations:
+                        accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                            self.request.domain,
+                            self.request.couch_user)
+                        )
+                    else:
+                        accessible_location_ids = None
+
+                    if self.form_or_case == 'form':
+                        export_filters = filter_form.get_form_filter(
+                            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
+                        )
+                    elif self.form_or_case == 'case':
+                        export_filters = filter_form.get_case_filter(
+                            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
+                        )
+                else:
+                    export_filters = filter_form.get_filter()
+            except ExportFormValidationException:
+                raise ExportAsyncException(
+                    _("Form did not validate.")
+                )
             export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+
             self._check_deid_permissions(export_instances)
 
             # Check export isn't too big to download
