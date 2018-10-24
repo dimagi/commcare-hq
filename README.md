@@ -99,6 +99,10 @@ Enter `localsettings.py` and do the following:
 - Find the `LOCAL_APPS` section and un-comment the line that starts with `'kombu.transport.django'`
 - You may also want to add the line `from dev_settings import *` at the top of the file, which includes some useful default settings.
 
+Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then run:
+
+    $ mkdir sharedfiles
+
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
 Note that if you want to run everything except for riakcs (which you often do not need for a development environment),
