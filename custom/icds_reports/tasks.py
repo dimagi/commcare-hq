@@ -34,6 +34,7 @@ from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -74,6 +75,7 @@ from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExpo
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
     create_excel_file
+from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -420,13 +422,29 @@ def _update_months_table(day):
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
 
 
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
+
+
 @track_time
 def _child_health_monthly_table(state_ids, day):
+    helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
+    agg_queries = helper.aggregation_queries()
+
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.create_temporary_table())
+        for agg_query, agg_params in agg_queries:
+            cursor.execute(agg_query, agg_params)
+
     with transaction.atomic():
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('child_health_monthly', %s)",
         ], day)
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
+
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
 
 
 @track_time
