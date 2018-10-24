@@ -63,7 +63,7 @@ branches:
   - jls/ko-export-dl-views+jls/ko-exports-create  # Jenny Oct 24
   - jls/ko-exports-create  # Jenny Oct 19
   - jls/ko-export-dl-views  # Jenny Oct 23
-  - jls/ko-exports-list  # Jenny Oct 24
+#  - jls/ko-exports-list  # Jenny Oct 24
   - dm/gevent # daniel Oct 24
   - np/testing-OData # Nick P Oct 24
 submodules:
