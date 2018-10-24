@@ -1546,6 +1546,7 @@ class Subscription(models.Model):
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
             'base_url': get_site_domain(),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+            'sales_email': settings.REPORT_BUILDER_ADD_ON_EMAIL
         }
 
         if self.account.is_customer_billing_account:
@@ -1635,6 +1636,7 @@ class Subscription(models.Model):
                     USER_DATE_FORMAT),
                 'contacts': ', '.join(self._reminder_email_contacts(self.subscriber.domain)),
                 'dimagi_contact': email,
+                'accounts_email': settings.ACCOUNTS_EMAIL
             }
         else:
             domain = self.subscriber.domain
