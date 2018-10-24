@@ -18,7 +18,6 @@ from custom.icds_reports.utils.aggregation import (
     DailyFeedingFormsChildHealthAggregationHelper,
     DeliveryFormsAggregationHelper, GrowthMonitoringFormsAggregationHelper,
     InactiveAwwsAggregationHelper,
-    THRFormsCcsRecordAggregationHelper,
     AwwIncentiveAggregationHelper
 )
 from dateutil.relativedelta import relativedelta
@@ -33,6 +32,7 @@ from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_ccs_reco
 from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_health import \
     PostnatalCareFormsChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.thr_forms_child_health import THRFormsChildHealthAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
 
 
 class CcsRecordMonthly(models.Model):
