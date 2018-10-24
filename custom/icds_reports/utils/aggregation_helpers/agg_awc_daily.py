@@ -217,6 +217,8 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             'CREATE INDEX "{tablename}_indx4" ON "{tablename}" (supervisor_id)'.format(tablename=self.tablename),
             'CREATE INDEX "{tablename}_indx5" ON "{tablename}" (block_id)'.format(tablename=self.tablename),
             'CREATE INDEX "{tablename}_indx6" ON "{tablename}" (district_id)'.format(tablename=self.tablename),
-            'CREATE INDEX "{tablename}_indx7" ON "{tablename}" (aggregation_level)'.format(tablename=self.tablename),
+            'CREATE INDEX "{tablename}_indx7" ON "{tablename}" (aggregation_level)'.format(
+                tablename=self.tablename
+            ),
         ]
         return indexes
