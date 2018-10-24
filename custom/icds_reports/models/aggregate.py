@@ -260,12 +260,11 @@ class ChildHealthMonthly(models.Model):
     @classmethod
     def aggregate(cls, state_ids, month):
         helper = ChildHealthMonthlyAggregationHelper(state_ids, month)
-        index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
             cursor.execute(helper.drop_table_query())
-            cursor.execute(helper.real_query())
-            for query in index_queries:
+            cursor.execute(helper.aggregation_query())
+            for query in helper.indexes():
                 cursor.execute(query)
 
 

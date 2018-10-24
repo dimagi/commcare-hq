@@ -429,7 +429,6 @@ def get_cursor(model):
 @track_time
 def _child_health_monthly_table(state_ids, day):
     helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
-    agg_queries = helper.aggregation_queries()
 
     celery_task_logger.info("Creating temporary table")
     with get_cursor(ChildHealthMonthly) as cursor:
@@ -438,7 +437,7 @@ def _child_health_monthly_table(state_ids, day):
 
     sub_aggregations = group([
         _child_health_helper.si(query=query, params=params)
-        for query, params in agg_queries
+        for query, params in helper.pre_aggregation_queries()
     ]).apply_async()
     sub_aggregations.get()
 
