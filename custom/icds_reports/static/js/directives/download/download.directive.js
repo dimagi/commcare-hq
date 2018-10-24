@@ -437,7 +437,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.isVisible = function(level) {
-        return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all');
+        return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all')  && !(vm.isIncentiveReportSelected() && level > 2);
     };
 
     vm.selectedFilterOptions = function() {
