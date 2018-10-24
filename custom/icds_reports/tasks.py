@@ -13,7 +13,6 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.management import call_command
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 from io import BytesIO
@@ -432,20 +431,35 @@ def _child_health_monthly_table(state_ids, day):
     helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
     agg_queries = helper.aggregation_queries()
 
+    celery_task_logger.info("Creating temporary table")
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
-        for agg_query, agg_params in agg_queries:
-            cursor.execute(agg_query, agg_params)
 
+    sub_aggregations = group([
+        _child_health_helper.si(query=query, params=params)
+        for query, params in agg_queries
+    ]).apply_async()
+    sub_aggregations.get()
+
+    celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic():
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('child_health_monthly', %s)",
         ], day)
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
+    celery_task_logger.info("Dropping temporary table")
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
+
+
+@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
+@track_time
+def _child_health_helper(query, params):
+    celery_task_logger.info("Running child_health_helper with %s", params)
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(query, params)
 
 
 @track_time
@@ -455,6 +469,7 @@ def _ccs_record_monthly_table(day):
             "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
         ], day)
         CcsRecordMonthly.aggregate(force_to_date(day))
+
 
 @track_time
 def _daily_attendance_table(day):
@@ -495,6 +510,7 @@ def _agg_awc_table_weekly(day):
     _run_custom_sql_script([
         "SELECT update_aggregate_awc_data(%s)"
     ], day)
+
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
@@ -873,6 +889,7 @@ def push_missing_docs_to_es():
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
         )
+
 
 @periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='14'), acks_late=True, queue='icds_aggregation_queue')
 def build_incentive_report(agg_date=None):
