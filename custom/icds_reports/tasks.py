@@ -13,7 +13,6 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.management import call_command
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 from io import BytesIO
@@ -476,6 +475,7 @@ def _agg_awc_table_weekly(day):
     _run_custom_sql_script([
         "SELECT update_aggregate_awc_data(%s)"
     ], day)
+
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
