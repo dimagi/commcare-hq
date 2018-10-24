@@ -15,8 +15,7 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 from django.contrib import messages
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
-    get_per_type_defaults
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
@@ -281,12 +280,7 @@ def _setup_case_property_builder(app):
     defaults = ('name', 'date-opened', 'status', 'last_modified')
     if app.case_sharing:
         defaults += ('#owner_name',)
-    per_type_defaults = None
-    if is_usercase_in_use(app.domain):
-        per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
-    builder = ParentCasePropertyBuilder(app, defaults=defaults,
-                                        per_type_defaults=per_type_defaults)
-    return builder
+    return ParentCasePropertyBuilder.for_app(app, defaults=defaults)
 
 
 # Parent case selection in case list: get modules whose case type is the parent of the given module's case type
