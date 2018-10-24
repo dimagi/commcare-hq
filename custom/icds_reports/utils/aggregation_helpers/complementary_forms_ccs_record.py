@@ -21,7 +21,10 @@ class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         SUM(CASE WHEN unscheduled_visit=0 AND days_visit_late < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
-        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s AND ccs_record_case_id IS NOT NULL
+        WHERE (
+          timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+          state_id = %(state_id)s AND ccs_record_case_id IS NOT NULL
+        )
         WINDOW w AS (
             PARTITION BY ccs_record_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
