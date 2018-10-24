@@ -82,25 +82,3 @@ class DomainMigrationMiddleware(MiddlewareMixin):
                     }
                 )
         return None
-
-
-DOMAIN_AUDIT_VIEWS = [
-    'ConfigurableReportView',  # for audit number of configurable report viewed
-    'ProjectReportDispatcher',  # for audit number of nonconfigurable reports viewed
-    'retrieve_download',  # for audit number of downloads
-    'release_build',  # for audit number of deploy app release
-    'form_source',  # for audit number of form builder entered
-    'patch_xform',  # for audit number of changes in application
-    'edit_module_attr',
-    'edit_app_attr'
-]
-
-
-class DomainAuditMiddleware(MiddlewareMixin):
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        if view_func.__name__ in DOMAIN_AUDIT_VIEWS:
-            domain = view_kwargs.get('domain', None)
-            # skipping  audit if domain=None/''
-            if domain:
-                DomainAuditRecordEntry.update_calculations(domain, view_func.__name__)
-        return None

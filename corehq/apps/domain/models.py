@@ -1268,23 +1268,7 @@ class DomainAuditRecordEntry(models.Model):
 
     @classmethod
     @atomic
-    def update_calculations(cls, domain, model, method=None):
+    def update_calculations(cls, domain, property_to_update):
         obj, is_new = cls.objects.get_or_create(domain=domain)
-
-        config = {
-            ('retrieve_download', None): "cp_n_downloads_custom_exports",
-            ('ConfigurableReportView', None): "cp_n_viewed_ucr_reports",
-            ('ProjectReportDispatcher', None): "cp_n_viewed_non_ucr_reports",
-            ('ReportConfiguration', 'create'): "cp_n_reports_created",
-            ('ReportConfiguration', 'update'): "cp_n_reports_edited",
-            ('ReportNotification', None): "cp_n_saved_scheduled_reports",
-            ('release_build', None): "cp_n_click_app_deploy",
-            ('form_source', None): "cp_n_form_builder_entered",
-            ('patch_xform', None): "cp_n_saved_app_changes",
-            ('edit_module_attr', None): "cp_n_saved_app_changes",
-            ('edit_app_attr', None): "cp_n_saved_app_changes"
-        }
-
-        property_to_update = config.get((model, method))
         setattr(obj, property_to_update, F(property_to_update) + 1)
         obj.save()

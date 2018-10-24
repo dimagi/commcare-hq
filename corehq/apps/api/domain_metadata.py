@@ -82,6 +82,7 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
                 "cp_n_reports_edited",
                 "cp_n_saved_scheduled_reports",
                 "cp_n_click_app_deploy",
+                "cp_n_form_builder_entered",
                 "cp_n_saved_app_changes",
             ]
             for prop in extra_properties:

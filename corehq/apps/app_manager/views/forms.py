@@ -58,8 +58,8 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
-    login_or_digest, api_domain_view
-)
+    login_or_digest, api_domain_view,
+    audit_request)
 from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.models import (
@@ -474,6 +474,7 @@ def new_form(request, domain, app_id, module_unique_id):
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
+@audit_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']

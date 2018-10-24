@@ -1062,7 +1062,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             self.report_notification.save()
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user.get_id)
             if self.is_new:
-                DomainAuditRecordEntry.update_calculations(self.domain, 'ReportNotification')
+                DomainAuditRecordEntry.update_calculations(self.domain, 'cp_n_saved_scheduled_reports')
                 messages.success(request, _("Scheduled report added."))
             else:
                 messages.success(request, _("Scheduled report updated."))

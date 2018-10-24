@@ -33,7 +33,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.domain.decorators import login_or_api_key
+from corehq.apps.domain.decorators import login_or_api_key, audit_request
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
@@ -205,6 +205,7 @@ def current_app_version(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@audit_request(calculated_prop='cp_n_click_app_deploy')
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     ajax = request.POST.get('ajax') == 'true'

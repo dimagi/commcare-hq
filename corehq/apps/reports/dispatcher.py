@@ -17,7 +17,7 @@ from django_prbac.utils import has_privilege
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
+from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view, audit_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
@@ -255,6 +255,7 @@ class ProjectReportDispatcher(ReportDispatcher):
         }
 
     @cls_to_view_login_and_domain
+    @audit_request(calculated_prop='cp_n_viewed_non_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 

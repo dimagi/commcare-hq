@@ -7,6 +7,7 @@ from contextlib import contextmanager, closing
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 
+from corehq.apps.domain.decorators import audit_request
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
@@ -145,6 +146,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @audit_request(calculated_prop='cp_n_viewed_ucr_reports')
     @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):

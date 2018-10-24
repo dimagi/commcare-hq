@@ -16,6 +16,7 @@ from django.contrib import messages
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
 from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
+from corehq.apps.domain.decorators import audit_request
 
 from dimagi.utils.logging import notify_exception
 
@@ -56,6 +57,7 @@ logger = logging.getLogger(__name__)
 
 
 @require_can_edit_apps
+@audit_request(calculated_prop='cp_n_form_builder_entered')
 def form_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
 

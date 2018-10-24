@@ -33,7 +33,7 @@ from dimagi.utils.web import json_response
 from django_otp import match_token
 
 # CCHQ imports
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
@@ -474,3 +474,19 @@ def check_domain_migration(view_func):
 
     wrapped_view.domain_migration_handled = True
     return wraps(view_func)(wrapped_view)
+
+
+def audit_request(calculated_prop):
+    """
+        Use this decorator to audit request.
+    """
+    def _dec(view_func):
+        @wraps(view_func)
+        def _wrapped(class_based_view, request, *args, **kwargs):
+            domain = kwargs.get("domain", None)
+            if domain:
+                DomainAuditRecordEntry.update_calculations(domain, calculated_prop)
+            return view_func(class_based_view, request, *args, **kwargs)
+        return _wrapped
+
+    return _dec
