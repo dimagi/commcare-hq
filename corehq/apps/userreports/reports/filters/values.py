@@ -106,10 +106,9 @@ class DateFilterValue(FilterValue):
 
     def _offset_enddate(self, enddate):
         # offset enddate for SQL query
-        # if it is datetime.date object it should not be offset
-        # if it is datetime.datetime object it should be offset to last microsecond of the day
-        if enddate and type(enddate) is datetime.datetime:
-            enddate = enddate + datetime.timedelta(days=1) - datetime.timedelta.resolution
+        
+        if enddate:
+            enddate = datetime.datetime.combine(enddate, datetime.datetime.max.time())
         return enddate
 
 
