@@ -45,6 +45,7 @@ from corehq.apps.export.views.utils import (
     DailySavedExportPaywall,
     DataFileDownloadList,
     DataFileDownloadDetail,
+    GenerateSchemaFromAllBuildsView,
 )
 
 urlpatterns = [
