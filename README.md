@@ -637,8 +637,6 @@ that you have a 32bit version of Python installed.
  [zlib]: http://sourceforge.net/projects/gnuwin32/files/zlib/
  [file]: http://sourceforge.net/projects/gnuwin32/files/file/
 
-+ On Windows, Touchforms may complain about not having permission to access `tmp`. To solve this make a `c:\tmp` folder.
-
 + On Windows, if Celery gives this error on startup: `TypeError: 'LazySettings' object is not iterable` apply the
   changes decribed in this bug report comment: https://github.com/celery/django-celery/issues/228#issuecomment-13562642
 
