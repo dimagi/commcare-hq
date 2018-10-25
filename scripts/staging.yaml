@@ -49,13 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  - revert-21236-fr/add-secure-urllib3  # Danny July 18
-#  - np/celery-4.x-monkeypatch  # Nick P Sept 4
-#  - np/celery-4.x-2  # Nick P Aug 22
-#  - jls/add-js-to-sentry  # Jenny Sept 18
-  - sr-redis-client # Sravan Sept 19
-#  - rn_correct_datefilter_of_ucr # rohit Oct 14
-#  - rn_test_report_export # rohit #oct 16
   - jls/ko-export-merge-conflicts  # Jenny Oct 24
   - jls/ko-exports-create  # Jenny Oct 19
   - jls/ko-exports-list  # Jenny Oct 24
