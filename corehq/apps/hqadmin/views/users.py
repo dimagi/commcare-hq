@@ -535,20 +535,12 @@ class AppBuildTimingsView(TemplateView):
 
     @staticmethod
     def get_timing_context(app, request_user_id):
-        with TimingContext(app.name) as context:
-
-            with context('validate app'):
-                errors = app.validate_app()
-
+        with app.timing_context:
+            errors = app.validate_app()
             assert not errors, errors
-
-            with context('make build'):
-                copy = app.make_build(
-                    comment="Generated automatically during profiling",
-                    user_id=request_user_id,
-                    previous_version=app.get_latest_app(released_only=False),
-                )
-            with context('save'):
-                copy.save(increment_version=False)
-
-        return context
+            app.make_build(
+                comment="Generated automatically during profiling",
+                user_id=request_user_id,
+                previous_version=app.get_latest_app(released_only=False),
+            )
+        return app.timing_context
