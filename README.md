@@ -606,12 +606,6 @@ that you have a 32bit version of Python installed.
 
 #### Common issues
 
-+ A bug in psycopg 2.4.1 (a Python package we require) may break CommCare HQ
-  when using a virtualenv created with `--no-site-packages` or when the
-  `egenix-mx-base` Python package is not already installed. To fix this, install
-  `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
-  and use `virtualenv --system-site-packages` instead.
-
 + If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
