@@ -21,6 +21,7 @@ from corehq.blobs.exceptions import NotFound
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
+from corehq.apps.export.exceptions import ExportNotFound
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
@@ -126,6 +127,38 @@ from soil.progress import get_task_status
 from six.moves import map
 
 
+# Form used for rendering filters
+def _get_filter_form_class(form_or_case, sms_export=False):
+    if sms_export:
+        return FilterSmsESExportDownloadForm
+    if form_or_case == 'form':
+        return EmwfFilterFormExport
+    if form_or_case == 'case':
+        return FilterCaseESExportDownloadForm
+    raise ValueError("Could not find filter form class")
+
+
+def _get_export(request, domain=None, export_id=None, form_or_case=None, sms_export=False):
+    if sms_export:
+        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(request)
+        return SMSExportInstance._new_from_schema(
+            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
+        )
+    if form_or_case == 'form':
+        return FormExportInstance.get(export_id)
+    if form_or_case == 'case':
+        return CaseExportInstance.get(export_id)
+    raise ExportNotFound("Could not get export")
+
+
+def _get_mobile_user_and_group_slugs(filter_slug):
+    mobile_user_and_group_slugs_regex = re.compile(
+        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
+    )
+    matches = mobile_user_and_group_slugs_regex.findall(filter_slug)
+    return [n[1] for n in matches]
+
+
 def _get_timezone(domain, couch_user):
     if not domain:
         return pytz.utc
@@ -208,14 +241,9 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     http_method_names = ['get', 'post']
     show_date_range = False
     check_for_multimedia = False
-    # Form used for rendering filters
-    filter_form_class = None
     sms_export = False
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
-    mobile_user_and_group_slugs_regex = re.compile(
-        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
-    )
 
     @use_daterangepicker
     @use_select2
@@ -249,10 +277,11 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
             'export_list_url': self.export_list_url,
+            'form_or_case': self.form_or_case,
             'max_column_size': self.max_column_size,
             'show_date_range': self.show_date_range,
             'check_for_multimedia': self.check_for_multimedia,
-            'is_sms_export': self.sms_export,
+            'sms_export': self.sms_export,
             'user_types': HQUserType.human_readable
         }
         if (
@@ -285,11 +314,10 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         raise NotImplementedError("You must implement export_list_url")
 
     @property
+    @memoized
     def download_export_form(self):
-        """Should return a memoized instance that is a subclass of
-        FilterExportDownloadForm.
-        """
-        raise NotImplementedError("You must implement download_export_form.")
+        form_class = _get_filter_form_class(self.form_or_case, self.sms_export)
+        return form_class(self.domain_object, timezone=self.timezone)
 
     @property
     def export_id(self):
@@ -310,9 +338,13 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             and not self.request.is_ajax()
         ):
             raw_export_list = json.loads(self.request.POST['export_list'])
-            exports = [self._get_export(self.domain, e['id']) for e in raw_export_list]
+            exports = [_get_export(
+                self.request, domain=self.domain, export_id=e['id'],
+                form_or_case=self.form_or_case, sms_export=self.sms_export
+            ) for e in raw_export_list]
         elif self.export_id or self.sms_export:
-            exports = [self._get_export(self.domain, self.export_id)]
+            exports = [_get_export(self.request, domain=self.domain, export_id=self.export_id,
+                                   form_or_case=self.form_or_case, sms_export=self.sms_export)]
 
         if not self.permissions.has_view_permissions:
             if self.permissions.has_deid_view_permissions:
@@ -327,9 +359,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         exports = [self.download_export_form.format_export_data(e) for e in exports]
         return exports
 
-    def _get_export(self, domain, export_id):
-        raise NotImplementedError()
-
     @property
     def max_column_size(self):
         try:
@@ -337,147 +366,78 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         except TypeError:
             return 2000
 
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        raise NotImplementedError("Must return a list of export filter objects")
 
-    @allow_remote_invocation
-    def poll_custom_export_download(self, in_data):
-        """Polls celery to see how the export download task is going.
-        :param in_data: dict passed by the  angular js controller.
-        :return: final response: {
-            'success': True,
-            'dropbox_url': '<url>',
-            'download_url: '<url>',
-            <task info>
-        }
-        """
-        try:
-            download_id = in_data['download_id']
-        except KeyError:
-            return format_angular_error(_("Requires a download id"), log_error=False)
-        try:
-            context = get_download_context(download_id)
-        except TaskFailedError:
-            notify_exception(self.request, "Export download failed",
-                             details={'download_id': download_id})
-            return format_angular_error(
-                _("Download Task Failed to Start. It seems that the server "
-                  "might be under maintenance."),
-                log_error=False,
-            )
-        if context.get('is_ready', False):
-            context.update({
-                'dropbox_url': reverse('dropbox_upload', args=(download_id,)),
-                'download_url': "{}?get_file".format(
-                    reverse('retrieve_download', args=(download_id,))
-                ),
-            })
-        context['is_poll_successful'] = True
-        return context
+@require_POST
+@login_and_domain_required
+def prepare_custom_export(request, domain):
+    """Uses the current exports download framework (with some nasty filters)
+    to return the current download id to POLL for the download status.
+    :return: {
+        'success': True,
+        'download_id': '<some uuid>',
+    }
+    """
+    form_or_case = request.POST.get('form_or_case')
+    sms_export = json.loads(request.POST.get('sms_export'))
+    permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
+    permissions.access_download_export_or_404()
 
-    def _get_download_task(self, in_data):
-        export_filters, export_specs = self._process_filters_and_specs(in_data)
-        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
-        self._check_deid_permissions(export_instances)
-        self._check_export_size(export_instances, export_filters)
-        return get_export_download(
-            export_instances=export_instances,
-            filters=export_filters,
-            filename=self._get_filename(export_instances)
-        )
-
-    @staticmethod
-    def _get_form_data_and_specs(in_data):
-        try:
-            export_specs = in_data['exports']
-            filter_form_data = in_data['form_data']
-        except (KeyError, TypeError):
-            raise ExportAsyncException(
-                _("Request requires a list of exports and filters.")
-            )
-
-        return filter_form_data, export_specs
-
-    def _process_filters_and_specs(self, in_data):
-        """Returns a the export filters and a list of JSON export specs
-        """
-        filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(
+    try:
+        filter_form_data = json.loads(request.POST.get('form_data'))
+        export_specs = json.loads(request.POST.get('exports'))
+        mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(
             filter_form_data[ExpandedMobileWorkerFilter.slug]
         )
         try:
-            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
+            # Determine export filter
+            form_class = _get_filter_form_class(form_or_case, sms_export)
+            domain_object = Domain.get_by_name(domain)
+            timezone = _get_timezone(domain, request.couch_user)
+            filter_form = form_class(domain_object, timezone, filter_form_data)
+            if not filter_form.is_valid():
+                raise ExportFormValidationException()
+
+            if form_or_case:
+                if not request.can_access_all_locations:
+                    accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
+                        request.domain, request.couch_user
+                    )
+                else:
+                    accessible_location_ids = None
+
+                if form_or_case == 'form':
+                    export_filters = filter_form.get_form_filter(
+                        mobile_user_and_group_slugs, request.can_access_all_locations, accessible_location_ids
+                    )
+                elif form_or_case == 'case':
+                    export_filters = filter_form.get_case_filter(
+                        mobile_user_and_group_slugs, request.can_access_all_locations, accessible_location_ids
+                    )
+            else:
+                export_filters = filter_form.get_filter()
         except ExportFormValidationException:
             raise ExportAsyncException(
                 _("Form did not validate.")
             )
+        export_instances = [_get_export(
+            request, domain=domain, export_id=spec['export_id'],
+            form_or_case=form_or_case, sms_export=sms_export
+        ) for spec in export_specs]
 
-        return export_filter, export_specs
-
-    def check_if_export_has_data(self, in_data):
-        export_filters, export_specs = self._process_filters_and_specs(in_data)
-        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
-
-        for instance in export_instances:
-            if (get_export_size(instance, export_filters) > 0):
-                return True
-
-        return False
-
-    @allow_remote_invocation
-    def prepare_custom_export(self, in_data):
-        """Uses the current exports download framework (with some nasty filters)
-        to return the current download id to POLL for the download status.
-        :param in_data: dict passed by the  angular js controller.
-        :return: {
-            'success': True,
-            'download_id': '<some uuid>',
-        }
-        """
-        try:
-            download = self._get_download_task(in_data)
-        except ExportAsyncException as e:
-            return format_angular_error(e.message, log_error=True)
-        except XlsLengthException:
-            return format_angular_error(
-                error_msg=_('This file has more than 256 columns, which is not supported '
-                            'by xls. Please change the output type to csv or xlsx to export this '
-                            'file.'), log_error=False)
-        except Exception:
-            return format_angular_error(_("There was an error."), log_error=True)
-        send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
-        return format_angular_success({
-            'download_id': download.download_id,
-        })
-
-    def _get_filename(self, export_instances):
-        if len(export_instances) > 1:
-            return "{}_custom_bulk_export_{}".format(
-                self.domain,
-                date.today().isoformat()
-            )
-        else:
-            return "{} {}".format(
-                export_instances[0].name,
-                date.today().isoformat()
-            )
-
-    def _check_deid_permissions(self, export_instances):
-        # if any export is de-identified, check that
+        # If any export is de-identified, check that
         # the requesting domain has access to the deid feature.
-        if not self.permissions.has_deid_view_permissions:
+        if not permissions.has_deid_view_permissions:
             for instance in export_instances:
                 if instance.is_deidentified:
                     raise ExportAsyncException(
-                        _("You do not have permission to export this "
-                        "De-Identified export.")
+                        _("You do not have permission to export de-identified exports.")
                     )
 
-    def _check_export_size(self, export_instances, filters):
+        # Check export isn't too big to download
         count = 0
         for instance in export_instances:
-            count += get_export_size(instance, filters)
-        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
+            count += get_export_size(instance, export_filters)
+        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(domain):
             raise ExportAsyncException(
                 _("This export contains %(row_count)s rows. Please change the "
                   "filters to be less than %(max_rows)s rows.") % {
@@ -486,9 +446,112 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                 }
             )
 
-    def _get_mobile_user_and_group_slugs(self, filter_slug):
-        matches = self.mobile_user_and_group_slugs_regex.findall(filter_slug)
-        return [n[1] for n in matches]
+        # Generate filename
+        if len(export_instances) > 1:
+            filename = "{}_custom_bulk_export_{}".format(domain, date.today().isoformat())
+        else:
+            filename = "{} {}".format(export_instances[0].name, date.today().isoformat())
+
+        download = get_export_download(
+            export_instances=export_instances,
+            filters=export_filters,
+            filename=filename,
+        )
+    except ExportAsyncException as e:
+        return json_response({
+            'error': str(e),
+        })
+    except XlsLengthException:
+        return json_response({
+            'error': _('This file has more than 256 columns, which is not supported by xls. '
+                       'Please change the output type to csv or xlsx to export this file.')
+        })
+    except Exception:
+        return json_response({
+            'error': _("There was an error."),
+        })
+    send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, request)
+
+    # Analytics
+    if form_or_case:
+        def _check_if_export_has_data(instances):
+            for instance in instances:
+                if (get_export_size(instance, export_filters) > 0):
+                    return True
+            return False
+
+        capitalized = form_or_case[0].upper() + form_or_case[1:]
+        if _check_if_export_has_data(export_instances):
+            track_workflow(request.couch_user.username, 'Downloaded {} Exports With Data'.format(capitalized))
+        else:
+            track_workflow(request.couch_user.username, 'Downloaded {} Exports With No Data'.format(capitalized))
+
+    return json_response({
+        'success': True,
+        'download_id': download.download_id,
+    })
+
+
+@require_GET
+@login_and_domain_required
+def has_multimedia(request, domain):
+    """Checks to see if this form export has multimedia available to export
+    """
+    form_or_case = request.GET.get('form_or_case')
+    if form_or_case != 'form':
+        raise ValueError("has_multimedia is only available for form exports")
+
+    permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
+    permissions.access_download_export_or_404()
+
+    export_object = FormExportInstance.get(request.GET.get('export_id'))
+    if isinstance(export_object, ExportInstance):
+        has_multimedia = export_object.has_multimedia
+    else:
+        has_multimedia = forms_have_multimedia(
+            domain,
+            export_object.app_id,
+            getattr(export_object, 'xmlns', '')
+        )
+    return json_response({
+        'success': True,
+        'hasMultimedia': has_multimedia,
+    })
+
+
+@require_GET
+@login_and_domain_required
+def poll_custom_export_download(request, domain):
+    """Polls celery to see how the export download task is going.
+    :return: final response: {
+        'success': True,
+        'dropbox_url': '<url>',
+        'download_url: '<url>',
+        <task info>
+    }
+    """
+    form_or_case = request.GET.get('form_or_case')
+    permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
+    permissions.access_download_export_or_404()
+
+    download_id = request.GET.get('download_id')
+    try:
+        context = get_download_context(download_id)
+    except TaskFailedError:
+        notify_exception(request, "Export download failed",
+                         details={'download_id': download_id})
+        return json_response({
+            'error': _("Download task failed to start."),
+        })
+    if context.get('is_ready', False):
+        context.update({
+            'dropbox_url': reverse('dropbox_upload', args=(download_id,)),
+            'download_url': "{}?get_file".format(
+                reverse('retrieve_download', args=(download_id,))
+            ),
+        })
+    context['is_poll_successful'] = True
+    return json_response(context)
 
 
 class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
@@ -1637,7 +1700,6 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
 @location_safe
 class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
-    filter_form_class = EmwfFilterFormExport
     export_filter_class = SubmitHistoryFilter
     show_date_range = True
     page_title = ugettext_noop("Download Form Data Export")
@@ -1647,14 +1709,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
     @property
     def export_list_url(self):
         return reverse(FormExportListView.urlname, args=(self.domain,))
-
-    @property
-    @memoized
-    def download_export_form(self):
-        return self.filter_form_class(
-            self.domain_object,
-            self.timezone,
-        )
 
     @property
     def parent_pages(self):
@@ -1668,111 +1722,55 @@ class DownloadNewFormExportView(BaseDownloadExportView):
             'url': reverse(FormExportListView.urlname, args=(self.domain,)),
         }]
 
-    @allow_remote_invocation
-    def has_multimedia(self, in_data):
-        """Checks to see if this form export has multimedia available to export
-        """
-        try:
-            export_object = self._get_export(self.domain, self.export_id)
-            if isinstance(export_object, ExportInstance):
-                has_multimedia = export_object.has_multimedia
-            else:
-                has_multimedia = forms_have_multimedia(
-                    self.domain,
-                    export_object.app_id,
-                    getattr(export_object, 'xmlns', '')
-                )
-        except Exception:
-            return format_angular_error(_("There was an error"), log_error=True)
-        return format_angular_success({
-            'hasMultimedia': has_multimedia,
+
+@require_POST
+@login_and_domain_required
+def prepare_form_multimedia(request, domain):
+    """Gets the download_id for the multimedia zip and sends it to the
+    exportDownloadService in download_export.ng.js to begin polling for the
+    zip file download.
+    """
+    form_or_case = request.POST.get('form_or_case')
+    sms_export = json.loads(request.POST.get('sms_export'))
+    permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
+    permissions.access_download_export_or_404()
+
+    filter_form_data = json.loads(request.POST.get('form_data'))
+    export_specs = json.loads(request.POST.get('exports'))
+    form_class = _get_filter_form_class(form_or_case, sms_export)
+    domain_object = Domain.get_by_name(domain)
+    timezone = _get_timezone(domain, request.couch_user)
+    filter_form = form_class(domain_object, timezone, filter_form_data)
+    if not filter_form.is_valid():
+        return json_response({
+            'error': _("Please check that you've submitted all required filters."),
         })
+    download = DownloadBase()
+    export_object = _get_export(request, domain=domain, export_id=export_specs[0]['export_id'],
+                                form_or_case=form_or_case, sms_export=sms_export)
+    filter_slug = filter_form_data[ExpandedMobileWorkerFilter.slug]
+    mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(filter_slug)
+    task_kwargs = filter_form.get_multimedia_task_kwargs(export_object, download.download_id,
+                                                         mobile_user_and_group_slugs)
+    from corehq.apps.reports.tasks import build_form_multimedia_zip
+    download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
 
-    @allow_remote_invocation
-    def prepare_form_multimedia(self, in_data):
-        """Gets the download_id for the multimedia zip and sends it to the
-        exportDownloadService in download_export.ng.js to begin polling for the
-        zip file download.
-        """
-        try:
-            filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-            filter_form = self.filter_form_class(
-                self.domain_object, self.timezone, filter_form_data
-            )
-            if not filter_form.is_valid():
-                raise ExportFormValidationException(
-                    _("Please check that you've submitted all required filters.")
-                )
-            download = DownloadBase()
-            export_object = self._get_export(self.domain, export_specs[0]['export_id'])
-            task_kwargs = self.get_multimedia_task_kwargs(in_data, filter_form, export_object,
-                                                          download.download_id)
-            from corehq.apps.reports.tasks import build_form_multimedia_zip
-            download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
-        except Exception:
-            return format_angular_error(_("There was an error"), log_error=True)
-        return format_angular_success({
-            'download_id': download.download_id,
-        })
-
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
-
-    def _get_export(self, domain, export_id):
-        return FormExportInstance.get(export_id)
-
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        filter_form = self._get_filter_form(filter_form_data)
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain,
-                self.request.couch_user)
-            )
-        else:
-            accessible_location_ids = None
-        form_filters = filter_form.get_form_filter(
-            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
-        )
-        return form_filters
-
-    def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
-        filter_slug = in_data['form_data'][ExpandedMobileWorkerFilter.slug]
-        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
-        return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
-
-    @allow_remote_invocation
-    def prepare_custom_export(self, in_data):
-        prepare_custom_export = super(DownloadNewFormExportView, self).prepare_custom_export(in_data)
-
-        if self.check_if_export_has_data(in_data):
-            track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With Data')
-        else:
-            track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With No Data')
-
-        return prepare_custom_export
+    return json_response({
+        'success': True,
+        'download_id': download.download_id,
+    })
 
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = ugettext_noop("Download Form Data Exports")
-    filter_form_class = EmwfFilterFormExport
     export_filter_class = ExpandedMobileWorkerFilter
-
-    @allow_remote_invocation
-    def has_multimedia(self, in_data):
-        return False
+    check_for_multimedia = False
 
 
 @location_safe
 class DownloadNewCaseExportView(BaseDownloadExportView):
     urlname = 'new_export_download_cases'
-    filter_form_class = FilterCaseESExportDownloadForm
     export_filter_class = CaseListFilter
     page_title = ugettext_noop("Download Case Data Export")
     form_or_case = 'case'
@@ -1782,62 +1780,17 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
         return reverse(CaseExportListView.urlname, args=(self.domain,))
 
     @property
-    @memoized
-    def download_export_form(self):
-        return self.filter_form_class(
-            self.domain_object,
-            timezone=self.timezone,
-        )
-
-    @property
     def parent_pages(self):
         return [{
             'title': CaseExportListView.page_title,
             'url': reverse(CaseExportListView.urlname, args=(self.domain,)),
         }]
 
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data,
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
-    def _get_export(self, domain, export_id):
-        return CaseExportInstance.get(export_id)
-
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        filter_form = self._get_filter_form(filter_form_data)
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain,
-                self.request.couch_user)
-            )
-        else:
-            accessible_location_ids = None
-        form_filters = filter_form.get_case_filter(
-            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
-        )
-        return form_filters
-
-    @allow_remote_invocation
-    def prepare_custom_export(self, in_data):
-        prepare_custom_export = super(DownloadNewCaseExportView, self).prepare_custom_export(in_data)
-
-        if self.check_if_export_has_data(in_data):
-            track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With Data')
-        else:
-            track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With No Data')
-
-        return prepare_custom_export
-
 
 class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
     page_title = ugettext_noop("Export SMS Messages")
     form_or_case = None
-    filter_form_class = FilterSmsESExportDownloadForm
     export_id = None
     sms_export = True
 
@@ -1846,34 +1799,8 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
         return None
 
     @property
-    @memoized
-    def download_export_form(self):
-        return self.filter_form_class(
-            self.domain_object,
-            timezone=self.timezone,
-        )
-
-    @property
     def parent_pages(self):
         return []
-
-    def _get_filter_form(self, filter_form_data):
-        filter_form = self.filter_form_class(
-            self.domain_object, self.timezone, filter_form_data,
-        )
-        if not filter_form.is_valid():
-            raise ExportFormValidationException()
-        return filter_form
-
-    def _get_export(self, domain, export_id):
-        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
-        return SMSExportInstance._new_from_schema(
-            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
-        )
-
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        filter_form = self._get_filter_form(filter_form_data)
-        return filter_form.get_filter()
 
 
 class GenerateSchemaFromAllBuildsView(View):
