@@ -1590,6 +1590,18 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
+    def downgrade_messages(self):
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        downgrades = get_change_status(
+            subscription.plan_version if subscription else None,
+            self.selected_plan_version
+        )[1]
+        downgrade_handler = DomainDowngradeStatusHandler(
+            self.domain_object, self.selected_plan_version, downgrades,
+        )
+        return downgrade_handler.get_response()
+
+    @property
     def is_upgrade(self):
         if self.current_subscription.is_trial:
             return True
@@ -1628,6 +1640,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     def page_context(self):
         return {
+            'downgrade_messages': self.downgrade_messages,
             'is_upgrade': self.is_upgrade,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
