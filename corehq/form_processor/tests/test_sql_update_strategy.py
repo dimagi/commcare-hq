@@ -122,6 +122,38 @@ class SqlUpdateStrategyTest(TestCase):
         update_strategy = SqlCaseUpdateStrategy(case)
         self.assertRaises(ReconciliationError, update_strategy.reconcile_transactions)
 
+    @patch.object(SoftAssert, '_call')
+    def test_reconcile_transactions_within_fudge_factor(self, soft_assert_mock):
+        """ tests a transanction with an early client date and late server date """
+        with freeze_time("2018-10-10"):
+            case = self._create_case()
+
+        with freeze_time("2018-10-11 06:00"):
+            new_old_xform = self._create_form()
+        with freeze_time("2018-10-10 18:00"):
+            new_old_trans = self._create_case_transaction(case, new_old_xform)
+        with freeze_time("2018-10-11 06:00"):
+            case.track_create(new_old_trans)
+            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+
+        with freeze_time("2018-10-11"):
+            new_old_xform = self._create_form()
+            new_old_trans = self._create_case_transaction(case, new_old_xform)
+            case.track_create(new_old_trans)
+            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+
+        case = CaseAccessorSQL.get_case(case.case_id)
+        update_strategy = SqlCaseUpdateStrategy(case)
+        self.assertTrue(update_strategy.reconcile_transactions_if_necessary())
+        self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
+
+        CaseAccessorSQL.save_case(case)
+
+        case = CaseAccessorSQL.get_case(case.case_id)
+        update_strategy = SqlCaseUpdateStrategy(case)
+        self.assertFalse(update_strategy.reconcile_transactions_if_necessary())
+        self._check_for_reconciliation_error_soft_assert(soft_assert_mock)
+
     def _create_form(self, user_id=None, received_on=None):
         """
         Create the models directly so that these tests aren't dependent on any
