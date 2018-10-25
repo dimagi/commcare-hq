@@ -78,6 +78,27 @@
         {% endif %}
     {% endif %}
 
+    {% if downgrade_messages %}
+    <hr />
+    <h4>
+        {% if show_community_notice %}
+        {% trans 'Note: If you do not upgrade from the Community Plan the following changes will take place.' %}
+        {% else %}
+        {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
+        {% endif %}
+    </h4>
+    {% endif %}
+    {% for message in downgrade_messages %}
+        <div class="alert alert-warning">
+            {{ message.message }}
+            <ul>
+            {% for detail in message.details %}
+                <li>{{ detail|safe }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endfor %}
+
     {% if show_community_notice %}
     <div class="form-actions">
         <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
