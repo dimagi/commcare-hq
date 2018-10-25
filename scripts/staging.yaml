@@ -54,5 +54,4 @@ branches:
   - jls/ko-exports-list  # Jenny Oct 24
   - jls/ko-export-dl-views  # Jenny Oct 23
   - dm/gevent # daniel Oct 24
-  - np/testing-OData # Nick P Oct 24
 submodules: {}
