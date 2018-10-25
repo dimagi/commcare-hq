@@ -99,6 +99,45 @@ class AdapterBulkSaveTest(TestCase):
         self.adapter.bulk_delete([doc['_id'] for doc in docs])
         self.assertEqual(self.adapter.get_query_object().count(), 0)
 
+    def test_upsert(self):
+        self.adapter.build_table()
+
+        docs = []
+        names = {}
+        for i in range(5):
+            name = 'doc_name_' + str(i)
+            names[str(i)] = name
+            docs.append({
+                "_id": str(i),
+                "domain": self.domain,
+                "doc_type": "CommCareCase",
+                "name": name
+            })
+
+        self.adapter.bulk_save(docs)
+        self.assertEqual({
+            row.doc_id: row.name for row in self.adapter.get_query_object().all()
+        }, names)
+
+        update_docs = []
+        for i in range(3):
+            name = 'new_name_' + str(i)  # update name
+            update_docs.append({
+                "_id": str(i),
+                "domain": self.domain,
+                "doc_type": "CommCareCase",
+                "name": name
+            })
+            names[str(i)] = name
+
+        self.adapter.bulk_save(update_docs)
+        self.assertEqual({
+            row.doc_id: row.name for row in self.adapter.get_query_object().all()
+        }, names)
+
+        self.adapter.bulk_delete([doc['_id'] for doc in docs])
+        self.assertEqual(self.adapter.get_query_object().count(), 0)
+
     def test_save_rows_empty(self):
         self.adapter.build_table()
         self.adapter.save_rows([])

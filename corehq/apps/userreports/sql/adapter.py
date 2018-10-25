@@ -155,9 +155,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             {i.column.database_column_name: i.value for i in row}
             for row in rows
         ]
-        doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
-        delete = table.delete(table.c.doc_id.in_(doc_ids))
         # Using session.bulk_insert_mappings below might seem more inline
         #   with sqlalchemy API, but it results in
         #   appending an empty row which results in a postgres
@@ -166,10 +164,19 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         #   the plain INSERT INTO VALUES statement resulting from below line
         #   because bulk_insert_mappings is meant for multi-table insertion
         #   so it has overhead of format conversions and multiple statements
-        insert = table.insert().values(formatted_rows)
+
+        # https://docs.sqlalchemy.org/en/latest/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
+        from sqlalchemy.dialects.postgresql import insert
+        insert_stmt = insert(table).values(formatted_rows)
+        on_conflict_update = {
+            col.name: col for col in insert_stmt.excluded if not col.primary_key
+        }
+        on_update_stmt = insert_stmt.on_conflict_do_update(
+            constraint=table.primary_key,
+            set_=on_conflict_update
+        )
         with self.session_helper.session_context() as session:
-            session.execute(delete)
-            session.execute(insert)
+            session.execute(on_update_stmt)
 
     def bulk_save(self, docs):
         rows = []
