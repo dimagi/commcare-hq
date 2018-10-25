@@ -5923,6 +5923,30 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
+    def _make_language_files(self, prefix, build_profile_id):
+        return {
+            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id)
+            for lang in ['default'] + self.get_build_langs(build_profile_id)
+        }
+
+    def _get_form_files(self, prefix, build_profile_id):
+        files = {}
+        for form_stuff in self.get_forms(bare=False):
+            def exclude_form(form):
+                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
+
+            if not exclude_form(form_stuff['form']):
+                filename = prefix + self.get_form_filename(**form_stuff)
+                form = form_stuff['form']
+                try:
+                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+                except XFormValidationFailed:
+                    raise XFormException(_('Unable to validate the forms due to a server error. '
+                                           'Please try again later.'))
+                except XFormException as e:
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
+        return files
+
     def create_all_files(self, build_profile_id=None):
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
@@ -5965,24 +5989,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 '{}practice_user_restore.xml'.format(prefix): practice_user_restore
             })
 
-        langs_for_build = self.get_build_langs(build_profile_id)
-        for lang in ['default'] + langs_for_build:
-            files["{prefix}{lang}/app_strings.txt".format(
-                prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
-        for form_stuff in self.get_forms(bare=False):
-            def exclude_form(form):
-                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
-
-            if not exclude_form(form_stuff['form']):
-                filename = prefix + self.get_form_filename(**form_stuff)
-                form = form_stuff['form']
-                try:
-                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
-                except XFormValidationFailed:
-                    raise XFormException(_('Unable to validate the forms due to a server error. '
-                                           'Please try again later.'))
-                except XFormException as e:
-                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
+        files.update(self._make_language_files(prefix, build_profile_id))
+        files.update(self._get_form_files(prefix, build_profile_id))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
