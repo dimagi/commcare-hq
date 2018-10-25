@@ -100,7 +100,7 @@ markdown==2.2.1
 markupsafe==1.0
 mock==2.0.0
 ndg-httpsclient==0.5.1
-numpy==1.7.1
+numpy==1.15.3
 openpyxl==2.5.8
 packaging==18.0           # via sphinx
 pbr==4.2.0

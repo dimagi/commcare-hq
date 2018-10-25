@@ -47,7 +47,7 @@ simplejson==3.11.1
 sh==1.09
 gevent==1.2.2
 greenlet==0.4.12
-numpy==1.7.1
+numpy==1.15.3
 six==1.11.0
 socketpool==0.5.3
 markdown==2.2.1
