@@ -63,7 +63,7 @@ from soil import views as soil_views
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt, \
-    audit_request
+    track_domain_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
@@ -455,7 +455,7 @@ def logout(req):
 
 
 @login_and_domain_required
-@audit_request(calculated_prop='cp_n_downloads_custom_exports')
+@track_domain_request(calculated_prop='cp_n_downloads_custom_exports')
 def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
     next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
     return soil_views.retrieve_download(req, download_id, template,

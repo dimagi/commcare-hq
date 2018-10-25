@@ -476,7 +476,7 @@ def check_domain_migration(view_func):
     return wraps(view_func)(wrapped_view)
 
 
-def audit_request(calculated_prop):
+def track_domain_request(calculated_prop):
     """
         Use this decorator to audit request.
     """
