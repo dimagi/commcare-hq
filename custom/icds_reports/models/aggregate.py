@@ -14,6 +14,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
+from custom.icds_reports.utils.aggregation_helpers.agg_awc_weekly import AggAwcWeeklyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
@@ -483,6 +484,17 @@ class AggAwc(models.Model):
                     cursor.execute(query)
                 for query in index_queries:
                     cursor.execute(query)
+
+    @classmethod
+    def aggregate_weekly(cls, month):
+        helper = AggAwcWeeklyAggregationHelper(month)
+        agg_query, agg_params = helper.aggregate_query()
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(agg_query, agg_params)
+                for i in range(4, 0, -1):
+                    rollup_query, rollup_params = helper.rollup_query(i)
+                    cursor.execute(rollup_query, rollup_params)
 
 
 class AggCcsRecord(models.Model):
