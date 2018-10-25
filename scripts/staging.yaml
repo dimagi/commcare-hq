@@ -55,10 +55,4 @@ branches:
   - jls/ko-export-dl-views  # Jenny Oct 23
   - dm/gevent # daniel Oct 24
   - np/testing-OData # Nick P Oct 24
-submodules:
-  submodules/django-digest-src:
-    branches: []
-  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
-    branches: []
-  submodules/commcare-translations:
-    branches: []
+submodules: []
