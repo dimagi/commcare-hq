@@ -132,43 +132,12 @@
 
         self._reset();
 
-        $scope.$watch(function () {
-            return exportDownloadService.downloadStatusData;
-        }, function (data) {
-            if (!_.isEmpty(data)) {
-                $scope.progress = data.progress;
-                self._updateProgressBar(data);
-                $scope.download_id = data.download_id;
-                $scope.showProgress = true;
-            }
-        });
-
-        self._updateProgressBar = function (data) {
-            var progressPercent = 0;
-            if (data.is_ready && data.has_file) {
-                progressPercent = 100;
-                $scope.isDownloadReady = true;
-                $scope.dropboxUrl = data.dropbox_url;
-                $scope.downloadUrl = data.download_url;
-                if (formElement.progress()) formElement.progress().addClass('progress-bar-success');
-            } else if (_.isNumber(data.progress.percent)) {
-                progressPercent = data.progress.percent;
-            }
-            $scope.progress.percent = progressPercent;
-            if (formElement.progress()) formElement.progress().css('width', progressPercent + '%');
-        };
-
         $scope.resetDownload = function () {
             self._reset();
             exportDownloadService.resetDownload();
         };
 
         $scope.$watch(function () {
-            return exportDownloadService.showDownloadStatus;
-        }, function (status) {
-            $scope.showDownloadStatus = status;
-        });
-
         $scope.$watch(function () {
             return exportDownloadService.celeryError;
         }, function (status) {
@@ -189,28 +158,6 @@
             $scope.isMultimediaDownload = status;
         });
 
-        $scope.sendAnalytics = function () {
-            hqImport('analytix/js/google').track.event(
-                "Download Export",
-                hqImport('export/js/utils').capitalize(exportDownloadService.exportType), "Saved");
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Download button");
-        };
-
-        $scope.sendEmailUponCompletion = function () {
-            setTimeout(function () {  // function must wait until download_id is available in the scope
-                if ($scope.download_id !== undefined) {
-                    var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-                    $.ajax({
-                        method: 'POST',
-                        dataType: 'json',
-                        url: initial_page_data.reverse('add_export_email_request'),
-                        data: { download_id: $scope.download_id },
-                    });
-                } else {
-                    $scope.sendEmailUponCompletion();
-                }
-            });
-        };
     };
     download_export.controller(exportsControllers);
 
@@ -218,90 +165,6 @@
     downloadExportServices.exportDownloadService = function ($interval, djangoRMI) {
         var self = {};
 
-        self.resetDownload = function () {
-            self.downloadId = null;
-            self._numErrors = 0;
-            self._numCeleryRetries = 0;
-            self._lastProgress = 0;
-            self.downloadStatusData = null;
-            self.showDownloadStatus = false;
-            self.downloadError = null;
-            self.celeryError = false;
-            self.downloadError = false;
-            self.isMultimediaDownload = false;
-            self.exportType = null;
-        };
-
-        self.resetDownload();
-
-        self._checkDownloadProgress = function () {
-            $.ajax({
-                method: 'GET',
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('poll_custom_export_download'),
-                data: {
-                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
-                    download_id: self.downloadId,
-                },
-                success: function (data) {
-                    if (data.is_poll_successful) {
-                        self.downloadStatusData = data;
-                        if (data.has_file && data.is_ready) {
-                            $interval.cancel(self._promise);
-                            return;
-                        }
-                        if (data.progress && data.progress.error) {
-                            $interval.cancel(self._promise);
-                            self.downloadError = data.progress.error;
-                            return;
-                        }
-                        if (data.progress.current > self._lastProgress) {
-                            self._lastProgress = data.progress.current;
-                            // processing is still going, keep moving.
-                            // this avoids failing hard prematurely at celery errors if
-                            // the polling is still reporting forward progress.
-                            self._numCeleryRetries = 0;
-                            return;
-                        }
-                    }
-                    if (data.error) {
-                        self._dealWithErrors(data);
-                    }
-                    if (_.isNull(data.is_alive)) {
-                        self._dealWithCeleryErrors();
-                    }
-                },
-                error: self._dealWithErrors,
-            });
-        };
-
-        self._dealWithCeleryErrors = function () {
-            // Sometimes the task handler for celery is a little slow to get
-            // started, so we have to try a few times.
-            if (self._numCeleryRetries > 10) {
-                $interval.cancel(self._promise);
-                self.celeryError = true;
-            }
-            self._numCeleryRetries ++;
-        };
-
-        self._dealWithErrors = function (data) {
-            if (self._numErrors > 3) {
-                if (data && data.error) {
-                    self.downloadError = data.error;
-                } else {
-                    self.downloadError = "default";
-                }
-                $interval.cancel(self._promise);
-            }
-            self._numErrors ++;
-        };
-
-        self.startDownload = function (downloadId, exportType) {
-            self.showDownloadStatus = true;
-            self.downloadId = downloadId;
-            self.exportType = exportType;
-            self._promise = $interval(self._checkDownloadProgress, 2000);
-        };
 
         self.startMultimediaDownload = function (downloadId, exportType) {
             self.isMultimediaDownload = true;
