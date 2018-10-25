@@ -338,7 +338,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
 
     def create_temporary_table(self):
-        return "CREATE TABLE \"{}\" (LIKE child_health_monthly INCLUDING INDEXES)".format(self.temporary_table)
+        return "CREATE TABLE \"{}\" (LIKE child_health_monthly INCLUDING INDEXES)".format(self.temporary_tablename)
 
     def drop_temporary_table(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
