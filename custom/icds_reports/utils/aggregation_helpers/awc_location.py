@@ -6,7 +6,7 @@ import six
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
-from custom.icds_reports.utils.aggregation import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper
 
 
 class LocationAggregationHelper(BaseICDSAggregationHelper):
@@ -115,7 +115,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ('state_id', 'state_id'),
             ('state_name', 'state_name'),
             ('state_site_code', 'state_site_code'),
-            ('aggregation_level', aggregation_level),
+            ('aggregation_level', "'{}'".format(aggregation_level)),
             ('block_map_location_name', lambda col: col if aggregation_level > 2 else "'All'"),
             ('district_map_location_name', lambda col: col if aggregation_level > 1 else "'All'"),
             ('state_map_location_name', 'state_map_location_name'),

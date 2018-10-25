@@ -123,7 +123,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             ('block_id', lambda col: col if aggregation_level > 2 else "'All'"),
             ('supervisor_id', lambda col: col if aggregation_level > 3 else "'All'"),
             ('awc_id', lambda col: col if aggregation_level > 4 else "'All'"),
-            ('aggregation_level', str(aggregation_level)),
+            ('aggregation_level', "'{}'".format(aggregation_level)),
             ('date', 'date'),
             ('cases_household', 'sum(cases_household)'),
             ('cases_person', 'sum(cases_person)'),
