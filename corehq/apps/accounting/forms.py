@@ -111,7 +111,10 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         help_text='ex: dimagi.com, commcarehq.org',
     )
-    invoicing_plan = forms.ChoiceField(label="Invoicing Plan")
+    invoicing_plan = forms.ChoiceField(
+        label="Invoicing Plan",
+        required=False
+    )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
         help_text=ugettext_lazy(
