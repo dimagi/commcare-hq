@@ -612,16 +612,6 @@ that you have a 32bit version of Python installed.
   `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
   and use `virtualenv --system-site-packages` instead.
 
-+ On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
-  properly. To fix this, run `brew install libmagic`.
-
-+ On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
-  will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
-
-+ On Mac OS X, if lxml fails to install, ensure that your command line tools are up to date by running `xcode-select --install`.
-
-+ On Mac OS X, if Pillow complains that it can't find freetype, make sure freetype is installed with `brew install freetype`. Then create a symlink with: `ln -s /usr/local/include/freetype2 /usr/local/include/freetype`.
-
 + If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
