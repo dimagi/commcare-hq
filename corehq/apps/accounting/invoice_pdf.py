@@ -171,18 +171,21 @@ class InvoiceTemplate(object):
             while len(items) > 0:
                 items_to_draw = items[12:]
                 items = items[:12]
-                if len(items) <= 4:
-                    self.draw_table_and_footer(items)
-                else:
-                    self.draw_header()
-                    self.draw_table(items)
-                    self.canvas.showPage()
-                    self.canvas.save()
-                    if len(items_to_draw) == 0:
-                        self.draw_totals_on_new_page()
+                self.draw_customer_invoice(items, items_to_draw)
                 items = items_to_draw
         else:
-            self.draw_table_and_footer(self.items)
+            self.draw_table_with_header_and_footer(self.items)
+
+    def draw_customer_invoice(self, items, items_to_draw):
+        if len(items) <= 4:
+            self.draw_table_with_header_and_footer(items)
+        else:
+            self.draw_header()
+            self.draw_table(items)
+            self.canvas.showPage()
+            self.canvas.save()
+            if len(items_to_draw) == 0:
+                self.draw_totals_on_new_page()
 
     def draw_logo(self):
         self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
@@ -557,7 +560,7 @@ class InvoiceTemplate(object):
         payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
         payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))
 
-    def draw_table_and_footer(self, items):
+    def draw_table_with_header_and_footer(self, items):
         self.draw_header()
         if not self.is_wire or self.is_prepayment:
             self.draw_table(items)
