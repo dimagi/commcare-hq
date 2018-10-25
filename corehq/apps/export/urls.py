@@ -38,6 +38,8 @@ from corehq.apps.export.views import (
     poll_custom_export_download,
     prepare_custom_export,
     prepare_form_multimedia,
+    get_app_data_drilldown_values,
+    submit_app_data_drilldown_form,
 )
 
 urlpatterns = [
@@ -134,6 +136,12 @@ urlpatterns = [
     url(r'^poll_custom_export_download/$', poll_custom_export_download, name='poll_custom_export_download'),
     url(r'^prepare_custom_export/$', prepare_custom_export, name='prepare_custom_export'),
     url(r'^prepare_form_multimedia/$', prepare_form_multimedia, name='prepare_form_multimedia'),
+    url(r'^get_app_data_drilldown_values/$',
+        get_app_data_drilldown_values,
+        name='get_app_data_drilldown_values'),
+    url(r'^submit_app_data_drilldown_form/$',
+        submit_app_data_drilldown_form,
+        name='submit_app_data_drilldown_form'),
 
     # Delete export views
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
