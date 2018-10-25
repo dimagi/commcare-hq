@@ -1,5 +1,6 @@
+/* globals Clipboard */
 hqDefine("export/js/export_list", function () {
-    var exportModel = function(options, pageOptions) {
+    var exportModel = function (options, pageOptions) {
         hqImport("hqwebapp/js/assert_properties").assert(pageOptions, ['is_deid', 'model_type', 'urls']);
 
         _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'showLink'], function (key) {
@@ -102,8 +103,7 @@ hqDefine("export/js/export_list", function () {
         };
 
         self.updateDisabledState = function (model, e) {
-                $button = $(e.currentTarget);
-
+            var $button = $(e.currentTarget);
             $button.disableButton();
             $.ajax({
                 method: 'POST',
@@ -130,7 +130,7 @@ hqDefine("export/js/export_list", function () {
         return self;
     };
 
-    var exportListModel = function(options) {
+    var exportListModel = function (options) {
         hqImport("hqwebapp/js/assert_properties").assert(options, ['exports', 'isDeid', 'modelType', 'urls']);
 
         var self = {};
@@ -163,10 +163,10 @@ hqDefine("export/js/export_list", function () {
         });
 
         // Bulk export handling
-        self.selectAll = function() {
+        self.selectAll = function () {
             _.each(self.exports, function (e) { e.addedToBulk(true); });
         };
-        self.selectNone = function() {
+        self.selectNone = function () {
             _.each(self.exports, function (e) { e.addedToBulk(false); });
         };
         self.showBulkExportDownload = ko.observable(false);
