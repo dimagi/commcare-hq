@@ -29,8 +29,8 @@ class GetTimestampTests(SimpleTestCase):
 """
 
     def test_no_node(self):
-        xml = re.sub(r'<updated.*</updated>', b'', self.feed_xml)
-        feed_elem = etree.XML(xml)
+        xml = re.sub(r'<updated.*</updated>', '', self.feed_xml.decode('utf-8'))
+        feed_elem = etree.XML(xml.encode('utf-8'))
         with self.assertRaisesRegex(ValueError, r'^XPath "./atom:updated" not found$'):
             get_timestamp(feed_elem)
 
@@ -41,14 +41,14 @@ class GetTimestampTests(SimpleTestCase):
         self.assertEqual(timestamp, datetime(2018, 4, 26, 10, 56, 10, tzinfo=tzutc()))
 
     def test_bad_date(self):
-        xml = re.sub(r'2018-05-15T14:02:08Z', b'Nevermore', self.feed_xml)
-        feed_elem = etree.XML(xml)
+        xml = re.sub(r'2018-05-15T14:02:08Z', 'Nevermore', self.feed_xml.decode('utf-8'))
+        feed_elem = etree.XML(xml.encode('utf-8'))
         with self.assertRaisesRegex(ValueError, r'^Unknown string format$'):
             get_timestamp(feed_elem)
 
     def test_timezone(self):
-        xml = re.sub(r'2018-05-15T14:02:08Z', b'2018-05-15T14:02:08+0500', self.feed_xml)
-        feed_elem = etree.XML(xml)
+        xml = re.sub(r'2018-05-15T14:02:08Z', '2018-05-15T14:02:08+0500', self.feed_xml.decode('utf-8'))
+        feed_elem = etree.XML(xml.encode('utf-8'))
         timestamp = get_timestamp(feed_elem)
         self.assertEqual(timestamp, datetime(2018, 5, 15, 14, 2, 8, tzinfo=tzoffset(None, 5 * 60 * 60)))
 
