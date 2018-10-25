@@ -1915,7 +1915,6 @@
         ]
       }
     ],
-    "disable_destructive_rebuild": true,
-    "asynchronous": true
+    "disable_destructive_rebuild": true
   }
 }
