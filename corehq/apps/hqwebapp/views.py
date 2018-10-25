@@ -378,7 +378,7 @@ def _login(req, domain_name, template_name):
         })
     else:
         context.update({
-            'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
+            'current_page': {'page_name': _('Welcome back to %s!') % settings.COMMCARE_HQ_NAME}
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView

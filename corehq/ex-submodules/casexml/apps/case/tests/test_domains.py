@@ -74,7 +74,6 @@ ALICE_DOMAIN = 'domain1'
 EVE_DOMAIN = 'domain2'
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=True)
 class DomainTest(TestCase):
 
     def tearDown(self):

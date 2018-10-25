@@ -2157,8 +2157,6 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-CASEXML_FORCE_DOMAIN_CHECK = True
-
 RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
     ("production", "malawi-fp-study"),

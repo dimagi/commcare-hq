@@ -53,16 +53,21 @@ branches:
 #  - np/celery-4.x-monkeypatch  # Nick P Sept 4
 #  - np/celery-4.x-2  # Nick P Aug 22
   - pv/deactivated-users # Preethi Aug 23
-  - sr-batch-ucrpillow # Sravan Sept 4
 #  - jls/add-js-to-sentry  # Jenny Sept 18
   - sr-redis-client # Sravan Sept 19
-  - mk-282955 # MK Sept 25
   - pv/no-filter-reports # Preethi Sept 28
   - pv/deac-users-fixes # Preethi Sept 28
 #  - rn_correct_datefilter_of_ucr # rohit Oct 14
-  - rn_test_report_export # rohit #oct 16
+#  - rn_test_report_export # rohit #oct 16
   - qa-customer-billing # Gabriella Oct 19
+  - jls/ko-export-merge-conflicts  # Jenny Oct 24
+  - jls/kill-export-angular-tests  # Jenny Oct 24
+  - jls/more-export-permissions  # Jenny Oct 24
   - jls/ko-exports-create  # Jenny Oct 19
+  - jls/ko-exports-list  # Jenny Oct 24
+  - jls/ko-export-dl-views  # Jenny Oct 23
+  - dm/gevent # daniel Oct 24
+  - np/testing-OData # Nick P Oct 24
 submodules:
   submodules/django-digest-src:
     branches: []

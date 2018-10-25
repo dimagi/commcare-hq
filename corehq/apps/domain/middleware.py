@@ -102,5 +102,5 @@ class DomainAuditMiddleware(MiddlewareMixin):
             domain = view_kwargs.get('domain', None)
             # skipping  audit if domain=None/''
             if domain:
-                DomainAuditRecordEntry.update_calculations(domain, view_func.func_name)
+                DomainAuditRecordEntry.update_calculations(domain, view_func.__name__)
         return None

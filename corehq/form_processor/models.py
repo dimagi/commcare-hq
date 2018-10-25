@@ -5,6 +5,7 @@ import json
 import mimetypes
 import os
 import uuid
+import functools
 from collections import (
     namedtuple,
     OrderedDict
@@ -804,6 +805,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
+    def check_transaction_order(self):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.check_transaction_order_for_case(self.case_id)
+
     @property
     def actions(self):
         """For compatability with CommCareCase. Please use transactions when possible"""
@@ -1134,9 +1139,20 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     sync_log_id = models.CharField(max_length=255, null=True)
     server_date = models.DateTimeField(null=False)
+    _client_date = models.DateTimeField(null=True, db_column='client_date')
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
     details = JSONField(default=dict)
+
+    @property
+    def client_date(self):
+        if self._client_date:
+            return self._client_date
+        return self.server_date
+
+    @client_date.setter
+    def client_date(self, value):
+        self._client_date = value
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
@@ -1200,14 +1216,20 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @property
     def is_case_rebuild(self):
-        return bool(
-            (self.TYPE_REBUILD_FORM_ARCHIVED & self.type) or
-            (self.TYPE_REBUILD_FORM_EDIT & self.type) or
-            (self.TYPE_REBUILD_USER_ARCHIVED & self.type) or
-            (self.TYPE_REBUILD_USER_REQUESTED & self.type) or
-            (self.TYPE_REBUILD_WITH_REASON & self.type) or
-            (self.TYPE_REBUILD_FORM_REPROCESS & self.type)
-        )
+        return bool(self.type & self.case_rebuild_types())
+
+    @classmethod
+    @memoized
+    def case_rebuild_types(cls):
+        """ returns an int of all rebuild types reduced using a bitwise or """
+        return functools.reduce(lambda x, y: x | y, [
+            cls.TYPE_REBUILD_FORM_ARCHIVED,
+            cls.TYPE_REBUILD_FORM_EDIT,
+            cls.TYPE_REBUILD_USER_ARCHIVED,
+            cls.TYPE_REBUILD_USER_REQUESTED,
+            cls.TYPE_REBUILD_WITH_REASON,
+            cls.TYPE_REBUILD_FORM_REPROCESS,
+        ])
 
     @property
     def readable_type(self):
@@ -1231,7 +1253,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         return not self.__eq__(other)
 
     @classmethod
-    def form_transaction(cls, case, xform, action_types=None):
+    def form_transaction(cls, case, xform, client_date, action_types=None):
         action_types = action_types or []
 
         if any([not cls._valid_action_type(action_type) for action_type in action_types]):
@@ -1241,7 +1263,11 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
         for action_type in action_types:
             type_ |= action_type
-        return cls._from_form(case, xform, transaction_type=type_)
+
+        transaction = cls._from_form(case, xform, transaction_type=type_)
+        transaction.client_date = client_date
+
+        return transaction
 
     @classmethod
     def _valid_action_type(cls, action_type):
