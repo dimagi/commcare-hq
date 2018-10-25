@@ -4,7 +4,7 @@ preload_app = True
 worker_class = 'gevent'
 keepalive = 60
 timeout = 900
-max_requests = 100
+max_requests = 240
 max_requests_jitter = int(max_requests * 0.5)
 # defaults to 30 sec, setting to 5 minutes to fight `GreenletExit`s
 graceful_timeout = 5*60
