@@ -520,19 +520,35 @@ class AppBuildTimingsView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(AppBuildTimingsView, self).get_context_data(**kwargs)
         app_id = self.request.GET.get('app_id')
+        request_user_id = self.request.couch_user._id
         if app_id:
             try:
                 app = Application.get(app_id)
             except ResourceNotFound:
                 raise Http404()
+            timing_context = self.get_timing_context(app, request_user_id)
             context.update({
                 'app': app,
-                'timing_data': self.get_timing_context(app).to_list(),
+                'timing_data': timing_context.to_list(),
             })
         return context
 
     @staticmethod
-    def get_timing_context(app):
+    def get_timing_context(app, request_user_id):
         with TimingContext(app.name) as context:
-            pass  # TODO build the app
+
+            with context('validate app'):
+                errors = app.validate_app()
+
+            assert not errors, errors
+
+            with context('make build'):
+                copy = app.make_build(
+                    comment="Generated automatically during profiling",
+                    user_id=request_user_id,
+                    previous_version=app.get_latest_app(released_only=False),
+                )
+            with context('save'):
+                copy.save(increment_version=False)
+
         return context
