@@ -30,11 +30,13 @@ from django.views.generic import FormView, TemplateView, View
 from lxml import etree
 from lxml.builder import E
 
+from couchdbkit.exceptions import ResourceNotFound
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
     require_superuser, login_or_basic, domain_admin_required, check_lockout)
@@ -509,3 +511,28 @@ class WebUserDataView(View):
             return JsonResponse(data)
         else:
             return HttpResponse('Only web users can access this endpoint', status=400)
+
+
+@method_decorator(require_superuser, name='dispatch')
+class AppBuildTimingsView(TemplateView):
+    template_name = 'hqadmin/app_build_timings.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(AppBuildTimingsView, self).get_context_data(**kwargs)
+        app_id = self.request.GET.get('app_id')
+        if app_id:
+            try:
+                app = Application.get(app_id)
+            except ResourceNotFound:
+                raise Http404()
+            context.update({
+                'app': app,
+                'timing_data': self.get_timing_context(app).to_list(),
+            })
+        return context
+
+    @staticmethod
+    def get_timing_context(app):
+        with TimingContext(app.name) as context:
+            pass  # TODO build the app
+        return context

@@ -33,6 +33,7 @@ from corehq.apps.hqadmin.views.system import (
 from corehq.apps.hqadmin.views.utils import default
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
+    AppBuildTimingsView,
     AuthenticateAs,
     DisableTwoFactorView,
     DisableUserView,
@@ -64,6 +65,7 @@ urlpatterns = [
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
+    url(r'^app_build_timings/$', AppBuildTimingsView.as_view(), name="app_build_timings"),
     url(r'^stats_data/$', stats_data, name="admin_stats_data"),
     url(r'^admin_reports_stats_data/$', admin_reports_stats_data, name="admin_reports_stats_data"),
     url(r'^do_pillow_op/$', pillow_operation_api, name="pillow_operation_api"),
