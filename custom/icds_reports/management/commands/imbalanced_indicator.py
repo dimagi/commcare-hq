@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 
 import dateutil
 from corehq.sql_db.connections import get_icds_ucr_db_alias
-from django.db import connections, transaction
+from django.db import connections
 
 
 class Command(BaseCommand):
@@ -57,22 +57,26 @@ class Command(BaseCommand):
                 'table': 'agg_awc',
                 'indicators': [
                     {'numerator': 'sum(num_launched_awcs)', 'denominator': 'sum(num_awcs)'},
-                    {'numerator': 'sum(cases_person_has_aadhaar)', 'denominator': 'sum(cases_person_beneficiary)'},
+                    {'numerator': 'sum(cases_person_has_aadhaar)',
+                     'denominator': 'sum(cases_person_beneficiary)'},
                     {'numerator': 'sum(cases_child_health)', 'denominator': 'sum(cases_child_health_all)'},
                     {'numerator': 'sum(cases_ccs_pregnant)', 'denominator': 'sum(cases_ccs_pregnant_all)'},
                     {'numerator': 'sum(cases_ccs_lactating)', 'denominator': 'sum(cases_ccs_lactating_all)'},
                     {'numerator': 'sum(infra_clean_water)', 'denominator': 'sum(num_awc_infra_last_update)'},
-                    {'numerator': 'sum(infra_functional_toilet)', 'denominator': 'sum(num_awc_infra_last_update)'},
+                    {'numerator': 'sum(infra_functional_toilet)',
+                     'denominator': 'sum(num_awc_infra_last_update)'},
                     {'numerator': 'sum(infra_medicine_kits)', 'denominator': 'sum(num_awc_infra_last_update)'},
-                    {'numerator': 'sum(infra_infant_weighing_scale)', 'denominator': 'sum(num_awc_infra_last_update)'},
-                    {'numerator': 'sum(infra_adult_weighing_scale)', 'denominator': 'sum(num_awc_infra_last_update)'},
-                           ],
-             },
+                    {'numerator': 'sum(infra_infant_weighing_scale)',
+                     'denominator': 'sum(num_awc_infra_last_update)'},
+                    {'numerator': 'sum(infra_adult_weighing_scale)',
+                     'denominator': 'sum(num_awc_infra_last_update)'},
+                ],
+            },
             {
                 "table": "agg_ccs_record",
                 "indicators": [
-                    {'numerator': 'sum(institutional_delivery_in_month)', 'denominator': 'sum(delivered_in_month)',
-                     },
+                    {'numerator': 'sum(institutional_delivery_in_month)',
+                     'denominator': 'sum(delivered_in_month)',},
                     {'numerator': 'sum(anc1_received_at_delivery)', 'denominator': 'sum(delivered_in_month)',
                      },
                     {'numerator': 'sum(anc2_received_at_delivery)', 'denominator': 'sum(delivered_in_month)',
@@ -96,19 +100,21 @@ class Command(BaseCommand):
                     {'numerator': 'sum(cf_initiation_in_month)', 'denominator': 'sum(cf_initiation_eligible)',
                      },
                     {'numerator': 'sum(ebf_in_month)', 'denominator': 'sum(ebf_eligible)', },
-                    {'numerator': 'sum(height_measured_in_month)', 'denominator': 'sum(height_eligible)', },
+                    {'numerator': 'sum(height_measured_in_month)', 'denominator': 'sum(height_eligible)'},
                     {'numerator': 'sum(fully_immunized_on_time) + sum(fully_immunized_late)',
                      'denominator': 'sum(fully_immunized_eligible)', },
                     {'numerator': 'sum(stunting_moderate) + sum(stunting_severe)',
                      'denominator': 'sum(height_measured_in_month)'},
                     {'numerator': 'sum(nutrition_status_moderately_underweight)+\
-                      sum(nutrition_status_severely_underweight)', 'denominator': 'sum(nutrition_status_weighed)'},
-                    {'numerator': 'sum(low_birth_weight_in_month)', 'denominator': 'sum(weighed_and_born_in_month)',
-                     },
+                      sum(nutrition_status_severely_underweight)',
+                     'denominator': 'sum(nutrition_status_weighed)'},
+                    {'numerator': 'sum(low_birth_weight_in_month)',
+                     'denominator': 'sum(weighed_and_born_in_month)'},
                     {'numerator': 'sum(wasting_moderate)+sum(wasting_severe)',
-                     'denominator': 'sum(weighed_and_height_measured_in_month)', },
-                    {'numerator': 'sum(nutrition_status_weighed)', 'denominator': 'sum(wer_eligible)', },
-                    {'numerator': 'sum(low_birth_weight_in_month)', 'denominator': 'sum(weighed_and_born_in_month)',
+                     'denominator': 'sum(weighed_and_height_measured_in_month)'},
+                    {'numerator': 'sum(nutrition_status_weighed)', 'denominator': 'sum(wer_eligible)'},
+                    {'numerator': 'sum(low_birth_weight_in_month)',
+                     'denominator': 'sum(weighed_and_born_in_month)',
                      },
                     {'numerator': 'sum(cf_in_month)', 'denominator': 'sum(cf_eligible)',
                      },
