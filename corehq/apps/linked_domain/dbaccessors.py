@@ -14,6 +14,10 @@ def get_domain_master_link(domain):
     return DomainLink.objects.filter(linked_domain=domain).first()
 
 
+def is_downstream_linked_domain(domain):
+    return bool(get_domain_master_link(domain))
+
+
 @quickcache(['domain'], timeout=60 * 60)
 def get_linked_domains(domain):
     """

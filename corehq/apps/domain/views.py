@@ -45,7 +45,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.linked_domain.dbaccessors import is_downstream_linked_domain
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -1973,7 +1973,7 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if get_domain_master_link(request.domain):
+        if is_downstream_linked_domain(request.domain):
             raise Http404()
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
