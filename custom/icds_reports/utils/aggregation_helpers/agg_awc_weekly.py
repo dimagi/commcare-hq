@@ -50,7 +50,7 @@ class AggAwcWeeklyAggregationHelper(BaseICDSAggregationHelper):
               sum(home_visit) +
               sum(add_pregnancy) +
               sum(add_household)
-            ) >= 15 THEN 1 
+            ) >= 15 THEN 1
             ELSE 0 END AS usage_awc_num_active
             FROM "{usage_tablename}"
             WHERE month >= %(month_start_6m)s GROUP BY awc_id, month) ut
@@ -88,18 +88,18 @@ class AggAwcWeeklyAggregationHelper(BaseICDSAggregationHelper):
             num_launched_blocks = ut.num_launched_supervisors,
             num_launched_supervisors = ut.num_launched_supervisors,
             num_launched_awcs = ut.sum_num_launched_awcs,
-            usage_awc_num_active = ut.usage_awc_num_active
+            usage_awc_num_active = ut.sum_usage_awc_num_active
           FROM (SELECT
             {location_column},
             month,
             sum(usage_num_hh_reg) as sum_usage_num_hh_reg,
             CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END as num_launched_supervisors,
             sum(num_launched_awcs) as sum_num_launched_awcs,
-            sum(usage_awc_num_active) as usage_awc_num_active
+            sum(usage_awc_num_active) as sum_usage_awc_num_active
             FROM "{tablename}"
             WHERE aggregation_level=%(child_aggregation_level)s AND month >= %(month_start_6m)s
             GROUP BY {group_by}) ut
-          WHERE ut.month = agg_awc.month AND ut.{location_column} = agg_awc.{location_column} 
+          WHERE ut.month = agg_awc.month AND ut.{location_column} = agg_awc.{location_column}
             AND aggregation_level=%(aggregation_level)s
         """.format(
             tablename=self.base_tablename,
