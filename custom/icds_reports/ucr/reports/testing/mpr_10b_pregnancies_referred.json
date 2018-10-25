@@ -101,7 +101,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_health_problem ~ '\ybleeding\y'": 1
+          "referral_health_problem ~ '\\ybleeding\\y'": 1
         }
       },
       {
@@ -111,7 +111,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_health_problem ~ '\yconvulsions\y'": 1
+          "referral_health_problem ~ '\\yconvulsions\\y'": 1
         }
       },
       {
@@ -121,7 +121,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_health_problem ~ '\yprolonged_labor\y'": 1
+          "referral_health_problem ~ '\\yprolonged_labor\\y'": 1
         }
       },
       {
@@ -131,7 +131,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_health_problem ~ '\yabortion_complications\y'": 1
+          "referral_health_problem ~ '\\yabortion_complications\\y'": 1
         }
       },
       {
@@ -141,7 +141,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_health_problem ~ '\yfever\y' OR referral_health_problem ~ '\yoffensive_discharge\y'": 1
+          "referral_health_problem ~ '\\yfever\\y' OR referral_health_problem ~ '\\yoffensive_discharge\\y'": 1
         }
       },
       {
@@ -151,7 +151,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_health_problem ~ '\yswelling\y' OR referral_health_problem ~ '\yblurred_vision\y' OR referral_health_problem ~ '\yother\y'": 1
+          "referral_health_problem ~ '\\yswelling\\y' OR referral_health_problem ~ '\\yblurred_vision\\y' OR referral_health_problem ~ '\\yother\\y'": 1
         }
       },
       {
@@ -161,7 +161,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\ybleeding\y'": 1
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ybleeding\\y'": 1
         }
       },
       {
@@ -171,7 +171,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\yconvulsions\y'": 1
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yconvulsions\\y'": 1
         }
       },
       {
@@ -181,7 +181,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\yprolonged_labor\y'": 1
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yprolonged_labor\\y'": 1
         }
       },
       {
@@ -191,7 +191,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\yabortion_complications\y'": 1
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yabortion_complications\\y'": 1
         }
       },
       {
@@ -201,7 +201,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND (referral_health_problem ~ '\yfever\y' OR referral_health_problem ~ '\yoffensive_discharge\y')": 1
+          "referral_reached_facility = 'yes' AND (referral_health_problem ~ '\\yfever\\y' OR referral_health_problem ~ '\\yoffensive_discharge\\y')": 1
         }
       },
       {
@@ -211,7 +211,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND (referral_health_problem ~ '\yother\y' OR referral_health_problem ~ '\yswelling\y' OR referral_health_problem ~ '\yblurred_vision\y')": 1
+          "referral_reached_facility = 'yes' AND (referral_health_problem ~ '\\yother\\y' OR referral_health_problem ~ '\\yswelling\\y' OR referral_health_problem ~ '\\yblurred_vision\\y')": 1
         }
       }
     ],
