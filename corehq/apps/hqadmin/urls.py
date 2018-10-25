@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import include, url
-from corehq.apps.api.odata import OData
+from corehq.apps.api.odata import OData, ODataMetadata
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.hqadmin.views.data import (
@@ -89,4 +89,5 @@ urlpatterns = [
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
     AdminReportDispatcher.url_pattern(),
     url(r'^odata', OData.as_view(), name=OData.urlname),
+    url(r'^\$metadata', ODataMetadata.as_view(), name=ODataMetadata.urlname),
 ]
