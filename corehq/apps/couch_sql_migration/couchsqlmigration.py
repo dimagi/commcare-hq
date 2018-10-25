@@ -590,6 +590,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
             extensions_to_close
         )
         for case in case_result.cases:
+            case_db.post_process_case(case, sql_form)
             case_db.mark_changed(case)
 
         stock_result = process_stock(xforms, case_db)
