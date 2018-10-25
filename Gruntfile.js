@@ -4,12 +4,15 @@ module.exports = function(grunt) {
         BASE_URL = 'http://' + BASE_ADDRESS + ':8000/mocha/';
 
     /*
-     * To add a new app to test, add the app name to this test and create
-     * a test runner view at:
+     * To add a new app to test:
+     *  - Add the app name to this list
+     *  - Create a test runner view at corehq/apps/<app>/templates/<app>/spec/mocha.html
+     *  - Test in the browser at http://localhost:8000/mocha/<app>
      *
-     * corehq/apps/<app>/templates/<app>/spec/mocha.html
-     *
-     * You can view an example in the app_manager
+     * To add a new section to an existing app:
+     *  - Add <app>#<section> to this list
+     *  - Create a test runner view at corehq/apps/<app>/templates/<app>/spec/<section>/mocha.html
+     *  - Test in the browser at http://localhost:8000/mocha/<app>/<section>
      */
     var apps = [
         'app_manager',
