@@ -59,7 +59,6 @@ branches:
   - pv/deac-users-fixes # Preethi Sept 28
 #  - rn_correct_datefilter_of_ucr # rohit Oct 14
 #  - rn_test_report_export # rohit #oct 16
-  - qa-customer-billing # Gabriella Oct 19
   - jls/ko-export-merge-conflicts  # Jenny Oct 24
   - jls/kill-export-angular-tests  # Jenny Oct 24
   - jls/more-export-permissions  # Jenny Oct 24
