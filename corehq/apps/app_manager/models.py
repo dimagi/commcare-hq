@@ -1443,7 +1443,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
             )
 
     @quickcache(['self.unique_id', 'self.version'], timeout=24 * 60 * 60,
-                skip_arg=lambda *args: settings.UNIT_TESTING)
+                skip_arg=lambda form, *args: form.version is None or settings.UNIT_TESTING)
     def get_all_case_updates(self):
         """
         Collate contributed case updates from all sources within the form
