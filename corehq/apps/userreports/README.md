@@ -933,26 +933,6 @@ ledger_balances | Save a column for each product specified, containing ledger da
 
 *Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these ones they are left out of the current docs.*
 
-#### Boolean indicators
-
-Now we see again the power of our filter framework defined above! Boolean indicators take any arbitrarily complicated filter expression and save a `1` to the database if the expression is true, otherwise a `0`.  Here is an example boolean indicator which will save `1` if a form has a question with ID `is_pregnant` with a value of `"yes"`:
-
-```
-{
-    "type": "boolean",
-    "column_id": "col",
-    "filter": {
-	    "type": "boolean_expression",
-	    "expression": {
-	        "type": "property_path",
-	        "property_path": ["form", "is_pregnant"],
-	    },
-	    "operator": "eq",
-	    "property_value": "yes"
-	}
-}
-```
-
 #### Expression indicators
 
 Similar to the boolean indicators - expression indicators leverage the expression structure defined above to create arbitrarily complex indicators. Expressions can store arbitrary values from documents (as opposed to boolean indicators which just store `0`'s and `1`'s). Because of this they require a few additional properties in the definition:
