@@ -403,6 +403,46 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
         self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
 
+    @patch.object(filter, 'show_deactivated_data', return_value=True)
+    @patch.object(filter, 'show_project_data', return_value=True)
+    @patch.object(filter, 'show_all_data', return_value=False)
+    @patch.object(filter, 'selected_user_types', return_value=[HQUserType.ADMIN])
+    @patch.object(filter_builder, '_get_filters_from_slugs')
+    @patch.object(filter_builder, 'get_user_ids_for_user_types', return_value=['123'])
+    def test_get_case_filter_for_project_data_with_deactivated_filter(self, fetch_user_ids_patch,
+                                                                      filters_from_slugs_patch, *patches):
+        # The show_deactivated_data filter should not change the results.
+        data = {'date_range': '1992-01-30 to 2016-11-28'}
+        self.export_filter = self.subject(self.domain, pytz.utc, data=data)
+        self.assertTrue(self.export_filter.is_valid())
+        case_filters = self.export_filter.get_case_filter('', True, None)
+
+        fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
+                                                     web=False)
+        assert not filters_from_slugs_patch.called
+
+        self.assertIsInstance(case_filters[0], NOT)
+        self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
+        self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
+
+    @patch.object(filter, 'show_deactivated_data', return_value=True)
+    @patch.object(filter, 'selected_user_types', return_value=[HQUserType.DEACTIVATED])
+    @patch.object(filter_builder, '_get_filters_from_slugs')
+    @patch.object(filter_builder, 'get_user_ids_for_user_types', return_value=['123'])
+    def test_get_case_filter_for_deactivated_data(self, fetch_user_ids_patch, filters_from_slugs_patch, *patches):
+        data = {'date_range': '1992-01-30 to 2016-11-28'}
+        self.export_filter = self.subject(self.domain, pytz.utc, data=data)
+        self.assertTrue(self.export_filter.is_valid())
+        case_filters = self.export_filter.get_case_filter('', True, None)
+
+        fetch_user_ids_patch.assert_called_once_with(admin=True, commtrack=True, demo=True, unknown=True,
+                                                     web=True, active=True, deactivated=False)
+        assert not filters_from_slugs_patch.called
+
+        self.assertIsInstance(case_filters[0], NOT)
+        self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
+        self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
+
     @patch.object(filter_builder, '_get_group_independent_filters', lambda x, y, z, a, b: [])
     def test_get_filters_from_slugs_for_all_locations_access(self, static_user_ids_for_group_patch,
                                                              group_ids_patch):
