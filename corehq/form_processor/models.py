@@ -1132,7 +1132,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     )
     TYPE_ACTIONS_ENUM = (
         TYPE_CASE_CREATE,
-        TYPE_FORM,
         TYPE_CASE_INDEX,
         TYPE_CASE_CLOSE,
         TYPE_CASE_ATTACHMENT,
