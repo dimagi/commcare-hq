@@ -201,15 +201,18 @@ hqDefine('export/js/download_export', function () {
 
         self.downloadId = ko.observable();
         self.showDownloadStatus = ko.observable(false);
-        self.showError = ko.observable(false);
-        self.hasCeleryError = ko.observable(false);
         self.isDownloaded = ko.observable(false);
         self.isDownloadReady = ko.observable(false);
-        self.hasDownloadError = ko.observable(false);
         self.isMultimediaDownload = ko.observable(false);
         self.progressError = ko.observable('');
         self.progress = ko.observable(0);
         self.sendEmailFlag = ko.observable(false);
+
+        self.celeryError = ko.observable('');
+        self.downloadError = ko.observable('');
+        self.showError = ko.computed(function () {
+            return self.celeryError() || self.downloadError();
+        });
 
         self.dropboxUrl = ko.observable('');
         self.downloadUrl = ko.observable('');
@@ -220,8 +223,8 @@ hqDefine('export/js/download_export', function () {
             self._numCeleryRetries = 0;
             self._lastProgress = 0;
             self.showDownloadStatus(false);
-            self.hasCeleryError(false);
-            self.hasDownloadError(false);
+            self.celeryError('');
+            self.downloadError('');
             self.isMultimediaDownload(false);
         };
         self.resetDownload();
@@ -294,7 +297,7 @@ hqDefine('export/js/download_export', function () {
             // started, so we have to try a few times.
             if (self._numCeleryRetries > 10) {
                 clearInterval(self.interval);
-                self.celeryError = true;
+                self.celeryError(gettext("Server maintenance in progress. Please try again later."));
             }
             self._numCeleryRetries ++;
         };
@@ -302,9 +305,9 @@ hqDefine('export/js/download_export', function () {
         self._dealWithErrors = function (data) {
             if (self._numErrors > 3) {
                 if (data && data.error) {
-                    self.downloadError = data.error;
+                    self.downloadError(data.error);
                 } else {
-                    self.downloadError = "default";
+                    self.downloadError(gettext("There was an error downloading your export."));
                 }
                 clearInterval(self.interval);
             }
