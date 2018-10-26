@@ -4,13 +4,18 @@ import re
 import base64
 from datetime import timedelta
 from django.conf import settings
+from django.urls import resolve
 
 from django.contrib.auth.hashers import get_hasher
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.util.view_utils import get_request
-from custom.nic_compliance.const import EXPIRE_LOGIN_ATTEMPTS_IN, REDIS_LOGIN_ATTEMPTS_LIST_PREFIX
+from custom.nic_compliance.const import (
+    EXPIRE_LOGIN_ATTEMPTS_IN,
+    REDIS_LOGIN_ATTEMPTS_LIST_PREFIX,
+    MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK,
+)
 
 PASSWORD_HASHER = get_hasher()
 # Passwords set with expected padding length and format would respect this regex
@@ -90,11 +95,14 @@ def get_raw_password(obfuscated_password, username=None):
         client.set(key_name, obfuscated_passwords + [hash_password(obfuscated_password)])
         client.expire(key_name, timedelta(EXPIRE_LOGIN_ATTEMPTS_IN))
 
+    def _mobile_request_to_track():
+        return resolve(request.path).url_name in MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK
+
     def _decode_password():
-        # force check for replay attack and recording login attempt only for web sign in by checking for username
-        # Also skip those two checks in case of 2-step authentication by checking for auth-username which is not
-        # present in consecutive token step's POST params
-        if username and request and request.POST.get('auth-username'):
+        # In case of 2-step authentication for web skip by checking for auth-username which is
+        # present in first step
+        if username and (request and request.POST.get('auth-username') or
+                         _mobile_request_to_track()):
             if replay_attack():
                 return ''
             record_login_attempt()
