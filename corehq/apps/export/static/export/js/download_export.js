@@ -1,21 +1,6 @@
 hqDefine('export/js/download_export', function () {
     'use strict';
 
-    /*var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
-    var downloadExportsApp = window.angular.module('downloadExportsApp', ['hq.download_export']);
-    downloadExportsApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
-        djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
-    }]);
-    downloadExportsApp.constant('exportList', initial_page_data('export_list'));
-    downloadExportsApp.constant('formElement', {
-        progress: function () {
-            return $('#download-progress-bar');
-        },
-        group: function () {
-            return $('#id_group');
-        },
-    });*/
-
     // Model for the form to select date range, users, etc.
     var downloadFormModel = function (options) {
         hqImport("hqwebapp/js/assert_properties").assert(options, [
