@@ -21,26 +21,7 @@
     </h4>
 
     <div class="row">
-        <table id="timingTable" class="table">
-            <thead>
-                <tr>
-                    <th>Timer name</th>
-                    <th>Duration</th>
-                    <th>Percent of Parent</th>
-                    <th>Percent of Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for timer in timing_data %}
-                    <tr data-tt-id="{{ timer.name }}" {% if timer.parent %}data-tt-parent-id="{{ timer.parent.name }}"{% endif %}>
-                        <td>{{ timer.name }}</td>
-                        <td>{{ timer.duration|stringformat:".3f" }}</td>
-                        <td>{{ timer.percent_of_parent|stringformat:".1f" }}</td>
-                        <td>{{ timer.percent_of_total|stringformat:".1f" }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        {% include 'hqadmin/partials/timing_data_table.html' with timing_data=timing_data %}
     </div>
 
 </div>
