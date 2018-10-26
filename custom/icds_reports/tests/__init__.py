@@ -122,7 +122,7 @@ def setUpModule():
                         '"{}"'.format(c.strip())  # quote to preserve case
                         for c in f.readline().split(',')
                     ]
-                    postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', columns=columns)
+                    postgres_copy.copy_from(f, table, engine, format='csv', null='', columns=columns)
 
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
