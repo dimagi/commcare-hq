@@ -17,7 +17,7 @@ from corehq.motech.openmrs.atom_feed import get_timestamp, get_patient_uuid
 class GetTimestampTests(SimpleTestCase):
 
     def setUp(self):
-        self.feed_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+        self.feed_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Patient AOP</title>
   <updated>2018-05-15T14:02:08Z</updated>
@@ -29,25 +29,25 @@ class GetTimestampTests(SimpleTestCase):
 """
 
     def test_no_node(self):
-        xml = re.sub(r'<updated.*</updated>', '', self.feed_xml.decode('utf-8'))
+        xml = re.sub(r'<updated.*</updated>', '', self.feed_xml)
         feed_elem = etree.XML(xml.encode('utf-8'))
         with self.assertRaisesRegex(ValueError, r'^XPath "./atom:updated" not found$'):
             get_timestamp(feed_elem)
 
     def test_xpath(self):
-        feed_elem = etree.XML(self.feed_xml)
+        feed_elem = etree.XML(self.feed_xml.encode('utf-8'))
         # "*[local-name()='foo']" ignores namespaces and matches all nodes with tag "foo":
         timestamp = get_timestamp(feed_elem, "./*[local-name()='entry']/*[local-name()='updated']")
         self.assertEqual(timestamp, datetime(2018, 4, 26, 10, 56, 10, tzinfo=tzutc()))
 
     def test_bad_date(self):
-        xml = re.sub(r'2018-05-15T14:02:08Z', 'Nevermore', self.feed_xml.decode('utf-8'))
+        xml = re.sub(r'2018-05-15T14:02:08Z', 'Nevermore', self.feed_xml)
         feed_elem = etree.XML(xml.encode('utf-8'))
         with self.assertRaisesRegex(ValueError, r'^Unknown string format$'):
             get_timestamp(feed_elem)
 
     def test_timezone(self):
-        xml = re.sub(r'2018-05-15T14:02:08Z', '2018-05-15T14:02:08+0500', self.feed_xml.decode('utf-8'))
+        xml = re.sub(r'2018-05-15T14:02:08Z', '2018-05-15T14:02:08+0500', self.feed_xml)
         feed_elem = etree.XML(xml.encode('utf-8'))
         timestamp = get_timestamp(feed_elem)
         self.assertEqual(timestamp, datetime(2018, 5, 15, 14, 2, 8, tzinfo=tzoffset(None, 5 * 60 * 60)))
@@ -56,7 +56,7 @@ class GetTimestampTests(SimpleTestCase):
 class GetPatientUuidTests(SimpleTestCase):
 
     def setUp(self):
-        self.feed_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+        self.feed_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Patient AOP</title>
   <entry>
@@ -69,21 +69,21 @@ class GetPatientUuidTests(SimpleTestCase):
 """
 
     def test_no_content_node(self):
-        xml = re.sub(r'<content.*</content>', b'', self.feed_xml, flags=re.DOTALL)
-        feed_elem = etree.XML(xml)
+        xml = re.sub(r'<content.*</content>', '', self.feed_xml, flags=re.DOTALL)
+        feed_elem = etree.XML(xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
         with self.assertRaisesRegex(ValueError, r'^patient UUID not found$'):
             get_patient_uuid(entry_elem)
 
     def test_bad_cdata(self):
-        xml = re.sub(r'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4', b'mary-mallon', self.feed_xml)
-        feed_elem = etree.XML(xml)
+        xml = re.sub(r'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4', 'mary-mallon', self.feed_xml)
+        feed_elem = etree.XML(xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
         with self.assertRaisesRegex(ValueError, r'^patient UUID not found$'):
             get_patient_uuid(entry_elem)
 
     def test_success(self):
-        feed_elem = etree.XML(self.feed_xml)
+        feed_elem = etree.XML(self.feed_xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
         patient_uuid = get_patient_uuid(entry_elem)
         self.assertEqual(patient_uuid, 'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4')
