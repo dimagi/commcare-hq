@@ -1,13 +1,8 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load djangular_tags %}
 
-<form class="form form-horizontal form-notice-container"
-      id="exportFiltersFormId"
-      name="exportFiltersForm"
-      ng-submit="prepareExport()"
-      novalidate="novalidate">
+<form class="form form-horizontal form-notice-container" name="exportFiltersForm" data-bind="submit: prepareExport">
     <div class="form-notice-container">
         {% if dynamic_filters %}
             <div class="form-group">
@@ -15,8 +10,7 @@
             </div>
         {% endif %}
         {% crispy download_export_form %}
-        <div class="form-notice"
-             ng-show="downloadInProgress">
+        <div class="form-notice" data-bind="visible: downloadInProgress()">
             <div class="row">
                 <div class="col-sm-9 col-lg-5 col-sm-offset-3">
                     <div class="label label-default label-lg">
@@ -27,68 +21,35 @@
             </div>
         </div>
     </div>
-    <div class="form-actions form-actions-exports" ng-show="!downloadInProgress">
+    <div class="form-actions form-actions-exports" data-bind="visible: !downloadInProgress()">
         <div class="col-sm-9 col-sm-offset-3">
-            {% angularjs %}
-            <div class="alert alert-warning"
-                 ng-show="!!prepareExportError">
+            <div class="alert alert-warning" data-bind="visible: prepareExportError()">
                 <i class="fa fa-exclamation-triangle"></i>
-                <span ng-if="prepareExportError === 'default'">
-                    {% blocktrans %}
-                    Sorry, there was a problem reaching the server.
-                    Please try again or
-                    <a href="#modalReportIssue"
-                       data-toggle="modal">Report an Issue</a>.
-                    {% endblocktrans %}
-                </span>
-                <span ng-if="prepareExportError !== 'default'">
-                    {{ prepareExportError }}
-                </span>
+                <span data-bind="text: prepareExportError"></span>
             </div>
-            {% endangularjs %}
             <div class="row">
                 <div class="col-xs-6 col-sm-4 col-md-3">
-                    <button type="submit"
-                            class="btn btn-primary btn-full-width"
-                            ng-show="!preparingExport"
-                            ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingExport">
-                        <i class="fa fa-download"></i>
-                        {% trans "Prepare Export" %}
-                    </button>
-                    <button type="submit"
-                            class="btn btn-primary btn-full-width btn-disabled"
-                            ng-show="preparingExport"
-                            disabled="disabled">
-                        <i class="fa-spin fa fa-spinner"></i>
-                        {% trans "Preparing Export" %}
+                    <button type="submit" class="btn btn-primary btn-full-width" data-bind="disable: disablePrepareExport">
+                        <i data-bind="visible: !preparingExport()" class="fa fa-cloud-download"></i>
+                        <span data-bind="visible: !preparingExport()">{% trans "Prepare Export" %}</span>
+
+                        <i data-bind="visible: preparingExport()" class="fa-spin fa fa-spinner"></i>
+                        <span data-bind="visible: preparingExport()">{% trans "Preparing Export" %}</span>
                     </button>
                 </div>
-                <div class="col-xs-6 col-sm-4 col-md-3"
-                     ng-show="hasMultimedia">
-                    <button type="button"
-                            class="btn btn-info btn-full-width"
-                            ng-click="prepareMultimediaExport()"
-                            ng-show="!preparingMultimediaExport"
-                            ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingMultimediaExport">
-                        <i class="fa fa-download"></i>
-                        {% trans "Prepare Multimedia" %}
-                    </button>
-                    <button type="button"
-                            class="btn btn-info btn-full-width btn-disabled"
-                            ng-show="preparingMultimediaExport"
-                            disabled="disabled">
-                        <i class="fa-spin fa fa-spinner"></i>
-                        {% trans "Preparing Multimedia" %}
+                <div class="col-xs-6 col-sm-4 col-md-3" data-bind="visible: hasMultimedia">
+                    <button type="button" class="btn btn-info btn-full-width"
+                            data-bind="
+                                click: prepareMultimediaExport,
+                                disable: disablePrepareMultimediaExport,
+                            ">
+                        <i data-bind="visible: !preparingMultimediaExport()" class="fa fa-cloud-download"></i>
+                        <span data-bind="visible: !preparingMultimediaExport()">{% trans "Prepare Multimedia" %}</span>
+
+                        <i data-bind="visible: preparingMultimediaExport()" class="fa-spin fa fa-spinner"></i>
+                        <span data-bind="visible: preparingMultimediaExport()">{% trans "Preparing Multimedia" %}</span>
                     </button>
                 </div>
-                {% if export_list_url %}
-                <div class="col-xs-12 col-sm-4 col-md-5">
-                    <a href="{{ export_list_url }}"
-                       class="btn btn-default">
-                        {% trans "Cancel" %}
-                    </a>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
