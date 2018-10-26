@@ -25,33 +25,14 @@
 
     download_export.constant('maxColumnSize', 2000);
     download_export.constant('defaultDateRange', null);
-    download_export.constant('checkForMultimedia', false);
 
     var exportsControllers = {};
     exportsControllers.DownloadExportFormController = function (
         $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService,
-        defaultDateRange, checkForMultimedia, formElement
     ) {
         var self = {};
         $scope._ = _;   // make underscore.js available
         self._maxColumnSize = maxColumnSize;
-
-        $scope.hasMultimedia = false;
-        if (checkForMultimedia) {
-            $.ajax({
-                method: 'GET',
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("has_multimedia"),
-                data: {
-                    export_id: $scope.exportList[0].export_id,
-                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
-                },
-                success: function (data) {
-                    if (data.success) {
-                        $scope.hasMultimedia = data.hasMultimedia;
-                    }
-                },
-            });
-        }
 
         $scope.formData.user_types = ['mobile'];
         $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
@@ -70,33 +51,6 @@
 
         $scope.isFormInvalid = function () {
             return _.isEmpty($scope.formData.user_types);
-        };
-
-        $scope.preparingMultimediaExport = false;
-        $scope.prepareMultimediaExport = function () {
-            $scope.prepareExportError = null;
-            $scope.preparingMultimediaExport = true;
-            $.ajax({
-                method: 'POST',
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('prepare_form_multimedia'),
-                data: {
-                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
-                    sms_export: hqImport('hqwebapp/js/initial_page_data').get("sms_export"),
-                    exports: JSON.stringify($scope.exportList),
-                    form_data: JSON.stringify($scope.formData),
-                },
-                success: function (data) {
-                    if (data.success) {
-                        self.sendAnalytics();
-                        $scope.preparingMultimediaExport = false;
-                        $scope.downloadInProgress = true;
-                        exportDownloadService.startMultimediaDownload(data.download_id, self.exportType);
-                    } else {
-                        self._handlePrepareError(data);
-                    }
-                },
-                error: self._handlePrepareError,
-            });
         };
 
         $scope.$watch(function () {
@@ -123,7 +77,6 @@
             $scope.showError = false;
             $scope.celeryError = false;
             $scope.downloadError = false;
-            $scope.isMultimediaDownload = false;
             if (formElement.progress()) {
                 formElement.progress().css('width', '0%');
                 formElement.progress().removeClass('progress-bar-success');
@@ -138,7 +91,6 @@
         };
 
         $scope.$watch(function () {
-        $scope.$watch(function () {
             return exportDownloadService.celeryError;
         }, function (status) {
             $scope.celeryError = status;
@@ -152,27 +104,7 @@
             $scope.showError = status;
         });
 
-        $scope.$watch(function () {
-            return exportDownloadService.isMultimediaDownload;
-        }, function (status) {
-            $scope.isMultimediaDownload = status;
-        });
-
     };
     download_export.controller(exportsControllers);
-
-    var downloadExportServices = {};
-    downloadExportServices.exportDownloadService = function ($interval, djangoRMI) {
-        var self = {};
-
-
-        self.startMultimediaDownload = function (downloadId, exportType) {
-            self.isMultimediaDownload = true;
-            self.startDownload(downloadId, exportType);
-        };
-
-        return self;
-    };
-    download_export.factory(downloadExportServices);
 
 }(window.angular));
