@@ -1,6 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url
+from corehq.apps.export.views.download import (
+    DownloadNewFormExportView,
+    BulkDownloadNewFormExportView,
+    DownloadNewCaseExportView,
+    DownloadNewSmsExportView,
+)
 from corehq.apps.export.old_views import (
     CreateNewCustomFormExportView,
     CreateNewCustomCaseExportView,
@@ -10,10 +16,6 @@ from corehq.apps.export.old_views import (
     FormExportListView,
     CaseExportListView,
     DeIdFormExportListView,
-    DownloadNewFormExportView,
-    BulkDownloadNewFormExportView,
-    DownloadNewCaseExportView,
-    DownloadNewSmsExportView,
     GenerateSchemaFromAllBuildsView,
     download_daily_saved_export,
     DashboardFeedListView,

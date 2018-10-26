@@ -541,15 +541,17 @@ class ProjectDataTab(UITab):
             ])
 
         elif self.can_export_data:
+            from corehq.apps.export.views.download import (
+                DownloadNewFormExportView,
+                DownloadNewCaseExportView,
+                DownloadNewSmsExportView,
+                BulkDownloadNewFormExportView,
+            )
             from corehq.apps.export.old_views import (
                 FormExportListView,
                 CaseExportListView,
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
-                DownloadNewFormExportView,
-                DownloadNewCaseExportView,
-                DownloadNewSmsExportView,
-                BulkDownloadNewFormExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
                 DashboardFeedListView,
