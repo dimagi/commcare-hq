@@ -951,6 +951,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
             ["domain", "external_id", "type"],
+            ["domain", "type"],
         ]
         app_label = "form_processor"
         db_table = CommCareCaseSQL_DB_TABLE
