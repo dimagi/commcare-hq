@@ -354,13 +354,6 @@ hqDefine('export/js/download_export', function () {
             pollUrl: initialPageData.reverse('poll_custom_export_download'),
         });
 
-        var progressModel = downloadProgressModel({
-            exportType: exportType,
-            emailUrl: initialPageData.reverse('add_export_email_request'),
-            formOrCase: initialPageData.get('form_or_case'),
-            pollUrl: initialPageData.reverse('poll_custom_export_download'),
-        });
-
         $("#download-export-form").koApplyBindings(downloadFormModel({
             defaultDateRange: initialPageData.get('default_date_range'),
             exportList: exportList,
