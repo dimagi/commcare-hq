@@ -45,10 +45,20 @@ class Command(BaseCommand):
         parser.add_argument('--show-diffs', action='store_true', default=False)
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
+        parser.add_argument('--dry-run', action='store_true', default=False)
 
     @staticmethod
     def require_only_option(sole_option, options):
-        this_command_opts = {'MIGRATE', 'COMMIT', 'blow_away', 'stats', 'show_diffs', 'no_input', 'debug'}
+        this_command_opts = {
+            'MIGRATE',
+            'COMMIT',
+            'blow_away',
+            'stats',
+            'show_diffs',
+            'no_input',
+            'debug',
+            'dry_run',
+        }
         assert all(not value for key, value in options.items()
                    if key in this_command_opts and key != sole_option)
 
@@ -58,6 +68,8 @@ class Command(BaseCommand):
 
         self.no_input = options.pop('no_input', False)
         self.debug = options.pop('debug', False)
+        self.dry_run = options.pop('dry_run', False)
+
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('no-input only allowed for unit testing')
 
