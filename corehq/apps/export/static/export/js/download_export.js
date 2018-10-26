@@ -53,9 +53,12 @@ hqDefine('export/js/download_export', function () {
             return self.prepareExportError() === 'default';
         });
 
+        self.isValid = ko.computed(function () {
+            return !!self.dateRange();
+        });
+
         self.disablePrepareExport = ko.computed(function () {
-            // TODO
-            //ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingExport">
+            return !self.isValid() || self.preparingExport();
         });
 
         self.sendAnalytics = function () {
