@@ -9,7 +9,6 @@ hqDefine('export/js/download_export', function () {
     downloadExportsApp.constant('exportList', initial_page_data('export_list'));
     downloadExportsApp.constant('maxColumnSize', initial_page_data('max_column_size'));
     downloadExportsApp.constant('defaultDateRange', initial_page_data('default_date_range'));
-    downloadExportsApp.constant('checkForMultimedia', initial_page_data('check_for_multimedia'));
     downloadExportsApp.constant('formElement', {
         progress: function () {
             return $('#download-progress-bar');
@@ -24,7 +23,17 @@ hqDefine('export/js/download_export', function () {
 
     // Model for the form to select date range, users, etc.
     var downloadFormModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['exportList', 'exportType', 'formOrCase', 'progressModel', 'prepareUrl', 'smsExport', 'userTypes']);
+        hqImport("hqwebapp/js/assert_properties").assert(options, [
+            'exportList',
+            'exportType',
+            'formOrCase',
+            'multimediaUrl',    // present if we should check for multimedia
+            'progressModel',
+            'prepareUrl',
+            'prepareMultimediaUrl',
+            'smsExport',
+            'userTypes',
+        ]);
 
         var self = {};
 
@@ -32,7 +41,9 @@ hqDefine('export/js/download_export', function () {
         self.exportType = options.exportType;
         self.filterName = self.exportType === "form" ? "emw" : "case_list_filter";
         self.formOrCase = options.formOrCase;
+        self.multimediaUrl = options.multimediaUrl;
         self.prepareUrl = options.prepareUrl;
+        self.prepareMultimediaUrl = options.prepareMultimediaUrl;
         self.smsExport = options.smsExport;
         self.userTypes = options.userTypes;
 
@@ -47,7 +58,7 @@ hqDefine('export/js/download_export', function () {
         self.prepareExportError = ko.observable('');
         self.preparingMultimediaExport = ko.observable(false);
         self.downloadInProgress = ko.observable(false);
-        self.hasMultimedia = ko.observable(false);  // TODO
+        self.hasMultimedia = ko.observable(false);
 
         self.defaultPrepareExportError = ko.computed(function () {
             return self.prepareExportError() === 'default';
@@ -59,6 +70,9 @@ hqDefine('export/js/download_export', function () {
 
         self.disablePrepareExport = ko.computed(function () {
             return !self.isValid() || self.preparingExport();
+        });
+        self.disablePrepareMultimediaExport = ko.computed(function () {
+            return !self.isValid() || self.preparingMultimediaExport();
         });
 
         self.sendAnalytics = function () {
@@ -127,6 +141,51 @@ hqDefine('export/js/download_export', function () {
             });
         };
 
+        if (self.multimediaUrl) {
+            $.ajax({
+                method: 'GET',
+                url: self.multimediaUrl,
+                data: {
+                    export_id: self.exportList[0].export_id,
+                    form_or_case: self.formOrCase,
+                },
+                success: function (data) {
+                    if (data.success) {
+                        self.hasMultimedia(data.hasMultimedia);
+                    }
+                },
+            });
+        }
+
+        self.prepareMultimediaExport = function () {
+            self.prepareExportError('');
+            self.preparingMultimediaExport(true);
+            $.ajax({
+                method: 'POST',
+                url: self.prepareMultimediaUrl,
+                data: {
+                    form_or_case: self.formOrCase,
+                    sms_export: self.smsExport,
+                    exports: JSON.stringify(self.exportList),
+                    form_data: JSON.stringify({
+                        date_range: self.dateRange(),
+                        emw: self.emw(),
+                    }),
+                },
+                success: function (data) {
+                    if (data.success) {
+                        self.sendAnalytics();
+                        self.preparingMultimediaExport(false);
+                        self.downloadInProgress(true);
+                        self.progressModel.startMultimediaDownload(data.download_id);
+                    } else {
+                        self._handlePrepareError(data);
+                    }
+                },
+                error: self._handlePrepareError,
+            });
+        };
+
         self._handlePrepareError = function (data) {
             if (data && data.error) {
                 // The server returned an error message.
@@ -184,6 +243,11 @@ hqDefine('export/js/download_export', function () {
             self.showDownloadStatus(true);
             self.downloadId(downloadId);
             self.interval = setInterval(self._checkDownloadProgress, 2000);
+        };
+
+        self.startMultimediaDownload = function (downloadId) {
+            self.isMultimediaDownload(true);
+            self.startDownload(downloadId);
         };
 
         self.clickDownload = function () {
@@ -311,10 +375,12 @@ hqDefine('export/js/download_export', function () {
             exportList: exportList,
             exportType: exportType,
             formOrCase: initialPageData.get('form_or_case'),
-            userTypes: initialPageData.get('user_types'),
+            multimediaUrl: initialPageData.get('check_for_multimedia') ? initialPageData.reverse('has_multimedia') : '',
             progressModel: progressModel,
             prepareUrl: initialPageData.reverse('prepare_custom_export'),
+            prepareMultimediaUrl: initialPageData.reverse('prepare_form_multimedia'),
             smsExport: initialPageData.get('sms_export'),
+            userTypes: initialPageData.get('user_types'),
         }));
 
         $("#download-progress").koApplyBindings(progressModel);
