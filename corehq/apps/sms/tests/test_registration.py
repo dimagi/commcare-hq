@@ -2,6 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import base64
 import json
+
+import six
+
 from corehq.apps.accounting.models import (BillingAccount, DefaultProductPlan,
     SoftwarePlanEdition, SubscriptionAdjustment, Subscription)
 from corehq.apps.domain.calculations import num_mobile_users
@@ -604,7 +607,7 @@ class RegistrationAPITestCase(TestCase):
                 {},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content, '{"sms_user_registration": {"app_id": "This field is required"}}')
+            self.assertEqual(response.content.decode('utf-8'), '{"sms_user_registration": {"app_id": "This field is required"}}')
 
             response = self.make_api_post(
                 self.domain1,
@@ -613,8 +616,12 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': 123},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content,
-                '{"sms_user_registration": {"app_id": "Expected type: basestring"}}')
+            if six.PY3:
+                self.assertEqual(response.content.decode('utf-8'),
+                    '{"sms_user_registration": {"app_id": "Expected type: str"}}')
+            else:
+                self.assertEqual(response.content.decode('utf-8'),
+                    '{"sms_user_registration": {"app_id": "Expected type: basestring"}}')
 
             response = self.make_api_post(
                 self.domain1,
@@ -623,7 +630,7 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': '123'},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content, '{"sms_user_registration": {"users": "This field is required"}}')
+            self.assertEqual(response.content.decode('utf-8'), '{"sms_user_registration": {"users": "This field is required"}}')
 
             response = self.make_api_post(
                 self.domain1,
@@ -632,5 +639,5 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': '123', 'users': [{}]},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content,
+            self.assertEqual(response.content.decode('utf-8'),
                 '{"sms_user_registration": {"phone_number": "This field is required"}}')
