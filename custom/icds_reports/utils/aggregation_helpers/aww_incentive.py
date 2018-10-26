@@ -35,13 +35,13 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
             awcm.supervisor_name,
             awcm.awc_name,
             awcm.aww_name,
-            acm.contact_phone_number,
+            awcm.contact_phone_number,
             awcm.wer_weighed,
             awcm.wer_eligible,
             awcm.awc_num_open,
-            acm.valid_visits,
-            acm.expected_visits
-          FROM agg_ccs_record_monthly AS acm
+            ccsm.valid_visits,
+            ccsm.expected_visits
+          FROM agg_ccs_record_monthly AS ccsm
           INNER JOIN agg_awc_monthly as awcm
           ON chm.month=acm.month AND chm.awc_id=awcm.awc_id
           WHERE acm.month = %(month)s AND acm.state_id = %(state_id)s and aggregation_level=5
