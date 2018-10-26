@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from io import StringIO
+from io import BytesIO
 from mock import patch
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -47,7 +47,7 @@ class BlobExpireTest(TestCase):
 
         with capture_log_output(mod.__name__) as logs:
             with patch('corehq.blobs.metadata._utcnow', return_value=now):
-                self.db.put(StringIO('content'), timeout=60, **self.args)
+                self.db.put(BytesIO(b'content'), timeout=60, **self.args)
 
             self.assertIsNotNone(self.db.get(key=self.key))
             with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=61)):
@@ -71,7 +71,7 @@ class BlobExpireTest(TestCase):
         pre_expire_count = manager.all().count()
 
         with patch('corehq.blobs.metadata._utcnow', return_value=now):
-            self.db.put(StringIO('content'), timeout=60, **self.args)
+            self.db.put(BytesIO(b'content'), timeout=60, **self.args)
 
         self.assertIsNotNone(self.db.get(key=self.key))
         with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=30)):
@@ -88,7 +88,7 @@ class BlobExpireTest(TestCase):
         with capture_log_output(mod.__name__) as logs:
             args = self.args.copy()
             args["key"] = blob_key = "bucket/" + self.key
-            meta = self.db.put(StringIO('content'), **args)
+            meta = self.db.put(BytesIO(b'content'), **args)
             self.assertFalse(meta.expires_on, meta.expires_on)
             self.addCleanup(lambda: self.db.delete(key=blob_key))
 
