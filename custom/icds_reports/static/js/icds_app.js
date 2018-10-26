@@ -295,8 +295,8 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_infrastructure/adult_weight_scale/:step", {
                 template: "<adult-weight-scale></adult-weight-scale>",
             })
-            .when("/awc_infrastructure/awc_reports", {
-                redirectTo: "/awc_infrastructure/awc_reports/pse",
+            .when("/awc_reports", {
+                redirectTo: "/awc_reports/pse",
             })
             .when("/awc_reports/:step", {
                 template: "<awc-reports></awc-reports>",
