@@ -43,8 +43,8 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
             ccsm.expected_visits
           FROM agg_ccs_record_monthly AS ccsm
           INNER JOIN agg_awc_monthly as awcm
-          ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id
-          WHERE ccsm.month = %(month)s AND ccsm.state_id = %(state_id)s and aggregation_level=5
+          ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcsm.aggregation_level
+          WHERE ccsm.month = %(month)s AND ccsm.state_id = %(state_id)s and ccsm.aggregation_level=5
         )
         """.format(
             tablename=tablename
