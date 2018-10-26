@@ -159,7 +159,7 @@ class SubmissionPost(object):
         if not user or not user.is_web_user():
             return _('Form successfully saved!')
 
-        from corehq.apps.export.old_views import CaseExportListView, FormExportListView
+        from corehq.apps.export.views.list import CaseExportListView, FormExportListView
         from corehq.apps.reports.views import CaseDataView, FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'

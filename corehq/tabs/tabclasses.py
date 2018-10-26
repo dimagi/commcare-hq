@@ -520,7 +520,7 @@ class ProjectDataTab(UITab):
 
         export_data_views = []
         if self.can_only_see_deid_exports:
-            from corehq.apps.export.old_views import (
+            from corehq.apps.export.views.list import (
                 DeIdFormExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
@@ -547,9 +547,11 @@ class ProjectDataTab(UITab):
                 DownloadNewSmsExportView,
                 BulkDownloadNewFormExportView,
             )
-            from corehq.apps.export.old_views import (
+            from corehq.apps.export.views.list import (
                 FormExportListView,
                 CaseExportListView,
+            )
+            from corehq.apps.export.old_views import (
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
                 EditNewCustomFormExportView,
@@ -772,8 +774,11 @@ class ProjectDataTab(UITab):
         ):
             return []
 
+        from corehq.apps.export.views.list import (
+            FormExportListView, CaseExportListView
+        )
         from corehq.apps.export.old_views import (
-            FormExportListView, CaseExportListView, DownloadNewSmsExportView,
+            DownloadNewSmsExportView,
         )
 
         items = []

@@ -20,11 +20,13 @@ from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
 )
+from corehq.apps.export.views.list import (
+    DailySavedExportListView,
+)
 from corehq.apps.export.old_views import (
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
-    DailySavedExportListView,
     DataFileDownloadDetail,
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
