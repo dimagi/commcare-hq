@@ -38,15 +38,12 @@
             </div>
             <div class="row">
                 <div class="col-xs-6 col-sm-4 col-md-3">
-                    <button type="submit" class="btn btn-primary btn-full-width"
-                            data-bind="visible: !preparingExport(), disable: disablePrepareExport">
-                        <i class="fa fa-download"></i>
-                        {% trans "Prepare Export" %}
-                    </button>
-                    <button type="submit" class="btn btn-primary btn-full-width btn-disabled"
-                            data-bind="visible: preparingExport()" disabled="disabled">
-                        <i class="fa-spin fa fa-spinner"></i>
-                        {% trans "Preparing Export" %}
+                    <button type="submit" class="btn btn-primary btn-full-width" data-bind="disable: disablePrepareExport">
+                        <i data-bind="visible: !preparingExport()" class="fa fa-cloud-download"></i>
+                        <span data-bind="visible: !preparingExport()">{% trans "Prepare Export" %}</span>
+
+                        <i data-bind="visible: preparingExport()" class="fa-spin fa fa-spinner"></i>
+                        <span data-bind="visible: preparingExport()">{% trans "Preparing Export" %}</span>
                     </button>
                 </div>
                 <div class="col-xs-6 col-sm-4 col-md-3" data-bind="visible: hasMultimedia">
@@ -54,17 +51,12 @@
                             data-bind="
                                 click: prepareMultimediaExport,
                                 disable: disablePrepareMultimediaExport,
-                                visible: !preparingMultimediaExport(),
                             ">
-                        <i class="fa fa-cloud-download"></i>
-                        {% trans "Prepare Multimedia" %}
-                    </button>
-                    <button type="button"
-                            class="btn btn-info btn-full-width btn-disabled"
-                            data-bind="visible: preparingMultimediaExport"
-                            disabled="disabled">
-                        <i class="fa-spin fa fa-spinner"></i>
-                        {% trans "Preparing Multimedia" %}
+                        <i data-bind="visible: !preparingMultimediaExport()" class="fa fa-cloud-download"></i>
+                        <span data-bind="visible: !preparingMultimediaExport()">{% trans "Prepare Multimedia" %}</span>
+
+                        <i data-bind="visible: preparingMultimediaExport()" class="fa-spin fa fa-spinner"></i>
+                        <span data-bind="visible: preparingMultimediaExport()">{% trans "Preparing Multimedia" %}</span>
                     </button>
                 </div>
             </div>
