@@ -38,40 +38,12 @@
         $scope.isFormInvalid = function () {
             return _.isEmpty($scope.formData.user_types);
         };
-
-        $scope.$watch(function () {
-            return exportDownloadService.showDownloadStatus;
-        }, function (status) {
-            $scope.downloadInProgress = status;
-        });
-        $scope.downloadInProgress = false;
     };
 
     exportsControllers.DownloadProgressController = function (
         $scope, exportDownloadService, formElement
     ) {
         var self = {};
-
-        self._reset = function () {
-            $scope.showProgress = false;
-            $scope.showDownloadStatus = false;
-            $scope.isDownloadReady = false;
-            $scope.isDownloaded = false;
-            $scope.dropboxUrl = null;
-            $scope.downloadUrl = null;
-            $scope.progress = {};
-            if (formElement.progress()) {
-                formElement.progress().css('width', '0%');
-                formElement.progress().removeClass('progress-bar-success');
-            }
-        };
-
-        self._reset();
-
-        $scope.resetDownload = function () {
-            self._reset();
-            exportDownloadService.resetDownload();
-        };
     };
     download_export.controller(exportsControllers);
 
