@@ -25,16 +25,7 @@
         <div class="col-sm-9 col-sm-offset-3">
             <div class="alert alert-warning" data-bind="visible: prepareExportError()">
                 <i class="fa fa-exclamation-triangle"></i>
-                <span data-bind="if: defaultPrepareExportError()">
-                    {% blocktrans %}
-                        Sorry, there was a problem reaching the server.
-                        Please try again or
-                        <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.
-                    {% endblocktrans %}
-                </span>
-                <span data-bind="ifnot: defaultPrepareExportError()">
-                    <span data-bind="text: prepareExportError"></span>
-                </span>
+                <span data-bind="text: prepareExportError"></span>
             </div>
             <div class="row">
                 <div class="col-xs-6 col-sm-4 col-md-3">
