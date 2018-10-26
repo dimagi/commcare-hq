@@ -232,9 +232,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        filters = get_filter_values(self.filters, self.request_dict, user=self.request_user)
-
-        return filters
+        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
 
     @property
     @memoized

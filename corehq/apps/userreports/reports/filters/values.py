@@ -106,7 +106,6 @@ class DateFilterValue(FilterValue):
 
     def _offset_enddate(self, enddate):
         # offset enddate for SQL query
-        
         if enddate:
             enddate = datetime.datetime.combine(enddate, datetime.datetime.max.time())
         return enddate
