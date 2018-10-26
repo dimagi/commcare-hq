@@ -710,14 +710,14 @@ class DateFilterOffsetTest(SimpleTestCase):
         start, end = date(2015, 1, 1), date(2015, 1, 2)
         computed_start, computed_end = self._computed_dates(start, end)
         self.assertEqual(computed_start, start)
-        self.assertEqual(computed_end, end)
+        self.assertEqual(computed_end, datetime.combine(end,datetime.max.time()))
 
     def test_datetime_objects(self):
         # computed_enddate should be last minute of the enddate
         start, end = datetime(2015, 1, 1), datetime(2015, 1, 2)
         computed_start, computed_end = self._computed_dates(start, end)
         self.assertEqual(computed_start, start)
-        self.assertNotEqual(computed_end, end)
+        self.assertEqual(computed_end, datetime.combine(end,datetime.max.time()))
         self.assertEqual((computed_end - end).days, 0)
 
 
