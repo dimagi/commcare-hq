@@ -7,7 +7,6 @@ hqDefine('export/js/download_export', function () {
         djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
     }]);
     downloadExportsApp.constant('exportList', initial_page_data('export_list'));
-    downloadExportsApp.constant('defaultDateRange', initial_page_data('default_date_range'));
     downloadExportsApp.constant('formElement', {
         progress: function () {
             return $('#download-progress-bar');
@@ -23,6 +22,7 @@ hqDefine('export/js/download_export', function () {
     // Model for the form to select date range, users, etc.
     var downloadFormModel = function (options) {
         hqImport("hqwebapp/js/assert_properties").assert(options, [
+            'defaultDateRange',
             'exportList',
             'exportType',
             'formOrCase',
@@ -35,24 +35,12 @@ hqDefine('export/js/download_export', function () {
             'userTypes',
         ]);
 
-        var self = {};
-
-        self.exportList = options.exportList;
-        self.exportType = options.exportType;
+        var self = _.extend({}, options);
         self.filterName = self.exportType === "form" ? "emw" : "case_list_filter";
-        self.formOrCase = options.formOrCase;
-        self.maxColumnSize = options.maxColumnSize;
-        self.multimediaUrl = options.multimediaUrl;
-        self.prepareUrl = options.prepareUrl;
-        self.prepareMultimediaUrl = options.prepareMultimediaUrl;
-        self.smsExport = options.smsExport;
-        self.userTypes = options.userTypes;
 
         // Form data
-        self.dateRange = ko.observable();
+        self.dateRange = ko.observable(self.defaultDateRange);
         self.emw = ko.observable();
-
-        self.progressModel = options.progressModel;
 
         // UI flags
         self.preparingExport = ko.observable(false);
@@ -373,6 +361,7 @@ hqDefine('export/js/download_export', function () {
         });
 
         $("#download-export-form").koApplyBindings(downloadFormModel({
+            defaultDateRange: initialPageData.get('default_date_range'),
             exportList: exportList,
             exportType: exportType,
             formOrCase: initialPageData.get('form_or_case'),
