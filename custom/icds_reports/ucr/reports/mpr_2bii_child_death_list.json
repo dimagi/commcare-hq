@@ -96,7 +96,12 @@
           "mar": "नांव",
           "tel": "పేరు",
           "hin": "नाम",
-          "en": "Name"
+          "en": "Name",
+          "tam": "பெயர்",
+          "lus": "Hming",
+          "pan": "ਨਾਮ",
+          "grt": "Bimung",
+          "kha": "Kyrteng"
         }
       },
       {
@@ -109,7 +114,12 @@
           "mar": "वय",
           "tel": "వయస్సు",
           "hin": "उम्र",
-          "en": "Age"
+          "en": "Age",
+          "tam": "வயது",
+          "lus": "Kum",
+          "pan": "ਉਮਰ",
+          "grt": "Bilsi",
+          "kha": "Kyrta"
         }
       },
       {
@@ -122,19 +132,34 @@
                 "mar": "पुरुष",
                 "tel": "పురుషుడు",
                 "hin": "पुरुष",
-                "en": "M"
+                "en": "M",
+                "tam": "ஆண்",
+                "lus": "Mipa",
+                "pan": "ਪੁਰਸ਼",
+                "grt": "Me·asa",
+                "kha": "Shynrang"
             },
             "O": {
                 "mar": "अन्य",
                 "tel": "ఇతరులు",
                 "hin": "अन्य",
-                "en": "O"
+                "en": "O",
+                "tam": "மற்றவர்",
+                "lus": "A dang",
+                "pan": "ਹੋਰ",
+                "grt": "Gipinrang",
+                "kha": "Kiwei kiwei"
             },
             "F": {
                 "mar": "स्त्री",
                 "tel": "మహిళ",
                 "hin": "महिला",
-                "en": "F"
+                "en": "F",
+                "tam": "பெண்",
+                "lus": "Hmeichhia",
+                "pan": "ਇਸਤਰੀ",
+                "grt": "Me·chik",
+                "kha": "Kynthei"
             }
           }
         },
@@ -145,7 +170,12 @@
           "mar": "लिंग",
           "tel": "లింగం",
           "hin": "लिंग",
-          "en": "Sex"
+          "en": "Sex",
+          "tam": "பாலினம்",
+          "lus": "Sex",
+          "pan": "ਲਿੰਗ",
+          "grt": "Me·a ba Me·chik",
+          "kha": "Jinglong shynrang ne kynthei"
         },
         "aggregation": "simple"
       },
@@ -159,25 +189,45 @@
               "mar": "पांढरा",
               "tel": "తెలుపు",
               "hin": "सफेद",
-              "en": "White"
+              "en": "White",
+              "tam": "வெள்ளை",
+              "lus": "a var",
+              "pan": "ਚਿੱਟਾ",
+              "grt": "Gipok",
+              "kha": "lieh"
             },
             "green": {
               "mar": "हिरवा",
               "tel": "ఆకుపచ్చ",
               "hin": "हरा",
-              "en": "Green"
+              "en": "Green",
+              "tam": "பச்சை",
+              "lus": "a hring",
+              "pan": "ਹਰਾ",
+              "grt": "Tangsek",
+              "kha": "Jyrngam"
             },
             "red": {
               "mar": "लाल",
               "tel": "ఎరుపు",
               "hin": "लाल",
-              "en": "Red"
+              "en": "Red",
+              "tam": "சிவப்பு",
+              "lus": "a sen",
+              "pan": "ਲਾਲ",
+              "grt": "Gitchak",
+              "kha": "Saw"
             },
             "yellow": {
               "mar": "पिवळा",
               "tel": "పసుపు",
               "hin": "पीला",
-              "en": "Yellow"
+              "en": "Yellow",
+              "tam": "மஞ்சள்",
+              "lus": "Rimit",
+              "pan": "ਪੀਲਾ",
+              "grt": "Rimit",
+              "kha": "Stem"
             }
           }
         },
@@ -188,7 +238,12 @@
           "mar": "पोषणाची परिस्थिति",
           "tel": "పోషకాహార స్థితి",
           "hin": "पोषण की स्थिति",
-          "en": "Nutrition Status"
+          "en": "Nutrition Status",
+          "tam": "ஊட்டச்சத்து நிலை",
+          "lus": "Nutrition dinhmun",
+          "pan": "ਪੋਸ਼ਣ ਸਥਿਤੀ",
+          "grt": "Nutritionni Gadang",
+          "kha": "Nutrition status i khynnah"
         },
         "aggregation": "simple"
       },
@@ -202,13 +257,23 @@
               "mar": "होय",
               "tel": "అవును",
               "hin": "हाँ",
-              "en": "Yes"
+              "en": "Yes",
+              "tam": "ஆம்",
+              "lus": "Aw",
+              "pan": "ਹਾਂ",
+              "grt": "Ong·a",
+              "kha": "Hooid"
             },
             "no": {
               "mar": "नाही",
               "tel": "కాదు",
               "hin": "नहीं",
-              "en": "No"
+              "en": "No",
+              "tam": "இல்லை",
+              "lus": "Aih",
+              "pan": "ਨਹੀਂ",
+              "grt": "Ong·ja",
+              "kha": "Em"
             }
           }
         },
@@ -219,7 +284,12 @@
           "mar": "निवासी",
           "tel": "నివాసితుడు",
           "hin": "निवासी",
-          "en": "Resident"
+          "en": "Resident",
+          "tam": "வசிப்பவர்",
+          "lus": "Chenna",
+          "pan": "ਨਿਵਾਸੀ",
+          "grt": "Songtangni",
+          "kha": "Nongshong shnong"
         },
         "aggregation": "simple"
       },
@@ -233,7 +303,12 @@
           "mar": "मृत्युची  तारीख",
           "tel": "మరణించిన తేదీ",
           "hin": "मृत्यु की तारीख",
-          "en": "Date Death"
+          "en": "Date Death",
+          "tam": "இறந்த தேதி",
+          "lus": "Thih ni",
+          "pan": "ਮੌਤ ਦੀ ਮਿਤੀ",
+          "grt": "Siani tarik",
+          "kha": "Sngi Khlad"
         }
       }
     ],
