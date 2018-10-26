@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.db import migrations
+from corehq.util.django_migrations import AlterIndexIfNotExists
 
 
 class Migration(migrations.Migration):
@@ -13,7 +14,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterIndexTogether(
+        AlterIndexIfNotExists(
             name='commcarecasesql',
             index_together=set([
                 ('owner_id', 'server_modified_on'),
