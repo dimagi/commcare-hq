@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from memoized import Memoized
 from django.test import TestCase, SimpleTestCase
 import mock
-from corehq.apps.export.views import user_can_view_deid_exports
+from corehq.apps.export.old_views import user_can_view_deid_exports
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions, WebUser, UserRole, DomainMembership
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION
@@ -30,7 +30,7 @@ class PermissionsTest(TestCase):
         )))
 
 
-@mock.patch('corehq.apps.export.views.domain_has_privilege',
+@mock.patch('corehq.apps.export.old_views.domain_has_privilege',
             lambda domain, privilege: True)
 class ExportPermissionsTest(SimpleTestCase):
 

@@ -79,7 +79,7 @@ def default(request, domain):
 
 
 def default_data_view_url(request, domain):
-    from corehq.apps.export.views import (
+    from corehq.apps.export.old_views import (
         CaseExportListView,
         DataFileDownloadList,
         DeIdFormExportListView,

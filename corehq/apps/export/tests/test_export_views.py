@@ -20,7 +20,7 @@ from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
 )
-from corehq.apps.export.views import (
+from corehq.apps.export.old_views import (
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
@@ -242,7 +242,7 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-    @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.export.old_views.domain_has_privilege', lambda x, y: True)
     @patch("corehq.apps.export.tasks.rebuild_export")
     def test_edit_daily_saved_export_filters(self, _):
         # Create an export

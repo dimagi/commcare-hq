@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url
-from corehq.apps.export.views import (
+from corehq.apps.export.old_views import (
     CreateNewCustomFormExportView,
     CreateNewCustomCaseExportView,
     EditNewCustomFormExportView,

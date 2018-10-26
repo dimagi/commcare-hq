@@ -497,7 +497,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_only_see_deid_exports(self):
-        from corehq.apps.export.views import user_can_view_deid_exports
+        from corehq.apps.export.old_views import user_can_view_deid_exports
         return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
@@ -520,7 +520,7 @@ class ProjectDataTab(UITab):
 
         export_data_views = []
         if self.can_only_see_deid_exports:
-            from corehq.apps.export.views import (
+            from corehq.apps.export.old_views import (
                 DeIdFormExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
@@ -541,7 +541,7 @@ class ProjectDataTab(UITab):
             ])
 
         elif self.can_export_data:
-            from corehq.apps.export.views import (
+            from corehq.apps.export.old_views import (
                 FormExportListView,
                 CaseExportListView,
                 CreateNewCustomFormExportView,
@@ -702,7 +702,7 @@ class ProjectDataTab(UITab):
                 })
 
         if can_download_data_files(self.domain, self.couch_user):
-            from corehq.apps.export.views import DataFileDownloadList
+            from corehq.apps.export.old_views import DataFileDownloadList
 
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
@@ -770,7 +770,7 @@ class ProjectDataTab(UITab):
         ):
             return []
 
-        from corehq.apps.export.views import (
+        from corehq.apps.export.old_views import (
             FormExportListView, CaseExportListView, DownloadNewSmsExportView,
         )
 

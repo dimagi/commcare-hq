@@ -15,7 +15,7 @@ ReportPermission = namedtuple('ReportPermission', ['slug', 'title', 'is_visible'
 
 
 def get_extra_permissions():
-    from corehq.apps.export.views import (
+    from corehq.apps.export.old_views import (
         FormExportListView, DeIdFormExportListView, CaseExportListView, DownloadNewSmsExportView
     )
     yield ReportPermission(
