@@ -49,25 +49,24 @@
                         {% trans "Preparing Export" %}
                     </button>
                 </div>
-                <!-- TODO -->
-                <!--div class="col-xs-6 col-sm-4 col-md-3"
-                     ng-show="hasMultimedia">
-                    <button type="button"
-                            class="btn btn-info btn-full-width"
-                            ng-click="prepareMultimediaExport()"
-                            ng-show="!preparingMultimediaExport"
-                            ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingMultimediaExport">
-                        <i class="fa fa-download"></i>
+                <div class="col-xs-6 col-sm-4 col-md-3" data-bind="visible: hasMultimedia">
+                    <button type="button" class="btn btn-info btn-full-width"
+                            data-bind="
+                                click: prepareMultimediaExport,
+                                disable: disablePrepareMultimediaExport,
+                                visible: !preparingMultimediaExport(),
+                            ">
+                        <i class="fa fa-cloud-download"></i>
                         {% trans "Prepare Multimedia" %}
                     </button>
                     <button type="button"
                             class="btn btn-info btn-full-width btn-disabled"
-                            ng-show="preparingMultimediaExport"
+                            data-bind="visible: preparingMultimediaExport"
                             disabled="disabled">
                         <i class="fa-spin fa fa-spinner"></i>
                         {% trans "Preparing Multimedia" %}
                     </button>
-                </div-->
+                </div>
                 {% if export_list_url %}
                 <div class="col-xs-12 col-sm-4 col-md-5">
                     <a href="{{ export_list_url }}" class="btn btn-default">
