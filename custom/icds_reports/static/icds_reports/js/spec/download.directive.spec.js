@@ -39,7 +39,6 @@ describe('Download Directive', function () {
             var fakeDate = new Date(2016, 9, 1);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
 
-            window.ga = function() {};
             var element = window.angular.element("<download data='test'></download>");
             var compiled = $compile(element)($scope);
 
@@ -287,7 +286,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(7, length);
+            assert.equal(8, length);
         });
     });
 
@@ -335,7 +334,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(7, length);
+            assert.equal(8, length);
         });
     });
 

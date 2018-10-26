@@ -4,7 +4,7 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
+git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
 alembic==0.8.6
 amqp==1.4.9
@@ -72,6 +72,7 @@ ethiopian-date-converter==0.1.5
 eulxml==1.1.3
 fakecouch==0.0.15
 faker==0.8.15
+freezegun==0.3.10
 funcsigs==1.0.2
 futures==3.2.0
 gevent==1.2.2
@@ -90,7 +91,7 @@ jinja2==2.10
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.9
+jsonobject-couchdbkit==0.9.10
 jsonobject==0.9.4
 jsonpath-rw==1.4.0
 kafka-python==1.4.3
@@ -138,6 +139,7 @@ qrcode==4.0.4
 quickcache==0.5.1
 raven==6.1.0
 rcssmin==1.0.6
+redis-py-cluster==1.3.5
 redis==2.10.6
 reportlab==3.0
 requests-mock==1.5.2

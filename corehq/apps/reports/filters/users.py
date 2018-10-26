@@ -123,7 +123,9 @@ class EmwfUtils(object):
     def user_tuple(self, u):
         user = util._report_user_dict(u)
         uid = "u__%s" % user['user_id']
-        if user['is_active']:
+        if u['doc_type'] == 'WebUser':
+            name = "%s [Web User]" % user['username_in_report']
+        elif user['is_active']:
             name = "%s [Active Mobile Worker]" % user['username_in_report']
         else:
             name = "%s [Deactivated Mobile Worker]" % user['username_in_report']

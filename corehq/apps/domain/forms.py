@@ -1649,7 +1649,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 if self.current_subscription is not None:
-                    if self.is_downgrade() and self.current_subscription.is_below_minimum_subscription:
+                    if self.is_downgrade_from_paid_plan() and \
+                            self.current_subscription.is_below_minimum_subscription:
                         self.current_subscription.update_subscription(
                             date_start=self.current_subscription.date_start,
                             date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
@@ -1693,8 +1694,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             )
             return False
 
-    def is_downgrade(self):
+    def is_downgrade_from_paid_plan(self):
         if self.current_subscription is None:
+            return False
+        elif self.current_subscription.is_trial:
             return False
         else:
             return is_downgrade(

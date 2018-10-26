@@ -45,6 +45,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -93,7 +94,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice,
+    EntryPoint, WireInvoice, CustomerInvoice,
     StripePaymentMethod, LastPayment,
     UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
 )
@@ -719,7 +720,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'show_account_credits': any(
                 feature['account_credit'].get('is_visible')
                 for feature in self.plan.get('features')
-            )
+            ),
+            'can_change_subscription': self.current_subscription.user_can_change_subscription(self.request.user)
         }
 
 
@@ -883,6 +885,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 ),
             },
             'total_balance': self.total_balance,
+            'show_plan': True
         })
         return pagination_context
 
@@ -1080,8 +1083,11 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
         except IndexError:
             raise PaymentRequestError("invoice_id is required")
         try:
-            return Invoice.objects.get(pk=invoice_id)
-        except Invoice.DoesNotExist:
+            if self.account and self.account.is_customer_billing_account:
+                return CustomerInvoice.objects.get(pk=invoice_id)
+            else:
+                return Invoice.objects.get(pk=invoice_id)
+        except (Invoice.DoesNotExist, CustomerInvoice.DoesNotExist):
             raise PaymentRequestError(
                 "Could not find a matching invoice for invoice_id '%s'"
                 % invoice_id
@@ -1089,7 +1095,7 @@ class InvoiceStripePaymentView(BaseStripePaymentView):
 
     @property
     def account(self):
-        return self.invoice.subscription.account
+        return BillingAccount.get_account_by_domain(self.domain)
 
     def get_payment_handler(self):
         return InvoiceStripePaymentHandler(
@@ -1119,9 +1125,11 @@ class WireInvoiceView(View):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        from corehq.apps.accounting.views import _get_account_or_404
         emails = request.POST.get('emails', []).split()
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
-        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+        account = _get_account_or_404(request, request.domain)
+        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails, account=account)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
         except Exception as e:
@@ -1153,24 +1161,37 @@ class BillingStatementPdfView(View):
                     pk=invoice_pdf.invoice_id,
                     domain=domain
                 )
+            elif invoice_pdf.is_customer:
+                invoice = CustomerInvoice.objects.get(
+                    pk=invoice_pdf.invoice_id
+                )
             else:
                 invoice = Invoice.objects.get(
                     pk=invoice_pdf.invoice_id,
                     subscription__subscriber__domain=domain
                 )
-        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist):
+        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist, CustomerInvoice.DoesNotExist):
             raise Http404()
 
-        if invoice.is_wire:
-            edition = 'Bulk'
+        if invoice.is_customer_invoice:
+            from corehq.apps.accounting.views import _get_account_or_404
+            account = _get_account_or_404(request, domain)
+            filename = "%(pdf_id)s_%(account)s_%(filename)s" % {
+                'pdf_id': invoice_pdf._id,
+                'account': account,
+                'filename': invoice_pdf.get_filename(invoice)
+            }
         else:
-            edition = DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name']
-        filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
-            'pdf_id': invoice_pdf._id,
-            'domain': domain,
-            'edition': edition,
-            'filename': invoice_pdf.get_filename(invoice),
-        }
+            if invoice.is_wire:
+                edition = 'Bulk'
+            else:
+                edition = DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name']
+            filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
+                'pdf_id': invoice_pdf._id,
+                'domain': domain,
+                'edition': edition,
+                'filename': invoice_pdf.get_filename(invoice),
+            }
         try:
             data = invoice_pdf.get_data(invoice)
             response = HttpResponse(data, content_type='application/pdf')
@@ -1570,6 +1591,18 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
+    def downgrade_messages(self):
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        downgrades = get_change_status(
+            subscription.plan_version if subscription else None,
+            self.selected_plan_version
+        )[1]
+        downgrade_handler = DomainDowngradeStatusHandler(
+            self.domain_object, self.selected_plan_version, downgrades,
+        )
+        return downgrade_handler.get_response()
+
+    @property
     def is_upgrade(self):
         if self.current_subscription.is_trial:
             return True
@@ -1608,6 +1641,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     def page_context(self):
         return {
+            'downgrade_messages': self.downgrade_messages,
             'is_upgrade': self.is_upgrade,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
@@ -1729,21 +1763,34 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             return self.async_response
 
         if self.is_form_post and self.billing_account_info_form.is_valid():
+            if not self.current_subscription.user_can_change_subscription(self.request.user):
+                messages.error(
+                    request, _(
+                        "You do not have permission to change the subscription for this customer-level account. "
+                        "Please reach out to the %s enterprise admin for help."
+                    ) % self.account.name
+                )
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             next_subscription = self.current_subscription.next_subscription
 
             if is_saved:
-                if not request.user.is_superuser and not self.is_upgrade:
+                if self.billing_account_info_form.is_downgrade_from_paid_plan() and not request.user.is_superuser:
                     self.send_downgrade_email()
                 if next_subscription is not None:
                     # New subscription has been scheduled for the future
-                    current_subscription = self.current_subscription.plan_version.plan.edition
+                    current_subscription_edition = self.current_subscription.plan_version.plan.edition
                     start_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
                     message = _(
-                        "You have successfully scheduled your current %s Edition Plan subscription to "
-                        "downgrade to the %s Edition Plan on %s."
-                    ) % (current_subscription, software_plan_name, start_date)
+                        "You have successfully scheduled your current %(current_subscription_edition)s "
+                        "Edition Plan subscription to downgrade to the %(software_plan_name)s Edition Plan "
+                        "on %(start_date)s."
+                    ) % {
+                        'current_subscription_edition': current_subscription_edition,
+                        'software_plan_name': software_plan_name,
+                        'start_date': start_date,
+                    }
                 else:
                     message = _(
                         "Your project has been successfully subscribed to the %s Edition Plan."
@@ -1756,9 +1803,12 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             downgrade_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
             messages.error(
                 request, _(
-                    "You have already scheduled a downgrade to the %s Software Plan on %s. If this is a "
-                    "mistake, please reach out to billing-support@dimagi.com."
-                ) % (software_plan_name, downgrade_date)
+                    "You have already scheduled a downgrade to the %(software_plan_name)s Software Plan on "
+                    "%(downgrade_date)s. If this is a mistake, please reach out to billing-support@dimagi.com."
+                ) % {
+                    'software_plan_name': software_plan_name,
+                    'downgrade_date': downgrade_date,
+                }
             )
 
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
@@ -1936,6 +1986,8 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
+        if get_domain_master_link(request.domain):
+            raise Http404()
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property

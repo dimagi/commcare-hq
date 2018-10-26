@@ -103,6 +103,7 @@ ADMIN_API_LIST = (
     BillingAccountResource,
     SubscriptionResource,
     InvoiceResource,
+    CustomerInvoiceResource,
     LineItemResource,
     PaymentMethodResource,
     BillingContactInfoResource,

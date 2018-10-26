@@ -250,7 +250,7 @@ def create_form_for_test(
             modified_by=user_id,
             server_modified_on=utcnow,
         )
-        case.track_create(CaseTransaction.form_transaction(case, form))
+        case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
         cases = [case]
 
     if save:

@@ -158,18 +158,6 @@ class CaseProcessingConfig(object):
         )
 
 
-def get_and_check_xform_domain(xform):
-    try:
-        domain = xform.domain
-    except AttributeError:
-        domain = None
-
-    if not domain and settings.CASEXML_FORCE_DOMAIN_CHECK:
-        raise NoDomainProvided()
-
-    return domain
-
-
 def _get_or_update_cases(xforms, case_db):
     """
     Given an xform document, update any case blocks found within it,
@@ -438,11 +426,8 @@ def cases_referenced_by_xform(xform):
     Returns a list of CommCareCase or CommCareCaseSQL given a JSON
     representation of an XFormInstance
     """
-    from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+    assert xform.domain, "Form is missing 'domain'"
     from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
     case_ids = get_case_ids_from_form(xform)
-    domain = get_and_check_xform_domain(xform)
-    case_accessor = CaseAccessors(domain)
-    if domain is None:
-        assert case_accessor.db_accessor == CaseAccessorCouch
+    case_accessor = CaseAccessors(xform.domain)
     return list(case_accessor.get_cases(list(case_ids)))

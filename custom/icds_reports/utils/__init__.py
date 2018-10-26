@@ -293,19 +293,19 @@ def get_age_filter_in_months(age_value):
         For that range we want to include 0 and 6 in results.
     """
     if age_value == '6':
-        return {'age_in_months__in': ['0', '6']}
+        return {'age_in_months__range': ['0', '6']}
     elif age_value == '12':
-        return {'age_in_months__in': ['7', '12']}
+        return {'age_in_months__range': ['7', '12']}
     elif age_value == '24':
-        return {'age_in_months__in': ['13', '24']}
+        return {'age_in_months__range': ['13', '24']}
     elif age_value == '36':
-        return {'age_in_months__in': ['25', '36']}
+        return {'age_in_months__range': ['25', '36']}
     elif age_value == '48':
-        return {'age_in_months__in': ['37', '48']}
+        return {'age_in_months__range': ['37', '48']}
     elif age_value == '60':
-        return {'age_in_months__in': ['49', '60']}
+        return {'age_in_months__range': ['49', '60']}
     elif age_value == '72':
-        return {'age_in_months__in': ['61', '72']}
+        return {'age_in_months__range': ['61', '72']}
 
 
 def match_age(age):
@@ -426,9 +426,9 @@ def get_counseling(value):
 def get_tt_dates(value):
     tt_dates = []
     if value['tt_1']:
-        tt_dates.append(value['tt_1'])
+        tt_dates.append(str(value['tt_1']))
     if value['tt_2']:
-        tt_dates.append(value['tt_2'])
+        tt_dates.append(str(value['tt_2']))
     if tt_dates:
         return '; '.join(tt_dates)
     else:
@@ -770,3 +770,9 @@ def percent_or_not_entered(x, y):
 class ICDSDatabaseColumn(DatabaseColumn):
     def get_raw_value(self, row):
         return (self.view.get_value(row) or '') if row else ''
+
+
+def india_now():
+    utc_now = datetime.now(pytz.utc)
+    india_now = utc_now.astimezone(india_timezone)
+    return india_now.strftime("%H:%M:%S %d %B %Y")

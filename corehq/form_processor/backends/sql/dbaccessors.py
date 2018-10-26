@@ -56,7 +56,7 @@ from corehq.form_processor.utils.sql import (
     fetchall_as_namedtuple
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
-from corehq.sql_db.routers import get_cursor
+from corehq.sql_db.routers import db_for_read_write, get_cursor
 from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
 from dimagi.utils.chunked import chunked
@@ -216,7 +216,8 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
     @property
     def sql_db_aliases(self):
-        all_db_aliases = get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
+        all_db_aliases = get_sql_db_aliases_in_use() if self.is_sharded() \
+            else [db_for_read_write(self.model_class)]
         if self.limit_db_aliases:
             db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
             assert db_aliases, 'Limited DBs not in expected list: {} {}'.format(
@@ -908,6 +909,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
+    def check_transaction_order_for_case(case_id):
+        """ Returns whether the order of transactions needs to be reconciled by client_date
+
+        True if the order is fine, False if the order is bad
+        """
+        if not case_id:
+            return False
+
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        db = get_db_alias_for_partitioned_doc(case_id)
+        with connections[db].cursor() as cursor:
+            cursor.execute(
+                'SELECT compare_server_client_case_transaction_order(%s, %s)',
+                [case_id, CaseTransaction.case_rebuild_types() | CaseTransaction.TYPE_CASE_CREATE])
+            result = cursor.fetchone()[0]
+            return result
+
+    @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
         with get_cursor(CommCareCaseSQL) as cursor:
@@ -1224,6 +1243,60 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             )
             for trans in resultset:
                 yield trans
+
+    @staticmethod
+    def get_case_transactions_by_case_id(case_id, updated_xforms=None):
+        """
+        This fetches all the transactions required to rebuild the case along
+        with all the forms for those transactions.
+
+        For any forms that have been updated it replaces the old form
+        with the new one.
+
+        :param case_id: ID of case to rebuild
+        :param updated_xforms: list of forms that have been changed.
+        :return: list of ``CaseTransaction`` objects with their associated forms attached.
+        """
+
+        transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
+        CaseAccessorSQL.fetch_case_transaction_forms(transactions, updated_xforms)
+        return transactions
+
+    @staticmethod
+    def fetch_case_transaction_forms(transactions, updated_xforms=None):
+        """
+        Fetches the forms for a list of transactions, caching them onto each transaction
+
+        :param transactions: list of ``CaseTransaction`` objects:
+        :param updated_xforms: list of forms that have been changed.
+        """
+
+        form_ids = {tx.form_id for tx in transactions}
+        updated_xforms_map = {
+            xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
+        } if updated_xforms else {}
+
+        form_ids_to_fetch = list(form_ids - set(updated_xforms_map))
+        xform_map = {
+            form.form_id: form
+            for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)
+        }
+
+        def get_form(form_id):
+            if form_id in updated_xforms_map:
+                return updated_xforms_map[form_id]
+
+            try:
+                return xform_map[form_id]
+            except KeyError:
+                raise XFormNotFound
+
+        for case_transaction in transactions:
+            if case_transaction.form_id:
+                try:
+                    case_transaction.cached_form = get_form(case_transaction.form_id)
+                except XFormNotFound:
+                    logging.error('Form not found during rebuild: %s', case_transaction.form_id)
 
 
 class LedgerReindexAccessor(ReindexAccessor):

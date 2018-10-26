@@ -436,6 +436,33 @@
           "true_values": ["yes"],
           "false_values": ["no"]
         }
+      },
+      {
+        "column_id": "unscheduled_visit",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "unscheduled_visit"]
+        }
+      },
+      {
+        "column_id": "days_visit_late",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "days_visit_late"]
+        }
+      },
+      {
+        "column_id": "next_visit",
+        "datatype": "date",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "next_due"]
+        }
       }
     ],
     "named_expressions": {

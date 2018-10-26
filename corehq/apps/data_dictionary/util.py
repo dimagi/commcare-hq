@@ -1,9 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from itertools import groupby
+from operator import attrgetter
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext
 
 from corehq import toggles
+from corehq.util.quickcache import quickcache
 from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -15,24 +20,22 @@ class OldExportsEnabledException(Exception):
 
 
 def generate_data_dictionary(domain):
-    properties = get_all_case_properties(domain)
+    properties = _get_all_case_properties(domain)
     _create_properties_for_case_types(domain, properties)
     CaseType.objects.filter(domain=domain, name__in=list(properties)).update(fully_generated=True)
     return True
 
 
-def get_all_case_properties(domain, case_types=None):
+def _get_all_case_properties(domain):
     # moved here to avoid circular import
     from corehq.apps.export.models.new import CaseExportDataSchema
 
     case_type_to_properties = {}
     case_properties_from_apps = all_case_properties_by_domain(
-        domain, case_types=case_types, include_parent_properties=False
+        domain, include_parent_properties=False
     )
 
-    if case_types is None:
-        case_types = get_case_types_from_apps(domain)
-    for case_type in case_types:
+    for case_type in get_case_types_from_apps(domain):
         properties = set()
         schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
 
@@ -149,3 +152,16 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     except ValidationError as e:
         return six.text_type(e)
     prop.save()
+
+
+@quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
+def get_data_dict_props_by_case_type(domain):
+    return {
+        case_type: {prop.name for prop in props} for case_type, props in groupby(
+            CaseProperty.objects
+            .filter(case_type__domain=domain, deprecated=False)
+            .select_related("case_type")
+            .order_by('case_type__name'),
+            key=attrgetter('case_type.name')
+        )
+    }

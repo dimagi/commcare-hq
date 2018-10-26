@@ -27,7 +27,7 @@ class TestAppStructureRepeater(TestCase):
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
         self.assertEqual(len(repeat_records), 0)
-        
+
         app_structure_repeater = AppStructureRepeater(domain=self.domain, url=self.forwarding_url)
         app_structure_repeater.save()
 
@@ -36,9 +36,9 @@ class TestAppStructureRepeater(TestCase):
 
         self.assertEqual(len(repeat_records), 1)
         for repeat_record in repeat_records:
-                self.assertEqual(repeat_record.url, self.forwarding_url)
+                self.assertEqual(repeat_record.repeater.get_url(repeat_record), self.forwarding_url)
                 self.assertEqual(repeat_record.get_payload(), application.get_id)
                 repeat_record.delete()
-        
+
         application.delete()
         app_structure_repeater.delete()

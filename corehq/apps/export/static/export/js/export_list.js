@@ -15,7 +15,6 @@ hqDefine("export/js/export_list", function () {
         window.location = data.url;
     });
     listExportsApp.constant('bulk_download_url', initial_page_data("bulk_download_url"));
-    listExportsApp.constant('legacy_bulk_download_url', initial_page_data("legacy_bulk_download_url"));
     listExportsApp.constant('modelType', initial_page_data("model_type"));
     listExportsApp.constant('staticModelType', initial_page_data("static_model_type"));
     listExportsApp.constant('filterFormElements', {

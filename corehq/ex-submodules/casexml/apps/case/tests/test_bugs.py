@@ -44,7 +44,6 @@ class CaseBugTestCouchOnly(TestCase):
             submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseBugTest(TestCase, TestFileMixin):
     """
     Tests bugs that come up in case processing

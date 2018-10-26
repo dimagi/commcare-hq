@@ -96,6 +96,10 @@
                     {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
                         {% include "app_manager/partials/forms/custom_instances.html" %}
                     {% endif %}
+                    {{ request|toggle_tag_info:"CUSTOM_ASSERTIONS" }}
+                    {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
+                        {% include "app_manager/partials/forms/custom_assertions.html" %}
+                    {% endif %}
                 </div>
             </div>
         </div>

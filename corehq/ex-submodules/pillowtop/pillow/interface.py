@@ -168,7 +168,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                             changes_chunk = []
                             serial_processing_time = 0
                     else:
-                        self._record_change_in_datadog(change, serial_processing_time)
+                        self._record_change_in_datadog(change, processing_time)
                         self._update_checkpoint(change, context)
                 else:
                     self._update_checkpoint(None, None)
@@ -194,6 +194,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         for processor in self.batch_processors:
             if not changes_chunk:
                 return set(), 0
+
+            changes_chunk = self._deduplicate_changes(changes_chunk)
             retry_changes = set()
             timer = TimingContext()
             with timer:
@@ -285,8 +287,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         count = len(changes_chunk) * len(self.processors)
         datadog_counter('commcare.change_feed.changes.count', count, tags=tags)
 
-        max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).seconds
-        min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).seconds
+        max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).total_seconds()
+        min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).total_seconds()
         datadog_gauge('commcare.change_feed.chunked.min_change_lag', min_change_lag, tags=tags)
         datadog_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
 
@@ -339,7 +341,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             count = 1 if processor else len(self.processors)
             datadog_counter(metric, value=count, tags=tags)
 
-            change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).seconds
+            change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
             datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 _topic_for_ddog(change.topic),
@@ -347,6 +349,17 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
 
             if processing_time:
                 datadog_histogram('commcare.change_feed.processing_time', processing_time, tags=tags)
+
+    @staticmethod
+    def _deduplicate_changes(changes_chunk):
+        seen = set()
+        unique = []
+        for change in reversed(changes_chunk):
+            if change.id not in seen:
+                unique.append(change)
+                seen.add(change.id)
+        unique.reverse()
+        return unique
 
 
 class ChangeEventHandler(six.with_metaclass(ABCMeta, object)):

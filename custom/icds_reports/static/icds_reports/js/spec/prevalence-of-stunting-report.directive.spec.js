@@ -38,7 +38,6 @@ describe('Prevalence Of Stunting Directive feature flag disable', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
-        window.ga = function() {};
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('prevalence_of_stunting').respond(200, {
@@ -104,12 +103,12 @@ describe('Prevalence Of Stunting Directive feature flag disable', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, total_measured: 15, severe: 5, moderate: 5, normal: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>' +
-            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>15</strong></div>' +
-            '<div>Number of children (6 - 60 months) unmeasured: <strong>5</strong></div>' +
-            '<div>% children (6 - 60 months) with severely stunted growth: <strong>33.33%</strong></div>' +
-            '<div>% children (6 - 60 months) with moderate stunted growth: <strong>33.33%</strong></div>' +
-            '<div>% children (6 - 60 months) with normal stunted growth: <strong>33.33%</strong></div></div>');
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
+            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>15</strong></div>' +
+            '<div>Number of children (0 - 5 years) unmeasured: <strong>5</strong></div>' +
+            '<div>% children (0 - 5 years) with severely stunted growth: <strong>33.33%</strong></div>' +
+            '<div>% children (0 - 5 years) with moderate stunted growth: <strong>33.33%</strong></div>' +
+            '<div>% children (0 - 5 years) with normal stunted growth: <strong>33.33%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -178,7 +177,7 @@ describe('Prevalence Of Stunting Directive feature flag disable', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Of the children enrolled for Anganwadi services, whose height was measured, the percentage of children between (6 - 60 months) who were moderately/severely stunted in the current month. \n' +
+            'Of the children enrolled for Anganwadi services, whose height was measured, the percentage of children between (0 - 5 years) who were moderately/severely stunted in the current month. \n' +
             '\n' +
             'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child'
         );
@@ -188,12 +187,12 @@ describe('Prevalence Of Stunting Directive feature flag disable', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>' +
-            '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>' +
-            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>10</strong></div>' +
-            '<div>Number of children (6 - 60 months) unmeasured: <strong>10</strong></div>' +
-            '<div>% children (6 - 60 months) with severely stunted growth: <strong>20.00%</strong></div>' +
-            '<div>% children (6 - 60 months) with moderate stunted growth: <strong>15.00%</strong></div>' +
-            '<div>% children (6 - 60 months) with normal stunted growth: <strong>10.00%</strong></div>';
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
+            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>10</strong></div>' +
+            '<div>Number of children (0 - 5 years) unmeasured: <strong>10</strong></div>' +
+            '<div>% children (0 - 5 years) with severely stunted growth: <strong>20.00%</strong></div>' +
+            '<div>% children (0 - 5 years) with moderate stunted growth: <strong>15.00%</strong></div>' +
+            '<div>% children (0 - 5 years) with normal stunted growth: <strong>10.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 10, 20);
         assert.equal(expected, result);
@@ -202,12 +201,12 @@ describe('Prevalence Of Stunting Directive feature flag disable', function () {
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Total Children (6 - 60 months) weighed in given month: <strong>0</strong></div>' +
-            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>0</strong></div>' +
-            '<div>Number of children (6 - 60 months) unmeasured: <strong>0</strong></div>' +
-            '<div>% children (6 - 60 months) with severely stunted growth: <strong>NaN%</strong></div>' +
-            '<div>% children (6 - 60 months) with moderate stunted growth: <strong>NaN%</strong></div>' +
-            '<div>% children (6 - 60 months) with normal stunted growth: <strong>NaN%</strong></div></div>';
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>0</strong></div>' +
+            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>0</strong></div>' +
+            '<div>Number of children (0 - 5 years) unmeasured: <strong>0</strong></div>' +
+            '<div>% children (0 - 5 years) with severely stunted growth: <strong>NaN%</strong></div>' +
+            '<div>% children (0 - 5 years) with moderate stunted growth: <strong>NaN%</strong></div>' +
+            '<div>% children (0 - 5 years) with normal stunted growth: <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };
