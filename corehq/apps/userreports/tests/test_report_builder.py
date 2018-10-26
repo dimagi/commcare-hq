@@ -136,7 +136,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             'form.case.update.last_name', "count",
         ]
 
-        self.assertEqual(expected_property_names, list(reference.data_source_properties.keys()))
+        self.assertEqual(set(expected_property_names), set(reference.data_source_properties.keys()))
         user_id_prop = reference.data_source_properties['userID']
         self.assertEqual('userID', user_id_prop.get_id())
         self.assertEqual('userID', user_id_prop.get_text())
