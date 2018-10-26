@@ -70,13 +70,11 @@ hqDefine('export/js/download_export', function () {
             });
             var action = (self.exportList.length > 1) ? "Bulk" : "Regular";
             hqImport('analytix/js/google').track.event("Download Export", self.exportType, action);
-            if (self.has_case_history_table) {
-                _.each(self.exportList, function (export_) {
-                    if (export_.has_case_history_table) {
-                        hqImport('analytix/js/google').track.event("Download Case History Export", export_.domain, export_.export_id);
-                    }
-                });
-            }
+            _.each(self.exportList, function (export_) {
+                if (export_.has_case_history_table) {
+                    hqImport('analytix/js/google').track.event("Download Case History Export", export_.domain, export_.export_id);
+                }
+            });
         };
 
         self.prepareExport = function () {

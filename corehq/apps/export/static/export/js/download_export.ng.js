@@ -35,12 +35,6 @@
             $('form[name="exportFiltersForm"]'));
         if (formElement.user_type()) formElement.user_type().select2('val', ['mobile']);
 
-        if (exportType === 'case') {
-            self.has_case_history_table = _.any($scope.exportList, function (export_) {
-                return export_.has_case_history_table;
-            });
-        }
-
         $scope.isFormInvalid = function () {
             return _.isEmpty($scope.formData.user_types);
         };
