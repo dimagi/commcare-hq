@@ -23,7 +23,6 @@
         user_type: function () { return null; },
     });
 
-    download_export.constant('maxColumnSize', 2000);
     download_export.constant('defaultDateRange', null);
 
     var exportsControllers = {};
@@ -32,7 +31,6 @@
     ) {
         var self = {};
         $scope._ = _;   // make underscore.js available
-        self._maxColumnSize = maxColumnSize;
 
         $scope.formData.user_types = ['mobile'];
         $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
