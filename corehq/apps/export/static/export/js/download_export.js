@@ -45,10 +45,6 @@ hqDefine('export/js/download_export', function () {
             self.downloadInProgress(newValue);
         });
 
-        self.defaultPrepareExportError = ko.computed(function () {
-            return self.prepareExportError() === 'default';
-        });
-
         self.isValid = ko.computed(function () {
             return !!self.dateRange();
         });
@@ -131,10 +127,10 @@ hqDefine('export/js/download_export', function () {
                         self.downloadInProgress(true);
                         self.progressModel.startDownload(data.download_id);
                     } else {
-                        self._handlePrepareError(data);
+                        self.handleError(data);
                     }
                 },
-                error: self._handlePrepareError,
+                error: self.handleError,
             });
         };
 
@@ -160,19 +156,19 @@ hqDefine('export/js/download_export', function () {
                         self.downloadInProgress(true);
                         self.progressModel.startMultimediaDownload(data.download_id);
                     } else {
-                        self._handlePrepareError(data);
+                        self.handleError(data);
                     }
                 },
-                error: self._handlePrepareError,
+                error: self.handleError,
             });
         };
 
-        self._handlePrepareError = function (data) {
+        self.handleError = function (data) {
             if (data && data.error) {
                 // The server returned an error message.
                 self.prepareExportError(data.error);
             } else {
-                self.prepareExportError("default");
+                self.prepareExportError(gettext("Sorry, there was a problem reaching the server. Please try again."));
             }
             self.preparingExport(false);
             self.preparingMultimediaExport(false);
@@ -273,7 +269,7 @@ hqDefine('export/js/download_export', function () {
                         }
                         if (data.progress && data.progress.error) {
                             clearInterval(self.interval);
-                            self.downloadError(data.progress.error);
+                            self.progressError(data.progress.error_message);
                             return;
                         }
                         if (data.progress.current > self._lastProgress) {
