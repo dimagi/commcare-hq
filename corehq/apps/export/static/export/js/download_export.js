@@ -1,7 +1,15 @@
+/**
+ *  UI for the page to download an export (form, case, or SMS; single or bulk).
+ *
+ *  Contains two models:
+ *      downloadFormModel: Controls the form where the user specifies a date range, etc. Also contains
+ *          functionality to download the multimedia associated with an export (form exports only).
+ *      downloadProgressModel: Controls the progress bar, etc. once the user has clicked 'Prepare Export'.
+ *          Includes functionality to email the user when the export is done, rather than them waiting for it.
+ */
 hqDefine('export/js/download_export', function () {
     'use strict';
 
-    // Model for the form to select date range, users, etc.
     var downloadFormModel = function (options) {
         hqImport("hqwebapp/js/assert_properties").assert(options, [
             'defaultDateRange',
@@ -21,7 +29,7 @@ hqDefine('export/js/download_export', function () {
 
         // Form data
         self.dateRange = ko.observable(self.defaultDateRange);
-        self.emw = ko.observable();
+        self.emw = ko.observable();     // "expanded mobile worker" => the users (for forms) or case owners (for cases)
 
         // UI flags
         self.preparingExport = ko.observable(false);
@@ -51,6 +59,23 @@ hqDefine('export/js/download_export', function () {
         self.disablePrepareMultimediaExport = ko.computed(function () {
             return !self.isValid() || self.preparingMultimediaExport();
         });
+
+        // Determine whether or not to show button to download multimedia
+        if (self.multimediaUrl) {
+            $.ajax({
+                method: 'GET',
+                url: self.multimediaUrl,
+                data: {
+                    export_id: self.exportList[0].export_id,
+                    form_or_case: self.formOrCase,
+                },
+                success: function (data) {
+                    if (data.success) {
+                        self.hasMultimedia(data.hasMultimedia);
+                    }
+                },
+            });
+        }
 
         self.sendAnalytics = function () {
             var action = (self.exportList.length > 1) ? "Bulk" : "Regular";
@@ -113,22 +138,6 @@ hqDefine('export/js/download_export', function () {
             });
         };
 
-        if (self.multimediaUrl) {
-            $.ajax({
-                method: 'GET',
-                url: self.multimediaUrl,
-                data: {
-                    export_id: self.exportList[0].export_id,
-                    form_or_case: self.formOrCase,
-                },
-                success: function (data) {
-                    if (data.success) {
-                        self.hasMultimedia(data.hasMultimedia);
-                    }
-                },
-            });
-        }
-
         self.prepareMultimediaExport = function () {
             self.prepareExportError('');
             self.preparingMultimediaExport(true);
@@ -172,7 +181,6 @@ hqDefine('export/js/download_export', function () {
         return self;
     };
 
-    // Model for showing progress, etc once the download has been generated
     var downloadProgressModel = function (options) {
         hqImport("hqwebapp/js/assert_properties").assert(options, ['exportType', 'formOrCase', 'emailUrl', 'pollUrl']);
 
@@ -180,27 +188,31 @@ hqDefine('export/js/download_export', function () {
 
         self.exportType = options.exportType;
         self.formOrCase = options.formOrCase;
-
-        self.emailUrl = options.emailUrl;
-        self.pollUrl = options.pollUrl;
-
         self.downloadId = ko.observable();
+        self.progress = ko.observable();
+
+        // URLs for user actions
+        self.pollUrl = options.pollUrl;
+        self.emailUrl = options.emailUrl;
+
+        // URLs related to the completed download
+        self.dropboxUrl = ko.observable();
+        self.downloadUrl = ko.observable();
+
+        // UI flags
         self.showDownloadStatus = ko.observable();
         self.isDownloaded = ko.observable();
         self.isDownloadReady = ko.observable();
         self.isMultimediaDownload = ko.observable();
-        self.progressError = ko.observable();
-        self.progress = ko.observable();
         self.sendEmailFlag = ko.observable();
 
+        // Error handling
+        self.progressError = ko.observable();
         self.celeryError = ko.observable('');
         self.downloadError = ko.observable('');
         self.showError = ko.computed(function () {
             return self.celeryError() || self.downloadError();
         });
-
-        self.dropboxUrl = ko.observable();
-        self.downloadUrl = ko.observable();
 
         self.resetDownload = function () {
             self.downloadId(null);
