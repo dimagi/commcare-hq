@@ -801,9 +801,7 @@ class DishaIndicatorView(models.Model):
     # agg_awc_monthly indicators
     cases_person_all = models.IntegerField(blank=True, null=True)
     cases_person = models.IntegerField(blank=True, null=True)
-    cases_ccs_pregnant_all = models.IntegerField(blank=True, null=True)
     cases_ccs_pregnant = models.IntegerField(blank=True, null=True)
-    cases_ccs_lactating_all = models.IntegerField(blank=True, null=True)
     cases_ccs_lactating = models.IntegerField(blank=True, null=True)
     cases_child_health_all = models.IntegerField(blank=True, null=True)
     cases_child_health = models.IntegerField(blank=True, null=True)
@@ -818,17 +816,7 @@ class DishaIndicatorView(models.Model):
     functional_toilet_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     # agg_ccs_record_monthly indicators
-    anemic_pregnant_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
     tetanus_complete_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
-    anc1_received_at_delivery_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
-    anc2_received_at_delivery_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
-    anc3_received_at_delivery_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
-    anc4_received_at_delivery_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     resting_during_pregnancy_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
@@ -853,10 +841,6 @@ class DishaIndicatorView(models.Model):
     stunting_severe_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     stunting_moderate_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
-    low_birth_weight_in_month_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
-    immunized_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
 
     class Meta(object):
