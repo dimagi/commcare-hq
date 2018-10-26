@@ -7,7 +7,6 @@ hqDefine('export/js/download_export', function () {
         djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
     }]);
     downloadExportsApp.constant('exportList', initial_page_data('export_list'));
-    downloadExportsApp.constant('maxColumnSize', initial_page_data('max_column_size'));
     downloadExportsApp.constant('defaultDateRange', initial_page_data('default_date_range'));
     downloadExportsApp.constant('formElement', {
         progress: function () {
@@ -27,6 +26,7 @@ hqDefine('export/js/download_export', function () {
             'exportList',
             'exportType',
             'formOrCase',
+            'maxColumnSize',
             'multimediaUrl',    // present if we should check for multimedia
             'progressModel',
             'prepareUrl',
@@ -41,6 +41,7 @@ hqDefine('export/js/download_export', function () {
         self.exportType = options.exportType;
         self.filterName = self.exportType === "form" ? "emw" : "case_list_filter";
         self.formOrCase = options.formOrCase;
+        self.maxColumnSize = options.maxColumnSize;
         self.multimediaUrl = options.multimediaUrl;
         self.prepareUrl = options.prepareUrl;
         self.prepareMultimediaUrl = options.prepareMultimediaUrl;
@@ -121,7 +122,7 @@ hqDefine('export/js/download_export', function () {
                     form_or_case: self.formOrCase,
                     sms_export: self.smsExport,
                     exports: JSON.stringify(self.exportList),
-                    max_column_size: self._maxColumnSize,
+                    max_column_size: self.maxColumnSize,
                     form_data: JSON.stringify({
                         date_range: self.dateRange(),
                         emw: self.emw(),
@@ -375,6 +376,7 @@ hqDefine('export/js/download_export', function () {
             exportList: exportList,
             exportType: exportType,
             formOrCase: initialPageData.get('form_or_case'),
+            maxColumnSize: initialPageData.get('max_column_size') || 2000,
             multimediaUrl: initialPageData.get('check_for_multimedia') ? initialPageData.reverse('has_multimedia') : '',
             progressModel: progressModel,
             prepareUrl: initialPageData.reverse('prepare_custom_export'),
