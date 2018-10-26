@@ -514,7 +514,6 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
             crispy.Field(
                 'date_range',
                 data_bind='value: dateRange',
-                #ng_required='true',    # TODO
             ),
         ]
 
@@ -1012,7 +1011,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
             crispy.Field(
                 'date_range',
                 data_bind='value: dateRange',
-                #ng_required='true',    # TODO
             ),
         ]
 
@@ -1051,6 +1049,5 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
             crispy.Field(
                 'date_range',
                 data_bind='value: dateRange',
-                #ng_required='true',    # TODO
             ),
         ]
