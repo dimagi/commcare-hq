@@ -51,7 +51,7 @@ class UpdateFormTests(TestCase):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        actual_form_xml = Command().update_form_data(form, NEW_USERNAME)
+        actual_form_xml = Command().update_form_data(form, NEW_USERNAME).decode('utf-8')
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
 
