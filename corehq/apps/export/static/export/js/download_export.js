@@ -46,8 +46,15 @@ hqDefine('export/js/download_export', function () {
         self.preparingExport = ko.observable(false);
         self.prepareExportError = ko.observable('');
         self.preparingMultimediaExport = ko.observable(false);
-        self.downloadInProgress = ko.observable(false);
         self.hasMultimedia = ko.observable(false);
+
+        // Once the download starts, this (downloadFormModel) disables the form and displays a message.
+        // When the download is complete, the downloadProgressModel gives the user the option to clear
+        // filters and do another download. Listen for that signal.
+        self.downloadInProgress = ko.observable(false);
+        self.progressModel.showDownloadStatus.subscribe(function (newValue) {
+            self.downloadInProgress(newValue);
+        });
 
         self.defaultPrepareExportError = ko.computed(function () {
             return self.prepareExportError() === 'default';
@@ -200,13 +207,13 @@ hqDefine('export/js/download_export', function () {
         self.pollUrl = options.pollUrl;
 
         self.downloadId = ko.observable();
-        self.showDownloadStatus = ko.observable(false);
-        self.isDownloaded = ko.observable(false);
-        self.isDownloadReady = ko.observable(false);
-        self.isMultimediaDownload = ko.observable(false);
-        self.progressError = ko.observable('');
-        self.progress = ko.observable(0);
-        self.sendEmailFlag = ko.observable(false);
+        self.showDownloadStatus = ko.observable();
+        self.isDownloaded = ko.observable();
+        self.isDownloadReady = ko.observable();
+        self.isMultimediaDownload = ko.observable();
+        self.progressError = ko.observable();
+        self.progress = ko.observable();
+        self.sendEmailFlag = ko.observable();
 
         self.celeryError = ko.observable('');
         self.downloadError = ko.observable('');
@@ -214,8 +221,8 @@ hqDefine('export/js/download_export', function () {
             return self.celeryError() || self.downloadError();
         });
 
-        self.dropboxUrl = ko.observable('');
-        self.downloadUrl = ko.observable('');
+        self.dropboxUrl = ko.observable();
+        self.downloadUrl = ko.observable();
 
         self.resetDownload = function () {
             self.downloadId(null);
@@ -223,9 +230,16 @@ hqDefine('export/js/download_export', function () {
             self._numCeleryRetries = 0;
             self._lastProgress = 0;
             self.showDownloadStatus(false);
+            self.isDownloadReady(false);
+            self.isDownloaded(false);
             self.celeryError('');
             self.downloadError('');
             self.isMultimediaDownload(false);
+            self.progress(0);
+            self.progressError('');
+            self.sendEmailFlag(false);
+            self.dropboxUrl('');
+            self.downloadUrl('');
         };
         self.resetDownload();
 
