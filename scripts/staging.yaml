@@ -53,6 +53,7 @@ branches:
   - jls/ko-exports-create  # Jenny Oct 19
   - jls/ko-exports-list  # Jenny Oct 24
   - jls/ko-export-dl-views  # Jenny Oct 23
+  - jls/ko-export-dl-ui  # Jenny Oct 26
   - dm/gevent # daniel Oct 24
   - pv/case-list-deac-label # Preethi Oct 26
 submodules: {}
