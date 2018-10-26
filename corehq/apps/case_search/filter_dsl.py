@@ -160,6 +160,14 @@ def build_filter_from_ast(domain, node):
 
         if _is_related_case_lookup(node):
             # this node represents a filter on a property for a related case
+
+            # NOTE: This functionality was disabled as it didn't work when the
+            # query matched a very large number of cases (1M+). Since this made
+            # it unusable for "Solutions" domains it was determined we should
+            # remove this functionality altogether. If someone decides
+            # othewise in the future, you can revert commit
+            # d54fa926e555dca8f01b8617036b1b86ebeeda28
+
             raise CaseFilterError(
                 _("We don't currently support related case lookups in the Case List Explorer."),
                 serialize(node)
