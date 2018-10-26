@@ -4,7 +4,7 @@
 {% load djangular_tags %}
 {% load humanize %}
 
-<div class="alert alert-info" ng-show="_.isEmpty(exports)">
+<div class="alert alert-info" data-bind="visible: !exports.length">
     <p>
         {% if is_deid %}
             {% blocktrans %}

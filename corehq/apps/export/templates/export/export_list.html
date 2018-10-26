@@ -5,40 +5,32 @@
 {% load compress %}
 {% load djangular_tags %}
 
-{% block stylesheets %}{{ block.super }}
-    <style>
-        .bulk-checkbox {
-            margin-top: 8px;
-            vertical-align: top;
-            line-height: 20px;
-            display: inline-block;
-        }
-    </style>
-{% endblock %}
-
 {% block js %}
 <script src="{% static 'clipboard/dist/clipboard.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/select_2_ajax_widget_v3.js' %}"></script>
-<script src="{% static 'export/js/list_exports.ng.js' %}"></script>
-<script src="{% static 'app_manager/js/hq.app_data_drilldown.ng.js' %}"></script>
 <script src="{% static 'export/js/utils.js' %}"></script>
+<script src="{% static 'export/js/create_export.js' %}"></script>
 <script src="{% static 'export/js/export_list.js' %}"></script>
+<script src="{% static 'export/js/export_list_main.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
     {% initial_page_data 'bulk_download_url' bulk_download_url %}
     {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
     {% initial_page_data 'exports' exports %}
+    {% initial_page_data 'is_daily_saved_export' is_daily_saved_export|default:False %}
+    {% initial_page_data 'is_deid' is_deid %}
+    {% initial_page_data 'is_feed' is_feed|default:False %}
     {% initial_page_data 'model_type' model_type %}
     {% initial_page_data 'static_model_type' static_model_type %}
+    {% registerurl 'commit_filters' domain %}
+    {% registerurl 'get_app_data_drilldown_values' domain %}
+    {% registerurl 'get_saved_export_progress' domain %}
+    {% registerurl 'submit_app_data_drilldown_form' domain %}
+    {% registerurl 'toggle_saved_export_enabled' domain %}
+    {% registerurl 'update_emailed_export_data' domain %}
 
     <p>{{ lead_text }}</p>
 
-    <div ng-app="listExportsApp">
-        {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
-        {% include 'export/partials/export_list_create_export_modal.html' %}
-        {% if is_daily_saved_export %}
-            {% include 'export/partials/feed_filter_modal.html' %}
-        {% endif %}
-    </div>
+    {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
 {% endblock %}
