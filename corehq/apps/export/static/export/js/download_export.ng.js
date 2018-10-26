@@ -23,8 +23,6 @@
         user_type: function () { return null; },
     });
 
-    download_export.constant('defaultDateRange', null);
-
     var exportsControllers = {};
     exportsControllers.DownloadExportFormController = function (
         $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService,
@@ -36,10 +34,6 @@
         $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
             $('form[name="exportFiltersForm"]'));
         if (formElement.user_type()) formElement.user_type().select2('val', ['mobile']);
-
-        if (!_.isNull(defaultDateRange)) {
-            $scope.formData.date_range = defaultDateRange;
-        }
 
         if (exportType === 'case') {
             self.has_case_history_table = _.any($scope.exportList, function (export_) {
