@@ -60,9 +60,6 @@
             $scope.dropboxUrl = null;
             $scope.downloadUrl = null;
             $scope.progress = {};
-            $scope.showError = false;
-            $scope.celeryError = false;
-            $scope.downloadError = false;
             if (formElement.progress()) {
                 formElement.progress().css('width', '0%');
                 formElement.progress().removeClass('progress-bar-success');
@@ -75,21 +72,6 @@
             self._reset();
             exportDownloadService.resetDownload();
         };
-
-        $scope.$watch(function () {
-            return exportDownloadService.celeryError;
-        }, function (status) {
-            $scope.celeryError = status;
-            $scope.showError = status;
-        });
-
-        $scope.$watch(function () {
-            return exportDownloadService.downloadError;
-        }, function (status) {
-            $scope.downloadError = status;
-            $scope.showError = status;
-        });
-
     };
     download_export.controller(exportsControllers);
 
