@@ -20,7 +20,6 @@
     download_export.constant('formElement', {
         progress: function () { return null; },
         group: function () { return null; },
-        user_type: function () { return null; },
     });
 
     var exportsControllers = {};
@@ -30,14 +29,8 @@
         var self = {};
         $scope._ = _;   // make underscore.js available
 
-        $scope.formData.user_types = ['mobile'];
         $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
             $('form[name="exportFiltersForm"]'));
-        if (formElement.user_type()) formElement.user_type().select2('val', ['mobile']);
-
-        $scope.isFormInvalid = function () {
-            return _.isEmpty($scope.formData.user_types);
-        };
     };
 
     exportsControllers.DownloadProgressController = function (

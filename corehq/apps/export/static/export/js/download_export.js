@@ -14,9 +14,6 @@ hqDefine('export/js/download_export', function () {
         group: function () {
             return $('#id_group');
         },
-        user_type: function () {
-            return $('#id_user_types');
-        },
     });*/
 
     // Model for the form to select date range, users, etc.
@@ -36,7 +33,6 @@ hqDefine('export/js/download_export', function () {
         ]);
 
         var self = _.extend({}, options);
-        self.filterName = self.exportType === "form" ? "emw" : "case_list_filter";
 
         // Form data
         self.dateRange = ko.observable(self.defaultDateRange);
@@ -72,9 +68,6 @@ hqDefine('export/js/download_export', function () {
         });
 
         self.sendAnalytics = function () {
-            _.each(self.userTypes, function (user_type) {
-                hqImport('analytix/js/google').track.event("Download Export", 'Select "user type"', user_type); // TODO: test
-            });
             var action = (self.exportList.length > 1) ? "Bulk" : "Regular";
             hqImport('analytix/js/google').track.event("Download Export", self.exportType, action);
             _.each(self.exportList, function (export_) {
@@ -89,24 +82,24 @@ hqDefine('export/js/download_export', function () {
             self.prepareExportError('');
             self.preparingExport(true);
 
-            var filterNamesAsString = $("form[name='exportFiltersForm']").find("input[name=" + self.filterName + "]").val();
-
-            function getFilterNames() {
-                return (filterNamesAsString ? filterNamesAsString.split(',') : []);
+            // Generate human-readable list of mobile workers, to send to analytics
+            function getFilterString() {
+                var filterName = self.exportType === "form" ? "emw" : "case_list_filter",
+                    filterNamesAsString = $("form[name='exportFiltersForm']").find("input[name=" + filterName + "]").val(),
+                    filterNamesAsArray = filterNamesAsString ? filterNamesAsString.split(',') : [];
+                return _.map(filterNamesAsArray, function (item) {
+                    var prefix = "t__";
+                    if (item.substring(0, prefix.length) === prefix) {
+                        return self.userTypes[item.substring(prefix.length)];
+                    }
+                    return item;
+                }).join();
             }
 
             hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
-                "Export type": self.exportList[0].export_type,
-                "filters": _.map(
-                    getFilterNames(),
-                    function (item) {
-                        var prefix = "t__";
-                        if (item.substring(prefix.length) === prefix) {
-                            return self.userTypes[item.substring(prefix.length)];
-                        }
-                        return item;
-                    }
-                ).join()});
+                "Export type": self.exportType,
+                "filters": getFilterString(),
+            });
 
             $.ajax({
                 method: 'POST',
