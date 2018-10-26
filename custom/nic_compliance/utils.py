@@ -101,8 +101,9 @@ def get_raw_password(obfuscated_password, username=None):
     def _decode_password():
         # In case of 2-step authentication for web skip by checking for auth-username which is
         # present in first step
-        if username and (request and request.POST.get('auth-username') or
-                         _mobile_request_to_track()):
+        if username and (
+                (request and request.POST.get('auth-username')) or
+                _mobile_request_to_track()):
             if replay_attack():
                 return ''
             record_login_attempt()
