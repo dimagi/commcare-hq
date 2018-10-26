@@ -16,7 +16,7 @@ def get_disha_migration():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0066_aggregatesqlprofile_last_included_doc_time'),
+        ('icds_reports', '0070_aww_name_in_agg_ccs_view'),
     ]
 
     operations = [
