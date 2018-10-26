@@ -274,17 +274,12 @@ hqDefine('export/js/download_export', function () {
         };
 
         self.sendEmailUponCompletion = function () {
-            setTimeout(function () {  // function must wait until download_id is available in the scope // <= TODO: still true?
-                if (self.downloadId) {
-                    $.ajax({
-                        method: 'POST',
-                        dataType: 'json',
-                        url: self.emailUrl,
-                        data: { download_id: self.downloadId },
-                    });
-                } else {
-                    self.sendEmailUponCompletion();
-                }
+            self.sendEmailFlag(true);
+            $.ajax({
+                method: 'POST',
+                dataType: 'json',
+                url: self.emailUrl,
+                data: { download_id: self.downloadId },
             });
         };
 
