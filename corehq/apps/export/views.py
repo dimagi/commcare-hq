@@ -276,7 +276,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         context = {
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
-            'export_list_url': self.export_list_url,
             'form_or_case': self.form_or_case,
             'max_column_size': self.max_column_size,
             'show_date_range': self.show_date_range,
@@ -307,11 +306,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
                 self.request, self.request.domain
             ).render()
         return context
-
-    @property
-    def export_list_url(self):
-        """Should return a the URL for the export list view"""
-        raise NotImplementedError("You must implement export_list_url")
 
     @property
     @memoized
@@ -1770,10 +1764,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
     form_or_case = 'form'
 
     @property
-    def export_list_url(self):
-        return reverse(FormExportListView.urlname, args=(self.domain,))
-
-    @property
     def parent_pages(self):
         if not self.permissions.has_edit_permissions:
             return [{
@@ -1839,10 +1829,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
     form_or_case = 'case'
 
     @property
-    def export_list_url(self):
-        return reverse(CaseExportListView.urlname, args=(self.domain,))
-
-    @property
     def parent_pages(self):
         return [{
             'title': CaseExportListView.page_title,
@@ -1856,10 +1842,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
     form_or_case = None
     export_id = None
     sms_export = True
-
-    @property
-    def export_list_url(self):
-        return None
 
     @property
     def parent_pages(self):
