@@ -851,6 +851,20 @@ class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
         return [x for x in exports if x.is_daily_saved_export and x.export_format == "html"]
 
 
+def can_download_daily_saved_export(export, domain, couch_user):
+    if (export.is_deidentified
+        and user_can_view_deid_exports(domain, couch_user)
+    ):
+        return True
+    elif export.type == FORM_EXPORT and has_permission_to_view_report(
+            couch_user, domain, FORM_EXPORT_PERMISSION):
+        return True
+    elif export.type == CASE_EXPORT and has_permission_to_view_report(
+            couch_user, domain, CASE_EXPORT_PERMISSION):
+        return True
+    return False 
+
+
 @location_safe
 @csrf_exempt
 @api_auth
