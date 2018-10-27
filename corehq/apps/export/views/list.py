@@ -852,6 +852,7 @@ class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
 
 
 def can_download_daily_saved_export(export, domain, couch_user):
+    from corehq.apps.export.views.util import user_can_view_deid_exports
     if (export.is_deidentified
         and user_can_view_deid_exports(domain, couch_user)
     ):

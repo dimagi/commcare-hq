@@ -126,22 +126,3 @@ from soil.progress import get_task_status
 from six.moves import map
 
 
-def _get_timezone(domain, couch_user):
-    if not domain:
-        return pytz.utc
-    else:
-        try:
-            return get_timezone_for_user(couch_user, domain)
-        except AttributeError:
-            return get_timezone_for_user(None, domain)
-
-
-def user_can_view_deid_exports(domain, couch_user):
-    return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
-            and couch_user.has_permission(
-                domain,
-                get_permission_name(Permissions.view_report),
-                data=DEID_EXPORT_PERMISSION
-            ))
-
-

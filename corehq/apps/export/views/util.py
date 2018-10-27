@@ -125,6 +125,25 @@ from soil.progress import get_task_status
 from six.moves import map
 
 
+def get_timezone(domain, couch_user):
+    if not domain:
+        return pytz.utc
+    else:
+        try:
+            return get_timezone_for_user(couch_user, domain)
+        except AttributeError:
+            return get_timezone_for_user(None, domain)
+
+
+def user_can_view_deid_exports(domain, couch_user):
+    return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
+            and couch_user.has_permission(
+                domain,
+                get_permission_name(Permissions.view_report),
+                data=DEID_EXPORT_PERMISSION
+            ))
+
+
 class ExportsPermissionsManager(object):
     """
     Encapsulates some shortcuts for checking export permissions.
@@ -197,7 +216,7 @@ class DailySavedExportMixin(object):
         instance = super(DailySavedExportMixin, self).create_new_export_instance(schema)
         instance.is_daily_saved_export = True
 
-        span = datespan_from_beginning(self.domain_object, _get_timezone(self.domain, self.request.couch_user))
+        span = datespan_from_beginning(self.domain_object, get_timezone(self.domain, self.request.couch_user))
         instance.filters.date_period = DatePeriod(
             period_type="since", begin=span.startdate.date()
         )

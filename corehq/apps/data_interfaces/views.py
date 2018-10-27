@@ -84,8 +84,7 @@ def default_data_view_url(request, domain):
         FormExportListView,
         DeIdFormExportListView,
     )
-    from corehq.apps.export.util import DataFileDownloadList
-    from corehq.apps.export.views import user_can_view_deid_exports
+    from corehq.apps.export.views.util import DataFileDownloadList, user_can_view_deid_exports
 
     if can_view_form_exports(request.couch_user, domain):
         return reverse(FormExportListView.urlname, args=[domain])
