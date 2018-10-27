@@ -27,22 +27,25 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
-            awc_id,
-            block_id,
-            state_name,
-            district_name,
-            block_name,
-            supervisor_name,
-            awc_name,
-            aww_name,
-            contact_phone_number,
-            wer_weighed,
-            wer_eligible,
-            awc_num_open,
-            valid_visits,
-            expected_visits
-          FROM agg_ccs_record_monthly AS acm
-          WHERE acm.month = %(month)s AND acm.state_id = %(state_id)s and aggregation_level=5
+            awcm.awc_id,
+            awcm.block_id,
+            awcm.state_name,
+            awcm.district_name,
+            awcm.block_name,
+            awcm.supervisor_name,
+            awcm.awc_name,
+            awcm.aww_name,
+            awcm.contact_phone_number,
+            awcm.wer_weighed,
+            awcm.wer_eligible,
+            awcm.awc_num_open,
+            sum(ccsm.valid_visits),
+            sum(ccsm.expected_visits)
+          FROM agg_awc_monthly as awcm
+          INNER JOIN agg_ccs_record_monthly AS ccsm
+          ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcm.aggregation_level
+          WHERE awcm.month = %(month)s AND awcm.state_id = %(state_id)s and awcm.aggregation_level=5
+          GROUP BY awcm.awc_id
         )
         """.format(
             tablename=tablename
