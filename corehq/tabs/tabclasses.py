@@ -566,6 +566,8 @@ class ProjectDataTab(UITab):
                 CreateNewCaseFeedView,
                 EditFormFeedView,
                 EditCaseFeedView,
+            )
+            from corehq.apps.export.views.util import (
                 DashboardFeedPaywall,
                 DailySavedExportPaywall
             )
@@ -706,7 +708,7 @@ class ProjectDataTab(UITab):
                 })
 
         if can_download_data_files(self.domain, self.couch_user):
-            from corehq.apps.export.old_views import DataFileDownloadList
+            from corehq.apps.export.util import DataFileDownloadList
 
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),

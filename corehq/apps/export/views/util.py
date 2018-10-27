@@ -281,3 +281,96 @@ class GenerateSchemaFromAllBuildsView(View):
         return json_response({
             'download_id': download.download_id
         })
+
+
+class DailySavedExportPaywall(BaseProjectDataView):
+    urlname = 'daily_saved_paywall'
+    template_name = 'export/paywall.html'
+
+
+class DashboardFeedPaywall(BaseProjectDataView):
+    urlname = 'dashbaord_feeds_paywall'
+    template_name = 'export/paywall.html'
+
+
+@location_safe
+class DataFileDownloadList(BaseProjectDataView):
+    urlname = 'download_data_files'
+    template_name = 'export/download_data_files.html'
+    page_title = ugettext_lazy("Download Data Files")
+
+    def dispatch(self, request, *args, **kwargs):
+        if can_download_data_files(self.domain, request.couch_user):
+            return super(DataFileDownloadList, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
+
+    def get_context_data(self, **kwargs):
+        context = super(DataFileDownloadList, self).get_context_data(**kwargs)
+        context.update({
+            'timezone': get_timezone_for_user(self.request.couch_user, self.domain),
+            'data_files': DataFile.get_all(self.domain),
+            'is_admin': self.request.couch_user.is_domain_admin(self.domain),
+            'url_base': get_url_base(),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.FILES['file'].size > MAX_DATA_FILE_SIZE:
+            messages.warning(
+                request,
+                _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE // (1024 * 1024))
+            )
+            return self.get(request, *args, **kwargs)
+
+        total_size = DataFile.get_total_size(self.domain)
+        if total_size and total_size + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL:
+            messages.warning(
+                request,
+                _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
+                  'Please remove some files in order to upload new files.').format(
+                    MAX_DATA_FILE_SIZE_TOTAL // (1024 * 1024 * 1024))
+            )
+            return self.get(request, *args, **kwargs)
+
+        data_file = DataFile.save_blob(
+            request.FILES['file'],
+            domain=self.domain,
+            filename=request.FILES['file'].name,
+            description=request.POST['description'],
+            content_type=request.FILES['file'].content_type,
+            delete_after=datetime.utcnow() + timedelta(hours=int(request.POST['ttl'])),
+        )
+        messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))
+        return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
+
+
+@method_decorator(api_auth, name='dispatch')
+class DataFileDownloadDetail(BaseProjectDataView):
+    urlname = 'download_data_file'
+
+    def dispatch(self, request, *args, **kwargs):
+        if can_download_data_files(self.domain, request.couch_user):
+            return super(DataFileDownloadDetail, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
+
+    def get(self, request, *args, **kwargs):
+        try:
+            data_file = DataFile.get(self.domain, kwargs['pk'])
+            blob = data_file.get_blob()
+        except (DataFile.DoesNotExist, NotFound):
+            raise Http404
+
+        format = Format('', data_file.content_type, '', True)
+        return get_download_response(
+            blob, data_file.content_length, format, data_file.filename, request
+        )
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            data_file = DataFile.get(self.domain, kwargs['pk'])
+        except DataFile.DoesNotExist:
+            raise Http404
+        data_file.delete()
+        return HttpResponse(status=204)

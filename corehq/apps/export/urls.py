@@ -31,14 +31,16 @@ from corehq.apps.export.old_views import (
     EditFormDailySavedExportView,
     CreateNewDailySavedCaseExport,
     CreateNewDailySavedFormExport,
-    DashboardFeedPaywall,
-    DailySavedExportPaywall,
     CopyExportView,
-    DataFileDownloadList,
-    DataFileDownloadDetail,
     add_export_email_request
 )
-from corehq.apps.export.views.util import GenerateSchemaFromAllBuildsView
+from corehq.apps.export.views.util import (
+    DashboardFeedPaywall,
+    DailySavedExportPaywall,
+    DataFileDownloadList,
+    DataFileDownloadDetail,
+    GenerateSchemaFromAllBuildsView,
+)
 
 urlpatterns = [
     # Export list views

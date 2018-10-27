@@ -27,10 +27,10 @@ from corehq.apps.export.old_views import (
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
-    DataFileDownloadDetail,
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )
+from corehq.apps.export.util import DataFileDownloadDetail
 from corehq.util.test_utils import flag_enabled, generate_cases
 from io import open
 
