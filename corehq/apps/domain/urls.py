@@ -49,7 +49,6 @@ from corehq.apps.domain.views import (
     LocationFixtureConfigView,
     ManageProjectMediaView,
     PasswordResetView,
-    ProBonoView,
     RecoveryMeasuresHistory,
     SelectPlanView,
     SelectedEnterprisePlanView,
@@ -62,6 +61,7 @@ from corehq.apps.domain.views import (
     set_published_snapshot,
     toggle_diff,
 )
+from corehq.apps.domain.views.pro_bono import ProBonoView
 from corehq.apps.domain.views.repeaters import generate_repeater_payloads
 from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.linked_domain.views import DomainLinkView

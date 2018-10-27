@@ -57,12 +57,12 @@ from corehq.apps.domain.views.internal import (
     EditInternalDomainInfoView,
     EditInternalCalculationsView,
 )
+'''
 from corehq.apps.domain.views.pro_bono import (
     ProBonoMixin,
     ProBonoStaticView,
     ProBonoView,
 )
-'''
 from corehq.apps.domain.views.repeaters import (
     generate_repeater_payloads,
 )
