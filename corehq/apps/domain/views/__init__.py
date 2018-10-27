@@ -48,6 +48,7 @@ from corehq.apps.domain.views.fixtures import (
 )
 from corehq.apps.domain.views.internal import (
     calculated_properties,
+    toggle_diff,
     FlagsAndPrivilegesView,
     TransferDomainView,
     ActivateTransferDomainView,
@@ -76,13 +77,10 @@ from corehq.apps.domain.views.settings import (
     logo,
     CaseSearchConfigView,
     RecoveryMeasuresHistory,
+    FeaturePreviewsView,
 )
 from corehq.apps.domain.views.sms import (
     PublicSMSRatesView,
     SMSRatesView,
-)
-from corehq.apps.domain.views.toggles import (
-    toggle_diff,
-    FeaturePreviewsView,
 )
 '''
