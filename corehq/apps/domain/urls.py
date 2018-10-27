@@ -61,8 +61,8 @@ from corehq.apps.domain.views import (
     select,
     set_published_snapshot,
     toggle_diff,
-    generate_repeater_payloads,
 )
+from corehq.apps.domain.views.repeaters import generate_repeater_payloads
 from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher

@@ -133,3 +133,19 @@ from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.ota.models import MobileRecoveryMeasure
 import six
 from six.moves import map
+
+
+@require_POST
+@require_can_edit_web_users
+def generate_repeater_payloads(request, domain):
+    try:
+        email_id = request.POST.get('email_id')
+        repeater_id = request.POST.get('repeater_id')
+        data = csv.reader(request.FILES['payload_ids_file'])
+        payload_ids = [row[0] for row in data]
+    except Exception as e:
+        messages.error(request, _("Could not process the file. %s") % str(e))
+    else:
+        send_repeater_payloads.delay(repeater_id, payload_ids, email_id)
+        messages.success(request, _("Successfully queued request. You should receive an email shortly."))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
