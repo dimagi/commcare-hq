@@ -1129,20 +1129,6 @@ def osdd(request, template='osdd.xml'):
     return response
 
 
-@require_superuser
-def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-
-    return render(request, template, {
-        'alerts': [{
-            'created': six.text_type(alert.created),
-            'active': alert.active,
-            'html': alert.html,
-            'id': alert.id,
-        } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
-    })
-
-
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
     page_title = ugettext_noop("Maintenance Alerts")
