@@ -20,7 +20,7 @@ from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
 )
-from corehq.apps.export.edit import (
+from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )

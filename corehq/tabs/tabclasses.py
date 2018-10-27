@@ -710,7 +710,7 @@ class ProjectDataTab(UITab):
                 })
 
         if can_download_data_files(self.domain, self.couch_user):
-            from corehq.apps.export.util import DataFileDownloadList
+            from corehq.apps.export.views.utils import DataFileDownloadList
 
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
@@ -778,7 +778,7 @@ class ProjectDataTab(UITab):
         ):
             return []
 
-        from corehq.apps.export.download import (
+        from corehq.apps.export.views.download import (
             DownloadNewSmsExportView,
         )
         from corehq.apps.export.views.list import (

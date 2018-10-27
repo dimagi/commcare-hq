@@ -439,7 +439,8 @@ class DailySavedExportListView(BaseExportListView):
         return []
 
     def fmt_export_data(self, export):
-        from corehq.apps.exportviews.new import CopyExportView
+        from corehq.apps.export.views.new import CopyExportView
+        from corehq.apps.export.views.download import DownloadNewCaseExportView, DownloadNewFormExportView
         if isinstance(export, FormExportInstance):
             edit_view = self._get_edit_export_class('form')
             download_view = DownloadNewFormExportView
@@ -583,7 +584,8 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
-        from corehq.apps.exportviews.new import CopyExportView
+        from corehq.apps.export.views.new import CopyExportView
+        from corehq.apps.export.views.edit import EditNewCustomFormExportView
         emailed_export = None
         if export.is_daily_saved_export:
             emailed_export = self._get_daily_saved_export_metadata(export)
@@ -612,6 +614,7 @@ class FormExportListView(BaseExportListView):
         }
 
     def _get_download_url(self, export_id):
+        from corehq.apps.export.views.download import DownloadNewFormExportView
         return reverse(DownloadNewFormExportView.urlname, args=(self.domain, export_id))
 
     @allow_remote_invocation
@@ -681,7 +684,8 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
-        from corehq.apps.exportviews.new import CopyExportView
+        from corehq.apps.export.views.edit import EditNewCustomCaseExportView
+        from corehq.apps.export.views.new import CopyExportView
         emailed_export = None
         if export.is_daily_saved_export:
             emailed_export = self._get_daily_saved_export_metadata(export)
@@ -709,6 +713,7 @@ class CaseExportListView(BaseExportListView):
         }
 
     def _get_download_url(self, export_id):
+        from corehq.apps.export.views.download import DownloadNewCaseExportView
         return reverse(DownloadNewCaseExportView.urlname, args=(self.domain, export_id))
 
     @allow_remote_invocation

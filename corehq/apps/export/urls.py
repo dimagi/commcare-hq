@@ -8,7 +8,7 @@ from corehq.apps.export.views.download import (
     DownloadNewSmsExportView,
     add_export_email_request,
 )
-from corehq.apps.export.edit import (
+from corehq.apps.export.views.edit import (
     EditNewCustomFormExportView,
     EditNewCustomCaseExportView,
     EditCaseFeedView,
