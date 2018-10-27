@@ -528,7 +528,7 @@ class SubscriptionForm(forms.Form):
             from corehq.apps.accounting.views import (
                 ViewSoftwarePlanVersionView, ManageBillingAccountView
             )
-            from corehq.apps.domain.views import DefaultProjectSettingsView
+            from corehq.apps.domain.views.settings import DefaultProjectSettingsView
             self.fields['account'].initial = subscription.account.id
             account_field = hqcrispy.B3TextField(
                 'account',
@@ -1784,7 +1784,7 @@ class AnnualPlanContactForm(forms.Form):
         self.domain = domain
         self.web_user = web_user
         super(AnnualPlanContactForm, self).__init__(data, *args, **kwargs)
-        from corehq.apps.domain.views import SelectPlanView, DomainSubscriptionView
+        from corehq.apps.domain.views.accounting import SelectPlanView, DomainSubscriptionView
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'

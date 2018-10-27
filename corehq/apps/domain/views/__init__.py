@@ -2,9 +2,9 @@ from __future__ import absolute_import
 
 from corehq.apps.domain.views.base import (
     select,
-    DomainViewMixin,        # TODO: update imports
-    LoginAndDomainMixin,    # TODO: update imports
-    BaseDomainView,         # TODO: update imports
+    DomainViewMixin,
+    LoginAndDomainMixin,
+    BaseDomainView,
 )
 from corehq.apps.domain.views.accounting import (
     SelectedEnterprisePlanView,
@@ -16,8 +16,8 @@ from corehq.apps.domain.views.accounting import (
     ConfirmSubscriptionRenewalView,
     EmailOnDowngradeView,
     SubscriptionUpgradeRequiredView,
-    DomainAccountingSettings,   # TODO: update imports
-    DomainSubscriptionView,     # TODO: update imports
+    DomainAccountingSettings,
+    DomainSubscriptionView,
     EditExistingBillingAccountView,
     DomainBillingStatementsView,
     BaseStripePaymentView,
@@ -62,9 +62,9 @@ from corehq.apps.domain.views.repeaters import (
     generate_repeater_payloads,
 )
 from corehq.apps.domain.views.settings import (
-    BaseProjectSettingsView,    # TODO: update imports
-    DefaultProjectSettingsView, # TODO: update imports
-    BaseAdminProjectSettingsView, # TODO: update imports
+    BaseProjectSettingsView,
+    DefaultProjectSettingsView,
+    BaseAdminProjectSettingsView,
     BaseEditProjectInfoView,
     EditBasicProjectInfoView,
     EditMyProjectSettingsView,

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 import re
 from corehq.apps.api.decorators import api_user_basic_auth
-from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from custom.zipline.api import get_order_update_critical_section_key, ProductQuantity
 from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
     update_product_quantity_json_field, EmergencyOrderPackage)

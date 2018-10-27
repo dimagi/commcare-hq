@@ -7,7 +7,7 @@ from contextlib import contextmanager, closing
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
 from corehq.apps.reports_core.filters import Choice, PreFilter

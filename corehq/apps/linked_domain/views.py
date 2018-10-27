@@ -12,7 +12,8 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain
 from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
 from corehq.apps.domain.decorators import login_or_api_key, domain_admin_required
-from corehq.apps.domain.views import BaseAdminProjectSettingsView, DomainViewMixin
+from corehq.apps.domain.views.base import DomainViewMixin
+from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP

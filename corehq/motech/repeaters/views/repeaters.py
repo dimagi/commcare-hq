@@ -19,7 +19,7 @@ from dimagi.utils.post import simple_post
 
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views import BaseAdminProjectSettingsView, BaseProjectSettingsView
+from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView, BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.users.models import Permissions

@@ -18,7 +18,7 @@ from corehq.motech.dhis2.forms import Dhis2ConnectionForm, Dhis2ConfigForm
 from corehq.motech.dhis2.models import DataValueMap, DataSetMap
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.dhis2.tasks import send_datasets
-from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from memoized import memoized
 from dimagi.utils.web import json_response
 from six.moves import range

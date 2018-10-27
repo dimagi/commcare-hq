@@ -25,7 +25,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id

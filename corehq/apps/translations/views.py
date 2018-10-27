@@ -20,7 +20,7 @@ from corehq.apps.translations.forms import (
 )
 from corehq.apps.app_manager.app_translations.generators import Translation, PoFileGenerator
 from corehq.util.files import safe_filename_header
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds.translations.integrations.utils import get_file_content_from_workbook, \

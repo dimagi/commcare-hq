@@ -10,7 +10,7 @@ from django.views.decorators.http import require_http_methods
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER

@@ -123,6 +123,7 @@ from corehq.apps.domain.models import (
 from corehq.apps.domain.utils import normalize_domain_name, send_repeater_payloads
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
+from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
 from memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 

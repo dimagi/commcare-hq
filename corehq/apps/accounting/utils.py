@@ -251,7 +251,7 @@ def make_anchor_tag(href, name, attrs=None):
 
 
 def get_default_domain_url(domain):
-    from corehq.apps.domain.views import DefaultProjectSettingsView
+    from corehq.apps.domain.views.settings import DefaultProjectSettingsView
     return absolute_reverse(
         DefaultProjectSettingsView.urlname,
         args=[domain],

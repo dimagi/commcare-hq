@@ -1528,7 +1528,7 @@ class Subscription(models.Model):
 
     @property
     def ending_reminder_context(self):
-        from corehq.apps.domain.views import DomainSubscriptionView
+        from corehq.apps.domain.views.accounting import DomainSubscriptionView
 
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days

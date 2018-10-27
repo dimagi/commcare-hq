@@ -15,7 +15,7 @@ from django.views.generic.list import ListView
 from corehq.apps.commtrack.models import CommtrackConfig, StockState
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
+from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.models import SMS, INCOMING, OUTGOING

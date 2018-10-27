@@ -43,7 +43,7 @@ from corehq.apps.data_interfaces.forms import (
     CaseRuleActionsForm)
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, HQJSONResponseMixin, PaginatedItemException
 from corehq.apps.data_interfaces.dispatcher import (

@@ -121,6 +121,8 @@ from corehq.apps.domain.models import (
     TransferDomainRequest,
 )
 from corehq.apps.domain.utils import normalize_domain_name, send_repeater_payloads
+from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
 from memoized import memoized

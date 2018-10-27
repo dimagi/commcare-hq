@@ -12,7 +12,7 @@ from corehq.apps.users.models import WebUser
 from corehq.motech.repeaters.models import AppStructureRepeater
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application, APP_V1
-from corehq.apps.domain.views import CreateNewExchangeSnapshotView
+from corehq.apps.domain.views.exchange import CreateNewExchangeSnapshotView
 from corehq.util.test_utils import teardown
 
 

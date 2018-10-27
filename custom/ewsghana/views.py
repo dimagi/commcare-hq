@@ -16,7 +16,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption, \
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location, location_safe
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation

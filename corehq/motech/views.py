@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy
 from django.views.generic import ListView, DetailView
 from memoized import memoized
 
-from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.models import RequestLog
