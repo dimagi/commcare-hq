@@ -19,7 +19,6 @@ from corehq.apps.domain.views import (
     ActivateTransferDomainView,
     BillingStatementPdfView,
     BulkStripePaymentView,
-    CalendarFixtureConfigView,
     CardView,
     CardsView,
     CaseSearchConfigView,
@@ -46,7 +45,6 @@ from corehq.apps.domain.views import (
     FeaturePreviewsView,
     InternalSubscriptionManagementView,
     InvoiceStripePaymentView,
-    LocationFixtureConfigView,
     ManageProjectMediaView,
     PasswordResetView,
     RecoveryMeasuresHistory,
@@ -61,6 +59,7 @@ from corehq.apps.domain.views import (
     set_published_snapshot,
     toggle_diff,
 )
+from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
 from corehq.apps.domain.views.pro_bono import ProBonoView
 from corehq.apps.domain.views.repeaters import generate_repeater_payloads
 from corehq.apps.domain.views.sms import SMSRatesView

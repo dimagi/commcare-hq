@@ -42,10 +42,12 @@ from corehq.apps.domain.views.exchange import (
     _notification_email_on_publish,
     set_published_snapshot,
 )
+'''
 from corehq.apps.domain.views.fixtures import (
     CalendarFixtureConfigView,
     LocationFixtureConfigView,
 )
+'''
 from corehq.apps.domain.views.internal import (
     calculated_properties,
     toggle_diff,

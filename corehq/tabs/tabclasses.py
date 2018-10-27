@@ -1628,7 +1628,7 @@ def _get_integration_section(domain):
 
 
 def _get_feature_flag_items(domain):
-    from corehq.apps.domain.views import CalendarFixtureConfigView, LocationFixtureConfigView
+    from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
