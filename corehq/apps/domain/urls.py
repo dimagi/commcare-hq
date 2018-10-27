@@ -16,25 +16,17 @@ from django.views.generic import RedirectView
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
 from corehq.apps.domain.views import (
-    ActivateTransferDomainView,
     CaseSearchConfigView,
     CreateNewExchangeSnapshotView,
-    DeactivateTransferDomainView,
     DefaultProjectSettingsView,
     EditBasicProjectInfoView,
-    EditInternalCalculationsView,
-    EditInternalDomainInfoView,
     EditMyProjectSettingsView,
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
-    FlagsAndPrivilegesView,
     FeaturePreviewsView,
     ManageProjectMediaView,
     PasswordResetView,
     RecoveryMeasuresHistory,
-    TransferDomainView,
-    calculated_properties,
-    toggle_diff,
 )
 from corehq.apps.domain.views.accounting import (
     BillingStatementPdfView,
@@ -61,6 +53,16 @@ from corehq.apps.domain.views.accounting import (
 from corehq.apps.domain.views.base import select
 from corehq.apps.domain.views.exchange import ExchangeSnapshotsView, set_published_snapshot,
 from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
+from corehq.apps.domain.views.internal import (
+    ActivateTransferDomainView,
+    DeactivateTransferDomainView,
+    EditInternalCalculationsView,
+    EditInternalDomainInfoView,
+    FlagsAndPrivilegesView,
+    TransferDomainView,
+    calculated_properties,
+    toggle_diff,
+)
 from corehq.apps.domain.views.pro_bono import ProBonoView
 from corehq.apps.domain.views.repeaters import generate_repeater_payloads
 from corehq.apps.domain.views.sms import SMSRatesView

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.template.loader import render_to_string
 
-from corehq.apps.domain.views import EditInternalDomainInfoView
+from corehq.apps.domain.views.internal import EditInternalDomainInfoView
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser

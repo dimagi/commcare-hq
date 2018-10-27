@@ -133,3 +133,374 @@ from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.ota.models import MobileRecoveryMeasure
 import six
 from six.moves import map
+
+
+class BaseInternalDomainSettingsView(BaseProjectSettingsView):
+    strict_domain_fetching = True
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(BaseInternalDomainSettingsView, self).main_context
+        context.update({
+            'project': self.domain_object,
+        })
+        return context
+
+    @property
+    def page_name(self):
+        return mark_safe("%s <small>Internal</small>" % self.page_title)
+
+
+class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
+    urlname = 'domain_internal_settings'
+    page_title = ugettext_lazy("Project Information")
+    template_name = 'domain/internal_settings.html'
+    strict_domain_fetching = True
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    @use_jquery_ui  # datepicker
+    @use_multiselect
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def internal_settings_form(self):
+        can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
+        if self.request.method == 'POST':
+            return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
+        initial = {
+            'countries': self.domain_object.deployment.countries,
+            'is_test': self.domain_object.is_test,
+            'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
+            'auto_case_update_limit': self.domain_object.auto_case_update_limit,
+            'granted_messaging_access': self.domain_object.granted_messaging_access,
+        }
+        internal_attrs = [
+            'sf_contract_id',
+            'sf_account_id',
+            'initiative',
+            'self_started',
+            'area',
+            'sub_area',
+            'organization_name',
+            'notes',
+            'phone_model',
+            'commtrack_domain',
+            'performance_threshold',
+            'experienced_threshold',
+            'amplifies_workers',
+            'amplifies_project',
+            'data_access_threshold',
+            'business_unit',
+            'workshop_region',
+            'partner_technical_competency',
+            'support_prioritization',
+            'gs_continued_involvement',
+            'technical_complexity',
+            'app_design_comments',
+            'training_materials',
+            'partner_comments',
+            'partner_contact',
+            'dimagi_contact',
+        ]
+        if can_edit_eula:
+            internal_attrs += [
+                'custom_eula',
+                'can_use_data',
+            ]
+        for attr in internal_attrs:
+            val = getattr(self.domain_object.internal, attr)
+            if isinstance(val, bool):
+                val = 'true' if val else 'false'
+            initial[attr] = val
+        return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'project': self.domain_object,
+            'form': self.internal_settings_form,
+            'areas': dict([(a["name"], a["sub_areas"]) for a in settings.INTERNAL_DATA["area"]]),
+        }
+
+    def send_handoff_email(self):
+        partner_contact = self.internal_settings_form.cleaned_data['partner_contact']
+        dimagi_contact = self.internal_settings_form.cleaned_data['dimagi_contact']
+        recipients = [partner_contact, dimagi_contact]
+        params = {'contact_name': CouchUser.get_by_username(dimagi_contact).human_friendly_name}
+        send_html_email_async.delay(
+            subject="Project Support Transition",
+            recipient=recipients,
+            html_content=render_to_string(
+                "domain/email/support_handoff.html", params),
+            text_content=render_to_string(
+                "domain/email/support_handoff.txt", params),
+            email_from=settings.SUPPORT_EMAIL,
+        )
+        messages.success(self.request,
+                         _("Sent hand-off email to {}.").format(" and ".join(recipients)))
+
+    def post(self, request, *args, **kwargs):
+        if self.internal_settings_form.is_valid():
+            old_attrs = copy.copy(self.domain_object.internal)
+            self.internal_settings_form.save(self.domain_object)
+            eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula) or
+                                  bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
+
+            if eula_props_changed and settings.EULA_CHANGE_EMAIL:
+                message = '\n'.join([
+                    '{user} changed either the EULA or data sharing properties for domain {domain}.',
+                    '',
+                    'The properties changed were:',
+                    '- Custom eula: {eula_old} --> {eula_new}',
+                    '- Can use data: {can_use_data_old} --> {can_use_data_new}'
+                ]).format(
+                    user=self.request.couch_user.username,
+                    domain=self.domain,
+                    eula_old=old_attrs.custom_eula,
+                    eula_new=self.domain_object.internal.custom_eula,
+                    can_use_data_old=old_attrs.can_use_data,
+                    can_use_data_new=self.domain_object.internal.can_use_data,
+                )
+                send_mail_async.delay(
+                    'Custom EULA or data use flags changed for {}'.format(self.domain),
+                    message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL]
+                )
+
+            messages.success(request, _("The internal information for project %s was successfully updated!")
+                                      % self.domain)
+            if self.internal_settings_form.cleaned_data['send_handoff_email']:
+                self.send_handoff_email()
+            return redirect(self.urlname, self.domain)
+        else:
+            messages.error(request, _(
+                "Your settings are not valid, see below for errors. Correct them and try again!"))
+            return self.get(request, *args, **kwargs)
+
+
+class EditInternalCalculationsView(BaseInternalDomainSettingsView):
+    urlname = 'domain_internal_calculations'
+    page_title = ugettext_lazy("Calculated Properties")
+    template_name = 'domain/internal_calculations.html'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'calcs': CALCS,
+            'order': CALC_ORDER,
+        }
+
+
+class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
+    urlname = 'feature_flags_and_privileges'
+    page_title = ugettext_lazy("Feature Flags and Privileges")
+    template_name = 'domain/admin/flags_and_privileges.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
+
+    @memoized
+    def enabled_flags(self):
+        def _sort_key(toggle_enabled_tuple):
+            return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
+        unsorted_toggles = [(
+            toggle,
+            toggle.enabled(self.domain, namespace=NAMESPACE_DOMAIN),
+            toggle.enabled(self.request.couch_user.username, namespace=NAMESPACE_USER)
+        ) for toggle in all_toggles()]
+        return sorted(unsorted_toggles, key=_sort_key)
+
+    def _get_privileges(self):
+        return sorted([
+            (privileges.Titles.get_name_from_privilege(privilege),
+             domain_has_privilege(self.domain, privilege))
+            for privilege in privileges.MAX_PRIVILEGES
+        ], key=lambda name_has: (not name_has[1], name_has[0]))
+
+    @property
+    def page_context(self):
+        return {
+            'flags': self.enabled_flags(),
+            'use_sql_backend': self.domain_object.use_sql_backend,
+            'privileges': self._get_privileges(),
+        }
+
+
+class TransferDomainView(BaseAdminProjectSettingsView):
+    urlname = 'transfer_domain_view'
+    page_title = ugettext_lazy("Transfer Project")
+    template_name = 'domain/admin/transfer_domain.html'
+
+    @property
+    @memoized
+    def active_transfer(self):
+        return TransferDomainRequest.get_active_transfer(self.domain,
+                                                         self.request.user.username)
+
+    @property
+    @memoized
+    def transfer_domain_form(self):
+        return TransferDomainForm(self.domain,
+                                  self.request.user.username,
+                                  self.request.POST or None)
+
+    def get(self, request, *args, **kwargs):
+
+        if self.active_transfer:
+            self.template_name = 'domain/admin/transfer_domain_pending.html'
+
+            if request.GET.get('resend', None):
+                self.active_transfer.send_transfer_request()
+                messages.info(request,
+                              _("Resent transfer request for project '{domain}'").format(domain=self.domain))
+
+        return super(TransferDomainView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = self.transfer_domain_form
+        if form.is_valid():
+            # Initiate domain transfer
+            transfer = form.save()
+            transfer.send_transfer_request()
+            return HttpResponseRedirect(self.page_url)
+
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @property
+    def page_context(self):
+        if self.active_transfer:
+            return {'transfer': self.active_transfer.as_dict()}
+        else:
+            return {'form': self.transfer_domain_form}
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not TRANSFER_DOMAIN.enabled(request.domain):
+            raise Http404()
+        return super(TransferDomainView, self).dispatch(request, *args, **kwargs)
+
+
+class ActivateTransferDomainView(BasePageView):
+    urlname = 'activate_transfer_domain'
+    page_title = 'Activate Domain Transfer'
+    template_name = 'domain/activate_transfer_domain.html'
+
+    @property
+    @memoized
+    def active_transfer(self):
+        return TransferDomainRequest.get_by_guid(self.guid)
+
+    @property
+    def page_context(self):
+        if self.active_transfer:
+            return {'transfer': self.active_transfer.as_dict()}
+        else:
+            return {}
+
+    @property
+    def page_url(self):
+        return self.request.get_full_path()
+
+    def get(self, request, guid, *args, **kwargs):
+        self.guid = guid
+
+        if (self.active_transfer and
+                self.active_transfer.to_username != request.user.username and
+                not request.user.is_superuser):
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+        return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
+
+    def post(self, request, guid, *args, **kwargs):
+        self.guid = guid
+
+        if not self.active_transfer:
+            raise Http404()
+
+        if self.active_transfer.to_username != request.user.username and not request.user.is_superuser:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+        self.active_transfer.transfer_domain(ip=get_ip(request))
+        messages.success(request, _("Successfully transferred ownership of project '{domain}'")
+                         .format(domain=self.active_transfer.domain))
+
+        return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ActivateTransferDomainView, self).dispatch(*args, **kwargs)
+
+
+class DeactivateTransferDomainView(View):
+
+    def post(self, request, guid, *args, **kwargs):
+
+        transfer = TransferDomainRequest.get_by_guid(guid)
+
+        if not transfer:
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+        if (transfer.to_username != request.user.username and
+                transfer.from_username != request.user.username and
+                not request.user.is_superuser):
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+        transfer.active = False
+        transfer.save()
+
+        referer = request.META.get('HTTP_REFERER', '/')
+
+        # Do not want to send them back to the activate page
+        if referer.endswith(reverse('activate_transfer_domain', args=[guid])):
+            messages.info(request,
+                          _("Declined ownership of project '{domain}'").format(domain=transfer.domain))
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(referer)
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
+
+
+@login_and_domain_required
+@require_superuser
+@require_GET
+def toggle_diff(request, domain):
+    params = json_request(request.GET)
+    other_domain = params.get('domain')
+    diff = []
+    if Domain.get_by_name(other_domain):
+        diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
+                for t in feature_previews.all_previews() + all_toggles()
+                if t.enabled(request.domain, NAMESPACE_DOMAIN) and not t.enabled(other_domain, NAMESPACE_DOMAIN)]
+        diff.sort(cmp=lambda x, y: cmp(x['label'], y['label']))
+    return json_response(diff)
+
+
+@login_and_domain_required
+@require_superuser
+def calculated_properties(request, domain):
+    calc_tag = request.GET.get("calc_tag", '').split('--')
+    extra_arg = calc_tag[1] if len(calc_tag) > 1 else ''
+    calc_tag = calc_tag[0]
+
+    if not calc_tag or calc_tag not in list(CALC_FNS):
+        data = {"error": 'This tag does not exist'}
+    else:
+        data = {"value": dom_calc(calc_tag, domain, extra_arg)}
+    return json_response(data)

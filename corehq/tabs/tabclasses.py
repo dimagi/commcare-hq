@@ -1501,7 +1501,7 @@ class ProjectSettingsTab(UITab):
                 items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
-            from corehq.apps.domain.views import (
+            from corehq.apps.domain.views.internal import (
                 EditInternalDomainInfoView,
                 EditInternalCalculationsView,
                 FlagsAndPrivilegesView,
@@ -1529,9 +1529,9 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
+    from corehq.apps.domain.views.internal import TransferDomainView
     from corehq.apps.domain.views import (
         FeaturePreviewsView,
-        TransferDomainView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
