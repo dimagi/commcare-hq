@@ -24,6 +24,7 @@ from corehq.apps.export.views.list import (
     DeIdFormExportListView,
     DeIdDailySavedExportListView,
     DeIdDashboardFeedListView,
+    download_daily_saved_export,
 )
 from corehq.apps.export.views.new import (
     CreateNewCustomFormExportView,
@@ -34,9 +35,6 @@ from corehq.apps.export.views.new import (
     CreateNewFormFeedView,
     CopyExportView,
     DeleteNewCustomExportView,
-)
-from corehq.apps.export.old_views import (
-    download_daily_saved_export,
 )
 from corehq.apps.export.views.util import (
     DashboardFeedPaywall,

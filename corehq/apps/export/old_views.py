@@ -159,59 +159,5 @@ def can_download_daily_saved_export(export, domain, couch_user):
     return False
 
 
-@location_safe
-@csrf_exempt
-@api_auth
-@require_GET
-def download_daily_saved_export(req, domain, export_instance_id):
-    with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
-        try:
-            export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        except ResourceNotFound:
-            raise Http404(_("Export not found"))
-
-        assert domain == export_instance.domain
-
-        if export_instance.export_format == "html":
-            if not domain_has_privilege(domain, EXCEL_DASHBOARD):
-                raise Http404
-        elif export_instance.is_daily_saved_export:
-            if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
-                raise Http404
-
-        if not export_instance.filters.is_location_safe_for_user(req):
-            return location_restricted_response(req)
-
-        if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
-            raise Http404
-
-        if export_instance.export_format == "html":
-            message = "Download Excel Dashboard"
-        else:
-            message = "Download Saved Export"
-        track_workflow(req.couch_user.username, message, properties={
-            'domain': domain,
-            'is_dimagi': req.couch_user.is_dimagi
-        })
-
-        if should_update_export(export_instance.last_accessed):
-            try:
-                rebuild_saved_export(export_instance_id, manual=False)
-            except Exception:
-                notify_exception(
-                    req,
-                    'Failed to rebuild export during download',
-                    {
-                        'export_instance_id': export_instance_id,
-                        'domain': domain,
-                    },
-                )
-
-        export_instance.last_accessed = datetime.utcnow()
-        export_instance.save()
-
-    payload = export_instance.get_payload(stream=True)
-    format = Format.from_format(export_instance.export_format)
-    return get_download_response(payload, export_instance.file_size, format, export_instance.filename, req)
 
 
