@@ -547,25 +547,27 @@ class ProjectDataTab(UITab):
                 DownloadNewSmsExportView,
                 BulkDownloadNewFormExportView,
             )
+            from corehq.apps.export.views.edit import (
+                EditNewCustomFormExportView,
+                EditNewCustomCaseExportView,
+                EditFormDailySavedExportView,
+                EditCaseDailySavedExportView,
+                EditFormFeedView,
+                EditCaseFeedView,
+            )
             from corehq.apps.export.views.list import (
                 FormExportListView,
                 CaseExportListView,
-            )
-            from corehq.apps.export.old_views import (
-                CreateNewCustomFormExportView,
-                CreateNewCustomCaseExportView,
-                EditNewCustomFormExportView,
-                EditNewCustomCaseExportView,
                 DashboardFeedListView,
                 DailySavedExportListView,
+            )
+            from corehq.apps.export.views.new import (
+                CreateNewCustomFormExportView,
+                CreateNewCustomCaseExportView,
                 CreateNewDailySavedFormExport,
                 CreateNewDailySavedCaseExport,
-                EditFormDailySavedExportView,
-                EditCaseDailySavedExportView,
                 CreateNewFormFeedView,
                 CreateNewCaseFeedView,
-                EditFormFeedView,
-                EditCaseFeedView,
             )
             from corehq.apps.export.views.util import (
                 DashboardFeedPaywall,
@@ -776,11 +778,11 @@ class ProjectDataTab(UITab):
         ):
             return []
 
+        from corehq.apps.export.download import (
+            DownloadNewSmsExportView,
+        )
         from corehq.apps.export.views.list import (
             FormExportListView, CaseExportListView
-        )
-        from corehq.apps.export.old_views import (
-            DownloadNewSmsExportView,
         )
 
         items = []

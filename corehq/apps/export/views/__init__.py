@@ -7,6 +7,15 @@ from corehq.apps.export.views.download import (
     DownloadNewSmsExportView,
     BulkDownloadNewFormExportView,
 )
+from corehq.apps.export.views.edit import (
+    BaseEditNewCustomExportView,
+    EditNewCustomFormExportView,
+    EditNewCustomCaseExportView,
+    EditCaseFeedView,
+    EditFormFeedView,
+    EditCaseDailySavedExportView,
+    EditFormDailySavedExportView,
+)
 from corehq.apps.export.views.list import (
     BaseExportListView,
     DailySavedExportListView,
@@ -17,6 +26,18 @@ from corehq.apps.export.views.list import (
     DeIdDailySavedExportListView,
     DeIdDashboardFeedListView,
     _DeidMixin,
+)
+from corehq.apps.export.views.new import (
+    BaseNewExportView,
+    BaseModifyNewCustomView,
+    DeleteNewCustomExportView,
+    CreateNewCustomFormExportView,
+    CreateNewCustomCaseExportView,
+    CreateNewCaseFeedView,
+    CreateNewFormFeedView,
+    CreateNewDailySavedCaseExport,
+    CreateNewDailySavedFormExport,
+    CopyExportView,
 )
 from corehq.apps.export.views.util import (
      ExportsPermissionsManager,

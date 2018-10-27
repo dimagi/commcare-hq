@@ -379,12 +379,14 @@ class DailySavedExportListView(BaseExportListView):
         return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
 
     def _get_create_export_class(self, model):
+        from corehq.apps.export.views.new import CreateNewDailySavedFormExport, CreateNewDailySavedCaseExport
         return {
             "form": CreateNewDailySavedFormExport,
             "case": CreateNewDailySavedCaseExport,
         }[model]
 
     def _get_edit_export_class(self, model):
+        from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
         return {
             "form": EditFormDailySavedExportView,
             "case": EditCaseDailySavedExportView
@@ -437,6 +439,7 @@ class DailySavedExportListView(BaseExportListView):
         return []
 
     def fmt_export_data(self, export):
+        from corehq.apps.exportviews.new import CopyExportView
         if isinstance(export, FormExportInstance):
             edit_view = self._get_edit_export_class('form')
             download_view = DownloadNewFormExportView
@@ -580,6 +583,7 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
+        from corehq.apps.exportviews.new import CopyExportView
         emailed_export = None
         if export.is_daily_saved_export:
             emailed_export = self._get_daily_saved_export_metadata(export)
@@ -625,6 +629,7 @@ class FormExportListView(BaseExportListView):
         return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
+        from corehq.apps.export.views.new import CreateNewCustomFormExportView
         create_form = CreateExportTagForm(
             self.permissions.has_form_export_permissions,
             self.permissions.has_case_export_permissions,
@@ -676,6 +681,7 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
+        from corehq.apps.exportviews.new import CopyExportView
         emailed_export = None
         if export.is_daily_saved_export:
             emailed_export = self._get_daily_saved_export_metadata(export)
@@ -718,6 +724,7 @@ class CaseExportListView(BaseExportListView):
         return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
+        from corehq.apps.export.views.new import CreateNewCustomCaseExportView
         create_form = CreateExportTagForm(
             self.permissions.has_form_export_permissions,
             self.permissions.has_case_export_permissions,
@@ -757,12 +764,14 @@ class DashboardFeedListView(DailySavedExportListView):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
     def _get_create_export_class(self, model):
+        from corehq.apps.export.views.new import CreateNewFormFeedView, CreateNewCaseFeedView
         return {
             "form": CreateNewFormFeedView,
             "case": CreateNewCaseFeedView,
         }[model]
 
     def _get_edit_export_class(self, model):
+        from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
         return {
             "form": EditFormFeedView,
             "case": EditCaseFeedView

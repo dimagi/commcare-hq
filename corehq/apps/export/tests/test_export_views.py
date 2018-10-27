@@ -20,15 +20,17 @@ from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
 )
+from corehq.apps.export.edit import (
+    EditNewCustomCaseExportView,
+    EditNewCustomFormExportView,
+)
 from corehq.apps.export.views.list import (
     DailySavedExportListView,
 )
-from corehq.apps.export.old_views import (
+from corehq.apps.export.new import (
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
-    EditNewCustomCaseExportView,
-    EditNewCustomFormExportView,
 )
 from corehq.apps.export.util import DataFileDownloadDetail
 from corehq.util.test_utils import flag_enabled, generate_cases

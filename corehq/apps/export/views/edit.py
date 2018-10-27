@@ -23,6 +23,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DataFile, EmailExportWhenDoneRequest
+from corehq.apps.export.views.new import BaseModifyNewCustomView
 from corehq.apps.export.views.util import DailySavedExportMixin, DailySavedExportMixin
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
@@ -126,115 +127,81 @@ from soil.progress import get_task_status
 from six.moves import map
 
 
-def _get_timezone(domain, couch_user):
-    if not domain:
-        return pytz.utc
-    else:
+class BaseEditNewCustomExportView(BaseModifyNewCustomView):
+
+    @property
+    def export_id(self):
+        return self.kwargs.get('export_id')
+
+    @property
+    @memoized
+    def new_export_instance(self):
+        return self.export_instance_cls.get(self.export_id)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.export_id])
+
+    def get(self, request, *args, **kwargs):
         try:
-            return get_timezone_for_user(couch_user, domain)
-        except AttributeError:
-            return get_timezone_for_user(None, domain)
-
-
-def user_can_view_deid_exports(domain, couch_user):
-    return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
-            and couch_user.has_permission(
-                domain,
-                get_permission_name(Permissions.view_report),
-                data=DEID_EXPORT_PERMISSION
-            ))
-
-
-def can_download_daily_saved_export(export, domain, couch_user):
-    if (export.is_deidentified
-        and user_can_view_deid_exports(domain, couch_user)
-    ):
-        return True
-    elif export.type == FORM_EXPORT and has_permission_to_view_report(
-            couch_user, domain, FORM_EXPORT_PERMISSION):
-        return True
-    elif export.type == CASE_EXPORT and has_permission_to_view_report(
-            couch_user, domain, CASE_EXPORT_PERMISSION):
-        return True
-    return False
-
-
-@login_and_domain_required
-@require_POST
-def add_export_email_request(request, domain):
-    download_id = request.POST.get('download_id')
-    user_id = request.couch_user.user_id
-    if download_id is None or user_id is None:
-        return HttpResponseBadRequest(ugettext_lazy('Download ID or User ID blank/not provided'))
-    try:
-        download_context = get_download_context(download_id)
-    except TaskFailedError:
-        return HttpResponseServerError(ugettext_lazy('Export failed'))
-    if download_context.get('is_ready', False):
-        try:
-            couch_user = CouchUser.get_by_user_id(user_id, domain=domain)
-        except CouchUser.AccountTypeError:
-            return HttpResponseBadRequest(ugettext_lazy('Invalid user'))
-        if couch_user is not None:
-            process_email_request(domain, download_id, couch_user.get_email())
-    else:
-        EmailExportWhenDoneRequest.objects.create(domain=domain, download_id=download_id, user_id=user_id)
-    return HttpResponse(ugettext_lazy('Export e-mail request sent.'))
-
-
-@location_safe
-@csrf_exempt
-@api_auth
-@require_GET
-def download_daily_saved_export(req, domain, export_instance_id):
-    with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
-        try:
-            export_instance = get_properly_wrapped_export_instance(export_instance_id)
+            export_instance = self.new_export_instance
         except ResourceNotFound:
-            raise Http404(_("Export not found"))
+            raise Http404()
 
-        assert domain == export_instance.domain
+        schema = self.get_export_schema(
+            self.domain,
+            self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),
+            export_instance.identifier
+        )
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(
+            schema,
+            saved_export=export_instance,
+            # The export exists - we don't want to automatically select new columns
+            auto_select=False,
+        )
+        for message in self.export_instance.error_messages():
+            messages.error(request, message)
+        return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
 
-        if export_instance.export_format == "html":
-            if not domain_has_privilege(domain, EXCEL_DASHBOARD):
-                raise Http404
-        elif export_instance.is_daily_saved_export:
-            if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
-                raise Http404
-
-        if not export_instance.filters.is_location_safe_for_user(req):
-            return location_restricted_response(req)
-
-        if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
+    @method_decorator(login_and_domain_required)
+    def post(self, request, *args, **kwargs):
+        try:
+            new_export_instance = self.new_export_instance
+        except ResourceNotFound:
+            new_export_instance = None
+        if (
+            new_export_instance
+            and not new_export_instance.can_edit(request.couch_user)
+        ):
             raise Http404
-
-        if export_instance.export_format == "html":
-            message = "Download Excel Dashboard"
-        else:
-            message = "Download Saved Export"
-        track_workflow(req.couch_user.username, message, properties={
-            'domain': domain,
-            'is_dimagi': req.couch_user.is_dimagi
-        })
-
-        if should_update_export(export_instance.last_accessed):
-            try:
-                rebuild_saved_export(export_instance_id, manual=False)
-            except Exception:
-                notify_exception(
-                    req,
-                    'Failed to rebuild export during download',
-                    {
-                        'export_instance_id': export_instance_id,
-                        'domain': domain,
-                    },
-                )
-
-        export_instance.last_accessed = datetime.utcnow()
-        export_instance.save()
-
-    payload = export_instance.get_payload(stream=True)
-    format = Format.from_format(export_instance.export_format)
-    return get_download_response(payload, export_instance.file_size, format, export_instance.filename, req)
+        return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)
 
 
+class EditNewCustomFormExportView(BaseEditNewCustomExportView):
+    urlname = 'edit_new_custom_export_form'
+    page_title = ugettext_lazy("Edit Form Data Export")
+    export_type = FORM_EXPORT
+
+
+class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
+    urlname = 'edit_new_custom_export_case'
+    page_title = ugettext_lazy("Edit Case Data Export")
+    export_type = CASE_EXPORT
+
+
+class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
+    urlname = 'edit_case_feed_export'
+    page_title = ugettext_lazy("Edit Case Feed")
+
+
+class EditFormFeedView(DashboardFeedMixin, EditNewCustomFormExportView):
+    urlname = 'edit_form_feed_export'
+    page_title = ugettext_lazy("Edit Form Feed")
+
+
+class EditCaseDailySavedExportView(DailySavedExportMixin, EditNewCustomCaseExportView):
+    urlname = 'edit_case_daily_saved_export'
+
+
+class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExportView):
+    urlname = 'edit_form_daily_saved_export'
