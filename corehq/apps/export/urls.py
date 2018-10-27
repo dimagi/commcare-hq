@@ -22,7 +22,6 @@ from corehq.apps.export.old_views import (
     EditNewCustomFormExportView,
     EditNewCustomCaseExportView,
     DeleteNewCustomExportView,
-    GenerateSchemaFromAllBuildsView,
     download_daily_saved_export,
     CreateNewCaseFeedView,
     CreateNewFormFeedView,
@@ -39,6 +38,7 @@ from corehq.apps.export.old_views import (
     DataFileDownloadDetail,
     add_export_email_request
 )
+from corehq.apps.export.views.util import GenerateSchemaFromAllBuildsView
 
 urlpatterns = [
     # Export list views

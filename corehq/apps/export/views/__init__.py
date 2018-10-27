@@ -18,3 +18,9 @@ from corehq.apps.export.views.list import (
     DeIdDashboardFeedListView,
     _DeidMixin,
 )
+from corehq.apps.export.views.util import (
+     ExportsPermissionsManager,
+     DailySavedExportMixin,
+     DashboardFeedMixin,
+     GenerateSchemaFromAllBuildsView,
+)
