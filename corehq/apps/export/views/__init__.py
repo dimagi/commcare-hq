@@ -41,7 +41,7 @@ from corehq.apps.export.views.new import (
     CreateNewDailySavedFormExport,
     CopyExportView,
 )
-from corehq.apps.export.views.util import (
+from corehq.apps.export.views.utils import (
      ExportsPermissionsManager,
      DailySavedExportMixin,
      DashboardFeedMixin,

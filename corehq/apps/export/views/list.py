@@ -23,7 +23,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DataFile, EmailExportWhenDoneRequest
-from corehq.apps.export.views.util import ExportsPermissionsManager
+from corehq.apps.export.views.utils import ExportsPermissionsManager, user_can_view_deid_exports
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
@@ -852,7 +852,6 @@ class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
 
 
 def can_download_daily_saved_export(export, domain, couch_user):
-    from corehq.apps.export.views.util import user_can_view_deid_exports
     if (export.is_deidentified
         and user_can_view_deid_exports(domain, couch_user)
     ):

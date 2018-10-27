@@ -36,7 +36,7 @@ from corehq.apps.export.views.new import (
     CopyExportView,
     DeleteNewCustomExportView,
 )
-from corehq.apps.export.views.util import (
+from corehq.apps.export.views.utils import (
     DashboardFeedPaywall,
     DailySavedExportPaywall,
     DataFileDownloadList,

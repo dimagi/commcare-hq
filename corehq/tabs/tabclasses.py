@@ -497,7 +497,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_only_see_deid_exports(self):
-        from corehq.apps.export.views.util import user_can_view_deid_exports
+        from corehq.apps.export.views.utils import user_can_view_deid_exports
         return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
@@ -569,7 +569,7 @@ class ProjectDataTab(UITab):
                 CreateNewFormFeedView,
                 CreateNewCaseFeedView,
             )
-            from corehq.apps.export.views.util import (
+            from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
                 DailySavedExportPaywall
             )

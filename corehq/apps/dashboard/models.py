@@ -4,7 +4,7 @@ from django.urls import reverse, resolve, Resolver404
 from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
-from corehq.apps.export.views.util import ExportsPermissionsManager
+from corehq.apps.export.views.utils import ExportsPermissionsManager
 from corehq.apps.reports.models import ReportConfig
 from memoized import memoized
 
