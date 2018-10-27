@@ -31,7 +31,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
-from corehq.apps.domain.views import (
+from corehq.apps.domain.views.accounting import (
     BillingStatementPdfView,
     PAYMENT_ERROR_MESSAGES,
     InvoiceStripePaymentView,

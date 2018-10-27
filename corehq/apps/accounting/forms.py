@@ -1720,7 +1720,7 @@ class EnterprisePlanContactForm(forms.Form):
         self.domain = domain
         self.web_user = web_user
         super(EnterprisePlanContactForm, self).__init__(data, *args, **kwargs)
-        from corehq.apps.domain.views import SelectPlanView
+        from corehq.apps.domain.views.accounting import SelectPlanView
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'

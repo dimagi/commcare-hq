@@ -1451,7 +1451,7 @@ class ProjectSettingsTab(UITab):
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
             if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
-                from corehq.apps.domain.views import (
+                from corehq.apps.domain.views.accounting import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,

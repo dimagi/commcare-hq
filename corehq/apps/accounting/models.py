@@ -487,7 +487,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def _send_autopay_card_removed_email(self, new_user, domain):
         """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
-        from corehq.apps.domain.views import EditExistingBillingAccountView
+        from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
         old_user = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
@@ -514,7 +514,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def _send_autopay_card_added_email(self, domain):
         """Sends an email to the new autopayer for this account telling them they are now the autopayer"""
-        from corehq.apps.domain.views import EditExistingBillingAccountView
+        from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
         subject = _("Your card is being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
         web_user = WebUser.get_by_username(self.auto_pay_user)
@@ -2299,9 +2299,8 @@ class BillingRecordBase(models.Model):
             })
 
     def email_context(self):
-        from corehq.apps.domain.views import (
-            DomainBillingStatementsView, DefaultProjectSettingsView,
-        )
+        from corehq.apps.domain.views.accounting import DomainBillingStatementsView
+        from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.get_domain()

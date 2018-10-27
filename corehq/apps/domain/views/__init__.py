@@ -6,9 +6,7 @@ from corehq.apps.domain.views.base import (
     LoginAndDomainMixin,    # TODO: update imports
     BaseDomainView,         # TODO: update imports
 )
-'''
 from corehq.apps.domain.views.accounting import (
-    EditPrivacySecurityView,
     SelectedEnterprisePlanView,
     SelectedAnnualPlanView,
     ConfirmSelectedPlanView,
@@ -18,8 +16,8 @@ from corehq.apps.domain.views.accounting import (
     ConfirmSubscriptionRenewalView,
     EmailOnDowngradeView,
     SubscriptionUpgradeRequiredView,
-    DomainAccountingSettings,
-    DomainSubscriptionView,
+    DomainAccountingSettings,   # TODO: update imports
+    DomainSubscriptionView,     # TODO: update imports
     EditExistingBillingAccountView,
     DomainBillingStatementsView,
     BaseStripePaymentView,
@@ -35,7 +33,6 @@ from corehq.apps.domain.views.accounting import (
     CardView,
     CardsView,
 )
-'''
 from corehq.apps.domain.views.exchange import (
     ExchangeSnapshotsView,
     CreateNewExchangeSnapshotView,
@@ -74,6 +71,7 @@ from corehq.apps.domain.views.settings import (
     BaseEditProjectInfoView,
     EditBasicProjectInfoView,
     EditMyProjectSettingsView,
+    EditPrivacySecurityView,
     EditOpenClinicaSettingsView,
     ManageProjectMediaView,
     logo,

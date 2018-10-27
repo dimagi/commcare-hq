@@ -723,7 +723,7 @@ def _is_subscription_eligible_for_downgrade_process(subscription):
 
 def _apply_downgrade_process(subscription, oldest_unpaid_invoice, total, today):
     from corehq.apps.domain.views import DomainSubscriptionView
-    from corehq.apps.domain.views import DomainBillingStatementsView
+    from corehq.apps.domain.views.accounting import DomainBillingStatementsView
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
     domain = subscription.subscriber.domain
