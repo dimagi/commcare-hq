@@ -50,12 +50,6 @@ class DBAccessorsTest(TestCase):
             get_doc_count_in_domain_by_class, self.domain, CommCareCase)
 
         self.assertEqual(get(), 2)
-        self.assertEqual(get(start_date=datetime.datetime(1999, 7, 1)), 2)
-        self.assertEqual(get(start_date=datetime.datetime(2000, 7, 1)), 1)
-        self.assertEqual(get(start_date=datetime.datetime(2001, 7, 1)), 0)
-        self.assertEqual(get(end_date=datetime.datetime(2001, 7, 1)), 2)
-        self.assertEqual(get(end_date=datetime.datetime(2000, 7, 1)), 1)
-        self.assertEqual(get(end_date=datetime.datetime(1999, 7, 1)), 0)
 
     def test_get_doc_ids_in_domain_by_class(self):
         user_role = UserRole(domain=self.domain)
