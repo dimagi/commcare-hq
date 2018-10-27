@@ -15,9 +15,8 @@ from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
-from corehq.apps.domain.views import (
+from corehq.apps.domain.views.settings import (
     CaseSearchConfigView,
-    CreateNewExchangeSnapshotView,
     DefaultProjectSettingsView,
     EditBasicProjectInfoView,
     EditMyProjectSettingsView,
@@ -51,7 +50,11 @@ from corehq.apps.domain.views.accounting import (
     WireInvoiceView,
 )
 from corehq.apps.domain.views.base import select
-from corehq.apps.domain.views.exchange import ExchangeSnapshotsView, set_published_snapshot,
+from corehq.apps.domain.views.exchange import (
+    ExchangeSnapshotsView,
+    CreateNewExchangeSnapshotView,
+    set_published_snapshot,
+)
 from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,

@@ -61,11 +61,10 @@ from corehq.apps.domain.views.pro_bono import (
 from corehq.apps.domain.views.repeaters import (
     generate_repeater_payloads,
 )
-'''
 from corehq.apps.domain.views.settings import (
-    BaseProjectSettingsView,
-    DefaultProjectSettingsView,
-    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,    # TODO: update imports
+    DefaultProjectSettingsView, # TODO: update imports
+    BaseAdminProjectSettingsView, # TODO: update imports
     BaseEditProjectInfoView,
     EditBasicProjectInfoView,
     EditMyProjectSettingsView,
@@ -75,9 +74,9 @@ from corehq.apps.domain.views.settings import (
     logo,
     CaseSearchConfigView,
     RecoveryMeasuresHistory,
+    PasswordResetView,
     FeaturePreviewsView,
 )
-'''
 from corehq.apps.domain.views.sms import (
     PublicSMSRatesView,
     SMSRatesView,

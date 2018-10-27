@@ -12,7 +12,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
 from corehq.apps.app_manager.views.phone import list_apps
-from corehq.apps.domain.views import logo
+from corehq.apps.domain.views.settings import logo
 from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirect_to_dimagi
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
