@@ -30,6 +30,8 @@ class PermissionsTest(TestCase):
         )))
 
 
+@mock.patch('corehq.apps.export.views.utils.domain_has_privilege',
+            lambda domain, privilege: True)
 class ExportPermissionsTest(SimpleTestCase):
 
     @classmethod

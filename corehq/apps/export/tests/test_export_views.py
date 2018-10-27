@@ -27,7 +27,7 @@ from corehq.apps.export.views.edit import (
 from corehq.apps.export.views.list import (
     DailySavedExportListView,
 )
-from corehq.apps.export.new import (
+from corehq.apps.export.views.new import (
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
