@@ -51,7 +51,6 @@ from corehq.apps.domain.views import (
     PasswordResetView,
     ProBonoView,
     RecoveryMeasuresHistory,
-    SMSRatesView,
     SelectPlanView,
     SelectedEnterprisePlanView,
     SelectedAnnualPlanView,
@@ -64,6 +63,7 @@ from corehq.apps.domain.views import (
     toggle_diff,
     generate_repeater_payloads,
 )
+from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (

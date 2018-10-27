@@ -79,8 +79,8 @@ from corehq.apps.domain.views.settings import (
     RecoveryMeasuresHistory,
     FeaturePreviewsView,
 )
+'''
 from corehq.apps.domain.views.sms import (
     PublicSMSRatesView,
     SMSRatesView,
 )
-'''
