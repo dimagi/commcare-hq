@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
-'''
 from corehq.apps.domain.views.base import (
     select,
-    DomainViewMixin,
-    LoginAndDomainMixin,
-    BaseDomainView,
+    DomainViewMixin,        # TODO: update imports
+    LoginAndDomainMixin,    # TODO: update imports
+    BaseDomainView,         # TODO: update imports
 )
+'''
 from corehq.apps.domain.views.accounting import (
     EditPrivacySecurityView,
     SelectedEnterprisePlanView,

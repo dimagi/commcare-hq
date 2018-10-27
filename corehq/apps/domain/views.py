@@ -145,80 +145,7 @@ PAYMENT_ERROR_MESSAGES = {
 }
 
 
-# Domain not required here - we could be selecting it for the first time. See notes domain.decorators
-# about why we need this custom login_required decorator
-@login_required
-def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
-    domains_for_user = Domain.active_for_user(request.user)
-    if not domains_for_user:
-        return redirect('registration_domain')
-
-    email = request.couch_user.get_email()
-    open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
-
-    additional_context = {
-        'domains_for_user': domains_for_user,
-        'open_invitations': open_invitations,
-        'current_page': {'page_name': _('Select A Project')},
-    }
-
-    last_visited_domain = request.session.get('last_visited_domain')
-    if open_invitations \
-       or do_not_redirect \
-       or not last_visited_domain:
-        return render(request, domain_select_template, additional_context)
-    else:
-        domain = Domain.get_by_name(last_visited_domain)
-        if domain and domain.is_active:
-            # mirrors logic in login_and_domain_required
-            if (
-                request.couch_user.is_member_of(domain)
-                or (request.user.is_superuser and not domain.restrict_superusers)
-                or domain.is_snapshot
-            ):
-                try:
-                    from corehq.apps.dashboard.views import dashboard_default
-                    return dashboard_default(request, last_visited_domain)
-                except Http404:
-                    pass
-
-        del request.session['last_visited_domain']
-        return render(request, domain_select_template, additional_context)
-
-
-class DomainViewMixin(object):
-    """
-        Paving the way for a world of entirely class-based views.
-        Let's do this, guys. :-)
-
-        Set strict_domain_fetching to True in subclasses to bypass the cache.
-    """
-    strict_domain_fetching = False
-
-    @property
-    @memoized
-    def domain(self):
-        domain = self.args[0] if len(self.args) > 0 else self.kwargs.get('domain', "")
-        return normalize_domain_name(domain)
-
-    @property
-    @memoized
-    def domain_object(self):
-        domain = Domain.get_by_name(self.domain, strict=self.strict_domain_fetching)
-        if not domain:
-            raise Http404()
-        return domain
-
-
-class LoginAndDomainMixin(object):
-
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, *args, **kwargs):
-        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
-
-
-class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
-                                      DomainViewMixin):
+class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("Upgrade Required")
     template_name = "domain/insufficient_privilege_notification.html"
 
@@ -267,23 +194,6 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
         return super(SubscriptionUpgradeRequiredView, self).get(
             request, *args, **kwargs
         )
-
-
-class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
-
-    @property
-    def main_context(self):
-        main_context = super(BaseDomainView, self).main_context
-        main_context.update({
-            'domain': self.domain,
-        })
-        return main_context
-
-    @property
-    @memoized
-    def page_url(self):
-        if self.urlname:
-            return reverse(self.urlname, args=[self.domain])
 
 
 class BaseProjectSettingsView(BaseDomainView):
