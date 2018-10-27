@@ -35,14 +35,12 @@ from corehq.apps.domain.views.accounting import (
     CardView,
     CardsView,
 )
+'''
 from corehq.apps.domain.views.exchange import (
     ExchangeSnapshotsView,
     CreateNewExchangeSnapshotView,
-    _publish_snapshot,
-    _notification_email_on_publish,
     set_published_snapshot,
 )
-'''
 from corehq.apps.domain.views.fixtures import (
     CalendarFixtureConfigView,
     LocationFixtureConfigView,

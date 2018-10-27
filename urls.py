@@ -12,7 +12,8 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
 from corehq.apps.app_manager.views.phone import list_apps
-from corehq.apps.domain.views import ProBonoStaticView, logo
+from corehq.apps.domain.views import logo
+from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirect_to_dimagi
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
@@ -138,8 +139,7 @@ urlpatterns = [
     url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
     url(r'^exchange/cda/$', cda, name='cda'),
     url(r'^wisepill/', include('custom.apps.wisepill.urls')),
-    url(r'^pro_bono/$', ProBonoStaticView.as_view(),
-        name=ProBonoStaticView.urlname),
+    url(r'^pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname),
     url(r'^ping/$', ping, name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK, permanent=True), name='go_to_pricing'),

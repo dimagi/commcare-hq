@@ -40,7 +40,6 @@ from corehq.apps.domain.views import (
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
     EmailOnDowngradeView,
-    ExchangeSnapshotsView,
     FlagsAndPrivilegesView,
     FeaturePreviewsView,
     InternalSubscriptionManagementView,
@@ -56,9 +55,9 @@ from corehq.apps.domain.views import (
     WireInvoiceView,
     calculated_properties,
     select,
-    set_published_snapshot,
     toggle_diff,
 )
+from corehq.apps.domain.views.exchange import ExchangeSnapshotsView, set_published_snapshot,
 from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
 from corehq.apps.domain.views.pro_bono import ProBonoView
 from corehq.apps.domain.views.repeaters import generate_repeater_payloads
