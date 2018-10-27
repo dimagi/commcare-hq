@@ -6,6 +6,7 @@ from corehq.apps.export.views.download import (
     BulkDownloadNewFormExportView,
     DownloadNewCaseExportView,
     DownloadNewSmsExportView,
+    add_export_email_request,
 )
 from corehq.apps.export.edit import (
     EditNewCustomFormExportView,
@@ -36,7 +37,6 @@ from corehq.apps.export.views.new import (
 )
 from corehq.apps.export.old_views import (
     download_daily_saved_export,
-    add_export_email_request
 )
 from corehq.apps.export.views.util import (
     DashboardFeedPaywall,
