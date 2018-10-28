@@ -13,71 +13,20 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_lazy
 
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    FuzzyProperties,
-    IgnorePatterns,
-    enable_case_search,
-    disable_case_search,
-)
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
-    use_select2,
-    use_select2_v4,
-    use_multiselect,
-)
-from corehq.apps.accounting.exceptions import (
-    NewSubscriptionError,
-    PaymentRequestError,
-    SubscriptionAdjustmentError,
-)
-from corehq.apps.accounting.payment_handlers import (
-    BulkStripePaymentHandler,
-    CreditStripePaymentHandler,
-    InvoiceStripePaymentHandler,
-)
-from corehq.apps.accounting.utils import (
-    get_change_status, get_privileges, fmt_dollar_amount,
-    quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, domain_has_privilege, is_downgrade
-)
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, NAMESPACE_USER
 from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
-from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SubscriptionType,
-    DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType,
-    Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice, CustomerInvoice,
-    StripePaymentMethod, LastPayment,
-    UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
-)
-from corehq.apps.accounting.user_text import (
-    get_feature_name,
-    DESC_BY_EDITION,
-    get_feature_recurring_interval,
-)
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_required, require_superuser, login_and_domain_required
 )
-from corehq.apps.domain.forms import (
-    DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
-    SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
-    ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
-    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
-    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm, USE_PARENT_LOCATION_CHOICE,
-    USE_LOCATION_CHOICE)
-from corehq.apps.domain.models import (
-    Domain,
-    LICENSES,
-    TransferDomainRequest,
-)
+from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
+from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.views import BasePageView
 from memoized import memoized
@@ -225,8 +174,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                     message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL]
                 )
 
-            messages.success(request, _("The internal information for project %s was successfully updated!")
-                                      % self.domain)
+            messages.success(request,
+                             _("The internal information for project %s was successfully updated!") % self.domain)
             if self.internal_settings_form.cleaned_data['send_handoff_email']:
                 self.send_handoff_email()
             return redirect(self.urlname, self.domain)
@@ -439,7 +388,7 @@ def toggle_diff(request, domain):
         diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
                 for t in feature_previews.all_previews() + all_toggles()
                 if t.enabled(request.domain, NAMESPACE_DOMAIN) and not t.enabled(other_domain, NAMESPACE_DOMAIN)]
-        diff.sort(cmp=lambda x, y: cmp(x['label'], y['label']))
+        diff.sort(key=lambda x: x['label'])
     return json_response(diff)
 
 

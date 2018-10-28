@@ -27,22 +27,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
-    use_select2,
-    use_select2_v4,
-    use_multiselect,
-)
-from corehq.apps.accounting.exceptions import (
-    NewSubscriptionError,
-    PaymentRequestError,
-    SubscriptionAdjustmentError,
-)
-from corehq.apps.accounting.payment_handlers import (
-    BulkStripePaymentHandler,
-    CreditStripePaymentHandler,
-    InvoiceStripePaymentHandler,
-)
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
@@ -55,36 +40,12 @@ from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
-from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SubscriptionType,
-    DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType,
-    Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice, CustomerInvoice,
-    StripePaymentMethod, LastPayment,
-    UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
-)
-from corehq.apps.accounting.user_text import (
-    get_feature_name,
-    DESC_BY_EDITION,
-    get_feature_recurring_interval,
-)
-from corehq.apps.domain.decorators import (
-    domain_admin_required, login_required, require_superuser, login_and_domain_required
-)
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.forms import (
-    DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
-    SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
-    ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
-    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
-    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm, USE_PARENT_LOCATION_CHOICE,
-    USE_LOCATION_CHOICE)
-from corehq.apps.domain.models import (
-    Domain,
-    LICENSES,
-    TransferDomainRequest,
+    DomainGlobalSettingsForm, DomainMetadataForm, PrivacySecurityForm,
+    USE_PARENT_LOCATION_CHOICE, USE_LOCATION_CHOICE,
 )
+from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.forms import ProjectSettingsForm
 from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
 from memoized import memoized
@@ -150,7 +111,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
             # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
             # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
-            'cloudcare_releases':  self.domain_object.cloudcare_releases,
+            'cloudcare_releases': self.domain_object.cloudcare_releases,
         })
         return context
 
@@ -239,7 +200,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             if self.basic_info_form.save(request, self.domain_object):
                 messages.success(request, _("Project settings saved!"))
             else:
-                messages.error(request, _("There seems to have been an error saving your settings. Please try again!"))
+                messages.error(request, _("There was an error saving your settings. Please try again!"))
             return HttpResponseRedirect(self.page_url)
 
         return self.get(request, *args, **kwargs)
@@ -257,7 +218,7 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     @property
     @memoized
     def my_project_settings_form(self):
-        initial = { 'global_timezone': self.domain_object.default_timezone }
+        initial = {'global_timezone': self.domain_object.default_timezone}
         if self.domain_membership:
             initial.update({
                 'override_global_tz': self.domain_membership.override_global_tz,
@@ -524,7 +485,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
         return sorted(features, key=lambda feature: feature[0].label)
 
     def get_toggle(self, slug):
-        if not slug in [f.slug for f, _ in self.features()]:
+        if slug not in [f.slug for f, _ in self.features()]:
             raise Http404()
         try:
             return Toggle.get(slug)

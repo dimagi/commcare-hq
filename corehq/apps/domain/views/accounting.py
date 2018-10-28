@@ -20,13 +20,6 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
 
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    FuzzyProperties,
-    IgnorePatterns,
-    enable_case_search,
-    disable_case_search,
-)
 from corehq.const import USER_DATE_FORMAT
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
@@ -34,8 +27,6 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
-    use_select2_v4,
-    use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
@@ -52,7 +43,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm, AnnualPlanCo
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, domain_has_privilege, is_downgrade
+    log_accounting_error, is_downgrade
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.users.models import Permissions
@@ -73,21 +64,11 @@ from corehq.apps.accounting.user_text import (
     DESC_BY_EDITION,
     get_feature_recurring_interval,
 )
-from corehq.apps.domain.decorators import (
-    domain_admin_required, login_required, require_superuser, login_and_domain_required
-)
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.forms import (
-    DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
-    SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
-    ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
-    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
+    ConfirmNewSubscriptionForm, EditBillingAccountInfoForm, ConfirmSubscriptionRenewalForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm, USE_PARENT_LOCATION_CHOICE,
-    USE_LOCATION_CHOICE)
-from corehq.apps.domain.models import (
-    Domain,
-    LICENSES,
-    TransferDomainRequest,
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm,
 )
 from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
@@ -846,7 +827,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                     'This request will require Ops assistance. '
                     'Please explain to <a href="mailto:%(ops_email)s">%(ops_email)s</a>'
                     ' what you\'re trying to do and report the following error: <strong>"%(error)s"</strong>' % {
-                        'error': e.message,
+                        'error': str(e),
                         'ops_email': settings.ACCOUNTS_EMAIL,
                     }
                 ))
