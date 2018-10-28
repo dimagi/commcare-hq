@@ -23,7 +23,7 @@ class IncentiveReport(object):
             if home_visit_percent > 1:
                 home_visit_percent = 1
 
-            excel_rows.append(row['state_name'],
+            excel_rows.append([row['state_name'],
                               row['district_name'],
                               row['block_name'],
                               row['supervisor_name'],
@@ -32,7 +32,7 @@ class IncentiveReport(object):
                               '{:.2%}'.format(home_visit_percent),
                               row['awc_num_open'],
                               '{:.2%}'.format(weighing_efficiency),
-                              'Yes' if weighing_efficiency > 0.6 and home_visit_percent > 0.6 else 'No')
+                               'Yes' if weighing_efficiency > 0.6 and home_visit_percent > 0.6 else 'No'])
 
         return [
             [
