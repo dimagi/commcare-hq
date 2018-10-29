@@ -49,11 +49,12 @@
 trunk: master
 name: autostaging
 branches:
-  - jls/ko-export-merge-conflicts  # Jenny Oct 24
-  - jls/ko-exports-create  # Jenny Oct 19
-  - jls/ko-exports-list  # Jenny Oct 24
-  - jls/ko-export-dl-views  # Jenny Oct 23
-  - jls/ko-export-dl-ui  # Jenny Oct 26
+  #- jls/ko-export-merge-conflicts  # Jenny Oct 24
+  #- jls/ko-exports-create  # Jenny Oct 19
+  #- jls/ko-exports-list  # Jenny Oct 24
+  #- jls/ko-export-dl-views  # Jenny Oct 23
+  #- jls/ko-export-dl-ui  # Jenny Oct 26
   - dm/gevent # daniel Oct 24
   - pv/case-list-deac-label # Preethi Oct 26
+  - jls/split-export-views  # Jenny Oct 29
 submodules: {}
