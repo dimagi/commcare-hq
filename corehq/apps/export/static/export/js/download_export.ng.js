@@ -44,12 +44,19 @@
 
         $scope.hasMultimedia = false;
         if (checkForMultimedia) {
-            djangoRMI.has_multimedia({})
-                .success(function (data) {
+            $.ajax({
+                method: 'GET',
+                url: hqImport("hqwebapp/js/initial_page_data").reverse("has_multimedia"),
+                data: {
+                    export_id: $scope.exportList[0].export_id,
+                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
+                },
+                success: function (data) {
                     if (data.success) {
                         $scope.hasMultimedia = data.hasMultimedia;
                     }
-                });
+                },
+            });
         }
 
         $scope.formData.user_types = ['mobile'];
@@ -122,12 +129,17 @@
                         return item;
                     }
                 ).join()});
-            djangoRMI.prepare_custom_export({
-                exports: $scope.exportList,
-                max_column_size: self._maxColumnSize,
-                form_data: $scope.formData,
-            })
-                .success(function (data) {
+            $.ajax({
+                method: 'POST',
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('prepare_custom_export'),
+                data: {
+                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
+                    sms_export: hqImport('hqwebapp/js/initial_page_data').get("sms_export"),
+                    exports: JSON.stringify($scope.exportList),
+                    max_column_size: self._maxColumnSize,
+                    form_data: JSON.stringify($scope.formData),
+                },
+                success: function (data) {
                     if (data.success) {
                         self.sendAnalytics();
                         $scope.preparingExport = false;
@@ -136,8 +148,9 @@
                     } else {
                         self._handlePrepareError(data);
                     }
-                })
-                .error(self._handlePrepareError);
+                },
+                error: self._handlePrepareError,
+            });
         };
 
         self._handlePrepareError = function (data) {
@@ -149,17 +162,23 @@
             }
             $scope.preparingExport = false;
             $scope.preparingMultimediaExport = false;
+            $scope.$apply();
         };
 
         $scope.preparingMultimediaExport = false;
         $scope.prepareMultimediaExport = function () {
             $scope.prepareExportError = null;
             $scope.preparingMultimediaExport = true;
-            djangoRMI.prepare_form_multimedia({
-                exports: $scope.exportList,
-                form_data: $scope.formData,
-            })
-                .success(function (data) {
+            $.ajax({
+                method: 'POST',
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('prepare_form_multimedia'),
+                data: {
+                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
+                    sms_export: hqImport('hqwebapp/js/initial_page_data').get("sms_export"),
+                    exports: JSON.stringify($scope.exportList),
+                    form_data: JSON.stringify($scope.formData),
+                },
+                success: function (data) {
                     if (data.success) {
                         self.sendAnalytics();
                         $scope.preparingMultimediaExport = false;
@@ -168,8 +187,9 @@
                     } else {
                         self._handlePrepareError(data);
                     }
-                })
-                .error(self._handlePrepareError);
+                },
+                error: self._handlePrepareError,
+            });
         };
 
         $scope.$watch(function () {
@@ -308,10 +328,14 @@
         self.resetDownload();
 
         self._checkDownloadProgress = function () {
-            djangoRMI.poll_custom_export_download({
-                download_id: self.downloadId,
-            })
-                .success(function (data) {
+            $.ajax({
+                method: 'GET',
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('poll_custom_export_download'),
+                data: {
+                    form_or_case: hqImport('hqwebapp/js/initial_page_data').get("form_or_case"),
+                    download_id: self.downloadId,
+                },
+                success: function (data) {
                     if (data.is_poll_successful) {
                         self.downloadStatusData = data;
                         if (data.has_file && data.is_ready) {
@@ -338,8 +362,9 @@
                     if (_.isNull(data.is_alive)) {
                         self._dealWithCeleryErrors();
                     }
-                })
-                .error(self._dealWithErrors);
+                },
+                error: self._dealWithErrors,
+            });
         };
 
         self._dealWithCeleryErrors = function () {
