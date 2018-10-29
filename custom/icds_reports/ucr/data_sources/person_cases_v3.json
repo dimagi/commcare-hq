@@ -112,7 +112,6 @@
         "property_name": "name"
       },
       {
-        "comment": "make boolean",
         "column_id": "sex",
         "datatype": "string",
         "type": "raw",
@@ -413,7 +412,6 @@
               "property_name": "aadhar_date"
             },
             "default_expression": {
-              "comment": "TODO: a case migration will need to be run to ensure that all cases have aadhar_date",
               "type": "nested",
               "argument_expression": {
                 "type": "reduce_items",
