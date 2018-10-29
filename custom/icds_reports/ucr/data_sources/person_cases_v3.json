@@ -349,7 +349,7 @@
           "cases": {
             "not_registered": {
               "type": "constant",
-              "constant": 1
+              "constant": 0
             }
           },
           "default": {
