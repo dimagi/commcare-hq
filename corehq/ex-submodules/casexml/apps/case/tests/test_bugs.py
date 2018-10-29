@@ -353,6 +353,7 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual('from the create form', case.get_case_property('pcreate'))
         self.assertEqual('this should get overridden', case.get_case_property('pboth'))
 
+        # submit a form and simulate an error
         couch_patch = patch(
             'corehq.form_processor.backends.couch.casedb.CaseDbCacheCouch.get_cases_for_saving',
             side_effect=CouchSaveAborted
@@ -372,7 +373,9 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual('this should get overridden', case.get_case_property('pboth'))
 
         form = FormAccessors(domain).get_form(update_form_id)
+        self.assertTrue(form.is_error)
 
+        # re-submit the same form and make sure it get's processed
         res = submit_form_locally(update_xml, domain)
         form = res.xform
         case = res.cases[0]
