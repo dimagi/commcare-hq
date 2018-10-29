@@ -234,21 +234,17 @@
               "type": "constant",
               "constant": 1
             },
-            "sbc": {
+            "st": {
               "type": "constant",
               "constant": 2
             },
-            "st": {
+            "obc": {
               "type": "constant",
               "constant": 3
             },
-            "obc": {
-              "type": "constant",
-              "constant": 4
-            },
             "other": {
               "type": "constant",
-              "constant": 5
+              "constant": 4
             }
           },
           "default": {

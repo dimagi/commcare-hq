@@ -103,7 +103,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 3": 1
+          "closed_on IS NULL AND sex = 'F' and hh_caste = 2": 1
         }
       },
       {
@@ -123,7 +123,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 5": 1
+          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN (1, 2)": 1
         }
       },
       {
@@ -153,7 +153,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 3": 1
+          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 2": 1
         }
       },
       {
@@ -173,7 +173,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 5": 1
+          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN (1, 2)": 1
         }
       },
       {
