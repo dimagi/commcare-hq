@@ -72,29 +72,28 @@ def verify_password(password, encoded_password):
     return PASSWORD_HASHER.verify(password, encoded_password)
 
 
-def obfuscated_passwords_redis_key_for_user(username):
-    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + username
+def obfuscated_password_redis_key_for_user(username, obfuscated_password):
+    return '_'.join([REDIS_LOGIN_ATTEMPTS_LIST_PREFIX, username, obfuscated_password])
 
 
-def get_obfuscated_passwords(username):
+def get_obfuscated_passwords(username, obfuscated_password):
     client = get_redis_client()
-    return client.get(obfuscated_passwords_redis_key_for_user(username), [])
+    return client.get(obfuscated_password_redis_key_for_user(username, obfuscated_password), [])
 
 
 def get_raw_password(obfuscated_password, username=None):
+    client = get_redis_client()
+
     def replay_attack():
         # Replay attack where the same obfuscated password used from previous login attempt
-        obfuscated_passwords = get_obfuscated_passwords(username)
-        for submitted_obfuscated_password in obfuscated_passwords:
-            if verify_password(obfuscated_password, submitted_obfuscated_password):
-                return True
+        key_name = obfuscated_password_redis_key_for_user(username, obfuscated_password)
+        if client.get(key_name):
+            return True
 
     def record_login_attempt():
-        client = get_redis_client()
-        key_name = obfuscated_passwords_redis_key_for_user(username)
-        obfuscated_passwords = client.get(key_name, [])
-        client.set(key_name, obfuscated_passwords + [hash_password(obfuscated_password)])
-        client.expire(key_name, timedelta(EXPIRE_LOGIN_ATTEMPTS_IN))
+        key_name = obfuscated_password_redis_key_for_user(username, obfuscated_password)
+        client.set(key_name, True)
+        client.expire(key_name, timedelta(days=EXPIRE_LOGIN_ATTEMPTS_IN))
 
     def _mobile_request_to_track(username):
         # To be added just for audit test and should be removed to implement for all users
