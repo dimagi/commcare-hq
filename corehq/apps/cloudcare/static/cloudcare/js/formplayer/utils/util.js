@@ -155,6 +155,17 @@ Util.CloudcareUrl = function (options) {
         this.search = null;
     };
 
+    this.removeStep = function () {
+        if (!this.steps) {
+            this.steps = [];
+            return;
+        }
+        this.steps.pop();
+        //clear out pagination and search when we take a step
+        this.page = null;
+        this.search = null;
+    };
+
     this.setPage = function (page) {
         this.page = page;
     };

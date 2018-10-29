@@ -47,8 +47,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
                 Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
             }).fail(function () {
-                // if it didn't go through, then it displayed an error message.
-                // the right thing to do is then to just stay in the same place.
+                var urlObject = Util.currentUrlToObject();
+                urlObject.removeStep()
+                Util.setUrlToObject(urlObject);
             });
         },
 
