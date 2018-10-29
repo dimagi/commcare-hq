@@ -1,5 +1,5 @@
 attrs==18.1.0
-# needed to build gevent from source
+# needed to build jsonobject, and possibly other libraries?
 cython==0.27.3
 iso8601==0.1.12
 jsonobject==0.9.4
