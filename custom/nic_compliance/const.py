@@ -9,3 +9,10 @@ MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK = [
     'app_aware_restore',  # restore
     'phone_heartbeat',  # heartbeat
 ]
+USERS_TO_TRACK_FOR_REPLAY_ATTACK = [
+    'audit.aww1@icds-cas.commcarehq.org',
+    'audit.aww2@icds-cas.commcarehq.org',
+    'audit.bhd1@icds-cas.commcarehq.org',
+    'audit.ls1@icds-cas.commcarehq.org',
+    'adhaar.test@icds-cas.commcarehq.org',
+]

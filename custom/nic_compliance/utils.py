@@ -15,6 +15,7 @@ from custom.nic_compliance.const import (
     EXPIRE_LOGIN_ATTEMPTS_IN,
     REDIS_LOGIN_ATTEMPTS_LIST_PREFIX,
     MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK,
+    USERS_TO_TRACK_FOR_REPLAY_ATTACK,
 )
 
 PASSWORD_HASHER = get_hasher()
@@ -95,7 +96,10 @@ def get_raw_password(obfuscated_password, username=None):
         client.set(key_name, obfuscated_passwords + [hash_password(obfuscated_password)])
         client.expire(key_name, timedelta(EXPIRE_LOGIN_ATTEMPTS_IN))
 
-    def _mobile_request_to_track():
+    def _mobile_request_to_track(username):
+        # To be added just for audit test and should be removed to implement for all users
+        if username not in USERS_TO_TRACK_FOR_REPLAY_ATTACK:
+            return False
         return resolve(request.path).url_name in MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK
 
     def _decode_password():
@@ -103,7 +107,7 @@ def get_raw_password(obfuscated_password, username=None):
         # present in first step
         if username and (
                 (request and request.POST.get('auth-username')) or
-                _mobile_request_to_track()):
+                _mobile_request_to_track(username)):
             if replay_attack():
                 return ''
             record_login_attempt()
