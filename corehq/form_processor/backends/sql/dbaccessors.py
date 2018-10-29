@@ -60,6 +60,7 @@ from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
 from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
@@ -1287,6 +1288,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         forms_missing_transactions = list(updated_xform_ids - form_ids)
         for form_id in forms_missing_transactions:
             # Add in any transactions that aren't already present
+            soft_assert('{}@dimagi.com'.format('skelly'))(False, 'Missing form transaction during rebuild', {
+                'form_id': form_id,
+                'case_id': case.case_id
+            })
             form = updated_xforms_map[form_id]
             case_updates = [update for update in get_case_updates(form) if update.id == case.case_id]
             types = [
