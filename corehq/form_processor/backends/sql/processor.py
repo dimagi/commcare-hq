@@ -1,32 +1,33 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import datetime
 import logging
 import uuid
 
 import redis
+import six
 from PIL import Image
 from contextlib2 import ExitStack
 from django.db import transaction
 from lxml import etree
 
-from casexml.apps.case.xform import get_case_updates
-from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
+from casexml.apps.case.xform import get_case_updates, get_case_ids_from_form
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 )
+from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
-    republish_all_changes_for_form)
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, KafkaPublishingError
+    publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
+from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
+from corehq.util.soft_assert import soft_assert
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
-import six
 
 
 class FormProcessorSQL(object):
@@ -234,20 +235,39 @@ class FormProcessorSQL(object):
     def get_cases_from_forms(case_db, xforms):
         """Get all cases affected by the forms. Includes new cases, updated cases.
         """
-        touched_cases = {}
+        submitted_form = xforms[0]
         if len(xforms) > 1:
-            domain = xforms[0].domain
-            affected_cases = set()
-            deprecated_form = None
-            for xform in xforms:
-                if xform.is_deprecated:
-                    deprecated_form = xform
-                if not (xform.is_deprecated and xform.problem):
-                    # don't process deprecatd forms which have errors.
-                    # see http://manage.dimagi.com/default.asp?243382 for context.
-                    # note that we have to use .problem instead of .is_error because applying
-                    # the state=DEPRECATED overrides state=ERROR
-                    affected_cases.update(case_update.id for case_update in get_case_updates(xform))
+            assert len(xforms) == 2 and xforms[0].is_normal and xforms[1].is_deprecated
+            deprecated_form = xforms[1]
+            if deprecated_form.problem:
+                # if the deprecated form had an error it should not have created a case update
+                # so we shouldn't need to rebuild the case, we can just process the new form as normal
+                # but check for any case transactions just to be safe
+                affected_cases = get_case_ids_from_form(deprecated_form)
+                for case_id in affected_cases:
+                    trans = CaseAccessorSQL.get_transaction_by_form_id(case_id, submitted_form.form_id)
+                    if trans:
+                        # there was a transaction for the error form. Investigate
+                        soft_assert(to='{}@dimagi.com'.format('skelly'))(
+                            False, "Transaction exists for error form",
+                            details={
+                                'form_id': submitted_form.form_id,
+                                'case_id': trans.case_id
+                            })
+                        break
+                else:
+                    return FormProcessorSQL._get_cases_from_normal_form(case_db, submitted_form)
+
+            touched_cases = {}
+            domain = submitted_form.domain
+            affected_cases = get_case_ids_from_form(submitted_form)
+            if not deprecated_form.problem:
+                # don't process deprecated forms which have errors.
+                # see http://manage.dimagi.com/default.asp?243382 for context.
+                # note that we have to use .problem instead of .is_error because applying
+                # the state=DEPRECATED overrides state=ERROR
+                # update: this shouldn't ever happen (see above processing block)
+                affected_cases.update(get_case_ids_from_form(deprecated_form))
 
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
@@ -266,17 +286,22 @@ class FormProcessorSQL(object):
                         case=case, is_creation=is_creation, previous_owner_id=previous_owner,
                     )
         else:
-            xform = xforms[0]
-            for case_update in get_case_updates(xform):
-                case_update_meta = case_db.get_case_from_case_update(case_update, xform)
-                if case_update_meta.case:
-                    touched_cases[case_update_meta.case.case_id] = case_update_meta
-                else:
-                    logging.error(
-                        "XForm %s had a case block that wasn't able to create a case! "
-                        "This usually means it had a missing ID" % xform.get_id
-                    )
+            return FormProcessorSQL._get_cases_from_normal_form(case_db, submitted_form)
 
+        return touched_cases
+
+    @staticmethod
+    def _get_cases_from_normal_form(case_db, xform):
+        touched_cases = {}
+        for case_update in get_case_updates(xform):
+            case_update_meta = case_db.get_case_from_case_update(case_update, xform)
+            if case_update_meta.case:
+                touched_cases[case_update_meta.case.case_id] = case_update_meta
+            else:
+                logging.error(
+                    "XForm %s had a case block that wasn't able to create a case! "
+                    "This usually means it had a missing ID" % xform.get_id
+                )
         return touched_cases
 
     @staticmethod
