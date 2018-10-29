@@ -205,6 +205,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
         }
 
     return {
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'shadow_module_options': {
             'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
