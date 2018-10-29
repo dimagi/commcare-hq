@@ -1,19 +1,23 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import os
 import uuid
+
 from couchdbkit.exceptions import BulkSaveError
 from django.test import TestCase, SimpleTestCase
-import os
-from django.test.utils import override_settings
+from mock import patch
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.reports.view_helpers import get_case_hierarchy
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.reports.view_helpers import get_case_hierarchy
+from corehq.form_processor.exceptions import CouchSaveAborted
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
@@ -329,6 +333,53 @@ class TestCaseHierarchy(TestCase):
             )[0]
         hierarchy = get_case_hierarchy(cases['bungo'], {})
         self.assertEqual(4, len(hierarchy['case_list']))
+
+    def test_save_aborted(self):
+        domain = 'test-abort'
+
+        create_form_id = 'c9265a8f-6d79-4caa-93ab-5299d65a6cd9'
+        update_form_id = '0effe64d-7cd7-4346-ae45-5fe3f11022ab'
+
+        dir = os.path.join(os.path.dirname(__file__), "data", "ordering")
+        with open(os.path.join(dir, 'create_oo.xml'), "rb") as f:
+            create_xml = f.read()
+
+        with open(os.path.join(dir, 'update_oo.xml'), "rb") as f:
+            update_xml = f.read()
+
+        res = submit_form_locally(create_xml, domain)
+        case = res.cases[0]
+        self.assertEqual([create_form_id], case.xform_ids)
+        self.assertEqual('from the create form', case.get_case_property('pcreate'))
+        self.assertEqual('this should get overridden', case.get_case_property('pboth'))
+
+        couch_patch = patch(
+            'corehq.form_processor.backends.couch.casedb.CaseDbCacheCouch.get_cases_for_saving',
+            side_effect=CouchSaveAborted
+        )
+        sql_patch = patch(
+            'corehq.form_processor.backends.sql.casedb.CaseDbCacheSQL.get_cases_for_saving',
+            side_effect=CouchSaveAborted
+        )
+        with couch_patch, sql_patch:
+            try:
+                submit_form_locally(update_xml, domain)
+                self.fail('Expected CouchSaveAborted error')
+            except CouchSaveAborted:
+                pass
+
+        case = CaseAccessors(domain).get_case(case.case_id)
+        self.assertEqual('this should get overridden', case.get_case_property('pboth'))
+
+        form = FormAccessors(domain).get_form(update_form_id)
+
+        res = submit_form_locally(update_xml, domain)
+        form = res.xform
+        case = res.cases[0]
+        self.assertEqual([create_form_id, update_form_id], case.xform_ids)
+        self.assertEqual('from the create form', case.get_case_property('pcreate'))
+        self.assertEqual('from the update form', case.get_case_property('pupdate'))
+        self.assertEqual('overridden by the update form', case.get_case_property('pboth'))
 
 
 @use_sql_backend

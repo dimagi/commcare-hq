@@ -214,10 +214,15 @@ def _handle_duplicate(new_doc):
             )
             return FormProcessingResult(new_doc, existing_doc)
     else:
-        # follow standard dupe handling, which simply saves a copy of the form
-        # but a new doc_id, and a doc_type of XFormDuplicate
-        duplicate = interface.deduplicate_xform(new_doc)
-        return FormProcessingResult(duplicate, existing_doc)
+        if existing_doc.is_normal or existing_doc.is_archived or existing_doc.is_duplicate:
+            # follow standard dupe handling, which simply saves a copy of the form
+            # but a new doc_id, and a doc_type of XFormDuplicate
+            duplicate = interface.deduplicate_xform(new_doc)
+            return FormProcessingResult(duplicate, existing_doc)
+        else:
+            # in this case the existing form is an error form so we should try to reprocess the form
+            existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
+            return FormProcessingResult(new_doc, existing_doc)
 
 
 def apply_deprecation(existing_xform, new_xform, interface=None):
