@@ -22,7 +22,7 @@ class CaseListFilterUtils(EmwfUtils):
         return [
             ("all_data", _("[All Data]")),
             ('project_data', _("[Project Data]"))
-        ] + options[1:]
+        ] + options[2:]
 
     def _group_to_choice_tuple(self, group):
         if group.case_sharing:

@@ -1910,9 +1910,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'testing', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
-
 ]
 
 

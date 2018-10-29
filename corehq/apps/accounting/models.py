@@ -1480,45 +1480,13 @@ class Subscription(models.Model):
             )
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days
-        if num_days_left == 1:
-            ending_on = _("tomorrow!")
-        else:
-            ending_on = _("on %s." % self.date_end.strftime(USER_DATE_FORMAT))
 
-        user_desc = self.plan_version.user_facing_description
-        plan_name = user_desc['name']
         domain_name = self.subscriber.domain
-        if self.is_trial:
-            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s") % {
-                'domain': domain_name,
-                'ending_on': ending_on,
-            }
-            template = 'accounting/email/trial_ending_reminder.html'
-            template_plaintext = 'accounting/email/trial_ending_reminder.txt'
-        else:
-            subject = _(
-                "CommCare Alert: %(domain)s's subscription to "
-                "%(plan_name)s ends %(ending_on)s"
-            ) % {
-                'plan_name': plan_name,
-                'domain': domain_name,
-                'ending_on': ending_on,
-            }
+        context = self.ending_reminder_context
+        subject = context['subject']
 
-            template = 'accounting/email/subscription_ending_reminder.html'
-            template_plaintext = 'accounting/email/subscription_ending_reminder.txt'
-
-        from corehq.apps.domain.views import DomainSubscriptionView
-        context = {
-            'domain': domain_name,
-            'plan_name': plan_name,
-            'ending_on': ending_on,
-            'subscription_url': absolute_reverse(
-                DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
-            'base_url': get_site_domain(),
-            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
-        }
+        template = self.ending_reminder_email_html
+        template_plaintext = self.ending_reminder_email_text
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
         bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
@@ -1540,6 +1508,79 @@ class Subscription(models.Model):
                 }
             )
 
+    @property
+    def ending_reminder_email_html(self):
+        if self.account.is_customer_billing_account:
+            return 'accounting/email/customer_subscription_ending_reminder.html'
+        elif self.is_trial:
+            return 'accounting/email/trial_ending_reminder.html'
+        else:
+            return 'accounting/email/subscription_ending_reminder.html'
+
+    @property
+    def ending_reminder_email_text(self):
+        if self.account.is_customer_billing_account:
+            return 'accounting/email/customer_subscription_ending_reminder.txt'
+        elif self.is_trial:
+            return 'accounting/email/trial_ending_reminder.txt'
+        else:
+            return 'accounting/email/subscription_ending_reminder.txt'
+
+    @property
+    def ending_reminder_context(self):
+        from corehq.apps.domain.views import DomainSubscriptionView
+
+        today = datetime.date.today()
+        num_days_left = (self.date_end - today).days
+        if num_days_left == 1:
+            ending_on = _("tomorrow!")
+        else:
+            ending_on = _("on %s." % self.date_end.strftime(USER_DATE_FORMAT))
+
+        user_desc = self.plan_version.user_facing_description
+        plan_name = user_desc['name']
+
+        domain_name = self.subscriber.domain
+
+        context = {
+            'domain': domain_name,
+            'plan_name': plan_name,
+            'account': self.account.name,
+            'ending_on': ending_on,
+            'subscription_url': absolute_reverse(
+                DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
+            'base_url': get_site_domain(),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+            'sales_email': settings.REPORT_BUILDER_ADD_ON_EMAIL
+        }
+
+        if self.account.is_customer_billing_account:
+            subject = _(
+                "CommCare Alert: %(account_name)s's subscription to "
+                "%(plan_name)s ends %(ending_on)s"
+            ) % {
+                'account_name': self.account.name,
+                'plan_name': plan_name,
+                'ending_on': ending_on,
+            }
+        elif self.is_trial:
+            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
+                        "ends %(ending_on)s") % {
+                'domain': domain_name,
+                'ending_on': ending_on,
+            }
+        else:
+            subject = _(
+                "CommCare Alert: %(domain)s's subscription to "
+                "%(plan_name)s ends %(ending_on)s"
+            ) % {
+                'plan_name': plan_name,
+                'domain': domain_name,
+                'ending_on': ending_on,
+            }
+        context.update({'subject': subject})
+        return context
+
     def send_dimagi_ending_reminder_email(self):
         if self.date_end is None:
             raise SubscriptionReminderError(
@@ -1550,28 +1591,69 @@ class Subscription(models.Model):
                 "This subscription has no Dimagi contact."
             )
 
-        domain = self.subscriber.domain
-        end_date = self.date_end.strftime(USER_DATE_FORMAT)
-        email = self.account.dimagi_contact
-        subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
-                  domain=domain,
-                  end_date=end_date)
-        template = 'accounting/email/subscription_ending_reminder_dimagi.html'
-        template_plaintext = 'accounting/email/subscription_ending_reminder_dimagi.txt'
-        context = {
-            'domain': domain,
-            'end_date': end_date,
-            'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(USER_DATE_FORMAT),
-            'contacts': ', '.join(self._reminder_email_contacts(domain)),
-            'dimagi_contact': email,
-        }
-        email_html = render_to_string(template, context)
-        email_plaintext = render_to_string(template_plaintext, context)
+        subject = self.dimagi_ending_reminder_subject
+        context = self.dimagi_ending_reminder_context
+        email_html = render_to_string(self.dimagi_ending_reminder_email_html, context)
+        email_plaintext = render_to_string(self.dimagi_ending_reminder_email_text, context)
         send_html_email_async.delay(
-            subject, email, email_html,
+            subject, self.account.dimagi_contact, email_html,
             text_content=email_plaintext,
             email_from=settings.DEFAULT_FROM_EMAIL,
         )
+
+    @property
+    def dimagi_ending_reminder_email_html(self):
+        if self.account.is_customer_billing_account:
+            return 'accounting/email/customer_subscription_ending_reminder_dimagi.html'
+        else:
+            return 'accounting/email/subscription_ending_reminder_dimagi.html'
+
+    @property
+    def dimagi_ending_reminder_email_text(self):
+        if self.account.is_customer_billing_account:
+            return 'accounting/email/customer_subscription_ending_reminder_dimagi.txt'
+        else:
+            return 'accounting/email/subscription_ending_reminder_dimagi.txt'
+
+    @property
+    def dimagi_ending_reminder_subject(self):
+        if self.account.is_customer_billing_account:
+            return "Alert: {account}'s subscriptions are ending on {end_date}".format(
+                account=self.account.name,
+                end_date=self.date_end.strftime(USER_DATE_FORMAT))
+        else:
+            return "Alert: {domain}'s subscription is ending on {end_date}".format(
+                domain=self.subscriber.domain,
+                end_date=self.date_end.strftime(USER_DATE_FORMAT))
+
+    @property
+    def dimagi_ending_reminder_context(self):
+        end_date = self.date_end.strftime(USER_DATE_FORMAT)
+        email = self.account.dimagi_contact
+        if self.account.is_customer_billing_account:
+            account = self.account.name
+            plan = self.plan_version.plan.edition
+            context = {
+                'account': account,
+                'plan': plan,
+                'end_date': end_date,
+                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
+                    USER_DATE_FORMAT),
+                'contacts': ', '.join(self._reminder_email_contacts(self.subscriber.domain)),
+                'dimagi_contact': email,
+                'accounts_email': settings.ACCOUNTS_EMAIL
+            }
+        else:
+            domain = self.subscriber.domain
+            context = {
+                'domain': domain,
+                'end_date': end_date,
+                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
+                    USER_DATE_FORMAT),
+                'contacts': ', '.join(self._reminder_email_contacts(domain)),
+                'dimagi_contact': email,
+            }
+        return context
 
     def _reminder_email_contacts(self, domain_name):
         emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
@@ -1591,6 +1673,9 @@ class Subscription(models.Model):
                     )
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
+        if self.account.is_customer_billing_account:
+            enterprise_admin_emails = self.account.enterprise_admin_emails
+            emails |= {enterprise_admin_email for enterprise_admin_email in enterprise_admin_emails}
         return emails
 
     def set_billing_account_entry_point(self):
@@ -1765,6 +1850,13 @@ class Subscription(models.Model):
             return True
         else:
             return False
+
+    def user_can_change_subscription(self, user):
+        if self.account.is_customer_billing_account:
+            return False
+        if user.is_superuser:
+            return True
+        return self.account.has_enterprise_admin(user.email)
 
 
 class InvoiceBaseManager(models.Manager):

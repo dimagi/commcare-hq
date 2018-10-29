@@ -21,6 +21,7 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
     KeywordsListView,
@@ -1536,12 +1537,14 @@ def _get_administration_section(domain):
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
-    if not settings.ENTERPRISE_MODE:
+    if not settings.ENTERPRISE_MODE and not get_domain_master_link(domain):
         administration.extend([
             {
                 'title': _('CommCare Exchange'),
                 'url': reverse('domain_snapshot_settings', args=[domain])
-            },
+            }])
+    if not settings.ENTERPRISE_MODE:
+        administration.extend([
             {
                 'title': _('Multimedia Sharing'),
                 'url': reverse('domain_manage_multimedia', args=[domain])

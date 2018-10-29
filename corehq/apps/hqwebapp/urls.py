@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp.views import (
     debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror,
     dropbox_upload, domain_login,
-    assert_initial_page_data, retrieve_download, toggles_js, couch_doc_counts,
+    assert_initial_page_data, retrieve_download, toggles_js,
     server_up, BugReportView,
     redirect_to_dimagi,
     temporary_google_verify,
@@ -69,7 +69,6 @@ domain_specific = [
         retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
     url(r'toggles.js$', toggles_js, name='toggles_js'),
-    url(r'couch_doc_counts', couch_doc_counts),
 ]
 
 prelogin_root = [
