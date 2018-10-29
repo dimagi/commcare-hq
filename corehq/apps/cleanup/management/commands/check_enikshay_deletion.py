@@ -92,7 +92,13 @@ class Command(BaseCommand):
         ),
 
     def handle(self, all=False, **options):
-        for domain_name in DOMAINS:
+        domains = list(DOMAINS)
+
+        for domain_name in Domain.get_all_names():
+            if 'uatbc' in domain_name or 'nikshay' in domain_name:
+                domains.append(domain_name)
+
+        for domain_name in domains:
             checks = (check(domain_name) for check in [
                 _check_domain_exists,
                 _check_cases,
