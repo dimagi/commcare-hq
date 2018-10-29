@@ -54,6 +54,11 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         return 'project_data' in mobile_user_and_group_slugs
 
     @staticmethod
+    def show_deactivated_data(mobile_user_and_group_slugs):
+        from corehq.apps.reports.models import HQUserType
+        return "t__{}".format(HQUserType.DEACTIVATED) in mobile_user_and_group_slugs
+
+    @staticmethod
     def selected_sharing_group_ids(mobile_user_and_group_slugs):
         return [g[4:] for g in mobile_user_and_group_slugs if g.startswith("sg__")]
 
