@@ -143,7 +143,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('valid_visits', '('
                 'COALESCE(agg_cf.valid_visits, 0) + '
                 'COALESCE(agg_bp.valid_visits, 0) + '
-                'COALSECE(agg_pnc.valid_visits, 0) + '
+                'COALESCE(agg_pnc.valid_visits, 0) + '
                 'COALESCE(agg_delivery.valid_visits, 0)'
              ')'),
             ('opened_on', 'case_list.opened_on'),
