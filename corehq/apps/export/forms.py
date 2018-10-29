@@ -763,7 +763,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
     date_filter_class = ModifiedOnRangeFilter
 
     def get_filters(self, can_access_all_locations, accessible_location_ids, show_all_data, show_project_data,
-                   selected_user_types, datespan, group_ids, location_ids, user_ids):
+                    show_deactivated_data, selected_user_types, datespan, group_ids, location_ids, user_ids):
         """
         Return a list of `ExportFilter`s for the given ids.
         This list of filters will eventually be ANDed to filter the documents that appear in the export.
@@ -775,12 +775,12 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             user is restricted to seeing data from
         :return: list of filters
         """
+        user_types = selected_user_types
         if can_access_all_locations and show_all_data:
             # if all data then just filter by date
             case_filter = []
         elif can_access_all_locations and show_project_data:
             # show projects data except user_ids for user types excluded
-            user_types = selected_user_types
             ids_to_exclude = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
@@ -788,6 +788,18 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
                 demo=HQUserType.DEMO_USER not in user_types,
                 # this should be true since we are excluding
                 commtrack=True,
+            )
+            case_filter = [NOT(OwnerFilter(ids_to_exclude))]
+        elif can_access_all_locations and show_deactivated_data:
+            # show projects data except user_ids for user types excluded
+            ids_to_exclude = self.get_user_ids_for_user_types(
+                admin=True,
+                unknown=True,
+                web=True,
+                demo=True,
+                commtrack=True,
+                active=True,
+                deactivated=False
             )
             case_filter = [NOT(OwnerFilter(ids_to_exclude))]
         else:
@@ -1029,6 +1041,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
             accessible_location_ids,
             self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs),
+            self.dynamic_filter_class.show_deactivated_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs),
             self.cleaned_data['date_range'],
             self._get_group_ids(mobile_user_and_group_slugs),
