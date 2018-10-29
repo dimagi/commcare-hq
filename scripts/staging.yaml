@@ -56,4 +56,5 @@ branches:
   - jls/ko-export-dl-ui  # Jenny Oct 26
   - dm/gevent # daniel Oct 24
   - pv/case-list-deac-label # Preethi Oct 26
+  - jls/shadow-menu-advanced  # Jenny Oct 29
 submodules: {}
