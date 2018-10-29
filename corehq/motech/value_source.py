@@ -49,8 +49,12 @@ class ValueSource(DocumentSchema):
                       serializers.get((None, self.commcare_data_type)))
         return serializer(external_value) if serializer else external_value
 
-    def get_value(self, case_trigger_info):
+    def get_commcare_value(self, case_trigger_info):
         raise NotImplementedError()
+
+    def get_value(self, case_trigger_info):
+        value = self.get_commcare_value(case_trigger_info)
+        return self.serialize(value)
 
 
 class CaseProperty(ValueSource):
@@ -65,17 +69,15 @@ class CaseProperty(ValueSource):
     #
     case_property = StringProperty()
 
-    def get_value(self, case_trigger_info):
-        value = case_trigger_info.updates.get(self.case_property)
-        return self.serialize(value)
+    def get_commcare_value(self, case_trigger_info):
+        return case_trigger_info.updates.get(self.case_property)
 
 
 class FormQuestion(ValueSource):
     form_question = StringProperty()  # e.g. "/data/foo/bar"
 
-    def get_value(self, case_trigger_info):
-        value = case_trigger_info.form_question_values.get(self.form_question)
-        return self.serialize(value)
+    def get_commcare_value(self, case_trigger_info):
+        return case_trigger_info.form_question_values.get(self.form_question)
 
 
 class ConstantString(ValueSource):
@@ -88,16 +90,16 @@ class ConstantString(ValueSource):
     #       }
     #     }
     #
+    # Serializes value to convert dates, etc. to a format that is
+    # acceptable to whatever API we are sending it to.
     value = StringProperty()
 
     def deserialize(self, external_value):
         # ConstantString doesn't have a corresponding case or form value
         return None
 
-    def get_value(self, case_trigger_info):
-        # Serialize self.value to convert dates, etc. to a format
-        # that is acceptable to whatever API we are sending it to.
-        return self.serialize(self.value)
+    def get_commcare_value(self, case_trigger_info):
+        return self.value
 
 
 class CasePropertyMap(CaseProperty):
@@ -119,18 +121,18 @@ class CasePropertyMap(CaseProperty):
     #
     value_map = DictProperty()
 
-    def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
-
-    def get_value(self, case_trigger_info):
-        value = super(CasePropertyMap, self).get_value(case_trigger_info)
+    def serialize(self, value):
+        # Don't bother serializing. self.value_map does that already.
+        #
         # Using `.get()` because it's OK if some CommCare answers are
         # not mapped to OpenMRS concepts, e.g. when only the "yes" value
         # of a yes-no question in CommCare is mapped to a concept in
         # OpenMRS.
-        # Don't bother serializing. self.value_map does that already.
         return self.value_map.get(value)
+
+    def deserialize(self, external_value):
+        reverse_map = {v: k for k, v in self.value_map.items()}
+        return reverse_map.get(external_value)
 
 
 class FormQuestionMap(FormQuestion):
@@ -139,13 +141,12 @@ class FormQuestionMap(FormQuestion):
     """
     value_map = DictProperty()
 
+    def serialize(self, value):
+        return self.value_map.get(value)
+
     def deserialize(self, external_value):
         reverse_map = {v: k for k, v in self.value_map.items()}
         return reverse_map.get(external_value)
-
-    def get_value(self, case_trigger_info):
-        value = super(FormQuestionMap, self).get_value(case_trigger_info)
-        return self.value_map.get(value)
 
 
 def get_form_question_values(form_json):
