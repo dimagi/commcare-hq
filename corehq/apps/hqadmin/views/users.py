@@ -37,6 +37,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
     check_lockout, domain_admin_required, login_or_basic, require_superuser)
+from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username
@@ -537,9 +538,15 @@ class AppBuildTimingsView(TemplateView):
         with app.timing_context:
             errors = app.validate_app()
             assert not errors, errors
-            app.make_build(
-                comment="Generated automatically during profiling",
-                user_id=request_user_id,
-                previous_version=app.get_latest_app(released_only=False),
-            )
+
+            with app.timing_context("build_zip"):
+                build_application_zip(
+                    include_multimedia_files=True,
+                    include_index_files=True,
+                    app=app,
+                    download_id=None,
+                    compress_zip=True,
+                    filename='app-profile-test.ccz',
+                )
+
         return app.timing_context
