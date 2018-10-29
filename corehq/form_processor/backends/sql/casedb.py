@@ -5,7 +5,7 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.exceptions import CaseNotFound, CaseSaveError
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq import toggles
 
@@ -37,10 +37,11 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         for case in cases:
             if case.is_saved():
                 modified_on = cases_modified_on.get(case.case_id, None)
-                assert case.server_modified_on == modified_on, (
-                    "Aborting because the case has been modified by another process: "
-                    "case={}, {} != {}".format(case.case_id, case.server_modified_on, modified_on)
-                )
+                if case.server_modified_on != modified_on:
+                    raise CaseSaveError(
+                        "Aborting because the case has been modified by another process: "
+                        "case={}, {} != {}".format(case.case_id, case.server_modified_on, modified_on)
+                    )
             case.server_modified_on = now
         return cases
 
