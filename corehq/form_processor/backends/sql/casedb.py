@@ -1,11 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
-from corehq.form_processor.exceptions import CaseNotFound, CaseSaveError
+from corehq.form_processor.exceptions import CaseSaveError
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq import toggles
 
