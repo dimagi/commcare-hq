@@ -404,7 +404,7 @@ def _type_sort(action_type):
     """
     Consistent ordering for action types
     """
-    for idx, type_action in enumerate(CaseTransaction.TYPE_ACTIONS_ENUM):
+    for idx, type_action in enumerate(CaseTransaction.FORM_TYPE_ACTIONS_ORDER):
         if action_type & type_action == action_type:
             return idx
-    return len(CaseTransaction.TYPE_ACTIONS_ENUM)
+    return len(CaseTransaction.FORM_TYPE_ACTIONS_ORDER)
