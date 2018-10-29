@@ -3,9 +3,7 @@ from __future__ import unicode_literals
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.starfish.models import StarfishBackend
-from django.http import HttpResponse, HttpResponseBadRequest
-from lxml import etree
-from xml.sax.saxutils import unescape
+from django.http import JsonResponse, HttpResponseBadRequest
 import six
 
 
@@ -18,37 +16,23 @@ class StarfishIncomingView(IncomingBackendView):
 
     def clean_value(self, value):
         if isinstance(value, six.string_types):
-            return unescape(value.strip())
-
+            return value.strip()
         return value
 
-    def get_number_and_message(self, request):
-        number = None
-        text = None
-        try:
-            xml = etree.fromstring(request.body)
-        except etree.XMLSyntaxError:
-            return None, None
-
-        for element in xml:
-            name = element.get('name')
-            if name == 'MobileNumber':
-                number = self.clean_value(element.text)
-            elif name == 'Text':
-                text = self.clean_value(element.text)
-
-        return number, text
-
-    def post(self, request, api_key, *args, **kwargs):
-        number, text = self.get_number_and_message(request)
+    def get(self, request, api_key, *args, **kwargs):
+        number = self.clean_value(request.GET.get("msisdn"))
+        text = self.clean_value(request.GET.get("message"))
         if not number or not text:
             return HttpResponseBadRequest("MobileNumber or Text are missing")
 
-        incoming(
+        sms = incoming(
             number,
             text,
             StarfishBackend.get_api_id(),
             domain_scope=self.domain,
-            backend_id=self.backend_couch_id
+            backend_id=self.backend_couch_id,
         )
-        return HttpResponse("OK")
+        return JsonResponse({"status": "OK", "message_id": sms.couch_id})
+
+    def post(self, request, api_key, *args, **kwargs):
+        return self.get(request, api_key, *args, **kwargs)

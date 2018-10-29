@@ -111,6 +111,7 @@ urlpatterns = [
     url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     url(r'^push/', include('corehq.messaging.smsbackends.push.urls')),
+    url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
     url(r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
     url(r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
