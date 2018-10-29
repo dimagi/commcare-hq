@@ -203,7 +203,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type @> ['1']": 1
+          "closed_on IS NULL AND disability_type ~ '\\y1\\y'": 1
         }
       },
       {
@@ -213,7 +213,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type @> ['2']": 1
+          "closed_on IS NULL AND disability_type ~ '\\y2\\y'": 1
         }
       },
       {
@@ -223,7 +223,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type @> ['3']": 1
+          "closed_on IS NULL AND disability_type ~ '\\y3\\y'": 1
         }
       },
       {
@@ -233,7 +233,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type @> ['4']": 1
+          "closed_on IS NULL AND disability_type ~ '\\y4\\y'": 1
         }
       },
       {
@@ -243,7 +243,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type @> ['5']": 1
+          "closed_on IS NULL AND disability_type '\\y5\\y'": 1
         }
       }
     ],
