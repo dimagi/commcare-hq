@@ -1901,6 +1901,15 @@
       }
     },
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "3"
+        }
+      ]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [
@@ -1915,7 +1924,6 @@
         ]
       }
     ],
-    "disable_destructive_rebuild": true,
-    "asynchronous": true
+    "disable_destructive_rebuild": true
   }
 }

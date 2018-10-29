@@ -22,7 +22,7 @@ from custom.abt.reports.filters import UsernameFilter, CountryFilter, LevelOneFi
 
 
 class LatePMTUsers(SqlData):
-    engine_id = 'ucr'
+    engine_id = 'default'
 
     @property
     def table_name(self):

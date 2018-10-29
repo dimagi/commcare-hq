@@ -67,7 +67,6 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
 
     def test_good_data(self):
         data = {
-            'type_or_group': 'group',
             'date_range': 'range',
             'start_date': '1992-01-30',
             'end_date': '2016-10-01',
@@ -77,7 +76,6 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
 
     def test_missing_fields(self):
         data = {
-            'type_or_group': 'group',
             'date_range': 'range',
             'start_date': '1992-01-30',
         }
@@ -86,18 +84,12 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
 
     def test_bad_dates(self):
         data = {
-            'type_or_group': 'group',
             'date_range': 'range',
             'start_date': '1992-01-30',
             'end_date': 'banana',
         }
         form = DashboardFeedFilterForm(DomainObject([], 'my-domain'), data=data)
         self.assertFalse(form.is_valid())
-
-
-class TestBaseFilterExportDownloadForm(SimpleTestCase):
-    def test_skip_layout_default(self):
-        self.assertFalse(BaseFilterExportDownloadForm.skip_layout)
 
 
 class TestEmwfFilterFormExport(TestCase):
@@ -113,17 +105,8 @@ class TestEmwfFilterFormExport(TestCase):
     def test_attributes(self):
         self.export_filter = self.subject(self.domain, pytz.utc)
 
-        self.assertTrue(self.export_filter.skip_layout)
         self.assertEqual(self.subject.export_user_filter, FormSubmittedByFilter)
         self.assertEqual(self.subject.dynamic_filter_class, SubmitHistoryFilter)
-
-    def test_export_to_es_user_types_map(self):
-        mapping = {'mobile': ['mobile'], 'demo_user': ['demo'], 'supply': ['supply'],
-                   'unknown': ['unknown', 'system', 'web']}
-        self.assertEqual(
-            self.subject._EXPORT_TO_ES_USER_TYPES_MAP,
-            mapping
-        )
 
 
 class TestEmwfFilterExportMixin(TestCase):
@@ -199,7 +182,6 @@ class TestEmwfFilterFormExportFilters(TestCase):
     def test_attributes(self):
         export_filter = self.subject(self.domain, pytz.utc)
 
-        self.assertTrue(export_filter.skip_layout)
         self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
         self.assertEqual(export_filter.dynamic_filter_class, SubmitHistoryFilter)
 
@@ -389,7 +371,6 @@ class TestFilterCaseESExportDownloadForm(TestCase):
     def test_attributes(self, *patches):
         self.export_filter = self.subject(self.domain, pytz.utc)
 
-        self.assertTrue(self.export_filter.skip_layout)
         self.assertEqual(self.export_filter.export_user_filter, OwnerFilter)
         self.assertEqual(self.export_filter.dynamic_filter_class, CaseListFilter)
 

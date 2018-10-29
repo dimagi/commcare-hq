@@ -77,11 +77,6 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     args[i] = hqImport(dependency);
                 } else if (thirdPartyGlobals.hasOwnProperty(dependency)) {
                     args[i] = window[thirdPartyGlobals[dependency]];
-                } else if (!_.contains(thirdPartyPlugins, dependency)) {
-                    var message = "Could not find module '" + dependency + "'.";
-                    message += " Verify that its script tag appears before the script tag for '" + path + "'.";
-                    message += " If this is a third-party module, verify it appears in thirdPartyGlobals in hqModules.js.";
-                    console.warn(message);
                 }
             }
             if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {

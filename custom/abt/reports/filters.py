@@ -11,7 +11,7 @@ from corehq.apps.userreports.util import get_table_name
 
 
 class FilterDataSource(SqlData):
-    engine_id = 'ucr'
+    engine_id = 'default'
 
     def __init__(self, domain, loc_level):
         self.config = {}
@@ -43,7 +43,7 @@ class FilterDataSource(SqlData):
 
 
 class UserFilterDataSource(SqlData):
-    engine_id = 'ucr'
+    engine_id = 'default'
 
     def __init__(self, domain):
         self.config = {}

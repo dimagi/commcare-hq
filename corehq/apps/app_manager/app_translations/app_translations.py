@@ -32,8 +32,6 @@ import six
 from six.moves import zip
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
-ID_MAPPING_SUFFIX = " (ID Mapping Value)"
-
 
 def get_unicode_dicts(iterable):
     """
@@ -822,7 +820,7 @@ def _update_case_list_translations(sheet, rows, app):
             index_of_last_enum_in_condensed = len(condensed_rows) - 1
 
         # If it's an enum value, add it to it's parent enum property
-        elif row['case_property'].endswith(ID_MAPPING_SUFFIX):
+        elif row['case_property'].endswith(" (ID Mapping Value)"):
             row['id'] = row['case_property'].split(" ")[0]
             parent = condensed_rows[index_of_last_enum_in_condensed]
             parent['mappings'] = parent.get('mappings', []) + [row]
@@ -944,9 +942,8 @@ def _update_case_list_translations(sheet, rows, app):
                              .format(detail.field)))
             else:
                 for row in rows:
-                    prop = row['case_property'].rstrip(ID_MAPPING_SUFFIX)
-                    if prop in mappings_by_prop:
-                        _update_translation(row, mappings_by_prop[prop].value)
+                    if row['id'] in mappings_by_prop:
+                        _update_translation(row, mappings_by_prop[row['id']].value)
 
     def _update_detail(row, detail):
         # Update the translations for the row and all its child rows
@@ -995,7 +992,7 @@ def _update_case_list_translations(sheet, rows, app):
             _update_detail(row, detail)
 
     def _partial_upload(rows, details):
-        rows_by_property = {row['case_property']: row for row in rows}
+        rows_by_property = {row['id']: row for row in rows}
         for detail in details:
             if rows_by_property.get(detail.field):
                 _update_detail(rows_by_property.get(detail.field), detail)

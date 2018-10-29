@@ -45,6 +45,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -719,7 +720,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'show_account_credits': any(
                 feature['account_credit'].get('is_visible')
                 for feature in self.plan.get('features')
-            )
+            ),
+            'can_change_subscription': self.current_subscription.user_can_change_subscription(self.request.user)
         }
 
 
@@ -1589,6 +1591,18 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
+    def downgrade_messages(self):
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        downgrades = get_change_status(
+            subscription.plan_version if subscription else None,
+            self.selected_plan_version
+        )[1]
+        downgrade_handler = DomainDowngradeStatusHandler(
+            self.domain_object, self.selected_plan_version, downgrades,
+        )
+        return downgrade_handler.get_response()
+
+    @property
     def is_upgrade(self):
         if self.current_subscription.is_trial:
             return True
@@ -1627,6 +1641,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     def page_context(self):
         return {
+            'downgrade_messages': self.downgrade_messages,
             'is_upgrade': self.is_upgrade,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
@@ -1748,6 +1763,14 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             return self.async_response
 
         if self.is_form_post and self.billing_account_info_form.is_valid():
+            if not self.current_subscription.user_can_change_subscription(self.request.user):
+                messages.error(
+                    request, _(
+                        "You do not have permission to change the subscription for this customer-level account. "
+                        "Please reach out to the %s enterprise admin for help."
+                    ) % self.account.name
+                )
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             next_subscription = self.current_subscription.next_subscription
@@ -1963,6 +1986,8 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
+        if get_domain_master_link(request.domain):
+            raise Http404()
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property

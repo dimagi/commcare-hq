@@ -30,6 +30,7 @@ from corehq.apps.locations.permissions import location_safe, location_restricted
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter
 from corehq.apps.reports.views import should_update_export
+from corehq.apps.reports.models import HQUserType
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
@@ -90,7 +91,6 @@ from corehq.apps.export.dbaccessors import (
     get_case_exports_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
@@ -192,6 +192,15 @@ class ExportsPermissionsManager(object):
         # just a convenience wrapper around user_can_view_deid_exports
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
+    def access_list_exports_or_404(self, is_deid=False):
+        if not (self.has_edit_permissions or self.has_view_permissions
+                or (is_deid and self.has_deid_view_permissions)):
+            raise Http404()
+
+    def access_download_export_or_404(self):
+        if not (self.has_edit_permissions or self.has_view_permissions or self.has_deid_view_permissions):
+            raise Http404()
+
 
 class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
@@ -213,11 +222,8 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
+        self.permissions.access_download_export_or_404()
 
-        if not (self.permissions.has_edit_permissions
-                or self.permissions.has_view_permissions
-                or self.permissions.has_deid_view_permissions):
-            raise Http404()
         return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -246,6 +252,7 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             'show_date_range': self.show_date_range,
             'check_for_multimedia': self.check_for_multimedia,
             'is_sms_export': self.sms_export,
+            'user_types': HQUserType.human_readable
         }
         if (
             self.default_datespan.startdate is not None
@@ -333,20 +340,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
         raise NotImplementedError("Must return a list of export filter objects")
 
     @allow_remote_invocation
-    def get_group_options(self, in_data):
-        """Returns list of groups for the group filters
-        :param in_data: dict passed by the  angular js controller.
-        :return: {
-            'success': True,
-            'groups': [<..list of groups..>],
-        }
-        """
-        groups = [{'id': g._id, 'text': g.name} for g in Group.get_reporting_groups(self.domain)]
-        return format_angular_success({
-            'groups': groups,
-        })
-
-    @allow_remote_invocation
     def poll_custom_export_download(self, in_data):
         """Polls celery to see how the export download task is going.
         :param in_data: dict passed by the  angular js controller.
@@ -401,10 +394,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             raise ExportAsyncException(
                 _("Request requires a list of exports and filters.")
             )
-
-        if filter_form_data['type_or_group'] != 'group':
-            # make double sure that group is none
-            filter_form_data['group'] = ''
 
         return filter_form_data, export_specs
 
@@ -516,10 +505,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
-
-        if not (self.permissions.has_edit_permissions or self.permissions.has_view_permissions
-                or (self.is_deid and self.permissions.has_deid_view_permissions)):
-            raise Http404()
+        self.permissions.access_list_exports_or_404(is_deid=self.is_deid)
 
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
@@ -782,9 +768,6 @@ class DailySavedExportListView(BaseExportListView):
             "static_model_type": False,
             "export_filter_form": DashboardFeedFilterForm(
                 self.domain_object,
-                initial={
-                    'type_or_group': 'type',
-                },
             )
         })
         return context
@@ -1733,9 +1716,6 @@ class DownloadNewFormExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property
@@ -1869,9 +1849,6 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             timezone=self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property
@@ -1936,9 +1913,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
         return self.filter_form_class(
             self.domain_object,
             timezone=self.timezone,
-            initial={
-                'type_or_group': 'type',
-            },
         )
 
     @property

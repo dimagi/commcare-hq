@@ -102,7 +102,6 @@ class BaseOtaRestoreTest(TestCase, TestFileMixin):
         super(BaseOtaRestoreTest, self).tearDown()
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OtaRestoreTest(BaseOtaRestoreTest):
 
     def _get_the_first_synclog(self):

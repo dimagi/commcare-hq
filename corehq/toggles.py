@@ -914,6 +914,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
         'Enables the insertion of custom assertions into the suite file. '
     ),
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/User+defined+assert+blocks",
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -1650,4 +1651,11 @@ FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
                 '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
                 'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
                 'have group and location filters, such as the Submissions by Form report.',
+)
+
+SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
+    'sort_out_of_order_form_submissions_sql',
+    'Sort out of order form submissions in the SQL update strategy',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
 )

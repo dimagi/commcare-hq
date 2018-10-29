@@ -573,12 +573,11 @@ def _get_case_and_ledger_updates(domain, sql_form):
     See SubmissionPost.process_xforms_for_cases and methods it calls for the equivalent
     section of the form-processing code.
     """
-    from casexml.apps.case.xform import get_and_check_xform_domain
     from corehq.apps.commtrack.processing import process_stock
 
     interface = FormProcessorInterface(domain)
 
-    get_and_check_xform_domain(sql_form)
+    assert sql_form.domain
     xforms = [sql_form]
 
     with interface.casedb_cache(domain=domain, lock=False, deleted_ok=True, xforms=xforms) as case_db:
@@ -591,6 +590,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
             extensions_to_close
         )
         for case in case_result.cases:
+            case_db.post_process_case(case, sql_form)
             case_db.mark_changed(case)
 
         stock_result = process_stock(xforms, case_db)

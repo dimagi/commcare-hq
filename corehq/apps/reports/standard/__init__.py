@@ -13,6 +13,7 @@ from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.dates import DateSpan
@@ -30,6 +31,10 @@ class ProjectReport(GenericReportView):
     @property
     def default_report_url(self):
         return reverse('reports_home', args=[self.request.project])
+
+    @property
+    def template_context(self):
+        return {'user_types': HQUserType.human_readable}
 
 
 class CustomProjectReport(ProjectReport):

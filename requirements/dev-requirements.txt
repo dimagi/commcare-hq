@@ -84,6 +84,7 @@ fakecouch==0.0.15
 faker==0.8.15
 first==2.0.1              # via pip-tools
 fixture==1.5.11
+freezegun==0.3.10
 funcsigs==1.0.2
 futures==3.2.0
 gevent==1.2.2
