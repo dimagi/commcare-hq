@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
+import six
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
@@ -115,24 +116,38 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
         default_interval=default_age_interval(icds_feature_flag)
     )
 
+    def _get_color(val):
+        if isinstance(val, six.text_type):
+            return 'red'
+        return 'green' if val > 0 else 'red'
+
+    def _get_color_2(val):
+        if isinstance(val, six.text_type):
+            return 'green'
+        return 'red' if val > 0 else 'green'
+
+    percent_underweight = percent_diff('underweight', this_month_data, prev_month_data, 'valid')
+    percent_wasting = percent_diff('wasting', this_month_data, prev_month_data, 'weighed_and_height_measured_in_month')
+    percent_stunting = percent_diff('stunting', this_month_data, prev_month_data, 'height_measured_in_month')
+    percent_low_birth_weight = percent_diff('low_birth_weight', this_month_data, prev_month_data, 'weighed_and_born_in_month')
+    percent_bf_birth = percent_diff('bf_birth', this_month_data, prev_month_data, 'born')
+    percent_ebf = percent_diff('ebf', this_month_data, prev_month_data, 'ebf_eli')
+    percent_cf_initiation = percent_diff('cf_initiation', this_month_data, prev_month_data, 'cf_initiation_eli')
+    percent_institutional_delivery = percent_diff(
+        'institutional_delivery',
+        deliveries_this_month,
+        deliveries_prev_month,
+        'delivered'
+    )
+
     return {
         'records': [
             [
                 {
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': underweight_children_help_text(),
-                    'percent': percent_diff(
-                        'underweight',
-                        this_month_data,
-                        prev_month_data,
-                        'valid'
-                    ),
-                    'color': 'red' if percent_diff(
-                        'underweight',
-                        this_month_data,
-                        prev_month_data,
-                        'valid'
-                    ) > 0 else 'green',
+                    'percent': percent_underweight,
+                    'color': _get_color_2(percent_underweight),
                     'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid'),
                     'format': 'percent_and_div',
@@ -142,18 +157,8 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 {
                     'label': _('Wasting (Weight-for-Height)'),
                     'help_text': _(wasting_help_text(age_label)),
-                    'percent': percent_diff(
-                        'wasting',
-                        this_month_data,
-                        prev_month_data,
-                        'weighed_and_height_measured_in_month'
-                    ),
-                    'color': 'red' if percent_diff(
-                        'wasting',
-                        this_month_data,
-                        prev_month_data,
-                        'weighed_and_height_measured_in_month'
-                    ) > 0 else 'green',
+                    'percent': percent_wasting,
+                    'color': _get_color_2(percent_wasting),
                     'value': get_value(this_month_data, 'wasting'),
                     'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
@@ -165,18 +170,8 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 {
                     'label': _('Stunting (Height-for-Age)'),
                     'help_text': _(stunting_help_text(age_label)),
-                    'percent': percent_diff(
-                        'stunting',
-                        this_month_data,
-                        prev_month_data,
-                        'height_measured_in_month'
-                    ),
-                    'color': 'red' if percent_diff(
-                        'stunting',
-                        this_month_data,
-                        prev_month_data,
-                        'height_measured_in_month'
-                    ) > 0 else 'green',
+                    'percent': percent_stunting,
+                    'color': _get_color_2(percent_stunting),
                     'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
@@ -188,18 +183,8 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'help_text': _((
                         new_born_with_low_weight_help_text(html=False)
                     )),
-                    'percent': percent_diff(
-                        'low_birth_weight',
-                        this_month_data,
-                        prev_month_data,
-                        'weighed_and_born_in_month'
-                    ),
-                    'color': 'red' if percent_diff(
-                        'low_birth_weight',
-                        this_month_data,
-                        prev_month_data,
-                        'weighed_and_born_in_month'
-                    ) > 0 else 'green',
+                    'percent': percent_low_birth_weight,
+                    'color': _get_color(percent_low_birth_weight),
                     'value': get_value(this_month_data, 'low_birth_weight'),
                     'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
@@ -211,18 +196,8 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 {
                     'label': _('Early Initiation of Breastfeeding'),
                     'help_text': early_initiation_breastfeeding_help_text(),
-                    'percent': percent_diff(
-                        'bf_birth',
-                        this_month_data,
-                        prev_month_data,
-                        'born'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'bf_birth',
-                        this_month_data,
-                        prev_month_data,
-                        'born'
-                    ) > 0 else 'red',
+                    'percent': percent_bf_birth,
+                    'color': _get_color(percent_bf_birth),
                     'value': get_value(this_month_data, 'bf_birth'),
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
@@ -232,18 +207,8 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 {
                     'label': _('Exclusive Breastfeeding'),
                     'help_text': exclusive_breastfeeding_help_text(),
-                    'percent': percent_diff(
-                        'ebf',
-                        this_month_data,
-                        prev_month_data,
-                        'ebf_eli'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'ebf',
-                        this_month_data,
-                        prev_month_data,
-                        'ebf_eli'
-                    ) > 0 else 'red',
+                    'percent': percent_ebf,
+                    'color': _get_color(percent_ebf),
                     'value': get_value(this_month_data, 'ebf'),
                     'all': get_value(this_month_data, 'ebf_eli'),
                     'format': 'percent_and_div',
@@ -255,18 +220,8 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 {
                     'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': children_initiated_appropriate_complementary_feeding_help_text(),
-                    'percent': percent_diff(
-                        'cf_initiation',
-                        this_month_data,
-                        prev_month_data,
-                        'cf_initiation_eli'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'cf_initiation',
-                        this_month_data,
-                        prev_month_data,
-                        'cf_initiation_eli'
-                    ) > 0 else 'red',
+                    'percent': percent_cf_initiation,
+                    'color': _get_color(percent_cf_initiation),
                     'value': get_value(this_month_data, 'cf_initiation'),
                     'all': get_value(this_month_data, 'cf_initiation_eli'),
                     'format': 'percent_and_div',
@@ -276,18 +231,8 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 {
                     'label': _('Institutional Deliveries'),
                     'help_text': institutional_deliveries_help_text(),
-                    'percent': percent_diff(
-                        'institutional_delivery',
-                        deliveries_this_month,
-                        deliveries_prev_month,
-                        'delivered'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'institutional_delivery',
-                        deliveries_this_month,
-                        deliveries_prev_month,
-                        'delivered'
-                    ) > 0 else 'red',
+                    'percent': percent_institutional_delivery,
+                    'color': _get_color(percent_institutional_delivery),
                     'value': get_value(deliveries_this_month, 'institutional_delivery'),
                     'all': get_value(deliveries_this_month, 'delivered'),
                     'format': 'percent_and_div',
