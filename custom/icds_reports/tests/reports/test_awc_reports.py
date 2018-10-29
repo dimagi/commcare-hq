@@ -49,9 +49,9 @@ class TestAWCReport(TestCase):
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3141')
         self.assertEqual(data['mother_name'], 'शियामु बाई')
-        self.assertEqual(filter(lambda r: r['x'] == 53, data['weight'])[0]['y'], 12.6)
-        self.assertEqual(filter(lambda r: r['x'] == 53, data['height'])[0]['y'], 96.0)
-        self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
+        self.assertEqual(next(filter(lambda r: r['x'] == 53, data['weight']))['y'], 12.6)
+        self.assertEqual(next(filter(lambda r: r['x'] == 53, data['height']))['y'], 96.0)
+        self.assertEqual(next(filter(lambda r: r['x'] == 96.0, data['wfl']))['y'], 12.6)
 
     def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
         data = get_beneficiary_details(
