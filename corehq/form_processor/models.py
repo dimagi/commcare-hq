@@ -1136,12 +1136,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         TYPE_CASE_CLOSE,
         TYPE_CASE_ATTACHMENT,
         TYPE_LEDGER,
-        TYPE_REBUILD_WITH_REASON,
-        TYPE_REBUILD_USER_REQUESTED,
-        TYPE_REBUILD_USER_ARCHIVED,
-        TYPE_REBUILD_FORM_ARCHIVED,
-        TYPE_REBUILD_FORM_EDIT,
-        TYPE_REBUILD_FORM_REPROCESS,
     )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
