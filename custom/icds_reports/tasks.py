@@ -85,7 +85,8 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney']
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney',
+                          'rnegi']
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
