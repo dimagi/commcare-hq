@@ -96,7 +96,8 @@ class Command(BaseCommand):
 
         for domain_name in Domain.get_all_names():
             if 'uatbc' in domain_name or 'nikshay' in domain_name:
-                domains.append(domain_name)
+                if domain_name not in domains:
+                    domains.append(domain_name)
 
         for domain_name in domains:
             checks = (check(domain_name) for check in [
