@@ -118,7 +118,7 @@ class Command(BaseCommand):
 def _check_domain_exists(domain_name):
     domain = Domain.get_by_name(domain_name)
     if domain:
-        print('Domain "%s" still exists. Creator: %s' % domain_name, domain.creating_user)
+        print('Domain "%s" still exists. Creator: %s' % (domain_name, domain.creating_user))
         return True
 
 
