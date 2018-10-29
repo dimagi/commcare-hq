@@ -27,7 +27,7 @@ from corehq.apps.sms.api import (
     MessageMetadata,
 )
 from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
-from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
+from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.hqwebapp.decorators import (
