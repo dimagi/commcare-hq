@@ -5268,7 +5268,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def timing_context(self):
         return TimingContext(self.name)
 
-    @time_method()
     def validate_app(self):
         errors = []
 
@@ -6282,6 +6281,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             })
         return errors
 
+    @time_method()
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []
