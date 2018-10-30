@@ -219,7 +219,9 @@ Instead, try running formplayer from a .jar file
 
 ##### Running formplayer.jar
 
-Prerequisite: install Java (left as an exercise for the reader)
+Prerequisites:
++ Install Java (left as an exercise for the reader)
++ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running)
 
 To get set up, download the settings file and `formplayer.jar`. You may run this
 in the commcare-hq repo root.
