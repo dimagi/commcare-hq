@@ -6,10 +6,10 @@ from corehq.util.quickcache import quickcache
 from .models import DomainMigrationProgress, MigrationStatus
 
 
-def set_migration_started(domain, slug):
+def set_migration_started(domain, slug, dry_run=False):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
     if progress.migration_status == MigrationStatus.NOT_STARTED:
-        progress.migration_status = MigrationStatus.IN_PROGRESS
+        progress.migration_status = MigrationStatus.DRY_RUN if dry_run else MigrationStatus.IN_PROGRESS
         progress.save()
         reset_caches(domain, slug)
     else:
@@ -21,7 +21,7 @@ def set_migration_started(domain, slug):
 
 def set_migration_not_started(domain, slug):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
-    if progress.migration_status == MigrationStatus.IN_PROGRESS:
+    if migration_in_progress(domain, slug, True):
         progress.migration_status = MigrationStatus.NOT_STARTED
         progress.save()
         reset_caches(domain, slug)
@@ -53,8 +53,10 @@ def get_migration_status(domain, slug, strict=False):
         return MigrationStatus.NOT_STARTED
 
 
-def migration_in_progress(domain, slug):
-    return get_migration_status(domain, slug) == MigrationStatus.IN_PROGRESS
+def migration_in_progress(domain, slug, any_run=False):
+    """ any_run means a dry run should also be checked """
+    status = get_migration_status(domain, slug)
+    return status == MigrationStatus.IN_PROGRESS or (any_run and status == MigrationStatus.DRY_RUN)
 
 
 @quickcache(['domain'], skip_arg='strict', timeout=60 * 60, memoize_timeout=60)
