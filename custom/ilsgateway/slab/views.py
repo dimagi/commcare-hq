@@ -6,7 +6,7 @@ from django.http.response import HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.models import get_location, SQLLocation
 from corehq.apps.locations.views import LocationsListView
 from corehq.apps.reports.standard import CustomProjectReport

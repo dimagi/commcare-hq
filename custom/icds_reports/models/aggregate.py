@@ -17,7 +17,7 @@ from six.moves import range
 from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.aww_inactive import AwwIncentiveAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.aww_incentive import AwwIncentiveAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.birth_preparedness_forms import \
     BirthPreparednessFormsAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.ccs_record_monthly import CcsRecordMonthlyAggregationHelper
@@ -260,16 +260,12 @@ class ChildHealthMonthly(models.Model):
     @classmethod
     def aggregate(cls, state_ids, month):
         helper = ChildHealthMonthlyAggregationHelper(state_ids, month)
-        agg_queries = helper.aggregation_queries()
-        index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
-                cursor.execute(helper.drop_table_query())
-                for agg_query, agg_params in agg_queries:
-                    cursor.execute(agg_query, agg_params)
-                for query in index_queries:
-                    cursor.execute(query)
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(helper.aggregation_query())
+            for query in helper.indexes():
+                cursor.execute(query)
 
 
 class AggAwc(models.Model):

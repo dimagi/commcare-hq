@@ -140,7 +140,12 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
             ('last_date_thr', 'case_list.last_date_thr'),
             ('num_anc_complete', 'case_list.num_anc_complete'),
-            ('valid_visits', 'agg_cf.valid_visits + agg_bp.valid_visits + agg_pnc.valid_visits'),
+            ('valid_visits', '('
+                'COALESCE(agg_cf.valid_visits, 0) + '
+                'COALESCE(agg_bp.valid_visits, 0) + '
+                'COALESCE(agg_pnc.valid_visits, 0) + '
+                'COALESCE(agg_delivery.valid_visits, 0)'
+             ')'),
             ('opened_on', 'case_list.opened_on'),
             ('dob', 'case_list.dob')
         )

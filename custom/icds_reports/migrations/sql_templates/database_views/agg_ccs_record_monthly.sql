@@ -67,7 +67,7 @@ CREATE VIEW agg_ccs_record_monthly AS
         COALESCE("agg_ccs_record"."counsel_immediate_conception", 0) AS "counsel_immediate_conception",
         COALESCE("agg_ccs_record"."counsel_accessible_postpartum_fp", 0) AS "counsel_accessible_postpartum_fp",
         COALESCE("agg_ccs_record"."valid_visits", 0) AS "valid_visits",
-        COALESCE("agg_ccs_record"."expected_visits", 0) AS "expected_vists"
+        COALESCE("agg_ccs_record"."expected_visits", 0) AS "expected_visits"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."agg_ccs_record" "agg_ccs_record" ON (
         ("awc_location_months"."month" = "agg_ccs_record"."month") AND
