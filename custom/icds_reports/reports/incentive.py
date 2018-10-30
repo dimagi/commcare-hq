@@ -18,12 +18,12 @@ class IncentiveReport(object):
         excel_rows = []
         excel_rows.append(headers)
         for row in data:
-            home_visit_percent = row['valid_visits'] / row['expected_visits']
-            weighing_efficiency = row['wer_weighed'] / row['wer_eligible']
+            home_visit_percent = row['valid_visits'] / row['expected_visits'] if row['expected_visits'] != 0 else 1
+            weighing_efficiency = row['wer_weighed'] / row['wer_eligible'] if row['wer_eligible'] != 0 else 1
             if home_visit_percent > 1:
                 home_visit_percent = 1
 
-            excel_rows.append(row['state_name'],
+            excel_rows.append([row['state_name'],
                               row['district_name'],
                               row['block_name'],
                               row['supervisor_name'],
@@ -32,7 +32,7 @@ class IncentiveReport(object):
                               '{:.2%}'.format(home_visit_percent),
                               row['awc_num_open'],
                               '{:.2%}'.format(weighing_efficiency),
-                              'Yes' if weighing_efficiency > 0.6 and home_visit_percent > 0.6 else 'No')
+                               'Yes' if weighing_efficiency > 0.6 and home_visit_percent > 0.6 else 'No'])
 
         return [
             [
