@@ -46,8 +46,31 @@ class TestDecodePassword(TestCase):
         cls.web_user.delete()
         super(TestDecodePassword, cls).tearDownClass()
 
+    def test_no_replay_attack_for_mobile_heartbeat_attempt(self):
+        get_redis_client().clear()
+        redis_client = get_redis_client()
+        with override_settings(OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE=True):
+            obfuscated_password = "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
+            client = Client(enforce_csrf_checks=False)
+            auth_headers = {
+                'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode('%s:%s' % (
+                    self.username, obfuscated_password
+                )),
+            }
+            key_name = obfuscated_password_redis_key_for_user(self.username, obfuscated_password)
+            self.assertEqual(redis_client.get(key_name), None)
+            response = client.get(reverse('phone_heartbeat', args=[self.domain.name, "bad_app_id"]),
+                                  **auth_headers)
+            self.assertEqual(response.status_code, 404)
+
+            # test no replay attack
+            response = client.get(reverse('phone_heartbeat', args=[self.domain.name, "bad_app_id"]),
+                                  **auth_headers)
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(redis_client.get(key_name), None)
+
     @patch("custom.nic_compliance.utils.USERS_TO_TRACK_FOR_REPLAY_ATTACK", [username])
-    def test_mobile_heartbeat_attempt(self):
+    def test_replay_attack_for_mobile_heartbeat_attempt(self):
         get_redis_client().clear()
         redis_client = get_redis_client()
         with override_settings(OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE=True):
@@ -72,7 +95,7 @@ class TestDecodePassword(TestCase):
             self.assertEqual(response.status_code, 401)
             redis_client.expire(key_name, 0)
 
-    def test_web_login_attempt(self):
+    def test_replay_attack_for_web_login_attempt(self):
         get_redis_client().clear()
         redis_client = get_redis_client()
         with override_settings(OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE=True):
