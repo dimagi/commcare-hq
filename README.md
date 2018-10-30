@@ -22,3 +22,4 @@ providing generic domain management and form data-collection functionality.
 + To setup a production CommCare HQ environment, check out [CommCare Cloud](https://dimagi.github.io/commcare-cloud/), our toolkit for deploying and maintaining CommCare servers.
 + Additional documentation is available on [ReadTheDocs](https://commcare-hq.readthedocs.io/).
 + We welcome contributions, see our [CONTRIBUTING.rst](CONTRIBUTING.rst) document for more.
++ Questions?  Contact the CommCare community at our [forum](https://forum.dimagi.com/).
