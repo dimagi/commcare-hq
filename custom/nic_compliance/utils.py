@@ -76,11 +76,6 @@ def obfuscated_password_redis_key_for_user(username, obfuscated_password):
     return '_'.join([REDIS_LOGIN_ATTEMPTS_LIST_PREFIX, username, obfuscated_password])
 
 
-def get_obfuscated_passwords(username, obfuscated_password):
-    client = get_redis_client()
-    return client.get(obfuscated_password_redis_key_for_user(username, obfuscated_password), [])
-
-
 def get_raw_password(obfuscated_password, username=None):
     client = get_redis_client()
 
