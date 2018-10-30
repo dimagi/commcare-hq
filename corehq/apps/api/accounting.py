@@ -5,7 +5,7 @@ from tastypie.resources import ModelResource
 from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVersion, LineItem, PaymentMethod, \
     BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
     SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
-    SubscriptionAdjustment, BillingRecord, Invoice
+    SubscriptionAdjustment, BillingRecord, Invoice, CustomerInvoice
 from corehq.apps.api.resources.auth import AdminAuthentication
 from tastypie import fields
 
@@ -183,6 +183,18 @@ class InvoiceResource(ModelResource):
         fields = ['id', 'tax_rate', 'balance', 'date_due', 'date_paid', 'date_created',
                   'date_start', 'date_end', 'is_hidden', 'is_hidden_to_ops', 'last_modified']
         resource_name = 'invoice'
+
+
+class CustomerInvoiceResource(ModelResource):
+    account = fields.IntegerField('account_id')
+    subtotal = fields.DecimalField('subtotal')
+    applied_credit = fields.DecimalField('applied_credit')
+
+    class Meta(AccountingResourceMeta):
+        queryset = CustomerInvoice.api_objects.order_by('pk')
+        fields = ['id', 'tax_rate', 'balance', 'date_due', 'date_paid', 'date_created',
+                  'date_start', 'date_end', 'is_hidden', 'is_hidden_to_ops', 'last_modified']
+        resource_name = 'customer_invoice'
 
 
 class LineItemResource(ModelResource):

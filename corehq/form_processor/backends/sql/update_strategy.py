@@ -288,6 +288,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             if transaction.is_form_transaction and transaction.is_relevant:
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
+                if not transaction.is_saved():
+                    self.case.track_create(transaction)
 
         self._delete_old_related_models(
             original_indices,
@@ -329,7 +331,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     error.format(self.case.case_id, sorted_transactions[0])
                 )
 
-        CaseAccessorSQL.fetch_case_transaction_forms(sorted_transactions)
+        CaseAccessorSQL.fetch_case_transaction_forms(self.case, sorted_transactions)
         rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
         rebuild_transaction = CaseTransaction.rebuild_transaction(self.case, rebuild_detail)
         self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
@@ -404,4 +406,7 @@ def _type_sort(action_type):
     """
     Consistent ordering for action types
     """
-    return const.CASE_ACTIONS.index(action_type)
+    for idx, type_action in enumerate(CaseTransaction.FORM_TYPE_ACTIONS_ORDER):
+        if action_type & type_action == action_type:
+            return idx
+    return len(CaseTransaction.FORM_TYPE_ACTIONS_ORDER)

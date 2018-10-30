@@ -55,7 +55,7 @@
                                 "property_name": "Test_YN",
                                 "type": "property_name"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }
@@ -80,7 +80,7 @@
                                 "property_name": "Test_YN",
                                 "type": "property_name"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }
@@ -105,7 +105,7 @@
                                 "property_name": "Test_YN",
                                 "type": "property_name"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }
@@ -130,7 +130,7 @@
                                 "property_name": "Test_YN",
                                 "type": "property_name"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }
@@ -155,7 +155,7 @@
                                 "property_name": "Test_YN",
                                 "type": "property_name"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }

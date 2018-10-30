@@ -1410,7 +1410,7 @@ class ProjectSettingsTab(UITab):
         project_info = []
 
         if user_is_admin:
-            from corehq.apps.domain.views import EditBasicProjectInfoView, EditPrivacySecurityView
+            from corehq.apps.domain.views.settings import EditBasicProjectInfoView, EditPrivacySecurityView
 
             project_info.extend([
                 {
@@ -1423,14 +1423,14 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-        from corehq.apps.domain.views import EditMyProjectSettingsView
+        from corehq.apps.domain.views.settings import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
         if toggles.OPENCLINICA.enabled(self.domain):
-            from corehq.apps.domain.views import EditOpenClinicaSettingsView
+            from corehq.apps.domain.views.settings import EditOpenClinicaSettingsView
             project_info.append({
                 'title': _(EditOpenClinicaSettingsView.page_title),
                 'url': reverse(EditOpenClinicaSettingsView.urlname, args=[self.domain])
@@ -1451,7 +1451,7 @@ class ProjectSettingsTab(UITab):
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
             if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
-                from corehq.apps.domain.views import (
+                from corehq.apps.domain.views.accounting import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
@@ -1501,7 +1501,7 @@ class ProjectSettingsTab(UITab):
                 items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
-            from corehq.apps.domain.views import (
+            from corehq.apps.domain.views.internal import (
                 EditInternalDomainInfoView,
                 EditInternalCalculationsView,
                 FlagsAndPrivilegesView,
@@ -1529,9 +1529,9 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views import (
+    from corehq.apps.domain.views.internal import TransferDomainView
+    from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
-        TransferDomainView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -1628,7 +1628,7 @@ def _get_integration_section(domain):
 
 
 def _get_feature_flag_items(domain):
-    from corehq.apps.domain.views import CalendarFixtureConfigView, LocationFixtureConfigView
+    from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({

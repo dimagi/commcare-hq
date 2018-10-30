@@ -1,6 +1,7 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
     "reach-test",
     "icds-cas"
   ],
@@ -281,8 +282,11 @@
         "datatype": "string",
         "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "case_load_ccs_record0", "case", "@case_id"]
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "case_load_ccs_record0", "case", "@case_id"]
+          }
         }
       }
     ],
