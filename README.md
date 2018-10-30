@@ -1,8 +1,6 @@
 CommCare HQ
 ===========
 
-https://github.com/dimagi/commcare-hq
-
 [![Build Status](https://travis-ci.org/dimagi/commcare-hq.png)](https://travis-ci.org/dimagi/commcare-hq)
 
 CommCare HQ is a server-side tool to help manage community health workers.
