@@ -61,12 +61,14 @@ class TestDecodePassword(TestCase):
             # ensure that login attempt gets stored
             key_name = obfuscated_password_redis_key_for_user(self.username, obfuscated_password)
             self.assertFalse(redis_client.get(key_name))
-            response = client.get(reverse('phone_heartbeat'), **auth_headers)
-            self.assertEqual(response.status_code, 200)
+            response = client.get(reverse('phone_heartbeat', args=[self.domain.name, "bad_app_id"]),
+                                  **auth_headers)
+            self.assertEqual(response.status_code, 404)
             self.assertTrue(redis_client.get(key_name))
 
             # test replay attack
-            response = client.get(reverse('phone_heartbeat'), **auth_headers)
+            response = client.get(reverse('phone_heartbeat', args=[self.domain.name, "bad_app_id"]),
+                                  **auth_headers)
             self.assertEqual(response.status_code, 401)
             redis_client.expire(key_name, 0)
 
