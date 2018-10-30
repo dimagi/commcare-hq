@@ -2,6 +2,7 @@
   "domains": [
     "icds-cas",
     "icds-dashboard-qa",
+    "reach-sandbox",
     "reach-test"
   ],
   "server_environment": [
