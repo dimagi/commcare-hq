@@ -75,11 +75,12 @@ class Command(BaseCommand):
 
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
-            set_couch_sql_migration_started(domain)
+            set_couch_sql_migration_started(domain, self.dry_run)
             do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
             if has_diffs:
                 print("\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n")
+
         if options['blow_away']:
             self.require_only_option('blow_away', options)
             if not self.no_input:
@@ -89,13 +90,15 @@ class Command(BaseCommand):
                 )
             set_couch_sql_migration_not_started(domain)
             _blow_away_migration(domain)
+
         if options['stats_short'] or options['stats_long']:
             self.print_stats(domain, short=options['stats_short'])
         if options['show_diffs']:
             self.show_diffs(domain)
+
         if options['COMMIT']:
             self.require_only_option('COMMIT', options)
-            assert couch_sql_migration_in_progress(domain)
+            assert couch_sql_migration_in_progress(domain, any_run=False)
             if not self.no_input:
                 _confirm(
                     "This will allow convert the domain to use the SQL backend and"

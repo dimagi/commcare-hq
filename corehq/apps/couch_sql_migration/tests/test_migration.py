@@ -35,7 +35,6 @@ from corehq.util.test_utils import (
     softer_assert)
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import patch_datadog
-from mock import patch, MagicMock
 from io import open
 
 
@@ -565,6 +564,23 @@ class MigrationTestCase(BaseMigrationTestCase):
         ]
         for t_stat in tracked_stats:
             self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))
+
+    def test_dry_run(self):
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+        call_command(
+            'migrate_domain_from_couch_to_sql',
+            self.domain_name,
+            MIGRATE=True,
+            no_input=True,
+            dry_run=True
+        )
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with self.assertRaises(AssertionError):
+            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+        self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, blow_away=True, no_input=True)
+        self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
