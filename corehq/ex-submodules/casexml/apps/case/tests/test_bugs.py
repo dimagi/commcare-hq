@@ -344,11 +344,8 @@ class TestCaseHierarchy(TestCase):
             create=True,
         ).as_string()
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
-        try:
+        with self.assertRaises(CaseNotFound):
             CaseAccessors().get_case(case_id2)
-            self.fail('Case should not exist')
-        except CaseNotFound:
-            pass
 
         # form with same ID submitted but now has a new case transaction
         new_case_block = CaseBlock(
