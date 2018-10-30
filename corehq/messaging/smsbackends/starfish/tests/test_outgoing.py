@@ -10,19 +10,14 @@ from corehq.messaging.smsbackends.starfish.models import (
 from django.test import SimpleTestCase
 
 
-class SimpleQueuedSMS(QueuedSMS):
-
-    def save(self):
-        pass
-
-
 class TestStarfishBackend(SimpleTestCase):
 
     def mock_send(self, **kwargs):
-        msg = SimpleQueuedSMS(
+        msg = QueuedSMS(
             phone_number='+255111222333',
             text="the message",
         )
+        msg.save = lambda: None  # prevent db access in SimpleTestCase
         with requests_mock.Mocker() as mock:
             mock.get(StarfishBackend.get_url(), **kwargs)
             StarfishBackend().send(msg)
