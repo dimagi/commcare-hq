@@ -6281,35 +6281,42 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             })
         return errors
 
-    @time_method()
-    def validate_app(self):
-        xmlns_count = defaultdict(int)
-        errors = []
-
-        for lang in self.langs:
-            if not lang:
-                errors.append({'type': 'empty lang'})
-
+    def _check_modules(self):
         if not self.modules:
-            errors.append({'type': "no modules"})
+            yield {'type': "no modules"}
         for module in self.get_modules():
             try:
-                errors.extend(module.validate_for_build())
+                for error in module.validate_for_build():
+                    yield error
             except ModuleNotFoundException as ex:
-                errors.append({
+                yield {
                     "type": "missing module",
                     "message": six.text_type(ex)
-                })
+                }
 
+    def _check_forms(self):
+        xmlns_count = defaultdict(int)
         for form in self.get_forms():
-            errors.extend(form.validate_for_build(validate_module=False))
+            for error in form.validate_for_build(validate_module=False):
+                yield error
 
             # make sure that there aren't duplicate xmlns's
             if not isinstance(form, ShadowForm):
                 xmlns_count[form.xmlns] += 1
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
-                    errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
+                    yield {'type': "duplicate xmlns", "xmlns": xmlns}
+
+    @time_method()
+    def validate_app(self):
+        errors = []
+
+        for lang in self.langs:
+            if not lang:
+                errors.append({'type': 'empty lang'})
+
+        errors.extend(self._check_modules())
+        errors.extend(self._check_forms())
 
         if any(not module.unique_id for module in self.get_modules()):
             raise ModuleIdMissingException
