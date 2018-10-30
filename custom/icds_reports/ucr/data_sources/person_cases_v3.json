@@ -186,6 +186,10 @@
             "delivery": {
               "type": "constant",
               "constant": 2
+            },
+            "pregnant": {
+              "type": "constant",
+              "constant": 3
             }
           },
           "default": {
