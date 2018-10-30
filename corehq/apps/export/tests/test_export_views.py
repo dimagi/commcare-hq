@@ -247,6 +247,7 @@ class ExportViewTest(ViewTestCase):
         self.assertEqual(resp.status_code, 200)
 
     @patch('corehq.apps.export.views.list.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.export.views.new.domain_has_privilege', lambda x, y: True)
     @patch("corehq.apps.export.tasks.rebuild_export")
     def test_edit_daily_saved_export_filters(self, _):
         # Create an export
