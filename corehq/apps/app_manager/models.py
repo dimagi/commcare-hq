@@ -6281,6 +6281,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             })
         return errors
 
+    @time_method()
     def _check_modules(self):
         if not self.modules:
             yield {'type': "no modules"}
@@ -6294,6 +6295,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     "message": six.text_type(ex)
                 }
 
+    @time_method()
     def _check_forms(self):
         xmlns_count = defaultdict(int)
         for form in self.get_forms():
