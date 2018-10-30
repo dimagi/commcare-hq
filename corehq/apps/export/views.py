@@ -1440,7 +1440,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def page_context(self):
         result = super(BaseModifyNewCustomView, self).page_context
         result['format_options'] = ["xls", "xlsx", "csv"]
-        if self.export_instance.owner_id:
+        if self.export_instance.owner_id or not self.export_instance._id:
             result['sharing_options'] = SharingOption.CHOICES
         else:
             result['sharing_options'] = [SharingOption.EDIT_AND_EXPORT]
