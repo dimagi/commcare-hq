@@ -2393,6 +2393,16 @@
             "constant": null
           }
         }
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "phone_number",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "phone_number"
       }
     ],
     "named_expressions": {},

@@ -114,6 +114,12 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='contact_phone_number'
             ),
             DatabaseColumn(
+                'Parent phone number',
+                SimpleColumn('phone_number'),
+                format_fn=phone_number_fucntion,
+                slug='phone_number'
+            ),
+            DatabaseColumn(
                 'Child Name',
                 SimpleColumn('person_name'),
                 slug='person_name'

@@ -63,7 +63,8 @@ CREATE VIEW child_health_monthly_view AS
         WHEN (child_health_monthly.zscore_grading_wfh = 1 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 1 AND child_health_monthly.muac_grading_recorded_in_month = 1) THEN 1
         WHEN (child_health_monthly.zscore_grading_wfh = 2 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 2 AND child_health_monthly.muac_grading_recorded_in_month = 2) THEN 2
         WHEN (child_health_monthly.zscore_grading_wfh = 3 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 3 AND child_health_monthly.muac_grading_recorded_in_month = 3) THEN 3
-        ELSE 4 END AS current_month_wasting_v2_sort
+        ELSE 4 END AS current_month_wasting_v2_sort,
+      child_health_monthly.phone_number
   FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."child_health_monthly" "child_health_monthly" ON (
       ("awc_location_months"."month" = "child_health_monthly"."month") AND

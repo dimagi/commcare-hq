@@ -15,4 +15,4 @@ class Migration(migrations.Migration):
 
     operations = [
     ]
-    operations.extend(get_view_migrations())
+    operations.extend(get_view_migrations()[:-1])
