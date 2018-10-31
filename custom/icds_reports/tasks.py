@@ -59,8 +59,8 @@ from custom.icds_reports.models import (
     CcsRecordMonthly,
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
-    AWWIncentiveReport
-)
+    AWWIncentiveReport,
+    AggAwc)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
@@ -127,7 +127,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
 ]
 
 
@@ -498,10 +497,11 @@ def _agg_ccs_record_table(day):
 
 @track_time
 def _agg_awc_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
-        "SELECT aggregate_awc_data(%s)"
-    ], day)
+    with transaction.atomic():
+        _run_custom_sql_script([
+            "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
+        ], day)
+        AggAwc.aggregate(force_to_date(day))
 
 
 @track_time
