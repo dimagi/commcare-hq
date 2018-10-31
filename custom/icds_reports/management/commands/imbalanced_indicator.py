@@ -58,7 +58,7 @@ class Command(BaseCommand):
                 'indicators': [
                     {'numerator': 'sum(num_launched_awcs)',
                      'denominator': 'sum(num_awcs)',
-                     'indicator':'AWCs launched'},
+                     'indicator': 'AWCs launched'},
                     {'numerator': 'sum(cases_person_has_aadhaar)',
                      'denominator': 'sum(cases_person_beneficiary)',
                      'indicator': 'Adhaar-seeded beneficiaries'},
@@ -157,7 +157,7 @@ class Command(BaseCommand):
                      'indicator': 'Wasting (weight-for-height)'},
                     {'numerator': 'sum(nutrition_status_weighed)',
                      'denominator': 'sum(wer_eligible)',
-                     'indicator' : 'Weighing efficiency (Children <5 weighed)'},
+                     'indicator': 'Weighing efficiency (Children <5 weighed)'},
                     {'numerator': 'sum(low_birth_weight_in_month)',
                      'denominator': 'sum(weighed_and_born_in_month)',
                      'indicator': 'Newborns with Low Birth Weight'},
