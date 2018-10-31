@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 import base64
+import hashlib
 from datetime import timedelta
 from django.conf import settings
 from django.urls import resolve
@@ -73,7 +74,9 @@ def verify_password(password, encoded_password):
 
 
 def obfuscated_password_redis_key_for_user(username, obfuscated_password):
-    return '_'.join([REDIS_LOGIN_ATTEMPTS_LIST_PREFIX, username, obfuscated_password])
+    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + hashlib.md5("%s%s" % (
+        username, obfuscated_password
+    )).hexdigest()
 
 
 def get_raw_password(obfuscated_password, username=None):
