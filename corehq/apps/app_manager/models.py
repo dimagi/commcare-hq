@@ -6283,31 +6283,33 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @time_method()
     def _check_modules(self):
+        errors = []
         if not self.modules:
-            yield {'type': "no modules"}
+            errors.append({'type': "no modules"})
         for module in self.get_modules():
             try:
-                for error in module.validate_for_build():
-                    yield error
+                errors.extend(module.validate_for_build())
             except ModuleNotFoundException as ex:
-                yield {
+                errors.append({
                     "type": "missing module",
                     "message": six.text_type(ex)
-                }
+                })
+        return errors
 
     @time_method()
     def _check_forms(self):
+        errors = []
         xmlns_count = defaultdict(int)
         for form in self.get_forms():
-            for error in form.validate_for_build(validate_module=False):
-                yield error
+            errors.extend(form.validate_for_build(validate_module=False))
 
             # make sure that there aren't duplicate xmlns's
             if not isinstance(form, ShadowForm):
                 xmlns_count[form.xmlns] += 1
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
-                    yield {'type': "duplicate xmlns", "xmlns": xmlns}
+                    errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
+        return errors
 
     @time_method()
     def validate_app(self):
