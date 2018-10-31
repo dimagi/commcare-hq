@@ -94,7 +94,7 @@ class CouchSqlDomainMigrator(object):
 
     def migrate(self):
         self.log_info('migrating domain {}'.format(self.domain))
-        self.processed_objects = 0
+        self.processed_docs = 0
         with TimingContext("couch_sql_migration") as timing_context:
             self.timing_context = timing_context
             with timing_context('main_forms'):
@@ -170,7 +170,7 @@ class CouchSqlDomainMigrator(object):
             raise
         finally:
             self.queues.release_lock_for_queue_obj(wrapped_form)
-            self.processed_objects += 1
+            self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
     def _migrate_form_and_associated_models(self, couch_form):
@@ -238,7 +238,7 @@ class CouchSqlDomainMigrator(object):
 
         _save_migrated_models(sql_form)
 
-        self.processed_objects += 1
+        self.processed_docs += 1
         self._log_unprocessed_forms_processed_count(throttled=True)
 
     def _copy_unprocessed_cases(self):
@@ -295,7 +295,7 @@ class CouchSqlDomainMigrator(object):
                 sql_case.deletion_id
             )
 
-        self.processed_objects += 1
+        self.processed_docs += 1
         self._log_unprocessed_cases_processed_count(throttled=True)
 
     def _calculate_case_diffs(self):
@@ -340,7 +340,7 @@ class CouchSqlDomainMigrator(object):
 
         self._diff_ledgers(case_ids)
 
-        self.processed_objects += 1
+        self.processed_docs += 1
         self._log_case_diff_count(throttled=True)
 
     def _rebuild_couch_case_and_re_diff(self, couch_case, sql_case_json):
@@ -399,11 +399,11 @@ class CouchSqlDomainMigrator(object):
             return iterable
 
     def _log_objects_processed_count(self, tags, throttled=False):
-        if throttled and self.processed_objects % 100 != 0:
+        if throttled and self.processed_docs % 100 != 0:
             return
 
         datadog_counter("commcare.couchsqlmigration.docs_processed",
-                        value=self.processed_objects,
+                        value=self.processed_docs,
                         tags=tags)
         self.processed_objects = 0
 
