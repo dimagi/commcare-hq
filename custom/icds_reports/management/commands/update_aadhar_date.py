@@ -19,6 +19,8 @@ UPDATE "{child_tablename}" child SET
   aadhar_date = person.aadhar_date
 FROM "{person_tablename}" person
 WHERE child.mother_id = person.doc_id AND child.supervisor_id = %(sup_id)s AND person.supervisor_id = %(sup_id)s
+      AND lower("substring"(person.state_id, '.{3}$'::text)) = %(state_id_last_3)s
+      AND lower("substring"(child.state_id, '.{3}$'::text)) = %(state_id_last_3)s
 """.format(child_tablename=CHILD_TABLENAME, person_tablename=PERSON_TABLENAME)
 
 
@@ -29,17 +31,19 @@ def get_cursor(model):
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        supervisor_ids = (
+        supervisors = (
             SQLLocation.objects
             .filter(domain='icds-cas', location_type__name='supervisor')
-            .values_list('location_id', flat=True)
         )
         count = 0
-        num_ids = len(supervisor_ids)
+        num_ids = supervisors.count()
 
-        for sup_id in supervisor_ids:
+        for sup in supervisors:
             with get_cursor(ChildHealthMonthly) as cursor:
-                cursor.execute(UPDATE_QUERY, {"sup_id": sup_id})
+                cursor.execute(UPDATE_QUERY, {
+                    "sup_id": sup.location_id,
+                    "state_id_last_3": sup.get_ancestor_of_type('state').location_id[-3:]
+                })
             count += 1
 
             if count % 100 == 0:
