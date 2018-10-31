@@ -33,7 +33,7 @@ CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 
 
-@task(serializer='pickle')
+@task(serializer='pickle', queue='case_import_queue')
 def bulk_import_async(config, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
     try:
@@ -58,7 +58,7 @@ def bulk_import_async(config, domain, excel_id):
         store_task_result.delay(excel_id)
 
 
-@task(serializer='pickle')
+@task(serializer='pickle', queue='case_import_queue')
 def store_task_result(upload_id):
     case_upload = CaseUpload.get(upload_id)
     case_upload.store_task_result()
