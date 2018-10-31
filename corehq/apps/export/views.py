@@ -192,6 +192,15 @@ class ExportsPermissionsManager(object):
         # just a convenience wrapper around user_can_view_deid_exports
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
+    def access_list_exports_or_404(self, is_deid=False):
+        if not (self.has_edit_permissions or self.has_view_permissions
+                or (is_deid and self.has_deid_view_permissions)):
+            raise Http404()
+
+    def access_download_export_or_404(self):
+        if not (self.has_edit_permissions or self.has_view_permissions or self.has_deid_view_permissions):
+            raise Http404()
+
 
 class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
@@ -213,11 +222,8 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
+        self.permissions.access_download_export_or_404()
 
-        if not (self.permissions.has_edit_permissions
-                or self.permissions.has_view_permissions
-                or self.permissions.has_deid_view_permissions):
-            raise Http404()
         return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -499,10 +505,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
-
-        if not (self.permissions.has_edit_permissions or self.permissions.has_view_permissions
-                or (self.is_deid and self.permissions.has_deid_view_permissions)):
-            raise Http404()
+        self.permissions.access_list_exports_or_404(is_deid=self.is_deid)
 
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 

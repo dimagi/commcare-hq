@@ -914,6 +914,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
         'Enables the insertion of custom assertions into the suite file. '
     ),
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/User+defined+assert+blocks",
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(

@@ -96,7 +96,12 @@
           "mar": "नांव",
           "tel": "పేరు",
           "hin": "नाम",
-          "en": "Name"
+          "en": "Name",
+          "tam": "பெயர்",
+          "lus": "Hming",
+          "pan": "ਨਾਮ",
+          "grt": "Bimung",
+          "kha": "Kyrteng"
         }
       },
       {
@@ -113,7 +118,12 @@
           "mar": "मुलाचे जन्म वजन आहे",
           "tel": "బిడ్డ యొక్క బరువు",
           "hin": "जन्म के समय बच्चे का वज़न",
-          "en": "Birth Weight"
+          "en": "Birth Weight",
+          "tam": "பிறப்பு எடை",
+          "lus": "Pianhlima rihzawng",
+          "pan": "ਜਨਮ ਸਮੇ ਭਾਰ",
+          "grt": "Atchiao Jrimani",
+          "kha": "Jingkhia ha ka por ba kha"
         }
       },
       {
@@ -126,19 +136,34 @@
               "mar": "पुरुष",
               "tel": "పురుషుడు",
               "hin": "पुरुष",
-              "en": "M"
+              "en": "M",
+              "tam": "ஆண்",
+              "lus": "Mipa",
+              "pan": "ਪੁਰਸ਼",
+              "grt": "Me·asa",
+              "kha": "Shynrang"
             },
             "O": {
               "mar": "अन्य",
               "tel": "ఇతరులు",
               "hin": "अन्य",
-              "en": "O"
+              "en": "O",
+              "tam": "மற்றவர்",
+              "lus": "A dang",
+              "pan": "ਹੋਰ",
+              "grt": "Gipinrang",
+              "kha": "Kiwei kiwei"
             },
             "F": {
               "mar": "स्त्री",
               "tel": "మహిళ",
               "hin": "महिला",
-              "en": "F"
+              "en": "F",
+              "tam": "பெண்",
+              "lus": "Hmeichhia",
+              "pan": "ਇਸਤਰੀ",
+              "grt": "Me·chik",
+              "kha": "Kynthei"
             }
           }
         },
@@ -149,7 +174,12 @@
           "mar": "लिंग",
           "tel": "లింగం",
           "hin": "लिंग",
-          "en": "Sex"
+          "en": "Sex",
+          "tam": "பாலினம்",
+          "lus": "Sex",
+          "pan": "ਲਿੰਗ",
+          "grt": "Me·a ba Me·chik",
+          "kha": "Jinglong shynrang ne kynthei"
         },
         "aggregation": "simple"
       },
@@ -163,7 +193,12 @@
           "mar": "जन्म तारीख",
           "tel": "పుట్టిన తేదీ",
           "hin": "जन्म तिथि",
-          "en": "Date of Birth"
+          "en": "Date of Birth",
+          "tam": "பிறந்த தேதி",
+          "lus": "Pian ni leh thla",
+          "pan": "ਜਨਮ ਮਿਤੀ",
+          "grt": "Atchiani tarik",
+          "kha": "Sngi Kha"
         }
       },
       {
@@ -176,13 +211,23 @@
               "mar": "होय",
               "tel": "అవును",
               "hin": "हाँ",
-              "en": "Yes"
+              "en": "Yes",
+              "tam": "ஆம்",
+              "lus": "Aw",
+              "pan": "ਹਾਂ",
+              "grt": "Ong·a",
+              "kha": "Hooid"
             },
             "no": {
               "mar": "नाही",
               "tel": "కాదు",
               "hin": "नहीं",
-              "en": "No"
+              "en": "No",
+              "tam": "இல்லை",
+              "lus": "Aih",
+              "pan": "ਨਹੀਂ",
+              "grt": "Ong·ja",
+              "kha": "Em"
             }
           }
         },
@@ -193,7 +238,12 @@
           "mar": "निवासी",
           "tel": "నివాసితుడు",
           "hin": "निवासी",
-          "en": "Resident"
+          "en": "Resident",
+          "tam": "வயது",
+          "lus": "Kum",
+          "pan": "ਉਮਰ",
+          "grt": "Bilsi",
+          "kha": "Kyrta"
         },
         "aggregation": "simple"
       }

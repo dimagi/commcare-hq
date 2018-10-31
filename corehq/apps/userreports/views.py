@@ -54,7 +54,7 @@ from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.locations.permissions import conditionally_location_safe
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (

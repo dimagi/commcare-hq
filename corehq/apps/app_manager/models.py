@@ -44,6 +44,7 @@ from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
+from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -1442,8 +1443,6 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                 "%s is not a valid question" % question_path
             )
 
-    @quickcache(['self.unique_id', 'self.version'], timeout=24 * 60 * 60,
-                skip_arg=lambda *args: settings.UNIT_TESTING)
     def get_all_case_updates(self):
         """
         Collate contributed case updates from all sources within the form
@@ -5146,6 +5145,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
+    @time_method()
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
             # remote apps don't support get_forms yet.
@@ -5159,6 +5159,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                             "subscription before using this feature."
                         ))
 
+    @time_method()
     def validate_intents(self):
         if domain_has_privilege(self.domain, privileges.CUSTOM_INTENTS):
             return
@@ -5262,6 +5263,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
                 return jadjar.jad, jadjar.jar
 
+    @property
+    @memoized
+    def timing_context(self):
+        return TimingContext(self.name)
+
+    @time_method()
     def validate_app(self):
         errors = []
 
@@ -5388,6 +5395,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
+    @time_method()
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
@@ -5751,6 +5759,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
+    @time_method()
     def create_profile(self, is_odk=False, with_media=False,
                        template='app_manager/profile.xml', build_profile_id=None, target_commcare_flavor=None):
         self__profile = self.profile
@@ -5889,6 +5898,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return None
 
+    @time_method()
     def create_practice_user_restore(self, build_profile_id=None):
         """
         Returns:
@@ -5906,6 +5916,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return None
 
+    @time_method()
     def validate_practice_users(self):
         # validate practice_mobile_worker of app and all app profiles
         # raises PracticeUserException in case of misconfiguration
@@ -5923,6 +5934,33 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
+    @time_method()
+    def _make_language_files(self, prefix, build_profile_id):
+        return {
+            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id)
+            for lang in ['default'] + self.get_build_langs(build_profile_id)
+        }
+
+    @time_method()
+    def _get_form_files(self, prefix, build_profile_id):
+        files = {}
+        for form_stuff in self.get_forms(bare=False):
+            def exclude_form(form):
+                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
+
+            if not exclude_form(form_stuff['form']):
+                filename = prefix + self.get_form_filename(**form_stuff)
+                form = form_stuff['form']
+                try:
+                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+                except XFormValidationFailed:
+                    raise XFormException(_('Unable to validate the forms due to a server error. '
+                                           'Please try again later.'))
+                except XFormException as e:
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
+        return files
+
+    @time_method()
     def create_all_files(self, build_profile_id=None):
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
@@ -5965,24 +6003,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 '{}practice_user_restore.xml'.format(prefix): practice_user_restore
             })
 
-        langs_for_build = self.get_build_langs(build_profile_id)
-        for lang in ['default'] + langs_for_build:
-            files["{prefix}{lang}/app_strings.txt".format(
-                prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
-        for form_stuff in self.get_forms(bare=False):
-            def exclude_form(form):
-                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
-
-            if not exclude_form(form_stuff['form']):
-                filename = prefix + self.get_form_filename(**form_stuff)
-                form = form_stuff['form']
-                try:
-                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
-                except XFormValidationFailed:
-                    raise XFormException(_('Unable to validate the forms due to a server error. '
-                                           'Please try again later.'))
-                except XFormException as e:
-                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
+        files.update(self._make_language_files(prefix, build_profile_id))
+        files.update(self._get_form_files(prefix, build_profile_id))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
