@@ -36,9 +36,9 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
             awcm.awc_name,
             awcm.aww_name,
             awcm.contact_phone_number,
-            sum(awcm.wer_weighed),
-            sum(awcm.wer_eligible),
-            sum(awcm.awc_num_open),
+            awcm.wer_weighed,
+            awcm.wer_eligible,
+            awcm.awc_days_open,
             sum(ccsm.valid_visits),
             sum(ccsm.expected_visits)
           FROM agg_awc_monthly as awcm
@@ -47,7 +47,8 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
           WHERE awcm.month = %(month)s AND awcm.state_id = %(state_id)s and awcm.aggregation_level=5
           GROUP BY awcm.awc_id, awcm.block_id, awcm.state_name, awcm.district_name,
                    awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
-                   awcm.contact_phone_number
+                   awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
+                   awcm.awc_days_open
         )
         """.format(
             tablename=tablename
