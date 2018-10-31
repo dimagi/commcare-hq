@@ -60,8 +60,12 @@ def migration_in_progress(domain, slug, include_dry_runs=False):
 
 @quickcache(['domain'], skip_arg='strict', timeout=60 * 60, memoize_timeout=60)
 def any_migrations_in_progress(domain, strict=False):
-    """Returns True if there are any migrations in progress where modifications to
-    project forms and cases should be prevented
+    """ Checks if any migrations at all are in progress for the domain
+
+    Returns True if there are any migrations in progress where modifications to
+    project forms and cases should be prevented.
+
+    This does not include migrations that are marked as dry runs.
     """
     return DATA_MIGRATION.enabled(domain) or DomainMigrationProgress.objects.filter(
         domain=domain, migration_status=MigrationStatus.IN_PROGRESS
