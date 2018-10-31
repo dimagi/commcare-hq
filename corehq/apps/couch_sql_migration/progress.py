@@ -22,8 +22,8 @@ def set_couch_sql_migration_not_started(domain):
     set_migration_not_started(domain, COUCH_TO_SQL_SLUG)
 
 
-def couch_sql_migration_in_progress(domain, any_run=True):
-    return migration_in_progress(domain, COUCH_TO_SQL_SLUG, any_run)
+def couch_sql_migration_in_progress(domain, include_dry_runs=True):
+    return migration_in_progress(domain, COUCH_TO_SQL_SLUG, include_dry_runs)
 
 
 def _notify_dimagi_users_on_domain(domain):

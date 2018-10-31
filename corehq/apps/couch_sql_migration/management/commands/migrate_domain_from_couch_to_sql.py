@@ -98,7 +98,7 @@ class Command(BaseCommand):
 
         if options['COMMIT']:
             self.require_only_option('COMMIT', options)
-            assert couch_sql_migration_in_progress(domain, any_run=False)
+            assert couch_sql_migration_in_progress(domain, include_dry_runs=False)
             if not self.no_input:
                 _confirm(
                     "This will allow convert the domain to use the SQL backend and"

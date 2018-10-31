@@ -53,10 +53,9 @@ def get_migration_status(domain, slug, strict=False):
         return MigrationStatus.NOT_STARTED
 
 
-def migration_in_progress(domain, slug, any_run=False):
-    """ any_run means a dry run should also be checked """
+def migration_in_progress(domain, slug, include_dry_runs=False):
     status = get_migration_status(domain, slug)
-    return status == MigrationStatus.IN_PROGRESS or (any_run and status == MigrationStatus.DRY_RUN)
+    return status == MigrationStatus.IN_PROGRESS or (include_dry_runs and status == MigrationStatus.DRY_RUN)
 
 
 @quickcache(['domain'], skip_arg='strict', timeout=60 * 60, memoize_timeout=60)
