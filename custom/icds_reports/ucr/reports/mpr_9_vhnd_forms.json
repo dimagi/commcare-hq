@@ -6,6 +6,7 @@
     "icds-test",
     "icds-sql",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
