@@ -5268,7 +5268,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def timing_context(self):
         return TimingContext(self.name)
 
-    @time_method()
     def validate_app(self):
         errors = []
 
@@ -6283,14 +6282,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             })
         return errors
 
-    def validate_app(self):
-        xmlns_count = defaultdict(int)
+    @time_method()
+    def _check_modules(self):
         errors = []
-
-        for lang in self.langs:
-            if not lang:
-                errors.append({'type': 'empty lang'})
-
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
@@ -6301,7 +6295,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     "type": "missing module",
                     "message": six.text_type(ex)
                 })
+        return errors
 
+    @time_method()
+    def _check_forms(self):
+        errors = []
+        xmlns_count = defaultdict(int)
         for form in self.get_forms():
             errors.extend(form.validate_for_build(validate_module=False))
 
@@ -6311,6 +6310,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
+        return errors
+
+    @time_method()
+    def validate_app(self):
+        errors = []
+
+        for lang in self.langs:
+            if not lang:
+                errors.append({'type': 'empty lang'})
+
+        errors.extend(self._check_modules())
+        errors.extend(self._check_forms())
 
         if any(not module.unique_id for module in self.get_modules()):
             raise ModuleIdMissingException
