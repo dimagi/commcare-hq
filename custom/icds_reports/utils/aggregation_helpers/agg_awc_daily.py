@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import six
 
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from six.moves import map
 
@@ -83,7 +82,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
         """.format(
             tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
-            calculations=", ".join([col[1] or col[0] for col in columns]),
+            calculations=", ".join([col[1] if len(col) > 1 else col[0] for col in columns]),
         ), {
             "start_date": self.month
         }
