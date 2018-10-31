@@ -34,6 +34,10 @@ def set_migration_not_started(domain, slug):
 
 def set_migration_complete(domain, slug):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
+
+    if progress.migration_status == MigrationStatus.DRY_RUN:
+        raise DomainMigrationProgressError("Cannot complete a migration that is in state dry run")
+
     if progress.migration_status != MigrationStatus.COMPLETE:
         progress.migration_status = MigrationStatus.COMPLETE
         progress.save()
