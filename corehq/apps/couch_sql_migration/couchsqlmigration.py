@@ -402,7 +402,7 @@ class CouchSqlDomainMigrator(object):
         if throttled and self.processed_objects % 100 != 0:
             return
 
-        datadog_counter("commcare.couchsqlmigration.forms_processed",
+        datadog_counter("commcare.couchsqlmigration.docs_processed",
                         value=self.processed_objects,
                         tags=tags)
         self.processed_objects = 0
