@@ -628,7 +628,7 @@ class AggAwcDaily(models.Model):
         with get_cursor(cls) as cursor:
             with transaction.atomic():
                 cursor.execute(helper.drop_table_query())
-                cursor.execute(helper.create_table_query())
+                cursor.execute(*helper.create_table_query())
                 cursor.execute(agg_query, agg_params)
                 cursor.execute(update_query, update_params)
                 for query in rollup_queries:

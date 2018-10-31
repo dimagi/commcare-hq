@@ -69,7 +69,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             ('num_launched_supervisors',),
             ('num_launched_awcs',),
             ('cases_person_has_aadhaar_v2',),
-            ('cases_person_beneficiary_v',),
+            ('cases_person_beneficiary_v2',),
         )
         return """
         INSERT INTO "{tablename}" (
@@ -128,7 +128,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             ('supervisor_id', lambda col: col if aggregation_level > 3 else "'All'"),
             ('awc_id', lambda col: col if aggregation_level > 4 else "'All'"),
             ('aggregation_level', str(aggregation_level)),
-            ('date',),
+            ('date', 'date'),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),
@@ -152,7 +152,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             ('num_launched_supervisors', lambda col: _launched_col(col)),
             ('num_launched_awcs', lambda col: _launched_col(col)),
             ('cases_person_has_aadhaar_v2',),
-            ('cases_person_beneficiary_v',),
+            ('cases_person_beneficiary_v2',),
         )
 
         def _transform_column(column_tuple):
@@ -184,7 +184,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
         ) (
             SELECT {calculations}
             FROM "{tablename}"
-            WHERE aggregation_level = %(aggregation_level)s
+            WHERE aggregation_level = {aggregation_level}
             GROUP BY {group_by}
         )
         """.format(
