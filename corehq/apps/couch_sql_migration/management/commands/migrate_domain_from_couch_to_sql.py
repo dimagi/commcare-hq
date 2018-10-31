@@ -59,8 +59,9 @@ class Command(BaseCommand):
             'debug',
             'dry_run',
         }
-        assert all(not value for key, value in options.items()
-                   if key in this_command_opts and key != sole_option)
+        for key, value in options.items():
+            if value and key in this_command_opts and key != sole_option:
+                raise CommandError("%s must be the sole option used" % key)
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):
@@ -98,7 +99,8 @@ class Command(BaseCommand):
 
         if options['COMMIT']:
             self.require_only_option('COMMIT', options)
-            assert couch_sql_migration_in_progress(domain, include_dry_runs=False)
+            if not couch_sql_migration_in_progress(domain, include_dry_runs=False):
+                raise CommandError("cannot commit a migration that is not in state in_progress")
             if not self.no_input:
                 _confirm(
                     "This will allow convert the domain to use the SQL backend and"

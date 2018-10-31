@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.test import TestCase
 from django.test import override_settings
+from django.core.management.base import CommandError
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
@@ -575,7 +576,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             dry_run=True
         )
         clear_local_domain_sql_backend_override(self.domain_name)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(CommandError):
             call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
         call_command('migrate_domain_from_couch_to_sql', self.domain_name, blow_away=True, no_input=True)
