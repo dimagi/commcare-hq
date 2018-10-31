@@ -6,11 +6,11 @@
     ],
     "domains": [
         "icds-dashboard-qa",
-    "reach-sandbox",
-    "reach-test",
+        "reach-sandbox",
+        "reach-test",
         "icds-test",
         "icds-cas",
-    "cas-lab"
+        "cas-lab"
     ],
     "report_id": "static-it_issues_activity",
     "data_source_table": "static-it_report_follow_issue",
