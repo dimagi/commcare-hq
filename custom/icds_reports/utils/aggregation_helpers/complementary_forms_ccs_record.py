@@ -19,7 +19,7 @@ class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         return """
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
-        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (next_due=timeend::DATE)g THEN 1 ELSE 0 END) OVER w as valid_visits
+        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (next_due=timeend::DATE) THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE (
           timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
