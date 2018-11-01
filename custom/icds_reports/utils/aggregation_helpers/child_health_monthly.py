@@ -53,6 +53,12 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return get_table_name(self.domain, config.table_id)
 
     @property
+    def person_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
     def tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
@@ -116,7 +122,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("fully_immunized_on_time", "CASE WHEN {} AND {} <= 365 AND {} THEN 1 ELSE 0 END".format(fully_immunized_eligible, immunized_age_in_days, fully_immun_before_month)),
             ("fully_immunized_late", "CASE WHEN {} AND {} > 365 AND {} THEN 1 ELSE 0 END".format(fully_immunized_eligible, immunized_age_in_days, fully_immun_before_month)),
             ("has_aadhar_id",
-                "CASE WHEN child_health.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
+                "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
                 "CASE WHEN {} AND {} AND {} <= 72 AND child_health.is_migrated = 0 THEN 1 ELSE 0 END".format(open_in_month, alive_in_month, age_in_months)),
@@ -290,6 +296,9 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON child_health.doc_id = child_tasks.child_health_case_id
               AND child_health.state_id = child_tasks.state_id
               AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
+            LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
+              AND child_health.state_id = person_cases.state_id
+              AND lower(substring(person_cases.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
               AND child_health.state_id = cf.state_id
             LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id AND thr.month = %(start_date)s
@@ -317,6 +326,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
+            person_cases_ucr=self.person_case_ucr_tablename,
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),
