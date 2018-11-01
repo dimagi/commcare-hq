@@ -1641,9 +1641,22 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
+    'filter_on_groups_and_locations',
+    'Filter on groups AND locations in all reports with group and location filters',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This will add a filter called [GROUPS_AND_LOCATIONS] to form reports  and exports which have '
+                'group and location filters. When selected, it changes the OR logic to an AND, so '
+                'that (for example): "Groups or Users: (Salima District [location]) AND (Healthworkers [group])" '
+                'returns 40 healthworkers who are also in Salima. This only works if at least one group and one '
+                'location are selected',
+)
+
 SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'sort_out_of_order_form_submissions_sql',
     'Sort out of order form submissions in the SQL update strategy',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
 )
+

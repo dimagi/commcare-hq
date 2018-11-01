@@ -15,6 +15,7 @@ from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.commtrack.models import SQLLocation
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 
 from .. import util
 from ..models import HQUserType
@@ -147,9 +148,11 @@ class EmwfUtils(object):
     @memoized
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
-        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN', 'GROUPS_AND_LOCATIONS']
+        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
+        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain):
+            types.append('GROUPS_AND_LOCATIONS')
         for t in types:
             user_type = getattr(HQUserType, t)
             static_options.append(self.user_type_tuple(user_type))
@@ -189,9 +192,11 @@ class SubmitHistoryUtils(EmwfUtils):
     @memoized
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
-        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN', 'GROUPS_AND_LOCATIONS']
+        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
+        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain):
+            types.append('GROUPS_AND_LOCATIONS')
         for t in types:
             user_type = getattr(HQUserType, t)
             static_options.append(self.user_type_tuple(user_type))
