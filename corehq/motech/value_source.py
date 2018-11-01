@@ -25,6 +25,14 @@ def recurse_subclasses(cls):
 
 
 class ValueSource(DocumentSchema):
+    """
+    Subclasses model a reference to a value, like a case property or a
+    form question.
+
+    Use the `get_value()` method to fetch the value using the reference,
+    and serialize it, if necessary, for the external system that it is
+    being sent to.
+    """
     external_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN)
     commcare_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN,
                                         choices=COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,))
@@ -40,11 +48,21 @@ class ValueSource(DocumentSchema):
             return super(ValueSource, cls).wrap(data)
 
     def serialize(self, value):
+        """
+        Converts the value's CommCare data type or format to its data
+        type or format for the external system, if necessary, otherwise
+        returns the value unchanged.
+        """
         serializer = (serializers.get((self.commcare_data_type, self.external_data_type)) or
                       serializers.get((None, self.external_data_type)))
         return serializer(value) if serializer else value
 
     def deserialize(self, external_value):
+        """
+        Converts the value's external data type or format to its data
+        type or format for CommCare, if necessary, otherwise returns the
+        value unchanged.
+        """
         serializer = (serializers.get((self.external_data_type, self.commcare_data_type)) or
                       serializers.get((None, self.commcare_data_type)))
         return serializer(external_value) if serializer else external_value
@@ -53,11 +71,18 @@ class ValueSource(DocumentSchema):
         raise NotImplementedError()
 
     def get_value(self, case_trigger_info):
+        """
+        Returns the value referred to by the ValueSource, serialized for
+        the external system.
+        """
         value = self.get_commcare_value(case_trigger_info)
         return self.serialize(value)
 
 
 class CaseProperty(ValueSource):
+    """
+    A reference to a case property
+    """
     # Example "person_property" value::
     #
     #     {
@@ -74,6 +99,9 @@ class CaseProperty(ValueSource):
 
 
 class FormQuestion(ValueSource):
+    """
+    A reference to a form question
+    """
     form_question = StringProperty()  # e.g. "/data/foo/bar"
 
     def get_commcare_value(self, case_trigger_info):
@@ -81,6 +109,12 @@ class FormQuestion(ValueSource):
 
 
 class ConstantString(ValueSource):
+    """
+    A constant value.
+
+    Use the model's data types for the `serialize()` method to convert
+    the value for the external system, if necessary.
+    """
     # Example "person_property" value::
     #
     #     {
@@ -90,8 +124,6 @@ class ConstantString(ValueSource):
     #       }
     #     }
     #
-    # Serializes value to convert dates, etc. to a format that is
-    # acceptable to whatever API we are sending it to.
     value = StringProperty()
 
     def deserialize(self, external_value):
