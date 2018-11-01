@@ -41,7 +41,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(rupture) OVER w as rupture,
         LAST_VALUE(anemia) OVER w as anemia,
         LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities,
-        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (next_due=timeend::DATE) THEN 1 ELSE 0 END) OVER w as valid_visits
+        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (next_visit=timeend::DATE) THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
