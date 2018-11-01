@@ -1442,6 +1442,38 @@
               "constant": 0
             }
           }
+        },
+        "value_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "array_index",
+            "array_expression": {
+              "type": "filter_items",
+              "items_expression": {
+                "datatype": "array",
+                "type": "property_name",
+                "property_name": "indices"
+              },
+              "filter_expression": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "property_value": "mother",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "identifier"
+                }
+              }
+            },
+            "index_expression": {
+              "type": "constant",
+              "constant": 0
+            }
+          }
         }
       }
     },
