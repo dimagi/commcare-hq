@@ -5960,7 +5960,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return files
 
     @time_method()
-    @memoized
     def create_all_files(self, build_profile_id=None):
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
