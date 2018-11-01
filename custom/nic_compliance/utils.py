@@ -99,13 +99,13 @@ def get_raw_password(obfuscated_password, username=None):
         return resolve(request.path).url_name in MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK
 
     def _decode_password():
-        # In case of 2-step authentication for web skip by checking for auth-username which is
-        # present in first step
         raw_password = extract_password(obfuscated_password)
         if raw_password is False:
             # if there was no obfuscation done, just return the raw password
             # and skip any further checks
             return obfuscated_password
+        # In case of 2-step authentication for web skip by checking for auth-username which is
+        # present in first step
         if username and (
                 (request and request.POST.get('auth-username')) or
                 _mobile_request_to_track(username)):
