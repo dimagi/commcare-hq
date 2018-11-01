@@ -6,7 +6,7 @@ hqDefine("hqmedia/js/hqmediauploaders",[
 ], function (intialPageData,_, uploaderController) {
     var HQMediaUploaders = {};  // This will be referenced by the media references
     _.each(intialPageData.get("uploaders"), function (uploader) {
-        console.log(uploaderController)
+
         HQMediaUploaders[uploader.slug] = new uploaderController[uploader.uploader_type](
             uploader.slug,
             uploader.media_type,
