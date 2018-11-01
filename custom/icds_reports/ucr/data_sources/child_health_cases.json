@@ -1,10 +1,12 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
     "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -1214,76 +1216,123 @@
           "property_name": "child_immun_one_year_date"
         }
       },
-	  {
-		"expression": {
-			"type": "conditional",
-			"test": {
-			  "operator": "eq", 
-			  "expression": {
-				"value_expression": {
-				  "datatype": null, 
-				  "type": "property_name", 
-				  "property_name": "migration_status"
-				}, 
-				"type": "related_doc", 
-				"related_doc_type": "CommCareCase", 
-				"doc_id_expression": {
-				  "type": "named", 
-				  "name": "parent_id"
-				}
-			  }, 
-			  "type": "boolean_expression", 
-			  "property_value": "migrated"
-			},
-			"expression_if_true": {
-				"type": "constant",
-				"constant": 1
-			},
-			"expression_if_false": {
-				"type": "constant",
-				"constant": 0
-			}
-		}, 
-		"type": "expression", 
-		"column_id": "is_migrated",
-		"is_nullable": true,
-		"datatype": "integer"
-	 },
-	 {
-		"expression": {
-			"type": "conditional",
-			"test": {
-			  "operator": "not_eq", 
-			  "expression": {
-				"value_expression": {
-				  "datatype": null, 
-				  "type": "property_name", 
-				  "property_name": "registered_status"
-				}, 
-				"type": "related_doc", 
-				"related_doc_type": "CommCareCase", 
-				"doc_id_expression": {
-				  "type": "named", 
-				  "name": "parent_id"
-				}
-			  }, 
-			  "type": "boolean_expression", 
-			  "property_value": "not_registered"
-			},
-			"expression_if_true": {
-				"type": "constant",
-				"constant": 1
-			},
-			"expression_if_false": {
-				"type": "constant",
-				"constant": 0
-			}
-		},
-		"type": "expression", 
-		"column_id": "is_availing",
-		"is_nullable": true,
-		"datatype": "integer"
-	 }
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "migration_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "migrated"
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_migrated",
+        "is_nullable": true,
+        "datatype": "integer"
+      },
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "not_eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "registered_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "not_registered"
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_availing",
+        "is_nullable": true,
+        "datatype": "integer"
+      },
+      {
+        "column_id": "aadhar_date",
+        "datatype": "date",
+        "type": "expression",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "aadhar_number_from_person_case"
+              },
+              "property_value": ["", null]
+            }
+          },
+          "expression_if_true": {
+            "type": "conditional",
+            "test": {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "named",
+                  "name": "aadhar_date_from_person_case"
+                },
+                "property_value": ["", null]
+              }
+            },
+            "expression_if_true": {
+              "type": "named",
+              "name": "aadhar_date_from_person_case"
+            },
+            "expression_if_false": {
+              "type": "named",
+              "name": "aadhar_date_from_forms"
+            }
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      }
     ],
     "named_expressions": {
       "parent_id": {
@@ -1463,6 +1512,72 @@
               "constant": 0
             }
           }
+        }
+      },
+      "aadhar_date_from_forms": {
+        "type": "nested",
+        "argument_expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "first_item",
+          "items_expression": {
+            "type": "filter_items",
+            "items_expression": {
+              "type": "icds_get_case_history_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+                "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
+                "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
+              ],
+              "case_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "filter_expression": {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "update",
+                    "aadhar_number"
+                  ]
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              }
+            }
+          }
+        },
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "@date_modified"
+        }
+      },
+      "aadhar_date_from_person_case": {
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "icds_parent_id"
+        },
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "aadhar_date"
+        }
+      },
+      "aadhar_number_from_person_case": {
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "icds_parent_id"
+        },
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "aadhar_number"
         }
       }
     },

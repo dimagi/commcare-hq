@@ -7,6 +7,7 @@ from io import BytesIO
 import attr
 import datetime
 import logging
+import gevent
 
 from django.core import cache
 from django.conf import settings
@@ -214,21 +215,26 @@ def check_formplayer():
 
 
 def run_checks(checks_to_do):
-    statuses = []
+    greenlets = []
     with TimingContext() as timer:
         for check_name in checks_to_do:
             if check_name not in CHECKS:
                 raise UnknownCheckException(check_name)
 
-            check_info = CHECKS[check_name]
-            with timer(check_name):
-                try:
-                    status = check_info['check_func']()
-                except Exception as e:
-                    status = ServiceStatus(False, "{} raised an error".format(check_name), e)
-                status.duration = timer.peek().duration
-            statuses.append((check_name, status))
-    return statuses
+            greenlets.append(gevent.spawn(_run_check, check_name, timer))
+        gevent.joinall(greenlets)
+    return [greenlet.value for greenlet in greenlets]
+
+
+def _run_check(check_name, timer):
+    check_info = CHECKS[check_name]
+    with timer(check_name):
+        try:
+            status = check_info['check_func']()
+        except Exception as e:
+            status = ServiceStatus(False, "{} raised an error".format(check_name), e)
+        status.duration = timer.peek().duration
+    return check_name, status
 
 
 CHECKS = {

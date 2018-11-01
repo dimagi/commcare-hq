@@ -146,8 +146,13 @@
         "is_nullable": true,
         "column_id": "phone_number",
         "expression": {
-          "type": "property_name",
-          "property_name": "phone_number"
+          "type": "reduce_items",
+          "items_expression": {
+            "datatype": "array",
+            "type": "property_name",
+            "property_name": "phone_numbers"
+          },
+          "aggregation_fn": "first_item"
         }
       }
     ],

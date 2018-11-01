@@ -16,9 +16,7 @@ SELECT
     "awc_monthly"."cases_household",
     "awc_monthly"."cases_person_all",
     "awc_monthly"."cases_person",
-    "awc_monthly"."cases_ccs_pregnant_all",
     "awc_monthly"."cases_ccs_pregnant",
-    "awc_monthly"."cases_ccs_lactating_all",
     "awc_monthly"."cases_ccs_lactating",
     "awc_monthly"."cases_child_health_all",
     "awc_monthly"."cases_child_health",
@@ -32,18 +30,6 @@ SELECT
         ELSE 100 * "awc_monthly"."infra_clean_water" / "awc_monthly"."num_awc_infra_last_update" END as "clean_water_percent",
     CASE WHEN "awc_monthly"."num_awc_infra_last_update"=0 THEN null
         ELSE 100 * "awc_monthly"."infra_functional_toilet" / "awc_monthly"."num_awc_infra_last_update" END as "functional_toilet_percent",
-    CASE WHEN "ccs_record"."pregnant"=0 THEN null
-        ELSE 100 * ("ccs_record"."anemic_moderate" + "ccs_record"."anemic_severe")/"ccs_record"."pregnant" END as "anemic_pregnant_percent",
-    CASE WHEN "ccs_record"."pregnant"=0 THEN null
-        ELSE 100 * "ccs_record"."tetanus_complete"/"ccs_record"."pregnant" END as "tetanus_complete_percent",
-    CASE WHEN "ccs_record"."delivered_in_month"=0 THEN null
-        ELSE 100 * "ccs_record"."anc1_received_at_delivery"/"ccs_record"."delivered_in_month" END as "anc1_received_at_delivery_percent",
-    CASE WHEN "ccs_record"."delivered_in_month"=0 THEN null
-        ELSE 100 * "ccs_record"."anc2_received_at_delivery"/"ccs_record"."delivered_in_month" END as "anc2_received_at_delivery_percent",
-    CASE WHEN "ccs_record"."delivered_in_month"=0 THEN null
-        ELSE 100 * "ccs_record"."anc3_received_at_delivery"/"ccs_record"."delivered_in_month" END as "anc3_received_at_delivery_percent",
-    CASE WHEN "ccs_record"."delivered_in_month"=0 THEN null
-        ELSE 100 * "ccs_record"."anc4_received_at_delivery"/"ccs_record"."delivered_in_month" END as "anc4_received_at_delivery_percent",
     CASE WHEN "ccs_record"."pregnant"=0 THEN null
         ELSE 100 * "ccs_record"."resting_during_pregnancy"/"ccs_record"."pregnant" END as "resting_during_pregnancy_percent",
     CASE WHEN "ccs_record"."pregnant"=0 THEN null
@@ -66,11 +52,7 @@ SELECT
     CASE WHEN "child_health"."height_measured_in_month"=0 THEN null 
         ELSE 100 * "child_health"."stunting_severe"/"child_health"."height_measured_in_month" END as "stunting_severe_percent",
     CASE WHEN  "child_health"."height_measured_in_month"=0 THEN null 
-        ELSE 100 * "child_health"."stunting_moderate"/"child_health"."height_measured_in_month" END as "stunting_moderate_percent",
-    CASE WHEN "child_health"."weighed_and_born_in_month"=0 THEN null 
-        ELSE 100 * "child_health"."low_birth_weight_in_month"/"child_health"."weighed_and_born_in_month" END as "low_birth_weight_in_month_percent",
-    CASE WHEN  "child_health"."fully_immunized_eligible"=0 THEN null 
-        ELSE 100 * ("child_health"."fully_immunized_on_time" + "child_health"."fully_immunized_late")/ "child_health"."fully_immunized_eligible" END as "immunized_percent"    
+        ELSE 100 * "child_health"."stunting_moderate"/"child_health"."height_measured_in_month" END as "stunting_moderate_percent"
 FROM "agg_awc_monthly" "awc_monthly"
 LEFT JOIN "agg_ccs_record_monthly" "ccs_record" ON (
         ("awc_monthly"."month" = "ccs_record"."month") AND

@@ -43,7 +43,7 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
