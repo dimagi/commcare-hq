@@ -4,6 +4,6 @@ function (doc) {
             doc.domain,
             doc._id,
             doc.table_id,
-        ], doc);
+        ], null);
     }
 }
