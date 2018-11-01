@@ -129,10 +129,10 @@ class TestExtractPassword(TestCase):
 
     def test_invalid_regex_format(self):
         obfuscated_password = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
-        self.assertEqual(extract_password(obfuscated_password), obfuscated_password)
+        self.assertFalse(extract_password(obfuscated_password))
 
         obfuscated_password = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ=="
-        self.assertEqual(extract_password(obfuscated_password), obfuscated_password)
+        self.assertFalse(extract_password(obfuscated_password))
 
     def test_invalid_padding(self):
         obfuscated_password = "sha256$1e456bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
