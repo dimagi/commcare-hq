@@ -52,10 +52,10 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                 "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }
@@ -77,10 +77,10 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }
@@ -102,10 +102,10 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }
@@ -127,10 +127,10 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }
@@ -152,10 +152,10 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "property_value": "no",
                             "type": "boolean_expression"
                         }

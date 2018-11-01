@@ -1,10 +1,12 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
     "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -1901,6 +1903,15 @@
       }
     },
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "3"
+        }
+      ]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [
@@ -1915,7 +1926,6 @@
         ]
       }
     ],
-    "disable_destructive_rebuild": true,
-    "asynchronous": true
+    "disable_destructive_rebuild": true
   }
 }

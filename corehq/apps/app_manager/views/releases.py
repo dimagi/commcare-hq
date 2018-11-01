@@ -34,7 +34,7 @@ from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_or_api_key
-from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
+from corehq.apps.domain.views.base import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context

@@ -1,41 +1,49 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url
-from corehq.apps.export.views import (
-    CreateNewCustomFormExportView,
-    CreateNewCustomCaseExportView,
-    EditNewCustomFormExportView,
-    EditNewCustomCaseExportView,
-    DeleteNewCustomExportView,
-    FormExportListView,
-    CaseExportListView,
-    DeIdFormExportListView,
+from corehq.apps.export.views.download import (
     DownloadNewFormExportView,
     BulkDownloadNewFormExportView,
     DownloadNewCaseExportView,
     DownloadNewSmsExportView,
-    GenerateSchemaFromAllBuildsView,
-    download_daily_saved_export,
-    DashboardFeedListView,
-    CreateNewCaseFeedView,
-    CreateNewFormFeedView,
+    add_export_email_request,
+)
+from corehq.apps.export.views.edit import (
+    EditNewCustomFormExportView,
+    EditNewCustomCaseExportView,
     EditCaseFeedView,
     EditCaseDailySavedExportView,
     EditFormFeedView,
     EditFormDailySavedExportView,
+)
+from corehq.apps.export.views.list import (
     DailySavedExportListView,
-    CreateNewDailySavedCaseExport,
-    CreateNewDailySavedFormExport,
+    FormExportListView,
+    CaseExportListView,
+    DashboardFeedListView,
+    DeIdFormExportListView,
     DeIdDailySavedExportListView,
     DeIdDashboardFeedListView,
-    DashboardFeedPaywall,
-    DailySavedExportPaywall,
-    CopyExportView,
-    DataFileDownloadList,
-    DataFileDownloadDetail,
-    add_export_email_request,
+    download_daily_saved_export,
     get_app_data_drilldown_values,
     submit_app_data_drilldown_form,
+)
+from corehq.apps.export.views.new import (
+    CreateNewCustomFormExportView,
+    CreateNewCustomCaseExportView,
+    CreateNewDailySavedCaseExport,
+    CreateNewDailySavedFormExport,
+    CreateNewCaseFeedView,
+    CreateNewFormFeedView,
+    CopyExportView,
+    DeleteNewCustomExportView,
+)
+from corehq.apps.export.views.utils import (
+    DashboardFeedPaywall,
+    DailySavedExportPaywall,
+    DataFileDownloadList,
+    DataFileDownloadDetail,
+    GenerateSchemaFromAllBuildsView,
 )
 
 urlpatterns = [
