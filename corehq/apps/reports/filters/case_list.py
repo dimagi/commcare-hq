@@ -19,10 +19,11 @@ class CaseListFilterUtils(EmwfUtils):
         options = super(CaseListFilterUtils, self).static_options
         # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
         assert options[0][0] == "t__0"
+        # If static_options include GROUPS_AND_LOCATIONS, the case list should not show it
         return [
             ("all_data", _("[All Data]")),
             ('project_data', _("[Project Data]"))
-        ] + options[2:]
+        ] + options[2:6]
 
     def _group_to_choice_tuple(self, group):
         if group.case_sharing:
