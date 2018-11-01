@@ -8,8 +8,6 @@ from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 
 from corehq.apps.case_importer.const import LookupErrors, ImportErrors
-from corehq.apps.export.models import CaseExportDataSchema
-from corehq.apps.export.models.new import MAIN_TABLE
 from corehq.apps.groups.models import Group
 from corehq.apps.case_importer.exceptions import (
     ImporterExcelFileEncrypted,
@@ -24,12 +22,10 @@ from corehq.apps.users.util import format_username
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.workbook_reading import open_any_workbook, Workbook, \
     SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
 import six
-from six.moves import filter
 
 
 # Don't allow users to change the case type by accident using a custom field. But do allow users to change
@@ -108,8 +104,8 @@ class WorksheetWrapper(object):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called without Workbook object")
         elif not workbook.worksheets:
-            raise AssertionError(
-                "WorksheetWrapper.from_workbook called with Workbook with no sheets")
+            raise SpreadsheetFileInvalidError(
+                _("It seems as though your spreadsheet contains no sheets. Please resave it and try again."))
         else:
             return cls(workbook.worksheets[0])
 
@@ -187,7 +183,7 @@ class ImportErrorDetail(object):
         ),
         ImportErrors.InvalidDate: _(
             "Date fields were specified that caused an error during "
-            "conversion. This is likely caused by a value from excel having "
+            "conversion. This is likely caused by a value from Excel having "
             "the wrong type or not being formatted properly."
         ),
         ImportErrors.BlankExternalId: _(
@@ -207,11 +203,11 @@ class ImportErrorDetail(object):
             "with this same name, try using site-code instead."
         ),
         ImportErrors.InvalidInteger: _(
-            "Integer values were specified, but the values in excel were not "
+            "Integer values were specified, but the values in Excel were not "
             "all integers"
         ),
         ImportErrors.ImportErrorMessage: _(
-            "Problems in importing cases. Please check the excel file."
+            "Problems in importing cases. Please check the Excel file."
         )
     }
 
@@ -245,7 +241,7 @@ def convert_field_value(value):
 
 
 def parse_search_id(config, row):
-    """ Find and convert the search id in an excel row """
+    """ Find and convert the search id in an Excel row """
 
     # Find index of user specified search column
     search_column = config.search_column
@@ -420,8 +416,8 @@ def get_importer_error_message(e):
         # happened though...)
         return _('Sorry, your session has expired. Please start over and try again.')
     elif isinstance(e, ImporterFileNotFound):
-        return _('The session containing the file you uploaded has expired '
-                 '- please upload a new one.')
+        return _('The session containing the file you uploaded has expired. '
+                 'Please upload a new one.')
     elif isinstance(e, ImporterExcelFileEncrypted):
         return _('The file you want to import is password protected. '
                  'Please choose a file that is not password protected.')

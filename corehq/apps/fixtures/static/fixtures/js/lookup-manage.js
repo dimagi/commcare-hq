@@ -293,7 +293,7 @@ hqDefine("fixtures/js/lookup-manage", [
                     },
                     dataType: 'json',
                     success: function (response) {
-                        self.setupDownload(response);
+                        self.setupDownload(response.download_url);
                     },
                     error: function (response) {
                         self.downloadError();
@@ -302,13 +302,13 @@ hqDefine("fixtures/js/lookup-manage", [
             }
         };
 
-        self.setupDownload = function (response) {
+        self.setupDownload = function (downloadUrl) {
             var keep_polling = true;
-
+            var serverSlowRetries = 0;
             function poll() {
                 if (keep_polling) {
                     $.ajax({
-                        url: response.download_url,
+                        url: downloadUrl,
                         dataType: 'text',
                         success: function (resp) {
                             var progress = $("#download-progress");
@@ -323,9 +323,15 @@ hqDefine("fixtures/js/lookup-manage", [
                                 setTimeout(poll, 2000);
                             }
                         },
-                        error: function () {
-                            self.downloadError();
-                            keep_polling = false;
+                        error: function (resp) {
+                            if (resp.status === 502 && serverSlowRetries < 5){
+                                serverSlowRetries += 1;
+                                setTimeout(poll, 2000);
+                            }
+                            else {
+                                self.downloadError();
+                                keep_polling = false;
+                            }
                         },
                     });
                 }

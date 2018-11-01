@@ -444,7 +444,7 @@ class SyncLogSQL(models.Model):
         super(SyncLogSQL, self).save(*args, **kwargs)
         try:
             publish_synclog_saved(self)
-        except:
+        except Exception:
             notify_exception(
                 None,
                 message='Could not publish change for SyncLog',

@@ -491,19 +491,16 @@ def reverse_chevron(value):
 
 @register.simple_tag
 def maintenance_alert():
-    try:
-        alert = (MaintenanceAlert.objects
-                 .filter(active=True)
-                 .order_by('-modified'))[0]
-    except IndexError:
-        return ''
-    else:
+    alert = MaintenanceAlert.get_latest_alert()
+    if alert:
         return format_html(
             '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
             alert.id,
             mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
             mark_safe(alert.html),
         )
+    else:
+        return ''
 
 
 @register.simple_tag

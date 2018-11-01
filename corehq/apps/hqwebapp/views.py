@@ -27,6 +27,7 @@ from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+from django.urls import resolve
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
 
@@ -41,7 +42,6 @@ import httpagentparser
 from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
-from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 from corehq.apps.users.models import CouchUser
@@ -83,7 +83,6 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
-from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 import six
 from six.moves import range
@@ -107,7 +106,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
         exc_message = six.text_type(exc)
     else:
         exc_message = exc.message
-        if isinstance(exc_message, six.binary_type):
+        if isinstance(exc_message, bytes):
             exc_message = exc_message.decode('utf-8')
 
     return 'Traceback (most recent call last):\n{}{}: {}'.format(
@@ -121,6 +120,14 @@ def server_error(request, template_name='500.html'):
     """
     500 error handler.
     """
+    urlname = resolve(request.path).url_name
+    submission_urls = [
+        'receiver_secure_post',
+        'receiver_secure_post_with_app_id',
+        'receiver_post_with_app_id'
+    ]
+    if urlname in submission_urls + ['app_aware_restore']:
+        return HttpResponse(status=500)
 
     domain = get_domain_from_url(request.path) or ''
 
@@ -272,13 +279,12 @@ def server_up(req):
     statuses = run_checks(checks_to_do)
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
-    tags = [
-        'status:{}'.format('failed' if failed_checks else 'ok'),
-    ]
     for check_name, status in statuses:
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags + [
+        tags = [
+            'status:{}'.format('failed' if not status.success else 'ok'),
             'check:{}'.format(check_name)
-        ])
+        ]
+        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -370,10 +376,12 @@ def _login(req, domain_name, template_name):
         })
     else:
         context.update({
-            'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
+            'current_page': {'page_name': _('Welcome back to %s!') % settings.COMMCARE_HQ_NAME}
         })
-
-    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        auth_view = CloudCareLoginView
+    else:
+        auth_view = HQLoginView if not domain_name else CloudCareLoginView
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
@@ -495,17 +503,6 @@ def dropbox_upload(request, download_id):
         )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
-
-# TODO jschweers: Remove this in Q2 2018 if it hasn't been triggered,
-# change initial_page_data.js to throw an error
-@require_GET
-def assert_initial_page_data(request):
-    _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-    _assert(False, 'Initial page data called before page load complete', {
-        'page': request.META['HTTP_REFERER'],
-    })
-    return json_response({'success': True})
 
 
 @require_superuser
@@ -672,7 +669,8 @@ class BugReportView(View):
             email.attach(filename=filename, content=content)
 
         # only fake the from email if it's an @dimagi.com account
-        if re.search('@dimagi\.com$', report['username']):
+        is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+        if re.search('@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
@@ -1060,14 +1058,14 @@ def quick_find(request):
         return HttpResponseBadRequest('GET param "q" must be provided')
 
     def deal_with_doc(doc, domain, doc_info_fn):
-        if request.couch_user.is_superuser or (domain and request.couch_user.is_domain_admin(domain)):
+        if request.couch_user.is_superuser or (domain and request.couch_user.is_member_of(domain)):
             doc_info = doc_info_fn(doc)
         else:
             raise Http404()
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
-        elif request.couch_user.is_superuser:
+        elif redirect and request.couch_user.is_superuser:
             return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
         else:
             return json_response(doc_info)
@@ -1116,20 +1114,6 @@ def osdd(request, template='osdd.xml'):
     })
     response['Content-Type'] = 'application/xml'
     return response
-
-
-@require_superuser
-def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-
-    return render(request, template, {
-        'alerts': [{
-            'created': six.text_type(alert.created),
-            'active': alert.active,
-            'html': alert.html,
-            'id': alert.id,
-        } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
-    })
 
 
 class MaintenanceAlertsView(BasePageView):
@@ -1221,18 +1205,6 @@ def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
     return render(request, template, {
         'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)
-    })
-
-
-@require_superuser
-def couch_doc_counts(request, domain):
-    from casexml.apps.case.models import CommCareCase
-    from couchforms.models import XFormInstance
-    start = string_to_datetime(request.GET.get('start')) if request.GET.get('start') else None
-    end = string_to_datetime(request.GET.get('end')) if request.GET.get('end') else None
-    return json_response({
-        cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
-        for cls in [CommCareCase, XFormInstance]
     })
 
 

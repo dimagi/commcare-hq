@@ -12,6 +12,7 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
     Invoice,
+    CustomerInvoice,
     PaymentRecord,
     PreOrPostPay,
     StripePaymentMethod,
@@ -36,6 +37,7 @@ class BaseStripePaymentHandler(object):
     def __init__(self, payment_method, domain):
         self.payment_method = payment_method
         self.domain = domain
+        self.account = BillingAccount.get_account_by_domain(self.domain)
 
     @property
     def cost_item_name(self):
@@ -199,14 +201,24 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
 
     def update_credits(self, payment_record):
         # record the credit to the account
+        if self.invoice.is_customer_invoice:
+            customer_invoice = self.invoice
+            subscription_invoice = None
+            account = self.invoice.account
+        else:
+            customer_invoice = None
+            subscription_invoice = self.invoice
+            account = self.invoice.subscription.account
         CreditLine.add_credit(
-            payment_record.amount, account=self.invoice.subscription.account,
+            payment_record.amount,
+            account=account,
             payment_record=payment_record,
         )
         CreditLine.add_credit(
             -payment_record.amount,
-            account=self.invoice.subscription.account,
-            invoice=self.invoice,
+            account=account,
+            invoice=subscription_invoice,
+            customer_invoice=customer_invoice
         )
         self.invoice.update_balance()
         self.invoice.save()
@@ -244,10 +256,16 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
 
     @property
     def invoices(self):
-        return Invoice.objects.filter(
-            subscription__subscriber__domain=self.domain,
-            is_hidden=False,
-        )
+        if self.account and self.account.is_customer_billing_account:
+            return CustomerInvoice.objects.filter(
+                account=self.account,
+                is_hidden=False
+            )
+        else:
+            return Invoice.objects.filter(
+                subscription__subscriber__domain=self.domain,
+                is_hidden=False,
+            )
 
     @property
     def balance(self):
@@ -264,15 +282,25 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
             deduct_amount = min(amount, invoice.balance)
             amount -= deduct_amount
             if deduct_amount > 0:
+                if self.account and self.account.is_customer_billing_account:
+                    customer_invoice = invoice
+                    subscription_invoice = None
+                    account = self.account
+                else:
+                    customer_invoice = None
+                    subscription_invoice = invoice
+                    account = invoice.subscription.account
                 # TODO - refactor duplicated functionality
                 CreditLine.add_credit(
-                    deduct_amount, account=invoice.subscription.account,
+                    deduct_amount,
+                    account=account,
                     payment_record=payment_record,
                 )
                 CreditLine.add_credit(
                     -deduct_amount,
-                    account=invoice.subscription.account,
-                    invoice=invoice,
+                    account=account,
+                    invoice=subscription_invoice,
+                    customer_invoice=customer_invoice
                 )
                 invoice.update_balance()
                 invoice.save()

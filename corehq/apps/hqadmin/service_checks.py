@@ -7,6 +7,7 @@ from io import BytesIO
 import attr
 import datetime
 import logging
+import gevent
 
 from django.core import cache
 from django.conf import settings
@@ -22,7 +23,7 @@ from soil import heartbeat
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.app_manager.models import Application
-from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.es import GroupES
 from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
@@ -73,12 +74,14 @@ def check_rabbitmq():
 
 @change_log_level('kafka.client', logging.WARNING)
 def check_kafka():
-    client = get_kafka_client_or_none()
-    if not client:
-        return ServiceStatus(False, "Could not connect to Kafka")
-    elif len(client.brokers) == 0:
+    try:
+        client = get_kafka_client()
+    except Exception as e:
+        return ServiceStatus(False, "Could not connect to Kafka: %s" % e)
+
+    if len(client.cluster.brokers()) == 0:
         return ServiceStatus(False, "No Kafka brokers found")
-    elif len(client.topics) == 0:
+    elif len(client.cluster.topics()) == 0:
         return ServiceStatus(False, "No Kafka topics found")
     else:
         return ServiceStatus(True, "Kafka seems to be in order")
@@ -212,21 +215,26 @@ def check_formplayer():
 
 
 def run_checks(checks_to_do):
-    statuses = []
+    greenlets = []
     with TimingContext() as timer:
         for check_name in checks_to_do:
             if check_name not in CHECKS:
                 raise UnknownCheckException(check_name)
 
-            check_info = CHECKS[check_name]
-            with timer(check_name):
-                try:
-                    status = check_info['check_func']()
-                except Exception as e:
-                    status = ServiceStatus(False, "{} raised an error".format(check_name), e)
-                status.duration = timer.peek().duration
-            statuses.append((check_name, status))
-    return statuses
+            greenlets.append(gevent.spawn(_run_check, check_name, timer))
+        gevent.joinall(greenlets)
+    return [greenlet.value for greenlet in greenlets]
+
+
+def _run_check(check_name, timer):
+    check_info = CHECKS[check_name]
+    with timer(check_name):
+        try:
+            status = check_info['check_func']()
+        except Exception as e:
+            status = ServiceStatus(False, "{} raised an error".format(check_name), e)
+        status.duration = timer.peek().duration
+    return check_name, status
 
 
 CHECKS = {

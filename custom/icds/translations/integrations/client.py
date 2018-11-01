@@ -115,7 +115,7 @@ class TransifexApiClient(object):
         """
         target_lang_code = self.transifex_lang_code(hq_lang_code)
         url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}".format(
-            self.project, resource_name, target_lang_code)
+            self.project, resource_slug, target_lang_code)
         content = open(path_to_pofile, 'r', encoding="utf-8").read()
         headers = {'content-type': 'application/json'}
         data = {

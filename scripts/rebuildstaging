@@ -55,11 +55,6 @@ function rebuildstaging() {
     python scripts/rebuildstaging.py < scripts/staging.yaml "$@"
 }
 
-function rebuildenterprise() {
-    echo "rebuilding enterprise branch"
-    python scripts/rebuildstaging.py < scripts/enterprise.yaml "$@"
-}
-
 args=''
 
 [[ $verbose = 'y' ]] && args="$args -v"
@@ -83,9 +78,6 @@ then
         && commcare-cloud staging fab deploy:confirm=no \
         || echo 'Could not auto-deploy for you. Run `commcare-cloud staging fab deploy` to deploy.'
     }
-elif [[ $enterprise == 'y' ]]
-then
-    rebuildenterprise $args
 else
     rebuildstaging $args
 fi

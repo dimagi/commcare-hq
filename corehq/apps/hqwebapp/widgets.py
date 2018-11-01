@@ -43,53 +43,7 @@ class BootstrapCheckboxInput(CheckboxInput):
                          (flatatt(final_attrs), self.inline_label))
 
 
-class AutocompleteTextarea(forms.Textarea):
-    """
-    Textarea with auto-complete.  Uses a custom extension on top of Twitter
-    Bootstrap's typeahead plugin.
-    """
-
-    def render(self, name, value, attrs=None):
-        if hasattr(self, 'choices') and self.choices:
-            if not attrs:
-                attrs = {}
-            attrs.update({
-                'class': 'hqwebapp-autocomplete form-control',
-                'data-choices': json.dumps([{'text': c, 'id': c} for c in self.choices]),
-            })
-
-        return super(AutocompleteTextarea, self).render(name, value, attrs=attrs)
-
-
-class _Select2Mixin(object):
-
-    class Media(object):
-        css = {
-            'all': ('select2-3.4.5-legacy/select2.css',)
-        }
-        js = ('select2-3.4.5-legacy/select2.js',)
-
-    def render(self, name, value, attrs=None, choices=()):
-        output = super(_Select2Mixin, self).render(name, value, attrs)
-        output += """
-            <script>
-                $(function() {
-                    $('#%s').select2({ width: 'resolve' });
-                });
-            </script>
-        """ % attrs.get('id')
-        return mark_safe(output)
-
-
-class Select2(_Select2Mixin, forms.Select):
-    pass
-
-
-class Select2MultipleChoiceWidget(_Select2Mixin, forms.SelectMultiple):
-    pass
-
-
-class Select2Ajax(forms.TextInput):
+class _Select2AjaxMixin():
     """
     A Select2 widget that loads its options asynchronously.
 
@@ -97,12 +51,6 @@ class Select2Ajax(forms.TextInput):
     The url is not specified in the form class definition because in most cases the url will be dependent on the
     domain of the request.
     """
-    def __init__(self, attrs=None, page_size=20, multiple=False):
-        self.page_size = page_size
-        self.multiple = multiple
-        self._initial = None
-        super(Select2Ajax, self).__init__(attrs)
-
     def set_url(self, url):
         self.url = url
 
@@ -119,15 +67,42 @@ class Select2Ajax(forms.TextInput):
             # if its a scalar
             return {"id": val, "text": val}
 
+
+class Select2AjaxV3(_Select2AjaxMixin, forms.TextInput):
+    def __init__(self, attrs=None, page_size=20, multiple=False):
+        self.page_size = page_size
+        self.multiple = multiple
+        self._initial = None
+        super(Select2AjaxV3, self).__init__(attrs)
+
     def render(self, name, value, attrs=None):
         attrs.update({
-            'class': 'form-control hqwebapp-select2-ajax',
+            'class': 'form-control hqwebapp-select2-ajax-v3',
             'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
             'data-endpoint': self.url,
             'data-page-size': self.page_size,
             'data-multiple': '1' if self.multiple else '0',
         })
-        output = super(Select2Ajax, self).render(name, value, attrs)
+        output = super(Select2AjaxV3, self).render(name, value, attrs)
+        return mark_safe(output)
+
+
+class Select2AjaxV4(_Select2AjaxMixin, forms.Select):
+    def __init__(self, attrs=None, page_size=20, multiple=False):
+        self.page_size = page_size
+        self.multiple = multiple
+        self._initial = None
+        super(Select2AjaxV4, self).__init__(attrs)
+
+    def render(self, name, value, attrs=None):
+        attrs.update({
+            'class': 'form-control hqwebapp-select2-ajax-v4',
+            'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
+            'data-endpoint': self.url,
+            'data-page-size': self.page_size,
+            'data-multiple': '1' if self.multiple else '0',
+        })
+        output = super(Select2AjaxV4, self).render(name, value, attrs)
         return mark_safe(output)
 
 

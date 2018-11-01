@@ -24,6 +24,14 @@ hqDefine('case_importer/js/import_history', [
             return initialPageData.reverse('case_importer_upload_file_download', self.upload_id);
         };
 
+        self.formIdsUrl = function () {
+            return initialPageData.reverse('case_importer_upload_form_ids', self.upload_id);
+        };
+
+        self.caseIdsUrl = function () {
+            return initialPageData.reverse('case_importer_upload_case_ids', self.upload_id);
+        };
+
         return self;
     };
 
@@ -39,7 +47,7 @@ hqDefine('case_importer/js/import_history', [
             FAILED: 3,
         };
         self.case_uploads = ko.observableArray(null);
-        self.state = ko.observable(self.states.NOT_STARTED);
+        self.state = ko.observable(self.states.MISSING);
         var uploadIdsInDataMatchCurrent = function (data) {
             return _.chain(self.case_uploads()).pluck('upload_id').isEqual(_(data).pluck('upload_id')).value();
         };
@@ -72,7 +80,7 @@ hqDefine('case_importer/js/import_history', [
             }
         };
         self.fetchCaseUploads = function () {
-            if (self.state() === self.states.NOT_STARTED) {
+            if (self.state() === self.states.MISSING) {
                 // only show spinner on first fetch
                 self.state(self.states.STARTED);
             }
@@ -85,7 +93,7 @@ hqDefine('case_importer/js/import_history', [
 
                 var anyInProgress = _.any(self.case_uploads(), function (caseUpload) {
                     return caseUpload.task_status().state === self.states.STARTED ||
-                            caseUpload.task_status().state === self.states.NOT_STARTED;
+                            caseUpload.task_status().state === self.states.MISSING;
                 });
                 if (anyInProgress) {
                     _.delay(self.fetchCaseUploads, 5000);

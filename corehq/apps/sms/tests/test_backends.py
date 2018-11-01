@@ -365,15 +365,19 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
-        self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
-            msg_param=InboundParams.MESSAGE, msg_text='unicel test')
+        self._simulate_inbound_request(
+            '/unicel/in/%s/' % self.unicel_backend.inbound_api_key,
+            phone_param=InboundParams.SENDER,
+            msg_param=InboundParams.MESSAGE,
+            msg_text='unicel test'
+        )
 
         self._verify_inbound_request(self.unicel_backend.get_api_id(), 'unicel test')
 
     @run_with_all_backends
     def test_tropo_inbound_sms(self):
         tropo_data = {'session': {'from': {'id': self.test_phone_number}, 'initialText': 'tropo test'}}
-        self._simulate_inbound_request_with_payload('/tropo/sms/',
+        self._simulate_inbound_request_with_payload('/tropo/sms/%s/' % self.tropo_backend.inbound_api_key,
             content_type='text/json', payload=json.dumps(tropo_data))
 
         self._verify_inbound_request(self.tropo_backend.get_api_id(), 'tropo test')
@@ -430,23 +434,24 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self.assertEqual(start_count, end_count)
 
     @run_with_all_backends
-    def test_megamobile_inbound_sms(self):
-        self._simulate_inbound_request('/megamobile/sms/', phone_param='cel',
-            msg_param='msg', msg_text='megamobile test', is_megamobile=True)
-
-        self._verify_inbound_request(self.megamobile_backend.get_api_id(), 'megamobile test')
-
-    @run_with_all_backends
     def test_sislog_inbound_sms(self):
-        self._simulate_inbound_request('/sislog/in/', phone_param='sender',
-            msg_param='msgdata', msg_text='sislog test')
+        self._simulate_inbound_request(
+            '/sislog/in/%s/' % self.sislog_backend.inbound_api_key,
+            phone_param='sender',
+            msg_param='msgdata',
+            msg_text='sislog test'
+        )
 
         self._verify_inbound_request(self.sislog_backend.get_api_id(), 'sislog test')
 
     @run_with_all_backends
     def test_yo_inbound_sms(self):
-        self._simulate_inbound_request('/yo/sms/', phone_param='sender',
-            msg_param='message', msg_text='yo test')
+        self._simulate_inbound_request(
+            '/yo/sms/%s/' % self.yo_backend.inbound_api_key,
+            phone_param='sender',
+            msg_param='message',
+            msg_text='yo test'
+        )
 
         self._verify_inbound_request(self.yo_backend.get_api_id(), 'yo test')
 

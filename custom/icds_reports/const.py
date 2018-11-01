@@ -16,6 +16,9 @@ TABLEAU_INVALID_TOKEN = '-1'
 
 BHD_ROLE = 'BHD (For VL Dashboard Testing)'
 
+UCR_PILLOWS = ['kafka-ucr-static', 'kafka-ucr-static-cases',
+               'kafka-ucr-static-forms', 'kafka-ucr-static-awc-location',
+               'kafka-ucr-main']
 
 class LocationTypes(object):
     STATE = 'state'
@@ -71,8 +74,10 @@ SYSTEM_USAGE_EXPORT = 4
 AWC_INFRASTRUCTURE_EXPORT = 5
 BENEFICIARY_LIST_EXPORT = 6
 ISSNIP_MONTHLY_REGISTER_PDF = 7
+AWW_INCENTIVE_REPORT = 8
 
 AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
+AGG_CCS_RECORD_CF_TABLE = 'icds_dashboard_ccs_record_cf_forms'
 AGG_CCS_RECORD_PNC_TABLE = 'icds_dashboard_ccs_record_postnatal_forms'
 AGG_CHILD_HEALTH_PNC_TABLE = 'icds_dashboard_child_health_postnatal_forms'
 AGG_CHILD_HEALTH_THR_TABLE = 'icds_dashboard_child_health_thr_forms'
@@ -82,5 +87,6 @@ AGG_CCS_RECORD_DELIVERY_TABLE = 'icds_dashboard_ccs_record_delivery_forms'
 AGG_DAILY_FEEDING_TABLE = 'icds_dashboard_daily_feeding_forms'
 AGG_GROWTH_MONITORING_TABLE = 'icds_dashboard_growth_monitoring_forms'
 AGG_INFRASTRUCTURE_TABLE = 'icds_dashboard_infrastructure_forms'
+AWW_INCENTIVE_TABLE = 'icds_dashboard_aww_incentive'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'softlayer' else 'icds-cas'

@@ -576,7 +576,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.set_role(domain, role)
         if project.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if project.uses_locations:
+        if project.uses_locations and location_id:
             self.set_location(domain, location_id)
         self.save()
 

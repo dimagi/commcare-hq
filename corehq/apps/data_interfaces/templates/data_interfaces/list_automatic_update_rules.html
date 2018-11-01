@@ -4,19 +4,6 @@
 
 {% requirejs_main 'data_interfaces/js/list_automatic_update_rules' %}
 
-{% block title %}{{ current_page.title }}{% endblock %}
-
-{% block page_breadcrumbs %}
-    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-        <li>
-            <a href="{% url "data_interfaces_default" domain %}"><strong>{% trans "Data" %}</strong></a>
-        </li>
-        <li class="active">
-            {% trans "Automatically Close Cases" %}
-        </li>
-    </ol>
-{% endblock %}
-
 {% block pagination_header %}
     <div class="row">
         <div class="col-sm-8">

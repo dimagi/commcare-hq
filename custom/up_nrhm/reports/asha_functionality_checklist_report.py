@@ -33,11 +33,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
 
     @property
     def ashas(self):
-        return list(OrderedDict(
-            (x['hv_asha_name'], x)
-            for x in sorted(
-                list(self.model_data.data.values()), key=lambda x: x['completed_on'])
-        ).values())
+        return sorted(list(self.model_data.data.values()), key=lambda x: x['completed_on'])
 
     @property
     def headers(self):
@@ -77,6 +73,8 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
                       'hv_fx_support_inst_delivery', 'hv_fx_child_illness_mgmt', 'hv_fx_nut_counseling',
                       'hv_fx_malaria', 'hv_fx_dots', 'hv_fx_vhsnc', 'hv_fx_fp']
 
+        latest_value = {p: {} for p in properties}
+
         ttotal = [0] * len(default_row_data)
         total_of_functional = 0
         for asha in self.ashas:
@@ -90,7 +88,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
             denominator = 0
             for idx, p in enumerate(properties):
                 if data[p] == 1:
-                    ttotal[idx] += 1
+                    latest_value[p][asha['hv_asha_name']] = data[p]
                     total += 1
                 if p != 'completed_on' and data[p] != 88:
                     denominator += 1
@@ -108,6 +106,9 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
             default_row_data[-2].append('{0}/{1} ({2}%)'.format(total, denominator, percent))
             default_row_data[-1].append('')
 
+        for idx, p in enumerate(properties):
+            if 0 < idx < 11:
+                ttotal[idx] = sum(latest_value[p].values())
         for idx, row in enumerate(default_row_data):
             if idx == 0:
                 row.append(_('Total no. of ASHAs functional on each tasks'))

@@ -4,6 +4,7 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
 import six
+import attr
 
 from casexml.apps.case.mock import CaseBlock
 import uuid
@@ -23,7 +24,15 @@ from dimagi.utils.couch import CriticalSection
 from django.core.cache import cache
 
 
-class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type use_fixtures')):
+@attr.s
+class DomainLite(object):
+    name = attr.ib()
+    default_timezone = attr.ib()
+    cc_case_type = attr.ib()
+    use_fixtures = attr.ib()
+    form_datasource_enabled = attr.ib(default=True)
+    case_datasource_enabled = attr.ib(default=True)
+    case_actions_datasource_enabled = attr.ib(default=True)
 
     def midnights(self, utcnow=None):
         """Returns a list containing two datetimes in UTC that corresponds to midnight
@@ -296,7 +305,10 @@ def get_call_center_domains():
                 name=hit['name'],
                 default_timezone=hit['default_timezone'],
                 cc_case_type=case_type,
-                use_fixtures=config.get('use_fixtures', True)
+                use_fixtures=config.get('use_fixtures', True),
+                form_datasource_enabled=config.get('form_datasource_enabled', True),
+                case_datasource_enabled=config.get('case_datasource_enabled', True),
+                case_actions_datasource_enabled=config.get('case_actions_datasource_enabled', True),
             )
     return [_f for _f in [to_domain_lite(hit) for hit in result.hits] if _f]
 

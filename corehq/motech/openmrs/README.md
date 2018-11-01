@@ -299,14 +299,56 @@ subclasses.
 
 The `PatientFinder.find_patients()` method must be implemented by
 subclasses. It returns a list of zero, one, or many patients. If it
-returns one patient, the OpenmrsRepeater.find_patient() will accept that
-patient as a true match.
+returns one patient, the OpenmrsRepeater.find_or_create_patient() will
+accept that patient as a true match.
 
 **NOTE**: The consequences of a false positive (a Type II error) are
 severe: A real patient will have their valid values overwritten by those
 of someone else. So PatientFinders should be written and configured to
 skew towards false negatives (Type I errors). In other words, it is much
 better not to choose a patient than to choose the wrong patient.
+
+
+Creating Missing Patients
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If a corresponding OpenMRS patient is not found for a CommCare case,
+then a PatientFinder has the option to create a patient in OpenMRS. This
+is an optional property named "create_missing". Its value defaults to
+`false`. If it is set to `true`, then it will create a new patient if
+none are found.
+
+For example:
+
+    "patient_finder": {
+        "doc_type": "WeightedPropertyPatientFinder",
+        "property_weights": [
+            {"case_property": "given_name", "weight": 0.5},
+            {"case_property": "family_name", "weight": 0.6}
+        ],
+        "searchable_properties": ["family_name"],
+        "create_missing": true
+    }
+
+If more than one matching patient is found, a new patient will not be
+created.
+
+All required properties must be included in the payload. This is sure to
+include a name and a date of birth, possibly estimated. It may include
+an identifier. You can find this out from the OpenMRS Administration UI,
+or by testing the OpenMRS REST API.
+
+
+WeightedPropertyPatientFinder
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The first (and currently only) subclass of `PatientFinder` is the
+`WeightedPropertyPatientFinder` class. As the name suggests, it assigns
+weights to case properties, and scores the patients it finds in OpenMRS
+to select an OpenMRS patient that matches a CommCare case.
+
+See [the source code](finders.py) for more details on its properties and
+how to define it.
 
 
 Provider
@@ -356,3 +398,146 @@ Click "Save"
 Now CommCare's "Provider UUID" will be recognised by OpenMRS as a
 provider. Copy the value of the person UUID you made a note of earlier
 into your OpenMRS configuration in CommCare HQ.
+
+
+Atom Feed Integration
+---------------------
+
+The [OpenMRS Atom Feed Module](https://wiki.openmrs.org/display/docs/Atom+Feed+Module)
+allows MOTECH to poll a feed of updates to patients, concepts,
+encounters and observations. The feed adheres to the
+[Atom syndication format](https://validator.w3.org/feed/docs/rfc4287.html).
+
+An example URL for the patient feed would be like
+http://www.example.com/openmrs/ws/atomfeed/patient/recent
+
+Example content:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <title>Patient AOP</title>
+      <link rel="self" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/recent" />
+      <link rel="via" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/32" />
+      <link rel="prev-archive" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/31" />
+      <author>
+        <name>OpenMRS</name>
+      </author>
+      <id>bec795b1-3d17-451d-b43e-a094019f6984+32</id>
+      <generator uri="https://github.com/ICT4H/atomfeed">OpenMRS Feed Publisher</generator>
+      <updated>2018-04-26T10:56:10Z</updated>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:6fdab6f5-2cd2-4207-b8bb-c2884d6179f6</id>
+        <updated>2018-01-17T19:44:40Z</updated>
+        <published>2018-01-17T19:44:40Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:5c6b6913-94a0-4f08-96a2-6b84dbced26e</id>
+        <updated>2018-01-17T19:46:14Z</updated>
+        <published>2018-01-17T19:46:14Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:299c435d-b3b4-4e89-8188-6d972169c13d</id>
+        <updated>2018-01-17T19:57:09Z</updated>
+        <published>2018-01-17T19:57:09Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+    </feed>
+
+At the time of writing, the Atom feed does not use ETags or offer HEAD
+requests. MOTECH uses a GET request to fetch the document, and checks
+the timestamp in the `<updated>` tag to tell whether there is new
+content.
+
+The feed is paginated, and the page number is given at the end of the
+`href` attribute of the `<link rel="via" ...` tag, which is found at the
+start of the feed. A `<link rel="next-archive" ...` tag indicates that
+there is a next page.
+
+MOTECH stores the last page number polled in the
+`OpenmrsRepeater.atom_feed_last_page` property. When it polls again, it
+starts at this page, and iterates "next-archive" links until all have
+been fetched.
+
+If this is the first time MOTECH is polling an Atom feed, it uses the
+`/recent` URL (as given in the example URL above) instead of starting
+from the very beginning. This is to allow Atom feed integration to be
+enabled for ongoing projects that may have a lot of established data.
+Administrators should be informed that enabling Atom feed integration
+will not import all OpenMRS patients into CommCare, but it will add
+CommCare cases for patients created in OpenMRS from the moment Atom
+feed integration is enabled.
+
+### Adding cases for OpenMRS patients
+
+MOTECH needs three kinds of data in order to add a case for an OpenMRS
+patient:
+
+1. The **case type**. This is set using the OpenMRS Repeater's "Case
+   Type" field (i.e. OpenmrsRepeater.white_listed_case_types). It must
+   have exactly one case type specified.
+
+2. The **case owner**. This is determined using the OpenMRS Repeater's
+   "Location" field (i.e. OpenmrsRepeater.location_id). The owner is set
+   to the first mobile worker (specifically CommCareUser instance) found
+   at that location.
+
+3. The **case properties** to set. MOTECH uses the patient_identifiers,
+   person_properties, person_preferred_name, person_preferred_address,
+   and person_attributes given in "Case config"
+   (OpenmrsRepeater.openmrs_config.case_config) to map the values of an
+   OpenMRS patient to case properties. All and only the properties in
+   "Case config" are mapped.
+
+The **name of cases** updated from the Atom feed are set to the display
+name of the *person* (not the display name of patient because it often
+includes punctuation and an identifier).
+
+
+Data Types
+----------
+
+Integrating structured data with OpenMRS can involve converting data
+from one format or data type to another.
+
+For standard OpenMRS properties, MOTECH will set data types correctly,
+and integrators do not need to worry about them.
+
+But OpenMRS administrators may expect a value that is a date in CommCare
+to a datetime in OpenMRS, or vice-versa. To convert from one to the
+other, set data types for values in the Repeater configuration.
+
+The default is for both the CommCare data type and the external data
+type not to be set. e.g.
+
+    {
+      "expectedDeliveryDate": {
+        "doc_type": "CaseProperty",
+        "case_property": "edd",
+        "commcare_data_type": null,
+        "external_data_type": null
+      }
+    }
+
+To set the CommCare data type to a date and the OpenMRS data type to a
+datetime for example, use the following:
+
+    {
+      "expectedDeliveryDate": {
+        "doc_type": "CaseProperty",
+        "case_property": "edd",
+        "commcare_data_type": "cc_date",
+        "external_data_type": "omrs_datetime"
+      }
+    }
+
+For the complete list of CommCare data types, see
+[MOTECH constants](../const.py). For the complete list of OpenMRS data
+types, see [OpenMRS constants](./const.py).

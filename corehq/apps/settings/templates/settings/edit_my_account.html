@@ -18,7 +18,7 @@
 
 {% block modals %}{{ block.super }}
 {% if user_type == 'web' %}
-    {% include 'users/partial/basic_info_modals.html' %}
+    {% include 'users/partials/basic_info_modals.html' %}
 {% endif %}
 {% endblock %}
 
@@ -27,6 +27,6 @@
 
     {% crispy form form.new_helper %}
     {% if user_type == 'web' %}
-        {% include 'users/partial/manage_my_numbers.html' %}
+        {% include 'users/partials/manage_my_numbers.html' %}
     {% endif %}
 {% endblock %}

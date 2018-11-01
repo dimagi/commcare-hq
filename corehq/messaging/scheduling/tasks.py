@@ -258,11 +258,15 @@ class CaseTimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
         self.schedule_revision = schedule.get_schedule_revision(case=case)
 
     def create_new_instance_for_recipient(self, recipient_type, recipient_id):
+        start_date = self.start_date
+        if not start_date and self.model_instance:
+            start_date = self.model_instance.start_date
+
         return CaseTimedScheduleInstance.create_for_recipient(
             self.schedule,
             recipient_type,
             recipient_id,
-            start_date=self.start_date,
+            start_date=start_date,
             move_to_next_event_not_in_the_past=True,
             case_id=self.case.case_id,
             rule_id=self.rule.pk,
@@ -482,7 +486,9 @@ def handle_timed_schedule_instance(schedule_instance_id):
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
 def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
-    with CriticalSection(['handle-case-alert-schedule-instance-%s' % schedule_instance_id.hex]):
+    # Use the same lock key as the tasks which refresh case schedule instances
+    from corehq.messaging.tasks import get_sync_key
+    with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
         try:
             instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
         except CaseAlertScheduleInstance.DoesNotExist:
@@ -493,7 +499,9 @@ def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
 def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
-    with CriticalSection(['handle-case-timed-schedule-instance-%s' % schedule_instance_id.hex]):
+    # Use the same lock key as the tasks which refresh case schedule instances
+    from corehq.messaging.tasks import get_sync_key
+    with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
         try:
             instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
         except CaseTimedScheduleInstance.DoesNotExist:

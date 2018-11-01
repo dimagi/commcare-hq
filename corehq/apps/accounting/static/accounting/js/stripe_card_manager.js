@@ -1,7 +1,13 @@
-/* global Stripe */
-hqDefine("accounting/js/stripe_card_manager", function () {
-    var newStripeCardModel = function (data, cardManager) {
-        'use strict';
+hqDefine("accounting/js/stripe_card_manager", [
+    'jquery',
+    'knockout',
+    'accounting/js/lib/stripe',
+], function (
+    $,
+    ko,
+    Stripe
+) {
+    var newStripeCardModel = function(data, cardManager){
         var self = {};
         var mapping = {
             observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
@@ -81,7 +87,6 @@ hqDefine("accounting/js/stripe_card_manager", function () {
 
         self.wrap = function (data) {
             ko.mapping.fromJS(data, mapping, self);
-            self.is_autopay(self.is_autopay() === 'True');
             self.url = baseUrl + card.token + '/';
         };
         self.wrap(card);
@@ -143,9 +148,8 @@ hqDefine("accounting/js/stripe_card_manager", function () {
     };
 
 
-    var stripeCardManager = function (data) {
-        'use strict';
-        var self = this;
+    var stripeCardManager = function (data){
+        var self = {};
         var mapping = {
             'cards': {
                 create: function (card) {

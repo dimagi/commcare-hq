@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import children_initiated_appropriate_complementary_feeding_help_text
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_map, \
     get_children_initiated_data_chart, get_children_initiated_sector_data
 from django.test import TestCase
@@ -77,13 +78,7 @@ class TestChildrenInitiated(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, "
-            "the percentage that was given a timely introduction to solid, semi-solid or soft food."
-            "<br/><br/>"
-            "Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key "
-            "feeding practice to reduce malnutrition"
-        )
+        expected = children_initiated_appropriate_complementary_feeding_help_text(html=True)
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -298,11 +293,7 @@ class TestChildrenInitiated(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, "
-                        "the percentage that was given a timely introduction to solid, semi-solid or soft food."
-                        "<br/><br/>"
-                        "Timely intiation of complementary feeding in addition to breastmilk at 6 months "
-                        "of age is a key feeding practice to reduce malnutrition",
+                "info": children_initiated_appropriate_complementary_feeding_help_text(html=True),
                 "tooltips_data": {
                     "s2": {
                         "all": 7,

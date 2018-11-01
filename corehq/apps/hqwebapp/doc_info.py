@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from dimagi.ext.jsonobject import *
@@ -30,8 +31,7 @@ def get_doc_info_by_id(domain, id):
     if not id:
         return not_found_value
 
-    # todo: I think we want a better system for this
-    for db_name in (None, 'users'):
+    for db_name in [None] + settings.COUCH_SETTINGS_HELPER.extra_db_names:
         try:
             doc = get_db(db_name).get(id)
         except ResourceNotFound:

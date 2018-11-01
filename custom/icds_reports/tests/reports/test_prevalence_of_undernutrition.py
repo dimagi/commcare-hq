@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_map, \
     get_prevalence_of_undernutrition_data_chart, get_prevalence_of_undernutrition_sector_data
 from django.test import TestCase
@@ -80,12 +81,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            'Of the total children enrolled for Anganwadi services and weighed, the percentage of children '
-            'between 0 - 5 years years who were moderately/severely underweight in the current month. '
-            '<br/><br/>'
-            'Children who are moderately or severely underweight have a higher risk of mortality.'
-        )
+        expected = underweight_children_help_text(age_label="0 - 5 years", html=True)
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -450,10 +446,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Of the total children enrolled for Anganwadi services and weighed, the percentage of children "
-            "between 0-5 years who were moderately/severely underweight in the current month. "
-            "<br/><br/>"
-            "Children who are moderately or severely underweight have a higher risk of mortality. "
+            underweight_children_help_text(age_label="0-5 years", html=True)
         )
 
     def test_sector_data_tooltips_data(self):

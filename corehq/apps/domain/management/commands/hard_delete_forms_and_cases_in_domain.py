@@ -8,7 +8,6 @@ from django.core.management import BaseCommand
 
 from corehq.apps.domain.utils import silence_during_tests
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
 from six.moves import input
@@ -41,8 +40,6 @@ class Command(BaseCommand):
             if confirm != domain:
                 print("\n\t\tDomain deletion cancelled.")
                 return
-
-        assert should_use_sql_backend(domain)
 
         logger.info('Hard deleting forms...')
         deleted_sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)

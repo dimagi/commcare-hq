@@ -12,6 +12,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.test_utils import softer_assert
 
 LEDGER_BLOCKS_SIMPLE = """
 <transfer xmlns="http://commcarehq.org/ledger/v1" dest="{case_id}" date="2000-01-02" section-id="stock">
@@ -102,6 +103,7 @@ class RebuildStockStateTest(TestCase):
         self.assertTrue(form_id in [action.form_id for action in case.actions])
 
     @run_with_all_backends
+    @softer_assert()
     def test_edit_submissions_simple(self):
         initial_quantity = 100
         form = submit_case_blocks(

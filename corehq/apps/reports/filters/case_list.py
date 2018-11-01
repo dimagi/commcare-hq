@@ -20,9 +20,9 @@ class CaseListFilterUtils(EmwfUtils):
         # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
         assert options[0][0] == "t__0"
         return [
-            ("all_data", _("[All Data (Active & Deactivated Owners)]")),
-            ('project_data', _("[Project Data (Active & Deactivated Owners)]"))
-        ] + options[1:]
+            ("all_data", _("[All Data]")),
+            ('project_data', _("[Project Data]"))
+        ] + options[2:]
 
     def _group_to_choice_tuple(self, group):
         if group.case_sharing:
@@ -37,7 +37,8 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     label = _("Case Owner(s)")
     slug = 'case_list_filter'
     options_url = 'case_list_options'
-    default_selections = [('project_data', _("[Project Data (Active & Deactivated Owners)]"))]
+    default_selections = [('project_data', _("[Project Data]"))]
+    placeholder = _("Add case owners to filter this report.")
 
     @property
     @memoized

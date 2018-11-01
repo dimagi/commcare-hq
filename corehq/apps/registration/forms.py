@@ -35,7 +35,7 @@ class RegisterWebUserForm(forms.Form):
     # Not inheriting from other forms to de-obfuscate the role of this form.
 
     full_name = forms.CharField(label=_("Full Name"))
-    email = forms.CharField(label=_("Email"))
+    email = forms.CharField(label=_("Professional Email"))
     password = forms.CharField(
         label=_("Create Password"),
         widget=forms.PasswordInput(),
@@ -424,8 +424,9 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
+            widget = LocationSelectWidget(domain.name, select2_version='v3')
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
-                                                          widget=LocationSelectWidget(domain.name),
+                                                          widget=widget,
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
             programs = Program.by_domain(domain.name, wrap=False)

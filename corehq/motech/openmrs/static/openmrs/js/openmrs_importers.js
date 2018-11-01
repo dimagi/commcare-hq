@@ -3,13 +3,13 @@ hqDefine('openmrs/js/openmrs_importers', [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
-    'userreports/js/base',
+    'hqwebapp/js/base_ace',
 ], function (
     $,
     ko,
     initialPageData,
     alertUser,
-    ucrBase
+    baseAce
 ) {
     var openmrsImporter = function (properties) {
         var self = {};
@@ -87,7 +87,7 @@ hqDefine('openmrs/js/openmrs_importers', [
 
         self.initOpenmrsImporterTemplate = function (elements) {
             _.each(elements, function (element) {
-                _.each($(element).find('.jsonwidget'), ucrBase.initJsonWidget);
+                _.each($(element).find('.jsonwidget'), baseAce.initJsonWidget);
             });
         };
 

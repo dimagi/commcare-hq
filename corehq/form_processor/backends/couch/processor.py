@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import uuid
+from lxml import etree
 
 import redis
 from couchdbkit.exceptions import ResourceNotFound
@@ -97,8 +98,10 @@ class FormProcessorCouch(object):
                     data = data[repeat_index]
             data[i.last()] = response
 
+        new_xml = etree.tostring(xml)
         new_form._deferred_blobs = None     # will be re-populated by apply_deprecation
         new_form.external_blobs.clear()     # will be re-populated by apply_deprecation
+        new_form.deferred_put_attachment(new_xml, "form.xml", content_type="text/xml")
         existing_form, new_form = apply_deprecation(existing_form, new_form)
         return (existing_form, new_form)
 

@@ -4,15 +4,20 @@ import os
 import polib
 import datetime
 import tempfile
+import re
 
 from django.conf import settings
+from django.utils.functional import cached_property
 from memoized import memoized
 
-from collections import namedtuple, OrderedDict
+from collections import namedtuple, OrderedDict, defaultdict
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.app_manager.util import get_form_data
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
+HQ_MODULE_SHEET_NAME = re.compile('^module(\d+)$')
+HQ_FORM_SHEET_NAME = re.compile('^module(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
 
 
@@ -48,24 +53,21 @@ class AppTranslationsGenerator:
         self.use_version_postfix = use_version_postfix
         self.headers = dict()  # headers for each sheet name
         self.sheet_name_to_module_or_form_type_and_id = dict()
+        self.slug_to_name = defaultdict(dict)
+        self.slug_to_name[MODULES_AND_FORMS_SHEET_NAME] = {'en': MODULES_AND_FORMS_SHEET_NAME}
         self._build_translations()
 
-    @property
-    @memoized
-    def app_id_to_build(self):
-        return self._find_build_id()
-
-    def _find_build_id(self):
-        # find build id if version specified
-        if self.version:
-            from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions
-            built_app_ids = get_all_built_app_ids_and_versions(self.domain, self.app_id)
-            for app_built_version in built_app_ids:
-                if app_built_version.version == self.version:
-                    return app_built_version.build_id
-            raise Exception("Build for version requested not found")
-        else:
-            return self.app_id
+    @cached_property
+    def _get_labels_to_skip(self):
+        labels_to_skip = defaultdict(list)
+        module_data, errors = get_form_data(self.domain, self.app)
+        for module in module_data:
+            for form in module['forms']:
+                for question in form['questions']:
+                    if (question['comment'] and 'SKIP TRANSIFEX' in question['comment']
+                            and 'label_ref' in question):
+                        labels_to_skip[form['id']].append(question['label_ref'])
+        return labels_to_skip
 
     def _translation_data(self, app):
         # get the translations data
@@ -91,7 +93,65 @@ class AppTranslationsGenerator:
                 row[unique_id_column_index]
             )
 
+    def _generate_module_sheet_name(self, module_index):
+        """
+        receive index of module and convert into name with module unique id
+
+        :param module_index: index of module in the app
+        :return: name like module_moduleUniqueId
+        """
+        _module = self.app.modules[module_index]
+        sheet_name = "_".join(["module", _module.unique_id])
+        self.slug_to_name[_module.unique_id] = _module.name
+        return sheet_name
+
+    def _generate_form_sheet_name(self, module_index, form_index):
+        """
+        receive index of form and module and convert into name with form unique id
+
+        :param module_index: index of form's module in the app
+        :param form_index: index of form in the module
+        :return: name like form_formUniqueId
+        """
+        _module = self.app.modules[module_index]
+        form = _module.forms[form_index]
+        sheet_name = "_".join(["form", form.unique_id])
+        self.slug_to_name[form.unique_id][self.source_lang] = "%s > %s" % (
+            _module.name.get(self.source_lang, _module.default_name()),
+            form.name.get(self.source_lang, form.default_name())
+        )
+        return sheet_name
+
+    def _update_sheet_name_with_unique_id(self, sheet_name):
+        """
+        update sheet name with HQ format like module0 or module1_form1 to
+        a name with unique id of module or form instead
+
+        :param sheet_name: name like module0 or module1_form1
+        :return: name like module_moduleUniqueID or form_formUniqueId
+        """
+        if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
+            return sheet_name
+        module_sheet_name_match = HQ_MODULE_SHEET_NAME.match(sheet_name)
+        if module_sheet_name_match:
+            module_index = int(module_sheet_name_match.groups()[0]) - 1
+            return self._generate_module_sheet_name(module_index)
+        form_sheet_name_match = HQ_FORM_SHEET_NAME.match(sheet_name)
+        if form_sheet_name_match:
+            indexes = form_sheet_name_match.groups()
+            module_index, form_index = int(indexes[0]) - 1, int(indexes[1]) - 1
+            return self._generate_form_sheet_name(module_index, form_index)
+        raise Exception("Got unexpected sheet name %s" % sheet_name)
+
     def _get_filename(self, sheet_name):
+        """
+        receive sheet name in HQ format and return the name that should be used
+        to upload on transifex along with module/form unique ID and version postfix
+
+        :param sheet_name: name like module0 or module1_form1
+        :return: name like module_moduleUniqueID or form_formUniqueId
+        """
+        sheet_name = self._update_sheet_name_with_unique_id(sheet_name)
         if self.version and self.use_version_postfix:
             return sheet_name + '_v' + str(self.version)
         else:
@@ -103,9 +163,24 @@ class AppTranslationsGenerator:
                 return index
         raise Exception("Column not found with name {}".format(column_name))
 
+    def _filter_invalid_rows_for_form(self, rows, form_id, label_index):
+        """
+        Remove translations from questions that have SKIP TRANSIFEX in the comment
+        """
+        labels_to_skip = self._get_labels_to_skip[form_id]
+        valid_rows = []
+        for i, row in enumerate(rows):
+            question_label = row[label_index]
+            if question_label not in labels_to_skip:
+                valid_rows.append(row)
+        return valid_rows
+
     def _get_translation_for_sheet(self, app, sheet_name, rows):
         occurrence = None
-        translations_for_sheet = []
+        # a dict mapping of a context to a Translation object with
+        # multiple occurrences
+        translations = OrderedDict()
+        type_and_id = None
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
         default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + app.default_language)
@@ -129,23 +204,40 @@ class AppTranslationsGenerator:
                     return ':'.join([case_property, _row[list_or_detail_index]])
             elif type_and_id.type == "Form":
                 label_index = self._get_header_index(sheet_name, 'label')
+                rows = self._filter_invalid_rows_for_form(rows, type_and_id.id, label_index)
 
                 def occurrence(_row):
                     return _row[label_index]
-        for i, row in enumerate(rows):
+        is_module = type_and_id and type_and_id.type == "Module"
+        for index, row in enumerate(rows, 1):
             source = row[key_lang_index]
             translation = row[source_lang_index]
             if self.exclude_if_default:
                 if translation == row[default_lang_index]:
                     translation = ''
             occurrence_row = occurrence(row)
-            translations_for_sheet.append(Translation(
+            occurrence_row_and_source = "%s %s" % (occurrence_row, source)
+            if is_module:
+                # if there is already a translation with the same context and source,
+                # just add this occurrence
+                if occurrence_row_and_source in translations:
+                    translations[occurrence_row_and_source].occurrences.append(
+                        (occurrence_row, index)
+                    )
+                    continue
+
+            translations[occurrence_row_and_source] = Translation(
                 source,
                 translation,
-                [(occurrence_row, '')],
-                ':'.join([str(i), occurrence_row]))
-            )
-        return translations_for_sheet
+                [(occurrence_row, index)],
+                occurrence_row)
+        return list(translations.values())
+
+    @property
+    @memoized
+    def app(self):
+        from corehq.apps.app_manager.dbaccessors import get_current_app
+        return get_current_app(self.domain, self.app_id)
 
     def _build_translations(self):
         """
@@ -157,9 +249,7 @@ class AppTranslationsGenerator:
             ]
         }
         """
-        from corehq.apps.app_manager.dbaccessors import get_current_app
-        app = get_current_app(self.domain, self.app_id_to_build)
-
+        app = self.app
         if self.version is None:
             self.version = app.version
         rows = self._translation_data(app)
@@ -178,7 +268,7 @@ class AppTranslationsGenerator:
             team = ""
         now = str(datetime.datetime.now())
         return {
-            'App-Id': self.app_id_to_build,
+            'App-Id': self.app_id,
             'PO-Creation-Date': now,
             'Language-Team': "{lang} ({team})".format(
                 lang=self.key_lang, team=team

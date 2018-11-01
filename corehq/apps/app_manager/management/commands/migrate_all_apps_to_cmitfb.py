@@ -8,7 +8,6 @@ import six
 
 
 logger = logging.getLogger('app_migration')
-logger.setLevel('DEBUG')
 
 
 class Command(BaseCommand):
@@ -24,6 +23,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, commit, **options):
+        logger.setLevel('DEBUG')
         app_query = AppES().is_build(False).term('vellum_case_management', False) \
                            .term('doc_type', 'Application').size(500).source(['domain', '_id'])
 

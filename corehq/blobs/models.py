@@ -4,12 +4,12 @@ from datetime import datetime
 from uuid import uuid4
 
 from django.db.models import (
+    BigIntegerField,
     BooleanField,
     CharField,
     DateTimeField,
     IntegerField,
     Model,
-    PositiveIntegerField,
     PositiveSmallIntegerField,
 )
 from partial_index import PartialIndex
@@ -57,7 +57,7 @@ class BlobMeta(PartitionedModel, Model):
     type_code = PositiveSmallIntegerField(
         help_text="Blob type code. See `corehq.blobs.CODES`.",
     )
-    content_length = PositiveIntegerField()
+    content_length = BigIntegerField()
     content_type = CharField(max_length=255, null=True)
     properties = NullJsonField(default=dict)
     created_on = DateTimeField(default=datetime.utcnow)

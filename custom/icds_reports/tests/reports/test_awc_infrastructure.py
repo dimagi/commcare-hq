@@ -2,6 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
 
+from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text, \
+    awcs_reported_functional_toilet_help_text, awcs_reported_weighing_scale_infants_help_text, \
+    awcs_reported_weighing_scale_mother_and_child_help_text, awcs_reported_medicine_kit_help_text
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
 
 
@@ -25,8 +28,7 @@ class TestAWCInfrastructure(TestCase):
                 "value": 29,
                 "label": "AWCs Reported Clean Drinking Water",
                 "frequency": "month",
-                "help_text": "Of the AWCs that have submitted an Infrastructure Details form, "
-                             "the percentage of AWCs that reported having a source of clean drinking water. "
+                "help_text": awcs_reported_clean_drinking_water_help_text()
             }
         )
 
@@ -49,8 +51,7 @@ class TestAWCInfrastructure(TestCase):
                 "value": 15,
                 "label": "AWCs Reported Functional Toilet",
                 "frequency": "month",
-                "help_text": "Of the AWCs that submitted an Infrastructure Details form, "
-                             "the percentage of AWCs that reported having a functional toilet"
+                "help_text": awcs_reported_functional_toilet_help_text()
             }
         )
 
@@ -73,8 +74,7 @@ class TestAWCInfrastructure(TestCase):
                 "value": 24,
                 "label": "AWCs Reported Weighing Scale: Infants",
                 "frequency": "month",
-                "help_text": "Of the AWCs that have submitted an Infrastructure Details form, "
-                             "the percentage of AWCs that reported having a weighing scale for infants"
+                "help_text": awcs_reported_weighing_scale_infants_help_text()
             }
         )
 
@@ -97,8 +97,7 @@ class TestAWCInfrastructure(TestCase):
                 "value": 9,
                 "label": "AWCs Reported Weighing Scale: Mother and Child",
                 "frequency": "month",
-                "help_text": "Of the AWCs that have submitted an Infrastructure Details form, "
-                             "the percentage of AWCs that reported having a weighing scale for mother and child"
+                "help_text": awcs_reported_weighing_scale_mother_and_child_help_text()
             }
         )
 
@@ -121,8 +120,7 @@ class TestAWCInfrastructure(TestCase):
                 "value": 20,
                 "label": "AWCs Reported Medicine Kit",
                 "frequency": "month",
-                "help_text": "Of the AWCs that have submitted an Infrastructure Details form, "
-                             "the percentage of AWCs that reported having a Medicine Kit"
+                "help_text": awcs_reported_medicine_kit_help_text()
             }
         )
 

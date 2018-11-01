@@ -20,7 +20,6 @@ from django.views.generic.base import TemplateView
 from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
-from corehq.apps.analytics.ab_tests import appcues_template_app_test
 from corehq.apps.users.util import format_username
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base
@@ -28,6 +27,7 @@ from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
@@ -170,7 +170,7 @@ class FormplayerMain(View):
             "domain": domain,
             "language": language,
             "apps": apps,
-            "appcues_test": appcues_template_app_test(request),
+            "domain_is_on_trial": domain_is_on_trial(domain),
             "maps_api_key": settings.GMAPS_API_KEY,
             "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,

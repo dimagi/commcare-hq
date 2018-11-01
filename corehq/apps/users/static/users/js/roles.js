@@ -1,8 +1,10 @@
-hqDefine('users/js/roles', function () {
+hqDefine('users/js/roles',[
+    'knockout',
+], function (ko) {
     var RolesViewModel = function (o) {
         'use strict';
-        var self = this,
-            root = this;
+        var self, root;
+        self = root = {};
 
         var UserRole = {
             wrap: function (data) {
@@ -165,12 +167,14 @@ hqDefine('users/js/roles', function () {
                 };
             },
         };
+
+        return self;
     };
 
     return {
         initUserRoles: function ($element, o) {
             $element.each(function () {
-                $element.koApplyBindings(new RolesViewModel(o));
+                $element.koApplyBindings(RolesViewModel(o));
             });
         },
     };
