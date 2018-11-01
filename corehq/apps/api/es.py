@@ -641,12 +641,12 @@ RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TA
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {
     'xmlns': lambda v: {'term': {'xmlns.exact': v}},
-    'received_on_start': lambda v: {'range': {'received_on': {'from': validate_date(v)}}},
-    'received_on_end': lambda v: {'range': {'received_on': {'to': validate_date(v)}}},
-    'server_modified_on_start': lambda v: {'range': {'server_modified_on': {'from': validate_date(v)}}},
-    'server_modified_on_end': lambda v: {'range': {'server_modified_on': {'to': validate_date(v)}}},
-    'indexed_on_start': lambda v: {'range': {'indexed_on': {'from': validate_date(v)}}},
-    'indexed_on_end': lambda v: {'range': {'indexed_on': {'to': validate_date(v)}}},
+    'received_on_start': lambda v: {'range': {'received_on': {'gte': validate_date(v)}}},
+    'received_on_end': lambda v: {'range': {'received_on': {'lte': validate_date(v)}}},
+    'server_modified_on_start': lambda v: {'range': {'server_modified_on': {'gte': validate_date(v)}}},
+    'server_modified_on_end': lambda v: {'range': {'server_modified_on': {'lte': validate_date(v)}}},
+    'indexed_on_start': lambda v: {'range': {'indexed_on': {'gte': validate_date(v)}}},
+    'indexed_on_end': lambda v: {'range': {'indexed_on': {'lte': validate_date(v)}}},
 }
 
 
