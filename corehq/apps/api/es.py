@@ -645,6 +645,8 @@ query_param_transforms = {
     'received_on_end': lambda v: {'range': {'received_on': {'to': validate_date(v)}}},
     'server_modified_on_start': lambda v: {'range': {'server_modified_on': {'from': validate_date(v)}}},
     'server_modified_on_end': lambda v: {'range': {'server_modified_on': {'to': validate_date(v)}}},
+    'indexed_on_start': lambda v: {'range': {'indexed_on': {'from': validate_date(v)}}},
+    'indexed_on_end': lambda v: {'range': {'indexed_on': {'to': validate_date(v)}}},
 }
 
 
