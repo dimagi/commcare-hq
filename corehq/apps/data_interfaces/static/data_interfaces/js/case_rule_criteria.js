@@ -11,8 +11,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         self.constants = constants;
         self.case_type = ko.observable();
         self.criteria = ko.observableArray();
-        self.selected_case_filter_id = ko.observable();
-        self.show_add_filter_warning = ko.observable(false);
 
         self.filter_on_server_modified = ko.computed(function () {
             var result = 'false';
@@ -110,31 +108,28 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                 $('.main-form :input').prop('disabled', true);
             }
         };
-        self.add_filter = function () {
-            var case_filter_id = self.selected_case_filter_id();
-            if (case_filter_id === 'select-one') {
+        self.add_filter = function (caseFilterId) {
+            if (caseFilterId === 'select-one') {
                 return;
             }
 
-            if (case_filter_id === 'case-modified-filter') {
-                if (!self.filter_already_added(case_filter_id)) {
-                    self.criteria.push(new NotModifiedSinceDefinition(case_filter_id));
+            if (caseFilterId === 'case-modified-filter') {
+                if (!self.filter_already_added(caseFilterId)) {
+                    self.criteria.push(new NotModifiedSinceDefinition(caseFilterId));
                 }
             } else if (
-                case_filter_id === 'case-property-filter' ||
-                case_filter_id === 'date-case-property-filter' ||
-                case_filter_id === 'advanced-date-case-property-filter'
+                caseFilterId === 'case-property-filter' ||
+                caseFilterId === 'date-case-property-filter' ||
+                caseFilterId === 'advanced-date-case-property-filter'
             ) {
-                self.criteria.push(new MatchPropertyDefinition(case_filter_id));
-            } else if (case_filter_id === 'parent-closed-filter') {
-                if (!self.filter_already_added(case_filter_id)) {
-                    self.criteria.push(new ClosedParentDefinition(case_filter_id));
+                self.criteria.push(new MatchPropertyDefinition(caseFilterId));
+            } else if (caseFilterId === 'parent-closed-filter') {
+                if (!self.filter_already_added(caseFilterId)) {
+                    self.criteria.push(new ClosedParentDefinition(caseFilterId));
                 }
-            } else if (case_filter_id === 'custom-filter') {
-                self.criteria.push(new CustomMatchDefinition(case_filter_id));
+            } else if (caseFilterId === 'custom-filter') {
+                self.criteria.push(new CustomMatchDefinition(caseFilterId));
             }
-            self.selected_case_filter_id('select-one');
-            self.show_add_filter_warning(false);
         };
 
         self.remove_filter = function () {

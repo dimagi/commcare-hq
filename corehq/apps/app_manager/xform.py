@@ -921,6 +921,16 @@ class XForm(WrappedNode):
 
         return label
 
+    def get_label_ref(self, prompt):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_ref(prompt.find('..'))
+
+        label_node = prompt.find('{f}label')
+        if label_node.exists():
+            if 'ref' in label_node.attrib:
+                return self._normalize_itext_id(label_node.attrib['ref'])
+        return None
+
     def resolve_path(self, path, path_context=""):
         if path == "":
             return path_context
@@ -1014,12 +1024,13 @@ class XForm(WrappedNode):
             if node.tag_name == 'trigger' and not include_triggers:
                 continue
 
-            if (exclude_select_with_itemsets and cnode.data_type in [u'Select', u'MSelect']
+            if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
                     and cnode.node.find('{f}itemset').exists()):
                 continue
 
             question = {
                 "label": self.get_label_text(node, langs),
+                "label_ref": self.get_label_ref(node),
                 "tag": node.tag_name,
                 "value": path,
                 "repeat": repeat,

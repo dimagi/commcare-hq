@@ -13,7 +13,6 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.management import call_command
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 from io import BytesIO
@@ -34,12 +33,14 @@ from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
-    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT
+    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
+    AWW_INCENTIVE_REPORT
 from custom.icds_reports.models import (
     AggChildHealth,
     AggChildHealthMonthly,
@@ -56,11 +57,15 @@ from custom.icds_reports.models import (
     AggregateAwcInfrastructureForms,
     ChildHealthMonthly,
     CcsRecordMonthly,
-    UcrTableNameMapping)
+    UcrTableNameMapping,
+    AggregateCcsRecordComplementaryFeedingForms,
+    AWWIncentiveReport
+)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
+from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
@@ -69,6 +74,7 @@ from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExpo
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
     create_excel_file
+from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -130,7 +136,7 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6, hour=0, minute=0),
                acks_late=True, queue='icds_aggregation_queue')
 def run_weekly_aggregation_of_historical_data():
     date = datetime.utcnow().date().strftime('%Y-%m-%d')
@@ -138,7 +144,7 @@ def run_weekly_aggregation_of_historical_data():
     res_awc.get()
 
 
-@serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='icds_aggregation_queue')
+@serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     date = date or datetime.utcnow().date()
     monthly_dates = []
@@ -162,7 +168,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             _create_aggregate_functions(cursor)
             _update_aggregate_locations_tables(cursor)
 
-        state_ids = (SQLLocation.objects
+        state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
@@ -178,6 +184,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_cf_forms)
+                for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_ccs_cf_forms)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
@@ -218,7 +228,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res.get()
 
             res_child = chain(
-                icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
+                icds_state_aggregation_task.si(
+                    state_id=state_ids, date=calculation_date, func=_child_health_monthly_table
+                ),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
             ).apply_async()
             res_ccs = chain(
@@ -288,15 +300,15 @@ def icds_aggregation_task(self, date, func):
     try:
         func(date)
     except Error as exc:
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'error': exc}
+        )
         _dashboard_team_soft_assert(
             False,
             "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
                 func.__name__, settings.SERVER_ENVIRONMENT, date
             )
-        )
-        notify_exception(
-            None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name__, 'date': date, 'error': exc}
         )
         self.retry(exc=exc)
 
@@ -314,15 +326,15 @@ def icds_state_aggregation_task(self, state_id, date, func):
     try:
         func(state_id, date)
     except Error as exc:
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
+        )
         _dashboard_team_soft_assert(
             False,
             "{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
                 func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
             )
-        )
-        notify_exception(
-            None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
         )
         self.retry(exc=exc)
 
@@ -332,6 +344,11 @@ def icds_state_aggregation_task(self, state_id, date, func):
 @track_time
 def _aggregate_cf_forms(state_id, day):
     AggregateComplementaryFeedingForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_ccs_cf_forms(state_id, day):
+    AggregateCcsRecordComplementaryFeedingForms.aggregate(state_id, day)
 
 
 @track_time
@@ -404,13 +421,44 @@ def _update_months_table(day):
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
 
 
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
+
+
 @track_time
-def _child_health_monthly_table(day):
+def _child_health_monthly_table(state_ids, day):
+    helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
+
+    celery_task_logger.info("Creating temporary table")
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
+        cursor.execute(helper.create_temporary_table())
+
+    sub_aggregations = group([
+        _child_health_helper.si(query=query, params=params)
+        for query, params in helper.pre_aggregation_queries()
+    ]).apply_async()
+    sub_aggregations.get()
+
+    celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic():
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('child_health_monthly', %s)",
         ], day)
-        ChildHealthMonthly.aggregate(force_to_date(day))
+        ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
+
+    celery_task_logger.info("Dropping temporary table")
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
+
+
+@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
+@track_time
+def _child_health_helper(query, params):
+    celery_task_logger.info("Running child_health_helper with %s", params)
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(query, params)
 
 
 @track_time
@@ -420,6 +468,7 @@ def _ccs_record_monthly_table(day):
             "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
         ], day)
         CcsRecordMonthly.aggregate(force_to_date(day))
+
 
 @track_time
 def _daily_attendance_table(day):
@@ -460,6 +509,7 @@ def _agg_awc_table_weekly(day):
     _run_custom_sql_script([
         "SELECT update_aggregate_awc_data(%s)"
     ], day)
+
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
@@ -571,6 +621,12 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test,
             beta=beta
         ).get_excel_data(location)
+    elif indicator == AWW_INCENTIVE_REPORT:
+        data_type = 'AWW_Performance'
+        excel_data = IncentiveReport(
+            block=location,
+            month=config['month']
+        ).get_excel_data()
     cache_key = create_excel_file(excel_data, data_type, file_format)
     params = {
         'domain': domain,
@@ -832,3 +888,15 @@ def push_missing_docs_to_es():
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
         )
+
+
+@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')
+def build_incentive_report(agg_date=None):
+    state_ids = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                 .values_list('location_id', flat=True))
+    if agg_date is None:
+        current_month = date.today().replace(day=1)
+        agg_date = current_month - relativedelta(months=1)
+    for state in state_ids:
+        AWWIncentiveReport.aggregate(state, agg_date)

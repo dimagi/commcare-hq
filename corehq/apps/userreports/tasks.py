@@ -412,8 +412,12 @@ def _build_async_indicators(indicator_doc_ids):
                     adapter.save_rows(rows)
                 except Exception as e:
                     failed_indicators.union(indicators)
+                    message = e.message
+                    if isinstance(message, bytes):
+                        # TODO - figure out where these are coming from and use unicode message from the start
+                        message = repr(message)
                     notify_exception(None,
-                        "Exception bulk saving async indicators:{}".format(e))
+                        "Exception bulk saving async indicators:{}".format(message))
                 else:
                     # remove because it's sucessfully processed
                     _mark_config_to_remove(

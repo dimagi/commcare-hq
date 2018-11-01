@@ -7,10 +7,12 @@ import tempfile
 import re
 
 from django.conf import settings
+from django.utils.functional import cached_property
 from memoized import memoized
 
 from collections import namedtuple, OrderedDict, defaultdict
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.app_manager.util import get_form_data
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
@@ -54,6 +56,18 @@ class AppTranslationsGenerator:
         self.slug_to_name = defaultdict(dict)
         self.slug_to_name[MODULES_AND_FORMS_SHEET_NAME] = {'en': MODULES_AND_FORMS_SHEET_NAME}
         self._build_translations()
+
+    @cached_property
+    def _get_labels_to_skip(self):
+        labels_to_skip = defaultdict(list)
+        module_data, errors = get_form_data(self.domain, self.app)
+        for module in module_data:
+            for form in module['forms']:
+                for question in form['questions']:
+                    if (question['comment'] and 'SKIP TRANSIFEX' in question['comment']
+                            and 'label_ref' in question):
+                        labels_to_skip[form['id']].append(question['label_ref'])
+        return labels_to_skip
 
     def _translation_data(self, app):
         # get the translations data
@@ -149,9 +163,24 @@ class AppTranslationsGenerator:
                 return index
         raise Exception("Column not found with name {}".format(column_name))
 
+    def _filter_invalid_rows_for_form(self, rows, form_id, label_index):
+        """
+        Remove translations from questions that have SKIP TRANSIFEX in the comment
+        """
+        labels_to_skip = self._get_labels_to_skip[form_id]
+        valid_rows = []
+        for i, row in enumerate(rows):
+            question_label = row[label_index]
+            if question_label not in labels_to_skip:
+                valid_rows.append(row)
+        return valid_rows
+
     def _get_translation_for_sheet(self, app, sheet_name, rows):
         occurrence = None
-        translations_for_sheet = []
+        # a dict mapping of a context to a Translation object with
+        # multiple occurrences
+        translations = OrderedDict()
+        type_and_id = None
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
         default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + app.default_language)
@@ -175,23 +204,34 @@ class AppTranslationsGenerator:
                     return ':'.join([case_property, _row[list_or_detail_index]])
             elif type_and_id.type == "Form":
                 label_index = self._get_header_index(sheet_name, 'label')
+                rows = self._filter_invalid_rows_for_form(rows, type_and_id.id, label_index)
 
                 def occurrence(_row):
                     return _row[label_index]
-        for i, row in enumerate(rows):
+        is_module = type_and_id and type_and_id.type == "Module"
+        for index, row in enumerate(rows, 1):
             source = row[key_lang_index]
             translation = row[source_lang_index]
             if self.exclude_if_default:
                 if translation == row[default_lang_index]:
                     translation = ''
             occurrence_row = occurrence(row)
-            translations_for_sheet.append(Translation(
+            occurrence_row_and_source = "%s %s" % (occurrence_row, source)
+            if is_module:
+                # if there is already a translation with the same context and source,
+                # just add this occurrence
+                if occurrence_row_and_source in translations:
+                    translations[occurrence_row_and_source].occurrences.append(
+                        (occurrence_row, index)
+                    )
+                    continue
+
+            translations[occurrence_row_and_source] = Translation(
                 source,
                 translation,
-                [(occurrence_row, '')],
+                [(occurrence_row, index)],
                 occurrence_row)
-            )
-        return translations_for_sheet
+        return list(translations.values())
 
     @property
     @memoized

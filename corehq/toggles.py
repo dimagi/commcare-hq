@@ -654,6 +654,14 @@ CASE_LIST_EXPLORER = StaticToggle(
     save_fn=_enable_search_index,
 )
 
+EXPLORE_CASE_DATA = StaticToggle(
+    'explore_case_data',
+    'Show the Explore Case Data report (in dev)',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
@@ -896,6 +904,17 @@ CUSTOM_INSTANCES = StaticToggle(
         'Currently used by SimPrints-integrated projects.'
     ),
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+CUSTOM_ASSERTIONS = StaticToggle(
+    'custom_assertions',
+    'Inject custom assertions into the suite',
+    TAG_SOLUTIONS,
+    description=(
+        'Enables the insertion of custom assertions into the suite file. '
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/User+defined+assert+blocks",
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -1622,9 +1641,9 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-SEARCH_DEACTIVATED_USERS = StaticToggle(
-    'search_deactivated_users',
-    'Allow for searching by deactivating users in form and case reports and exports',
+SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
+    'sort_out_of_order_form_submissions_sql',
+    'Sort out of order form submissions in the SQL update strategy',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
 )

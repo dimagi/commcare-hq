@@ -13,6 +13,8 @@ from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_so
     APP_DATA_SOURCE_TYPE_VALUES, REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES, DATA_SOURCE_TYPE_RAW
 from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
 
+from corehq.apps.domain.models import DomainAuditRecordEntry
+
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
     CountColumn,
@@ -891,6 +893,9 @@ class ConfigureNewReportBase(forms.Form):
         self.existing_report.description = self.cleaned_data['report_description']
         self.existing_report.validate()
         self.existing_report.save()
+
+        DomainAuditRecordEntry.update_calculations(self.domain, 'ReportConfiguration', 'update')
+
         return self.existing_report
 
     def _update_data_source_if_necessary(self):
@@ -941,6 +946,9 @@ class ConfigureNewReportBase(forms.Form):
             )
         )
         report.validate()
+
+        DomainAuditRecordEntry.update_calculations(self.domain, 'ReportConfiguration', 'create')
+
         report.save()
         return report
 

@@ -68,3 +68,10 @@ class SafeSaveDocument(OldSafeSaveDocument):
     def delete_attachment(self, *args, **kwargs):
         _couch_attachment_soft_assert(False, 'SafeSaveDocument.delete_attachment was called')
         super(SafeSaveDocument, self).delete_attachment(*args, **kwargs)
+
+
+# A formatter configured in HQ settings (`couch-request-formatter`) logs
+# extra metrics provided by this logger to a file that can be consumed
+# for couch request timing analysis.
+from couchdbkit.logging import install_request_logger as _install_logger
+_install_logger()

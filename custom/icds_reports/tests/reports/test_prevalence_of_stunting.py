@@ -59,7 +59,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "moderate": 3,
                     "normal": 2,
                     "total_measured": 7,
-                    "total": 449,
+                    "total": 454,
                     'original_name': ["st1"],
                     "fillKey": "38%-100%"
                 },
@@ -68,7 +68,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "moderate": 5,
                     "normal": 11,
                     "total_measured": 25,
-                    "total": 490,
+                    "total": 497,
                     'original_name': ["st2"],
                     "fillKey": "38%-100%"
                 }
@@ -116,10 +116,10 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '939'},
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '951'},
                 {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '32'},
-                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '907'},
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '919'},
                 {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '34.38%'},
                 {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '25.00%'},
                 {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '40.62%'}
@@ -187,7 +187,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'normal': 2,
                     'original_name': ['b1', 'b2'],
                     'severe': 2,
-                    'total': 449,
+                    'total': 454,
                     'fillKey': '38%-100%'
                 }
             }
@@ -314,15 +314,15 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.18181818181818182,
+                        "y": 0.3076923076923077,
                         "x": 1491004800000,
-                        "all": 964,
-                        "measured": 11
+                        "all": 981,
+                        "measured": 13
                     },
                     {
                         "y": 0.40625,
                         "x": 1493596800000,
-                        "all": 939,
+                        "all": 951,
                         "measured": 32
                     }
                 ],
@@ -359,15 +359,15 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.36363636363636365,
+                        "y": 0.3076923076923077,
                         "x": 1491004800000,
-                        "all": 964,
-                        "measured": 11
+                        "all": 981,
+                        "measured": 13
                     },
                     {
                         "y": 0.25,
                         "x": 1493596800000,
-                        "all": 939,
+                        "all": 951,
                         "measured": 32
                     }
                 ],
@@ -404,15 +404,15 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.45454545454545453,
+                        "y": 0.38461538461538464,
                         "x": 1491004800000,
-                        "all": 964,
-                        "measured": 11
+                        "all": 981,
+                        "measured": 13
                     },
                     {
                         "y": 0.34375,
                         "x": 1493596800000,
-                        "all": 939,
+                        "all": 951,
                         "measured": 32
                     }
                 ],
@@ -497,14 +497,14 @@ class TestPrevalenceOfStunting(TestCase):
             data['tooltips_data'],
             {
                 "s2": {
-                    "total": 150,
+                    "total": 153,
                     "severe": 0,
                     "moderate": 2,
                     "total_measured": 4,
                     "normal": 2
                 },
                 "s1": {
-                    "total": 70,
+                    "total": 71,
                     "severe": 0,
                     "moderate": 0,
                     "total_measured": 0,

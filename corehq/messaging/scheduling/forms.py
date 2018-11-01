@@ -348,7 +348,7 @@ class ContentForm(Form):
                     data_bind='value: subject.messagesJSONString',
                 ),
                 crispy.Div(
-                    crispy.Div(template='scheduling/partial/message_configuration.html'),
+                    crispy.Div(template='scheduling/partials/message_configuration.html'),
                     data_bind='with: subject',
                 ),
                 data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_EMAIL,
@@ -360,7 +360,7 @@ class ContentForm(Form):
                     data_bind='value: message.messagesJSONString',
                 ),
                 crispy.Div(
-                    crispy.Div(template='scheduling/partial/message_configuration.html'),
+                    crispy.Div(template='scheduling/partials/message_configuration.html'),
                     data_bind='with: message',
                 ),
                 data_bind=(
@@ -1601,7 +1601,7 @@ class ScheduleForm(Form):
                 _("On Days"),
                 crispy.Field(
                     'days_of_month',
-                    template='scheduling/partial/days_of_month_picker.html',
+                    template='scheduling/partials/days_of_month_picker.html',
                 ),
                 data_bind='visible: showDaysOfMonthInput',
             ),
@@ -1745,7 +1745,7 @@ class ScheduleForm(Form):
                 _("Recipient(s)"),
                 crispy.Field(
                     'recipient_types',
-                    template='scheduling/partial/recipient_types_picker.html',
+                    template='scheduling/partials/recipient_types_picker.html',
                 ),
             ),
             crispy.Div(

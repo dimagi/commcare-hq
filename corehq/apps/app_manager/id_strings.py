@@ -239,6 +239,11 @@ def search_property_locale(module, search_prop):
     return "search_property.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
 
 
+@pattern('custom_assertion.m%d.f%d.%d')
+def custom_assertion_locale(module, form, id):
+    return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
+
+
 @pattern('referral_lists.m%d')
 def referral_list_locale(module):
     """1.0 holdover"""

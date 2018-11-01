@@ -54,8 +54,8 @@ class TestImmunizationCoverage(TestCase):
             data['data'],
             {
                 "st1": {
-                    "all": 573,
-                    "children": 85,
+                    "all": 570,
+                    "children": 83,
                     'original_name': ["st1"],
                     "fillKey": "0%-20%"
                 },
@@ -97,7 +97,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 11.046135224905703)
+        self.assertEquals(data['rightLegend']['average'], 10.909734012450482)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_immunization_coverage_data_map(
@@ -113,20 +113,20 @@ class TestImmunizationCoverage(TestCase):
             [
                 {
                     'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                    'value': "1,193"
+                    'value': "1,190"
                 },
                 {
                     'indicator': (
                         'Total number of children who have recieved '
                         'complete immunizations required by age 1:'
                     ),
-                    'value': "130"
+                    'value': "128"
                 },
                 {
                     'indicator': (
                         '% of children who have recieved complete immunizations required by age 1:'
                     ),
-                    'value': '10.90%'
+                    'value': '10.76%'
                 }
             ]
         )
@@ -187,9 +187,9 @@ class TestImmunizationCoverage(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'all': 573,
+                    'all': 570,
                     'original_name': ['b1', 'b2'],
-                    'children': 85,
+                    'children': 83,
                     'fillKey': '0%-20%'
                 }
             }
@@ -206,7 +206,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 14.909190638712824)
+        self.assertEquals(data['rightLegend']['average'], 14.634867448506947)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -223,7 +223,7 @@ class TestImmunizationCoverage(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 14.834205933682373
+                        "percent": 14.56140350877193
                     },
                     {
                         "loc_name": "st2",
@@ -233,7 +233,7 @@ class TestImmunizationCoverage(TestCase):
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 14.834205933682373
+                        "percent": 14.56140350877193
                     },
                     {
                         "loc_name": "st2",
@@ -259,16 +259,16 @@ class TestImmunizationCoverage(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.10765349032800672,
+                                "y": 0.10477001703577513,
                                 "x": 1491004800000,
-                                "all": 1189,
-                                "in_month": 128
+                                "all": 1174,
+                                "in_month": 123
                             },
                             {
-                                "y": 0.10896898575020955,
+                                "y": 0.10756302521008404,
                                 "x": 1493596800000,
-                                "all": 1193,
-                                "in_month": 130
+                                "all": 1190,
+                                "in_month": 128
                             }
                         ],
                         "key": "% Children received complete immunizations by 1 year"
@@ -277,7 +277,7 @@ class TestImmunizationCoverage(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 14.834205933682373
+                        "percent": 14.56140350877193
                     },
                     {
                         "loc_name": "st2",
@@ -315,7 +315,7 @@ class TestImmunizationCoverage(TestCase):
                         "children": 3
                     },
                     "s1": {
-                        "all": 100,
+                        "all": 99,
                         "children": 31
                     }
                 },
@@ -327,7 +327,7 @@ class TestImmunizationCoverage(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.31
+                                0.31313131313131315
                             ],
                             [
                                 "s2",

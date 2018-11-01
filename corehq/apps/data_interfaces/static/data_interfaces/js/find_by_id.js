@@ -3,14 +3,16 @@ hqDefine("data_interfaces/js/find_by_id", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
+    'analytix/js/kissmetrix',
 ], function (
     $,
     ko,
     assertProperties,
-    initialPageData
+    initialPageData,
+    kissmetrics
 ) {
     var findModel = function (options) {
-        assertProperties.assert(options, ['errorMessage', 'header', 'help', 'placeholder', 'successMessage']);
+        assertProperties.assert(options, ['errorMessage', 'eventName', 'header', 'help', 'placeholder', 'successMessage']);
 
         var self = options;
         self.query = ko.observable('');
@@ -20,7 +22,7 @@ hqDefine("data_interfaces/js/find_by_id", [
 
         self.linkMessage = ko.computed(function () {
             if (self.link()) {
-                var redirectTemplate = _.template(gettext("<a href='<%= link %>'>Click here</a> if you are not redirected."));
+                var redirectTemplate = _.template(gettext("<a href='<%= link %>' target='_blank'>View <i class='fa fa-external-link'></i></a>"));
                 return self.successMessage + " " + redirectTemplate({link: self.link()});
             }
             return '';
@@ -34,6 +36,7 @@ hqDefine("data_interfaces/js/find_by_id", [
             self.loading(true);
             self.link('');
             self.error('');
+            kissmetrics.track.event(options.eventName);
             $.ajax({
                 method: 'GET',
                 url: initialPageData.reverse('global_quick_find'),
@@ -44,9 +47,6 @@ hqDefine("data_interfaces/js/find_by_id", [
                 success: function (data) {
                     self.loading(false);
                     self.link(data.link);
-                    _.delay(function () {
-                        document.location = data.link;
-                    }, 2000);
                 },
                 error: function () {
                     self.loading(false);
@@ -59,6 +59,8 @@ hqDefine("data_interfaces/js/find_by_id", [
     };
 
     $(function () {
+        kissmetrics.track.event("[Find data by ID] Visited page");
+
         $("#find-case").koApplyBindings(findModel({
             header: gettext('Find Case'),
             help: _.template(gettext('IDs can be found in a <a href="<%= url %>">case data export</a>'))({
@@ -67,6 +69,7 @@ hqDefine("data_interfaces/js/find_by_id", [
             placeholder: gettext('Case ID'),
             successMessage: gettext('Case found!'),
             errorMessage: gettext('Could not find case'),
+            eventName: "[Find data by ID] Clicked Find for cases",
         }));
 
         $("#find-form").koApplyBindings(findModel({
@@ -77,6 +80,7 @@ hqDefine("data_interfaces/js/find_by_id", [
             errorMessage: gettext('Could not find form submission'),
             placeholder: gettext('Form Submission ID'),
             successMessage: gettext('Form submission found!'),
+            eventName: "[Find data by ID] Clicked Find for forms",
         }));
     });
 });

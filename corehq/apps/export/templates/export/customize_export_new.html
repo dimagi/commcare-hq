@@ -38,7 +38,7 @@
         </a>
     </div>
     {% endif %}
-    {% include "export/partial/customize_export_header.html" %}
+    {% include "export/partials/customize_export_header.html" %}
     <form class="form-horizontal" method="post">
         {% csrf_token %}
         <fieldset>
@@ -260,7 +260,7 @@
         </div>
     </form>
 </div>
-{% include "export/partial/new_customize_export_templates.html" %}
+{% include "export/partials/new_customize_export_templates.html" %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}

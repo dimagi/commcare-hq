@@ -60,12 +60,6 @@
     {% block post_files %}{% endblock %}
 {% endblock page_content %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-        <script src="{% static 'app_manager/js/source_files.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />

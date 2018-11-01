@@ -14,6 +14,7 @@ from corehq.apps.data_interfaces.views import (
     AddCaseRuleView,
     EditCaseRuleView,
     find_by_id,
+    ExploreCaseDataView,
 )
 from .interfaces import FormManagementMode
 
@@ -45,6 +46,7 @@ edit_data_urls = [
 urlpatterns = [
     url(r'^$', default, name="data_interfaces_default"),
     url(r'^edit/', include(edit_data_urls)),
+    url(r'^case_data/', ExploreCaseDataView.as_view(), name=ExploreCaseDataView.urlname),
     url(r'^export/', include('corehq.apps.export.urls')),
     url(r'^find/$', find_by_id, name="data_find_by_id"),
 ]

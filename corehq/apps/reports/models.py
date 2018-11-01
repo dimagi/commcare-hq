@@ -79,17 +79,19 @@ class HQUserType(object):
     UNKNOWN = 3
     COMMTRACK = 4
     DEACTIVATED = 5
-    GROUPS_AND_LOCATIONS = 6
+    WEB = 6
+    GROUPS_AND_LOCATIONS = 7
     human_readable = [settings.COMMCARE_USER_TERM,
                       ugettext_noop("demo_user"),
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
                       ugettext_noop("CommCare Supply"),
                       ugettext_noop("Deactivated Mobile Workers"),
-                      ugettext_noop("GROUPS AND LOCATIONS"),]
-    toggle_defaults = (True, False, False, False, False, True, True)
+                      ugettext_noop("Web Users"),
+                      ugettext_noop("GROUPS AND LOCATIONS"), ]
+    toggle_defaults = (True, False, False, False, False, True, True, True)
     count = len(human_readable)
-    included_defaults = (True, True, True, True, False, True, True)
+    included_defaults = (True, True, True, True, False, True, True, True)
 
     @classmethod
     def use_defaults(cls):

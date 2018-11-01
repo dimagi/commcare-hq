@@ -57,7 +57,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
                 'average': {'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
-                    {'html': 1.2232415902140672, 'sort_key': 1.2232415902140672},
+                    {'html': 1.1213047910295617, 'sort_key': 1.1213047910295617},
                     {'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
                     {'html': 0}
                 ],
@@ -352,14 +352,14 @@ class TestFactSheetReportInterventions(TestCase):
                 'rows_config': [
                     {
                         'average': {
-                            'html': 10.896898575020955,
-                            'sort_key': 10.896898575020955
+                            'html': 10.756302521008404,
+                            'sort_key': 10.756302521008404
                         },
                         'data': [
                             {'html': 'Children 1 year+ who have recieved complete immunization'
                                      ' required by age 1.'},
-                            {'html': 10.765349032800673, 'sort_key': 10.765349032800673},
-                            {'html': 10.896898575020955, 'sort_key': 10.896898575020955},
+                            {'html': 10.477001703577512, 'sort_key': 10.477001703577512},
+                            {'html': 10.756302521008404, 'sort_key': 10.756302521008404},
                             {'html': 0}
                         ],
                         'data_source': 'AggChildHealthMonthlyDataSource',

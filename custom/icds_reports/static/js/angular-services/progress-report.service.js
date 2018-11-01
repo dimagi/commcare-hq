@@ -1,13 +1,9 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-
 window.angular.module('icdsApp').factory('progressReportService', ['$http', function($http) {
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+    var gtag = hqImport('analytix/js/google').track;
     return {
         getData: function(params) {
-            window.ga('send', 'event', {
-                'eventCategory': 'Progress Report Service',
-                'eventAction': 'Fetching data started',
-                'eventLabel': 'getData',
-            });
+            gtag.event('Progress Report Service', 'Fetching data started', 'getData');
             var get_url = url('fact_sheets', '---');
             return  $http({
                 method: "GET",
@@ -15,19 +11,11 @@ window.angular.module('icdsApp').factory('progressReportService', ['$http', func
                 params: params,
             }).then(
                 function(response) {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Progress Report Service',
-                        'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getData',
-                    });
+                    gtag.event('Progress Report Service', 'Fetching data succeeded', 'getData');
                     return response;
                 },
                 function() {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Progress Report Service',
-                        'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getData',
-                    });
+                    gtag.event('Progress Report Service', 'Fetching data failed', 'getData');
                 }
             );
         },

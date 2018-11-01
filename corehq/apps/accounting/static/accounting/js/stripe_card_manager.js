@@ -87,7 +87,6 @@ hqDefine("accounting/js/stripe_card_manager", [
 
         self.wrap = function (data) {
             ko.mapping.fromJS(data, mapping, self);
-            self.is_autopay(self.is_autopay() === 'True');
             self.url = baseUrl + card.token + '/';
         };
         self.wrap(card);

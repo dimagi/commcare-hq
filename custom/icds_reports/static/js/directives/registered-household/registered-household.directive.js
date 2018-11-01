@@ -8,8 +8,8 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     var vm = this;
     vm.label = "Registered Household";
     vm.steps = {
-        'map': {route: '/registered_household/map', label: 'Map View'},
-        'chart': {route: '/registered_household/chart', label: 'Chart View'},
+        'map': {route: '/demographics/registered_household/map', label: 'Map View'},
+        'chart': {route: '/demographics/registered_household/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',

@@ -44,6 +44,7 @@ from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
+from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -98,7 +99,7 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -810,6 +811,15 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
+class CustomAssertion(DocumentSchema):
+    """Custom assertions to add to the assertions block
+    test: The actual assertion to run
+    locale_id: The id of the localizable string
+    """
+    test = StringProperty(required=True)
+    text = DictProperty(StringProperty)
+
+
 class CustomInstance(DocumentSchema):
     """Custom instances to add to the instance block
     instance_id: 	The ID of the instance
@@ -938,6 +948,7 @@ class FormBase(DocumentSchema):
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
+    custom_assertions = SchemaListProperty(CustomAssertion)
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
     is_release_notes_form = BooleanProperty(default=False)
@@ -5134,6 +5145,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
+    @time_method()
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
             # remote apps don't support get_forms yet.
@@ -5147,6 +5159,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                             "subscription before using this feature."
                         ))
 
+    @time_method()
     def validate_intents(self):
         if domain_has_privilege(self.domain, privileges.CUSTOM_INTENTS):
             return
@@ -5249,6 +5262,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     self.built_with.signed = jadjar.signed
 
                 return jadjar.jad, jadjar.jar
+
+    @property
+    @memoized
+    def timing_context(self):
+        return TimingContext(self.name)
 
     def validate_app(self):
         errors = []
@@ -5376,6 +5394,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
+    @time_method()
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
@@ -5739,6 +5758,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
+    @time_method()
     def create_profile(self, is_odk=False, with_media=False,
                        template='app_manager/profile.xml', build_profile_id=None, target_commcare_flavor=None):
         self__profile = self.profile
@@ -5877,6 +5897,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return None
 
+    @time_method()
     def create_practice_user_restore(self, build_profile_id=None):
         """
         Returns:
@@ -5894,6 +5915,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return None
 
+    @time_method()
     def validate_practice_users(self):
         # validate practice_mobile_worker of app and all app profiles
         # raises PracticeUserException in case of misconfiguration
@@ -5911,6 +5933,34 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
+    @time_method()
+    def _make_language_files(self, prefix, build_profile_id):
+        return {
+            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id)
+            for lang in ['default'] + self.get_build_langs(build_profile_id)
+        }
+
+    @time_method()
+    def _get_form_files(self, prefix, build_profile_id):
+        files = {}
+        for form_stuff in self.get_forms(bare=False):
+            def exclude_form(form):
+                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
+
+            if not exclude_form(form_stuff['form']):
+                filename = prefix + self.get_form_filename(**form_stuff)
+                form = form_stuff['form']
+                try:
+                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+                except XFormValidationFailed:
+                    raise XFormException(_('Unable to validate the forms due to a server error. '
+                                           'Please try again later.'))
+                except XFormException as e:
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
+        return files
+
+    @time_method()
+    @memoized
     def create_all_files(self, build_profile_id=None):
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
@@ -5953,24 +6003,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 '{}practice_user_restore.xml'.format(prefix): practice_user_restore
             })
 
-        langs_for_build = self.get_build_langs(build_profile_id)
-        for lang in ['default'] + langs_for_build:
-            files["{prefix}{lang}/app_strings.txt".format(
-                prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
-        for form_stuff in self.get_forms(bare=False):
-            def exclude_form(form):
-                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
-
-            if not exclude_form(form_stuff['form']):
-                filename = prefix + self.get_form_filename(**form_stuff)
-                form = form_stuff['form']
-                try:
-                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
-                except XFormValidationFailed:
-                    raise XFormException(_('Unable to validate the forms due to a server error. '
-                                           'Please try again later.'))
-                except XFormException as e:
-                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
+        files.update(self._make_language_files(prefix, build_profile_id))
+        files.update(self._get_form_files(prefix, build_profile_id))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
@@ -6248,14 +6282,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             })
         return errors
 
-    def validate_app(self):
-        xmlns_count = defaultdict(int)
+    @time_method()
+    def _check_modules(self):
         errors = []
-
-        for lang in self.langs:
-            if not lang:
-                errors.append({'type': 'empty lang'})
-
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
@@ -6266,7 +6295,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     "type": "missing module",
                     "message": six.text_type(ex)
                 })
+        return errors
 
+    @time_method()
+    def _check_forms(self):
+        errors = []
+        xmlns_count = defaultdict(int)
         for form in self.get_forms():
             errors.extend(form.validate_for_build(validate_module=False))
 
@@ -6276,6 +6310,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
+        return errors
+
+    @time_method()
+    def validate_app(self):
+        errors = []
+
+        for lang in self.langs:
+            if not lang:
+                errors.append({'type': 'empty lang'})
+
+        errors.extend(self._check_modules())
+        errors.extend(self._check_forms())
 
         if any(not module.unique_id for module in self.get_modules()):
             raise ModuleIdMissingException
@@ -6569,6 +6615,11 @@ class LinkedApplication(Application):
     linked_app_translations = DictProperty()  # corresponding property: translations
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
 
+    # if `uses_master_app_form_ids` is True, the form id might match the master's form id
+    # from a bug years ago. These should be fixed when mobile can handle the change
+    # https://manage.dimagi.com/default.asp?283410
+    uses_master_app_form_ids = BooleanProperty(default=False)
+
     @property
     @memoized
     def domain_link(self):
@@ -6593,6 +6644,9 @@ class LinkedApplication(Application):
     def reapply_overrides(self):
         self.translations.update(self.linked_app_translations)
         self.logo_refs.update(self.linked_app_logo_refs)
+        for key, ref in self.logo_refs.items():
+            mm = CommCareMultimedia.get(ref['m_id'])
+            self.create_mapping(mm, ref['path'], save=False)
         self.save()
 
 
