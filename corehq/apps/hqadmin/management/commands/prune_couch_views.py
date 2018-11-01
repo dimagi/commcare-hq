@@ -2,7 +2,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
-from couchdbkit import Database
 
 from django.core.management.base import BaseCommand
 from corehq.preindex import get_preindex_plugins
@@ -24,6 +23,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         # build a data structure indexing databases to relevant design docs
         db_label_map = defaultdict(lambda: set())
+        db_uri_map = {}
 
         # pull design docs from preindex plugins
         plugins = get_preindex_plugins()
@@ -31,10 +31,11 @@ class Command(BaseCommand):
             for design in plugin.get_designs():
                 if design.design_path:
                     db_label_map[design.db.uri].add(design.app_label)
+                    db_uri_map[design.db.uri] = design.db
 
         designs_to_delete = {}
         for db_uri in db_label_map:
-            db = Database(db_uri)
+            db = db_uri_map[db_uri]
             expected_designs = db_label_map[db_uri]
             design_docs = get_design_docs(db)
             found_designs = set(dd.name for dd in design_docs)

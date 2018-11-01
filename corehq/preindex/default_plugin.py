@@ -19,8 +19,8 @@ class DefaultPreindexPlugin(PreindexPlugin):
         # Instantiate here to make sure that it's instantiated after the dbs settings
         # are patched for tests
         couch_config = CouchConfig()
-        db = Database(
-            couch_config.get_db_uri_for_app_label(self.app_config.label), create=True)
+        uri = couch_config.get_db_uri_for_app_label(self.app_config.label)
+        db = Database(create=True, **uri.params)
         return [
             DesignInfo(app_label=self.app_config.label,
                        db=db,

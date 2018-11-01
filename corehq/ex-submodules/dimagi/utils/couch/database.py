@@ -43,7 +43,7 @@ def get_db(postfix=None):
     db_url = settings.COUCH_DATABASE
     if postfix:
         db_url = settings.EXTRA_COUCHDB_DATABASES[postfix]
-    return Database(db_url, create=True)
+    return Database(create=True, **db_url.params)
 
 
 def get_design_docs(database):

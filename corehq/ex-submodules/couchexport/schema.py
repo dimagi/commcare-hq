@@ -11,7 +11,7 @@ def build_latest_schema(schema_index):
     Build a schema, directly from the index. Also creates a saved checkpoint.
     """
     from couchexport.export import ExportConfiguration
-    db = Database(settings.COUCH_DATABASE)
+    db = Database(**settings.COUCH_DATABASE.params)
     previous_export = ExportSchema.last(schema_index)
     config = ExportConfiguration(db, schema_index,
                                  previous_export=previous_export)

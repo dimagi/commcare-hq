@@ -14,8 +14,11 @@ class OverrideDBTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(OverrideDBTest, cls).setUpClass()
-        cls.other_db_1 = Database(settings.COUCH_DATABASE + '_foo-test', create=True)
-        cls.other_db_2 = Database(settings.COUCH_DATABASE + '_foo-boo-test', create=True)
+        url = settings.COUCH_DATABASE
+        params = dict(url.params, create=True)
+        params.pop("uri")
+        cls.other_db_1 = Database(url + '_foo-test', **params)
+        cls.other_db_2 = Database(url + '_foo-boo-test', **params)
         cls.normal_db = CommCareCase.get_db()
         cls.normal_get_db = CommCareCase.get_db
 

@@ -70,39 +70,39 @@ class SharedDriveConfiguration(object):
         return os.path.join(self.temp_dir, name)
 
 
-def get_server_url(http_method, server_root, username, password):
+def get_couchdb_url(server_root, username, password, dbname, use_https=False):
     if username and password:
-        return '%(http_method)s://%(user)s:%(pass)s@%(server)s' % {
-            'http_method': http_method,
-            'user': username,
-            'pass': password,
-            'server': server_root,
+        db_params = {
+            "username": username,
+            "auth_token": password,
+            "use_basic_auth": True,
         }
     else:
-        return '%(http_method)s://%(server)s' % {
-            'http_method': http_method,
-            'server': server_root,
-        }
-
-
-def get_dynamic_db_settings(server_root, username, password, dbname,
-                            use_https=False):
-    """
-    Get dynamic database settings.
-    Other apps can use this if they want to change settings
-
-    """
-
+        # admin party + empty username and auth_token
+        db_params = None
     http_method = 'https' if use_https else 'http'
-    server_url = get_server_url(http_method, server_root, username, password)
-    database = '%(server)s/%(database)s' % {
-        'server': server_url,
-        'database': dbname,
-    }
-    return {
-        'COUCH_SERVER': server_url,
-        'COUCH_DATABASE': database,
-    }
+    uri = '{http_method}://{server_root}/{dbname}'.format(**locals())
+    return DbUri(uri, db_params)
+
+
+class DbUri(six.text_type):
+    """DB URI string with params attribute
+
+    The `params` attribute is a dict to be passed as keyword arguments
+    to `couchdbkit.client.Database` as in `Database(**uri.params)`
+
+    This allows database parameters to be passed with the URL without
+    major refactoring to change all the places that reference the URL
+    expecting it to be a string. Historically the parameters were
+    encoded in the URL.
+    """
+
+    __slots__ = ["params"]
+
+    def __new__(cls, uri, db_params):
+        obj = super(DbUri, cls).__new__(cls, uri)
+        obj.params = {"uri": uri, "db_params": db_params}
+        return obj
 
 
 def get_db_name(dbname, is_test):
@@ -144,11 +144,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         else:
             app_label, postfix = row
         if postfix:
-            if postfix in self.db_urls_by_prefix:
-                url = self.db_urls_by_prefix[postfix]
-            else:
-                url = '%s__%s' % (self.main_db_url, postfix)
-            return app_label, url
+            return app_label, self._db_url_for_postfix(postfix)
         else:
             return app_label, self.main_db_url
 
@@ -167,11 +163,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
 
         postfixes.extend(self.extra_db_names)
         for postfix in postfixes:
-            if postfix in self.db_urls_by_prefix:
-                url = self.db_urls_by_prefix[postfix]
-            else:
-                url = '%s__%s' % (self.main_db_url, postfix)
-            extra_dbs[postfix] = url
+            extra_dbs[postfix] = self._db_url_for_postfix(postfix)
 
         return extra_dbs
 
@@ -191,14 +183,22 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
 
         return self._urls_by_prefix
 
+    def _db_url_for_postfix(self, postfix):
+        if postfix in self.db_urls_by_prefix:
+            return self.db_urls_by_prefix[postfix]
+        return DbUri(
+            '%s__%s' % (self.main_db_url, postfix),
+            self.main_db_url.params["db_params"],
+        )
+
     def _get_db_url(self, config):
-        return get_dynamic_db_settings(
+        return get_couchdb_url(
             config['COUCH_SERVER_ROOT'],
             config['COUCH_USERNAME'],
             config['COUCH_PASSWORD'],
             get_db_name(config['COUCH_DATABASE_NAME'], self.unit_testing),
             use_https=config['COUCH_HTTPS'],
-        )["COUCH_DATABASE"]
+        )
 
 
 def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):

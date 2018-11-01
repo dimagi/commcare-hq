@@ -38,20 +38,19 @@ class CouchConfig(object):
     @property
     @memoized
     def all_dbs_by_slug(self):
-        return {slug: Database(db_uri)
+        return {slug: Database(**db_uri.params)
                 for slug, db_uri in self.all_db_uris_by_slug.items()}
 
     @property
     @memoized
     def all_dbs_by_db_name(self):
-        return {Database(db_uri).dbname: Database(db_uri)
-                for db_uri in self.all_db_uris_by_slug.values()}
+        return {db.dbname: db for db in self.all_dbs_by_slug.values()}
 
     def get_db(self, postfix):
         """
         Get the couch database by slug
         """
-        return Database(self.all_db_uris_by_slug[postfix], create=True)
+        return Database(create=True, **self.all_db_uris_by_slug[postfix].params)
 
     @property
     @memoized
@@ -68,10 +67,10 @@ class CouchConfig(object):
         return self.get_db_uri_for_class(get_document_class_by_doc_type(doc_type))
 
     def get_db_for_class(self, klass):
-        return Database(self.get_db_uri_for_class(klass))
+        return Database(**self.get_db_uri_for_class(klass).params)
 
     def get_db_for_doc_type(self, doc_type):
-        return Database(self.get_db_uri_for_doc_type(doc_type))
+        return Database(**self.get_db_uri_for_doc_type(doc_type).params)
 
     def get_db_for_db_name(self, db_name):
         try:
