@@ -18,6 +18,7 @@ either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 import six
 
