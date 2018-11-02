@@ -13,12 +13,13 @@ from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHel
 class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = 'agg_awc_daily'
 
-    def __init__(self, month):
-        self.month = transform_day_to_month(month)
+    def __init__(self, date):
+        self.date = date
+        self.month = transform_day_to_month(date)
 
     @property
     def tablename(self):
-        return "{}_{}".format(self.aggregate_parent_table, self.month.strftime("%Y-%m-%d"))
+        return "{}_{}".format(self.aggregate_parent_table, self.date.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
         return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
@@ -26,14 +27,14 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
     def create_table_query(self):
         return """
         CREATE TABLE IF NOT EXISTS "{tablename}" (
-            CHECK (date = %(month_string)s),
+            CHECK (date = DATE %(date)s),
             LIKE "{parent_tablename}" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
         ) INHERITS ("{parent_tablename}")
         """.format(
             parent_tablename=self.aggregate_parent_table,
             tablename=self.tablename,
         ), {
-            "month_string": month_formatter(self.month),
+            "date": self.date.strftime("%Y-%m-%d"),
         }
 
     def aggregation_query(self):
@@ -45,7 +46,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             ('supervisor_id',),
             ('awc_id',),
             ('aggregation_level',),
-            ('date', '%(start_date)s'),
+            ('date', '%(date)s'),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),
@@ -84,7 +85,8 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] if len(col) > 1 else col[0] for col in columns]),
         ), {
-            "start_date": self.month
+            "start_date": self.month,
+            "date": self.date
         }
 
     def update_query(self):
@@ -96,12 +98,12 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
                 awc_id,
                 pse_date,
                 sum(awc_open_count) AS daily_attendance_open
-            FROM daily_attendance WHERE pse_date = %(start_date)s
+            FROM daily_attendance WHERE pse_date = %(date)s
             GROUP BY awc_id, pse_date
         ) ut
         WHERE ut.pse_date = agg_awc.date AND ut.awc_id = agg_awc.awc_id
         """.format(tablename=self.tablename), {
-            'start_date': self.month
+            'date': self.date
         }
 
     def rollup_query(self, aggregation_level):
