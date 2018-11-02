@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 import uuid
 
 from xml.etree import cElementTree as ElementTree
@@ -281,3 +281,19 @@ def get_paged_changes_to_case_property(case, case_property_name, start=0, per_pa
             break
 
     return infos, last_index
+
+
+def get_case_history(case):
+    from casexml.apps.case.xform import extract_case_blocks
+    changes = defaultdict(dict)
+    for action in case.actions:
+        case_blocks = extract_case_blocks(action.form)
+        for block in case_blocks:
+            if block.get('@case_id') == case.case_id:
+                property_changes = block.get('create', {})
+                property_changes.update(block.get('update', {}))
+                property_changes['_received_on'] = action.form.received_on
+                property_changes['_submitted_by'] = action.form.metadata.username
+                property_changes['_form_id'] = action.form.form_id
+                changes[action.form.form_id].update(property_changes)
+    return sorted(changes.values(), key=lambda f: f['_received_on'])
