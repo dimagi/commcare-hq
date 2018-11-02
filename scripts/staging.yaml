@@ -52,9 +52,10 @@ branches:
   - pv/case-list-deac-label # Preethi Oct 26
   - test_rjs_multimedia_integration # Rohit Oct 31
   
-  # These exports branches are prone to conflicts and are all going through QA.
-  # If you need to remove any of them, please let Ben know. Much appreciated.
-  - jls/ko-export-merge-conflicts  # Jenny Nov 2
+  # These exports branches are all going through QA and are prone to conflicts.
+  # If there's a conflict you can't resolve and I'm not around to fix it,
+  # please let Ben know which one(s) you're removing. Much appreciated.
+  - jls/rebased-ko-export-download+jls/ko-exports-list  # Jenny Nov 2
   - jls/rebased-ko-export-download  # Jenny Nov 2
   - jls/ko-exports-create  # Jenny Nov 2
   - jls/ko-exports-list  # Jenny Nov 2
