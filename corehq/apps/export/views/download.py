@@ -251,6 +251,29 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             return 2000
 
 
+def _check_export_size(domain, export_instances, export_filters):
+    count = 0
+    for instance in export_instances:
+        count += get_export_size(instance, export_filters)
+    if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(domain):
+        raise ExportAsyncException(
+            _("This export contains %(row_count)s rows. Please change the "
+              "filters to be less than %(max_rows)s rows.") % {
+                'row_count': count,
+                'max_rows': MAX_EXPORTABLE_ROWS
+            }
+        )
+
+
+def _check_deid_permissions(permissions, export_instances):
+    if not permissions.has_deid_view_permissions:
+        for instance in export_instances:
+            if instance.is_deidentified:
+                raise ExportAsyncException(
+                    _("You do not have permission to export de-identified exports.")
+                )
+
+
 @require_POST
 @login_and_domain_required
 def prepare_custom_export(request, domain):
@@ -308,27 +331,8 @@ def prepare_custom_export(request, domain):
             form_or_case=form_or_case, sms_export=sms_export
         ) for spec in export_specs]
 
-        # If any export is de-identified, check that
-        # the requesting domain has access to the deid feature.
-        if not permissions.has_deid_view_permissions:
-            for instance in export_instances:
-                if instance.is_deidentified:
-                    raise ExportAsyncException(
-                        _("You do not have permission to export de-identified exports.")
-                    )
-
-        # Check export isn't too big to download
-        count = 0
-        for instance in export_instances:
-            count += get_export_size(instance, export_filters)
-        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(domain):
-            raise ExportAsyncException(
-                _("This export contains %(row_count)s rows. Please change the "
-                  "filters to be less than %(max_rows)s rows.") % {
-                    'row_count': count,
-                    'max_rows': MAX_EXPORTABLE_ROWS
-                }
-            )
+        _check_deid_permissions(permissions, export_instances)
+        _check_export_size(domain, export_instances, export_filters)
 
         # Generate filename
         if len(export_instances) > 1:
