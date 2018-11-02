@@ -49,9 +49,13 @@
 trunk: master
 name: autostaging
 branches:
-  #- jls/rebased-ko-export-download  # Jenny Nov 2
-  #- jls/ko-exports-create  # Jenny Nov 2
-  #- jls/ko-exports-list  # Jenny Nov 2
   - pv/case-list-deac-label # Preethi Oct 26
   - test_rjs_multimedia_integration # Rohit Oct 31
+  
+  # These exports branches are prone to conflicts and are all going through QA.
+  # If you need to remove any of them, please let Ben know. Much appreciated.
+  - jls/ko-export-merge-conflicts  # Jenny Nov 2
+  - jls/rebased-ko-export-download  # Jenny Nov 2
+  - jls/ko-exports-create  # Jenny Nov 2
+  - jls/ko-exports-list  # Jenny Nov 2
 submodules: {}
