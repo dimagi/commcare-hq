@@ -3,7 +3,6 @@ function (doc) {
         emit([
             doc.domain,
             doc.table_id,
-            doc._id,
         ], null);
     }
 }
