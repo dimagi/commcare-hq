@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
+import json
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
@@ -94,6 +95,7 @@ from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 from six.moves import map
 
 
@@ -851,6 +853,15 @@ def submit_app_data_drilldown_form(request, domain):
             'success': False,
             'error': _("The form did not validate."),
         })
+
+    from corehq.apps.export.views.new import (
+        CreateNewCaseFeedView,
+        CreateNewCustomCaseExportView,
+        CreateNewCustomFormExportView,
+        CreateNewDailySavedCaseExport,
+        CreateNewDailySavedFormExport,
+        CreateNewFormFeedView,
+    )
 
     if is_daily_saved_export:
         if create_form.cleaned_data['model_type'] == "case":
