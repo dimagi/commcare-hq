@@ -55,4 +55,5 @@ branches:
   - jls/ko-export-dl-views  # Jenny Oct 23
   - pv/case-list-deac-label # Preethi Oct 26
   - test_rjs_multimedia_integration # Rohit Oct 31
+  - pv/generalize-onse-or # Preethi Nov 02
 submodules: {}
