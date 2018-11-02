@@ -26,7 +26,11 @@ from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
 
 from corehq import toggles, privileges
-from corehq.apps.analytics.tasks import HUBSPOT_APP_TEMPLATE_FORM_ID, send_hubspot_form
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_APP_TEMPLATE_FORM_ID,
+    send_hubspot_form,
+    track_workflow,
+)
 from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.const import (
@@ -893,6 +897,7 @@ def pull_master_app(request, domain, app_id):
             messages.error(request, six.text_type(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
+    track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
 
