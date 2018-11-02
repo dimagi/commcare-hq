@@ -21,7 +21,7 @@ hqDefine("reports/js/case_details", [
     Clipboard,
     initialPageData,
     googleAnalytics,
-    kissMetrics,
+    kissmetrics,
     casePropertyModal,
     dataCorrections,
     singleForm
@@ -273,7 +273,7 @@ hqDefine("reports/js/case_details", [
 
         // Analytics
         $('.view-related-case-link').on('click', function () {
-            kissMetrics.track.event("Case Data Report: Related case link clicked");
+            kissmetrics.track.event("Case Data Report: Related case link clicked");
         });
 
     });
