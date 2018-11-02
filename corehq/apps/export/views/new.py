@@ -34,7 +34,6 @@ from corehq.apps.export.tasks import (
 from corehq.apps.export.exceptions import (
     ExportAppException,
     BadExportConfiguration,
-    ExportFormValidationException,
 )
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
