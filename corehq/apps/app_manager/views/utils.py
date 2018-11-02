@@ -290,22 +290,6 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
-def update_linked_app_and_notify(domain, app_id, user_id, email):
-    app = get_current_app(domain, app_id)
-    try:
-        update_linked_app(app, user_id)
-    except AppLinkError as e:
-        message = six.text_type(e)
-    except Exception:
-        message = _("Something went wrong! There was an error. Please try again. "
-                    "If you see this error repeatedly please report it as issue.")
-    else:
-        message = _("Your linked application was successfully updated to the latest version.")
-    subject = _("Update Status for linked app %s") % app.name
-    send_html_email_async.delay(subject, email, message)
-
-
 def update_linked_app(app, user_id):
     if not app.domain_link:
         raise AppLinkError(_(

@@ -62,3 +62,19 @@ def prune_auto_generated_builds(domain, app_id):
             raise SavedAppBuildException("Attempted to delete build that should not be deleted")
         app.delete_app()
         app.save(increment_version=False)
+
+
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
+def update_linked_app_and_notify(domain, app_id, user_id, email):
+    app = get_current_app(domain, app_id)
+    try:
+        update_linked_app(app, user_id)
+    except AppLinkError as e:
+        message = six.text_type(e)
+    except Exception:
+        message = _("Something went wrong! There was an error. Please try again. "
+                    "If you see this error repeatedly please report it as issue.")
+    else:
+        message = _("Your linked application was successfully updated to the latest version.")
+    subject = _("Update Status for linked app %s") % app.name
+    send_html_email_async.delay(subject, email, message)
