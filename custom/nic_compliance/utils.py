@@ -61,7 +61,7 @@ def extract_password(obfuscated_password):
             # completely
             return ''
     else:
-        return False
+        return None
 
 
 def hash_password(password):
@@ -100,7 +100,7 @@ def get_raw_password(obfuscated_password, username=None):
 
     def _decode_password():
         raw_password = extract_password(obfuscated_password)
-        if raw_password is False:
+        if raw_password is None:
             # if there was no obfuscation done, just return the raw password
             # and skip any further checks
             return obfuscated_password
