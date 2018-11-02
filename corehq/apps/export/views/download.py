@@ -282,7 +282,7 @@ def prepare_custom_export(request, domain):
             # Determine export filter
             form_class = _get_filter_form_class(form_or_case, sms_export)
             domain_object = Domain.get_by_name(domain)
-            timezone = _get_timezone(domain, request.couch_user)
+            timezone = get_timezone(domain, request.couch_user)
             filter_form = form_class(domain_object, timezone, filter_form_data)
             if not filter_form.is_valid():
                 raise ExportFormValidationException()
@@ -460,7 +460,7 @@ def prepare_form_multimedia(request, domain):
     export_specs = json.loads(request.POST.get('exports'))
     form_class = _get_filter_form_class(form_or_case, sms_export)
     domain_object = Domain.get_by_name(domain)
-    timezone = _get_timezone(domain, request.couch_user)
+    timezone = get_timezone(domain, request.couch_user)
     filter_form = form_class(domain_object, timezone, filter_form_data)
     if not filter_form.is_valid():
         return json_response({
