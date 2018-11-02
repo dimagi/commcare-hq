@@ -33,6 +33,11 @@ class AggAwcHelper(BaseICDSAggregationHelper):
     def tablename(self):
         return self._tablename_func(5)
 
+    def _ucr_tablename(self, ucr_id):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, ucr_id)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
     def aggregation_query(self):
         return """
         INSERT INTO "{tablename}"
@@ -151,7 +156,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         """.format(
             tablename=self.tablename,
         ), {
-           'start_date': self.month_start
+            'start_date': self.month_start
         }
 
         yield """
