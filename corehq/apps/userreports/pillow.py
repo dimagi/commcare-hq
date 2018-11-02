@@ -275,7 +275,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 notify_exception(
                     None,
                     "Error in saving changes chunk {ids}: {ex}".format(
-                        ids=[c.id for c in to_update], ex=ex))
+                        ids=[c.id for c in to_update], ex=repr(ex)))
                 retry_changes.update(to_update)
         if async_configs_by_doc_id:
             doc_type_by_id = {

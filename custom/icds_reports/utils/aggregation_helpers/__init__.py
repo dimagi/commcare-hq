@@ -10,6 +10,7 @@ import hashlib
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DASHBOARD_DOMAIN
+from six.moves import range
 
 
 def transform_day_to_month(day):

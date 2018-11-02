@@ -317,8 +317,7 @@ class TestXFormInstanceResource(APIResourceTest):
         start_date = datetime(1969, 6, 14)
         end_date = datetime(2011, 1, 2)
         expected = [
-            {'range': {'received_on': {'from': start_date.isoformat()}}},
-            {'range': {'received_on': {'to': end_date.isoformat()}}},
+            {'range': {'received_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
             {'term': {'doc_type': 'xforminstance'}},
             {'term': {'domain.exact': 'qwerty'}},
         ]

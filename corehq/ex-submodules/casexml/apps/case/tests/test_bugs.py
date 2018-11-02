@@ -14,11 +14,13 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.util.test_utils import TestFileMixin
+from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
 class SimpleCaseBugTests(SimpleTestCase):
@@ -329,6 +331,32 @@ class TestCaseHierarchy(TestCase):
             )[0]
         hierarchy = get_case_hierarchy(cases['bungo'], {})
         self.assertEqual(4, len(hierarchy['case_list']))
+
+    @softer_assert()
+    def test_missing_transactions(self):
+        # this could happen if a form was edited and resulted in a new case transaction
+        # e.g. a condition on a case transaction changed
+        case_id1 = uuid.uuid4().hex
+        case_id2 = uuid.uuid4().hex
+        form_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            case_id=case_id1,
+            create=True,
+        ).as_string()
+        submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
+        with self.assertRaises(CaseNotFound):
+            CaseAccessors().get_case(case_id2)
+
+        # form with same ID submitted but now has a new case transaction
+        new_case_block = CaseBlock(
+            case_id=case_id2,
+            create=True,
+            case_type='t1',
+        ).as_string()
+        submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
+        case2 = CaseAccessors().get_case(case_id2)
+        self.assertEqual([form_id], case2.xform_ids)
+        self.assertEqual('t1', case2.type)
 
 
 @use_sql_backend

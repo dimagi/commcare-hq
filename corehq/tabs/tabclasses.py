@@ -21,6 +21,7 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
     KeywordsListView,
@@ -496,7 +497,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_only_see_deid_exports(self):
-        from corehq.apps.export.views import user_can_view_deid_exports
+        from corehq.apps.export.views.utils import user_can_view_deid_exports
         return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
@@ -519,7 +520,7 @@ class ProjectDataTab(UITab):
 
         export_data_views = []
         if self.can_only_see_deid_exports:
-            from corehq.apps.export.views import (
+            from corehq.apps.export.views.list import (
                 DeIdFormExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
@@ -540,27 +541,35 @@ class ProjectDataTab(UITab):
             ])
 
         elif self.can_export_data:
-            from corehq.apps.export.views import (
-                FormExportListView,
-                CaseExportListView,
-                CreateNewCustomFormExportView,
-                CreateNewCustomCaseExportView,
+            from corehq.apps.export.views.download import (
                 DownloadNewFormExportView,
                 DownloadNewCaseExportView,
                 DownloadNewSmsExportView,
                 BulkDownloadNewFormExportView,
+            )
+            from corehq.apps.export.views.edit import (
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
-                DashboardFeedListView,
-                DailySavedExportListView,
-                CreateNewDailySavedFormExport,
-                CreateNewDailySavedCaseExport,
                 EditFormDailySavedExportView,
                 EditCaseDailySavedExportView,
-                CreateNewFormFeedView,
-                CreateNewCaseFeedView,
                 EditFormFeedView,
                 EditCaseFeedView,
+            )
+            from corehq.apps.export.views.list import (
+                FormExportListView,
+                CaseExportListView,
+                DashboardFeedListView,
+                DailySavedExportListView,
+            )
+            from corehq.apps.export.views.new import (
+                CreateNewCustomFormExportView,
+                CreateNewCustomCaseExportView,
+                CreateNewDailySavedFormExport,
+                CreateNewDailySavedCaseExport,
+                CreateNewFormFeedView,
+                CreateNewCaseFeedView,
+            )
+            from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
                 DailySavedExportPaywall
             )
@@ -701,7 +710,7 @@ class ProjectDataTab(UITab):
                 })
 
         if can_download_data_files(self.domain, self.couch_user):
-            from corehq.apps.export.views import DataFileDownloadList
+            from corehq.apps.export.views.utils import DataFileDownloadList
 
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
@@ -769,8 +778,11 @@ class ProjectDataTab(UITab):
         ):
             return []
 
-        from corehq.apps.export.views import (
-            FormExportListView, CaseExportListView, DownloadNewSmsExportView,
+        from corehq.apps.export.views.download import (
+            DownloadNewSmsExportView,
+        )
+        from corehq.apps.export.views.list import (
+            FormExportListView, CaseExportListView
         )
 
         items = []
@@ -1409,7 +1421,7 @@ class ProjectSettingsTab(UITab):
         project_info = []
 
         if user_is_admin:
-            from corehq.apps.domain.views import EditBasicProjectInfoView, EditPrivacySecurityView
+            from corehq.apps.domain.views.settings import EditBasicProjectInfoView, EditPrivacySecurityView
 
             project_info.extend([
                 {
@@ -1422,14 +1434,14 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-        from corehq.apps.domain.views import EditMyProjectSettingsView
+        from corehq.apps.domain.views.settings import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
         if toggles.OPENCLINICA.enabled(self.domain):
-            from corehq.apps.domain.views import EditOpenClinicaSettingsView
+            from corehq.apps.domain.views.settings import EditOpenClinicaSettingsView
             project_info.append({
                 'title': _(EditOpenClinicaSettingsView.page_title),
                 'url': reverse(EditOpenClinicaSettingsView.urlname, args=[self.domain])
@@ -1450,7 +1462,7 @@ class ProjectSettingsTab(UITab):
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
             if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
-                from corehq.apps.domain.views import (
+                from corehq.apps.domain.views.accounting import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
@@ -1500,7 +1512,7 @@ class ProjectSettingsTab(UITab):
                 items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
-            from corehq.apps.domain.views import (
+            from corehq.apps.domain.views.internal import (
                 EditInternalDomainInfoView,
                 EditInternalCalculationsView,
                 FlagsAndPrivilegesView,
@@ -1528,20 +1540,22 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views import (
+    from corehq.apps.domain.views.internal import TransferDomainView
+    from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
-        TransferDomainView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
-    if not settings.ENTERPRISE_MODE:
+    if not settings.ENTERPRISE_MODE and not get_domain_master_link(domain):
         administration.extend([
             {
                 'title': _('CommCare Exchange'),
                 'url': reverse('domain_snapshot_settings', args=[domain])
-            },
+            }])
+    if not settings.ENTERPRISE_MODE:
+        administration.extend([
             {
                 'title': _('Multimedia Sharing'),
                 'url': reverse('domain_manage_multimedia', args=[domain])
@@ -1625,7 +1639,7 @@ def _get_integration_section(domain):
 
 
 def _get_feature_flag_items(domain):
-    from corehq.apps.domain.views import CalendarFixtureConfigView, LocationFixtureConfigView
+    from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({

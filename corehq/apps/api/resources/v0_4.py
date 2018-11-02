@@ -67,6 +67,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     received_on = fields.CharField(attribute="received_on")
     edited_on = fields.CharField(attribute="edited_on", null=True)
     server_modified_on = fields.CharField(attribute="server_modified_on")
+    indexed_on = fields.CharField(attribute='inserted_at')
 
     app_id = fields.CharField(attribute='app_id', null=True)
     build_id = fields.CharField(attribute='build_id', null=True)
@@ -249,8 +250,8 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
 
     domain = fields.CharField(attribute='domain')
 
-    # Fields that v0.2 assumed were pre-transformed but we are now operating on straight CommCareCase objects again
     date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
+    indexed_on = fields.CharField(attribute='inserted_at', default="1900-01-01")
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
     opened_by = fields.CharField(attribute='opened_by', null=True)

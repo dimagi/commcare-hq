@@ -94,6 +94,7 @@ class CouchSqlDomainMigrator(object):
 
     def migrate(self):
         self.log_info('migrating domain {}'.format(self.domain))
+        self.processed_docs = 0
         with TimingContext("couch_sql_migration") as timing_context:
             self.timing_context = timing_context
             with timing_context('main_forms'):
@@ -158,6 +159,8 @@ class CouchSqlDomainMigrator(object):
         while not pool.join(timeout=10):
             self.log_info('Waiting on {} docs'.format(len(pool)))
 
+        self._log_main_forms_processed_count()
+
     def _migrate_form_and_associated_models_async(self, wrapped_form):
         set_local_domain_sql_backend_override(self.domain)
         try:
@@ -167,6 +170,8 @@ class CouchSqlDomainMigrator(object):
             raise
         finally:
             self.queues.release_lock_for_queue_obj(wrapped_form)
+            self.processed_docs += 1
+            self._log_main_forms_processed_count(throttled=True)
 
     def _migrate_form_and_associated_models(self, couch_form):
         sql_form = _migrate_form(self.domain, couch_form)
@@ -214,6 +219,8 @@ class CouchSqlDomainMigrator(object):
         while not pool.join(timeout=10):
             self.log_info('Waiting on {} docs'.format(len(pool)))
 
+        self._log_unprocessed_forms_processed_count()
+
     def _migrate_unprocessed_form(self, couch_form_json):
         self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         couch_form = _wrap_form(couch_form_json)
@@ -231,6 +238,9 @@ class CouchSqlDomainMigrator(object):
 
         _save_migrated_models(sql_form)
 
+        self.processed_docs += 1
+        self._log_unprocessed_forms_processed_count(throttled=True)
+
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
         pool = Pool(10)
@@ -240,6 +250,8 @@ class CouchSqlDomainMigrator(object):
 
         while not pool.join(timeout=10):
             self.log_info('Waiting on {} docs'.format(len(pool)))
+
+        self._log_unprocessed_cases_processed_count()
 
     def _copy_unprocessed_case(self, change):
         couch_case = CommCareCase.wrap(change.get_document())
@@ -283,6 +295,9 @@ class CouchSqlDomainMigrator(object):
                 sql_case.deletion_id
             )
 
+        self.processed_docs += 1
+        self._log_unprocessed_cases_processed_count(throttled=True)
+
     def _calculate_case_diffs(self):
         cases = {}
         batch_size = 100
@@ -299,6 +314,8 @@ class CouchSqlDomainMigrator(object):
 
         while not pool.join(timeout=10):
             self.log_info("Waiting on at most {} more docs".format(len(pool) * batch_size))
+
+        self._log_case_diff_count()
 
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
@@ -322,6 +339,9 @@ class CouchSqlDomainMigrator(object):
                 )
 
         self._diff_ledgers(case_ids)
+
+        self.processed_docs += 1
+        self._log_case_diff_count(throttled=True)
 
     def _rebuild_couch_case_and_re_diff(self, couch_case, sql_case_json):
         from corehq.form_processor.backends.couch.processor import FormProcessorCouch
@@ -377,6 +397,27 @@ class CouchSqlDomainMigrator(object):
         else:
             self.log_info("{} ({})".format(doc_count, ', '.join(doc_types)))
             return iterable
+
+    def _log_objects_processed_count(self, tags, throttled=False):
+        if throttled and self.processed_docs % 100 != 0:
+            return
+
+        datadog_counter("commcare.couchsqlmigration.docs_processed",
+                        value=self.processed_docs,
+                        tags=tags)
+        self.processed_objects = 0
+
+    def _log_main_forms_processed_count(self, throttled=False):
+        self._log_objects_processed_count(['type:main_forms'], throttled)
+
+    def _log_unprocessed_forms_processed_count(self, throttled=False):
+        self._log_objects_processed_count(['type:unprocessed_forms'], throttled)
+
+    def _log_unprocessed_cases_processed_count(self, throttled=False):
+        self._log_objects_processed_count(['type:unprocessed_cases'], throttled)
+
+    def _log_case_diff_count(self, throttled=False):
+        self._log_objects_processed_count(['type:case_diffs'], throttled)
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"
@@ -590,6 +631,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
             extensions_to_close
         )
         for case in case_result.cases:
+            case_db.post_process_case(case, sql_form)
             case_db.mark_changed(case)
 
         stock_result = process_stock(xforms, case_db)

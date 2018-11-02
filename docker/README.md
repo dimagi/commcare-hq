@@ -14,7 +14,7 @@ Initial setup
      * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
 
 * If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
-* Bootstrap the setup. Skip this step and go to [Configure your localsettings](#configure-your-localsettings) below if you came here from the [CommCare HQ README](https://github.com/dimagi/commcare-hq/blob/master/README.md#setup-localsettings).
+* Bootstrap the setup. Skip this step and go to [Configure your localsettings](#configure-your-localsettings) below if you came here from the [CommCare HQ README](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#setup-localsettings).
 
     ```
       $ ./scripts/docker runserver --bootstrap
@@ -45,7 +45,7 @@ There are two different localsettings configurations, depending on whether HQ is
   * Running docker services only (do this if you came here from the CommCare HQ README)
     * If you are using _Docker Toolbox_ (not _Docker for Mac_): change all service host settings (DATABASES HOST, COUCH_SERVER_ROOT, etc.) in your localsettings.py file to point to the IP address of your virtualbox docker VM.
     * Run `./scripts/docker up -d` to start docker services in the background. Sometimes this gets stuck waiting for Riak to start. If that happens break (CTRL+C) and try again.
-    * Once the services are all up (`./scripts/docker ps` to check) you can return to the CommCare HQ README and [Setup your Django environment](https://github.com/dimagi/commcare-hq/blob/master/README.md#set-up-your-django-environment).
+    * Once the services are all up (`./scripts/docker ps` to check) you can return to the CommCare HQ README and [Setup your Django environment](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#set-up-your-django-environment).
 
   * Running HQ inside a docker container
 

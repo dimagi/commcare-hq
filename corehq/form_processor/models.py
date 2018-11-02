@@ -1131,6 +1131,13 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     TYPES_TO_PROCESS = (
         TYPE_FORM,
     )
+    FORM_TYPE_ACTIONS_ORDER = (
+        TYPE_CASE_CREATE,
+        TYPE_CASE_INDEX,
+        TYPE_CASE_CLOSE,
+        TYPE_CASE_ATTACHMENT,
+        TYPE_LEDGER,
+    )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name="transaction_set", related_query_name="transaction",

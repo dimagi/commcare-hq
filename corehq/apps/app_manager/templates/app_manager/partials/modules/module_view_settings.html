@@ -25,7 +25,7 @@
                     <i class="fa fa-check"></i>{% trans "Multimedia" %}
                 </a>
             </li>
-            {% if not module.is_surveys and module.module_type != 'shadow' %}
+            {% if not module.is_surveys %}
                {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
                     <li>
                         <a href="#" data-slug="advanced" data-collapse="1">
@@ -156,40 +156,44 @@
             </div>
           </div>
 
-           {% if not module.is_surveys and module.module_type != 'shadow' %}
-             {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
-             <div class="panel panel-appmanager" data-slug="advanced">
-              <div class="panel-heading">
-                <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>
-              </div>
-              <div class="panel-body">
-                {% include 'app_manager/partials/modules/case_list_form_setting.html' %}
-
-                {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
-
-                {% if module.module_type == 'basic' and request.project.survey_management_enabled or module.task_list.show %}
-                    {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
-                {% endif %}
-
-                {% if module.doc_type == "AdvancedModule" %}
-                    <div class="form-group">
-                        <label class="control-label col-sm-2">
-                            {% trans "Auto Select Case" %}
-                            <span class="hq-help-template"
-                                  data-title="{% trans "Auto Select Case" %}"
-                                  data-content="{% blocktrans %}When the case list contains only one case, skip over it, jumping directly to case details.{% endblocktrans %}"
-                            ></span>
-                        </label>
-                        <div id="auto-select-case" class="col-sm-4 checkbox commcare-feature" data-since-version="2.24">
-                            <input type="checkbox" data-bind="checked: auto_select_case" />
-                            <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
-                        </div>
+        {% if not module.is_surveys %}
+             {% if add_ons.register_from_case_list or add_ons.case_list_menu_item and module.module_type != 'shadow' or module.doc_type == "AdvancedModule" %}
+                 <div class="panel panel-appmanager" data-slug="advanced">
+                    <div class="panel-heading">
+                        <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>
                     </div>
-                {% endif %}
-              </div>
-            </div>
+                    <div class="panel-body">
+                        {% if add_ons.register_from_case_list %}
+                            {% include 'app_manager/partials/modules/case_list_form_setting.html' %}
+                        {% endif %}
+
+                        {% if add_ons.case_list_menu_item and module.module_type != 'shadow' %} %}
+                            {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+
+                            {% if module.module_type == 'basic' and request.project.survey_management_enabled or module.task_list.show %}
+                                {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
+                            {% endif %}
+                        {% endif %}
+
+                        {% if module.doc_type == "AdvancedModule" %}
+                            <div class="form-group">
+                                <label class="control-label col-sm-2">
+                                    {% trans "Auto Select Case" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Auto Select Case" %}"
+                                          data-content="{% blocktrans %}When the case list contains only one case, skip over it, jumping directly to case details.{% endblocktrans %}"
+                                    ></span>
+                                </label>
+                                <div id="auto-select-case" class="col-sm-4 checkbox commcare-feature" data-since-version="2.24">
+                                    <input type="checkbox" data-bind="checked: auto_select_case" />
+                                    <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div><!-- end .panel-body -->
+                </div><!-- end .panel -->
             {% endif %}
-          {% endif %}
+        {% endif %}
 
         {% endblock %}
     </fieldset>
