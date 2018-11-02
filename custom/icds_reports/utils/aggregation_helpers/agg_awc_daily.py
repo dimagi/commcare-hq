@@ -3,11 +3,9 @@ from __future__ import unicode_literals
 
 import six
 
-from corehq.apps.userreports.util import get_table_name
 from six.moves import map
 
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, \
-    month_formatter
+from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
 
 
 class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
