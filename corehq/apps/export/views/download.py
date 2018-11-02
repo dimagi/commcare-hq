@@ -358,14 +358,10 @@ def prepare_custom_export(request, domain):
 
     # Analytics
     if form_or_case:
-        def _check_if_export_has_data(instances):
-            for instance in instances:
-                if (get_export_size(instance, export_filters) > 0):
-                    return True
-            return False
-
         capitalized = form_or_case[0].upper() + form_or_case[1:]
-        if _check_if_export_has_data(export_instances):
+        def _has_data(instance):
+            return get_export_size(instance, export_filters) > 0
+        if any(_has_data(instance) for instance in export_instances):
             track_workflow(request.couch_user.username, 'Downloaded {} Exports With Data'.format(capitalized))
         else:
             track_workflow(request.couch_user.username, 'Downloaded {} Exports With No Data'.format(capitalized))
