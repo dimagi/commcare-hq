@@ -12,5 +12,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL("DROP FUNCTION aggregate_awc_daily;", "SELECT 1")
+        migrations.RunSQL("DROP FUNCTION IF EXISTS aggregate_awc_daily(date)", "SELECT 1")
     ]
