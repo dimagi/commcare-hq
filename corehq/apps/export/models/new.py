@@ -1023,6 +1023,7 @@ class CaseExportInstance(ExportInstance):
                 self.filters.accessible_location_ids,
                 self.filters.show_all_data,
                 self.filters.show_project_data,
+                self.filters.show_deactivated_data,
                 self.filters.user_types,
                 self.filters.date_period,
                 self.filters.sharing_groups + self.filters.reporting_groups,
