@@ -355,10 +355,6 @@ def prepare_custom_export(request, domain):
             'error': _('This file has more than 256 columns, which is not supported by xls. '
                        'Please change the output type to csv or xlsx to export this file.')
         })
-    except Exception:
-        return json_response({
-            'error': _("There was an error."),
-        })
     send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, request)
 
     # Analytics
