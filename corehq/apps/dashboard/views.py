@@ -18,11 +18,12 @@ from corehq.apps.dashboard.models import (
     Tile,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
-    DefaultProjectSettingsView
+from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from dimagi.utils.web import json_response
@@ -134,7 +135,12 @@ def _get_default_tiles(request):
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
 
-    can_view_exchange = lambda request: can_edit_apps(request) and not settings.ENTERPRISE_MODE
+    def can_view_exchange(request):
+        return (
+            can_edit_apps(request)
+            and not settings.ENTERPRISE_MODE
+            and not get_domain_master_link(request.domain)  # this isn't a linked domain
+        )
 
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)

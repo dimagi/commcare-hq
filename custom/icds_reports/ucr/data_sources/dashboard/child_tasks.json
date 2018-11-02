@@ -1,8 +1,10 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
     "reach-test",
-    "icds-cas"
+    "icds-cas",
+    "cas-lab"
   ],
   "server_environment": [
     "softlayer",
@@ -182,7 +184,7 @@
         {
           "column": "state_id",
           "subtype": "string_lastchars",
-          "constraint": "5"
+          "constraint": "3"
         }
       ]
     },

@@ -19,7 +19,7 @@ from dimagi.utils.post import simple_post
 
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views import BaseAdminProjectSettingsView, BaseProjectSettingsView
+from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView, BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.users.models import Permissions
@@ -223,6 +223,7 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super(AddOpenmrsRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.location_id = self.add_repeater_form.cleaned_data['location_id']
+        repeater.atom_feed_enabled = self.add_repeater_form.cleaned_data['atom_feed_enabled']
         return repeater
 
 

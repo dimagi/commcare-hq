@@ -839,3 +839,10 @@ hr {
 .issnip-spinner-container span {
     margin-left: 5px;
 }
+
+.system-usage-message{
+    font-size: 13px;
+    font-style: italic;
+    text-align: center;
+    padding: 20px 50px 0;
+}

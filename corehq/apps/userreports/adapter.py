@@ -77,20 +77,16 @@ class IndicatorAdapter(object):
     def bulk_save(self, docs):
         """
         Evalutes UCR rows for given docs and saves the result in bulk.
-        Override this to support bulk. Currently supported in SQL version
         """
-        for doc in docs:
-            self.save(doc)
+        raise NotImplementedError
 
     def get_all_values(self, doc, eval_context=None):
         "Gets all the values from a document to save"
         return self.config.get_all_values(doc, eval_context)
 
-    def save_rows(self, rows):
-        """
-        Saves rows to a data source after deleting the old rows
-        """
-        raise NotImplementedError
+    def bulk_delete(self, doc_ids):
+        for _id in doc_ids:
+            self.delete({'_id': _id})
 
     def delete(self, doc):
         raise NotImplementedError

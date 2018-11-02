@@ -1,13 +1,9 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-
 window.angular.module('icdsApp').factory('infrastructureService', ['$http', function($http) {
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+    var gtag = hqImport('analytix/js/google').track;
     return {
         getCleanWaterData: function(step, params) {
-            window.ga('send', 'event', {
-                'eventCategory': 'Infrastructure Service',
-                'eventAction': 'Fetching data started',
-                'eventLabel': 'Clean Water',
-            });
+            gtag.event('Infrastructure Service', 'Fetching data started', 'Clean Water');
             var get_url = url('clean_water', step);
             return  $http({
                 method: "GET",
@@ -15,28 +11,16 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 params: params,
             }).then(
                 function(response) {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Clean Water',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Clean Water');
                     return response;
                 },
                 function() {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Clean Water',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Clean Water');
                 }
             );
         },
         getFunctionalToiletData: function(step, params) {
-            window.ga('send', 'event', {
-                'eventCategory': 'Infrastructure Service',
-                'eventAction': 'Fetching data started',
-                'eventLabel': 'Functional Toilet',
-            });
+            gtag.event('Infrastructure Service', 'Fetching data started', 'Functional Toilet');
             var get_url = url('functional_toilet', step);
             return  $http({
                 method: "GET",
@@ -44,28 +28,16 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 params: params,
             }).then(
                 function(response) {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Functional Toilet',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Functional Toilet');
                     return response;
                 },
                 function() {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Functional Toilet',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Functional Toilet');
                 }
             );
         },
         getMedicineKitData: function(step, params) {
-            window.ga('send', 'event', {
-                'eventCategory': 'Infrastructure Service',
-                'eventAction': 'Fetching data started',
-                'eventLabel': 'Medicine Kit',
-            });
+            gtag.event('Infrastructure Service', 'Fetching data started', 'Medicine Kit');
             var get_url = url('medicine_kit', step);
             return  $http({
                 method: "GET",
@@ -73,28 +45,16 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 params: params,
             }).then(
                 function(response) {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Medicine Kit',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Medicine Kit');
                     return response;
                 },
                 function() {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Medicine Kit',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Medicine Kit');
                 }
             );
         },
         getInfantsWeightScaleData: function(step, params) {
-            window.ga('send', 'event', {
-                'eventCategory': 'Infrastructure Service',
-                'eventAction': 'Fetching data started',
-                'eventLabel': 'Infants Weight Scale',
-            });
+            gtag.event('Infrastructure Service', 'Fetching data started', 'Infants Weight Scale');
             var get_url = url('infants_weight_scale', step);
             return  $http({
                 method: "GET",
@@ -102,28 +62,16 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 params: params,
             }).then(
                 function(response) {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Infants Weight Scale',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Infants Weight Scale');
                     return response;
                 },
                 function() {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Infants Weight Scale',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Infants Weight Scale');
                 }
             );
         },
         getAdultWeightScaleData: function(step, params) {
-            window.ga('send', 'event', {
-                'eventCategory': 'Infrastructure Service',
-                'eventAction': 'Fetching data started',
-                'eventLabel': 'Adult Weight Scale',
-            });
+            gtag.event('Infrastructure Service', 'Fetching data started', 'Adult Weight Scale');
             var get_url = url('adult_weight_scale', step);
             return  $http({
                 method: "GET",
@@ -131,19 +79,11 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 params: params,
             }).then(
                 function(response) {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Adult Weight Scale',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Adult Weight Scale');
                     return response;
                 },
                 function() {
-                    window.ga('send', 'event', {
-                        'eventCategory': 'Infrastructure Service',
-                        'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Adult Weight Scale',
-                    });
+                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Adult Weight Scale');
                 }
             );
         },

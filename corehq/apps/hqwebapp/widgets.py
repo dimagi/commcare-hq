@@ -43,52 +43,6 @@ class BootstrapCheckboxInput(CheckboxInput):
                          (flatatt(final_attrs), self.inline_label))
 
 
-class AutocompleteTextarea(forms.Textarea):
-    """
-    Textarea with auto-complete.  Uses a custom extension on top of Twitter
-    Bootstrap's typeahead plugin.
-    """
-
-    def render(self, name, value, attrs=None):
-        if hasattr(self, 'choices') and self.choices:
-            if not attrs:
-                attrs = {}
-            attrs.update({
-                'class': 'hqwebapp-autocomplete form-control',
-                'data-choices': json.dumps([{'text': c, 'id': c} for c in self.choices]),
-            })
-
-        return super(AutocompleteTextarea, self).render(name, value, attrs=attrs)
-
-
-class _Select2Mixin(object):
-
-    class Media(object):
-        css = {
-            'all': ('select2-3.5.2-legacy/select2.css',)
-        }
-        js = ('select2-3.5.2-legacy/select2.js',)
-
-    def render(self, name, value, attrs=None, choices=()):
-        output = super(_Select2Mixin, self).render(name, value, attrs)
-        output += """
-            <script>
-                $(function() {
-                    $('#%s').select2({ width: 'resolve' });
-                });
-            </script>
-        """ % attrs.get('id')
-        return mark_safe(output)
-
-
-class Select2(_Select2Mixin, forms.Select):
-    pass
-
-
-class Select2MultipleChoiceWidget(_Select2Mixin, forms.SelectMultiple):
-    pass
-
-
 class _Select2AjaxMixin():
     """
     A Select2 widget that loads its options asynchronously.

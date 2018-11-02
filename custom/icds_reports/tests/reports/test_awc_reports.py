@@ -11,7 +11,7 @@ from mock import mock
 
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
-    get_awc_report_beneficiary, get_awc_report_pregnant, get_pregnant_details
+    get_awc_report_beneficiary, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
 from custom.icds_reports.messages import new_born_with_low_weight_help_text, wasting_help_text, \
     exclusive_breastfeeding_help_text, early_initiation_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
@@ -2209,8 +2209,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 17,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2015-12-15',
+                    'age': '1 year 5 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': '645fd452-3732-44fb-a2d3-46162304807e',
@@ -2232,8 +2232,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 5,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2016-12-16',
+                    'age': '5 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': '9ca36787-bed9-4af0-a13e-fca1c9cad360',
@@ -2255,8 +2255,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 14,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2016-03-06',
+                    'age': '1 year 2 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': '7673a69c-29af-478c-85c6-9c3b22f6b2e4',
@@ -2278,8 +2278,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 7,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2016-10-05',
+                    'age': '7 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': 'd5d3fbeb-8b6a-486b-a853-30be35589200',
@@ -2301,8 +2301,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 59,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': 1,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2012-06-26',
+                    'age': '4 years 11 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': 'b954eb28-75de-43c8-9ec0-d38b7d246ead',
@@ -2324,8 +2324,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 2,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2017-03-19',
+                    'age': '2 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': '6faecfe6-cc88-4ff0-9b3d-d8ca069dd06f',
@@ -2347,8 +2347,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 45,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': 13,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2013-08-22',
+                    'age': '3 years 9 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': '3b242a3b-693e-44dd-ad4a-b713efdb0fdb',
@@ -2369,8 +2369,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 57,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': 9,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2012-08-24',
+                    'age': '4 years 9 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': '4cd07ebf-abce-4345-a930-f6db7ede8996',
@@ -2392,8 +2392,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 49,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': 11,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2013-05-01',
+                    'age': '4 years ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': '0198ec4a-f5ed-4452-863c-a400f43d238a',
@@ -2415,8 +2415,8 @@ class TestAWCReport(TestCase):
                     'age_in_months': 6,
                     'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
-                    'dob': None,
-                    'age': '0 days',
+                    'dob': '2016-11-16',
+                    'age': '6 months ',
                     'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
                     'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
                     'case_id': 'a9dc5cac-6820-45cf-b8c9-16f2cfb0ae02',
@@ -2466,6 +2466,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_pregnant_first_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_pregnant(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a15'
@@ -2490,6 +2492,8 @@ class TestAWCReport(TestCase):
     def test_awc_report_pregnant_second_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
             data = get_awc_report_pregnant(
+                start=0,
+                length=10,
                 order='age',
                 reversed_order=False,
                 awc_id='a15'
@@ -2565,4 +2569,172 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][2],
                 []
+            )
+
+    def test_awc_report_lactating_first_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][0],
+                {
+                    'num_rations_distributed': 0,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 20,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '36d5e223-a631-4030-910c-262a1d066fb3',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_second_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][1],
+                {
+                    'num_rations_distributed': 6,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 23,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': 'aefb8fe5-1cd1-4235-9baf-963b1a0b498e',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_third_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][2],
+                {
+                    'num_rations_distributed': 6,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 24,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_forth_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][3],
+                {
+                    'num_rations_distributed': 12,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 26,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '10a53900-f65e-46b7-ae0c-f32a208c0677',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_fifth_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][4],
+                {
+                    'num_rations_distributed': 12,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 26,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '1a6851bc-8172-48fc-80d1-b198f23033ab',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_sixth_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][5],
+                {
+                    'num_rations_distributed': 6,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 26,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_seventh_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertEqual(
+                data['data'][6],
+                {
+                    'num_rations_distributed': 6,
+                    'institutional_delivery_in_month': 'N',
+                    'person_name': None,
+                    'delivery_nature': None,
+                    'age': 29,
+                    'num_pnc_visits': None,
+                    'add': None,
+                    'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
+                    'breastfed_at_birth': 'N',
+                    'is_ebf': 'N'}
             )

@@ -1,5 +1,6 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% requirejs_main "data_interfaces/js/find_by_id" %}
 
@@ -7,6 +8,14 @@
     {% registerurl 'global_quick_find' %}
     {% registerurl 'list_case_exports' domain %}
     {% registerurl 'list_form_exports' domain %}
+
+    {% blocktrans %}
+        <p class="lead">Find Data by ID</p>
+        <p>
+            This page allows you to directly access a specific form data or case data page.
+            Read more on our <a href='https://confluence.dimagi.com/display/commcarepublic/Find+Data+by+ID'>help site</a>.
+        </p>
+    {% endblocktrans %}
 
     {% if can_view_cases %}
         <fieldset id="find-case" class="ko-template">

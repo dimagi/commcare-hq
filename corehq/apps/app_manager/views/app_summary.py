@@ -17,7 +17,7 @@ from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
-from corehq.apps.domain.views import LoginAndDomainMixin
+from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.reports.formdetails.readable import FormQuestionResponse
 from corehq.apps.hqwebapp.decorators import use_angular_js

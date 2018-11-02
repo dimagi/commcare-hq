@@ -8,7 +8,6 @@
 {% initial_page_data 'next_invoice_date' next_invoice_date %}
 {% initial_page_data 'current_plan' current_plan %}
 {% initial_page_data 'new_plan_edition' new_plan_edition %}
-{% initial_page_data 'new_plan_name' plan.name %}
 {% initial_page_data 'is_downgrade_before_minimum' is_downgrade_before_minimum %}
 {% initial_page_data 'current_subscription_end_date' current_subscription_end_date %}
 {% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
@@ -78,6 +77,27 @@
         </div>
         {% endif %}
     {% endif %}
+
+    {% if downgrade_messages %}
+    <hr />
+    <h4>
+        {% if show_community_notice %}
+        {% trans 'Note: If you do not upgrade from the Community Plan the following changes will take place.' %}
+        {% else %}
+        {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
+        {% endif %}
+    </h4>
+    {% endif %}
+    {% for message in downgrade_messages %}
+        <div class="alert alert-warning">
+            {{ message.message }}
+            <ul>
+            {% for detail in message.details %}
+                <li>{{ detail|safe }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endfor %}
 
     {% if show_community_notice %}
     <div class="form-actions">

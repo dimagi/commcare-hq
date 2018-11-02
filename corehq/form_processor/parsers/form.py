@@ -182,12 +182,13 @@ def _handle_duplicate(new_doc):
     new_md5 = new_doc.xml_md5()
 
     if existing_md5 != new_md5:
+        _soft_assert = soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)
         if new_doc.xmlns != existing_doc.xmlns:
             # if the XMLNS has changed this probably isn't a form edit
             # it could be a UUID clash (yes we've had that before)
             # Assign a new ID to the form and process as normal + notify_admins
             xform = interface.assign_new_id(new_doc)
-            soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)(
+            _soft_assert(
                 False, "Potential UUID clash", {
                     'incoming_form_id': conflict_id,
                     'existing_form_id': existing_doc.form_id,
@@ -204,6 +205,13 @@ def _handle_duplicate(new_doc):
             #    but a different ID and a doc_type of XFormDeprecated
             #  - Save the new instance to the previous document to preserve the ID
             existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
+            _soft_assert(
+                False, "Form edit", {
+                    'form_id': new_doc.form_id,
+                    'deprecated_form': existing_doc.form_id,
+                    'domain': new_doc.domain,
+                }
+            )
             return FormProcessingResult(new_doc, existing_doc)
     else:
         # follow standard dupe handling, which simply saves a copy of the form

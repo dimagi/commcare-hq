@@ -12,7 +12,7 @@ hqDefine("hqwebapp/js/widgets", [
             var $input = $(input);
             $input.select2(_.extend({
                 multiple: true,
-                tags: $input.data("choices"),
+                tags: true,
             }, additionalConfig));
         });
 

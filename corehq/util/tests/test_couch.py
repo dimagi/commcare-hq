@@ -11,7 +11,7 @@ from mock import Mock
 from corehq.util.exceptions import DocumentClassNotFound
 
 from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
-        DocUpdate, get_document_class_by_doc_type, get_document_or_404_lite)
+        DocUpdate, get_document_class_by_doc_type)
 from six.moves import range
 
 
@@ -85,15 +85,6 @@ class GetDocMockTestCase(SimpleTestCase):
         get_document_or_404 should return a wrapped model on success
         """
         doc = get_document_or_404(MockModel, 'ham', '123')
-        self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
-
-    def test_get_document_or_404_lite_not_found(self):
-        with mock_get_context():
-            with self.assertRaises(Http404):
-                get_document_or_404_lite(MockModel, '123')
-
-    def test_get_document_or_404_lite_success(self):
-        doc = get_document_or_404_lite(MockModel, '123')
         self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
 
 

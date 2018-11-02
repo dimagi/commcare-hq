@@ -220,7 +220,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain'),
     ModelDeletion('data_interfaces', 'DomainCaseRuleRun', 'domain'),
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
-    ModelDeletion('export', 'DailySavedExportNotification', 'domain'),
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     CustomDeletion('export', _delete_data_files),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),

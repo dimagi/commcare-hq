@@ -53,7 +53,6 @@ PARENT_TYPE = "mother"
 CHILD_RELATIONSHIP = "child"
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class BaseSyncTest(TestCase):
     """
     Shared functionality among tests

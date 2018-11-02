@@ -18,13 +18,12 @@ hqDefine('accounting/js/confirm_plan', [
     var MORE_FEATURES = gettext("I need additional/custom features");
     var OTHER = gettext("Other");
 
-    var confirmPlanModel = function (isUpgrade, currentPlan, newPlan) {
+    var confirmPlanModel = function (isUpgrade, currentPlan) {
         'use strict';
         var self = {};
 
         self.isUpgrade = isUpgrade;
         self.currentPlan = currentPlan;
-        self.newPlan = newPlan;
 
         // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
         self.userAgreementSigned = ko.observable(!isUpgrade);
@@ -105,8 +104,7 @@ hqDefine('accounting/js/confirm_plan', [
     $(function () {
         var confirmPlan = confirmPlanModel(
             initialPageData.get('is_upgrade'),
-            initialPageData.get('current_plan'),
-            initialPageData.get('new_plan_name')
+            initialPageData.get('current_plan')
         );
 
         $('#confirm-plan-content').koApplyBindings(confirmPlan);

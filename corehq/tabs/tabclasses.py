@@ -21,6 +21,7 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
     KeywordsListView,
@@ -413,6 +414,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
         '/a/{domain}/data_dictionary/',
+        '/a/{domain}/importer/'
     )
 
     @property
@@ -495,7 +497,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_only_see_deid_exports(self):
-        from corehq.apps.export.views import user_can_view_deid_exports
+        from corehq.apps.export.views.utils import user_can_view_deid_exports
         return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
@@ -518,21 +520,14 @@ class ProjectDataTab(UITab):
 
         export_data_views = []
         if self.can_only_see_deid_exports:
-            from corehq.apps.export.views import (
+            from corehq.apps.export.views.list import (
                 DeIdFormExportListView,
-                DownloadFormExportView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
                 'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
-                'subpages': [
-                    {
-                        'title': _(DownloadFormExportView.page_title),
-                        'urlname': DownloadFormExportView.urlname,
-                    },
-                ]
             })
             export_data_views.extend([
                 {
@@ -546,30 +541,35 @@ class ProjectDataTab(UITab):
             ])
 
         elif self.can_export_data:
-            from corehq.apps.export.views import (
-                FormExportListView,
-                CaseExportListView,
-                CreateNewCustomFormExportView,
-                CreateNewCustomCaseExportView,
-                DownloadFormExportView,
+            from corehq.apps.export.views.download import (
                 DownloadNewFormExportView,
-                DownloadCaseExportView,
                 DownloadNewCaseExportView,
                 DownloadNewSmsExportView,
-                BulkDownloadFormExportView,
                 BulkDownloadNewFormExportView,
+            )
+            from corehq.apps.export.views.edit import (
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
-                DashboardFeedListView,
-                DailySavedExportListView,
-                CreateNewDailySavedFormExport,
-                CreateNewDailySavedCaseExport,
                 EditFormDailySavedExportView,
                 EditCaseDailySavedExportView,
-                CreateNewFormFeedView,
-                CreateNewCaseFeedView,
                 EditFormFeedView,
                 EditCaseFeedView,
+            )
+            from corehq.apps.export.views.list import (
+                FormExportListView,
+                CaseExportListView,
+                DashboardFeedListView,
+                DailySavedExportListView,
+            )
+            from corehq.apps.export.views.new import (
+                CreateNewCustomFormExportView,
+                CreateNewCustomCaseExportView,
+                CreateNewDailySavedFormExport,
+                CreateNewDailySavedCaseExport,
+                CreateNewFormFeedView,
+                CreateNewCaseFeedView,
+            )
+            from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
                 DailySavedExportPaywall
             )
@@ -588,16 +588,8 @@ class ProjectDataTab(UITab):
                                 'urlname': CreateNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
-                                'title': _(BulkDownloadFormExportView.page_title),
-                                'urlname': BulkDownloadFormExportView.urlname,
-                            },
-                            {
                                 'title': _(BulkDownloadNewFormExportView.page_title),
                                 'urlname': BulkDownloadNewFormExportView.urlname,
-                            },
-                            {
-                                'title': _(DownloadFormExportView.page_title),
-                                'urlname': DownloadFormExportView.urlname,
                             },
                             {
                                 'title': _(DownloadNewFormExportView.page_title),
@@ -623,10 +615,6 @@ class ProjectDataTab(UITab):
                                 'title': _(CreateNewCustomCaseExportView.page_title),
                                 'urlname': CreateNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
-                            {
-                                'title': _(DownloadCaseExportView.page_title),
-                                'urlname': DownloadCaseExportView.urlname,
-                            },
                             {
                                 'title': _(DownloadNewCaseExportView.page_title),
                                 'urlname': DownloadNewCaseExportView.urlname,
@@ -722,7 +710,7 @@ class ProjectDataTab(UITab):
                 })
 
         if can_download_data_files(self.domain, self.couch_user):
-            from corehq.apps.export.views import DataFileDownloadList
+            from corehq.apps.export.views.utils import DataFileDownloadList
 
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
@@ -756,6 +744,20 @@ class ProjectDataTab(UITab):
                 })
             items.extend(edit_section)
 
+        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
+            explore_data_views = [
+                {
+                    'title': _(ExploreCaseDataView.page_title),
+                    'url': reverse(ExploreCaseDataView.urlname,
+                                   args=(self.domain,)),
+                    'show_in_dropdown': False,
+                    'icon': 'fa fa-search',
+                    'subpages': [],
+                }
+            ]
+            items.append([_("Explore Data"), explore_data_views])
+
         if self.can_use_lookup_tables:
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
@@ -776,8 +778,11 @@ class ProjectDataTab(UITab):
         ):
             return []
 
-        from corehq.apps.export.views import (
-            FormExportListView, CaseExportListView, DownloadNewSmsExportView,
+        from corehq.apps.export.views.download import (
+            DownloadNewSmsExportView,
+        )
+        from corehq.apps.export.views.list import (
+            FormExportListView, CaseExportListView
         )
 
         items = []
@@ -798,7 +803,7 @@ class ProjectDataTab(UITab):
             ))
         if self.can_view_form_exports or self.can_view_case_exports:
             items.append(dropdown_dict(
-                _('Find Data by ID (Beta)'),
+                _('Find Data by ID'),
                 url=reverse('data_find_by_id', args=[self.domain])
             ))
 
@@ -1356,6 +1361,10 @@ class EnterpriseSettingsTab(UITab):
                 'title': _('Enterprise Settings'),
                 'url': reverse('enterprise_settings', args=[self.domain]),
             },
+            {
+                'title': _('Billing Statements'),
+                'url': reverse('enterprise_billing_statements', args=[self.domain])
+            }
         ]))
         return items
 
@@ -1412,7 +1421,7 @@ class ProjectSettingsTab(UITab):
         project_info = []
 
         if user_is_admin:
-            from corehq.apps.domain.views import EditBasicProjectInfoView, EditPrivacySecurityView
+            from corehq.apps.domain.views.settings import EditBasicProjectInfoView, EditPrivacySecurityView
 
             project_info.extend([
                 {
@@ -1425,14 +1434,14 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-        from corehq.apps.domain.views import EditMyProjectSettingsView
+        from corehq.apps.domain.views.settings import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
         if toggles.OPENCLINICA.enabled(self.domain):
-            from corehq.apps.domain.views import EditOpenClinicaSettingsView
+            from corehq.apps.domain.views.settings import EditOpenClinicaSettingsView
             project_info.append({
                 'title': _(EditOpenClinicaSettingsView.page_title),
                 'url': reverse(EditOpenClinicaSettingsView.urlname, args=[self.domain])
@@ -1453,7 +1462,7 @@ class ProjectSettingsTab(UITab):
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
             if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
-                from corehq.apps.domain.views import (
+                from corehq.apps.domain.views.accounting import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
@@ -1503,7 +1512,7 @@ class ProjectSettingsTab(UITab):
                 items.append((_('Subscription'), subscription))
 
         if self.couch_user.is_superuser:
-            from corehq.apps.domain.views import (
+            from corehq.apps.domain.views.internal import (
                 EditInternalDomainInfoView,
                 EditInternalCalculationsView,
                 FlagsAndPrivilegesView,
@@ -1531,20 +1540,22 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views import (
+    from corehq.apps.domain.views.internal import TransferDomainView
+    from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
-        TransferDomainView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
-    if not settings.ENTERPRISE_MODE:
+    if not settings.ENTERPRISE_MODE and not get_domain_master_link(domain):
         administration.extend([
             {
                 'title': _('CommCare Exchange'),
                 'url': reverse('domain_snapshot_settings', args=[domain])
-            },
+            }])
+    if not settings.ENTERPRISE_MODE:
+        administration.extend([
             {
                 'title': _('Multimedia Sharing'),
                 'url': reverse('domain_manage_multimedia', args=[domain])
@@ -1628,7 +1639,7 @@ def _get_integration_section(domain):
 
 
 def _get_feature_flag_items(domain):
-    from corehq.apps.domain.views import CalendarFixtureConfigView, LocationFixtureConfigView
+    from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
