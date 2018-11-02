@@ -292,14 +292,14 @@ def approve_app(request, snapshot):
 def import_app(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
-        messages.error(request, 'You must agree to our terms of service to download an app')
+        messages.error(request, _('You must agree to our terms of service to download an app'))
         return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
     from_project = Domain.get(snapshot)
 
     if request.method == 'POST' and from_project.is_snapshot:
         if not from_project.published:
-            messages.error(request, "This project is not published and can't be downloaded")
+            messages.error(request, _("This project is not published and can't be downloaded"))
             return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
         to_project_name = request.POST['project']
@@ -327,7 +327,7 @@ def import_app(request, snapshot):
 def copy_snapshot(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
-        messages.error(request, 'You must agree to our terms of service to download an app')
+        messages.error(request, _('You must agree to our terms of service to download an app'))
         return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
     dom = Domain.get(snapshot)

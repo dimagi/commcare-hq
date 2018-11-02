@@ -63,8 +63,13 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return {
             'repeaters': self.repeaters,
             'pending_record_count': RepeatRecord.count(self.domain),
-            'gefingerpoken': self.request.couch_user.is_superuser or
-                             toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+            'gefingerpoken': (
+                # Set gefingerpoken_ to whether the user should be allowed to change MOTECH configuration.
+                # .. _gefingerpoken: https://en.wikipedia.org/wiki/Blinkenlights
+                self.request.couch_user.is_superuser or
+                self.request.couch_user.can_edit_motech() or
+                toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+            )
         }
 
 
@@ -218,6 +223,7 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super(AddOpenmrsRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.location_id = self.add_repeater_form.cleaned_data['location_id']
+        repeater.atom_feed_enabled = self.add_repeater_form.cleaned_data['atom_feed_enabled']
         return repeater
 
 

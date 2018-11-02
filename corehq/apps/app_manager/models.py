@@ -98,7 +98,7 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -239,21 +239,6 @@ def app_template_dir(slug):
 def load_app_template(slug):
     with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
         return json.load(f)
-
-
-@memoized
-def get_template_app_multimedia_paths(slug):
-    paths = []
-    base_path = app_template_dir(slug)
-    for root, subdirs, files in os.walk(base_path):
-        subdir = os.path.relpath(root, base_path)
-        if subdir == '.':
-            continue
-        for file in files:
-            if file.startswith("."):
-                continue
-            paths.append(subdir + os.sep + file)
-    return paths
 
 
 @memoized
@@ -825,6 +810,15 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
+class CustomAssertion(DocumentSchema):
+    """Custom assertions to add to the assertions block
+    test: The actual assertion to run
+    locale_id: The id of the localizable string
+    """
+    test = StringProperty(required=True)
+    text = DictProperty(StringProperty)
+
+
 class CustomInstance(DocumentSchema):
     """Custom instances to add to the instance block
     instance_id: 	The ID of the instance
@@ -953,6 +947,7 @@ class FormBase(DocumentSchema):
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
+    custom_assertions = SchemaListProperty(CustomAssertion)
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
     is_release_notes_form = BooleanProperty(default=False)
@@ -5525,11 +5520,18 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
-    def to_saved_build_json(self, timezone):
+    def releases_list_json(self, timezone):
+        """
+        returns minimum possible data that could be used to list a Build on releases page on HQ
+
+        :param timezone: timezone expected for timestamps in result
+        :return: data dict
+        """
         data = super(SavedAppBuild, self).to_json().copy()
+        # ignore details that are not used
         for key in ('modules', 'user_registration', 'external_blobs',
-                    '_attachments', 'profile', 'translations'
-                    'description', 'short_description'):
+                    '_attachments', 'profile', 'translations',
+                    'description', 'short_description', 'multimedia_map', 'media_language_map'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         data.update({
@@ -6250,9 +6252,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Properties. You can remove User Properties '
-                             'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".'),
+                'message': _('Your application is using User Properties and your current subscription does not '
+                             'support that. You can remove User Properties functionality by opening the User '
+                             'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
             })
         return errors
 
@@ -6572,6 +6574,16 @@ class LinkedApplication(Application):
     # This is the id of the master application
     master = StringProperty()
 
+    # The following properties will overwrite their corresponding values from
+    # the master app everytime the new master is pulled
+    linked_app_translations = DictProperty()  # corresponding property: translations
+    linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
+
+    # if `uses_master_app_form_ids` is True, the form id might match the master's form id
+    # from a bug years ago. These should be fixed when mobile can handle the change
+    # https://manage.dimagi.com/default.asp?283410
+    uses_master_app_form_ids = BooleanProperty(default=False)
+
     @property
     @memoized
     def domain_link(self):
@@ -6592,6 +6604,14 @@ class LinkedApplication(Application):
             return get_latest_master_app_release(self.domain_link, self.master)
         else:
             raise ActionNotPermitted
+
+    def reapply_overrides(self):
+        self.translations.update(self.linked_app_translations)
+        self.logo_refs.update(self.linked_app_logo_refs)
+        for key, ref in self.logo_refs.items():
+            mm = CommCareMultimedia.get(ref['m_id'])
+            self.create_mapping(mm, ref['path'], save=False)
+        self.save()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):

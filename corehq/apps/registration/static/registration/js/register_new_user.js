@@ -5,12 +5,11 @@ $(function () {
     // Demo CTA test
     hqImport("analytix/js/hubspot").then(function () {
         var kissmetrics = hqImport('analytix/js/kissmetrix');
-        kissmetrics.identifyTraits({'demo UI': (initial_page_data("demo_test") ? "on" : "off")});
         $("#test-cta-form-get-demo-button").click(function () {
-            kissmetrics.track.event("Test Get Demo CTA clicked");
+            kissmetrics.track.event("Body Get Demo CTA clicked");
         });
         $("#cta-form-get-demo-button").click(function () {
-            kissmetrics.track.event("Get Demo button clicked");
+            kissmetrics.track.event("Header Get Demo button clicked");
         });
         $(".hs_submit .hs-button").click(function () {
             kissmetrics.track.event("Demo request sent");

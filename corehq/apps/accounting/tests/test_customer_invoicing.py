@@ -4,13 +4,11 @@ from __future__ import unicode_literals
 from decimal import Decimal
 import random
 import datetime
-from dateutil.relativedelta import relativedelta
 
 from dimagi.utils.dates import add_months_to_date
 from corehq.util.dates import get_previous_month_date_range
 
-from corehq.apps.accounting import utils
-from corehq.apps.accounting.invoicing import CustomerAccountInvoiceFactory
+from corehq.apps.accounting import utils, tasks
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
@@ -107,13 +105,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
     def test_multiple_subscription_invoice(self):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -133,13 +125,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         Two subscriptions of the same plan only create one product line item and one set of feature line items
         """
         invoice_date = utils.months_from_date(self.sub2.date_end, 1)
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -156,13 +142,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         """
         Test that an invoice is not created if its subscriptions didn't start in the previous month.
         """
-        invoice_start, invoice_end = get_previous_month_date_range(self.subscription.date_start)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(self.subscription.date_start)
         self.assertEqual(CustomerInvoice.objects.count(), 0)
 
     def test_no_invoice_after_end(self):
@@ -170,13 +150,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         No invoices should be generated for the months after the end date of the subscriptions.
         """
         invoice_date = utils.months_from_date(self.sub2.date_end, 2)
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 0)
 
 
@@ -193,13 +167,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
     def test_product_line_items(self):
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -215,14 +183,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         self.account.invoicing_plan = InvoicingPlan.QUARTERLY
         self.account.save()
         invoice_date = utils.months_from_date(self.subscription.date_start, 14)
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_start = invoice_start - relativedelta(months=2)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -239,14 +200,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         self.account.invoicing_plan = InvoicingPlan.YEARLY
         self.account.save()
         invoice_date = utils.months_from_date(self.subscription.date_start, 14)
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_start = invoice_start - relativedelta(months=11)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
@@ -276,13 +230,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
 
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -307,13 +255,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
 
         invoice_date = utils.months_from_date(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -404,13 +346,7 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
             self.assertEqual(sms_line_item.total, sms_cost)
 
     def _create_sms_line_items(self):
-        invoice_start, invoice_end = get_previous_month_date_range(self.invoice_date)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
@@ -482,14 +418,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
         self.account.invoicing_plan = InvoicingPlan.QUARTERLY
         self.account.save()
         invoice_date = utils.months_from_date(self.subscription.date_start, 14)
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_start = invoice_start - relativedelta(months=2)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -511,14 +440,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
         self.account.invoicing_plan = InvoicingPlan.YEARLY
         self.account.save()
         invoice_date = utils.months_from_date(self.subscription.date_start, 14)
-        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
-        invoice_start = invoice_start - relativedelta(months=11)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -541,14 +463,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
             self.domain2, self.sms_date, num_sms_advanced
         )
 
-        invoice_start, invoice_end = get_previous_month_date_range(self.invoice_date)
-        invoice_start = invoice_start - relativedelta(months=2)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
 
@@ -583,14 +498,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
             self.domain2, self.sms_date, num_sms_advanced
         )
 
-        invoice_start, invoice_end = get_previous_month_date_range(self.invoice_date)
-        invoice_start = invoice_start - relativedelta(months=11)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
 
@@ -615,13 +523,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
             self.assertEqual(sms_line_item.total, sms_cost)
 
     def _create_sms_line_items_for_quarter(self):
-        invoice_start, invoice_end = get_previous_month_date_range(self.invoice_date)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            account=self.account,
-            date_start=invoice_start,
-            date_end=invoice_end
-        )
-        invoice_factory.create_invoice()
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)

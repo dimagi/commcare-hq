@@ -2,11 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-
-{% block js %}{{ block.super }}
-    <script src="{% static 'scheduling/js/dashboard.js' %}"></script>
-{% endblock %}
-
+{% requirejs_main 'scheduling/js/dashboard' %}
 
 {% block page_content %}
     {% registerurl 'messaging_dashboard' domain %}

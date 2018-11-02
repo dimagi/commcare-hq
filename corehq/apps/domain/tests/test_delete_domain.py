@@ -47,7 +47,7 @@ from corehq.apps.data_interfaces.models import (
     DomainCaseRuleRun,
 )
 from corehq.apps.domain.models import Domain, TransferDomainRequest
-from corehq.apps.export.models.new import DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
+from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
@@ -76,8 +76,9 @@ from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import get_blob_db, NotFound
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, doc_type_to_state
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
 from couchforms.models import UnfinishedSubmissionStub
@@ -291,14 +292,28 @@ class TestDeleteDomain(TestCase):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_deletion(self):
+        form_states = [state_tuple[0] for state_tuple in XFormInstanceSQL.STATES]
+
         for domain_name in [self.domain.name, self.domain2.name]:
-            create_form_for_test(domain_name)
-            self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
+            for form_state in form_states:
+                create_form_for_test(domain_name, state=form_state)
+            for doc_type in doc_type_to_state:
+                self.assertEqual(
+                    len(FormAccessors(domain_name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                    1
+                )
 
         self.domain.delete()
 
-        self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
-        self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
+        for doc_type in doc_type_to_state:
+            self.assertEqual(
+                len(FormAccessors(self.domain.name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                0
+            )
+            self.assertEqual(
+                len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                1
+            )
 
     def _assert_queryset_count(self, queryset_list, count):
         for queryset in queryset_list:
@@ -517,7 +532,6 @@ class TestDeleteDomain(TestCase):
 
     def _assert_export_counts(self, domain_name, count):
         self._assert_queryset_count([
-            DailySavedExportNotification.objects.filter(domain=domain_name),
             DataFile.meta_query(domain_name),
             EmailExportWhenDoneRequest.objects.filter(domain=domain_name),
         ], count)
@@ -526,7 +540,6 @@ class TestDeleteDomain(TestCase):
         blobdb = get_blob_db()
         data_files = []
         for domain_name in [self.domain.name, self.domain2.name]:
-            DailySavedExportNotification.objects.create(domain=domain_name)
             data_files.append(DataFile.save_blob(
                 BytesIO((domain_name + " csv").encode('utf-8')),
                 domain=domain_name,
@@ -873,8 +886,3 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
-
-    def test_assert_sql_domain(self):
-        self.domain.delete()
-        with self.assertRaises(AssertionError):
-            call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)

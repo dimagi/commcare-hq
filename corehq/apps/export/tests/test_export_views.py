@@ -12,7 +12,7 @@ from django.urls import reverse
 from mock import patch
 
 from corehq.apps.export.models import CaseExportInstance
-from corehq.apps.export.models.new import DailySavedExportNotification, DataFile
+from corehq.apps.export.models.new import DataFile
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (
@@ -242,25 +242,6 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-    @patch('corehq.apps.export.models.new.domain_has_daily_saved_export_access', lambda x: True)
-    @patch.object(DailySavedExportNotification, 'user_added_before_feature_release')
-    @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
-    def test_view_daily_saved_export_notification(self, user_created_mock):
-        self.assertFalse(DailySavedExportNotification.notified(self.user.user_id, self.domain))
-
-        user_created_mock.return_value = False
-        self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
-        self.assertFalse(DailySavedExportNotification.notified(self.user.user_id, self.domain))
-
-        user_created_mock.return_value = True
-        self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
-        self.assertTrue(DailySavedExportNotification.notified(self.user.user_id, self.domain))
-
-        with patch.object(DailySavedExportNotification, 'mark_notified') as notification:
-            self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
-            self.assertTrue(DailySavedExportNotification.notified(self.user.user_id, self.domain))
-            assert not notification.called
-
     @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
     @patch("corehq.apps.export.tasks.rebuild_export")
     def test_edit_daily_saved_export_filters(self, _):
@@ -301,7 +282,6 @@ class ExportViewTest(ViewTestCase):
 
         filter_form_data = {
             "emwf_case_filter": [],
-            "type_or_group": "group",
             "date_range": "range",
             "start_date": "1992-01-30",
             "end_date": "2016-10-01",

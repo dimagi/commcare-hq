@@ -369,7 +369,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'title': _(self.page_title),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Fixture upload failed for some reason and we have noted this failure. "
-                            "Please make sure the excel file is correctly formatted and try again."),
+                            "Please make sure the Excel file is correctly formatted and try again."),
             'next_url': reverse('edit_lookup_tables', args=[self.domain]),
             'next_url_text': _("Return to manage lookup tables"),
         })

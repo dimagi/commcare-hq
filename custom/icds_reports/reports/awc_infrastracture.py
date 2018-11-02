@@ -6,6 +6,9 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
+from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text, \
+    awcs_reported_functional_toilet_help_text, awcs_reported_weighing_scale_infants_help_text, \
+    awcs_reported_weighing_scale_mother_and_child_help_text, awcs_reported_medicine_kit_help_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value
 
@@ -43,8 +46,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
             [
                 {
                     'label': _('AWCs Reported Clean Drinking Water'),
-                    'help_text': _('Of the AWCs that have submitted an Infrastructure Details form, the '
-                                   'percentage of AWCs that reported having a source of clean drinking water. '),
+                    'help_text': awcs_reported_clean_drinking_water_help_text(),
                     'percent': percent_diff(
                         'clean_water',
                         this_month_data,
@@ -65,8 +67,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 },
                 {
                     'label': _("AWCs Reported Functional Toilet"),
-                    'help_text': _('Of the AWCs that submitted an Infrastructure Details form, the percentage '
-                                   'of AWCs that reported having a functional toilet'),
+                    'help_text': awcs_reported_functional_toilet_help_text(),
                     'percent': percent_diff(
                         'functional_toilet',
                         this_month_data,
@@ -98,8 +99,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 # },
                 {
                     'label': _('AWCs Reported Weighing Scale: Infants'),
-                    'help_text': _('Of the AWCs that have submitted an Infrastructure Details form, the '
-                                   'percentage of AWCs that reported having a weighing scale for infants'),
+                    'help_text': awcs_reported_weighing_scale_infants_help_text(),
                     'percent': percent_diff(
                         'infant_scale',
                         this_month_data,
@@ -120,10 +120,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 },
                 {
                     'label': _('AWCs Reported Weighing Scale: Mother and Child'),
-                    'help_text': _(
-                        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
-                        'AWCs that reported having a weighing scale for mother and child'
-                    ),
+                    'help_text': awcs_reported_weighing_scale_mother_and_child_help_text(),
                     'percent': percent_diff(
                         'adult_scale',
                         this_month_data,
@@ -146,8 +143,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
             [
                 {
                     'label': _('AWCs Reported Medicine Kit'),
-                    'help_text': _('Of the AWCs that have submitted an Infrastructure Details form, '
-                                   'the percentage of AWCs that reported having a Medicine Kit'),
+                    'help_text': awcs_reported_medicine_kit_help_text(),
                     'percent': percent_diff(
                         'medicine_kits',
                         this_month_data,

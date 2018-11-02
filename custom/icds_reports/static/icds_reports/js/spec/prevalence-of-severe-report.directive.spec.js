@@ -38,7 +38,6 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
-        window.ga = function() {};
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('prevalence_of_severe').respond(200, {
@@ -104,12 +103,12 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total_height_eligible: 30, total_weighed: 20, total_measured: 15, severe: 5, moderate: 5, normal: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>' +
-            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>15</strong></div>' +
-            '<div>Number of Children (6 - 60 months) unmeasured: <strong>15</strong></div>' +
-            '<div>% Severely Acute Malnutrition (6 - 60 months): <strong>33.33%</strong></div>' +
-            '<div>% Moderately Acute Malnutrition (6 - 60 months): <strong>33.33%</strong></div>' +
-            '<div>% Normal (6 - 60 months): <strong>33.33%</strong></div></div>');
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
+            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>15</strong></div>' +
+            '<div>Number of Children (0 - 5 years) unmeasured: <strong>15</strong></div>' +
+            '<div>% Severely Acute Malnutrition (0 - 5 years): <strong>33.33%</strong></div>' +
+            '<div>% Moderately Acute Malnutrition (0 - 5 years): <strong>33.33%</strong></div>' +
+            '<div>% Normal (0 - 5 years): <strong>33.33%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -178,7 +177,7 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Of the children enrolled for Anganwadi services, whose weight and height was measured, the percentage of children between (6 - 60 months) who were moderately/severely wasted in the current month. \n' +
+            'Of the children enrolled for Anganwadi services, whose weight and height was measured, the percentage of children between (0 - 5 years) who were moderately/severely wasted in the current month. \n' +
             '\n' +
             'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
             'of insufficient food intake or a high incidence of infectious diseases.'
@@ -189,12 +188,12 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>' +
-            '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>' +
-            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>10</strong></div>' +
-            '<div>Number of Children (6 - 60 months) unmeasured: <strong>20</strong></div>' +
-            '<div>% children (6 - 60 months)  with Normal Acute Malnutrition: <strong>10.00%</strong></div>' +
-            '<div>% children (6 - 60 months)  with Moderate Acute Malnutrition (MAM): <strong>15.00%</strong></div>' +
-            '<div>% children (6 - 60 months)  with Severe Acute Malnutrition (SAM): <strong>20.00%</strong></div>';
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
+            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>10</strong></div>' +
+            '<div>Number of Children (0 - 5 years) unmeasured: <strong>20</strong></div>' +
+            '<div>% children (0 - 5 years)  with Normal Acute Malnutrition: <strong>10.00%</strong></div>' +
+            '<div>% children (0 - 5 years)  with Moderate Acute Malnutrition (MAM): <strong>15.00%</strong></div>' +
+            '<div>% children (0 - 5 years)  with Severe Acute Malnutrition (SAM): <strong>20.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 20, 10, 30);
         assert.equal(expected, result);
@@ -203,12 +202,12 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Total Children (6 - 60 months) weighed in given month: <strong>0</strong></div>' +
-            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>0</strong></div>' +
-            '<div>Number of Children (6 - 60 months) unmeasured: <strong>0</strong></div>' +
-            '<div>% Severely Acute Malnutrition (6 - 60 months): <strong>NaN%</strong></div>' +
-            '<div>% Moderately Acute Malnutrition (6 - 60 months): <strong>NaN%</strong></div>' +
-            '<div>% Normal (6 - 60 months): <strong>NaN%</strong></div></div>';
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>0</strong></div>' +
+            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>0</strong></div>' +
+            '<div>Number of Children (0 - 5 years) unmeasured: <strong>0</strong></div>' +
+            '<div>% Severely Acute Malnutrition (0 - 5 years): <strong>NaN%</strong></div>' +
+            '<div>% Moderately Acute Malnutrition (0 - 5 years): <strong>NaN%</strong></div>' +
+            '<div>% Normal (0 - 5 years): <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ('pillowtop', '0002_djangopillowcheckpoint_sequence_format'),
     ]
-
     operations = [
         migrations.CreateModel(
             name='KafkaCheckpoint',

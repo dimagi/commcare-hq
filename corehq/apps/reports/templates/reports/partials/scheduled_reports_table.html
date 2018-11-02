@@ -79,7 +79,7 @@
 
                     <div class="btn-group">
                         <a class="btn btn-info" href="{% url "view_scheduled_report" domain report.get_id %}">
-                            <i class="fa fa-eye-open"></i> {% trans "View" %}
+                            <i class="fa fa-eye"></i> {% trans "View" %}
                         </a>
                         <a class="btn btn-info {% if not is_owner and not is_admin %}disabled{% endif %}" href="{% url "send_test_scheduled_report" domain report.get_id %}">
                             <i class="fa fa-envelope"></i> {% trans "Send Now" %}

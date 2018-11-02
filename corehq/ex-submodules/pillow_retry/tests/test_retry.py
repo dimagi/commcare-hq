@@ -5,7 +5,6 @@ from django.conf import settings
 from django.test import TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
 from mock import MagicMock, patch
 
 from corehq.apps.change_feed import topics
@@ -19,7 +18,7 @@ from pillow_retry.api import process_pillow_retry
 from pillow_retry.models import PillowError
 from pillowtop.feed.couch import populate_change_metadata
 from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import ConstructedPillow, PillowRuntimeContext
+from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import CountingProcessor
 from testapps.test_pillowtop.utils import process_pillow_changes
 
@@ -49,14 +48,13 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
         super(CouchPillowRetryProcessingTest, self).setUp()
         self._fake_couch = FakeCouchDb()
         self._fake_couch.dbname = 'test_commcarehq'
-        with trap_extra_setup(KafkaUnavailableError):
-            self.consumer = KafkaConsumer(
-                topics.CASE,
-                client_id='test-consumer',
-                bootstrap_servers=settings.KAFKA_BROKERS,
-                consumer_timeout_ms=100,
-                enable_auto_commit=False,
-            )
+        self.consumer = KafkaConsumer(
+            topics.CASE,
+            client_id='test-consumer',
+            bootstrap_servers=settings.KAFKA_BROKERS,
+            consumer_timeout_ms=100,
+            enable_auto_commit=False,
+        )
         try:
             next(self.consumer)
         except StopIteration:
@@ -83,7 +81,7 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
             # first change creates error
             message = 'test retry 1'
             self.pillow.process_change = MagicMock(side_effect=TestException(message))
-            self.pillow.process_with_error_handling(change, PillowRuntimeContext(changes_seen=0))
+            self.pillow.process_with_error_handling(change)
 
             errors = self._check_errors(1, message)
 
@@ -143,7 +141,7 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
             # first change creates error
             message = 'test retry 1'
             self.pillow.process_change = MagicMock(side_effect=TestException(message))
-            self.pillow.process_with_error_handling(change, PillowRuntimeContext(changes_seen=0))
+            self.pillow.process_with_error_handling(change)
 
             errors = self._check_errors(1, message)
 

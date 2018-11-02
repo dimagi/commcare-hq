@@ -42,7 +42,7 @@
     </ul>
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
-            {% include 'users/partial/basic_info_form.html' with user_type="mobile"%}
+            {% include 'users/partials/basic_info_form.html' with user_type="mobile"%}
         </div>
 
         <div class="tab-pane" id="groups">
@@ -79,11 +79,11 @@
                     <i class="fa fa-external-link"></i> {% trans "User Location" %}
                 </a>
             {% endif %}
-            {% include "users/partial/edit_commtrack_user_settings.html" %}
+            {% include "users/partials/edit_commtrack_user_settings.html" %}
         </div>
         {% endif %}
         <div class="tab-pane" id="user-password">
-            {% include 'users/partial/reset_password.html' %}
+            {% include 'users/partials/reset_password.html' %}
         </div>
         {% if not is_currently_logged_in_user %}
         <div class="tab-pane" id="user-permanent">
@@ -154,7 +154,7 @@
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-    {% include 'users/partial/basic_info_modals.html' with user_type='mobile' %}
+    {% include 'users/partials/basic_info_modals.html' with user_type='mobile' %}
     {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
         <div class="modal-dialog">

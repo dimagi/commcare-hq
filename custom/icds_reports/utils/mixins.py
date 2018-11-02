@@ -14,7 +14,7 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from custom.icds_reports.queries import get_test_state_locations_id
-from custom.icds_reports.utils import india_timezone, DATA_NOT_ENTERED
+from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.utils.utils import clean_IN_filter_value
 import six
 
@@ -86,12 +86,6 @@ class ExportableMixin(object):
         export_from_tables(excel_data, export_file, format)
         return export_response(export_file, format, self.title)
 
-    @property
-    def india_now(self):
-        utc_now = datetime.datetime.now(pytz.utc)
-        india_now = utc_now.astimezone(india_timezone)
-        return india_now.strftime("%H:%M:%S %d %B %Y")
-
     def get_excel_data(self, location):
         excel_rows = []
         headers = []
@@ -113,7 +107,7 @@ class ExportableMixin(object):
                 else:
                     row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
-        filters = [['Generated at', self.india_now]]
+        filters = [['Generated at', india_now()]]
         if location:
             locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
             for loc in locs:

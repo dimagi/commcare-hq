@@ -46,6 +46,15 @@ class OR(ExportFilter):
         return esfilters.OR(*[f.to_es_filter() for f in self.operand_filters])
 
 
+class AND(ExportFilter):
+
+    def __init__(self, *args):
+        self.operand_filters = args
+
+    def to_es_filter(self):
+        return esfilters.AND(*[f.to_es_filter() for f in self.operand_filters])
+
+
 class NOT(ExportFilter):
     def __init__(self, _filter):
         self.operand_filter = _filter

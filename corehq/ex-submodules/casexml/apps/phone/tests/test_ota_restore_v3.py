@@ -17,7 +17,6 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import MockDevice
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OtaV3RestoreTest(TestCase):
     """Tests OTA Restore v3"""
 

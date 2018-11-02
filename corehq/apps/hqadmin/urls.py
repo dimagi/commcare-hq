@@ -75,7 +75,6 @@ urlpatterns = [
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),
     url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
-    url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^download_malt/$',
         DownloadMALTView.as_view(), name=DownloadMALTView.urlname),
     url(r'^download_gir', DownloadGIRView.as_view(), name=DownloadGIRView.urlname),

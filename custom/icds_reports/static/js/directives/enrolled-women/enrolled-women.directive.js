@@ -8,8 +8,8 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     var vm = this;
     vm.label = "Pregnant Women enrolled for Anganwadi Services";
     vm.steps = {
-        'map': {route: '/enrolled_women/map', label: 'Map View'},
-        'chart': {route: '/enrolled_women/chart', label: 'Chart View'},
+        'map': {route: '/demographics/enrolled_women/map', label: 'Map View'},
+        'chart': {route: '/demographics/enrolled_women/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',

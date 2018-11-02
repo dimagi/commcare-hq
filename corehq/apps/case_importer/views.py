@@ -29,7 +29,7 @@ EXCEL_SESSION_ID = "excel_id"
 
 
 def render_error(request, domain, message):
-    """ Load error message and reload page for excel file load errors """
+    """ Load error message and reload page for Excel file load errors """
     messages.error(request, _(message))
     return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
 
@@ -60,7 +60,7 @@ def excel_config(request, domain):
     """
     Step one of three.
 
-    This is the initial post when the user uploads the excel file
+    This is the initial post when the user uploads the Excel file
 
     """
     if request.method != 'POST':
@@ -165,7 +165,7 @@ def excel_fields(request, domain):
         case id in the upload.
 
     search_column:
-        Which column of the excel file we are using to specify either
+        Which column of the Excel file we are using to specify either
         case ids or external ids. This is, strangely, required. If
         creating new cases only you would expect these to be blank with
         the create_new_cases flag set.
@@ -180,7 +180,7 @@ def excel_fields(request, domain):
         search_column = request.POST['search_column']
     except MultiValueDictKeyError:
         # this is only true if your configuration is messed up in an irreparable way
-        messages.error(request, _('The excel file you are trying to import does not have any headers.'))
+        messages.error(request, _('The Excel file you are trying to import does not have any headers.'))
         return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
     search_field = request.POST['search_field']

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from corehq.apps.domain.models import Domain
@@ -19,9 +18,8 @@ class KafkaProcessor(PillowProcessor):
     Processor that pushes changes to Kafka
     """
 
-    def __init__(self, kafka, data_source_type, data_source_name):
-        self._kafka = kafka
-        self._producer = ChangeProducer(self._kafka)
+    def __init__(self, data_source_type, data_source_name):
+        self._producer = ChangeProducer()
         self._data_source_type = data_source_type
         self._data_source_name = data_source_name
 
@@ -56,9 +54,8 @@ def get_application_db_kafka_pillow(pillow_id, **kwargs):
 
 
 def get_change_feed_pillow_for_db(pillow_id, couch_db):
-    kafka_client = get_simple_kafka_client_or_none()
     processor = KafkaProcessor(
-        kafka_client, data_source_type=data_sources.SOURCE_COUCH, data_source_name=couch_db.dbname
+        data_source_type=data_sources.SOURCE_COUCH, data_source_name=couch_db.dbname
     )
     change_feed = CouchChangeFeed(couch_db)
     checkpoint = PillowCheckpoint(pillow_id, change_feed.sequence_format)

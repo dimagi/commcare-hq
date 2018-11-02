@@ -7,6 +7,7 @@ from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
+from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 
@@ -14,7 +15,6 @@ from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 @quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
 def get_cas_reach_data(domain, now_date, config, show_test=False):
     now_date = datetime(*now_date)
-    yesterday_date = (now_date - relativedelta(days=1)).date()
 
     def get_data_for_awc_monthly(month, filters):
         level = filters['aggregation_level']
@@ -59,12 +59,16 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
     current_month_selected = (current_month.year == now_date.year and current_month.month == now_date.month)
 
     if current_month_selected:
-        two_days_ago = yesterday_date - relativedelta(days=1)
-        daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
-        daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
-        if not daily_yesterday:
-            daily_yesterday = daily_two_days_ago
-            daily_two_days_ago = get_data_for_daily_usage(two_days_ago - relativedelta(days=1), config)
+        date = now_date.date()
+        daily_yesterday = None
+        # keep the record in searched - current - month
+        while daily_yesterday is None or (not daily_yesterday and date.day != 1):
+            date -= relativedelta(days=1)
+            daily_yesterday = get_data_for_daily_usage(date, config)
+        daily_two_days_ago = None
+        while daily_two_days_ago is None or (not daily_two_days_ago and date.day != 1):
+            date -= relativedelta(days=1)
+            daily_two_days_ago = get_data_for_daily_usage(date, config)
         daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
         number_of_awc_open_yesterday = {
             'label': _('Number of AWCs Open yesterday'),
@@ -96,9 +100,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             [
                 {
                     'label': _('AWCs Launched'),
-                    'help_text': _('Total AWCs that have launched ICDS-CAS. '
-                                   'AWCs are considered launched after submitting at least '
-                                   'one Household Registration form. '),
+                    'help_text': awcs_launched_help_text(),
                     'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
                     'color': 'green' if percent_increase(
                         'awcs',

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import mock
 import uuid
 from django.test import SimpleTestCase, TestCase
@@ -11,6 +12,8 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.userreports.tests.utils import load_data_from_db
 from corehq.apps.userreports.tasks import build_async_indicators
 from six.moves import range
+
+import six
 
 
 class RunAsynchronousTest(SimpleTestCase):
@@ -75,6 +78,53 @@ class RunAsynchronousTest(SimpleTestCase):
     #     indicator_configuration = get_data_source_with_related_doc_type()
     #     adapter = get_indicator_adapter(indicator_configuration)
     #     self.assertTrue(adapter.run_asynchronous)
+
+
+class TestBulkUpdate(TestCase):
+    def tearDown(self):
+        AsyncIndicator.objects.all().delete()
+
+    def _get_indicator_data(self):
+        return {
+            i.doc_id: i.indicator_config_ids
+            for i in AsyncIndicator.objects.all()
+        }
+
+    def test_update_record(self):
+        domain = 'test-update-record'
+        doc_type = 'form'
+        initial_data = {
+            'd1': ['c1', 'c2'],
+            'd2': ['c1'],
+            'd3': ['c2']
+        }
+        AsyncIndicator.objects.bulk_create([
+            AsyncIndicator(
+                doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=sorted(config_ids))
+            for doc_id, config_ids in six.iteritems(initial_data)
+        ])
+        updated_data = {
+            'd2': ['c2'],
+            'd3': ['c3'],
+            'd4': ['c2', 'c1'],
+            'd5': ['c4']
+        }
+
+        with self.assertNumQueries(3):
+            # 3 queries, 1 for query, 1 for update, 1 for create
+            doc_type_by_ids = {i: doc_type for i in ['d1', 'd2', 'd3', 'd4', 'd5']}
+            AsyncIndicator.bulk_update_records(updated_data, domain, doc_type_by_ids)
+
+        self.assertEqual(
+            self._get_indicator_data(),
+            {
+                'd1': ['c1', 'c2'],
+                'd2': ['c1', 'c2'],
+                'd3': ['c2', 'c3'],
+                'd4': ['c1', 'c2'],
+                'd5': ['c4']
+            }
+        )
 
 
 class BulkAsyncIndicatorProcessingTest(TestCase):

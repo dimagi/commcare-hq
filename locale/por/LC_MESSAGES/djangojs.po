@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-09-11 19:07+0000\n"
+"POT-Creation-Date: 2018-10-23 19:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Claire O'Grady <cogrady@dimagi.com>, 2018\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -18,7 +18,42 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: corehq/apps/accounting/static/accounting/js/enterprise_dashboard.js:34
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:12
+msgid "My project ended"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:13
+msgid "The funding for my project ended"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:14
+msgid ""
+"I don’t need the features of my paid plan anymore but I plan on continuing "
+"using CommCare"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:15
+msgid "We are switching to a different mobile data collection tool"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:16
+msgid "For budget reasons"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:17
+msgid "I need more limited features"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:18
+msgid "I need additional/custom features"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:19
+#: corehq/apps/reports/static/reports/js/maps_utils.js:1090
+msgid "Other"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/enterprise_dashboard.js:38
 msgid ""
 "Error sending email, please try again or report an issue if this persists."
 msgstr ""
@@ -52,10 +87,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js:183
-#, fuzzy
-#| msgid "Monthly"
 msgid "Billed Monthly"
-msgstr "Mes"
+msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js:185
 msgid "Billed Annually"
@@ -68,8 +101,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:76
-#: corehq/apps/locations/static/locations/js/location_types.js:365
-#: corehq/apps/reminders/static/reminders/js/reminders.js:12
+#: corehq/apps/locations/static/locations/js/location_types.js:367
 msgid "You have unsaved changes."
 msgstr ""
 
@@ -94,15 +126,23 @@ msgstr ""
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:96
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:45
+msgid "Select All"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:45
+msgid "<span class='label label-default'>"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:105
 msgid "Application name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:106
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:115
 msgid "Invalid Project Selected"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:109
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:118
 msgid "Project name is required"
 msgstr ""
 
@@ -277,7 +317,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js:6
-#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js:343
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js:349
 msgid ""
 "Sorry, something went wrong with the download. If you see this repeatedly "
 "please report an issue."
@@ -539,7 +579,7 @@ msgid "[unknown]"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js:5
-msgid "Publish"
+msgid "Releases"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:25
@@ -562,15 +602,15 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:369
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:372
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:403
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:406
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:408
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:411
 msgid "No new changes!"
 msgstr ""
 
@@ -661,8 +701,7 @@ msgid "Questions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:69
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:109
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:111
 msgid "Copy"
 msgstr "Copiar"
 
@@ -702,7 +741,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:268
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:38
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:40
 msgid "Delete"
 msgstr ""
 
@@ -1529,6 +1567,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/userreports/static/userreports/js/data_source_select.js:11
 msgid "Data Source"
 msgstr ""
 
@@ -1904,7 +1943,7 @@ msgid "A reference to an integer question in this form."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: corehq/apps/userreports/static/userreports/js/data_source_select.js:8
+#: corehq/apps/userreports/static/userreports/js/data_source_select.js:9
 msgid "Case"
 msgstr ""
 
@@ -2033,6 +2072,7 @@ msgid "Case Type"
 msgstr "Típo de Caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:69
 msgid "Case ID"
 msgstr ""
 
@@ -2448,21 +2488,62 @@ msgid ""
 "continue?"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:164
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:168
 msgid "Case Reassignment (via HQ)"
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:172
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:176
 msgid "Search for users or groups"
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:25
+msgid ""
+"<a href='<%= link %>' target='_blank'>View <i class='fa fa-external-link'></"
+"i></a>"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:65
+msgid "Find Case"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:66
+msgid "IDs can be found in a <a href=\"<%= url %>\">case data export</a>"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:70
+msgid "Case found!"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:71
+msgid "Could not find case"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:76
+msgid "Find Form Submission"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:77
+msgid "IDs can be found in a <a href=\"<%= url %>\">form data export</a>"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:80
+msgid "Could not find form submission"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:81
+msgid "Form Submission ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:82
+msgid "Form submission found!"
+msgstr ""
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:446
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:464
+#: corehq/apps/users/static/users/js/mobile_workers.js:29
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:40
+#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:48
 msgid "Sorry, it looks like the upload failed."
 msgstr ""
 
@@ -2534,7 +2615,7 @@ msgstr ""
 msgid "Data file deleted."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/list_exports.ng.js:104
+#: corehq/apps/export/static/export/js/list_exports.ng.js:85
 msgid "Download Requested"
 msgstr ""
 
@@ -2630,19 +2711,19 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:14
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:18
 msgid "Show All References"
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:14
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:18
 msgid "Show Only Missing References"
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:213
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
 msgid "Replace "
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:213
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
 msgid "Upload "
 msgstr ""
 
@@ -2721,7 +2802,8 @@ msgstr ""
 msgid "We could not turn off the new feature. Please try again later."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:82
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler_v3.js:82
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler_v4.js:99
 msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""
@@ -2809,17 +2891,17 @@ msgstr ""
 msgid "Error saving user"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:299
+#: corehq/apps/locations/static/locations/js/location_tree.js:301
 msgid "You have successfully archived the location <%=name%>"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:302
+#: corehq/apps/locations/static/locations/js/location_tree.js:304
 msgid ""
 "You have successfully deleted the location <%=name%> and all of its child "
 "locations"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:305
+#: corehq/apps/locations/static/locations/js/location_tree.js:307
 msgid ""
 "An error occurred while deleting your location. If the problem persists, "
 "please report an issue"
@@ -2878,43 +2960,6 @@ msgstr ""
 msgid "Good Job! Your password is strong!"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:21
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:22
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:58
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:59
-msgid "There are no broadcasts to display."
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:23
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:60
-msgid "Show _MENU_ broadcasts per page"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:24
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:61
-msgid "Loading Broadcasts..."
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:25
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:62
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:32
-msgid "Showing _START_ to _END_ of _TOTAL_ broadcasts"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:26
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:63
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:33
-msgid "(filtered from _MAX_ total broadcasts)"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:77
-msgid "Are you sure you want to delete this broadcast?"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/reminders.list.js:96
-msgid "There are no reminders to display."
-msgstr ""
-
 #: corehq/apps/reports/static/reports/js/base.js:32
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js:97
 msgid "You can email a saved version<br />of this report."
@@ -2948,6 +2993,10 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:36
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/data_corrections.js:345
+msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:104
@@ -2994,12 +3043,8 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/hq_report.js:70
 msgid ""
-"Your requested excel report will be sent to the email address defined in "
+"Your requested Excel report will be sent to the email address defined in "
 "your account settings."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/maps_utils.js:1090
-msgid "Other"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/maps_utils.js:1091
@@ -3096,6 +3141,10 @@ msgstr ""
 msgid "Failed to re-process"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/v2/js/views/case_search.js:55
+msgid "add column"
+msgstr ""
+
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
@@ -3108,11 +3157,11 @@ msgstr ""
 msgid "Satellite"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/add_gateway.js:9
+#: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/add_gateway.js:23
+#: corehq/apps/sms/static/sms/js/add_gateway.js:25
 msgid "You must have at least one phone number."
 msgstr ""
 
@@ -3147,6 +3196,10 @@ msgstr ""
 #: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:71
 #: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:120
 msgid "There was an error fetching the SMS rate."
+msgstr ""
+
+#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:154
+msgid "Please Select a Country Code"
 msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js:28
@@ -3188,20 +3241,20 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
-#: corehq/apps/userreports/static/userreports/js/report_config.js:294
-#: corehq/apps/userreports/static/userreports/js/report_config.js:322
+#: corehq/apps/userreports/static/userreports/js/report_config.js:298
+#: corehq/apps/userreports/static/userreports/js/report_config.js:326
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:361
-#: corehq/apps/userreports/static/userreports/js/report_config.js:295
+#: corehq/apps/userreports/static/userreports/js/report_config.js:299
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:362
-#: corehq/apps/userreports/static/userreports/js/report_config.js:296
+#: corehq/apps/userreports/static/userreports/js/report_config.js:300
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -3209,7 +3262,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/report_config.js:323
+#: corehq/apps/userreports/static/userreports/js/report_config.js:327
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -3217,7 +3270,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:324
+#: corehq/apps/userreports/static/userreports/js/report_config.js:328
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
@@ -3230,7 +3283,7 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/data_source_select.js:8
+#: corehq/apps/userreports/static/userreports/js/data_source_select.js:10
 msgid "Form"
 msgstr "Formulário"
 
@@ -3287,36 +3340,20 @@ msgstr ""
 msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:474
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:433
 msgid "Username"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:475
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:434
 msgid "First Name"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:476
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:435
 msgid "Last Name"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:477
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:436
 msgid "Status"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:482
-msgid "Show 10 Mobile Workers"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:483
-msgid "Show 25 Mobile Workers"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:484
-msgid "Show 50 Mobile Workers"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:485
-msgid "Show 100 Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:117
@@ -3377,23 +3414,31 @@ msgstr ""
 msgid "Show _MENU_ messages per page"
 msgstr ""
 
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:32
+msgid "Showing _START_ to _END_ of _TOTAL_ broadcasts"
+msgstr ""
+
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:33
+msgid "(filtered from _MAX_ total broadcasts)"
+msgstr ""
+
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:62
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:60
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:62
 msgid "Active"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:64
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:62
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:64
 msgid "Inactive"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:74
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:85
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:87
 msgid "Deactivate"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:77
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:92
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:94
 msgid "Activate"
 msgstr ""
 
@@ -3409,59 +3454,59 @@ msgstr ""
 msgid "Are you sure you want to delete this scheduled message?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:23
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:24
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:25
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:26
 msgid "There are no alerts to display."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:25
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:27
 msgid "Showing _START_ to _END_ of _TOTAL_ alerts"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:67
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:69
 msgid "Processing"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:97
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:99
 msgid "Restart Rule"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:108
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:110
 msgid "Project"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:177
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:179
 msgid "This rule has been restarted."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:180
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:182
 #, javascript-format
 msgid ""
 "Unable to restart rule. Rules can only be started every two hours and there "
 "are %s minute(s) remaining before this rule can be started again."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:188
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:190
 msgid "Copy successful."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:190
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:192
 #, javascript-format
 msgid "Error: %s"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:205
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:207
 msgid "Are you sure you want to delete this conditional message?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:214
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:216
 msgid ""
 "A rule should only be restarted when you believe it is stuck and is not "
 "progressing. You will only be able to restart this rule once every two "
 "hours. Restart this rule?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:219
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:221
 msgid ""
 "A rule should only be restarted when you believe it is stuck and is not "
 "progressing. Your user is able to restart as many times as you like, but "
@@ -3469,11 +3514,11 @@ msgid ""
 "system. Restart this rule?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:234
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:236
 msgid "Please enter a project name first."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:238
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:240
 #, javascript-format
 msgid "Copy this alert to project %s?"
 msgstr ""
@@ -3518,7 +3563,7 @@ msgstr ""
 msgid "Schedule Broadcast"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/dashboard.js:61
+#: corehq/messaging/scheduling/static/scheduling/js/dashboard.js:66
 msgid "(no errors over the given date range)"
 msgstr ""
 

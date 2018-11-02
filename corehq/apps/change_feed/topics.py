@@ -85,12 +85,6 @@ def get_topic_offset(topic):
     return get_multi_topic_offset([topic])
 
 
-def get_all_offsets():
-    """
-    :returns: A dict of offsets keyed by topic and parition"""
-    return get_multi_topic_offset(ALL)
-
-
 def get_multi_topic_offset(topics):
     """
     :returns: A dict of offsets keyed by topic and partition"""

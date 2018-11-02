@@ -116,6 +116,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
         {id: 7, name: 'ICDS-CAS Monthly Register'},
+        {id: 8, name: 'AWW Performance Report'}
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -415,7 +416,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.hasErrors = function() {
-        return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        beneficiary_list_errors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        incentive_report_errors = vm.isIncentiveReportSelected() && !vm.isBlockSelected();
+        return beneficiary_list_errors || incentive_report_errors;
     };
 
     vm.isCombinedPDFSelected = function() {
@@ -434,7 +437,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.isVisible = function(level) {
-        return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all');
+        return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all')  && !(vm.isIncentiveReportSelected() && level > 2);
     };
 
     vm.selectedFilterOptions = function() {
@@ -449,6 +452,22 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.isISSNIPMonthlyRegisterSelected = function () {
         return vm.selectedIndicator === 7;
+    };
+
+    vm.isIncentiveReportSelected = function () {
+        return vm.selectedIndicator === 8;
+    };
+
+    vm.isSupervisorOrBelowSelected = function () {
+        return vm.selectedLocations[3] && vm.selectedLocations[3] !== ALL_OPTION.location_id;
+    };
+    
+    vm.isBlockSelected = function () {
+        return vm.isBlockOrBelowSelected() && !vm.isSupervisorOrBelowSelected();
+    };
+
+    vm.showViewBy = function () {
+        return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected());
     };
 
     vm.isDistrictOrBelowSelected = function() {

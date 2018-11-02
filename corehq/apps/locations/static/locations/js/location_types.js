@@ -15,11 +15,11 @@ hqDefine('locations/js/location_types', [
     'use strict';
     var ROOT_LOCATION_ID = -1;
 
-    function LocationSettingsViewModel(locTypes, commtrackEnabled) {
-        var self = this;
+    function locationSettingsViewModel(locTypes, commtrackEnabled) {
+        var self = {};
         self.loc_types = ko.observableArray();
         self.loc_types($.map(locTypes, function (locType) {
-            return new LocationTypeModel(locType, commtrackEnabled, self);
+            return locationTypeModel(locType, commtrackEnabled, self);
         }));
 
         self.json_payload = ko.observable();
@@ -70,7 +70,7 @@ hqDefine('locations/js/location_types', [
 
         self.new_loctype = function () {
             var parentPK = (_.last(self.loc_types()) || {}).pk;
-            var newLocType = new LocationTypeModel({parent_type: parentPK}, commtrackEnabled, self);
+            var newLocType = locationTypeModel({parent_type: parentPK}, commtrackEnabled, self);
             newLocType.onBind = function () {
                 var $inp = $(self.$e).find('.loctype_name');
                 $inp.focus();
@@ -178,6 +178,7 @@ hqDefine('locations/js/location_types', [
                 loc_types: $.map(self.loc_types(), function (e) { return e.to_json(); }),
             };
         };
+        return self;
     }
 
     // Make a fake pk to refer to this location type even if the name changes
@@ -189,8 +190,8 @@ hqDefine('locations/js/location_types', [
         };
     }();
 
-    function LocationTypeModel(locType, commtrackEnabled, viewModel) {
-        var self = this;
+    function locationTypeModel(locType, commtrackEnabled, viewModel) {
+        var self = {};
         var name = locType.name || '';
         self.pk = locType.pk || getFakePK();
         self.name = ko.observable(name);
@@ -281,9 +282,9 @@ hqDefine('locations/js/location_types', [
 
         self.expand_from_options = function () {
             // traverse all locations upwards, include a root option
-            var rootType = new LocationTypeModel(
+            var rootType = locationTypeModel(
                     {name: "root", pk: ROOT_LOCATION_ID},
-                    commtrackEnabled, this
+                    commtrackEnabled, self
                 ),
                 parents = self.parents();
             parents.push(rootType);
@@ -304,7 +305,7 @@ hqDefine('locations/js/location_types', [
             for (var level in locsSameLevels) {
                 // Only display a single child at each level
                 var childToAdd = locsSameLevels[level][0];
-                locsToReturn.push(new LocationTypeModel({
+                locsToReturn.push(locationTypeModel({
                     name: childToAdd.compiled_name(),
                     pk: childToAdd.pk,
                 }, false, self.view));
@@ -322,7 +323,7 @@ hqDefine('locations/js/location_types', [
                 for (var level in typesSameLevels) {
                     // Only display a single child at each level
                     var levelToAdd = typesSameLevels[level][0];
-                    levelsToReturn.push(new LocationTypeModel({
+                    levelsToReturn.push(locationTypeModel({
                         name: levelToAdd.compiled_name(),
                         pk: levelToAdd.pk,
                     }, false, self.view));
@@ -354,12 +355,13 @@ hqDefine('locations/js/location_types', [
                 include_only: self.include_only() || [],
             };
         };
+        return self;
     }
 
     $(function () {
         var locTypes = initialPageData.get('location_types'),
             commtrackEnabled = initialPageData.get('commtrack_enabled'),
-            model = new LocationSettingsViewModel(locTypes, commtrackEnabled);
+            model = locationSettingsViewModel(locTypes, commtrackEnabled);
 
         var warnBeforeUnload = function () {
             return gettext("You have unsaved changes.");
@@ -379,7 +381,7 @@ hqDefine('locations/js/location_types', [
         }
 
         $("form#settings").on("change input", function () {
-            $(this).find(":submit").addClass("btn-success").enable();
+            $(this).find(":submit").addClass("btn-primary").enable();
             window.onbeforeunload = warnBeforeUnload;
         });
 
@@ -392,7 +394,7 @@ hqDefine('locations/js/location_types', [
     });
 
     return {
-        'LocationSettingsViewModel': LocationSettingsViewModel,
-        'LocationTypeModel': LocationTypeModel,
+        'locationSettingsViewModel': locationSettingsViewModel,
+        'locationTypeModel': locationTypeModel,
     };
 });

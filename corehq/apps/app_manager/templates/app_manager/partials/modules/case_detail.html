@@ -28,7 +28,7 @@
 
     <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
         <i class="fa fa-plus"></i>
-        {% trans "Add tab" %}
+        {% trans "Add Tab" %}
     </button>
  
     {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
@@ -36,8 +36,8 @@
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
-            <li data-bind="click: function() { longScreen.addTab(false); }"><a>{% trans "Add tab" %}</a></li>
-            <li data-bind="click: function() { longScreen.addTab(true); }"><a>{% trans "Add data tab" %}</a></li>
+            <li data-bind="click: function() { longScreen.addTab(false); }"><a>{% trans "Add Tab" %}</a></li>
+            <li data-bind="click: function() { longScreen.addTab(true); }"><a>{% trans "Add Data Tab" %}</a></li>
         </ul>
     {% endif %}
 

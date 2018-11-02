@@ -8,8 +8,8 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     var vm = this;
     vm.label = "AWCs Reported Functional Toilet";
     vm.steps = {
-        'map': {route: '/functional_toilet/map', label: 'Map View'},
-        'chart': {route: '/functional_toilet/chart', label: 'Chart View'},
+        'map': {route: '/awc_infrastructure/functional_toilet/map', label: 'Map View'},
+        'chart': {route: '/awc_infrastructure/functional_toilet/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',

@@ -304,7 +304,10 @@ def get_shared_domain(doc):
 
 def get_invoice_domain(doc):
     if doc.get("is_wire"):
-        return acct.WireInvoice.objects.get(id=int(doc["invoice_id"])).domain
+        try:
+            return acct.WireInvoice.objects.get(id=int(doc["invoice_id"])).domain
+        except acct.WireInvoice.DoesNotExist:
+            return None  # trigger "unknown-domain" error
     # customer invoice has no domain
     return UNKNOWN_DOMAIN
 

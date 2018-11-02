@@ -31,6 +31,8 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_RAW
+from corehq.apps.userreports.reports.builder.sources import get_source_type_from_report_config
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -68,7 +70,7 @@ from corehq.apps.userreports.const import (
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
-)
+    DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -92,10 +94,9 @@ from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureMapReportForm,
-    DataSourceBuilder,
     ConfigureListReportForm,
     ConfigureTableReportForm,
-)
+    get_data_source_interface)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
@@ -451,27 +452,26 @@ class ConfigureReport(ReportBuilderView):
     @use_nvd3
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
-            self.source_type = {
-                "CommCareCase": "case",
-                "XFormInstance": "form"
-            }[self.existing_report.config.referenced_doc_type]
-            self.source_id = self.existing_report.config.meta.build.source_id
-            self.app_id = self.existing_report.config.meta.build.app_id
-            self.app = Application.get(self.app_id) if self.app_id else None
+            self.source_type = get_source_type_from_report_config(self.existing_report)
+            if self.source_type != DATA_SOURCE_TYPE_RAW:
+                self.source_id = self.existing_report.config.meta.build.source_id
+                self.app_id = self.existing_report.config.meta.build.app_id
+                self.app = Application.get(self.app_id) if self.app_id else None
+            else:
+                self.source_id = self.existing_report.config_id
+                self.app_id = self.app = None
         else:
             self.app_id = self.request.GET['application']
             self.app = Application.get(self.app_id)
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
 
-        if not self.app_id:
-            raise BadBuilderConfigError(_(
-                "Report builder data source doesn't reference an application. "
-                "It is likely this report has been customized and it is no longer editable. "
-            ))
-
+        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW:
+            raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
-            data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+            data_source_interface = get_data_source_interface(
+                self.domain, self.app, self.source_type, self.source_id
+            )
         except ResourceNotFound:
             self.template_name = 'userreports/report_error.html'
             if self.existing_report:
@@ -483,14 +483,7 @@ class ConfigureReport(ReportBuilderView):
             context.update(self.main_context)
             return self.render_to_response(context)
 
-        self._properties_by_column_id = {}
-        for p in data_source_builder.data_source_properties.values():
-            column = p.to_report_column_option()
-            for agg in column.aggregation_options:
-                indicators = column.get_indicators(agg)
-                for i in indicators:
-                    self._properties_by_column_id[i['column_id']] = p
-
+        self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -503,6 +496,15 @@ class ConfigureReport(ReportBuilderView):
         if self.existing_report:
             return self.existing_report.description or None
         return None
+
+    def _populate_data_source_properties_from_interface(self, data_source_interface):
+        self._properties_by_column_id = {}
+        for p in data_source_interface.data_source_properties.values():
+            column = p.to_report_column_option()
+            for agg in column.aggregation_options:
+                indicators = column.get_indicators(agg)
+                for i in indicators:
+                    self._properties_by_column_id[i['column_id']] = p
 
     def _get_report_name(self, request=None):
         if self.existing_report:
@@ -561,9 +563,9 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
-        temp_ds_id = report_form.create_temp_data_source(self.request.user.username)
+        temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
 
         return {
             'existing_report': self.existing_report,
@@ -593,6 +595,7 @@ class ConfigureReport(ReportBuilderView):
     def _get_bound_form(self, report_data):
         form_class = _get_form_type(report_data['report_type'])
         return form_class(
+            self.domain,
             self._get_report_name(),
             self.app._id,
             self.source_type,
@@ -699,8 +702,8 @@ class ReportPreview(BaseDomainView):
         report_data['user_filters'] = []
 
         _munge_report_data(report_data)
-
         bound_form = form_class(
+            domain,
             '{}_{}_{}'.format(TEMP_REPORT_PREFIX, self.domain, data_source),
             report_data['app'],
             report_data['source_type'],

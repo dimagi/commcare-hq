@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.contrib import admin
-from corehq.apps.sms.models import QueuedSMS, SMS, PhoneBlacklist, PhoneNumber
+from corehq.apps.sms.models import QueuedSMS, SMS, PhoneBlacklist, PhoneNumber, SQLMobileBackendMapping
 
 
 class SMSAdmin(admin.ModelAdmin):
@@ -77,7 +77,25 @@ class PhoneNumberAdmin(admin.ModelAdmin):
     ordering = ('phone_number',)
 
 
+class SQLMobileBackendMappingAdmin(admin.ModelAdmin):
+
+    list_display = [
+        'is_global',
+        'domain',
+        'backend_type',
+        'prefix',
+        'backend',
+    ]
+
+    search_fields = [
+        'domain',
+    ]
+
+    ordering = ('domain', 'prefix')
+
+
 admin.site.register(SMS, SMSAdmin)
 admin.site.register(QueuedSMS, QueuedSMSAdmin)
 admin.site.register(PhoneBlacklist, PhoneBlacklistAdmin)
 admin.site.register(PhoneNumber, PhoneNumberAdmin)
+admin.site.register(SQLMobileBackendMapping, SQLMobileBackendMappingAdmin)

@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import uuid
 from datetime import datetime
 from django.test import TestCase
-from kafka.common import KafkaUnavailableError
 
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
@@ -53,8 +52,7 @@ class TestLocationDataSource(TestCase):
         self.data_source_config.save()
 
         self.pillow = get_location_pillow(configs=[self.data_source_config])
-        with trap_extra_setup(KafkaUnavailableError):
-            self.pillow.get_change_feed().get_latest_offsets()
+        self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         self.domain_obj.delete()

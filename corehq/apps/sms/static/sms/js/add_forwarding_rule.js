@@ -1,5 +1,7 @@
-hqDefine('sms/js/add_forwarding_rule', function () {
-    function toggle_keyword() {
+hqDefine('sms/js/add_forwarding_rule',[
+    "jquery",
+], function ($) {
+    function toggleKeyword() {
         if ($("#id_forward_type").val() === "KEYWORD") {
             $("#keyword_row").removeClass('hide');
         } else {
@@ -7,9 +9,9 @@ hqDefine('sms/js/add_forwarding_rule', function () {
         }
     }
     $(function () {
-        toggle_keyword();
+        toggleKeyword();
         $("#id_forward_type").change(function () {
-            toggle_keyword();
+            toggleKeyword();
         });
     });
 });

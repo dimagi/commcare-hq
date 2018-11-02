@@ -87,7 +87,7 @@ class MultiCaseTypeFilter(CaseTypeMixin, BaseMultipleOptionFilter):
 
 class SelectOpenCloseFilter(BaseSingleOptionFilter):
     slug = "is_open"
-    label = ugettext_lazy("Opened / Closed")
+    label = ugettext_lazy("Open / Closed")
     default_text = ugettext_lazy("Show All")
 
     @property

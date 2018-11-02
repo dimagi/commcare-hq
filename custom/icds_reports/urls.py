@@ -19,12 +19,7 @@ dashboardurls = [
     url('^', DashboardView.as_view(), name='icds_dashboard')
 ]
 
-urlpatterns = [
-    url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
-    url(r'^icds_dashboard/', include(dashboardurls)),
-    url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
-    url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
-    url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
+maternal_and_child_urls = [
     url(
         r'^underweight_children/(?P<step>[\w-]+)/',
         PrevalenceOfUndernutritionView.as_view(),
@@ -45,10 +40,6 @@ urlpatterns = [
         r'^early_initiation/(?P<step>[\w-]+)/',
         EarlyInitiationBreastfeeding.as_view(),
         name='early_initiation'),
-    url(r'^locations$', LocationView.as_view(), name='icds_locations'),
-    url(r'^locations/ancestors$', LocationAncestorsView.as_view(), name='icds_locations_ancestors'),
-    url(r'^export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
-    url(r'^fact_sheets$', FactSheetsView.as_view(), name='fact_sheets'),
     url(
         r'^exclusive-breastfeeding/(?P<step>[\w-]+)/',
         ExclusiveBreastfeedingView.as_view(),
@@ -65,6 +56,9 @@ urlpatterns = [
         r'^immunization_coverage/(?P<step>[\w-]+)/',
         ImmunizationCoverageView.as_view(),
         name='immunization_coverage'),
+]
+
+cas_reach_urls = [
     url(
         r'^awc_daily_status/(?P<step>[\w-]+)/',
         AWCDailyStatusView.as_view(),
@@ -73,6 +67,9 @@ urlpatterns = [
         r'^awcs_covered/(?P<step>[\w-]+)/',
         AWCsCoveredView.as_view(),
         name='awcs_covered'),
+]
+
+demographics_urls = [
     url(
         r'^registered_household/(?P<step>[\w-]+)/',
         RegisteredHouseholdView.as_view(),
@@ -97,6 +94,9 @@ urlpatterns = [
         r'^adhaar/(?P<step>[\w-]+)/',
         AdhaarBeneficiariesView.as_view(),
         name='adhaar'),
+]
+
+awc_infrastructure_urls = [
     url(
         r'^clean_water/(?P<step>[\w-]+)/',
         CleanWaterView.as_view(),
@@ -117,6 +117,22 @@ urlpatterns = [
         r'^adult_weight_scale/(?P<step>[\w-]+)/',
         AdultWeightScaleView.as_view(),
         name='adult_weight_scale'),
+]
+
+urlpatterns = [
+    url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
+    url(r'^icds_dashboard/', include(dashboardurls)),
+    url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
+    url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
+    url(r'^maternal_and_child/', include(maternal_and_child_urls)),
+    url(r'^icds_cas_reach/', include(cas_reach_urls)),
+    url(r'^demographics/', include(demographics_urls)),
+    url(r'^awc_infrastructure/', include(awc_infrastructure_urls)),
+    url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
+    url(r'^locations$', LocationView.as_view(), name='icds_locations'),
+    url(r'^locations/ancestors$', LocationAncestorsView.as_view(), name='icds_locations_ancestors'),
+    url(r'^export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
+    url(r'^fact_sheets$', FactSheetsView.as_view(), name='fact_sheets'),
     url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
     url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
     url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
@@ -127,5 +143,4 @@ urlpatterns = [
     url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww'),
     url(r'^health_indicators', DishaAPIView.as_view(), name='disha_api'),
     url(r'^translations/apps/', AppTranslations.as_view(), name='app_translations'),
-    url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww')
 ]

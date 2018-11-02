@@ -3,8 +3,8 @@
 
 describe('Location Types', function () {
 
-    var LocationSettingsViewModel = hqImport('locations/js/location_types').LocationSettingsViewModel,
-        LocationTypeModel = hqImport('locations/js/location_types').LocationTypeModel;
+    var locationSettingsViewModel = hqImport('locations/js/location_types').locationSettingsViewModel,
+        locationTypeModel = hqImport('locations/js/location_types').locationTypeModel;
 
     var extract_name = function (loc_type) {
         return loc_type.name();
@@ -17,17 +17,17 @@ describe('Location Types', function () {
             this.location_types = _.map(data, function (data) {
                 return _.clone(data); // we mutate these values later
             });
-            this.view_model = new LocationSettingsViewModel(this.location_types, false),
-            this.state_model = new LocationTypeModel(data.state, false, this.view_model),
-            this.district_model = new LocationTypeModel(data.district, false, this.view_model),
-            this.block_model = new LocationTypeModel(data.block, false, this.view_model),
-            this.supervisor_model = new LocationTypeModel(data.supervisor, false, this.view_model);
+            this.view_model = locationSettingsViewModel(this.location_types, false),
+            this.state_model = locationTypeModel(data.state, false, this.view_model),
+            this.district_model = locationTypeModel(data.district, false, this.view_model),
+            this.block_model = locationTypeModel(data.block, false, this.view_model),
+            this.supervisor_model = locationTypeModel(data.supervisor, false, this.view_model);
         });
 
         var make_cycle = function () {
             this.location_types[0].parent_type = data.block.pk; // state.parent_type = block
             this.state_model.parent_type(this.block_model.pk);
-            this.view_model = new LocationSettingsViewModel(this.location_types, false);
+            this.view_model = locationSettingsViewModel(this.location_types, false);
 
             this.state_model.view = this.view_model;
             this.district_model.view = this.view_model;
@@ -104,12 +104,12 @@ describe('Location Types', function () {
             this.location_types = _.map(data, function (data) {
                 return _.clone(data); // we mutate these values later
             });
-            this.view_model = new LocationSettingsViewModel(this.location_types, false),
-            this.state_model = new LocationTypeModel(data.state, false, this.view_model),
-            this.county_model = new LocationTypeModel(data.county, false, this.view_model),
-            this.city_model = new LocationTypeModel(data.city, false, this.view_model),
-            this.region_model = new LocationTypeModel(data.region, false, this.view_model);
-            this.town_model = new LocationTypeModel(data.town, false, this.view_model);
+            this.view_model = locationSettingsViewModel(this.location_types, false),
+            this.state_model = locationTypeModel(data.state, false, this.view_model),
+            this.county_model = locationTypeModel(data.county, false, this.view_model),
+            this.city_model = locationTypeModel(data.city, false, this.view_model),
+            this.region_model = locationTypeModel(data.region, false, this.view_model);
+            this.town_model = locationTypeModel(data.town, false, this.view_model);
         });
 
         describe('expand_to_options', function () {

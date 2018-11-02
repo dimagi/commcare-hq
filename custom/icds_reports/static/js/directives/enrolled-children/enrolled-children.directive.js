@@ -24,8 +24,8 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.label = "Children (0-6 years) who are enrolled for Anganwadi Services";
     vm.steps = {
-        'map': {route: '/enrolled_children/map', label: 'Map View'},
-        'chart': {route: '/enrolled_children/chart', label: 'Chart View'},
+        'map': {route: '/demographics/enrolled_children/map', label: 'Map View'},
+        'chart': {route: '/demographics/enrolled_children/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Children',

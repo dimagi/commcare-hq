@@ -35,7 +35,7 @@ class RegisterWebUserForm(forms.Form):
     # Not inheriting from other forms to de-obfuscate the role of this form.
 
     full_name = forms.CharField(label=_("Full Name"))
-    email = forms.CharField(label=_("Email"))
+    email = forms.CharField(label=_("Professional Email"))
     password = forms.CharField(
         label=_("Create Password"),
         widget=forms.PasswordInput(),

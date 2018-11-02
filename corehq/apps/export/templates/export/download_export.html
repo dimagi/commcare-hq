@@ -49,6 +49,7 @@
     {% initial_page_data 'max_column_size' max_column_size %}
     {% initial_page_data 'default_date_range' default_date_range %}
     {% initial_page_data 'check_for_multimedia' check_for_multimedia %}
+    {% initial_page_data 'user_types' user_types %}
     <div ng-app="downloadExportsApp">
         <div ng-controller="DownloadExportFormController"
              ng-cloak>
@@ -96,10 +97,10 @@
                 </p>
             </div>
         {% else %}
-            {% include 'export/partial/export_download_prepare.html' %}
+            {% include 'export/partials/export_download_prepare.html' %}
         {% endif %}
         </div>
-        {% include 'export/partial/export_download_progress.html' %}
+        {% include 'export/partials/export_download_progress.html' %}
     </div>
 
 {% endblock page_content %}
