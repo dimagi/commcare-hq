@@ -4537,7 +4537,9 @@ class LazyBlobDoc(BlobMixin):
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
-                if isinstance(attachment, six.string_types):
+                if isinstance(attachment, bytes):
+                    attachment = attachment.decode('utf-8')
+                if isinstance(attachment, six.text_type):
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"

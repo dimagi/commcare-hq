@@ -257,7 +257,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         for xmlns, master_form_id in master_id_map.items():
             linked_form_id = linked_id_map[xmlns]
             self.assertEqual(
-                self.master_app_with_report_modules.get_form(master_form_id).source,
+                self.master_app_with_report_modules.get_form(master_form_id).source.decode('utf-8'),
                 linked_app.get_form(linked_form_id).source
             )
 
