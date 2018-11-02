@@ -177,7 +177,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         def _to_report_format(date, user, group):
             return [
                 date.strftime("%Y-%m-%d"),
-                user['username'],
+                user['username'].split('@')[0],
                 user['phone_number'],
                 user['country'],
                 user['level_1'],

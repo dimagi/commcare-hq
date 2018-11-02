@@ -401,15 +401,15 @@ def _aggregate_bp_forms(state_id, day):
     AggregateBirthPreparednesForms.aggregate(state_id, day)
 
 
-@transaction.atomic
 def _run_custom_sql_script(commands, day=None):
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return
 
-    with connections[db_alias].cursor() as cursor:
-        for command in commands:
-            cursor.execute(command, [day])
+    with transaction.atomic(using=db_alias):
+        with connections[db_alias].cursor() as cursor:
+            for command in commands:
+                cursor.execute(command, [day])
 
 
 def aggregate_awc_daily(day):
@@ -442,7 +442,7 @@ def _child_health_monthly_table(state_ids, day):
     sub_aggregations.get()
 
     celery_task_logger.info("Inserting into child_health_monthly_table")
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('child_health_monthly', %s)",
         ], day)
@@ -463,7 +463,7 @@ def _child_health_helper(query, params):
 
 @track_time
 def _ccs_record_monthly_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(CcsRecordMonthly)):
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
         ], day)
@@ -480,7 +480,7 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(AggChildHealth)):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
         ], day)
@@ -489,7 +489,7 @@ def _agg_child_health_table(day):
 
 @track_time
 def _agg_ccs_record_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(AggCcsRecord)):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
         ], day)
@@ -890,7 +890,7 @@ def push_missing_docs_to_es():
         )
 
 
-@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='14'), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')
 def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
