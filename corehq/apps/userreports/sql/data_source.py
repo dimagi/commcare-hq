@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import numbers
+from collections import OrderedDict
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
@@ -90,6 +91,27 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         with session_helper.session_context() as session:
             return qc.count(session.connection(), self.filter_values)
 
+    @memoized
+    def get_final_column_ids(self):
+        def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
+            return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
+
+        expanded_columns = get_expanded_columns(self.top_level_columns, self.config)
+
+        return OrderedDict([
+            (column_id, col)
+            for col in self.top_level_columns
+            for column_id in _get_relevant_column_ids(col, expanded_columns)
+        ])
+
+    @memoized
+    def get_total_column_ids(self):
+        return [
+            column_id
+            for column_id, col in self.get_final_column_ids().items()
+            if col.calculate_total
+        ]
+
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
         def _clean_total_row(val, col):
@@ -99,11 +121,6 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
                 return 0
             return ''
 
-        def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
-            return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
-
-        expanded_columns = get_expanded_columns(self.top_level_columns, self.config)
-
         qc = self.query_context()
         for c in self.columns:
             qc.append_column(c.view)
@@ -112,20 +129,13 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         with session_helper.session_context() as session:
             totals = qc.totals(
                 session.connection(),
-                [
-                    column_id
-                    for col in self.top_level_columns
-                    for column_id in _get_relevant_column_ids(col, expanded_columns)
-                    if col.calculate_total
-                ],
+                self.get_total_column_ids(),
                 self.filter_values
             )
 
         total_row = [
             _clean_total_row(totals.get(column_id), col)
-            for col in self.top_level_columns for column_id in _get_relevant_column_ids(
-                col, expanded_columns
-            )
+            for column_id, col in self.get_final_column_ids().items()
         ]
         if total_row and total_row[0] is '':
             total_row[0] = ugettext('Total')
