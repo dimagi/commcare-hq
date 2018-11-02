@@ -433,7 +433,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                         total_row
                     )
                 ),
-                data_source.get_total_records(),
+                index + 1,
                 is_total_row=True,
             ))
         return rows_elem
