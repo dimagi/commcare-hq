@@ -6,6 +6,7 @@ from functools import partial
 import itertools
 import json
 from wsgiref.util import FileWrapper
+import csv
 
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
@@ -75,7 +76,10 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
-from casexml.apps.case.util import get_paged_changes_to_case_property
+from casexml.apps.case.util import (
+    get_case_history,
+    get_paged_changes_to_case_property,
+)
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.case.views import get_wrapped_case
 from couchdbkit.exceptions import ResourceNotFound
@@ -1474,6 +1478,28 @@ def case_property_changes(request, domain, case_id, case_property_name):
         'changes': changes,
         'last_transaction_checked': last_trasaction_checked,
     })
+
+
+@location_safe
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def download_case_history(request, domain, case_id):
+    history = get_case_history(get_case_or_404(domain, case_id))
+    properties = set()
+    for f in history:
+        properties |= set(f.keys())
+    properties = sorted(list(properties))
+    columns = [properties]
+    for f in history:
+        columns.append([f.get(prop, '') for prop in properties])
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="case_history.csv"'
+
+    writer = csv.writer(response)
+    writer.writerows(zip(*columns))   # transpose the columns to rows
+    return response
 
 
 @location_safe
