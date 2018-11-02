@@ -110,59 +110,52 @@ class CreateExportTagForm(forms.Form):
                 crispy.Field(
                     'model_type',
                     placeholder=_('Select model type'),
-                    ng_model='formData.model_type',
-                    ng_change='resetForm()',
-                    ng_required="true",
+                    data_bind="value: modelType",
                 ),
-                ng_show="!staticModelType"
+                data_bind="visible: !staticModelType",
             ),
             crispy.Div(
                 crispy.Div(
                     crispy.Field(
                         'app_type',
                         placeholder=_("Select Application Type"),
-                        ng_model="formData.app_type",
-                        ng_change="updateAppChoices()",
-                        ng_required="true",
+                        data_bind="value: appType, event: {change: updateAppChoices}",
                     ),
-                    ng_show="hasSpecialAppTypes || formData.model_type === 'case'",
+                    data_bind="visible: showAppType()",
                 ),
                 crispy.Field(
                     'application',
                     placeholder=_("Select Application"),
-                    ng_model="formData.application",
-                    ng_change="formData.model_type === 'case' ? updateCaseTypeChoices() : updateModuleChoices()",
-                    ng_required="true",
+                    data_bind="value: application",
                 ),
                 crispy.Div(  # Form export fields
                     crispy.Field(
                         'module',
                         placeholder=_("Select Menu"),
-                        ng_model="formData.module",
-                        ng_disabled="!formData.application",
-                        ng_change="updateFormChoices()",
-                        ng_required="formData.model_type === 'form'",
+                        data_bind="value: module, disable: !application()",
                     ),
                     crispy.Field(
                         'form',
                         placeholder=_("Select Form"),
-                        ng_model="formData.form",
-                        ng_disabled="!formData.module",
-                        ng_required="formData.model_type === 'form'",
+                        data_bind='''
+                            value: form,
+                            disable: !module(),
+                        ''',
                     ),
-                    ng_show="formData.model_type === 'form'"
+                    data_bind="visible: isFormModel()",
                 ),
                 crispy.Div(  # Case export fields
                     crispy.Field(
                         'case_type',
                         placeholder=_("Select Case Type"),
-                        ng_model="formData.case_type",
-                        ng_disabled="!formData.application",
-                        ng_required="formData.model_type === 'case'",
+                        data_bind='''
+                            value: caseType,
+                            disable: !application(),
+                        ''',
                     ),
-                    ng_show="formData.model_type === 'case'",
+                    data_bind="visible: isCaseModel()",
                 ),
-                ng_show="formData.model_type"
+                data_bind="visible: modelType()",
             )
         )
 
@@ -259,19 +252,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         }
 
 
-def _date_help_text(field):
-    return """
-        <small class="label label-default">{fmt}</small>
-        <div ng-show="feedFiltersForm.{field}.$invalid && !feedFiltersForm.{field}.$pristine" class="help-block">
-            {msg}
-        </div>
-    """.format(
-        field=field,
-        fmt=ugettext_lazy("YYYY-MM-DD"),
-        msg=ugettext_lazy("Invalid date format"),
-    )
-
-
 class DashboardFeedFilterForm(forms.Form):
     """
     A form used to configure the filters on a Dashboard Feed export
@@ -307,14 +287,14 @@ class DashboardFeedFilterForm(forms.Form):
     start_date = forms.DateField(
         label=ugettext_lazy("Begin Date"),
         required=False,
-        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}),
-        help_text=_date_help_text("start_date")
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
+        help_text="<small class='label label-default'>{}</small>".format(ugettext_lazy("YYYY-MM-DD")),
     )
     end_date = forms.DateField(
         label=ugettext_lazy("End Date"),
         required=False,
-        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}),
-        help_text=_date_help_text("end_date"),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
+        help_text="<small class='label label-default'>{}</small>".format(ugettext_lazy("YYYY-MM-DD")),
     )
 
     def __init__(self, domain_object, *args, **kwargs):
@@ -370,46 +350,36 @@ class DashboardFeedFilterForm(forms.Form):
             crispy.Div(
                 crispy.Field(
                     'emwf_case_filter',
-                    # ng_model='formData.emwf_case_filter',
-                    # ng_model_options="{ getterSetter: true }",
                 ),
-                ng_show="modelType === 'case'"
+                data_bind="visible: showEmwfCaseFilter",
             ),
             crispy.Div(
                 crispy.Field(
                     'emwf_form_filter',
-                    # ng_model='formData.emwf_form_filter',
-                    # ng_model_options="{ getterSetter: true }",
                 ),
-                ng_show="modelType === 'form'"
+                data_bind="visible: showEmwfFormFilter",
             ),
             crispy.Field(
                 'date_range',
-                ng_model='formData.date_range',
-                ng_required='true',
+                data_bind='value: dateRange',
             ),
             crispy.Div(
-                crispy.Field("days", ng_model="formData.days"),
-                ng_show="formData.date_range === 'lastn'"
+                crispy.Field("days", data_bind="value: days"),
+                data_bind="visible: showDays",
             ),
             crispy.Div(
                 crispy.Field(
                     "start_date",
-                    ng_model="formData.start_date",
-                    ng_required="formData.date_range === 'since' || formData.date_range === 'range'"
+                    data_bind="value: startDate",
                 ),
-                ng_show="formData.date_range === 'range' || formData.date_range === 'since'",
-                ng_class=
-                    "{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
+                data_bind="visible: showStartDate, css: {'has-error': startDateHasError}",
             ),
             crispy.Div(
                 crispy.Field(
                     "end_date",
-                    ng_model="formData.end_date",
-                    ng_required="formData.date_range === 'range'"
+                    data_bind="value: endDate",
                 ),
-                ng_show="formData.date_range === 'range'",
-                ng_class="{'has-error': feedFiltersForm.end_date.$invalid && !feedFiltersForm.end_date.$pristine}",
+                data_bind="visible: showEndDate, css: {'has-error': endDateHasError}",
             )
         ]
 
