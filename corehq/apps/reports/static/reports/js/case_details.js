@@ -5,6 +5,7 @@ hqDefine("reports/js/case_details", [
     'clipboard/dist/clipboard',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
+    'analytix/js/kissmetrix',
     'case/js/case_property_modal',
     'reports/js/data_corrections',
     'reports/js/single_form',
@@ -20,6 +21,7 @@ hqDefine("reports/js/case_details", [
     Clipboard,
     initialPageData,
     googleAnalytics,
+    kissMetrics,
     casePropertyModal,
     dataCorrections,
     singleForm
@@ -268,5 +270,11 @@ hqDefine("reports/js/case_details", [
             modalData.init($(this).data('property-name'));
             $propertiesModal.modal();
         });
+
+        // Analytics
+        $('.view-related-case-link').on('click', function () {
+            kissMetrics.track.event("Case Data Report: Related case link clicked");
+        });
+
     });
 });
