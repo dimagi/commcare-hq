@@ -242,8 +242,8 @@ hqDefine('export/js/models', function () {
 
     ExportInstance.prototype.getSharingHelpText = gettext(
         '<strong>Private</strong>: Only you can edit and export.'
-        + ' <strong>Export Only</strong>: You can edit and export, other users can only export.'
-        + ' <strong>Edit and Export</strong>: All users can edit and export.'
+        + '<br/> <strong>Export Only</strong>: You can edit and export, other users can only export.'
+        + '<br/> <strong>Edit and Export</strong>: All users can edit and export.'
     );
 
     /**

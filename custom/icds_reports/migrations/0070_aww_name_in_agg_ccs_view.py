@@ -5,8 +5,6 @@ from __future__ import absolute_import
 
 from django.db import migrations
 
-from custom.icds_reports.utils.migrations import get_view_migrations
-
 
 class Migration(migrations.Migration):
 
@@ -16,4 +14,3 @@ class Migration(migrations.Migration):
 
     operations = [
     ]
-    operations.extend(get_view_migrations())
