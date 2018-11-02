@@ -97,7 +97,8 @@ class FormProcessorInterface(object):
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=15 * 60)
         try:
-            lock.acquire()
+            if not lock.acquire(blocking_timeout=5):
+                raise XFormLockError(xform_id)
         except RedisError:
             lock = None
         return lock
@@ -321,3 +322,7 @@ class XFormQuestionValueIterator(object):
         return self._last
 
     next = __next__     # For Py2 compatibility
+
+
+class XFormLockError(Exception):
+    """Exception raised when a form lock cannot be acquired"""
