@@ -127,3 +127,9 @@ class ConfigurableReportDataSource(object):
 
     def get_total_row(self):
         return self.data_source.get_total_row()
+
+    def get_total_column_ids(self):
+        return self.data_source.get_total_column_ids()
+
+    def get_final_column_ids(self):
+        return self.data_source.get_final_column_ids()

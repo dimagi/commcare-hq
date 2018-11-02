@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
+import numbers
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
 import random
 
 from django.conf import settings
+from django.utils.translation import ugettext
 from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -403,16 +406,31 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
+        total_column_ids = data_source.get_total_column_ids()
+        total_cols = {col_id: 0 for col_id in total_column_ids}
+
+        def _update_total_row(row):
+            for col_id in total_column_ids:
+                val = row[col_id]
+                if isinstance(val, numbers.Number):
+                    total_cols[col_id] += val
+
         rows_elem = E.rows(last_sync=last_sync)
-        for i, row in enumerate(data_source.get_data()):
-            rows_elem.append(_row_to_row_elem(row, i))
+        for index, row in enumerate(data_source.get_data()):
+            rows_elem.append(_row_to_row_elem(row, index))
+            _update_total_row(row)
         if data_source.has_total_row:
-            total_row = data_source.get_total_row()
+            total_row = [
+                str(total_cols.get(col_id, ''))
+                for col_id in data_source.get_final_column_ids()
+            ]
+            if total_row and total_row[0] is '':
+                total_row[0] = ugettext('Total')
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        [column_config.column_id for column_config in data_source.top_level_columns],
-                        list(map(str, total_row))
+                        list(data_source.get_final_column_ids()),
+                        total_row
                     )
                 ),
                 data_source.get_total_records(),
