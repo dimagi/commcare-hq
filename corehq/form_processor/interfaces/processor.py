@@ -97,7 +97,7 @@ class FormProcessorInterface(object):
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=15 * 60)
         try:
-            if not lock.acquire(blocking_timeout=5):
+            if not lock.acquire(blocking=False):
                 raise XFormLockError(xform_id)
         except RedisError:
             lock = None
