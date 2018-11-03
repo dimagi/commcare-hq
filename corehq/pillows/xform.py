@@ -14,7 +14,7 @@ from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, UCR_PROCESSING_CHUNK_SIZE
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
