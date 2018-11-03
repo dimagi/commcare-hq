@@ -21,7 +21,7 @@ from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
-    ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow, \
+    ConfigurableReportTableManagerMixin, get_kafka_ucr_static_pillow, \
     ConfigurableReportPillowProcessor
 from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
@@ -70,7 +70,7 @@ class ChunkedUCRProcessorTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        cls.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
+        cls.pillow = get_ucr_es_case_pillow(processor_chunk_size=100)
 
     @classmethod
     def tearDownClass(cls):
@@ -274,7 +274,7 @@ class IndicatorPillowTest(CallCenterDomainMockTest):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch_chunked(self, datetime_mock):
-        self._test_process_doc_from_couch(datetime_mock, get_kafka_ucr_pillow(processor_chunk_size=100))
+        self._test_process_doc_from_couch(datetime_mock, get_ucr_es_case_pillow(processor_chunk_size=100))
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch(self, datetime_mock):
@@ -300,9 +300,9 @@ class IndicatorPillowTest(CallCenterDomainMockTest):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql_chunked(self, datetime_mock):
-        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
+        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=100)
         self._test_process_doc_from_sql(datetime_mock)
-        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=0)
+        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=0)
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql(self, datetime_mock):
@@ -326,9 +326,9 @@ class IndicatorPillowTest(CallCenterDomainMockTest):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
-        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
+        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=100)
         self._test_process_deleted_doc_from_sql(datetime_mock)
-        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=0)
+        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=0)
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql(self, datetime_mock):
@@ -425,7 +425,7 @@ class ProcessRelatedDocTypePillowTest(CallCenterDomainMockTest):
         )
 
     def test_process_doc_from_sql_stale_chunked(self):
-        pillow = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=100)
+        pillow = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100)
         # one less query in chunked mode, as two cases are looked up in single query
         self._test_process_doc_from_sql_stale(pillow, num_queries=11)
 
@@ -510,8 +510,8 @@ class ReuseEvaluationContextTest(CallCenterDomainMockTest, TestCase):
         self._test_reuse_cache()
 
     def test_reuse_cache_chunked(self):
-        pillow1 = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=100)
-        pillow2 = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=100)
+        pillow1 = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100)
+        pillow2 = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100)
         self._test_reuse_cache(pillow1, pillow2, 11)
 
     def _test_reuse_cache(self, pillow1=None, pillow2=None, num_queries=12):
@@ -649,7 +649,7 @@ class ChunkedAsyncIndicatorTest(AsyncIndicatorTest):
     @classmethod
     def setUpClass(cls):
         super(ChunkedAsyncIndicatorTest, cls).setUpClass()
-        cls.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
+        cls.pillow = get_ucr_es_case_pillow(processor_chunk_size=100)
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):

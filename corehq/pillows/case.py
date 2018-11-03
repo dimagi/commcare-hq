@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, UCR_PROCESSING_CHUNK_SIZE
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -67,7 +67,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
 def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
                          num_processes=1, process_num=0, configs=None,
-                         topics=None, **kwargs):
+                         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
     if topics:
         assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"
     topics = topics or CASE_TOPICS
@@ -98,7 +98,8 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, case_to_es_processor, case_search_processor]
+        processor=[ucr_processor, case_to_es_processor, case_search_processor],
+        processor_chunk_size=processor_chunk_size
     )
 
 

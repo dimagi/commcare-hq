@@ -22,7 +22,7 @@ class BulkPillowProcessor(PillowProcessor):
     supports_batch_processing = True
 
     @abstractmethod
-    def process_changes_chunk(self, pillow_instance, changes_chunk):
+    def process_changes_chunk(self, changes_chunk):
         """
         Should process given changes_chunk.
 

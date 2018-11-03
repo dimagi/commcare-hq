@@ -54,9 +54,9 @@ class ChunkedCountProcessor(BulkPillowProcessor):
     def __init__(self):
         self.count = 0
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         self.count += 1
 
-    def process_changes_chunk(self, pillow_instance, changes_chunk):
+    def process_changes_chunk(self, changes_chunk):
         self.count += len(changes_chunk)
         return [], []
