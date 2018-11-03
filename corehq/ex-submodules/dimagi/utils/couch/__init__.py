@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import timedelta
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
@@ -90,6 +89,7 @@ def acquire_lock(lock, degrade_gracefully, **kwargs):
 
 
 def release_lock(lock, degrade_gracefully):
+    from dimagi.utils.logging import notify_exception
     if lock:
         try:
             try:
