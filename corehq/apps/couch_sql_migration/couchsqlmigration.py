@@ -398,26 +398,28 @@ class CouchSqlDomainMigrator(object):
             self.log_info("{} ({})".format(doc_count, ', '.join(doc_types)))
             return iterable
 
-    def _log_objects_processed_count(self, tags, throttled=False):
+    def _log_processed_docs_count(self, tags, throttled=False):
         if throttled and self.processed_docs % 100 != 0:
             return
 
-        datadog_counter("commcare.couchsqlmigration.docs_processed",
-                        value=self.processed_docs,
+        processed_docs = self.processed_docs
+        self.processed_docs = 0
+
+        datadog_counter("commcare.couchsqlmigration.processed_docs",
+                        value=processed_docs,
                         tags=tags)
-        self.processed_objects = 0
 
     def _log_main_forms_processed_count(self, throttled=False):
-        self._log_objects_processed_count(['type:main_forms'], throttled)
+        self._log_processed_docs_count(['type:main_forms'], throttled)
 
     def _log_unprocessed_forms_processed_count(self, throttled=False):
-        self._log_objects_processed_count(['type:unprocessed_forms'], throttled)
+        self._log_processed_docs_count(['type:unprocessed_forms'], throttled)
 
     def _log_unprocessed_cases_processed_count(self, throttled=False):
-        self._log_objects_processed_count(['type:unprocessed_cases'], throttled)
+        self._log_processed_docs_count(['type:unprocessed_cases'], throttled)
 
     def _log_case_diff_count(self, throttled=False):
-        self._log_objects_processed_count(['type:case_diffs'], throttled)
+        self._log_processed_docs_count(['type:case_diffs'], throttled)
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"
