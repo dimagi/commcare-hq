@@ -192,7 +192,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by),
-            aggregation_level=aggregation_level
+            aggregation_level=aggregation_level + 1
         )
 
     def indexes(self):
