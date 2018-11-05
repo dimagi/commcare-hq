@@ -56,6 +56,9 @@ hqDefine('export/js/models', function () {
             return format;
         });
 
+        self.initialSharing = ko.observable(instanceJSON.sharing);
+        self.hasOtherOwner = ko.observable(options.hasOtherOwner);
+
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function (table) {
             return table.selected() && _.any(table.columns(), function (column) {
