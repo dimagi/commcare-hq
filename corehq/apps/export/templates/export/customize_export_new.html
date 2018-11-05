@@ -167,6 +167,26 @@
                             value: sharing
                         ">
                     </select>
+                    {% if has_other_owner %}
+                    <div data-bind="visible: sharing() != initialSharing()" class="alert alert-warning">
+                        <div data-bind="visible: sharing() == 'private'">
+                            {% blocktrans %}
+                            This export was created by <strong>{{ owner_name }}</strong>.
+                            If you change the sharing settings for this export you will lose the ability
+                            to view and edit the export.
+                            Only <strong>{{ owner_name }}</strong> will have access to it.
+                            {% endblocktrans %}
+                        </div>
+                        <div data-bind="visible: sharing() == 'export_only'">
+                            {% blocktrans %}
+                            This export was created by <strong>{{ owner_name }}</strong>.
+                            If you change the sharing settings for this export you will lose the ability
+                            to edit the export.
+                            Only <strong>{{ owner_name }}</strong> will be able to edit it.
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
