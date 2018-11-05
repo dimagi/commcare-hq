@@ -21,4 +21,3 @@ class Migration(migrations.Migration):
         migrator.get_migration('update_tables30.sql')
     ]
     operations.extend(get_view_migrations())
-
