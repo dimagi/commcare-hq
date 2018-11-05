@@ -1690,14 +1690,9 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
         },
         {
-            'name': 'GroupPillow',
+            'name': 'GroupESPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.group.get_group_pillow',
-        },
-        {
-            'name': 'GroupToUserPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_es_pillow',
         },
         {
             'name': 'SqlSMSPillow',

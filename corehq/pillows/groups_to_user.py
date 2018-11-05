@@ -8,7 +8,7 @@ from corehq.elastic import stream_es_query, get_es_new, ES_META
 from corehq.apps.es import UserES
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.group import get_group_to_elasticsearch_processor
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -27,9 +27,9 @@ class GroupsToUsersProcessor(PillowProcessor):
             update_es_user_with_groups(change.get_document(), self._es)
 
 
-def get_group_es_pillow(pillow_id='GroupToUserPillow', num_processes=1, process_num=0, **kwargs):
-    assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, [topics.GROUP])
+def get_group_es_pillow(pillow_id='GroupESPillow', num_processes=1, process_num=0, **kwargs):
+    assert pillow_id == 'GroupESPillow', 'Pillow ID is not allowed to change'
+    checkpoint = KafkaPillowCheckpoint(pillow_id, [topics.GROUP])
     to_user_es_processor = GroupsToUsersProcessor()
     to_group_es_processor = get_group_to_elasticsearch_processor()
     change_feed = KafkaChangeFeed(
