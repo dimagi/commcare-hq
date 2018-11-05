@@ -165,6 +165,6 @@ def _check_elasticsearch(domain_name):
             print('Domain "%s" contains data in ES index "%s"' % (domain_name, hqESQuery.index))
             return True
 
-    return any(_check_index(hqESQuery) for hqESQuery in [
+    return any([_check_index(hqESQuery) for hqESQuery in [
         AppES, CaseES, CaseSearchES, DomainES, FormES, GroupES, LedgerES, UserES
-    ])
+    ]])
