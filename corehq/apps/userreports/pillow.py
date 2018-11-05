@@ -305,7 +305,10 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         docs = []
         for _, _changes in six.iteritems(changes_by_doctype):
             doc_store = _changes[0].document_store
-            docs.extend(list(doc_store.iter_documents([change.id for change in _changes])))
+            doc_ids_to_query = [change.id for change in _changes if change.should_fetch_document()]
+            new_docs = list(doc_store.iter_documents(doc_ids_to_query))
+            docs_queried_prior = [change.document for change in _changes if not change.fetch_document()]
+            docs.extend(new_docs + docs_queried_prior)
 
         # catch missing docs
         retry_changes = set()
@@ -316,6 +319,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 #   so let pillow fall back to serial mode to capture the error for missing docs
                 retry_changes.add(change)
                 continue
+            else:
+                # set this, so that subsequent doc lookups are avoided
+                change.set_document(docs_by_id[change.id])
             try:
                 ensure_matched_revisions(change, docs_by_id.get(change.id))
             except DocumentMismatchError:

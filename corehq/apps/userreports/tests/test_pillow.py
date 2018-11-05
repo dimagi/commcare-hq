@@ -392,7 +392,7 @@ class ProcessRelatedDocTypePillowTest(CallCenterDomainMockTest):
     def setUp(self):
         self.config = get_data_source_with_related_doc_type()
         self.config.save()
-        self.pillow = get_ucr_es_case_pillow(topics=['case-sql'], configs=[self.config])
+        self.pillow = get_ucr_es_case_pillow(topics=['case-sql'], configs=[self.config], processor_chunk_size=0)
         self.adapter = get_indicator_adapter(self.config)
 
         self.pillow.get_change_feed().get_latest_offsets()
