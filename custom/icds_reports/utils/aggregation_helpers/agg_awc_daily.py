@@ -116,7 +116,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
         def _launched_col(col):
             col_index = launched_cols.index(col)
             col_for_level = launched_cols[aggregation_level]
-            if col_index > aggregation_level:
+            if col_index >= aggregation_level:
                 return 'sum({})'.format(col)
             else:
                 return 'CASE WHEN (sum({}) > 0) THEN 1 ELSE 0 END'.format(col_for_level)
