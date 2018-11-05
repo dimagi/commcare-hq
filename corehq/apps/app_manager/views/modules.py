@@ -205,6 +205,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
         }
 
     return {
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'shadow_module_options': {
             'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
@@ -379,7 +380,7 @@ def _case_list_form_not_allowed_reasons(module):
     if not module.all_forms_require_a_case():
         reasons.append(_("all forms in this case list must update a case, "
                          "which means that registration forms must go in a different case list"))
-    if isinstance(module, Module):
+    if hasattr(module, 'parent_select'):
         app = module.get_app()
         if (not app.build_version or app.build_version < LooseVersion('2.23')) and module.parent_select.active:
             reasons.append(_("'Parent Selection' is configured"))

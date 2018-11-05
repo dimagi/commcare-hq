@@ -141,7 +141,7 @@ class CcsRecordMonthly(models.Model):
         index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in index_queries:
@@ -478,7 +478,7 @@ class AggCcsRecord(models.Model):
         index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in rollup_queries:
@@ -571,7 +571,7 @@ class AggChildHealth(models.Model):
         index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in rollup_queries:

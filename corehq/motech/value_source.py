@@ -25,8 +25,8 @@ def recurse_subclasses(cls):
 
 
 class ValueSource(DocumentSchema):
-    external_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN)
-    commcare_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN,
+    external_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True)
+    commcare_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True,
                                         choices=COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,))
 
     @classmethod

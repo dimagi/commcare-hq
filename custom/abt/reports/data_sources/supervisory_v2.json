@@ -52,8 +52,8 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                 "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
                             "operator": "eq",
                             "property_value": "no",
@@ -77,8 +77,8 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
                             "operator": "eq",
                             "property_value": "no",
@@ -102,8 +102,8 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
                             "operator": "eq",
                             "property_value": "no",
@@ -127,8 +127,8 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
                             "operator": "eq",
                             "property_value": "no",
@@ -152,8 +152,8 @@
                         {
                             "expression": {
                                 "datatype": null,
-                                "property_name": "Test_YN",
-                                "type": "property_name"
+                                "property_path": ["form", "Test_YN"],
+                                "type": "property_path"
                             },
                             "operator": "eq",
                             "property_value": "no",

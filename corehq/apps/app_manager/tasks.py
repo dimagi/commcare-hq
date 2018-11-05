@@ -62,3 +62,9 @@ def prune_auto_generated_builds(domain, app_id):
             raise SavedAppBuildException("Attempted to delete build that should not be deleted")
         app.delete_app()
         app.save(increment_version=False)
+
+
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
+def update_linked_app_and_notify_task(domain, app_id, user_id, email):
+    from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
+    update_linked_app_and_notify(domain, app_id, user_id, email)

@@ -1852,11 +1852,12 @@ class Subscription(models.Model):
             return False
 
     def user_can_change_subscription(self, user):
-        if self.account.is_customer_billing_account:
-            return False
         if user.is_superuser:
             return True
-        return self.account.has_enterprise_admin(user.email)
+        elif self.account.is_customer_billing_account:
+            return self.account.has_enterprise_admin(user.email)
+        else:
+            return True
 
 
 class InvoiceBaseManager(models.Manager):
