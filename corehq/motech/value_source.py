@@ -42,7 +42,7 @@ class ValueSource(DocumentSchema):
     # Whether the ValueSource is import-only ("in"), export-only ("out"), or
     # for both import and export (the default, None)
     direction = StringProperty(required=False, default=DIRECTION_BOTH, exclude_if_none=True,
-                               choices=tuple(DIRECTIONS))
+                               choices=DIRECTIONS)
 
     @classmethod
     def wrap(cls, data):
@@ -73,15 +73,15 @@ class ValueSource(DocumentSchema):
         imported or exported.
 
         >>> value_source = ValueSource(direction=DIRECTION_BOTH)
-        >>> bool(value_source.check_direction(DIRECTION_EXPORT))
+        >>> value_source.check_direction(DIRECTION_EXPORT)
         True
 
         >>> value_source = ValueSource(direction=DIRECTION_IMPORT)
-        >>> bool(value_source.check_direction(DIRECTION_EXPORT))
+        >>> value_source.check_direction(DIRECTION_EXPORT)
         False
 
         """
-        return DIRECTIONS[self.direction] & DIRECTIONS[direction]
+        return not self.direction or direction == self.direction
 
 
 class CaseProperty(ValueSource):
