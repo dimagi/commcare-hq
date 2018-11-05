@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET, require_POST
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.exceptions import ExportNotFound, ExportFormValidationException
+from corehq.apps.export.exceptions import ExportFormValidationException
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.export.views.utils import ExportsPermissionsManager, get_timezone
