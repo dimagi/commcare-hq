@@ -131,10 +131,7 @@ class DateRangePickerWidget(Input):
     }
     separator = ugettext_noop(' to ')
 
-    def __init__(self, attrs=None, range_labels=None, separator=None,
-                 default_datespan=None):
-        self.range_labels = range_labels or self.range_labels
-        self.separator = separator or self.separator
+    def __init__(self, attrs=None, default_datespan=None):
         self.default_datespan = default_datespan
         super(DateRangePickerWidget, self).__init__(attrs=attrs)
 
