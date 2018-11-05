@@ -1,8 +1,8 @@
 {% load i18n %}
 <div class="alert alert-info"
      data-bind="visible: showBulkExportDownload">
-    <form class="form form-inline"
-          method="post"
+    <form class="form form-inline" method="post"
+          data-bind="submit: submitBulkExportDownload"
           action="{{ bulk_download_url }}">
           {% csrf_token %}
         <div class="row">

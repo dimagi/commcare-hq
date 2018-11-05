@@ -171,22 +171,23 @@ hqDefine("export/js/export_list", function () {
         };
         self.showBulkExportDownload = ko.observable(false);
         self.bulkExportList = ko.observable('');
-        _.each(self.exports, function (e) {
-            e.addedToBulk.subscribe(function (newValue) {
+        self.submitBulkExportDownload = function() {
+            // Update hidden value of exports to download
+            self.bulkExportList(JSON.stringify(_.map(_.filter(self.exports, function (maybeSelectedExport) {
+                return maybeSelectedExport.addedToBulk();
+            }), function (maybeSelectedExport) {
+                return ko.mapping.toJS(maybeSelectedExport);
+            })));
+
+            return true;
+        };
+        _.each(self.exports, function (export_) {
+            export_.addedToBulk.subscribe(function (newValue) {
                 // Determine whether or not to show bulk export download button & message
                 if (newValue !== self.showBulkExportDownload()) {
-                    self.showBulkExportDownload(!!_.find(self.exports, function (e) {
-                        return e.addedToBulk();
+                    self.showBulkExportDownload(!!_.find(self.exports, function (maybeSelectedExport) {
+                        return maybeSelectedExport.addedToBulk();
                     }));
-                }
-
-                // Update hidden value of exports to download
-                if (self.showBulkExportDownload()) {
-                    self.bulkExportList(JSON.stringify(_.map(_.filter(self.exports, function (e) {
-                        return e.addedToBulk();
-                    }), function (e) {
-                        return ko.mapping.toJS(e);
-                    })));
                 }
             });
         });
