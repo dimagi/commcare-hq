@@ -21,6 +21,15 @@ class PaginationEventHandler(object):
         """
         pass
 
+    def page_exception(self, exception):
+        """ Called on the load if it raises an exception
+
+        :param exception: the exception that was raised
+
+        returns a boolean of whether the exception was handled
+        """
+        return False
+
     def page_end(self, total_emitted, duration, *args, **kwargs):
         """Called at the end of each page of data
 
@@ -103,7 +112,13 @@ def paginate_function(data_function, args_provider, event_handler=None):
         event_handler.page_start(total_emitted, *args, **kwargs)
         results = data_function(*args, **kwargs)
         start_time = datetime.utcnow()
-        len_results = len(results)
+
+        try:
+            len_results = len(results)
+        except Exception as e:
+            if event_handler.page_exception(e):
+                continue
+            raise
 
         for item in results:
             yield item

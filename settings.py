@@ -1938,7 +1938,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
@@ -2161,8 +2160,12 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
 
 RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
+    ("production", "born-on-time-2"),
+    ("production", "hki-nepal-suaahara-2"),
     ("production", "malawi-fp-study"),
+    ("production", "no-lean-season"),
     ("production", "rec"),
+    ("production", "sauti-1"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####
