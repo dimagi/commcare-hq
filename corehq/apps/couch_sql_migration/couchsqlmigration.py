@@ -402,10 +402,12 @@ class CouchSqlDomainMigrator(object):
         if throttled and self.processed_docs % 100 != 0:
             return
 
+        processed_docs = self.processed_docs
+        self.processed_docs = 0
+
         datadog_counter("commcare.couchsqlmigration.docs_processed",
-                        value=self.processed_docs,
+                        value=processed_docs,
                         tags=tags)
-        self.processed_objects = 0
 
     def _log_main_forms_processed_count(self, throttled=False):
         self._log_objects_processed_count(['type:main_forms'], throttled)
