@@ -15,6 +15,7 @@
 {% initial_page_data 'number_of_apps_to_process' number_of_apps_to_process %}
 {% initial_page_data 'format_options' format_options %}
 {% initial_page_data 'sharing_options' sharing_options %}
+{% initial_page_data 'has_other_owner' has_other_owner %}
 {% initial_page_data 'has_daily_saved_export_access' has_daily_saved_export_access %}
 {% initial_page_data 'has_excel_dashboard_access' has_excel_dashboard_access %}
 {% initial_page_data 'full_path' request.get_full_path %}
@@ -153,7 +154,7 @@
                 </div>
             </div>
             {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-            <div class="form-group">
+            <div class="form-group" data-bind="css: { 'has-warning': hasOtherOwner() && sharing() != initialSharing() }">
                 <label
                     for="sharing-select"
                     class="col-sm-3 col-md-2 control-label">
@@ -167,8 +168,7 @@
                             value: sharing
                         ">
                     </select>
-                    {% if has_other_owner %}
-                    <div data-bind="visible: sharing() != initialSharing()" class="alert alert-warning">
+                    <div class="help-block" data-bind="visible: hasOtherOwner() && sharing() != initialSharing()">
                         <div data-bind="visible: sharing() == 'private'">
                             {% blocktrans %}
                             This export was created by <strong>{{ owner_name }}</strong>.
@@ -186,7 +186,6 @@
                             {% endblocktrans %}
                         </div>
                     </div>
-                    {% endif %}
                 </div>
             </div>
             {% endif %}
