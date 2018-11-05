@@ -664,7 +664,7 @@ def _save_migrated_models(sql_form, case_stock_result=None):
 
 
 class MigrationPaginationEventHandler(PaginationEventHandler):
-    RETRIES = 10
+    RETRIES = 5
 
     def __init__(self, domain):
         self.domain = domain
@@ -676,6 +676,14 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
     def page_end(self, total_emitted, duration, *args, **kwargs):
         self.retries = self.RETRIES
         cache_utils.clear_limit(self._cache_key())
+
+    def page_exception(self, e):
+        if self.retries <= 0:
+            return False
+
+        self.retries -= 1
+        sleep(1)
+        return True
 
 
 def _get_main_form_iterator(domain):
