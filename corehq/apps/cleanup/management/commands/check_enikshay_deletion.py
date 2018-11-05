@@ -73,6 +73,9 @@ DOMAINS_FROM_SOFTLAYER = (
     'np-no-dirtiness',
     'np-test-migration-03-10',
     'enikshay-drtb-migration',
+    'derek-enikshay',
+    'enikshay-test-migration-test',
+    'enikshay-test-test',
 )
 
 DOMAINS_FROM_STAGING = (
