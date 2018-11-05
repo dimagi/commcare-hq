@@ -230,7 +230,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         try:
             with timer:
                 if processor:
-                    processor.process_change(self, change)
+                    processor.process_change(change)
                 else:
                     # process on serial processors
                     self.process_change(change, serial_only=True)
@@ -421,7 +421,7 @@ class ConstructedPillow(PillowBase):
     def process_change(self, change, serial_only=False):
         processors = self.serial_processors if serial_only else self.processors
         for processor in processors:
-            processor.process_change(self, change)
+            processor.process_change(change)
 
     def update_checkpoint(self, change, context):
         if self._change_processed_event_handler is not None:
