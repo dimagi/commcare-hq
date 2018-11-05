@@ -13,6 +13,7 @@ from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.case_search import get_case_search_processor
+from corehq.pillows.reportcase import get_case_to_report_es_processor
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -98,7 +99,8 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, case_to_es_processor, case_search_processor],
+        processor=[ucr_processor, case_to_es_processor, case_search_processor,
+            get_case_to_report_es_processor()],
         processor_chunk_size=processor_chunk_size
     )
 

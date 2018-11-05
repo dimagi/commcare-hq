@@ -146,7 +146,7 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
     ('group', 'GroupPillow'),
     ('ledger-v1', 'LedgerToElasticsearchPillow'),
     ('sms', 'SqlSMSPillow'),
-    ('report-case', 'ReportCaseToElasticsearchPillow'),
+    ('report-case', 'kafka-case-ucr-es'),
     ('report-xform', 'kafka-xform-ucr-es'),
 ], CheckpointCreationTest)
 def test_checkpoint_creation(self, reindex_id, pillow_name):
