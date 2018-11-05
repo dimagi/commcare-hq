@@ -189,10 +189,10 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 awc_id,
                 sum(seeking_services) AS cases_person,
                 sum(count) AS cases_person_all,
-                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= 'dob' AND sex = 'F' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14,
-                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= 'dob' AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all,
-                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= 'dob' AND sex = 'F' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18,
-                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= 'dob' AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all,
+                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14,
+                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all,
+                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18,
+                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all,
                 sum(CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) as cases_person_referred
             FROM "{ucr_tablename}"
             WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s ))
@@ -395,7 +395,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         def _launched_col(col):
             col_index = launched_cols.index(col)
             col_for_level = launched_cols[aggregation_level]
-            if col_index > aggregation_level:
+            if col_index >= aggregation_level:
                 return 'sum({})'.format(col)
             else:
                 return 'CASE WHEN (sum({}) > 0) THEN 1 ELSE 0 END'.format(col_for_level)
