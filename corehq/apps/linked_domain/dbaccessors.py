@@ -29,5 +29,5 @@ def get_linked_domains(domain):
 
 
 @quickcache(['domain'], timeout=60 * 60)
-def is_upstream_linked_domain(domain):
+def is_master_linked_domain(domain):
     return DomainLink.objects.filter(master_domain=domain).exists()
