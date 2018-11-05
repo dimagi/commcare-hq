@@ -171,7 +171,7 @@ hqDefine("export/js/export_list", function () {
         };
         self.showBulkExportDownload = ko.observable(false);
         self.bulkExportList = ko.observable('');
-        self.submitBulkExportDownload = function() {
+        self.submitBulkExportDownload = function () {
             // Update hidden value of exports to download
             self.bulkExportList(JSON.stringify(_.map(_.filter(self.exports, function (maybeSelectedExport) {
                 return maybeSelectedExport.addedToBulk();
