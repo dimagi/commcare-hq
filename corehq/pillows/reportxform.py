@@ -45,7 +45,7 @@ class ReportFormReindexerFactory(ReindexerFactory):
         domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_form_change_provider(domains=domains)
         return ElasticPillowReindexer(
-            pillow_or_pillow_processor=ElasticProcessor(
+            pillow_or_processor=ElasticProcessor(
                 elasticsearch=get_es_new(),
                 index_info=REPORT_XFORM_INDEX_INFO,
                 doc_prep_fn=transform_xform_for_report_forms_index,

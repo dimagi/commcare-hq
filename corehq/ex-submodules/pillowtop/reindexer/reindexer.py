@@ -131,15 +131,15 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
 class PillowChangeProviderReindexer(Reindexer):
     start_from = None
 
-    def __init__(self, pillow_or_pillow_processor, change_provider):
-        self.pillow_or_pillow_processor = pillow_or_pillow_processor
+    def __init__(self, pillow_or_processor, change_provider):
+        self.pillow_or_processor = pillow_or_processor
         self.change_provider = change_provider
 
     def reindex(self):
         for i, change in enumerate(self.change_provider.iter_all_changes()):
             try:
                 # below works because signature is same for pillow and processor
-                self.pillow_or_pillow_processor.process_change(change)
+                self.pillow_or_processor.process_change(change)
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
 
@@ -173,8 +173,8 @@ def _set_checkpoint(pillow):
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
     in_place = False
 
-    def __init__(self, pillow_or_pillow_processor, change_provider, elasticsearch, index_info, in_place=False):
-        super(ElasticPillowReindexer, self).__init__(pillow_or_pillow_processor, change_provider)
+    def __init__(self, pillow_or_processor, change_provider, elasticsearch, index_info, in_place=False):
+        super(ElasticPillowReindexer, self).__init__(pillow_or_processor, change_provider)
         self.es = elasticsearch
         self.index_info = index_info
         self.in_place = in_place
@@ -185,8 +185,8 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
     def reindex(self):
         if not self.in_place and not self.start_from:
             _prepare_index_for_reindex(self.es, self.index_info)
-            if isinstance(self.pillow_or_pillow_processor, ConstructedPillow):
-                _set_checkpoint(self.pillow_or_pillow_processor)
+            if isinstance(self.pillow_or_processor, ConstructedPillow):
+                _set_checkpoint(self.pillow_or_processor)
 
         super(ElasticPillowReindexer, self).reindex()
 

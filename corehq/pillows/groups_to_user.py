@@ -106,7 +106,7 @@ class GroupToUserReindexerFactory(ReindexerFactory):
 
     def build(self):
         return PillowChangeProviderReindexer(
-            pillow_or_pillow_processor=GroupsToUsersProcessor(),
+            pillow_or_processor=GroupsToUsersProcessor(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Group.get_db(),
                 view_name='all_docs/by_doc_type',

@@ -71,7 +71,7 @@ class ReportCaseReindexerFactory(ReindexerFactory):
         domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_case_change_provider(domains=domains)
         return ElasticPillowReindexer(
-            pillow_or_pillow_processor=get_report_case_to_elasticsearch_pillow(),
+            pillow_or_processor=get_report_case_to_elasticsearch_pillow(),
             change_provider=change_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_CASE_INDEX_INFO,
