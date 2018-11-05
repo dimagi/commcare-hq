@@ -49,7 +49,8 @@ class Command(BaseCommand):
         self.stdout.write("Processing {} domains".format(len(domains)))
         for domain in with_progress_bar(domains, oneline=False):
             try:
-                self.migrate_domain(domain)
+                if not self.migrate_domain(domain):
+                    failed.append((domain, "has diffs"))
             except Exception as e:
                 if with_traceback:
                     traceback.print_exc()
@@ -82,10 +83,12 @@ class Command(BaseCommand):
             writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'], [
                 (doc_type,) + stat for doc_type, stat in stats.items()
             ])
-        else:
-            assert couch_sql_migration_in_progress(domain)
-            set_couch_sql_migration_complete(domain)
-            self.stdout.write(shell_green("Domain migrated: {}".format(domain)))
+            return False
+
+        assert couch_sql_migration_in_progress(domain)
+        set_couch_sql_migration_complete(domain)
+        self.stdout.write(shell_green("Domain migrated: {}".format(domain)))
+        return True
 
     def get_diff_stats(self, domain):
         db = get_diff_db(domain)
