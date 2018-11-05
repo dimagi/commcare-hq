@@ -45,7 +45,7 @@ class SmsReindexerFactory(ReindexerFactory):
     def build(self):
         from corehq.apps.sms.models import SMS
         return ElasticPillowReindexer(
-            pillow=get_sql_sms_pillow(),
+            pillow_or_pillow_processor=get_sql_sms_pillow(),
             change_provider=DjangoModelChangeProvider(SMS, _sql_sms_to_change),
             elasticsearch=get_es_new(),
             index_info=SMS_INDEX_INFO,

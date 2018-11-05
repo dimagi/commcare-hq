@@ -114,7 +114,7 @@ class LedgerV1ReindexerFactory(ReindexerFactory):
     def build(self):
         from corehq.apps.commtrack.models import StockState
         return ElasticPillowReindexer(
-            pillow=get_ledger_to_elasticsearch_pillow(),
+            pillow_or_pillow_processor=get_ledger_to_elasticsearch_pillow(),
             change_provider=DjangoModelChangeProvider(StockState, _ledger_v1_to_change),
             elasticsearch=get_es_new(),
             index_info=LEDGER_INDEX_INFO,

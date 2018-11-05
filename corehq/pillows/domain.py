@@ -62,7 +62,7 @@ class DomainReindexerFactory(ReindexerFactory):
 
     def build(self):
         return ElasticPillowReindexer(
-            pillow=get_domain_kafka_to_elasticsearch_pillow(),
+            pillow_or_pillow_processor=get_domain_kafka_to_elasticsearch_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Domain.get_db(),
                 view_name='all_docs/by_doc_type',
