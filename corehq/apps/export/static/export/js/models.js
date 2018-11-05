@@ -31,7 +31,7 @@ hqDefine('export/js/models', function () {
             self.initiallyIncludeErrors = ko.observable(self.include_errors());
         }
 
-        // Detetrmines the state of the save. Used for controlling the presentaiton
+        // Determines the state of the save. Used for controlling the presentation
         // of the Save button.
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
 
