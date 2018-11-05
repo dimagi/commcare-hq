@@ -25,7 +25,6 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
 from django.utils.decorators import method_decorator
 import json
-import re
 
 from couchexport.writers import XlsLengthException
 
@@ -137,14 +136,6 @@ class DownloadExportViewHelper(object):
 
         return filter_form
 
-    def get_export_filters(self, filter_form, filter_form_data):
-        raise NotImplementedError()
-
-    def get_accessible_location_ids(self):
-        if not self.request.can_access_all_locations:
-            return SQLLocation.active_objects.accessible_location_ids(self.domain, self.request.couch_user)
-        return None
-
 
 class FormDownloadExportViewHelper(DownloadExportViewHelper):
     model = 'form'
@@ -153,16 +144,6 @@ class FormDownloadExportViewHelper(DownloadExportViewHelper):
     def get_export(self, id=None):
         return FormExportInstance.get(id)
 
-    def get_export_filters(self, filter_form, filter_form_data):
-        mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(
-            filter_form_data[ExpandedMobileWorkerFilter.slug]
-        )
-        accessible_location_ids = self.get_accessible_location_ids()
-
-        return filter_form.get_form_filter(
-            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
-        )
-
 
 class CaseDownloadExportViewHelper(DownloadExportViewHelper):
     model = 'case'
@@ -170,16 +151,6 @@ class CaseDownloadExportViewHelper(DownloadExportViewHelper):
 
     def get_export(self, id=None):
         return CaseExportInstance.get(id)
-
-    def get_export_filters(self, filter_form, filter_form_data):
-        mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(
-            filter_form_data[ExpandedMobileWorkerFilter.slug]
-        )
-        accessible_location_ids = self.get_accessible_location_ids()
-
-        return filter_form.get_case_filter(
-            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
-        )
 
 
 class SMSDownloadExportViewHelper(DownloadExportViewHelper):
@@ -191,17 +162,6 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
         return SMSExportInstance._new_from_schema(
             SMSExportDataSchema.get_latest_export_schema(self.domain, include_metadata)
         )
-
-    def get_export_filters(self, filter_form, filter_form_data):
-        return filter_form.get_filter()
-
-
-def _get_mobile_user_and_group_slugs(filter_slug):
-    mobile_user_and_group_slugs_regex = re.compile(
-        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
-    )
-    matches = mobile_user_and_group_slugs_regex.findall(filter_slug)
-    return [n[1] for n in matches]
 
 
 class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
@@ -376,7 +336,7 @@ def prepare_custom_export(request, domain):
         return json_response({
             'error': _("Form did not validate."),
         })
-    export_filters = view_helper.get_export_filters(filter_form, filter_form_data)
+    export_filters = filter_form.get_export_filters(request, filter_form_data)
 
     export_specs = json.loads(request.POST.get('exports'))
     export_instances = [view_helper.get_export(spec['export_id']) for spec in export_specs]
@@ -496,10 +456,7 @@ def prepare_form_multimedia(request, domain):
 
     download = DownloadBase()
     export_object = view_helper.get_export(export_specs[0]['export_id'])
-    filter_slug = filter_form_data[ExpandedMobileWorkerFilter.slug]
-    mobile_user_and_group_slugs = _get_mobile_user_and_group_slugs(filter_slug)
-    task_kwargs = filter_form.get_multimedia_task_kwargs(export_object, download.download_id,
-                                                         mobile_user_and_group_slugs)
+    task_kwargs = filter_form.get_multimedia_task_kwargs(export_object, download.download_id, filter_form_data)
     from corehq.apps.reports.tasks import build_form_multimedia_zip
     download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
 
