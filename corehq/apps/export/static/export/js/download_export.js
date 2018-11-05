@@ -24,5 +24,15 @@ hqDefine('export/js/download_export', function () {
 
     $(function () {
         hqImport("reports/js/filters/main").init();
+
+        $(".hqwebapp-datespan").each(function() {
+            var $el = $(this).find("input");
+            $el.createDateRangePicker(
+                $el.data("labels"),
+                $el.data("separator"),
+                $el.data('startDate'),
+                $el.data('endDate')
+            );
+        });
     });
 });
