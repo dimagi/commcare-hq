@@ -1485,7 +1485,8 @@ def case_property_changes(request, domain, case_id, case_property_name):
 @login_and_domain_required
 @require_GET
 def download_case_history(request, domain, case_id):
-    history = get_case_history(get_case_or_404(domain, case_id))
+    case = get_case_or_404(domain, case_id)
+    history = get_case_history(case)
     properties = set()
     for f in history:
         properties |= set(f.keys())
@@ -1495,7 +1496,7 @@ def download_case_history(request, domain, case_id):
         columns.append([f.get(prop, '') for prop in properties])
 
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="case_history.csv"'
+    response['Content-Disposition'] = 'attachment; filename="case_history_{}.csv"'.format(case.name)
 
     writer = csv.writer(response)
     writer.writerows(zip(*columns))   # transpose the columns to rows
