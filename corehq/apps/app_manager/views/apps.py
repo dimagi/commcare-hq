@@ -26,7 +26,11 @@ from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
 
 from corehq import toggles, privileges
-from corehq.apps.analytics.tasks import HUBSPOT_APP_TEMPLATE_FORM_ID, send_hubspot_form
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_APP_TEMPLATE_FORM_ID,
+    send_hubspot_form,
+    track_workflow,
+)
 from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.const import (
@@ -53,14 +57,17 @@ from corehq.apps.app_manager.models import (
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.tasks import make_async_build
+from corehq.apps.app_manager.tasks import (
+    make_async_build,
+    update_linked_app_and_notify_task
+)
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, update_linked_app, clear_xmlns_app_id_cache, update_linked_app_and_notify
+    validate_langs, update_linked_app, clear_xmlns_app_id_cache
 from corehq.apps.app_manager.xform import (
     XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -69,7 +76,7 @@ from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    api_key_auth)
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
@@ -882,7 +889,7 @@ def drop_user_case(request, domain, app_id):
 def pull_master_app(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
     if async_update:
-        update_linked_app_and_notify.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
+        update_linked_app_and_notify_task.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:
@@ -893,6 +900,7 @@ def pull_master_app(request, domain, app_id):
             messages.error(request, six.text_type(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
+    track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
 

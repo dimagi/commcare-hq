@@ -37,11 +37,10 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
     @property
     def columns(self):
         columns = self.get_columns_by_loc_level
-        percent_function = percent_or_not_entered if self.beta else percent
         agg_columns = [
             AggregateColumn(
                 'Percentage AWCs reported clean drinking water',
-                percent_function,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_clean_water'),
                     SumColumn('num_awc_infra_last_update', alias='awcs')
@@ -50,7 +49,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             ),
             AggregateColumn(
                 'Percentage AWCs reported functional toilet',
-                percent_function,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_functional_toilet'),
                     AliasColumn('awcs')
@@ -59,7 +58,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             ),
             AggregateColumn(
                 'Percentage AWCs reported medicine kit',
-                percent_function,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_medicine_kits'),
                     AliasColumn('awcs')
@@ -68,7 +67,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             ),
             AggregateColumn(
                 'Percentage AWCs reported weighing scale: infants',
-                percent_function,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_infant_weighing_scale'),
                     AliasColumn('awcs')
@@ -77,7 +76,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             ),
             AggregateColumn(
                 'Percentage AWCs reported weighing scale: mother and child',
-                percent_function,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_adult_weighing_scale'),
                     AliasColumn('awcs')

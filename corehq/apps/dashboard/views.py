@@ -18,8 +18,8 @@ from corehq.apps.dashboard.models import (
     Tile,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
-    DefaultProjectSettingsView
+from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin

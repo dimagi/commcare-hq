@@ -16,6 +16,7 @@ from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.es import filters
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import ESError, get_es_new, report_shard_failures
@@ -636,16 +637,46 @@ def validate_date(date):
                 raise DateTimeError("Date not in the correct format")
     return date
 
+
 RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
 
-# Note that dates are already in a string format when they arrive as query params
-query_param_transforms = {
-    'xmlns': lambda v: {'term': {'xmlns.exact': v}},
-    'received_on_start': lambda v: {'range': {'received_on': {'from': validate_date(v)}}},
-    'received_on_end': lambda v: {'range': {'received_on': {'to': validate_date(v)}}},
-    'server_modified_on_start': lambda v: {'range': {'server_modified_on': {'from': validate_date(v)}}},
-    'server_modified_on_end': lambda v: {'range': {'server_modified_on': {'to': validate_date(v)}}},
-}
+
+class DateRangeParams(object):
+    def __init__(self, field):
+        self.field = field
+        self.start_param = '{}_start'.format(field)
+        self.end_param = '{}_end'.format(field)
+
+    def consume_params(self, raw_params):
+        start = raw_params.pop(self.start_param, None)
+        end = raw_params.pop(self.end_param, None)
+        if start:
+            validate_date(start)
+        if end:
+            validate_date(end)
+
+        if start or end:
+            # Note that dates are already in a string format when they arrive as query params
+            return filters.date_range(self.field, gte=start, lte=end)
+
+
+class TermParam(object):
+    def __init__(self, param, term=None):
+        self.param = param
+        self.term = term or param
+
+    def consume_params(self, raw_params):
+        value = raw_params.pop(self.param, None)
+        if value:
+            return filters.term(self.term, value)
+
+
+query_param_consumers = [
+    TermParam('xmlns', 'xmlns.exact'),
+    DateRangeParams('received_on'),
+    DateRangeParams('server_modified_on'),
+    DateRangeParams('indexed_on'),
+]
 
 
 def es_search(request, domain, reserved_query_params=None):
@@ -676,17 +707,22 @@ def es_search(request, domain, reserved_query_params=None):
 
     # filters are actually going to be a more common case
     reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
-    for key in set(request.GET.keys()) - reserved_query_params:
-        if key.endswith('__full'): continue
-        
-        value = request.GET[key]
+    query_params = {
+        param: value
+        for param, value in request.GET.items()
+        if param not in reserved_query_params and not param.endswith('__full')
+    }
+    for consumer in query_param_consumers:
+        try:
+            payload_filter = consumer.consume_params(query_params)
+        except DateTimeError:
+            raise Http400("Bad query parameter")
 
-        if key in query_param_transforms:
-            try:
-                payload["filter"]["and"].append(query_param_transforms[key](value))
-            except DateTimeError:
-                raise Http400("Bad query parameter")
-        else:
-            payload["filter"]["and"].append({"term": {key: value}})
+        if payload_filter:
+            payload["filter"]["and"].append(payload_filter)
+
+    # add unconsumed filters
+    for param, value in query_params.items():
+        payload["filter"]["and"].append(filters.term(param, value))
 
     return payload

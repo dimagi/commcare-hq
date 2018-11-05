@@ -293,6 +293,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.http',
     'corehq.messaging.smsbackends.smsgh',
     'corehq.messaging.smsbackends.push',
+    'corehq.messaging.smsbackends.starfish',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
@@ -1511,6 +1512,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
+    'corehq.messaging.smsbackends.starfish.models.StarfishBackend',
     'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
     'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
@@ -1880,9 +1882,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'testing', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
-
 ]
 
 

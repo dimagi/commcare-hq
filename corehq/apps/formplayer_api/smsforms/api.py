@@ -283,7 +283,7 @@ def post_data_helper(d, auth, content_type, url, log=False):
     up = urlparse(url)
     headers = {}
     headers["content-type"] = content_type
-    headers["content-length"] = len(data)
+    headers["content-length"] = str(len(data))
     conn = six.moves.http_client.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
@@ -296,7 +296,7 @@ def formplayer_post_data_helper(d, content_type, url):
     up = urlparse(url)
     headers = {}
     headers["Content-Type"] = content_type
-    headers["content-length"] = len(data)
+    headers["content-length"] = str(len(data))
     headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
     response = requests.post(
         url,

@@ -13,7 +13,6 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.management import call_command
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 from io import BytesIO
@@ -34,6 +33,7 @@ from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -74,6 +74,7 @@ from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExpo
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
     create_excel_file
+from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -400,15 +401,15 @@ def _aggregate_bp_forms(state_id, day):
     AggregateBirthPreparednesForms.aggregate(state_id, day)
 
 
-@transaction.atomic
 def _run_custom_sql_script(commands, day=None):
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return
 
-    with connections[db_alias].cursor() as cursor:
-        for command in commands:
-            cursor.execute(command, [day])
+    with transaction.atomic(using=db_alias):
+        with connections[db_alias].cursor() as cursor:
+            for command in commands:
+                cursor.execute(command, [day])
 
 
 def aggregate_awc_daily(day):
@@ -420,22 +421,54 @@ def _update_months_table(day):
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
 
 
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
+
+
 @track_time
 def _child_health_monthly_table(state_ids, day):
-    with transaction.atomic():
+    helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
+
+    celery_task_logger.info("Creating temporary table")
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
+        cursor.execute(helper.create_temporary_table())
+
+    sub_aggregations = group([
+        _child_health_helper.si(query=query, params=params)
+        for query, params in helper.pre_aggregation_queries()
+    ]).apply_async()
+    sub_aggregations.get()
+
+    celery_task_logger.info("Inserting into child_health_monthly_table")
+    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('child_health_monthly', %s)",
         ], day)
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
+    celery_task_logger.info("Dropping temporary table")
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
+
+
+@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
+@track_time
+def _child_health_helper(query, params):
+    celery_task_logger.info("Running child_health_helper with %s", params)
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(query, params)
+
 
 @track_time
 def _ccs_record_monthly_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(CcsRecordMonthly)):
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
         ], day)
         CcsRecordMonthly.aggregate(force_to_date(day))
+
 
 @track_time
 def _daily_attendance_table(day):
@@ -447,7 +480,7 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(AggChildHealth)):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
         ], day)
@@ -456,7 +489,7 @@ def _agg_child_health_table(day):
 
 @track_time
 def _agg_ccs_record_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(AggCcsRecord)):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
         ], day)
@@ -476,6 +509,7 @@ def _agg_awc_table_weekly(day):
     _run_custom_sql_script([
         "SELECT update_aggregate_awc_data(%s)"
     ], day)
+
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
@@ -855,7 +889,8 @@ def push_missing_docs_to_es():
             recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
         )
 
-@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='14'), acks_late=True, queue='icds_aggregation_queue')
+
+@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')
 def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
