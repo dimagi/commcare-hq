@@ -31,6 +31,12 @@ requirejs.config({
             deps: ['d3/d3.min'],
             exports: 'nv',
         },
+        'hqmedia/MediaUploader/yui-base': {
+            exports: 'YUI'
+        },
+        "hqmedia/MediaUploader/yui-uploader": {
+            deps: ['hqmedia/MediaUploader/yui-base']
+        }
     },
     map: {
         "datatables.fixedColumns": {
