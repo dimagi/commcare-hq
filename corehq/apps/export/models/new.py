@@ -19,7 +19,7 @@ from django.db import models
 from django.db.models import Sum
 from django.http import Http404
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
-    get_case_properties
+    get_case_properties, get_all_case_properties_for_case_type
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
@@ -1637,6 +1637,12 @@ class ExportDataSchema(Document):
 
         return current_schema
 
+    @classmethod
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
+        if not app_id:
+            return []
+        return [app_id]
+
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -1664,12 +1670,6 @@ class FormExportDataSchema(ExportDataSchema):
 
     def _set_identifier(self, form_xmlns):
         self.xmlns = form_xmlns
-
-    @classmethod
-    def _get_current_app_ids_for_domain(cls, domain, app_id):
-        if not app_id:
-            return []
-        return [app_id]
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
@@ -1972,10 +1972,6 @@ class CaseExportDataSchema(ExportDataSchema):
     def _get_inferred_schema(cls, domain, app_id, case_type):
         return get_case_inferred_schema(domain, case_type)
 
-    @classmethod
-    def _get_current_app_ids_for_domain(cls, domain, app_id):
-        return get_app_ids_in_domain(domain)
-
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
         return get_built_app_ids_with_submissions_for_app_ids_and_versions(
@@ -1989,11 +1985,11 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, case_type):
-        case_property_mapping = get_case_properties(
-            app,
-            [case_type],
+        case_property_mapping = {case_type: sorted(get_all_case_properties_for_case_type(
+            app.domain,
+            case_type,
             include_parent_properties=False
-        )
+        ))}
         parent_types = (ParentCasePropertyBuilder.for_app(app)
                         .get_case_relationships_for_case_type(case_type))
         case_schemas = []
