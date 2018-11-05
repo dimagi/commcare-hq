@@ -24,4 +24,3 @@ class Migration(migrations.Migration):
     operations = []
     for view in sql_views:
         operations.append(migrator.get_migration(view))
-
