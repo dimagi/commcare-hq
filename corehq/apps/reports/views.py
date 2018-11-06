@@ -38,6 +38,7 @@ import pytz
 import re
 import io
 import tempfile
+from six.moves import zip
 from six.moves.urllib.error import URLError
 
 from django.conf import settings
