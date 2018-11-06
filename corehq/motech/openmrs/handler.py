@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from datetime import timedelta
 
+from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
@@ -112,6 +113,8 @@ class SyncPersonAttributesTask(WorkflowTask):
             for attribute in self.attributes
         }
         for person_attribute_type, value_source in self.openmrs_config.case_config.person_attributes.items():
+            if not value_source.check_direction(DIRECTION_EXPORT):
+                continue
             value = value_source.get_value(self.info)
             if person_attribute_type in existing_person_attributes:
                 attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
@@ -147,6 +150,8 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             for identifier in self.patient['identifiers']
         }
         for patient_identifier_type, value_source in self.openmrs_config.case_config.patient_identifiers.items():
+            if not value_source.check_direction(DIRECTION_EXPORT):
+                continue
             if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
                 # Don't try to sync the OpenMRS person UUID; It's not a
                 # user-defined identifier and it can't be changed.

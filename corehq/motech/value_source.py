@@ -6,7 +6,18 @@ from collections import namedtuple
 from couchdbkit.ext.django.schema import DocumentSchema
 
 from corehq.motech.serializers import serializers
-from corehq.motech.const import DATA_TYPE_UNKNOWN, COMMCARE_DATA_TYPES
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPES,
+    DATA_TYPE_UNKNOWN,
+    DIRECTIONS,
+    # pylint: disable=unused-import,F401
+    # (F401 = flake8 "'%s' imported but unused")
+    # Used in ValueSource.check_direction doctest
+    DIRECTION_IMPORT,
+    DIRECTION_EXPORT,
+    # pylint: enable=unused-import,F401
+    DIRECTION_BOTH,
+)
 from dimagi.ext.couchdbkit import (
     DictProperty,
     StringProperty
@@ -36,6 +47,10 @@ class ValueSource(DocumentSchema):
     external_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True)
     commcare_data_type = StringProperty(required=False, default=DATA_TYPE_UNKNOWN, exclude_if_none=True,
                                         choices=COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,))
+    # Whether the ValueSource is import-only ("in"), export-only ("out"), or
+    # for both import and export (the default, None)
+    direction = StringProperty(required=False, default=DIRECTION_BOTH, exclude_if_none=True,
+                               choices=DIRECTIONS)
 
     @classmethod
     def wrap(cls, data):
@@ -77,6 +92,22 @@ class ValueSource(DocumentSchema):
         """
         value = self.get_commcare_value(case_trigger_info)
         return self.serialize(value)
+
+    def check_direction(self, direction):
+        """
+        Checks whether the ValueSource direction allows the value to be
+        imported or exported.
+
+        >>> value_source = ValueSource(direction=DIRECTION_BOTH)
+        >>> value_source.check_direction(DIRECTION_EXPORT)
+        True
+
+        >>> value_source = ValueSource(direction=DIRECTION_IMPORT)
+        >>> value_source.check_direction(DIRECTION_EXPORT)
+        False
+
+        """
+        return not self.direction or direction == self.direction
 
 
 class CaseProperty(ValueSource):

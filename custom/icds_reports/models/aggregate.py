@@ -14,6 +14,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
+from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
@@ -141,7 +142,7 @@ class CcsRecordMonthly(models.Model):
         index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in index_queries:
@@ -408,6 +409,24 @@ class AggAwc(models.Model):
         managed = False
         db_table = 'agg_awc'
 
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggAwcHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        update_queries = helper.updates()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(agg_query, agg_params)
+            for query, params in update_queries:
+                cursor.execute(query, params)
+            for query in rollup_queries:
+                cursor.execute(query)
+            for query in index_queries:
+                cursor.execute(query)
+
 
 class AggCcsRecord(models.Model):
     state_id = models.TextField()
@@ -477,7 +496,7 @@ class AggCcsRecord(models.Model):
         index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in rollup_queries:
@@ -570,7 +589,7 @@ class AggChildHealth(models.Model):
         index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in rollup_queries:
@@ -724,7 +743,7 @@ class AggregateComplementaryFeedingForms(models.Model):
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
 
-        
+
 class AggregateCcsRecordComplementaryFeedingForms(models.Model):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
     Complementary Feeding form.

@@ -31,7 +31,7 @@ hqDefine('export/js/models', function () {
             self.initiallyIncludeErrors = ko.observable(self.include_errors());
         }
 
-        // Detetrmines the state of the save. Used for controlling the presentaiton
+        // Determines the state of the save. Used for controlling the presentation
         // of the Save button.
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
 
@@ -55,6 +55,9 @@ hqDefine('export/js/models', function () {
         self.sharingOptions = options.sharingOptions !== undefined ? options.sharingOptions : _.map(constants.SHARING_OPTIONS, function (format) {
             return format;
         });
+
+        self.initialSharing = instanceJSON.sharing;
+        self.hasOtherOwner = options.hasOtherOwner;
 
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function (table) {

@@ -398,26 +398,28 @@ class CouchSqlDomainMigrator(object):
             self.log_info("{} ({})".format(doc_count, ', '.join(doc_types)))
             return iterable
 
-    def _log_objects_processed_count(self, tags, throttled=False):
+    def _log_processed_docs_count(self, tags, throttled=False):
         if throttled and self.processed_docs % 100 != 0:
             return
 
-        datadog_counter("commcare.couchsqlmigration.docs_processed",
-                        value=self.processed_docs,
+        processed_docs = self.processed_docs
+        self.processed_docs = 0
+
+        datadog_counter("commcare.couchsqlmigration.processed_docs",
+                        value=processed_docs,
                         tags=tags)
-        self.processed_objects = 0
 
     def _log_main_forms_processed_count(self, throttled=False):
-        self._log_objects_processed_count(['type:main_forms'], throttled)
+        self._log_processed_docs_count(['type:main_forms'], throttled)
 
     def _log_unprocessed_forms_processed_count(self, throttled=False):
-        self._log_objects_processed_count(['type:unprocessed_forms'], throttled)
+        self._log_processed_docs_count(['type:unprocessed_forms'], throttled)
 
     def _log_unprocessed_cases_processed_count(self, throttled=False):
-        self._log_objects_processed_count(['type:unprocessed_cases'], throttled)
+        self._log_processed_docs_count(['type:unprocessed_cases'], throttled)
 
     def _log_case_diff_count(self, throttled=False):
-        self._log_objects_processed_count(['type:case_diffs'], throttled)
+        self._log_processed_docs_count(['type:case_diffs'], throttled)
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"
@@ -664,7 +666,7 @@ def _save_migrated_models(sql_form, case_stock_result=None):
 
 
 class MigrationPaginationEventHandler(PaginationEventHandler):
-    RETRIES = 10
+    RETRIES = 5
 
     def __init__(self, domain):
         self.domain = domain
@@ -676,6 +678,14 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
     def page_end(self, total_emitted, duration, *args, **kwargs):
         self.retries = self.RETRIES
         cache_utils.clear_limit(self._cache_key())
+
+    def page_exception(self, e):
+        if self.retries <= 0:
+            return False
+
+        self.retries -= 1
+        sleep(1)
+        return True
 
 
 def _get_main_form_iterator(domain):

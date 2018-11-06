@@ -317,8 +317,7 @@ class TestXFormInstanceResource(APIResourceTest):
         start_date = datetime(1969, 6, 14)
         end_date = datetime(2011, 1, 2)
         expected = [
-            {'range': {'received_on': {'from': start_date.isoformat()}}},
-            {'range': {'received_on': {'to': end_date.isoformat()}}},
+            {'range': {'received_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
             {'term': {'doc_type': 'xforminstance'}},
             {'term': {'domain.exact': 'qwerty'}},
         ]
@@ -907,7 +906,7 @@ class TestRepeaterResource(APIResourceTest):
         api_repeaters = json.loads(response.content)['objects']
         self.assertEqual(len(api_repeaters), 2)
 
-        api_case_repeater = filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters)[0]
+        api_case_repeater = list(filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters))[0]
         self.assertEqual(api_case_repeater['id'], case_repeater._id)
         self.assertEqual(api_case_repeater['url'], case_repeater.url)
         self.assertEqual(api_case_repeater['domain'], case_repeater.domain)

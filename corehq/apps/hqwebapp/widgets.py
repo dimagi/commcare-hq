@@ -131,44 +131,31 @@ class DateRangePickerWidget(Input):
     }
     separator = ugettext_noop(' to ')
 
-    def __init__(self, attrs=None, range_labels=None, separator=None,
-                 default_datespan=None):
-        self.range_labels = range_labels or self.range_labels
-        self.separator = separator or self.separator
+    def __init__(self, attrs=None, default_datespan=None):
         self.default_datespan = default_datespan
         super(DateRangePickerWidget, self).__init__(attrs=attrs)
 
     def render(self, name, value, attrs=None):
+        startdate = ''
+        enddate = ''
+        if isinstance(self.default_datespan, DateSpan):
+            if self.default_datespan.startdate is not None:
+                startdate = self.default_datespan.startdate.strftime('%m/%d/%Y')
+            if self.default_datespan.enddate is not None:
+                enddate = self.default_datespan.enddate.strftime('%m/%d/%Y')
+
+        attrs.update({
+            'data-separator': self.separator,
+            'data-labels': json.dumps(self.range_labels),
+            'data-start-date': startdate,
+            'data-end-date': enddate,
+        })
         final_attrs = self.build_attrs(attrs)
+
         output = super(DateRangePickerWidget, self).render(name, value, attrs)
-        # yes, I know inline html in python is gross, but this is what the
-        # built in django widgets are doing. :|
-        output += """
-            <script>
-                $(function () {
-                    var separator = '%(separator)s';
-                    var report_labels = JSON.parse('%(range_labels_json)s');
-                    $('#%(elem_id)s').createDateRangePicker(
-                        report_labels, separator, '%(startdate)s',
-                        '%(enddate)s'
-                    );
-                });
-            </script>
-        """ % {
-            'elem_id': final_attrs.get('id'),
-            'separator': self.separator,
-            'range_labels_json': json.dumps(self.range_labels),
-            'startdate': (self.default_datespan.startdate.strftime('%m/%d/%Y')
-                          if (isinstance(self.default_datespan, DateSpan)
-                              and self.default_datespan.startdate is not None)
-                          else ''),
-            'enddate': (self.default_datespan.enddate.strftime('%m/%d/%Y')
-                        if (isinstance(self.default_datespan, DateSpan)
-                            and self.default_datespan.enddate is not None)
-                        else ''),
-        }
-        output = """
-            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-        """ + output
-        output = '<div class="input-group">{}</div>'.format(output)
-        return mark_safe(output)
+        return mark_safe("""
+            <div class="input-group hqwebapp-datespan">
+                <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                {}
+            </div>
+        """.format(output))
