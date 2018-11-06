@@ -495,7 +495,7 @@ def _agg_ccs_record_table(day):
 
 @track_time
 def _agg_awc_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(AggAwc)):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
         ], day)
