@@ -9,6 +9,12 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AWW_INCENTIVE_TABLE
     aggregate_child_table_prefix = 'icds_db_aww_incentive_'
 
+    @property
+    def ccs_record_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+    
     def aggregation_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
@@ -49,7 +55,17 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
                    awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
                    awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
                    awcm.awc_days_open
-        )
+        );
+        /* update expected visits for cf cases (not in agg_ccs_record */
+        UPDATE {tablename}
+        SET expected_visits = expected_visits + ucr.expected
+        FROM (
+             SELECT SUM(0.39) AS expected, awc_id 
+             FROM {ccs_record_case_ucr} 
+             WHERE add > 183 AND closed = 0
+             GROUP BY awc_id
+             ) ucr
         """.format(
-            tablename=tablename
+            tablename=tablename,
+            ccs_record_case_ucr=self.ccs_record_case_ucr_tablename
         ), query_params
