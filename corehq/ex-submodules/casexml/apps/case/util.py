@@ -292,12 +292,14 @@ def get_case_history(case):
         case_blocks = extract_case_blocks(action.form)
         for block in case_blocks:
             if block.get('@case_id') == case.case_id:
-                property_changes = {}
-                property_changes['Form ID'] = action.form.form_id
-                property_changes['Form Name'] = xmlns_to_name(case.domain, action.form.xmlns, action.form.app_id)
-                property_changes['Form Received On'] = action.form.received_on
-                property_changes['Form Submitted By'] = action.form.metadata.username
+                form = action.form
+                property_changes = {
+                    'Form ID': form.form_id,
+                    'Form Name': xmlns_to_name(case.domain, form.xmlns, form.app_id),
+                    'Form Received On': form.received_on,
+                    'Form Submitted By': form.metadata.username,
+                }
                 property_changes.update(block.get('create', {}))
                 property_changes.update(block.get('update', {}))
-                changes[action.form.form_id].update(property_changes)
+                changes[form.form_id].update(property_changes)
     return sorted(changes.values(), key=lambda f: f['Form Received On'])
