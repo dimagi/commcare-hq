@@ -30,7 +30,7 @@ def make_async_build(app, username, release=False, comment=None):
             previous_version=latest_build,
             comment=comment,
         )
-        copy.is_auto_generated = True
+        copy.is_auto_generated = not release
         copy.is_released = release
         copy.save(increment_version=False)
         return copy
