@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
-import sys
 from contextlib import contextmanager
 
 from couchdbkit import ResourceNotFound
@@ -18,8 +17,17 @@ import six
 
 
 @contextmanager
-def locked_form(context, lock):
+def locked_form(xform, interface):
+    context = [xform]
+    lock = interface.acquire_lock_for_xform(xform.form_id)
     try:
+        if interface.is_duplicate(xform.form_id):
+            new_form, dup_form = _handle_id_conflict(xform, xform.domain)
+            if dup_form:
+                assert dup_form.form_id != new_form.form_id, (new_form, dup_form)
+                context[:] = [new_form, dup_form]
+            else:
+                assert new_form is xform, (new_form, xform)
         yield context
     finally:
         release_lock(lock, degrade_gracefully=True)
@@ -32,29 +40,8 @@ class FormProcessingResult(object):
         self.interface = FormProcessorInterface(self.submitted_form.domain)
 
     def get_locked_forms(self):
-        """Get a context manager whose context is a list of locked forms
-
-        Form lock has been acquired by the time this method returns.
-        Use the returned context manager to release the lock.
-        """
-        xform = self.submitted_form
-        xform_id = xform.form_id
-        context = [xform]
-        manager = locked_form(context, self.interface.acquire_lock_for_xform(xform_id))
-        try:
-            if self.interface.is_duplicate(xform_id):
-                new_form, dup_form = _handle_id_conflict(xform, xform.domain)
-                if dup_form:
-                    assert dup_form.form_id != new_form.form_id, (new_form, dup_form)
-                    context[:] = [new_form, dup_form]
-                else:
-                    assert new_form is xform, (new_form, xform)
-        except:
-            exc = sys.exc_info()
-            with manager:
-                pass
-            six.reraise(*exc)
-        return manager
+        """Get a context manager whose context is a list of forms"""
+        return locked_form(self.submitted_form, self.interface)
 
 
 def process_xform_xml(domain, instance, attachments=None, auth_context=None):
