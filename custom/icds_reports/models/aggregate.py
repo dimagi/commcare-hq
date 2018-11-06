@@ -645,7 +645,7 @@ class AggAwcDaily(models.Model):
         index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(*helper.create_table_query())
                 cursor.execute(agg_query, agg_params)
