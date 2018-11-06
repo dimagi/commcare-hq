@@ -2216,7 +2216,9 @@ class TestAWCReport(TestCase):
                     'case_id': '645fd452-3732-44fb-a2d3-46162304807e',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 1237'
+                    'person_name': 'Name 1237',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2240,6 +2242,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 1303',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2262,7 +2266,9 @@ class TestAWCReport(TestCase):
                     'case_id': '7673a69c-29af-478c-85c6-9c3b22f6b2e4',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 1305'
+                    'person_name': 'Name 1305',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2285,7 +2291,9 @@ class TestAWCReport(TestCase):
                     'case_id': 'd5d3fbeb-8b6a-486b-a853-30be35589200',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 1341'
+                    'person_name': 'Name 1341',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2308,7 +2316,9 @@ class TestAWCReport(TestCase):
                     'case_id': 'b954eb28-75de-43c8-9ec0-d38b7d246ead',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 2617'
+                    'person_name': 'Name 2617',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2331,7 +2341,9 @@ class TestAWCReport(TestCase):
                     'case_id': '6faecfe6-cc88-4ff0-9b3d-d8ca069dd06f',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 2917'
+                    'person_name': 'Name 2917',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2354,7 +2366,9 @@ class TestAWCReport(TestCase):
                     'case_id': '3b242a3b-693e-44dd-ad4a-b713efdb0fdb',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 4398'},
+                    'person_name': 'Name 4398',
+                    'contact_phone_number': None,
+                    'phone_number': None},
                 cls=DjangoJSONEncoder
             )
         )
@@ -2376,7 +2390,9 @@ class TestAWCReport(TestCase):
                     'case_id': '4cd07ebf-abce-4345-a930-f6db7ede8996',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 4399'
+                    'person_name': 'Name 4399',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2399,7 +2415,9 @@ class TestAWCReport(TestCase):
                     'case_id': '0198ec4a-f5ed-4452-863c-a400f43d238a',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 4400'
+                    'person_name': 'Name 4400',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2422,7 +2440,9 @@ class TestAWCReport(TestCase):
                     'case_id': 'a9dc5cac-6820-45cf-b8c9-16f2cfb0ae02',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 1191'
+                    'person_name': 'Name 1191',
+                    'contact_phone_number': None,
+                    'phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
