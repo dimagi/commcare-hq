@@ -199,7 +199,8 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    ucr_processor.bootstrap(configs)
+    if configs:
+        ucr_processor.bootstrap(configs)
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,

@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from datetime import datetime
+from django.test import TestCase
 
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.userreports.models import SQLPartition
 from corehq.apps.userreports.tests.utils import (
     doc_to_change,
@@ -17,7 +17,7 @@ from corehq.pillows.case import get_ucr_es_case_pillow
 EXPECTED_UCR_CHILD_TABLE_PREFIX = 'tbl_80f005a0bdc2f0d0ff6f8293daee8f33_'
 
 
-class DataSourceConfigurationPartitionTest(CallCenterDomainMockTest):
+class DataSourceConfigurationPartitionTest(TestCase):
     column = None
     subtype = None
     constraint = None

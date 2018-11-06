@@ -82,7 +82,8 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
     )
-    ucr_processor.bootstrap(configs)
+    if configs:
+        ucr_processor.bootstrap(configs)
     case_to_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,

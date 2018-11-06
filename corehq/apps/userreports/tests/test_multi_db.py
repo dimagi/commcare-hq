@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
+from django.test import TestCase
 
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.sql.connection import get_engine_id
@@ -15,7 +15,7 @@ from corehq.sql_db.tests.utils import temporary_database
 from six.moves import range
 
 
-class UCRMultiDBTest(CallCenterDomainMockTest):
+class UCRMultiDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):

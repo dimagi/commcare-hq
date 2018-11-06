@@ -14,7 +14,6 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
@@ -70,7 +69,7 @@ class ChunkedUCRProcessorTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        cls.pillow = get_ucr_es_case_pillow(processor_chunk_size=100)
+        cls.pillow = get_ucr_es_case_pillow(processor_chunk_size=100, configs=[cls.config])
 
     @classmethod
     def tearDownClass(cls):
@@ -128,7 +127,7 @@ class ChunkedUCRProcessorTest(TestCase):
 
         process_changes_patch.assert_called_once()
         # since chunked processing failed, normal processing should get called
-        process_change_patch.assert_has_calls([mock.call(mock.ANY, mock.ANY)] * 10)
+        process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 10)
         self._delete_cases(cases)
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
@@ -143,7 +142,7 @@ class ChunkedUCRProcessorTest(TestCase):
         cases = self._create_and_process_changes(docs)
 
         # since chunked processing failed, normal processing should get called
-        process_change_patch.assert_has_calls([mock.call(mock.ANY, mock.ANY)] * 4)
+        process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 4)
         self._delete_cases(cases)
 
     @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
@@ -182,7 +181,7 @@ class ChunkedUCRProcessorTest(TestCase):
         self._delete_cases(cases)
 
 
-class IndicatorPillowTest(CallCenterDomainMockTest):
+class IndicatorPillowTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -192,7 +191,7 @@ class IndicatorPillowTest(CallCenterDomainMockTest):
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        cls.pillow = get_ucr_es_case_pillow()
+        cls.pillow = get_ucr_es_case_pillow(processor_chunk_size=0, configs=[cls.config])
 
     @classmethod
     def tearDownClass(cls):
@@ -274,7 +273,8 @@ class IndicatorPillowTest(CallCenterDomainMockTest):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch_chunked(self, datetime_mock):
-        self._test_process_doc_from_couch(datetime_mock, get_ucr_es_case_pillow(processor_chunk_size=100))
+        self._test_process_doc_from_couch(datetime_mock,
+            get_ucr_es_case_pillow(processor_chunk_size=100, configs=[self.config]))
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch(self, datetime_mock):
@@ -300,9 +300,9 @@ class IndicatorPillowTest(CallCenterDomainMockTest):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql_chunked(self, datetime_mock):
-        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=100)
+        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=100, configs=[self.config])
         self._test_process_doc_from_sql(datetime_mock)
-        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=0)
+        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=0, configs=[self.config])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql(self, datetime_mock):
@@ -326,9 +326,9 @@ class IndicatorPillowTest(CallCenterDomainMockTest):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
-        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=100)
+        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=100, configs=[self.config])
         self._test_process_deleted_doc_from_sql(datetime_mock)
-        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=0)
+        self.pillow = get_ucr_es_case_pillow(processor_chunk_size=0, configs=[self.config])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql(self, datetime_mock):
@@ -385,7 +385,7 @@ class IndicatorPillowTest(CallCenterDomainMockTest):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class ProcessRelatedDocTypePillowTest(CallCenterDomainMockTest):
+class ProcessRelatedDocTypePillowTest(TestCase):
     domain = 'bug-domain'
 
     @softer_assert()
@@ -425,7 +425,7 @@ class ProcessRelatedDocTypePillowTest(CallCenterDomainMockTest):
         )
 
     def test_process_doc_from_sql_stale_chunked(self):
-        pillow = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100)
+        pillow = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100, configs=[self.config])
         # one less query in chunked mode, as two cases are looked up in single query
         self._test_process_doc_from_sql_stale(pillow, num_queries=11)
 
@@ -455,7 +455,7 @@ class ProcessRelatedDocTypePillowTest(CallCenterDomainMockTest):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class ReuseEvaluationContextTest(CallCenterDomainMockTest, TestCase):
+class ReuseEvaluationContextTest(TestCase):
     domain = 'bug-domain'
 
     @softer_assert()
@@ -469,8 +469,8 @@ class ReuseEvaluationContextTest(CallCenterDomainMockTest, TestCase):
         self.adapters = [get_indicator_adapter(c) for c in self.configs]
 
         # one pillow that has one config, the other has both configs
-        self.pillow1 = get_ucr_es_case_pillow(topics=['case-sql'], configs=[config1])
-        self.pillow2 = get_ucr_es_case_pillow(topics=['case-sql'], configs=self.configs)
+        self.pillow1 = get_ucr_es_case_pillow(topics=['case-sql'], configs=[config1], processor_chunk_size=0)
+        self.pillow2 = get_ucr_es_case_pillow(topics=['case-sql'], configs=self.configs, processor_chunk_size=0)
 
         self.pillow1.get_change_feed().get_latest_offsets()
 
@@ -510,8 +510,8 @@ class ReuseEvaluationContextTest(CallCenterDomainMockTest, TestCase):
         self._test_reuse_cache()
 
     def test_reuse_cache_chunked(self):
-        pillow1 = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100)
-        pillow2 = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100)
+        pillow1 = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100, configs=self.configs[:1])
+        pillow2 = get_ucr_es_case_pillow(topics=['case-sql'], processor_chunk_size=100, configs=self.configs)
         self._test_reuse_cache(pillow1, pillow2, 11)
 
     def _test_reuse_cache(self, pillow1=None, pillow2=None, num_queries=12):
@@ -533,7 +533,7 @@ class ReuseEvaluationContextTest(CallCenterDomainMockTest, TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class AsyncIndicatorTest(CallCenterDomainMockTest):
+class AsyncIndicatorTest(TestCase):
     domain = 'bug-domain'
 
     @classmethod
@@ -649,7 +649,7 @@ class ChunkedAsyncIndicatorTest(AsyncIndicatorTest):
     @classmethod
     def setUpClass(cls):
         super(ChunkedAsyncIndicatorTest, cls).setUpClass()
-        cls.pillow = get_ucr_es_case_pillow(processor_chunk_size=100)
+        cls.pillow = get_ucr_es_case_pillow(processor_chunk_size=100, configs=[cls.config])
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):
@@ -706,7 +706,7 @@ def _save_sql_case(doc):
     return cases[0]
 
 
-class RebuildTableTest(CallCenterDomainMockTest):
+class RebuildTableTest(TestCase):
     """This test is pretty fragile because in UCRs we have a global metadata
     object that sqlalchemy uses to keep track of tables and indexes. I've attempted
     to work around it here, but it feels a little nasty
@@ -746,7 +746,7 @@ class RebuildTableTest(CallCenterDomainMockTest):
         # mock rebuild table to ensure the table isn't rebuilt when adding index
         pillow = get_ucr_es_case_pillow(configs=[config])
         pillow.processors[0].rebuild_table = mock.MagicMock()
-        pillow.bootstrap([config])
+        pillow.processors[0].bootstrap([config])
 
         self.assertFalse(pillow.processors[0].rebuild_table.called)
         engine = adapter.engine
@@ -779,7 +779,7 @@ class RebuildTableTest(CallCenterDomainMockTest):
         engine = adapter.engine
 
         # mock rebuild table to ensure the table is rebuilt
-        with patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.rebuild_table'):
+        with mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.rebuild_table'):
             pillow = get_ucr_es_case_pillow(configs=[config])
             self.assertTrue(pillow.processors[0].rebuild_table.called)
         # column doesn't exist because rebuild table was mocked
@@ -822,7 +822,7 @@ class RebuildTableTest(CallCenterDomainMockTest):
 
         # mock rebuild table to ensure the column is added without rebuild table
         pillow = get_ucr_es_case_pillow(configs=[config])
-        pillow.processors[0].rebuild_table = MagicMock()
+        pillow.processors[0].rebuild_table = mock.MagicMock()
         self.assertFalse(pillow.processors[0].rebuild_table.called)
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
