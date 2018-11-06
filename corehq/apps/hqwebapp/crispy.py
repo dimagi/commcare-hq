@@ -13,10 +13,15 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 
 
+CSS_LABEL_CLASS = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
+CSS_FIELD_CLASS = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'
+CSS_ACTION_CLASS = CSS_FIELD_CLASS  + ' col-sm-offset-4 col-md-offset-4 col-lg-offset-2'
+
+
 class HQFormHelper(FormHelper):
     form_class = 'form form-horizontal'
-    label_class = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
-    field_class = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'
+    label_class = CSS_LABEL_CLASS
+    field_class = CSS_FIELD_CLASS
 
 
 class HiddenFieldWithErrors(OldField):
