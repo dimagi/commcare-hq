@@ -226,6 +226,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             return row_elem
 
         rows_elem = E.rows()
+        row_index = 0
         for row_index, row in enumerate(data_source.get_data()):
             rows_elem.append(_row_to_row_elem(row, row_index))
         if data_source.has_total_row:
@@ -404,6 +405,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             return row_elem
 
         rows_elem = E.rows(last_sync=last_sync)
+        row_index = 0
         for row_index, row in enumerate(data_source.get_data()):
             rows_elem.append(_row_to_row_elem(row, row_index))
         if data_source.has_total_row:
