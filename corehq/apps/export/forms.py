@@ -37,7 +37,7 @@ from corehq.apps.reports.util import (
     case_users_filter,
     datespan_from_beginning,
 )
-from corehq.apps.hqwebapp.crispy import B3MultiField, CrispyTemplate, HQFormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2AjaxV3
 from corehq.pillows import utils
 

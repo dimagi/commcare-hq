@@ -218,7 +218,7 @@ class SnapshotFixtureForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             twbscrispy.PrependedText('publish', ''),
@@ -263,7 +263,7 @@ class SnapshotSettingsForm(forms.Form):
         self.is_superuser = kw.pop("is_superuser", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -436,7 +436,7 @@ class TransferDomainForm(forms.ModelForm):
         self.fields['domain'].label = _('Type the name of the project to confirm')
         self.fields['to_username'].label = _('New owner\'s CommCare username')
 
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             'domain',
             'to_username',
@@ -595,7 +595,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.domain = self.project.name
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = HQFormHelper(self)
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
@@ -1097,7 +1097,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
             )
 
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -1474,7 +1474,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         fields = [
             'company_name',
             'first_name',
@@ -1787,7 +1787,7 @@ class ProBonoForm(forms.Form):
         super(ProBonoForm, self).__init__(*args, **kwargs)
         if not use_domain_field:
             self.fields['domain'].required = False
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
             _('Pro-Bono Application'),
@@ -1949,7 +1949,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
     def __init__(self, domain, web_user, *args, **kwargs):
         super(DimagiOnlyEnterpriseForm, self).__init__(domain, web_user, *args, **kwargs)
 
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.HTML(ugettext_noop(
                 '<i class="fa fa-info-circle"></i> You will have access to all '
@@ -2017,7 +2017,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.fields['organization_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails', css_class='input-xxlarge'),
@@ -2132,7 +2132,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
     def __init__(self, domain, web_user, *args, **kwargs):
         super(ContractedPartnerForm, self).__init__(domain, web_user, *args, **kwargs)
 
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.fields['fogbugz_client_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
@@ -2342,7 +2342,7 @@ class SelectSubscriptionTypeForm(forms.Form):
         defaults = defaults or {}
         super(SelectSubscriptionTypeForm, self).__init__(defaults, **kwargs)
 
-        self.helper = HQFormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         if defaults and disable_input:
             self.helper.layout = crispy.Layout(
                 hqcrispy.B3TextField(
