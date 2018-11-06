@@ -4,12 +4,19 @@ import re
 from contextlib import contextmanager
 
 from crispy_forms.bootstrap import AccordionGroup, InlineField, FormActions as OriginalFormActions
+from crispy_forms.helper import FormHelper
 from crispy_forms.layout import LayoutObject, MultiField, Field as OldField
 from crispy_forms.utils import render_field, get_template_pack, flatatt
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
+
+
+class HQFormHelper(FormHelper):
+    form_class = 'form form-horizontal'
+    label_class = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
+    field_class = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'
 
 
 class HiddenFieldWithErrors(OldField):
