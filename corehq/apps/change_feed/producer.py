@@ -30,7 +30,7 @@ class ChangeProducer(object):
     def send_change(self, topic, change_meta):
         message = change_meta.to_json()
         try:
-            self.producer.send(topic, bytes(json.dumps(message)))
+            self.producer.send(topic, bytes(json.dumps(message)), key=change_meta.document_id)
             self.producer.flush()
         except Exception as e:
             _assert = soft_assert(notify_admins=True)
