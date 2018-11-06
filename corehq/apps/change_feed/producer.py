@@ -23,7 +23,8 @@ class ChangeProducer(object):
             api_version=settings.KAFKA_API_VERSION,
             client_id="cchq-producer",
             retries=3,
-            acks=1
+            acks=1,
+            key_serializer=lambda key: key.encode()
         )
         return self._producer
 
