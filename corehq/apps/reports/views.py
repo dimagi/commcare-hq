@@ -115,6 +115,7 @@ from soil.tasks import prepare_download
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
 from corehq.apps.app_manager.models import Application, ShadowForm
@@ -1486,6 +1487,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 @require_GET
 def download_case_history(request, domain, case_id):
     case = get_case_or_404(domain, case_id)
+    track_workflow(request.couch_user.username, "Case Data Page: Case History csv Downloaded")
     history = get_case_history(case)
     properties = set()
     for f in history:
