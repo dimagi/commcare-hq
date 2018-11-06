@@ -3079,6 +3079,7 @@ class CreditLine(ValidateModelMixin, models.Model):
         credit_adjustment.save()
         self.balance = F('balance') + amount
         self.save()
+        self.refresh_from_db()
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
