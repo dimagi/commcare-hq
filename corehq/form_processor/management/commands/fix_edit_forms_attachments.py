@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import print_function
 
 from django.core.management.base import BaseCommand
 from collections import defaultdict
@@ -21,7 +22,9 @@ class Command(BaseCommand):
         form_accessor = FormAccessorSQL()
         for db_alias in get_db_aliases_for_partitioned_query():
             print('scanning %s' % db_alias)
-            edit_form_ids = XFormOperationSQL.objects.using(db_alias).filter(operation='edit').values_list('form_id', flat=True)
+            edit_form_ids = (XFormOperationSQL.objects.using(db_alias)
+                             .filter(operation='edit')
+                             .values_list('form_id', flat=True))
             for edit_form_id in with_progress_bar(edit_form_ids):
                 edited_form = form_accessor.get_form(edit_form_id)
                 deprecated_form_id = edited_form.deprecated_form_id
@@ -50,6 +53,6 @@ class Command(BaseCommand):
             raise NotImplementedError('finish your work first')
         if perform_update:
             print('starting with adding attachments. Need to update %s forms.' % len(forms_to_process))
-            for form_id, attachments in with_progress_bar(forms_to_process.items()):
+            for form_id, attachments in with_progress_bar(list(forms_to_process.items())):
                 for attachment_id, original_form_id in attachments:
                     self._add_attachment_to_form(attachment_id, form_id)
