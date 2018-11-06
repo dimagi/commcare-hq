@@ -25,7 +25,8 @@ class process_pillow_changes(ContextDecorator):
     def pillow(self):
         if not self._pillow:
             with real_pillow_settings(), override_settings(PTOP_CHECKPOINT_DELAY_OVERRIDE=None):
-                self._pillow = get_pillow_by_name(self.pillow_name_or_instance, instantiate=True, **self._pillow_kwargs)
+                self._pillow = get_pillow_by_name(
+                    self.pillow_name_or_instance, instantiate=True, **self._pillow_kwargs)
         return self._pillow
 
     def __enter__(self):

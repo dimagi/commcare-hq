@@ -27,8 +27,7 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from dimagi.utils.parsing import string_to_utc_datetime
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import ElasticProcessor
@@ -136,7 +135,6 @@ def transform_xform_for_elasticsearch(doc_dict):
         doc_ret['backend_id'] = 'couch'
 
     return doc_ret
-
 
 
 def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
