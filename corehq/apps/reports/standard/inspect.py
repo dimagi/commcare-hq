@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
@@ -142,6 +143,24 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
             return False
         else:
             return True
+
+    @classmethod
+    def get_subpages(cls):
+        def _form_name(request=None, **context):
+            if 'instance' in context:
+                try:
+                    return mark_safe(context['instance'].form_data['@name'])
+                except KeyError:
+                    pass
+            return _('View Form')
+
+        from corehq.apps.reports.views import FormDataView
+        return [
+            {
+                'title': _form_name,
+                'urlname': FormDataView.urlname,
+            },
+        ]
 
     @property
     def headers(self):
