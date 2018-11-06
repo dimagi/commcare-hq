@@ -60,11 +60,11 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
                    awcm.awc_days_open
         );
         /* update expected visits for cf cases (not in agg_ccs_record */
-        UPDATE {tablename} perf
+        UPDATE "{tablename}" perf
         SET expected_visits = expected_visits + ucr.expected
         FROM (
              SELECT SUM(0.39) AS expected, awc_id
-             FROM {ccs_record_case_ucr}
+             FROM "{ccs_record_case_ucr}"
              WHERE %(month)s - add > 183 AND (closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s)
              GROUP BY awc_id
              ) ucr
