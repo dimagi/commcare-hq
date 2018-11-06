@@ -3254,15 +3254,14 @@ class CreditLine(ValidateModelMixin, models.Model):
 
     @classmethod
     def get_credits_for_subscriptions(cls, subscriptions, feature_type=None, is_product=False):
-        credit_list = []
+        credit_list = cls.objects.none()
         for subscription in subscriptions.all():
-            credit_list.append(cls.get_credits_by_subscription_and_features(subscription,
-                                                                            feature_type=feature_type,
-                                                                            is_product=is_product))
-        credits = credit_list.pop()
-        for credit_line in credit_list:
-            credits.union(credit_line)
-        return credits
+            credit_list = credit_list.union(cls.get_credits_by_subscription_and_features(
+                subscription,
+                feature_type=feature_type,
+                is_product=is_product
+            ))
+        return credit_list
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, is_product=False):
