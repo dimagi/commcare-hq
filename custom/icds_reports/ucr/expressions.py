@@ -35,6 +35,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
     ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
     ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
+    ('icds_awc_owner_id', 'custom.icds_reports.ucr.expressions.awc_owner_id'),
 ]
 
 
@@ -344,6 +345,65 @@ class ICDSUserLocation(JsonObject):
 
     def __str__(self):
         return "User's location id"
+
+
+class AWCOwnerId(JsonObject):
+    type = TypeProperty('icds_awc_owner_id')
+    case_id_expression = DefaultProperty(required=True)
+
+    def configure(self, case_id_expression):
+        self._case_id_expression = case_id_expression
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+
+        if not case_id:
+            return None
+
+        if item['owner_id'] and item['owner_id'] != '-':
+            return item['owner_id']
+
+        if item['owner_id'] == '-':
+            accessor = CaseAccessors(context.root_doc['domain'])
+            indices = {case_id}
+            last_indices = set()
+            while indices != last_indices:
+                # assuming no loops
+                last_indices |= indices
+                indices |= set(accessor.get_indexed_case_ids(indices))
+
+            cases = accessor.get_cases(list(indices))
+            cases_with_owners = [
+                case for case in cases
+                if case.owner_id and case.owner_id != '-'
+            ]
+            if len(cases_with_owners) != 0:
+                # This shouldn't happen in this world, but will feasibly
+                # occur depending on our migration path from parent/child ->
+                # extension cases. Once a migration path is decided revisit
+                # alerting in this case
+                return cases_with_owners[0].owner_id
+
+            household_cases = [
+                case for case in cases
+                if case.type == 'household'
+            ]
+            assert len(household_cases) == 1
+            household_case = household_cases[0]
+            subcases = household_case.get_subcases(index_identifier='awc')
+            cases_with_owners = [
+                case for case in subcases
+                if case.owner_id and case.owner_id != '-'
+            ]
+            assert len(cases_with_owners) == 1
+            assert cases_with_owners[0].type == 'assignment'
+
+            return cases_with_owners[0].owner_id
+
+        return None
+
+    def __str__(self):
+        return "owner_id"
 
 
 def _datetime_now():
@@ -753,5 +813,13 @@ def icds_user_location(spec, context):
     wrapped = ICDSUserLocation.wrap(spec)
     wrapped.configure(
         user_id_expression=ExpressionFactory.from_spec(wrapped.user_id_expression, context)
+    )
+    return wrapped
+
+
+def awc_owner_id(spec, context):
+    wrapped = AWCOwnerId.wrap(spec)
+    wrapped.configure(
+        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
     )
     return wrapped

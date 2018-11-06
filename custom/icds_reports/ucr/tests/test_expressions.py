@@ -5,7 +5,7 @@ import uuid
 
 from django.test import SimpleTestCase, TestCase, override_settings
 
-from casexml.apps.case.const import CASE_INDEX_CHILD
+from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseIndex
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -16,6 +16,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, DynamicallyPredictablyRandomToggle, NAMESPACE_OTHER
+from corehq.util.test_utils import generate_cases
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 from toggle.models import Toggle
@@ -294,3 +295,312 @@ class TestBooleanChoiceQuestion(SimpleTestCase):
         self.assertEqual(0, expression({"child": {"test": "0"}}))
         self.assertEqual(1, expression({"child": {"test": "1"}}))
         self.assertEqual(1, expression({"child": {"test": "yes"}}))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class _TestOwnerIDBase(TestCase):
+    awc_owner_id = uuid.uuid4().hex
+    domain_name = uuid.uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super(_TestOwnerIDBase, cls).setUpClass()
+        cls.case_factory = CaseFactory(domain=cls.domain_name)
+        cls._create_cases()
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_cases()
+        super(_TestOwnerIDBase, cls).tearDownClass()
+
+
+class TestLegacyCaseStructureOwnerID(_TestOwnerIDBase):
+    @classmethod
+    def _create_cases(cls):
+        household_case = CaseStructure(
+            attrs={
+                'case_type': 'household',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': cls.awc_owner_id,
+                'update': dict()
+            },
+        )
+
+        father_person_case = CaseStructure(
+            attrs={
+                'case_type': 'person',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': cls.awc_owner_id,
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type='household',
+            )],
+        )
+
+        mother_person_case = CaseStructure(
+            attrs={
+                'case_type': 'person',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': cls.awc_owner_id,
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type='household',
+            )],
+        )
+
+        ccs_record_case = CaseStructure(
+            attrs={
+                'case_type': 'ccs_record',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': cls.awc_owner_id,
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                mother_person_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=mother_person_case.attrs['case_type'],
+            )],
+        )
+
+        child_health_person_case = CaseStructure(
+            attrs={
+                'case_type': 'person',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': cls.awc_owner_id,
+                'update': dict()
+            },
+            indices=[
+                CaseIndex(
+                    household_case,
+                    identifier='parent',
+                    relationship=CASE_INDEX_CHILD,
+                    related_type='household',
+                ),
+                CaseIndex(
+                    mother_person_case,
+                    identifier='mother',
+                    relationship=CASE_INDEX_CHILD,
+                    related_type=mother_person_case.attrs['case_type'],
+                )
+            ],
+        )
+
+        child_health_case = CaseStructure(
+            attrs={
+                'case_type': 'child_health',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': cls.awc_owner_id,
+                'update': dict()
+            },
+            indices=[
+                CaseIndex(
+                    child_health_person_case,
+                    identifier='parent',
+                    relationship=CASE_INDEX_EXTENSION,
+                    related_type=child_health_person_case.attrs['case_type'],
+                )
+            ],
+        )
+        cls.household_case = cls.case_factory.create_or_update_case(household_case)[0]
+        cls.father_person_case = cls.case_factory.create_or_update_case(father_person_case)[0]
+        cls.mother_person_case = cls.case_factory.create_or_update_case(mother_person_case)[0]
+        cls.ccs_record_case = cls.case_factory.create_or_update_case(ccs_record_case)[0]
+        cls.child_health_person_case = cls.case_factory.create_or_update_case(child_health_person_case)[0]
+        cls.child_health_case = cls.case_factory.create_or_update_case(child_health_case)[0]
+
+
+@generate_cases([
+    ('household_case',),
+    ('father_person_case',),
+    ('mother_person_case',),
+    ('ccs_record_case',),
+    ('child_health_person_case',),
+    ('child_health_case',),
+], TestLegacyCaseStructureOwnerID)
+def test_awc_owner_id(self, case):
+    expression = ExpressionFactory.from_spec({
+        "type": "icds_awc_owner_id",
+        "case_id_expression": {
+            "type": "property_name",
+            "property_name": "case_id",
+        },
+    })
+    self.assertEqual(self.awc_owner_id, expression(getattr(self, case).to_json()))
+
+
+class TestREACHCaseStructureOwnerID(_TestOwnerIDBase):
+    awc_owner_id = uuid.uuid4().hex
+
+    @classmethod
+    def _create_cases(cls):
+        household_case = CaseStructure(
+            attrs={
+                'case_type': 'household',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': '-',
+                'update': dict()
+            },
+        )
+
+        awc_ownership_case = CaseStructure(
+            attrs={
+                'case_type': 'assignment',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': cls.awc_owner_id,
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='awc',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type='household',
+            )],
+        )
+
+        father_person_case = CaseStructure(
+            attrs={
+                'case_type': 'person',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': '-',
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='parent',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type='household',
+            )],
+        )
+
+        mother_person_case = CaseStructure(
+            attrs={
+                'case_type': 'person',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': '-',
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='parent',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type='household',
+            )],
+        )
+
+        ccs_record_case = CaseStructure(
+            attrs={
+                'case_type': 'ccs_record',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': '-',
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                mother_person_case,
+                identifier='parent',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=mother_person_case.attrs['case_type'],
+            )],
+        )
+
+        child_health_person_case = CaseStructure(
+            attrs={
+                'case_type': 'person',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': '-',
+                'update': dict()
+            },
+            indices=[
+                CaseIndex(
+                    household_case,
+                    identifier='parent',
+                    relationship=CASE_INDEX_EXTENSION,
+                    related_type='household',
+                ),
+                CaseIndex(
+                    mother_person_case,
+                    identifier='mother',
+                    relationship=CASE_INDEX_EXTENSION,
+                    related_type='person',
+                )
+            ],
+        )
+
+        child_health_case = CaseStructure(
+            attrs={
+                'case_type': 'child_health',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': '-',
+                'update': dict()
+            },
+            indices=[
+                CaseIndex(
+                    child_health_person_case,
+                    identifier='parent',
+                    relationship=CASE_INDEX_EXTENSION,
+                    related_type=child_health_person_case.attrs['case_type'],
+                )
+            ],
+        )
+        cls.household_case = cls.case_factory.create_or_update_case(household_case)[0]
+        cls.awc_ownership_case = cls.case_factory.create_or_update_case(awc_ownership_case)[0]
+        cls.father_person_case = cls.case_factory.create_or_update_case(father_person_case)[0]
+        cls.mother_person_case = cls.case_factory.create_or_update_case(mother_person_case)[0]
+        cls.ccs_record_case = cls.case_factory.create_or_update_case(ccs_record_case)[0]
+        cls.child_health_person_case = cls.case_factory.create_or_update_case(child_health_person_case)[0]
+        cls.child_health_case = cls.case_factory.create_or_update_case(child_health_case)[0]
+
+
+@generate_cases([
+    ('household_case',),
+    ('awc_ownership_case',),
+    ('father_person_case',),
+    ('mother_person_case',),
+    ('ccs_record_case',),
+    ('child_health_person_case',),
+    ('child_health_case',),
+], TestREACHCaseStructureOwnerID)
+def test_reach_awc_owner_id(self, case):
+    expression = ExpressionFactory.from_spec({
+        "type": "icds_awc_owner_id",
+        "case_id_expression": {
+            "type": "property_name",
+            "property_name": "case_id",
+        },
+    })
+    context = EvaluationContext({"domain": self.domain_name}, 0)
+    self.assertEqual(self.awc_owner_id, expression(getattr(self, case).to_json(), context))
