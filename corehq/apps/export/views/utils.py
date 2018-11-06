@@ -32,8 +32,6 @@ from corehq.apps.export.tasks import (
 from corehq.apps.export.exceptions import (
     ExportAppException,
     BadExportConfiguration,
-    ExportFormValidationException,
-    ExportAsyncException,
 )
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
@@ -125,7 +123,7 @@ class ExportsPermissionsManager(object):
 
     def __init__(self, form_or_case, domain, couch_user):
         super(ExportsPermissionsManager, self).__init__()
-        if form_or_case not in [None, 'form', 'case']:
+        if form_or_case and form_or_case not in ['form', 'case']:
             raise ValueError("Unrecognized value for form_or_case")
         self.form_or_case = form_or_case
         self.domain = domain
