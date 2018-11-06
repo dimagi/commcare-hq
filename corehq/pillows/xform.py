@@ -138,33 +138,10 @@ def transform_xform_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
-                                      process_num=0, **kwargs):
-    assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, FORM_TOPICS)
-    form_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_prep_fn=transform_xform_for_elasticsearch,
-        doc_filter_fn=xform_pillow_filter,
-    )
-    kafka_change_feed = KafkaChangeFeed(
-        topics=FORM_TOPICS, client_id='forms-to-es', num_processes=num_processes, process_num=process_num
-    )
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=kafka_change_feed,
-        processor=form_processor,
-        change_processed_event_handler=KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
-        ),
-    )
-
 
 def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
-                         num_processes=1, process_num=0, configs=None,
+                         num_processes=1, process_num=0, configs=None, skip_ucr=False,
                          processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
     if topics:
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
@@ -201,13 +178,16 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
     )
     if configs:
         ucr_processor.bootstrap(configs)
+    processors = [xform_to_es_processor, xform_to_report_es_processor,
+        form_meta_processor, unknown_user_form_processor]
+    if not skip_ucr:
+        processors = [ucr_processor] + processors
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, xform_to_es_processor, xform_to_report_es_processor,
-                   form_meta_processor, unknown_user_form_processor],
+        processor=processors,
         processor_chunk_size=processor_chunk_size
     )
 

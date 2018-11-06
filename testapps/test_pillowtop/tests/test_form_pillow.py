@@ -5,7 +5,6 @@ from django.test import TestCase, override_settings
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.models import Application
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
@@ -18,13 +17,13 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata, get_simple_form_xml
 
 
-class FormPillowTest(CallCenterDomainMockTest):
+class FormPillowTest(TestCase):
     domain = 'test-form-pillow-domain'
 
     def setUp(self):
         super(FormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
-        self.pillow = get_ucr_es_form_pillow()
+        self.pillow = get_ucr_es_form_pillow(skip_ucr=True)
 
         factory = AppFactory(domain=self.domain)
         self.app = factory.app

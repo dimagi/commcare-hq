@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
+from django.test import TestCase
 import uuid
 
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.tests.utils import doc_to_change
@@ -15,7 +15,7 @@ from six.moves import range
 ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number', 'sort_key'])
 
 
-class ReportDataTest(CallCenterDomainMockTest):
+class ReportDataTest(TestCase):
 
     def setUp(self):
         super(ReportDataTest, self).setUp()

@@ -4,12 +4,11 @@ from __future__ import unicode_literals
 from datetime import datetime
 from mock import patch
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
 
 from kafka.common import KafkaUnavailableError
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
@@ -104,11 +103,11 @@ class ChangeFeedPillowTest(SimpleTestCase):
         self.assertLessEqual(change_meta.publish_timestamp, datetime.utcnow())
 
 
-class TestElasticProcessorPillows(CallCenterDomainMockTest):
+class TestElasticProcessorPillows(TestCase):
 
     def setUp(self):
         with patch('pillowtop.checkpoints.manager.get_or_create_checkpoint'):
-            self.pillow = get_ucr_es_case_pillow()
+            self.pillow = get_ucr_es_case_pillow(skip_ucr=True)
 
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)

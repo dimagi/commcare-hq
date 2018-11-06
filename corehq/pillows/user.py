@@ -95,7 +95,8 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kwargs):
+def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0,
+        skip_ucr=False, **kwargs):
     # Pillow that sends users to ES and UCR
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
@@ -114,7 +115,7 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kw
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
-        processor=[ucr_processor, user_processor],
+        processor=[user_processor] if skip_ucr else [ucr_processor, user_processor],
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),

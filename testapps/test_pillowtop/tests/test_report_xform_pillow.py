@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test import override_settings
+from django.test import override_settings, TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.es import FormES
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -21,7 +20,7 @@ DOMAIN = 'report-xform-pillowtest-domain'
 
 
 @override_settings(ES_XFORM_FULL_INDEX_DOMAINS=[DOMAIN])
-class ReportXformPillowTest(CallCenterDomainMockTest):
+class ReportXformPillowTest(TestCase):
 
     def setUp(self):
         super(ReportXformPillowTest, self).setUp()
@@ -58,7 +57,7 @@ class ReportXformPillowTest(CallCenterDomainMockTest):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self, domain):
-        with process_pillow_changes('kafka-xform-ucr-es'):
+        with process_pillow_changes('kafka-xform-ucr-es', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 metadata = TestFormMetadata(domain=domain)
                 form = get_form_ready_to_save(metadata)
@@ -68,7 +67,7 @@ class ReportXformPillowTest(CallCenterDomainMockTest):
 
 
 @override_settings(ES_XFORM_FULL_INDEX_DOMAINS=[DOMAIN])
-class ReportXformReindexerTest(CallCenterDomainMockTest):
+class ReportXformReindexerTest(TestCase):
 
     def setUp(self):
         super(ReportXformReindexerTest, self).setUp()

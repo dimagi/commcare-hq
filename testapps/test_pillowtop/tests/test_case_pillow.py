@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from django.test import TestCase
 import uuid
 
 from elasticsearch.exceptions import ConnectionError
 
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.es import CaseES
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -16,7 +16,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-class CasePillowTest(CallCenterDomainMockTest):
+class CasePillowTest(TestCase):
 
     domain = 'case-pillowtest-domain'
 
@@ -54,7 +54,7 @@ class CasePillowTest(CallCenterDomainMockTest):
         self.assertEqual(1, results.total)
 
         # soft delete the case
-        with process_pillow_changes('kafka-case-ucr-es'):
+        with process_pillow_changes('kafka-case-ucr-es', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 CaseAccessors(self.domain).soft_delete_cases([case_id])
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)

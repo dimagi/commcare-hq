@@ -3,10 +3,9 @@ from __future__ import unicode_literals
 
 import uuid
 
-from django.test import override_settings
+from django.test import override_settings, TestCase
 from mock import MagicMock, patch
 
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -36,7 +35,7 @@ from corehq.util.test_utils import create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-class CaseSearchPillowTest(CallCenterDomainMockTest):
+class CaseSearchPillowTest(TestCase):
 
     domain = 'meereen'
 
@@ -44,7 +43,7 @@ class CaseSearchPillowTest(CallCenterDomainMockTest):
         super(CaseSearchPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
-        self.pillow = get_ucr_es_case_pillow()
+        self.pillow = get_ucr_es_case_pillow(skip_ucr=True)
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
         # Bootstrap ES

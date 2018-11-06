@@ -65,10 +65,16 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
     )
 
 
-def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
-                         include_ucrs=None, exclude_ucrs=None,
-                         num_processes=1, process_num=0, configs=None,
-                         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
+def get_ucr_es_case_pillow(
+        pillow_id='kafka-case-ucr-es', ucr_division=None,
+        include_ucrs=None, exclude_ucrs=None,
+        num_processes=1, process_num=0, configs=None, skip_ucr=False,
+        processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
+    """
+    Return a pillow that processes cases. The processors include, UCR and elastic processors
+        Args:
+            skip_ucr: Can be set to True to avoid passing UCR processor, useful for tests
+    """
     if topics:
         assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"
     topics = topics or CASE_TOPICS
@@ -95,13 +101,16 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
+    processors = [case_to_es_processor, case_search_processor, get_case_to_report_es_processor()]
+    if not skip_ucr:
+        # this option is useful in tests to avoid extra UCR setup where unneccessary
+        processors = [ucr_processor] + processors
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, case_to_es_processor, case_search_processor,
-            get_case_to_report_es_processor()],
+        processor=processors,
         processor_chunk_size=processor_chunk_size
     )
 

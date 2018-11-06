@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
+from django.test import TestCase
+
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
@@ -29,7 +30,7 @@ from pillowtop.es_utils import initialize_index
 TEST_DOMAIN = 'user-pillow-test'
 
 
-class UserPillowTestBase(CallCenterDomainMockTest):
+class UserPillowTestBase(TestCase):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
         self.index_info = USER_INDEX_INFO
@@ -64,7 +65,7 @@ class UserPillowTest(UserPillowTestBase):
         producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
-        pillow = get_user_pillow()
+        pillow = get_user_pillow(skip_ucr=True)
         pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self.assertEqual(0, UserES().run().total)

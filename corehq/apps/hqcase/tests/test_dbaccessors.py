@@ -13,7 +13,6 @@ from couchforms.models import XFormInstance
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.hqcase.analytics import (
     get_number_of_cases_in_domain_of_type,
     get_number_of_cases_in_domain,
@@ -179,7 +178,7 @@ TEST_ES_META = {
 }
 
 
-class ESAccessorsTest(CallCenterDomainMockTest):
+class ESAccessorsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 
     def setUp(self):
@@ -208,7 +207,7 @@ class ESAccessorsTest(CallCenterDomainMockTest):
     def _create_case_and_sync_to_es(self):
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        with process_pillow_changes('kafka-case-ucr-es'):
+        with process_pillow_changes('kafka-case-ucr-es', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(self.domain, case_id, case_name)
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
