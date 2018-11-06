@@ -95,16 +95,19 @@ def add_demo_user_to_user_index():
     )
 
 
+def get_user_es_processor():
+    ElasticProcessor(
+            elasticsearch=get_es_new(),
+            index_info=USER_INDEX_INFO,
+            doc_prep_fn=transform_user_for_elasticsearch,
+        )
+
 def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0,
         skip_ucr=False, **kwargs):
     # Pillow that sends users to ES and UCR
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
-    user_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=USER_INDEX_INFO,
-        doc_prep_fn=transform_user_for_elasticsearch,
-    )
+    user_processor = get_user_es_processor()
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
     )
@@ -130,7 +133,7 @@ class UserReindexerFactory(ReindexerFactory):
 
     def build(self):
         return ElasticPillowReindexer(
-            pillow_or_processor=get_user_pillow(),
+            pillow_or_processor=get_user_es_processor(),
             change_provider=CouchViewChangeProvider(
                 couch_db=CommCareUser.get_db(),
                 view_name='users/by_username',
