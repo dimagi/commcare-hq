@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
 import sys
+from contextlib import contextmanager
 
-import attr
 from couchdbkit import ResourceNotFound
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -17,29 +17,12 @@ from dimagi.utils.couch import release_lock
 import six
 
 
-@attr.s
-class FormLockManager(object):
-
-    context = attr.ib()
-    interface = attr.ib()
-    locks = attr.ib(factory=list, init=False)
-
-    def acquire_lock(self, form_id):
-        self.locks.append(self.interface.acquire_lock_for_xform(form_id))
-
-    def __enter__(self):
-        return self.context
-
-    def __exit__(self, *exc):
-        raised = []
-        for lock in reversed(self.locks):
-            try:
-                release_lock(lock, degrade_gracefully=True)
-            except:
-                raised.append(sys.exc_info())
-        if raised:
-            # best effort: re-raise first error
-            six.reraise(*raised[0])
+@contextmanager
+def locked_form(context, lock):
+    try:
+        yield context
+    finally:
+        release_lock(lock, degrade_gracefully=True)
 
 
 class FormProcessingResult(object):
@@ -51,35 +34,25 @@ class FormProcessingResult(object):
     def get_locked_forms(self):
         """Get a context manager whose context is a list of locked forms
 
-        Form locks have been acquired by the time this method returns.
-        Call `__exit__` on the returned context manager to release the
-        locks.
+        Form lock has been acquired by the time this method returns.
+        Use the returned context manager to release the lock.
         """
         xform = self.submitted_form
         xform_id = xform.form_id
-        manager = FormLockManager([xform], self.interface)
-        manager.acquire_lock(xform_id)
+        context = [xform]
+        manager = locked_form(context, self.interface.acquire_lock_for_xform(xform_id))
         try:
             if self.interface.is_duplicate(xform_id):
                 new_form, dup_form = _handle_id_conflict(xform, xform.domain)
-                new_id = new_form.form_id
                 if dup_form:
-                    old_id = dup_form.form_id
-                    assert old_id != new_id, 'Expecting form IDs to be different'
-                    manager.context = [new_form, dup_form]
-                    if xform_id == new_id:
-                        manager.acquire_lock(old_id)
-                    elif xform_id == old_id:
-                        manager.acquire_lock(new_id)
-                    else:
-                        # unexpected, should never get here
-                        assert False, (xform_id, new_id, old_id)
-                elif new_id != xform_id:
-                    manager.context = [new_form]
-                    manager.acquire_lock(new_id)
+                    assert dup_form.form_id != new_form.form_id, (new_form, dup_form)
+                    context[:] = [new_form, dup_form]
+                else:
+                    assert new_form is xform, (new_form, xform)
         except:
             exc = sys.exc_info()
-            manager.__exit__()
+            with manager:
+                pass
             six.reraise(*exc)
         return manager
 
