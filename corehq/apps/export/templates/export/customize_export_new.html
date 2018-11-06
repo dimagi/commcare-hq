@@ -154,7 +154,7 @@
                 </div>
             </div>
             {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-            <div class="form-group" data-bind="css: { 'has-warning': hasOtherOwner() && sharing() != initialSharing() }">
+            <div class="form-group" data-bind="css: { 'has-warning': hasOtherOwner && sharing() != initialSharing }">
                 <label
                     for="sharing-select"
                     class="col-sm-3 col-md-2 control-label">
@@ -168,7 +168,7 @@
                             value: sharing
                         ">
                     </select>
-                    <div class="help-block" data-bind="visible: hasOtherOwner() && sharing() != initialSharing()">
+                    <div class="help-block" data-bind="visible: hasOtherOwner && sharing() != initialSharing">
                         <div data-bind="visible: sharing() == 'private'">
                             {% blocktrans %}
                             This export was created by <strong>{{ owner_name }}</strong>.
