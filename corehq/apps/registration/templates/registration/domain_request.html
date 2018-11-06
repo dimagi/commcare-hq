@@ -7,15 +7,20 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1>
-                {% if is_new_user %}
-                    {% blocktrans %}Welcome to CommCare HQ!
-                        <small>It's time to create your first project.</small>{% endblocktrans %}
-                {% else %}
-                    {% blocktrans %}Create a New Project Space{% endblocktrans %}
-                {% endif %}
-            </h1>
+        <h1>
+            {% if is_new_user %}
+                {% blocktrans %}
+                    Welcome to CommCare HQ!
+                {% endblocktrans %}
+            {% else %}
+                {% blocktrans %}
+                    Create a New Project Space
+                {% endblocktrans %}
+            {% endif %}
+        </h1>
+        <div class="help-block">
+            Please create a name for your project.
+            This will be used to create a project URL and will not be able to be changed in the future.
         </div>
 
         {% block registration-content %}
