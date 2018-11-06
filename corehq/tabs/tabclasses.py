@@ -21,7 +21,7 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
     KeywordsListView,
@@ -497,7 +497,7 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_only_see_deid_exports(self):
-        from corehq.apps.export.views import user_can_view_deid_exports
+        from corehq.apps.export.views.utils import user_can_view_deid_exports
         return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
@@ -520,7 +520,7 @@ class ProjectDataTab(UITab):
 
         export_data_views = []
         if self.can_only_see_deid_exports:
-            from corehq.apps.export.views import (
+            from corehq.apps.export.views.list import (
                 DeIdFormExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
@@ -541,27 +541,35 @@ class ProjectDataTab(UITab):
             ])
 
         elif self.can_export_data:
-            from corehq.apps.export.views import (
-                FormExportListView,
-                CaseExportListView,
-                CreateNewCustomFormExportView,
-                CreateNewCustomCaseExportView,
+            from corehq.apps.export.views.download import (
                 DownloadNewFormExportView,
                 DownloadNewCaseExportView,
                 DownloadNewSmsExportView,
                 BulkDownloadNewFormExportView,
+            )
+            from corehq.apps.export.views.edit import (
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
-                DashboardFeedListView,
-                DailySavedExportListView,
-                CreateNewDailySavedFormExport,
-                CreateNewDailySavedCaseExport,
                 EditFormDailySavedExportView,
                 EditCaseDailySavedExportView,
-                CreateNewFormFeedView,
-                CreateNewCaseFeedView,
                 EditFormFeedView,
                 EditCaseFeedView,
+            )
+            from corehq.apps.export.views.list import (
+                FormExportListView,
+                CaseExportListView,
+                DashboardFeedListView,
+                DailySavedExportListView,
+            )
+            from corehq.apps.export.views.new import (
+                CreateNewCustomFormExportView,
+                CreateNewCustomCaseExportView,
+                CreateNewDailySavedFormExport,
+                CreateNewDailySavedCaseExport,
+                CreateNewFormFeedView,
+                CreateNewCaseFeedView,
+            )
+            from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
                 DailySavedExportPaywall
             )
@@ -702,7 +710,7 @@ class ProjectDataTab(UITab):
                 })
 
         if can_download_data_files(self.domain, self.couch_user):
-            from corehq.apps.export.views import DataFileDownloadList
+            from corehq.apps.export.views.utils import DataFileDownloadList
 
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
@@ -770,8 +778,11 @@ class ProjectDataTab(UITab):
         ):
             return []
 
-        from corehq.apps.export.views import (
-            FormExportListView, CaseExportListView, DownloadNewSmsExportView,
+        from corehq.apps.export.views.download import (
+            DownloadNewSmsExportView,
+        )
+        from corehq.apps.export.views.list import (
+            FormExportListView, CaseExportListView
         )
 
         items = []
@@ -1537,7 +1548,7 @@ def _get_administration_section(domain):
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
-    if not settings.ENTERPRISE_MODE and not get_domain_master_link(domain):
+    if not settings.ENTERPRISE_MODE and not is_linked_domain(domain):
         administration.extend([
             {
                 'title': _('CommCare Exchange'),

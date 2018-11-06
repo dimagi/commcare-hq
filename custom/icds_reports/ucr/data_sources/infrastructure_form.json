@@ -3,7 +3,8 @@
     "icds-dashboard-qa",
     "reach-sandbox",
     "reach-test",
-    "icds-cas"
+    "icds-cas",
+    "cas-lab"
   ],
   "server_environment": [
     "softlayer",

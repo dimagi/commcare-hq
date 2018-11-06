@@ -14,6 +14,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
     LOCATION_OPENMRS_UUID,
@@ -405,7 +406,11 @@ class UpdatePersonNameTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_name.items()
-            if property_ in NAME_PROPERTIES and value_source.get_value(self.info)
+            if (
+                property_ in NAME_PROPERTIES and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(self.info)
+            )
         }
         if properties:
             self.requests.post(
@@ -453,7 +458,11 @@ class CreatePersonAddressTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
-            if property_ in ADDRESS_PROPERTIES and value_source.get_value(self.info)
+            if (
+                property_ in ADDRESS_PROPERTIES and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(self.info)
+            )
         }
         if properties:
             response = self.requests.post(
@@ -488,7 +497,11 @@ class UpdatePersonAddressTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
-            if property_ in ADDRESS_PROPERTIES and value_source.get_value(self.info)
+            if (
+                property_ in ADDRESS_PROPERTIES and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(self.info)
+            )
         }
         if properties:
             self.requests.post(
@@ -550,17 +563,29 @@ def create_patient(requests, info, case_config):
     name = {
         property_: value_source.get_value(info)
         for property_, value_source in case_config.person_preferred_name.items()
-        if property_ in NAME_PROPERTIES and value_source.get_value(info)
+        if (
+            property_ in NAME_PROPERTIES and
+            value_source.check_direction(DIRECTION_EXPORT) and
+            value_source.get_value(info)
+        )
     }
     address = {
         property_: value_source.get_value(info)
         for property_, value_source in case_config.person_preferred_address.items()
-        if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
+        if (
+            property_ in ADDRESS_PROPERTIES and
+            value_source.check_direction(DIRECTION_EXPORT) and
+            value_source.get_value(info)
+        )
     }
     properties = {
         property_: value_source.get_value(info)
         for property_, value_source in case_config.person_properties.items()
-        if property_ in PERSON_PROPERTIES and value_source.get_value(info)
+        if (
+            property_ in PERSON_PROPERTIES and
+            value_source.check_direction(DIRECTION_EXPORT) and
+            value_source.get_value(info)
+        )
     }
     person = {}
     if name:
@@ -573,7 +598,11 @@ def create_patient(requests, info, case_config):
         identifiers = [
             {'identifierType': patient_identifier_type, 'identifier': value_source.get_value(info)}
             for patient_identifier_type, value_source in case_config.patient_identifiers.items()
-            if patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID and value_source.get_value(info)
+            if (
+                patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(info)
+            )
         ]
         patient = {
             'person': person,
@@ -638,7 +667,11 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_properties.items()
-            if property_ in PERSON_PROPERTIES and value_source.get_value(self.info)
+            if (
+                property_ in PERSON_PROPERTIES and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(self.info)
+            )
         }
         if properties:
             self.requests.post(

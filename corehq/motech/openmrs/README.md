@@ -501,6 +501,42 @@ name of the *person* (not the display name of patient because it often
 includes punctuation and an identifier).
 
 
+Import-Only and Export-Only Values
+----------------------------------
+
+In configurations like Atom feed integration that involve both sending
+data to OpenMRS and importing data from OpenMRS, sometimes some values
+should only be imported, or only exported.
+
+Use the "direction" property to determine whether a value should only be
+exported, only imported, or (the default behaviour) both.
+
+For example, to import a patient value named "hivStatus" as a case
+property named "hiv_status" but not export it, use `"direction": "in"`:
+
+    {
+      "hivStatus": {
+        "doc_type": "CaseProperty",
+        "case_property": "hiv_status",
+        "direction": "in"
+      }
+    }
+
+To export a form question, for example, but not import it, use
+`"direction": "out"`:
+
+    {
+      "hivStatus": {
+        "doc_type": "FormQuestion",
+        "case_property": "hiv_status",
+        "direction": "out"
+      }
+    }
+
+Omit "direction", or set it to `null`, for values that should be both
+imported and exported.
+
+
 Data Types
 ----------
 

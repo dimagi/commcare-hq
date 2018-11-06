@@ -17,13 +17,15 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
+from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
 from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, XMLNS_OPENMRS
-from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
+from corehq.motech.openmrs.openmrs_config import OpenmrsConfig, OpenmrsCaseConfig
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 from corehq.util.test_utils import TestFileMixin, _create_case
 import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
+    create_patient,
     find_or_create_patient,
     get_case_location,
     get_case_location_ancestor_repeaters,
@@ -228,6 +230,32 @@ class GetFormQuestionValuesTests(SimpleTestCase):
             warnings.simplefilter("ignore", UnicodeWarning)
             value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
         self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
+
+
+class ExportOnlyTests(SimpleTestCase):
+
+    def test_create_patient(self):
+        """
+        ValueSource instances with direction set to DIRECTION_IMPORT
+        should not be exported.
+        """
+        requests = mock.Mock()
+        info = mock.Mock(updates={'sex': 'M', 'dob': '1918-07-18'})
+        case_config = copy.deepcopy(CASE_CONFIG)
+        case_config['patient_identifiers'] = {}
+        case_config['person_preferred_name'] = {}
+        case_config['person_preferred_address'] = {}
+        case_config['person_attributes'] = {}
+
+        case_config['person_properties']['gender']['direction'] = DIRECTION_IMPORT
+        case_config['person_properties']['birthdate']['direction'] = DIRECTION_EXPORT
+        case_config = OpenmrsCaseConfig(case_config)
+
+        create_patient(requests, info, case_config)
+        requests.post.assert_called_with(
+            '/ws/rest/v1/patient/',
+            json={'person': {'birthdate': '1918-07-18'}}
+        )
 
 
 class AllowedToForwardTests(TestCase):

@@ -6,11 +6,13 @@ from django.db import models
 class MigrationStatus(object):
     NOT_STARTED = 'not_started'
     IN_PROGRESS = 'in_progress'
+    DRY_RUN = 'dry_run'
     COMPLETE = 'complete'
 
     choices = [
         (NOT_STARTED, 'Not Started'),
         (IN_PROGRESS, 'In Progress'),
+        (DRY_RUN, 'Dry Run'),
         (COMPLETE, 'Complete'),
     ]
 
