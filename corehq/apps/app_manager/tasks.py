@@ -11,7 +11,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.decorators import serial_task
 
 
-logger = get_task_logger('app_manager')
+logger = get_task_logger(__name__)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
