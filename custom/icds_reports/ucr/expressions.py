@@ -36,6 +36,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
     ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
     ('icds_awc_owner_id', 'custom.icds_reports.ucr.expressions.awc_owner_id'),
+    ('icds_village_owner_id', 'custom.icds_reports.ucr.expressions.village_owner_id'),
 ]
 
 
@@ -350,6 +351,7 @@ class ICDSUserLocation(JsonObject):
 class AWCOwnerId(JsonObject):
     type = TypeProperty('icds_awc_owner_id')
     case_id_expression = DefaultProperty(required=True)
+    index_identifier = 'awc'
 
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
@@ -390,7 +392,7 @@ class AWCOwnerId(JsonObject):
             ]
             assert len(household_cases) == 1
             household_case = household_cases[0]
-            subcases = household_case.get_subcases(index_identifier='awc')
+            subcases = household_case.get_subcases(index_identifier=self.index_identifier)
             cases_with_owners = [
                 case for case in subcases
                 if case.owner_id and case.owner_id != '-'
@@ -404,6 +406,14 @@ class AWCOwnerId(JsonObject):
 
     def __str__(self):
         return "owner_id"
+
+
+class VillageOwnerId(AWCOwnerId):
+    type = TypeProperty('icds_village_owner_id')
+    index_identifier = 'village'
+
+    def __str__(self):
+        return "village owner_id"
 
 
 def _datetime_now():
@@ -819,6 +829,14 @@ def icds_user_location(spec, context):
 
 def awc_owner_id(spec, context):
     wrapped = AWCOwnerId.wrap(spec)
+    wrapped.configure(
+        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
+    )
+    return wrapped
+
+
+def village_owner_id(spec, context):
+    wrapped = VillageOwnerId.wrap(spec)
     wrapped.configure(
         case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
     )

@@ -451,6 +451,7 @@ def test_awc_owner_id(self, case):
 
 class TestREACHCaseStructureOwnerID(_TestOwnerIDBase):
     awc_owner_id = uuid.uuid4().hex
+    village_owner_id = uuid.uuid4().hex
 
     @classmethod
     def _create_cases(cls):
@@ -477,6 +478,23 @@ class TestREACHCaseStructureOwnerID(_TestOwnerIDBase):
             indices=[CaseIndex(
                 household_case,
                 identifier='awc',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type='household',
+            )],
+        )
+
+        village_ownership_case = CaseStructure(
+            attrs={
+                'case_type': 'assignment',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'owner_id': cls.village_owner_id,
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='village',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type='household',
             )],
@@ -578,6 +596,7 @@ class TestREACHCaseStructureOwnerID(_TestOwnerIDBase):
         )
         cls.household_case = cls.case_factory.create_or_update_case(household_case)[0]
         cls.awc_ownership_case = cls.case_factory.create_or_update_case(awc_ownership_case)[0]
+        cls.village_ownership_case = cls.case_factory.create_or_update_case(village_ownership_case)[0]
         cls.father_person_case = cls.case_factory.create_or_update_case(father_person_case)[0]
         cls.mother_person_case = cls.case_factory.create_or_update_case(mother_person_case)[0]
         cls.ccs_record_case = cls.case_factory.create_or_update_case(ccs_record_case)[0]
@@ -588,6 +607,7 @@ class TestREACHCaseStructureOwnerID(_TestOwnerIDBase):
 @generate_cases([
     ('household_case',),
     ('awc_ownership_case',),
+    # ('village_ownership_case',), currently returns village. Should it return AWC?
     ('father_person_case',),
     ('mother_person_case',),
     ('ccs_record_case',),
@@ -604,3 +624,25 @@ def test_reach_awc_owner_id(self, case):
     })
     context = EvaluationContext({"domain": self.domain_name}, 0)
     self.assertEqual(self.awc_owner_id, expression(getattr(self, case).to_json(), context))
+
+
+@generate_cases([
+    ('household_case',),
+    # ('awc_ownership_case',), currently returns AWC. Should it return village?
+    ('village_ownership_case',),
+    ('father_person_case',),
+    ('mother_person_case',),
+    ('ccs_record_case',),
+    ('child_health_person_case',),
+    ('child_health_case',),
+], TestREACHCaseStructureOwnerID)
+def test_reach_village_owner_id(self, case):
+    expression = ExpressionFactory.from_spec({
+        "type": "icds_village_owner_id",
+        "case_id_expression": {
+            "type": "property_name",
+            "property_name": "case_id",
+        },
+    })
+    context = EvaluationContext({"domain": self.domain_name}, 0)
+    self.assertEqual(self.village_owner_id, expression(getattr(self, case).to_json(), context))
