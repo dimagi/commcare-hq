@@ -307,12 +307,6 @@ def _queue_indicators(indicators):
         _queue_chunk(to_queue)
 
 
-@quickcache(['config_id'])
-def _get_config(config_id):
-    # performance optimization for build_async_indicators. don't use elsewhere
-    return _get_config_by_id(config_id)
-
-
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
@@ -381,7 +375,7 @@ def _build_async_indicators(indicator_doc_ids):
                 for config_id in indicator.indicator_config_ids:
                     config_ids.add(config_id)
                     try:
-                        config = _get_config(config_id)
+                        config = _get_config_by_id(config_id)
                     except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
                         celery_task_logger.info("{} no longer exists, skipping".format(config_id))
                         # remove because the config no longer exists
