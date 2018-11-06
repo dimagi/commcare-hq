@@ -18,6 +18,15 @@ import six
 
 @contextmanager
 def locked_form(xform, interface):
+    """Context manager that locks a form and checks/prepares for duplicates
+
+    The lock is acquired on context manager enter and released on exit.
+
+    Historically this locked both the new (possibly duplicate) form ID
+    as well as any new ID generated in the process of handling a
+    duplicate form ID. The submitted form ID is still locked, but the
+    newly generated ID is not since it should be globally unique.
+    """
     context = [xform]
     lock = interface.acquire_lock_for_xform(xform.form_id)
     try:
@@ -25,7 +34,7 @@ def locked_form(xform, interface):
             new_form, dup_form = _handle_id_conflict(xform, xform.domain)
             if dup_form:
                 assert dup_form.form_id != new_form.form_id, (new_form, dup_form)
-                context[:] = [new_form, dup_form]
+                context = [new_form, dup_form]
             else:
                 assert new_form is xform, (new_form, xform)
         yield context
@@ -40,7 +49,12 @@ class FormProcessingResult(object):
         self.interface = FormProcessorInterface(self.submitted_form.domain)
 
     def get_locked_forms(self):
-        """Get a context manager whose context is a list of forms"""
+        """Get a context manager whose context is a list of forms
+
+        The first form in the list is the newly submitted form, and will
+        always be present. The second is a form with a duplicate form ID
+        (if one exists); it will be omitted if there is no duplicate.
+        """
         return locked_form(self.submitted_form, self.interface)
 
 
