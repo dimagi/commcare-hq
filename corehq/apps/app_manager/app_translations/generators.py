@@ -19,7 +19,6 @@ Unique_ID = namedtuple('UniqueID', 'type id')
 HQ_MODULE_SHEET_NAME = re.compile('^module(\d+)$')
 HQ_FORM_SHEET_NAME = re.compile('^module(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
-EMPTY_SPACE = "&nbsp;"
 
 
 class AppTranslationsGenerator:
@@ -223,14 +222,14 @@ class AppTranslationsGenerator:
                 # just add this occurrence
                 if occurrence_row_and_source in translations:
                     translations[occurrence_row_and_source].occurrences.append(
-                        (occurrence_row.replace(' ', EMPTY_SPACE), index)
+                        ('', index)
                     )
                     continue
 
             translations[occurrence_row_and_source] = Translation(
                 source,
                 translation,
-                [(occurrence_row.replace(' ', EMPTY_SPACE), index)],
+                [('', index)],
                 occurrence_row)
         return list(translations.values())
 
