@@ -18,6 +18,18 @@ from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.util.log import with_progress_bar
 
 
+def get_sql_previous_versions(form_id, form_accessor):
+    """
+    :param form_id: edited form id
+    :return: all previous versions of a form including itself with the earliest being on top
+    """
+    form_ = form_accessor.get_form(form_id)
+    if form_.deprecated_form_id:
+        return get_sql_previous_versions(form_.deprecated_form_id, form_accessor) + [form_]
+    else:
+        return [form_]
+
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--source', help='sql/couch')
@@ -39,17 +51,18 @@ class Command(BaseCommand):
                              .filter(operation='edit')
                              .values_list('form_id', flat=True))
             for edit_form_id in with_progress_bar(edit_form_ids):
-                edited_form = form_accessor.get_form(edit_form_id)
-                deprecated_form_id = edited_form.deprecated_form_id
-                original_attachments = list(FormAccessorSQL.get_attachments_for_forms([deprecated_form_id]))
-                new_attachments = list(FormAccessorSQL.get_attachments_for_forms([edit_form_id]))
-                new_attachment_names = [a.name for a in new_attachments]
-                for attachment in original_attachments:
-                    if attachment.name not in new_attachment_names:
-                        assert attachment.form_id == deprecated_form_id
-                        add_forms_with_attachments[edit_form_id].append(
-                            (attachment.attachment_id, deprecated_form_id)
-                        )
+                edit_chain = get_sql_previous_versions(edit_form_id, form_accessor)
+                original_form = edit_chain[0]
+                original_attachments = list(FormAccessorSQL.get_attachments_for_forms([original_form.form_id]))
+                for edited_form in edit_chain[1:]:
+                    attachments = list(FormAccessorSQL.get_attachments_for_forms([edited_form.form_id]))
+                    attachment_names = [a.name for a in attachments]
+                    for attachment in original_attachments:
+                        if attachment.name not in attachment_names:
+                            assert attachment.form_id == original_form.form_id
+                            add_forms_with_attachments[edited_form.form_id].append(
+                                (attachment.attachment_id, original_form.form_id)
+                            )
         return add_forms_with_attachments
 
     @staticmethod
