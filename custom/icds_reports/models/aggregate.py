@@ -461,7 +461,6 @@ class AggAwc(models.Model):
             for query in index_queries:
                 cursor.execute(query)
 
-
     @classmethod
     def aggregate_weekly(cls, month):
         helper = AggAwcWeeklyAggregationHelper(month)
