@@ -32,7 +32,10 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
 from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
+from corehq.util.datadog.metrics import (
+    MULTIMEDIA_SUBMISSION_ERROR_COUNT,
+    XFORM_LOCKED_COUNT,
+)
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 import couchforms
@@ -81,18 +84,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             except:
                 meta = {}
 
-            details = [
-                "domain:{}".format(domain),
-                "app_id:{}".format(app_id),
-                "user_id:{}".format(user_id),
-                "authenticated:{}".format(authenticated),
-                "form_meta:{}".format(meta),
-            ]
-            datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
-            notify_exception(request, "Received a submission with POST.keys()", details)
-            response = HttpResponseBadRequest(six.text_type(e))
-            _record_metrics(metric_tags, 'unknown', response)
-            return response
+            return _submission_error(
+                request, "Received a submission with POST.keys()",
+                MULTIMEDIA_SUBMISSION_ERROR_COUNT, metric_tags,
+                domain, app_id, user_id, authenticated, meta,
+            )
 
         app_id, build_id = get_app_and_build_ids(domain, app_id)
         submission_post = SubmissionPost(
@@ -118,9 +114,10 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         try:
             result = submission_post.run()
         except XFormLockError as err:
-            message = "XFormLockError: %s" % err
-            notify_exception(request, message)
-            return HttpResponse(status=423, reason=message)
+            return _submission_error(
+                request, "XFormLockError: %s" % err, XFORM_LOCKED_COUNT,
+                metric_tags, domain, app_id, user_id, authenticated, status=423,
+            )
 
     response = result.response
 
@@ -132,6 +129,28 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     _record_metrics(metric_tags, result.submission_type, response, result, timer)
 
+    return response
+
+
+def _submission_error(request, message, count_metric, metric_tags,
+        domain, app_id, user_id, authenticated, meta=None, status=400):
+    """Notify exception, datadog count, record metrics, construct response
+
+    :param status: HTTP status code (default: 400).
+    :returns: HTTP response object
+    """
+    details = [
+        "domain:{}".format(domain),
+        "app_id:{}".format(app_id),
+        "user_id:{}".format(user_id),
+        "authenticated:{}".format(authenticated),
+        "form_meta:{}".format(meta or {}),
+    ]
+    datadog_counter(count_metric, tags=details)
+    notify_exception(request, message, details)
+    response = HttpResponseBadRequest(
+        message, status=status, content_type="text/plain")
+    _record_metrics(metric_tags, 'unknown', response)
     return response
 
 
