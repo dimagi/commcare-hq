@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 from django.conf import settings
+from requests import HTTPError
 from six.moves.urllib.parse import urlparse
 import six.moves.http_client
 import socket
@@ -289,6 +290,9 @@ def formplayer_post_data_helper(d, content_type, url):
         data=data,
         headers=headers
     )
+    if 500 <= response.status_code < 600:
+        http_error_msg = '%s Server Error: %s for url: %s' % (response.status_code, response.reason, response.url)
+        raise HTTPError(http_error_msg, response=response)
     return response.json()
 
 
