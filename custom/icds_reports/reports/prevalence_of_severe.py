@@ -60,7 +60,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     measured_for_all_locations = 0
     height_eligible_for_all_locations = 0
 
-    values_to_calculate_average = []
+    values_to_calculate_average = {'numerator': 0, 'denominator': 0}
     for row in get_data_for(config):
         total_weighed = row['total_weighed'] or 0
         total_height_eligible = row['total_height_eligible'] or 0
@@ -71,8 +71,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
 
-        numerator = moderate + severe
-        values_to_calculate_average.append(numerator * 100 / (total_weighed or 1))
+        values_to_calculate_average['numerator'] += moderate + severe
+        values_to_calculate_average['denominator'] += total_measured
 
         severe_for_all_locations += severe
         moderate_for_all_locations += moderate
@@ -110,6 +110,11 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         default_interval=default_age_interval(icds_feature_flag)
     )
 
+    average = (
+            (values_to_calculate_average['numerator'] * 100) /
+            float(values_to_calculate_average['denominator'] or 1)
+    )
+
     return {
         "slug": "severe",
         "label": "Percent of Children{gender} Wasted ({age})".format(
@@ -118,8 +123,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % ((sum(values_to_calculate_average)) /
-                                 float(len(values_to_calculate_average) or 1)),
+            "average": "%.2f" % average,
             "info": wasting_help_text(age_label),
             "extended_info": [
                 {

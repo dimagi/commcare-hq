@@ -55,7 +55,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     all_total = 0
     measured_total = 0
 
-    values_to_calculate_average = []
+    values_to_calculate_average = {'numerator': 0, 'denominator': 0}
     for row in get_data_for(config):
         total = row['total'] or 0
         name = row['%s_name' % loc_level]
@@ -65,8 +65,8 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
 
-        numerator = moderate + severe
-        values_to_calculate_average.append(numerator * 100 / (total_measured or 1))
+        values_to_calculate_average['numerator'] += moderate + severe
+        values_to_calculate_average['denominator'] += total_measured
 
         severe_total += severe
         moderate_total += moderate
@@ -101,6 +101,10 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         config,
         default_interval=default_age_interval(icds_feature_flag)
     )
+    average = (
+            (values_to_calculate_average['numerator'] * 100) /
+            float(values_to_calculate_average['denominator'] or 1)
+    )
 
     return {
         "slug": "severe",
@@ -110,8 +114,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % ((sum(values_to_calculate_average)) /
-                                 float(len(values_to_calculate_average) or 1)),
+            "average": "%.2f" % average,
             "info": _((
                 "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
                 "children between {} who were moderately/severely stunted in the current month. "

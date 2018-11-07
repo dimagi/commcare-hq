@@ -55,7 +55,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     all_total = 0
     weighed_total = 0
 
-    values_to_calculate_average = []
+    values_to_calculate_average = {'numerator': 0, 'denominator': 0}
     for row in get_data_for(config):
         weighed = row['weighed'] or 0
         total = row['total'] or 0
@@ -65,8 +65,8 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         moderately_underweight = row['moderately_underweight'] or 0
         normal = row['normal'] or 0
 
-        numerator = moderately_underweight + severely_underweight
-        values_to_calculate_average.append(numerator * 100 / (weighed or 1))
+        values_to_calculate_average['numerator'] += moderately_underweight + severely_underweight
+        values_to_calculate_average['denominator'] += weighed
 
         moderately_underweight_total += moderately_underweight
         severely_underweight_total += severely_underweight
@@ -97,7 +97,10 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     fills.update({'35%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
-    average = ((sum(values_to_calculate_average)) / float(len(values_to_calculate_average) or 1))
+    average = (
+            (values_to_calculate_average['numerator'] * 100) /
+            float(values_to_calculate_average['denominator'] or 1)
+    )
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 5 years')
 
@@ -109,7 +112,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         ),
         "fills": fills,
         "rightLegend": {
-            "average": average,
+            "average": "%.2f" % average,
             "info": underweight_children_help_text(age_label=age_label, html=True),
             "extended_info": [
                 {
