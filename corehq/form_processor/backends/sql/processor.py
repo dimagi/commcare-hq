@@ -145,11 +145,12 @@ class FormProcessorSQL(object):
             FormAccessorSQL.save_new_form(processed_forms.submitted)
             if cases:
                 for case in cases:
+                    CaseAccessorSQL.save_case(case)
+
                     if toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
                             case.domain, toggles.NAMESPACE_DOMAIN):
-                        SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary()
-
-                    CaseAccessorSQL.save_case(case)
+                        if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
+                            CaseAccessorSQL.save_case(case)
 
             if stock_result:
                 ledgers_to_save = stock_result.models_to_save
