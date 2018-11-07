@@ -87,13 +87,13 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('lactating_all', 'sum(ucr.lactating_all)'),
             ('pregnant_all', 'sum(ucr.pregnant_all)'),
             ('valid_visits', 'sum(crm.valid_visits)'),
-            ('expected_visits', 'floor(sum( '
+            ('expected_visits', 'sum( '
              'CASE '
              'WHEN ucr.pregnant=1 THEN 0.44 '
              'WHEN ucr.month - ucr.add <= 0 THEN 6 '
              'WHEN ucr.month - ucr.add < 182 THEN 1 '
              'ELSE 0.39 END'
-             '))'),
+             ')'),
         )
         return """
         INSERT INTO "{tablename}" (

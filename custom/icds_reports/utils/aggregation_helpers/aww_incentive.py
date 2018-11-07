@@ -63,7 +63,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
         UPDATE "{tablename}" perf
         SET expected_visits = expected_visits + ucr.expected
         FROM (
-             SELECT FLOOR(SUM(0.39)) AS expected, awc_id
+             SELECT SUM(0.39) AS expected, awc_id
              FROM "{ccs_record_case_ucr}"
              WHERE %(month)s - add > 183 AND (closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s) AND date_trunc('month', opened_on) <= %(month)s
              GROUP BY awc_id
