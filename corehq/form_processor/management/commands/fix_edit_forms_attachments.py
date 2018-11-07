@@ -134,6 +134,8 @@ class Command(BaseCommand):
         new_att.save()
 
     def handle(self, **options):
+        if options.get('inspect') and options.get('update'):
+            raise CommandError("Cant have updating with inspect")
         source = options.get("source") or 'sql'
         if source == 'sql':
             print('looking for sql forms with missing attachments now')
