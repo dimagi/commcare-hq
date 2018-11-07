@@ -241,6 +241,17 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(calls, [1])
 
+    def test_xform_locked(self):
+        from corehq.form_processor.interfaces.processor import FormProcessorInterface
+        form_id = 'ad38211be256653bceac8e2156475664'
+        proc = FormProcessorInterface(self.domain)
+        lock = proc.acquire_lock_for_xform(form_id)
+        try:
+            _, response = self._submit('simple_form.xml')
+        finally:
+            lock.release()
+        self.assertEqual(response.status_code, 423)
+
 
 @use_sql_backend
 class SubmissionErrorTestSQL(SubmissionErrorTest):
