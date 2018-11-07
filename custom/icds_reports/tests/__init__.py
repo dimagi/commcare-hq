@@ -6,6 +6,7 @@ from datetime import datetime
 
 import mock
 import postgres_copy
+import six
 import sqlalchemy
 
 from django.conf import settings
@@ -121,7 +122,10 @@ def setUpModule():
                         '"{}"'.format(c.strip())  # quote to preserve case
                         for c in f.readline().split(',')
                     ]
-                    postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', columns=columns)
+                    postgres_copy.copy_from(
+                        f, table, engine, format='csv' if six.PY3 else b'csv',
+                        null='' if six.PY3 else b'', columns=columns
+                    )
 
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
