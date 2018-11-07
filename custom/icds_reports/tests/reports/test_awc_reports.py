@@ -2217,8 +2217,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 1237',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2242,8 +2242,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 1303',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2267,8 +2267,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 1305',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2292,8 +2292,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 1341',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2317,8 +2317,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 2617',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2342,8 +2342,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 2917',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2367,8 +2367,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 4398',
-                    'contact_phone_number': None,
-                    'phone_number': None},
+                    'aww_phone_number': None,
+                    'mother_phone_number': None},
                 cls=DjangoJSONEncoder
             )
         )
@@ -2391,8 +2391,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 4399',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2416,8 +2416,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 4400',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2441,8 +2441,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 1191',
-                    'contact_phone_number': None,
-                    'phone_number': None
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )

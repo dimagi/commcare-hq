@@ -1164,7 +1164,7 @@ class TestExportData(TestCase):
                             "Supervisor Name",
                             "Block Name",
                             "AWW Phone Number",
-                            "Parent phone number",
+                            "Mother Phone Number",
                             "Child Name",
                             "Date of Birth",
                             "Current Age (as of 2017-05-01)",

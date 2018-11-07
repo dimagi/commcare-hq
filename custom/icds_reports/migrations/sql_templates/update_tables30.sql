@@ -1,1 +1,1 @@
-ALTER TABLE child_health_monthly ADD COLUMN phone_number text;
+ALTER TABLE child_health_monthly ADD COLUMN mother_phone_number text;

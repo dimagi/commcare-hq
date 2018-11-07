@@ -109,15 +109,15 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'AWW Phone Number',
-                SimpleColumn('contact_phone_number'),
+                SimpleColumn('aww_phone_number'),
                 format_fn=phone_number_fucntion,
-                slug='contact_phone_number'
+                slug='aww_phone_number'
             ),
             DatabaseColumn(
-                'Parent phone number',
-                SimpleColumn('phone_number'),
+                'Mother Phone Number',
+                SimpleColumn('mother_phone_number'),
                 format_fn=phone_number_fucntion,
-                slug='phone_number'
+                slug='mother_phone_number'
             ),
             DatabaseColumn(
                 'Child Name',
