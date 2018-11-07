@@ -27,6 +27,7 @@ from corehq.apps.receiverwrapper.util import (
     should_ignore_submission,
     DEMO_SUBMIT_MODE,
 )
+from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
@@ -114,7 +115,12 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             openrosa_headers=couchforms.get_openrosa_headers(request),
         )
 
-        result = submission_post.run()
+        try:
+            result = submission_post.run()
+        except XFormLockError as err:
+            message = "XFormLockError: %s" % err
+            notify_exception(request, message)
+            return HttpResponse(status=423, reason=message)
 
     response = result.response
 
