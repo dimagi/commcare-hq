@@ -2,8 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import print_function
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from collections import defaultdict
+import uuid
 
 from io import open
 import csv342 as csv
@@ -12,7 +13,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from couchforms.models import XFormDeprecated
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import XFormOperationSQL
+from corehq.form_processor.models import XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.util.log import with_progress_bar
@@ -105,25 +106,49 @@ class Command(BaseCommand):
         return add_forms_with_attachments
 
     @staticmethod
-    def _add_attachment_to_form(attachment_id, form_id):
+    def _add_attachment_to_couch_form(attachment_id, form_id):
         pass
+
+    @staticmethod
+    def _add_attachment_to_sql_form(from_form_id, form_id, attachment_id):
+        src_form = FormAccessorSQL.get_form(from_form_id)
+        attachment = None
+        for attachment_ in src_form.attachments.values():
+            if str(attachment_.attachment_id) == attachment_id:
+                attachment = attachment_
+                break
+        if not attachment:
+            print('Could not find attachment with id %s on form %s' %
+                  (attachment_id, from_form_id))
+        dest_form = FormAccessorSQL.get_form(form_id)
+        new_att = XFormAttachmentSQL(
+            form=dest_form,
+            name=attachment.name,
+            attachment_id=uuid.uuid4(),
+            content_type=attachment.content_type,
+            properties=attachment.properties,
+            blob_bucket=attachment.blobdb_bucket(),
+        )
+        with attachment.read_content(stream=True) as content:
+            new_att.write_content(content)
+        new_att.save()
 
     def handle(self, **options):
         source = options.get("source") or 'sql'
         if source == 'sql':
             print('looking for sql forms with missing attachments now')
             forms_to_process = self._find_sql_forms_with_missing_attachments()
+            if options.get('update'):
+                print('starting with adding attachments. Need to update %s forms.' % len(forms_to_process))
+                for form_id, attachments in with_progress_bar(list(forms_to_process.items())):
+                    for attachment_id, original_form_id in attachments:
+                        self._add_attachment_to_sql_form(form_id, attachment_id)
         elif source == 'couch':
             print('looking for couch forms with missing attachments now')
             forms_to_process = self._find_couch_forms_with_missing_attachments()
         else:
             raise NotImplementedError()
-        if options.get('update'):
-            print('starting with adding attachments. Need to update %s forms.' % len(forms_to_process))
-            for form_id, attachments in with_progress_bar(list(forms_to_process.items())):
-                for attachment_id, original_form_id in attachments:
-                    self._add_attachment_to_form(attachment_id, form_id)
-        elif options.get('inspect'):
+        if options.get('inspect'):
             file_name = '%s_forms_missing_attachments.csv' % source
             print('writing findings to file %s' % file_name)
             with open(file_name, 'w') as output_file:
