@@ -107,7 +107,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 $el.closest('.form-group').removeClass('has-error');
                 hideCaseTypeError();
 
-                if (value != originalCaseType) {
+                if (value !== originalCaseType) {
                     showCaseTypeChangedWarning();
                 } else {
                     hideCaseTypeChangedWarning();
