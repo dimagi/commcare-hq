@@ -175,7 +175,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
-    icds_rebuild_related_docs = BooleanProperty(default=False)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
 
