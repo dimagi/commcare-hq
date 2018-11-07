@@ -1273,7 +1273,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         :param updated_xforms: list of forms that have been changed.
         """
 
-        form_ids = {tx.form_id for tx in transactions}
+        form_ids = {tx.form_id for tx in transactions if tx.form_id}
         updated_xforms_map = {
             xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
         } if updated_xforms else {}
