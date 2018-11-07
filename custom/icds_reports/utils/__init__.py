@@ -484,8 +484,8 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         on_map_name = row['%s_map_location_name' % loc_level] or name
         in_month = row[num_prop] or 0
 
-        values_to_calculate_average['numerator'] += in_month
-        values_to_calculate_average['denominator'] += row[denom_prop]
+        values_to_calculate_average['numerator'] += in_month if in_month else 0
+        values_to_calculate_average['denominator'] += row[denom_prop] if row[denom_prop] else 0
 
         valid_total += valid
         in_month_total += in_month

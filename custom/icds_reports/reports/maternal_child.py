@@ -69,10 +69,10 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 Sum(moderately_underweight) + Sum(severely_underweight)
             ),
             valid=Sum(nutrition_status_weighed),
-            wasting=Sum(wasting_moderate) + Sum(wasting_severe), # 1
+            wasting=Sum(wasting_moderate) + Sum(wasting_severe),
             stunting=Sum(stunting_moderate) + Sum(stunting_severe),
             height_measured_in_month=Sum(height_measured_in_month),
-            weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),  # 2
+            weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
             low_birth_weight=Sum('low_birth_weight_in_month'),
             bf_birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),

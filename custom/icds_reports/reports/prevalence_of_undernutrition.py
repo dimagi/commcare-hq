@@ -65,8 +65,9 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         moderately_underweight = row['moderately_underweight'] or 0
         normal = row['normal'] or 0
 
-        values_to_calculate_average['numerator'] += moderately_underweight + severely_underweight
-        values_to_calculate_average['denominator'] += weighed
+        values_to_calculate_average['numerator'] += moderately_underweight if moderately_underweight else 0
+        values_to_calculate_average['numerator'] += severely_underweight if severely_underweight else 0
+        values_to_calculate_average['denominator'] += weighed if weighed else 0
 
         moderately_underweight_total += moderately_underweight
         severely_underweight_total += severely_underweight

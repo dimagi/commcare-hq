@@ -71,8 +71,9 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
 
-        values_to_calculate_average['numerator'] += moderate + severe
-        values_to_calculate_average['denominator'] += total_measured
+        values_to_calculate_average['numerator'] += moderate if moderate else 0
+        values_to_calculate_average['numerator'] += severe if severe else 0
+        values_to_calculate_average['denominator'] += total_measured if total_measured else 0
 
         severe_for_all_locations += severe
         moderate_for_all_locations += moderate
