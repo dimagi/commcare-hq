@@ -278,22 +278,8 @@ class XformsResponse(object):
                                         "contact your administrator for help."})
 
 
-def post_data_helper(d, auth, content_type, url, log=False):
-    data = json.dumps(d)
-    up = urlparse(url)
-    headers = {}
-    headers["content-type"] = content_type
-    headers["content-length"] = str(len(data))
-    conn = six.moves.http_client.HTTPConnection(up.netloc)
-    conn.request('POST', up.path, data, headers)
-    resp = conn.getresponse()
-    results = resp.read()
-    return results
-
-
 def formplayer_post_data_helper(d, content_type, url):
     data = json.dumps(d).encode('utf-8')
-    up = urlparse(url)
     headers = {}
     headers["Content-Type"] = content_type
     headers["content-length"] = str(len(data))
