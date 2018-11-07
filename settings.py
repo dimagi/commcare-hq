@@ -2192,6 +2192,18 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
+
+CACHES['session'] = {
+    'BACKEND': 'corehq.util.migrating_cache.MigratingCache',
+    'OPTIONS': {
+        'new_cache': 'redis',
+        'old_cache': 'dummy',
+    }
+}
+
+SESSION_CACHE_ALIAS = 'session'
+
+
 try:
     from datadog import initialize
 except ImportError:
