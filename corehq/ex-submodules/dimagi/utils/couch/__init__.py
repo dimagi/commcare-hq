@@ -222,8 +222,9 @@ class RedisLockableMixIn(object):
                     release_lock(lock, degrade_gracefully)
                     return LockManager(None, None)
         except:
+            exc = sys.exc_info()
             release_lock(lock, degrade_gracefully)
-            raise
+            six.reraise(*exc)
         if _id:
             return LockManager(obj, lock)
         try:
