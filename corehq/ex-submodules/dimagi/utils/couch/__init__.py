@@ -224,16 +224,16 @@ class RedisLockableMixIn(object):
         except:
             release_lock(lock, degrade_gracefully)
             raise
-        else:
-            if _id:
-                return LockManager(obj, lock)
-            else:
-                obj_lock = cls.get_obj_lock(obj)
-                obj_lock = acquire_lock(obj_lock, degrade_gracefully)
-                # Refresh the object in case another thread has updated it
-                obj = cls.get_latest_obj(obj)
-                release_lock(lock, degrade_gracefully)
-                return LockManager(obj, obj_lock)
+        if _id:
+            return LockManager(obj, lock)
+        try:
+            obj_lock = cls.get_obj_lock(obj)
+            obj_lock = acquire_lock(obj_lock, degrade_gracefully)
+            # Refresh the object in case another thread has updated it
+            obj = cls.get_latest_obj(obj)
+            return LockManager(obj, obj_lock)
+        finally:
+            release_lock(lock, degrade_gracefully)
 
 
 class CouchDocLockableMixIn(RedisLockableMixIn):
