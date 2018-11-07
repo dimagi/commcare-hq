@@ -303,8 +303,7 @@ def formplayer_post_data_helper(d, content_type, url):
         data=data,
         headers=headers
     )
-    response_json = response.json()
-    return response.text
+    return response.json()
 
 
 def post_data(data, auth=None, content_type="application/json"):
@@ -339,11 +338,11 @@ def get_formplayer_session_data(data):
 
 def get_response(data, auth=None):
     try:
-        response = post_data(data, auth=auth)
+        response_json = post_data(data, auth=auth)
     except socket.error as e:
         return XformsResponse.server_down()
     try:
-        return XformsResponse(json.loads(response))
+        return XformsResponse(response_json)
     except Exception as e:
         raise e
 
@@ -355,9 +354,7 @@ def sync_db(username, domain, auth):
         "domain": domain
     }
 
-    response = post_data(json.dumps(data), auth)
-    response = json.loads(response)
-    return response
+    return post_data(json.dumps(data), auth)
 
 
 def get_raw_instance(session_id, domain=None, auth=None):
@@ -373,7 +370,6 @@ def get_raw_instance(session_id, domain=None, auth=None):
         }
 
     response = post_data(json.dumps(data), auth)
-    response = json.loads(response)
     if "error" in response:
         error = response["error"]
         if error == "invalid session id":
