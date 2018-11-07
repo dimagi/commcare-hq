@@ -46,7 +46,6 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
-from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -308,12 +307,6 @@ def _queue_indicators(indicators):
         _queue_chunk(to_queue)
 
 
-@quickcache(['config_id'])
-def _get_config(config_id):
-    # performance optimization for build_async_indicators. don't use elsewhere
-    return _get_config_by_id(config_id)
-
-
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
@@ -370,7 +363,6 @@ def _build_async_indicators(indicator_doc_ids):
         doc_store = get_document_store_for_doc_type(
             all_indicators[0].domain, all_indicators[0].doc_type
         )
-        related_doc_ids = set()
         failed_indicators = set()
 
         rows_to_save_by_adapter = defaultdict(list)
@@ -383,7 +375,7 @@ def _build_async_indicators(indicator_doc_ids):
                 for config_id in indicator.indicator_config_ids:
                     config_ids.add(config_id)
                     try:
-                        config = _get_config(config_id)
+                        config = _get_config_by_id(config_id)
                     except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
                         celery_task_logger.info("{} no longer exists, skipping".format(config_id))
                         # remove because the config no longer exists
@@ -401,9 +393,6 @@ def _build_async_indicators(indicator_doc_ids):
                     except Exception as e:
                         failed_indicators.add(indicator)
                         handle_exception(e, config_id, doc, adapter)
-
-                    if config and config.icds_rebuild_related_docs:
-                        related_doc_ids.add(doc['_id'])
 
             for adapter, rows in six.iteritems(rows_to_save_by_adapter):
                 doc_ids = doc_ids_from_rows(rows)
@@ -437,15 +426,6 @@ def _build_async_indicators(indicator_doc_ids):
                 )
                 indicator.save()
 
-        # process asyncindicator for any related docs that are not rebuilt so far
-        related_docs_to_rebuild = []
-        for _id in related_doc_ids:
-            related_docs_to_rebuild.extend(icds_get_related_docs_ids(_id))
-        related_docs_to_rebuild = set(related_docs_to_rebuild) - set(indicator_doc_ids)
-        _queue_indicators(AsyncIndicator.objects.filter(
-            doc_id__in=related_docs_to_rebuild, date_queued=None
-        ))
-
         datadog_counter('commcare.async_indicator.processed_success', len(processed_indicators))
         datadog_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
         datadog_histogram(
@@ -454,11 +434,6 @@ def _build_async_indicators(indicator_doc_ids):
                 'config_ids:{}'.format(config_ids),
             ]
         )
-
-
-@task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(doc_ids):
-    build_async_indicators(doc_ids)
 
 
 @periodic_task(serializer='pickle',

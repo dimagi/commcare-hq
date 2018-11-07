@@ -90,7 +90,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
-        with open(file, 'r') as f:
+        with open(file, 'r', encoding='utf-8') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     def _test_submission_error_post_save(self, openrosa_version):
@@ -151,7 +151,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn(message, log.problem)
-        with open(file, 'r') as f:
+        with open(file, 'r', encoding='utf-8') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     @flag_enabled('DATA_MIGRATION')
@@ -203,6 +203,43 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self._test_case_processing_error(OPENROSA_VERSION_3)
         # make sure that a re-submission has the same response
         self._test_case_processing_error(OPENROSA_VERSION_3)
+
+    def test_no_form_lock_on_submit_device_log(self):
+        from corehq.form_processor.submission_post import FormProcessingResult as FPR
+        from corehq.form_processor.parsers.form import FormProcessingResult
+
+        class FakeResponse(dict):
+            content = "device-log-response"
+            status_code = 200
+            streaming = False
+            cookies = []
+            _closable_objects = []
+
+            def has_header(self, name):
+                return False
+
+            def set_cookie(self, *args, **kw):
+                pass
+
+            def close(self):
+                pass
+
+        def process_device_log(self_, xform):
+            result = FormProcessingResult(xform)
+            # verify form is not locked: acquire lock without XFormLockError
+            with result.get_locked_forms() as forms:
+                self.assertEqual(forms, [xform])
+            calls.append(1)
+            return FPR(FakeResponse(), xform, [], [], 'device-log')
+
+        calls = []
+        with patch(
+            'corehq.form_processor.submission_post.SubmissionPost.process_device_log',
+            new_callable=lambda: process_device_log,
+        ):
+            _, res = self._submit('device_log.xml')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(calls, [1])
 
 
 @use_sql_backend
