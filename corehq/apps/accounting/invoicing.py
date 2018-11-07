@@ -402,6 +402,9 @@ class CustomerAccountInvoiceFactory(object):
             if self.recipients:
                 for email in self.recipients:
                     record.send_email(contact_email=email)
+            elif self.account.enterprise_admin_emails:
+                for email in self.account.enterprise_admin_emails:
+                    record.send_email(contact_email=email)
             elif self.account.dimagi_contact:
                 record.send_email(contact_email=self.account.dimagi_contact,
                                   cc_emails=[settings.ACCOUNTS_EMAIL])
