@@ -246,7 +246,7 @@ class ReprocessSubmissionStubTests(TestCase):
         form_ids = []
         form_ids.append(submit_case_blocks(
             [
-                CaseBlock(case_id=case_id, create=True, case_type='shop').as_string(),
+                CaseBlock(case_id=case_id, create=True, case_type='shop').as_string().decode('utf-8'),
                 get_single_balance_block(case_id, 'product1', 100),
             ],
             self.domain
