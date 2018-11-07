@@ -1,0 +1,8 @@
+#
+msgid ""
+msgstr ""
+
+#: Tab" "0:detail:6
+msgctxt "Tab 0:detail"
+msgid "Name place"
+msgstr "Name [lace"
