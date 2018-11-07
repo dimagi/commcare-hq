@@ -22,7 +22,7 @@ from couchforms.models import (
     doc_types, XFormError, SubmissionErrorLog,
     XFormOperation)
 from couchforms.util import fetch_and_wrap_form
-from dimagi.utils.couch import acquire_lock, release_lock
+from dimagi.utils.couch import acquire_lock, release_lock, LockNotAcquired
 import six
 
 
@@ -248,10 +248,12 @@ class FormProcessorCouch(object):
                 case_doc = CommCareCase.get_lite(case_id, wrap=wrap)
             elif lock:
                 try:
-                    case, lock = CommCareCase.get_locked_obj(_id=case_id)
+                    case, lock = CommCareCase.get_locked_obj(_id=case_id, block=False)
                     if case and not wrap:
                         case = case.to_json()
                     return case, lock
+                except LockNotAcquired:
+                    raise
                 except redis.RedisError:
                     case_doc = _get_case()
             else:

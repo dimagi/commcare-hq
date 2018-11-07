@@ -26,7 +26,7 @@ from corehq.form_processor.models import (
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
-from dimagi.utils.couch import acquire_lock, release_lock
+from dimagi.utils.couch import acquire_lock, release_lock, LockNotAcquired
 import six
 
 
@@ -336,7 +336,9 @@ class FormProcessorSQL(object):
         try:
             if lock:
                 try:
-                    return CommCareCaseSQL.get_locked_obj(_id=case_id)
+                    return CommCareCaseSQL.get_locked_obj(_id=case_id, block=False)
+                except LockNotAcquired:
+                    raise
                 except redis.RedisError:
                     case = CaseAccessorSQL.get_case(case_id)
             else:

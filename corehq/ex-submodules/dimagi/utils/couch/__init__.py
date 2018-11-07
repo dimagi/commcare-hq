@@ -84,7 +84,7 @@ def acquire_lock(lock, degrade_gracefully, **kwargs):
         else:
             raise
     if lock and not acquired and not degrade_gracefully:
-        raise RedisError("Unable to acquire lock")
+        raise LockNotAcquired(six.text_type(lock.name))
     return lock
 
 
@@ -109,6 +109,10 @@ def release_lock(lock, degrade_gracefully):
         except RedisError:
             if not degrade_gracefully:
                 raise
+
+
+class LockNotAcquired(RedisError):
+    """Lock cannot be acquired"""
 
 
 class RedisLockableMixIn(object):
@@ -202,6 +206,7 @@ class RedisLockableMixIn(object):
         create = kwargs.pop("create", False)
         _id = kwargs.get("_id", None)
         degrade_gracefully = kwargs.pop('degrade_gracefully', False)
+        block = kwargs.pop('block', True)
         timeout_seconds = kwargs.pop('timeout_seconds', 120)
 
         if _id:
@@ -209,7 +214,7 @@ class RedisLockableMixIn(object):
         else:
             lock = cls.get_class_lock(timeout_seconds=timeout_seconds)
 
-        lock = acquire_lock(lock, degrade_gracefully, blocking=True)
+        lock = acquire_lock(lock, degrade_gracefully, blocking=block)
         try:
             if _id:
                 obj = cls.get_obj_by_id(_id)
@@ -229,9 +234,10 @@ class RedisLockableMixIn(object):
             return LockManager(obj, lock)
         try:
             obj_lock = cls.get_obj_lock(obj)
-            obj_lock = acquire_lock(obj_lock, degrade_gracefully)
-            # Refresh the object in case another thread has updated it
-            obj = cls.get_latest_obj(obj)
+            obj_lock = acquire_lock(obj_lock, degrade_gracefully, blocking=block)
+            if block:
+                # Refresh the object in case another thread has updated it
+                obj = cls.get_latest_obj(obj)
             return LockManager(obj, obj_lock)
         finally:
             release_lock(lock, degrade_gracefully)
