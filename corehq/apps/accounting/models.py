@@ -3103,7 +3103,7 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
-class CreditLine(ValidateModelMixin, models.Model):
+class CreditLine(models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
     a specific subscription, or specific rates in that subscription.
@@ -3169,8 +3169,9 @@ class CreditLine(ValidateModelMixin, models.Model):
             web_user=web_user,
         )
         credit_adjustment.save()
-        self.balance += amount
+        self.balance = F('balance') + amount
         self.save()
+        self.refresh_from_db()
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
@@ -3361,7 +3362,6 @@ class CreditLine(ValidateModelMixin, models.Model):
             if adjustment_amount > Decimal('0.0000'):
                 credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
-        return balance
 
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):
