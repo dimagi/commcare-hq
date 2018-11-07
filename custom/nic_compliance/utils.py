@@ -61,8 +61,7 @@ def extract_password(obfuscated_password):
             # completely
             return ''
     else:
-        # return the password received AS-IS
-        return obfuscated_password
+        return None
 
 
 def hash_password(password):
@@ -100,6 +99,11 @@ def get_raw_password(obfuscated_password, username=None):
         return resolve(request.path).url_name in MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK
 
     def _decode_password():
+        raw_password = extract_password(obfuscated_password)
+        if raw_password is None:
+            # if there was no obfuscation done, just return the raw password
+            # and skip any further checks
+            return obfuscated_password
         # In case of 2-step authentication for web skip by checking for auth-username which is
         # present in first step
         if username and (
@@ -108,7 +112,7 @@ def get_raw_password(obfuscated_password, username=None):
             if replay_attack():
                 return ''
             record_login_attempt()
-        return extract_password(obfuscated_password)
+        return raw_password
 
     if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
         request = get_request()

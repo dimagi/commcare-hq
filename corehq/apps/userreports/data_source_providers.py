@@ -13,7 +13,10 @@ class DataSourceProvider(six.with_metaclass(ABCMeta, object)):
 class DynamicDataSourceProvider(DataSourceProvider):
 
     def get_data_sources(self):
-        return [config for config in DataSourceConfiguration.all() if not config.is_deactivated]
+        return [DataSourceConfiguration.wrap(r['doc'])
+                for r in
+                DataSourceConfiguration.get_db().view('userreports/active_data_sources',
+                                                      reduce=False, include_docs=True)]
 
 
 class StaticDataSourceProvider(DataSourceProvider):

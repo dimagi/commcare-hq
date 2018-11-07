@@ -14,7 +14,7 @@ from corehq.apps.tzmigration.api import set_tz_migration_complete
 COUCH_TO_SQL_SLUG = 'couch_to_sql'
 
 
-def set_couch_sql_migration_started(domain, dry_run):
+def set_couch_sql_migration_started(domain, dry_run=False):
     set_migration_started(domain, COUCH_TO_SQL_SLUG, dry_run)
 
 

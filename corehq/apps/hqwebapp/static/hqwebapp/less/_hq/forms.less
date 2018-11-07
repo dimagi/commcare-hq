@@ -34,8 +34,11 @@ legend .subtext {
 }
 
 .daterangepickerwidget {
-  width: auto;
   display: inline-block;
+
+  // Don't allow this input to get too wide, regardless of its container
+  width: auto;
+  max-width: 180px;
 }
 
 .daterangepicker {
