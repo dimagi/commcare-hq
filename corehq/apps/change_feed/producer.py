@@ -24,7 +24,7 @@ class ChangeProducer(object):
             client_id="cchq-producer",
             retries=3,
             acks=1,
-            key_serializer=lambda key: key.encode()
+            key_serializer=lambda key: str(key).encode()
         )
         return self._producer
 
