@@ -508,8 +508,8 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
     average = (
-            (values_to_calculate_average['numerator'] * 100) /
-            float(values_to_calculate_average['denominator'] or 1)
+        (values_to_calculate_average['numerator'] * 100) /
+        float(values_to_calculate_average['denominator'] or 1)
     )
     return data_for_map, valid_total, in_month_total, average, total
 

@@ -99,8 +99,8 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     fills.update({'defaultFill': MapColors.GREY})
 
     average = (
-            (values_to_calculate_average['numerator'] * 100) /
-            float(values_to_calculate_average['denominator'] or 1)
+        (values_to_calculate_average['numerator'] * 100) /
+        float(values_to_calculate_average['denominator'] or 1)
     )
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 5 years')

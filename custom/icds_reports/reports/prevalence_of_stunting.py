@@ -103,8 +103,8 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         default_interval=default_age_interval(icds_feature_flag)
     )
     average = (
-            (values_to_calculate_average['numerator'] * 100) /
-            float(values_to_calculate_average['denominator'] or 1)
+        (values_to_calculate_average['numerator'] * 100) /
+        float(values_to_calculate_average['denominator'] or 1)
     )
 
     return {

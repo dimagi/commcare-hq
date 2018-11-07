@@ -112,8 +112,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     )
 
     average = (
-            (values_to_calculate_average['numerator'] * 100) /
-            float(values_to_calculate_average['denominator'] or 1)
+        (values_to_calculate_average['numerator'] * 100) /
+        float(values_to_calculate_average['denominator'] or 1)
     )
 
     return {
