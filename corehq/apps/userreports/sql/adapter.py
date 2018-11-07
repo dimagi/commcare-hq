@@ -224,8 +224,6 @@ def get_indicator_table(indicator_config, custom_metadata=None):
                 *index.column_ids
             ))
         else:
-            print(index.column_ids)
-            print(columns_by_col_id)
             _assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
             _assert(False, "Invalid index specified on {}".format(table_name))
             break
