@@ -205,9 +205,14 @@ class RedisLockableMixIn(object):
         """
         create = kwargs.pop("create", False)
         _id = kwargs.get("_id", None)
-        degrade_gracefully = kwargs.pop('degrade_gracefully', False)
         block = kwargs.pop('block', True)
         timeout_seconds = kwargs.pop('timeout_seconds', 120)
+
+        assert 'degrade_gracefully' not in kwargs, (
+            "DO NOT USE THIS OPTION it's hard to reason "
+            "about outcomes when lock errors are ignored"
+        )
+        degrade_gracefully = False
 
         if _id:
             lock = cls.get_obj_lock_by_id(_id, timeout_seconds=timeout_seconds)
