@@ -358,8 +358,8 @@ def get_raw_instance(session_id, domain=None, auth=None):
     response = post_data(json.dumps(data), auth)
     if "error" in response:
         error = response["error"]
-        if error == "invalid session id":
-            raise InvalidSessionIdException("Invalid Touchforms Session Id")
+        if error == "Form session not found":
+            raise InvalidSessionIdException("Invalid Session Id")
         else:
             raise TouchformsError(error)
     return response
