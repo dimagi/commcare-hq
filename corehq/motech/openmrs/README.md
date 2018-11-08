@@ -349,6 +349,76 @@ See [the source code](finders.py) for more details on its properties and
 how to define it.
 
 
+OpenmrsFormConfig
+-----------------
+
+MOTECH sends case updates as changes to patient properties and
+attributes. Form submissions can also create Visits, Encounters and
+Observations in OpenMRS.
+
+Configure this in the "Form configs" section of the OpenMRS Forwarder
+configuration.
+
+An example value of Form configs might look like this:
+
+    [
+      {
+        "doc_type": "OpenmrsFormConfig",
+        "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
+        "openmrs_start_datetime": {
+          "form_question": "/metadata/timeStart",
+          "doc_type": "FormQuestion",
+          "external_data_type": "omrs_date"
+        },
+        "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
+        "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+        "openmrs_observations": [
+          {
+            "doc_type": "ObservationMapping",
+            "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "value": {
+              "form_question": "/data/height",
+              "doc_type": "FormQuestion"
+            }
+          },
+          {
+            "doc_type": "ObservationMapping",
+            "concept": "5089AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "value": {
+              "form_question": "/data/weight",
+              "doc_type": "FormQuestion"
+            }
+          }
+        ]
+      }
+    ]
+
+This example will use two form question values, "/data/height" and
+"/data/weight". They are sent as values of OpenMRS concepts
+5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA and 5089AAAAAAAAAAAAAAAAAAAAAAAAAAAA
+respectively.
+
+Set the UUIDs of Visit type and Encounter type appropriately according
+to the context of the form in the CommCare app.
+
+"openmrs_start_datetime" is an optional setting. By default, MOTECH will
+set the start of the Visit and the Encounter to the time when the form
+was completed on the mobile worker's device.
+
+To change which timestamp is used, the following "form questions" are
+available:
+* "/metadata/timeStart": The timestamp, according to the mobile worker's
+  device, when the form was started
+* "/metadata/timeEnd": The timestamp, according to the mobile worker's
+  device, when the form was completed
+* "/metadata/received_on": The timestampe when the form wass submitted
+  to HQ.
+
+The value's default data type is datetime. But some organisations may
+need the value to be submitted to OpenMRS as just a date. To do this,
+change the "external_data_type" to "omrs_date", as shown in the example.
+
+
 Provider
 --------
 
