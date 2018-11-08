@@ -15,7 +15,6 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import mget_query
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
@@ -349,6 +348,26 @@ class ICDSUserLocation(JsonObject):
 
 
 class AWCOwnerId(JsonObject):
+    """
+    This class and subclasses are intended to allow us to use one expression
+    for all case data sources and return the correct owner id of a case. It
+    must also appropriately handle the case where some cases are in the
+    original ICDS hierarchy (AWC owner id on every case) and the new hierarchy.
+
+    REACH is proposing changing the case structure to rely on extension
+    cases that do not include an owner on each case. The owner(s) will be
+    determined by assignment cases that are extensions of the household.
+
+    assignment (AWC) +------>household<------+ assignment (Village)
+                               ^
+                               |
+                               +
+                             person
+                               ^
+                               |
+                               +
+                    child_health/ccs_record
+    """
     type = TypeProperty('icds_awc_owner_id')
     case_id_expression = DefaultProperty(required=True)
     index_identifier = 'awc'
@@ -365,6 +384,9 @@ class AWCOwnerId(JsonObject):
         if item['owner_id'] and item['owner_id'] != '-':
             return item['owner_id']
 
+        return self._owner_from_extension(item, context, case_id)
+
+    def _owner_from_extension(self, item, context, case_id):
         if item['owner_id'] == '-':
             accessor = CaseAccessors(context.root_doc['domain'])
             indices = {case_id}
@@ -414,6 +436,24 @@ class VillageOwnerId(AWCOwnerId):
 
     def __str__(self):
         return "village owner_id"
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+
+        if not case_id:
+            return None
+
+        # a village will only be on the case as the owner if
+        # its the assignment case so we should verify that
+        if item['owner_id'] != '-':
+            accessor = CaseAccessors(context.root_doc['domain'])
+            case = accessor.get_case(case_id)
+            if case.type == 'assignment':
+                # should verify it is a village case (not AWC)
+                # via some property to be determined later
+                return item['owner_id']
+
+        return self._owner_from_extension(item, context, case_id)
 
 
 def _datetime_now():
