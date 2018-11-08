@@ -388,7 +388,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
-    # Todo; to remove
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False,
             processor_chunk_size=0):
@@ -424,6 +424,53 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     def rebuild_table(self, sql_adapter):
         self._processor.rebuild_table(sql_adapter)
 
+
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
+                         include_ucrs=None, exclude_ucrs=None, topics=None,
+                         num_processes=1, process_num=0,
+                         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    topics = topics or KAFKA_TOPICS
+    topics = [t for t in topics]
+    return ConfigurableReportKafkaPillow(
+        processor=ConfigurableReportPillowProcessor(
+            data_source_provider=DynamicDataSourceProvider(),
+            auto_repopulate_tables=False,
+            ucr_division=ucr_division,
+            include_ucrs=include_ucrs,
+            exclude_ucrs=exclude_ucrs,
+        ),
+        pillow_name=pillow_id,
+        topics=topics,
+        num_processes=num_processes,
+        process_num=process_num,
+        processor_chunk_size=processor_chunk_size,
+    )
+
+
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
+                                include_ucrs=None, exclude_ucrs=None, topics=None,
+                                num_processes=1, process_num=0,
+                                processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    topics = topics or KAFKA_TOPICS
+    topics = [t for t in topics]
+    return ConfigurableReportKafkaPillow(
+        processor=ConfigurableReportPillowProcessor(
+            data_source_provider=StaticDataSourceProvider(),
+            auto_repopulate_tables=True,
+            ucr_division=ucr_division,
+            include_ucrs=include_ucrs,
+            exclude_ucrs=exclude_ucrs,
+            bootstrap_interval=7 * 24 * 60 * 60  # 1 week
+        ),
+        pillow_name=pillow_id,
+        topics=topics,
+        num_processes=num_processes,
+        process_num=process_num,
+        retry_errors=True,
+        processor_chunk_size=processor_chunk_size,
+    )
 
 def get_location_pillow(pillow_id='location-pillow', include_ucrs=None,
                         num_processes=1, process_num=0, **kwargs):

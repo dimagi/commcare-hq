@@ -16,6 +16,11 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import case_search_enabled_domains
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
@@ -31,8 +36,12 @@ from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import json_format_datetime
+from pillowtop.checkpoints.manager import (
+    get_checkpoint_for_elasticsearch_pillow,
+)
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
+from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import (
     get_domain_case_change_provider,
@@ -161,6 +170,30 @@ class CaseSearchReindexerFactory(ReindexerFactory):
                 get_case_search_processor(),
                 change_provider=change_provider,
             )
+
+
+def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', num_processes=1,
+                                            process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
+    case_processor = CaseSearchPillowProcessor(
+        elasticsearch=get_es_new(),
+        index_info=CASE_SEARCH_INDEX_INFO,
+        doc_prep_fn=transform_case_for_elasticsearch
+    )
+    change_feed = KafkaChangeFeed(
+        topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=case_processor,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
+        ),
+    )
 
 
 class ResumableCaseSearchReindexerFactory(ReindexerFactory):

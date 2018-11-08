@@ -1666,6 +1666,16 @@ CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 PILLOWTOPS = {
     'core': [
         {
+            'name': 'CaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'XFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
+        },
+        {
             'name': 'kafka-case-ucr-es',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_ucr_es_case_pillow',
@@ -1692,6 +1702,16 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
         },
         {
+            'name': 'GroupPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.group.get_group_pillow',
+        },
+        {
+            'name': 'GroupToUserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
+        {
             'name': 'GroupESPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_es_pillow',
@@ -1712,9 +1732,45 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
         {
+            'name': 'FormSubmissionMetadataTrackerPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
+        },
+        {
             'name': 'UpdateUserSyncHistoryPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
+        },
+        {
+            'name': 'kafka-ucr-main',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'kafka-ucr-static',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'ReportCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'ReportXFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'UnknownUsersPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
     ],
     'core_ext': [
@@ -1760,6 +1816,11 @@ PILLOWTOPS = {
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
+        {
+            'name': 'CaseSearchToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
+        },
         {
             'name': 'LedgerToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',

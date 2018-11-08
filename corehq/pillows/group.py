@@ -23,6 +23,28 @@ def get_group_to_elasticsearch_processor():
     )
 
 
+def get_group_pillow(pillow_id='GroupPillow', num_processes=1, process_num=0, **kwargs):
+    """
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
+    """
+    assert pillow_id == 'GroupPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, GROUP_INDEX_INFO, [topics.GROUP])
+    processor = get_group_to_elasticsearch_processor()
+    change_feed = KafkaChangeFeed(
+        topics=[topics.GROUP], client_id='groups-to-es', num_processes=num_processes, process_num=process_num
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=processor,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=10, change_feed=change_feed
+        ),
+    )
+
+
 class GroupReindexerFactory(ReindexerFactory):
     slug = 'group'
     arg_contributors = [

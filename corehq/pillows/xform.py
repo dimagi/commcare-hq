@@ -27,7 +27,7 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import ElasticProcessor
@@ -135,6 +135,31 @@ def transform_xform_for_elasticsearch(doc_dict):
         doc_ret['backend_id'] = 'couch'
 
     return doc_ret
+
+
+def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
+                                      process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, topics.FORM_TOPICS)
+    form_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=XFORM_INDEX_INFO,
+        doc_prep_fn=transform_xform_for_elasticsearch,
+        doc_filter_fn=xform_pillow_filter,
+    )
+    kafka_change_feed = KafkaChangeFeed(
+        topics=FORM_TOPICS, client_id='forms-to-es', num_processes=num_processes, process_num=process_num
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=kafka_change_feed,
+        processor=form_processor,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
+        ),
+    )
 
 
 def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,

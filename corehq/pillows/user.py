@@ -124,6 +124,26 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0,
         ),
     )
 
+def get_unknown_users_pillow(pillow_id='unknown-users-pillow', num_processes=1, process_num=0, **kwargs):
+    """
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
+    """
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.FORM_TOPICS)
+    processor = UnknownUsersProcessor()
+    change_feed = KafkaChangeFeed(
+        topics=topics.FORM_TOPICS, client_id='unknown-users', num_processes=num_processes, process_num=process_num
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=processor,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
+        ),
+    )
+
 
 class UserReindexerFactory(ReindexerFactory):
     slug = 'user'
