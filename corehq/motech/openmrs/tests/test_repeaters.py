@@ -240,7 +240,10 @@ class ExportOnlyTests(SimpleTestCase):
         should not be exported.
         """
         requests = mock.Mock()
-        info = mock.Mock(updates={'sex': 'M', 'dob': '1918-07-18'})
+        info = mock.Mock(
+            updates={'sex': 'M', 'dob': '1918-07-18'},
+            extra_fields={},
+        )
         case_config = copy.deepcopy(CASE_CONFIG)
         case_config['patient_identifiers'] = {}
         case_config['person_preferred_name'] = {}
