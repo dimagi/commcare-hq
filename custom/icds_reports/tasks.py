@@ -289,7 +289,7 @@ def icds_aggregation_task(self, date, func):
         return
 
     celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
-    func(date)
+
     try:
         func(date)
     except Error as exc:

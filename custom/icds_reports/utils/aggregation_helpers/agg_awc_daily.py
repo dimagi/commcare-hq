@@ -159,10 +159,22 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
             ('state_is_test', 'MAX(state_is_test)'),
-            ('district_is_test', lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 1 else "0"),
-            ('block_is_test', lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 2 else "0"),
-            ('supervisor_is_test', lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 3 else "0"),
-            ('awc_is_test', lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 4 else "0")
+            (
+                'district_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 1 else "0"
+            ),
+            (
+                'block_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 2 else "0"
+            ),
+            (
+                'supervisor_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 3 else "0"
+            ),
+            (
+                'awc_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 4 else "0"
+            )
         )
 
         def _transform_column(column_tuple):
