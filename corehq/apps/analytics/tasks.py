@@ -679,7 +679,7 @@ def update_subscription_properties_by_domain(domain):
     domain_obj = Domain.get_by_name(domain)
     if domain_obj:
         affected_users = WebUser.view(
-            'users/web_users_by_domain', reduce=False, key=domain.name, include_docs=True
+            'users/web_users_by_domain', reduce=False, key=domain, include_docs=True
         ).all()
 
         for web_user in affected_users:

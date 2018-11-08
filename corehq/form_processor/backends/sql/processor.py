@@ -24,6 +24,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
+from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
 import six
@@ -144,6 +145,10 @@ class FormProcessorSQL(object):
             FormAccessorSQL.save_new_form(processed_forms.submitted)
             if cases:
                 for case in cases:
+                    if toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
+                            case.domain, toggles.NAMESPACE_DOMAIN):
+                        SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary()
+
                     CaseAccessorSQL.save_case(case)
 
             if stock_result:

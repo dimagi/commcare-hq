@@ -14,9 +14,9 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0073_ccsrecordmonthly_closed'),
+        ('icds_reports', '0074_expected_decimal'),
     ]
 
     operations = [
-        migrator.get_migration('update_tables30.sql'),
+        migrator.get_migration('update_tables31.sql'),
     ]

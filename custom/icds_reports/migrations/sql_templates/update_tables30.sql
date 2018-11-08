@@ -1,15 +1,2 @@
-ALTER TABLE awc_location ADD COLUMN state_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN district_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN block_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN supervisor_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN awc_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN state_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN district_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN block_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN supervisor_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN awc_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN state_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN district_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN block_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN supervisor_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN awc_is_test smallint;
+DROP VIEW IF EXISTS agg_ccs_record_monthly CASCADE;
+ALTER TABLE agg_ccs_record ALTER COLUMN expected_visits type decimal;
