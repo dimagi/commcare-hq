@@ -19,6 +19,7 @@ Unique_ID = namedtuple('UniqueID', 'type id')
 HQ_MODULE_SHEET_NAME = re.compile('^module(\d+)$')
 HQ_FORM_SHEET_NAME = re.compile('^module(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
+SKIP_TRANSFEX_STRING = "SKIP TRANSIFEX"
 
 
 class AppTranslationsGenerator:
@@ -64,7 +65,7 @@ class AppTranslationsGenerator:
         for module in module_data:
             for form in module['forms']:
                 for question in form['questions']:
-                    if (question['comment'] and 'SKIP TRANSIFEX' in question['comment']
+                    if (question['comment'] and SKIP_TRANSFEX_STRING in question['comment']
                             and 'label_ref' in question):
                         labels_to_skip[form['id']].append(question['label_ref'])
         return labels_to_skip
@@ -73,11 +74,20 @@ class AppTranslationsGenerator:
         # get the translations data
         from corehq.apps.app_manager.app_translations.app_translations import expected_bulk_app_sheet_rows
         # simply the rows of data per sheet name
-        rows = expected_bulk_app_sheet_rows(app)
+        rows = expected_bulk_app_sheet_rows(
+            app,
+            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
+            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
+        )
 
         # get the translation data headers
         from corehq.apps.app_manager.app_translations.app_translations import expected_bulk_app_sheet_headers
-        for header_row in expected_bulk_app_sheet_headers(app):
+        headers = expected_bulk_app_sheet_headers(
+            app,
+            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
+            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
+        )
+        for header_row in headers:
             self.headers[header_row[0]] = header_row[1]
         self._set_sheet_name_to_module_or_form_mapping(rows[MODULES_AND_FORMS_SHEET_NAME])
         return rows
