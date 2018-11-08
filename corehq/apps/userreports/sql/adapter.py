@@ -239,7 +239,7 @@ def get_indicator_table(indicator_config, custom_metadata=None):
 
 def _custom_index_name(table_name, column_ids):
     base_name = "ix_{}_{}".format(table_name, ','.join(column_ids))
-    base_hash = hashlib.md5(base_name).hexdigest()
+    base_hash = hashlib.md5(base_name.encode('utf-8')).hexdigest()
     return "{}_{}".format(base_name[:50], base_hash[:5])
 
 
