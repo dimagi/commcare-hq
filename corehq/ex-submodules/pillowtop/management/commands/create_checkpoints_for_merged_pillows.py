@@ -107,7 +107,7 @@ class Command(BaseCommand):
                 topic = result['topic']
                 partition = result['partition']
                 min_offset = old_checkpoints.filter(
-                    topic=topic, parition=partition).annotate(Min('offset')))
+                    topic=topic, parition=partition).annotate(Min('offset'))
                 params = {
                     'checkpoint_id': new_checkpoint_id,
                     'topic': topic,
