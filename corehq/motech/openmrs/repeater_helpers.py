@@ -274,8 +274,13 @@ class CreateEncounterTask(WorkflowTask):
             encounter['visit'] = self.visit_uuid
         if self.location_uuid:
             encounter['location'] = self.location_uuid
-        if self.provider_uuid:
-            encounter['provider'] = self.provider_uuid
+        # TODO: Determine the format for the value of encounterProviders
+        # if self.provider_uuid:
+        #     encounter['encounterProviders'] = self.provider_uuid  # returns 400
+        #     encounter['encounterProviders'] = [self.provider_uuid]  # returns 500
+        #     encounter['encounterProviders'] = '["{}"]'.format(self.provider_uuid)  # returns 400
+        #     encounter['encounterProviders'] = [{'uuid': self.provider_uuid}]  # returns 500
+        #     encounter['encounterProviders'] = '[{"uuid": "%s"}]' % self.provider_uuid  # returns 400
         response = self.requests.post('/ws/rest/v1/encounter', json=encounter, raise_for_status=True)
         self.encounter_uuid = response.json()['uuid']
 
