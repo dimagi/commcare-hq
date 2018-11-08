@@ -13,10 +13,8 @@ class DataSourceProvider(six.with_metaclass(ABCMeta, object)):
 class DynamicDataSourceProvider(DataSourceProvider):
 
     def get_data_sources(self):
-        return [DataSourceConfiguration.wrap(r['doc'])
-                for r in
-                DataSourceConfiguration.get_db().view('userreports/active_data_sources',
-                                                      reduce=False, include_docs=True)]
+        return DataSourceConfiguration.view(
+            'userreports/active_data_sources', reduce=False, include_docs=True).all()
 
 
 class StaticDataSourceProvider(DataSourceProvider):
