@@ -65,7 +65,7 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             cls.domain,
         )
         cls.casefactory = CaseFactory(domain=cls.domain)
-        cls.adapter = get_indicator_adapter(cls.datasource, can_handle_laboratory=True)
+        cls.adapter = get_indicator_adapter(cls.datasource)
         cls.adapter.rebuild_table()
 
     @classmethod

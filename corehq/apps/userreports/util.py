@@ -124,7 +124,7 @@ def number_of_ucr_reports(domain):
     return len(ucr_reports)
 
 
-def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=False):
+def get_indicator_adapter(config, raise_errors=False):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     if raise_errors:
         return ErrorRaisingIndicatorSqlAdapter(config)
