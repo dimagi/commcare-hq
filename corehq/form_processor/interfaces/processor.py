@@ -238,7 +238,7 @@ class FormProcessorInterface(object):
         :param strip_history: If False, don't include case actions. (Couch only)
         :param wrap: Return wrapped case if True. (Couch only)
         :return: tuple(case, lock). Either could be None
-        :raises: IllegalCaseId
+        :raises: IllegalCaseId, CaseLockError
         """
         # check across Couch & SQL to ensure global uniqueness
         # check this domains DB first to support existing bad data

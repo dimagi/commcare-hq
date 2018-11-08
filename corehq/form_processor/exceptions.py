@@ -68,3 +68,10 @@ class XFormLockError(Exception):
 
     The error message should identify the locked form.
     """
+
+
+class CaseLockError(Exception):
+    """Exception raised when a case lock cannot be acquired
+
+    The error message should identify the locked case.
+    """

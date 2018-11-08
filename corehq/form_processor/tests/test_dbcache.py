@@ -8,6 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
+from corehq.form_processor.exceptions import CaseLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import use_sql_backend
@@ -146,6 +147,15 @@ class CaseDbCacheTest(TestCase):
         for i, id in enumerate(case_ids):
             case = cache.get(id)
             self.assertEqual(str(i), case.dynamic_case_properties()['my_index'])
+
+    def testGetLockedCase(self):
+        case_id, = _make_some_cases(1)
+        cache1 = self.interface.casedb_cache(lock=True)
+        cache2 = self.interface.casedb_cache(lock=True)
+        with cache1 as db1:
+            db1.get(case_id)
+            with self.assertRaises(CaseLockError), cache2 as db2:
+                db2.get(case_id)
 
 
 @use_sql_backend

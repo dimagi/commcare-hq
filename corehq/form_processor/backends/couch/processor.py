@@ -15,6 +15,7 @@ from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.exceptions import CaseLockError
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.utils import extract_meta_instance_id
 from couchforms.models import (
@@ -252,8 +253,8 @@ class FormProcessorCouch(object):
                     if case and not wrap:
                         case = case.to_json()
                     return case, lock
-                except LockNotAcquired:
-                    raise
+                except LockNotAcquired as err:
+                    six.raise_from(CaseLockError(case_id), err)
                 except redis.RedisError:
                     case_doc = _get_case()
             else:
