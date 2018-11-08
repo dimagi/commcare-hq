@@ -6,9 +6,6 @@ from corehq.apps.userreports.util import get_table_name
 
 from custom.icds_reports.const import (
     AWW_INCENTIVE_TABLE,
-    AGG_CCS_RECORD_BP_TABLE,
-    AGG_CCS_RECORD_PNC_TABLE,
-    AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CCS_RECORD_CF_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
@@ -83,8 +80,5 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
         """.format(
             tablename=tablename,
             ccs_record_case_ucr=self.ccs_record_case_ucr_tablename,
-            agg_pnc_table=AGG_CCS_RECORD_PNC_TABLE,
-            agg_bp_table=AGG_CCS_RECORD_BP_TABLE,
-            agg_delivery_table=AGG_CCS_RECORD_DELIVERY_TABLE,
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), query_params
