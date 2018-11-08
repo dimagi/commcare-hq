@@ -245,4 +245,11 @@ def get_form_question_values(form_json):
     _recurse_form_questions(form_json['form'], [b'/data'], result)  # "/data" is just convention, hopefully
     # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
     # necessarily. If this causes problems we may need a more reliable way to get to it.
+
+    metadata = {
+        'timeStart': form_json['form']['meta']['timeStart'],
+        'timeEnd': form_json['form']['meta']['timeEnd'],
+        'received_on': form_json['received_on'],
+    }
+    _recurse_form_questions(metadata, [b'/metadata'], result)
     return result
