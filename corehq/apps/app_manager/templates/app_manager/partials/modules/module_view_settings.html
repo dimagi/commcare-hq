@@ -167,7 +167,7 @@
                             {% include 'app_manager/partials/modules/case_list_form_setting.html' %}
                         {% endif %}
 
-                        {% if add_ons.case_list_menu_item and module.module_type != 'shadow' %} %}
+                        {% if add_ons.case_list_menu_item and module.module_type != 'shadow' %}
                             {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
 
                             {% if module.module_type == 'basic' and request.project.survey_management_enabled or module.task_list.show %}
