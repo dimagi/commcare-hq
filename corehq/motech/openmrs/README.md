@@ -411,7 +411,7 @@ available:
   device, when the form was started
 * "/metadata/timeEnd": The timestamp, according to the mobile worker's
   device, when the form was completed
-* "/metadata/received_on": The timestampe when the form wass submitted
+* "/metadata/received_on": The timestamp when the form was submitted
   to HQ.
 
 The value's default data type is datetime. But some organisations may
