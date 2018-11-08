@@ -309,8 +309,7 @@ skew towards false negatives (Type I errors). In other words, it is much
 better not to choose a patient than to choose the wrong patient.
 
 
-Creating Missing Patients
-^^^^^^^^^^^^^^^^^^^^^^^^^
+### Creating Missing Patients
 
 If a corresponding OpenMRS patient is not found for a CommCare case,
 then a PatientFinder has the option to create a patient in OpenMRS. This
@@ -339,8 +338,7 @@ an identifier. You can find this out from the OpenMRS Administration UI,
 or by testing the OpenMRS REST API.
 
 
-WeightedPropertyPatientFinder
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### WeightedPropertyPatientFinder
 
 The first (and currently only) subclass of `PatientFinder` is the
 `WeightedPropertyPatientFinder` class. As the name suggests, it assigns
