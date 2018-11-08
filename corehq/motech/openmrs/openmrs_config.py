@@ -182,7 +182,7 @@ class OpenmrsFormConfig(DocumentSchema):
     # of a visit is set to one day (specifically 23:59:59) later. If not
     # given, the value defaults to when the form was completed according
     # to the device, /meta/timeEnd.
-    openmrs_start_datetime = ValueSource(required=False)
+    openmrs_start_datetime = SchemaProperty(ValueSource, required=False)
 
     openmrs_visit_type = StringProperty()
     openmrs_encounter_type = StringProperty()
