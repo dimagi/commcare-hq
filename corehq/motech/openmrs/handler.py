@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from datetime import timedelta
 
 from corehq.motech.const import DIRECTION_EXPORT
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
@@ -197,22 +198,31 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:
                 if form_config.openmrs_start_datetime:
-                    # ValueSource.get_value() serializes self._get_commcare_value() ...
                     cc_start_datetime_str = form_config.openmrs_start_datetime._get_commcare_value(self.info)
-                    cc_start_datetime = string_to_utc_datetime(cc_start_datetime_str)
-                    # ... We need to call these separately so that we can
-                    # calculate stop_datetime from the CommCare value.
+                    if cc_start_datetime_str is None:
+                        raise ConfigurationError(
+                            'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
+                            'the visit but no value was found in the form.'.format(form_config.xmlns)
+                        )
+                    try:
+                        cc_start_datetime = string_to_utc_datetime(cc_start_datetime_str)
+                    except ValueError:
+                        raise ConfigurationError(
+                            'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
+                            'the visit but an invalid value was found in the form.'.format(form_config.xmlns)
+                        )
+                    cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
+                    # We need to use openmrs_start_datetime.serialize()
+                    # for both values because they could be either
+                    # OpenMRS datetimes or OpenMRS dates, and their data
+                    # types must match.
                     start_datetime = form_config.openmrs_start_datetime.serialize(cc_start_datetime)
-                    # We also need to use openmrs_start_datetime.serialize()
-                    # for both values because they could be OpenMRS datetimes
-                    # or OpenMRS dates and their data types must match.
-                    stop_datetime = form_config.openmrs_start_datetime.serialize(
-                        cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
-                    )
+                    stop_datetime = form_config.openmrs_start_datetime.serialize(cc_stop_datetime)
                 else:
                     cc_start_datetime = string_to_utc_datetime(self.form_json['form']['meta']['timeEnd'])
+                    cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
                     start_datetime = to_omrs_datetime(cc_start_datetime)
-                    stop_datetime = to_omrs_datetime(cc_start_datetime + timedelta(days=1) - timedelta(seconds=1))
+                    stop_datetime = to_omrs_datetime(cc_stop_datetime)
                 subtasks.append(
                     CreateVisitTask(
                         self.requests,
