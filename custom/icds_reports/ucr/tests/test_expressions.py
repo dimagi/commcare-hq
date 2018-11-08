@@ -458,7 +458,7 @@ def test_awc_owner_id(self, case):
     ('child_health_person_case',),
     ('child_health_case',),
 ], TestLegacyCaseStructureOwnerID)
-def test_reach_village_owner_id(self, case):
+def test_village_owner_id(self, case):
     expression = ExpressionFactory.from_spec({
         "type": "icds_village_owner_id",
         "case_id_expression": {
