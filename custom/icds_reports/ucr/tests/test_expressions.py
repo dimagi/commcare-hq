@@ -449,6 +449,27 @@ def test_awc_owner_id(self, case):
     self.assertEqual(self.awc_owner_id, expression(getattr(self, case).to_json()))
 
 
+@generate_cases([
+    ('household_case',),
+    # ('awc_ownership_case',), currently returns AWC. Should it return village?
+    ('father_person_case',),
+    ('mother_person_case',),
+    ('ccs_record_case',),
+    ('child_health_person_case',),
+    ('child_health_case',),
+], TestLegacyCaseStructureOwnerID)
+def test_reach_village_owner_id(self, case):
+    expression = ExpressionFactory.from_spec({
+        "type": "icds_village_owner_id",
+        "case_id_expression": {
+            "type": "property_name",
+            "property_name": "case_id",
+        },
+    })
+    context = EvaluationContext({"domain": self.domain_name}, 0)
+    self.assertEqual(None, expression(getattr(self, case).to_json(), context))
+
+
 class TestREACHCaseStructureOwnerID(_TestOwnerIDBase):
     awc_owner_id = uuid.uuid4().hex
     village_owner_id = uuid.uuid4().hex
