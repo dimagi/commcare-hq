@@ -472,7 +472,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         processor_chunk_size=processor_chunk_size,
     )
 
-def get_location_pillow(pillow_id='location-pillow', include_ucrs=None,
+def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
                         num_processes=1, process_num=0, **kwargs):
     # Todo; is ucr_division needed?
     change_feed = KafkaChangeFeed(

@@ -97,12 +97,36 @@ def add_demo_user_to_user_index():
 
 def get_user_es_processor():
     ElasticProcessor(
-            elasticsearch=get_es_new(),
-            index_info=USER_INDEX_INFO,
-            doc_prep_fn=transform_user_for_elasticsearch,
-        )
+        elasticsearch=get_es_new(),
+        index_info=USER_INDEX_INFO,
+        doc_prep_fn=transform_user_for_elasticsearch,
+    )
 
-def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0,
+
+def get_user_pillow(pillow_id='UserEPillow', num_processes=1, process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
+    user_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=USER_INDEX_INFO,
+        doc_prep_fn=transform_user_for_elasticsearch,
+    )
+    change_feed = KafkaChangeFeed(
+        topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=user_processor,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
+        ),
+    )
+
+
+def get_user_es_ucr_pillow(pillow_id='user-to-es-ucr-pillow', num_processes=1, process_num=0,
         skip_ucr=False, **kwargs):
     # Pillow that sends users to ES and UCR
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'

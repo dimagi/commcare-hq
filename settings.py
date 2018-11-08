@@ -1697,6 +1697,11 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
         {
+            'name': 'user-to-es-ucr-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_es_ucr_pillow',
+        },
+        {
             'name': 'ApplicationToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
@@ -1790,7 +1795,7 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
-            'name': 'location-pillow',
+            'name': 'location-ucr-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.userreports.pillow.get_location_pillow',
         },
