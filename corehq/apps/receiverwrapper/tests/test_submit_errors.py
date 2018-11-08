@@ -252,6 +252,14 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             lock.release()
         self.assertEqual(response.status_code, 423)
 
+    def test_case_locked(self):
+        from casexml.apps.case.models import CommCareCase
+        case_id = 'ad38211be256653bceac8e2156475667'
+        lock = CommCareCase.get_obj_lock_by_id(case_id, timeout_seconds=30)
+        with lock:
+            _, response = self._submit('form_with_case.xml')
+        self.assertEqual(response.status_code, 423)
+
 
 @use_sql_backend
 class SubmissionErrorTestSQL(SubmissionErrorTest):

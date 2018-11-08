@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 
+from corehq.util.datadog.metrics import CASE_LOCKED_COUNT, XFORM_LOCKED_COUNT
 from dimagi.utils.mixins import UnicodeMixIn
 
 
@@ -68,6 +69,7 @@ class XFormLockError(Exception):
 
     The error message should identify the locked form.
     """
+    metric = XFORM_LOCKED_COUNT
 
 
 class CaseLockError(Exception):
@@ -75,3 +77,4 @@ class CaseLockError(Exception):
 
     The error message should identify the locked case.
     """
+    metric = CASE_LOCKED_COUNT

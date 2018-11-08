@@ -27,15 +27,12 @@ from corehq.apps.receiverwrapper.util import (
     should_ignore_submission,
     DEMO_SUBMIT_MODE,
 )
-from corehq.form_processor.exceptions import XFormLockError
+from corehq.form_processor.exceptions import CaseLockError, XFormLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
 from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.metrics import (
-    MULTIMEDIA_SUBMISSION_ERROR_COUNT,
-    XFORM_LOCKED_COUNT,
-)
+from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 import couchforms
@@ -113,10 +110,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
         try:
             result = submission_post.run()
-        except XFormLockError as err:
+        except (CaseLockError, XFormLockError) as err:
+            message = "{}: {}".format(type(err).__name__, err)
             return _submission_error(
-                request, "XFormLockError: %s" % err, XFORM_LOCKED_COUNT,
-                metric_tags, domain, app_id, user_id, authenticated, status=423,
+                request, message, err.metric, metric_tags,
+                domain, app_id, user_id, authenticated, status=423,
             )
 
     response = result.response
