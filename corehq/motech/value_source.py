@@ -82,7 +82,7 @@ class ValueSource(DocumentSchema):
                       serializers.get((None, self.commcare_data_type)))
         return serializer(external_value) if serializer else external_value
 
-    def get_commcare_value(self, case_trigger_info):
+    def _get_commcare_value(self, case_trigger_info):
         raise NotImplementedError()
 
     def get_value(self, case_trigger_info):
@@ -90,7 +90,7 @@ class ValueSource(DocumentSchema):
         Returns the value referred to by the ValueSource, serialized for
         the external system.
         """
-        value = self.get_commcare_value(case_trigger_info)
+        value = self._get_commcare_value(case_trigger_info)
         return self.serialize(value)
 
     def check_direction(self, direction):
@@ -125,7 +125,7 @@ class CaseProperty(ValueSource):
     #
     case_property = StringProperty()
 
-    def get_commcare_value(self, case_trigger_info):
+    def _get_commcare_value(self, case_trigger_info):
         return case_trigger_info.updates.get(self.case_property)
 
 
@@ -135,7 +135,7 @@ class FormQuestion(ValueSource):
     """
     form_question = StringProperty()  # e.g. "/data/foo/bar"
 
-    def get_commcare_value(self, case_trigger_info):
+    def _get_commcare_value(self, case_trigger_info):
         return case_trigger_info.form_question_values.get(self.form_question)
 
 
@@ -161,7 +161,7 @@ class ConstantString(ValueSource):
         # ConstantString doesn't have a corresponding case or form value
         return None
 
-    def get_commcare_value(self, case_trigger_info):
+    def _get_commcare_value(self, case_trigger_info):
         return self.value
 
 

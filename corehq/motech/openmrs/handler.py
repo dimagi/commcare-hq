@@ -197,8 +197,8 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:
                 if form_config.openmrs_start_datetime:
-                    # ValueSource.get_value() serializes self.get_commcare_value() ...
-                    cc_start_datetime = form_config.openmrs_start_datetime.get_commcare_value(self.info)
+                    # ValueSource.get_value() serializes self._get_commcare_value() ...
+                    cc_start_datetime = form_config.openmrs_start_datetime._get_commcare_value(self.info)
                     # ... We need to call these separately so that we can
                     # calculate stop_datetime from the CommCare value.
                     start_datetime = form_config.openmrs_start_datetime.serialize(cc_start_datetime)
