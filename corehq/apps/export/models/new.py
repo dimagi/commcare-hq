@@ -1479,6 +1479,7 @@ class ExportDataSchema(Document):
                     current_schema,
                     app,
                     identifier,
+                    only_process_current_builds
                 )
             except Exception as e:
                 logging.exception('Failed to process app {}. {}'.format(app._id, e))
@@ -1684,7 +1685,7 @@ class FormExportDataSchema(ExportDataSchema):
         return get_latest_form_export_schema(domain, app_id, form_xmlns)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, form_xmlns):
+    def _process_app_build(cls, current_schema, app, form_xmlns, current_only=False):
         forms = app.get_forms_by_xmlns(form_xmlns, log_missing=False)
         if not forms:
             return current_schema
@@ -1984,12 +1985,19 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_latest_case_export_schema(domain, case_type)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, case_type):
-        case_property_mapping = {case_type: sorted(get_all_case_properties_for_case_type(
-            app.domain,
-            case_type,
-            include_parent_properties=False
-        ))}
+    def _process_app_build(cls, current_schema, app, case_type, current_only=False):
+        if current_only:
+            case_property_mapping = {case_type: sorted(get_all_case_properties_for_case_type(
+                app.domain,
+                case_type,
+                include_parent_properties=False
+            ))}
+        else:
+            case_property_mapping = get_case_properties(
+                app,
+                [case_type],
+                include_parent_properties=False
+            )
         parent_types = (ParentCasePropertyBuilder.for_app(app)
                         .get_case_relationships_for_case_type(case_type))
         case_schemas = []
