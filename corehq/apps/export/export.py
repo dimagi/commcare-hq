@@ -30,6 +30,7 @@ from corehq.apps.export.models.new import (
     SMSExportInstance,
 )
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 import six
 from io import open
 
@@ -458,6 +459,8 @@ def should_rebuild_export(export, last_access_cutoff):
     :return: True if export should be rebuilt
     """
     # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
+    if isinstance(export, six.string_types):
+        export = get_properly_wrapped_export_instance(export)
     is_auto_rebuild = last_access_cutoff is not None
     return not is_auto_rebuild or (
         export.auto_rebuild_enabled

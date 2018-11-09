@@ -166,7 +166,8 @@ def saved_exports():
 
     for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_saved_export(daily_saved_export_id, last_access_cutoff, manual=False)
+        if should_rebuild_export(daily_saved_export_id, last_access_cutoff):
+            rebuild_saved_export(daily_saved_export_id, last_access_cutoff, manual=False)
 
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
