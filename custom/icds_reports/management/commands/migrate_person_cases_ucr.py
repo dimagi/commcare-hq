@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from django.db import connections
 from corehq.apps.locations.models import SQLLocation
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.log import with_progress_bar
 from custom.icds_reports.models import ChildHealthMonthly
 
 
@@ -74,7 +75,7 @@ class Command(BaseCommand):
         ]
 
         blocks = SQLLocation.objects.filter(domain='icds-cas', location_type__name='block')
-        for block in blocks:
+        for block in with_progress_bar(blocks, blocks.count()):
             block_id = block.location_id
             state = block.get_ancestor_of_type('state')
             state_id = state.location_id
