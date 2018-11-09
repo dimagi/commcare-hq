@@ -3,25 +3,27 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
     var _p = {};
     _p.profileUrl = 'profiles/';
 
-    function Profile(profile_langs, name, id, practiceUser) {
-        this.id = id;
-        this.langs = ko.observableArray(profile_langs);
-        this.name = ko.observable(name);
-        this.defaultLang = ko.observable(profile_langs[0]);
-        this.practiceUser = ko.observable(practiceUser);
+    var profileModel = function(profile_langs, name, id, practiceUser) {
+        var self = {};
+        self.id = id;
+        self.langs = ko.observableArray(profile_langs);
+        self.name = ko.observable(name);
+        self.defaultLang = ko.observable(profile_langs[0]);
+        self.practiceUser = ko.observable(practiceUser);
+        return self;
     }
 
     function setProfileUrl(url) {
         _p.profileUrl = url;
     }
 
-    function ProfileManager(app_profiles, app_langs, enable_practice_users, practice_users) {
-        var self = this;
-        this.app_profiles = ko.observableArray([]);
-        this.app_langs = app_langs;
-        this.enable_practice_users = enable_practice_users;
-        this.practice_users = [{'id': '', 'text': ''}].concat(practice_users);
-        this.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+    var profileManager = function(app_profiles, app_langs, enable_practice_users, practice_users) {
+        var self = {};
+        self.app_profiles = ko.observableArray([]);
+        self.app_langs = app_langs;
+        self.enable_practice_users = enable_practice_users;
+        self.practice_users = [{'id': '', 'text': ''}].concat(practice_users);
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your application profiles"),
             save: function () {
                 var postProfiles = [];
@@ -55,8 +57,8 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
             'width': '100%',
             'placeholder': gettext(practice_users.length > 0 ? 'Select a user' : 'No practice mode mobile workers available'),
         };
-        this.addProfile = function (langs, name, id, practiceUser) {
-            var profile = new Profile(langs, name, id, practiceUser);
+        self.addProfile = function (langs, name, id, practiceUser) {
+            var profile = profileModel(langs, name, id, practiceUser);
             profile.name.subscribe(changeSaveButton);
             profile.langs.subscribe(changeSaveButton);
             profile.defaultLang.subscribe(changeSaveButton);
@@ -68,7 +70,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         _.each(app_profiles, function (value, key) {
             self.addProfile(value.langs, value.name, key, value.practice_mobile_worker_id || '');
         });
-        this.newProfile = function () {
+        self.newProfile = function () {
             self.addProfile([], '', '', '');
             var index = self.app_profiles().length - 1;
             _.delay(function () {
@@ -79,17 +81,19 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         if (!self.app_profiles()) {
             self.newProfile();
         }
-        this.removeProfile = function (profile) {
+        self.removeProfile = function (profile) {
             self.app_profiles.remove(profile);
         };
-        this.app_profiles.subscribe(changeSaveButton);
+        self.app_profiles.subscribe(changeSaveButton);
         _.delay(function () {
             $('.language-select').select2();
             $('.practice-user').select2(select2config);
         });
-    }
+        return self;
+    };
+
     return {
-        ProfileManager: ProfileManager,
+        profileManager: profileManager,
         setProfileUrl: setProfileUrl,
     };
 });
