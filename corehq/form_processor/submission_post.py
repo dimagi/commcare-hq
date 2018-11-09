@@ -38,7 +38,7 @@ from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.util.global_request import get_request
 from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
-from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
+from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub, UnfinishedArchiveStub
 from couchforms.signals import successful_form_received
 from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
@@ -539,5 +539,21 @@ def unfinished_submission(instance):
             domain=instance.domain,
         )
     tracker = SubmissionProcessTracker(unfinished_submission_stub)
+    yield tracker
+    tracker.submission_fully_processed()
+
+
+@contextlib.contextmanager
+def unfinished_archive(instance):
+    unfinished_archive_stub = None
+    if not getattr(instance, 'deprecated_form_id', None):
+        # don't create stubs for form edits since we don't want to auto-reprocess them
+        unfinished_archive_stub = UnfinishedArchiveStub.objects.create(
+            xform_id=instance.form_id,
+            timestamp=datetime.datetime.utcnow(),
+            saved=False,
+            domain=instance.domain,
+        )
+    tracker = SubmissionProcessTracker(unfinished_archive_stub)
     yield tracker
     tracker.submission_fully_processed()

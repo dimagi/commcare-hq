@@ -391,8 +391,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if self.is_archived:
             return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.archive_form(self, user_id=user_id)
-        xform_archived.send(sender="form_processor", xform=self)
+        from corehq.form_processor.submission_post import unfinished_archive
+        with unfinished_archive(instance=self):
+            FormAccessorSQL.archive_form(self, user_id=user_id)
+            xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user_id=None):
         if not self.is_archived:
