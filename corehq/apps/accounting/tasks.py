@@ -477,7 +477,7 @@ def send_purchase_receipt(payment_record, domain,
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice, payment_method):
+def send_autopay_failed(invoice):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
