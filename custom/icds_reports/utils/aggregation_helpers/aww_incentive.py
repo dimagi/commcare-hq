@@ -69,7 +69,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
         FROM (
              SELECT
              SUM(0.39) AS expected,
-             COALESCE(agg_cf.valid_visits, 0) as valid,
+             SUM(COALESCE(agg_cf.valid_visits, 0)) as valid,
              ucr.awc_id
              FROM "{ccs_record_case_ucr}" ucr
              LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND agg_cf.month = %(month)s
