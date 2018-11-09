@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
+import mock
 from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -13,6 +14,7 @@ from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin
+from couchforms.models import UnfinishedArchiveStub
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 
@@ -70,6 +72,40 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertTrue(lower_bound <= restoration.date <= upper_bound)
         self.assertEqual('unarchive', restoration.operation)
         self.assertEqual('mr. researcher', restoration.user)
+
+    def testUnfinishedArchiveStubCouch(self):
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
+        xml_data = self.get_xml('basic')
+        result = submit_form_locally(
+            xml_data,
+            'test-domain',
+        )
+        xform = result.xform
+        self.assertTrue(xform.is_normal)
+        self.assertEqual(0, len(xform.history))
+
+        # Mock the send function throwing an error
+        with mock.patch('couchforms.signals.xform_archived.send') as mock_send:
+            mock_send.side_effect = Exception
+            xform.archive(user_id='librarian')
+
+        # Get the form with the updated history
+        xform = self.formdb.get_form(xform.form_id)
+
+        self.assertEqual(1, len(xform.history))
+        self.assertTrue(xform.is_archived)
+        case = self.casedb.get_case(case_id)
+
+        # The case should still exist because it was not rebuilt
+        self.assertFalse(case.is_deleted)
+
+        [archival] = xform.history
+        self.assertEqual('archive', archival.operation)
+        self.assertEqual('librarian', archival.user)
+
+        stubs = UnfinishedArchiveStub.objects.filter(domain='test-domain')
+        self.assertEqual(len(stubs), 1)
+        self.assertEqual(stubs[0].xform_id, xform.form_id)
 
     def testSignal(self):
         global archive_counter, restore_counter
@@ -130,3 +166,39 @@ class TestFormArchivingSQL(TestFormArchiving):
                 xform.unarchive()
         self.assertEqual(1, len(change_context.changes))
         self.assertEqual(change_context.changes[0].id, xform.form_id)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def testUnfinishedArchiveStubSql(self):
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
+        xml_data = self.get_xml('basic')
+        result = submit_form_locally(
+            xml_data,
+            'test-domain',
+        )
+        xform = result.xform
+        self.assertTrue(xform.is_normal)
+        self.assertEqual(0, len(xform.history))
+
+        # Mock the send function throwing an error
+        with mock.patch('couchforms.signals.xform_archived.send') as mock_send:
+            mock_send.side_effect = Exception
+            xform.archive(user_id='librarian')
+
+        # Get the form with the updated history
+        xform = self.formdb.get_form(xform.form_id)
+
+        self.assertEqual(1, len(xform.history))
+        self.assertTrue(xform.is_archived)
+        case = self.casedb.get_case(case_id)
+
+        # The case should still exist because it was not rebuilt
+        self.assertFalse(case.is_deleted)
+
+        [archival] = xform.history
+        self.assertEqual('archive', archival.operation)
+        self.assertEqual('librarian', archival.user)
+
+        stubs = UnfinishedArchiveStub.objects.filter(domain='test-domain')
+        self.assertEqual(len(stubs), 1)
+        self.assertEqual(stubs[0].xform_id, xform.form_id)
+
