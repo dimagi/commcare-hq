@@ -262,12 +262,12 @@ def import_patients():
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
         if repeater.atom_feed_enabled and not repeater.paused:
-            patients = get_feed_updates(repeater, 'patient')
-            encounters = get_feed_updates(repeater, 'encounter')
-            for patient_uuid, updated_at in patients:
-                update_patient(repeater, patient_uuid, updated_at)
-            for encounter_uuid, updated_at in encounters:
-                import_encounter(repeater, encounter_uuid, updated_at)
+            patient_uuids = get_feed_updates(repeater, 'patient')
+            encounter_uuids = get_feed_updates(repeater, 'encounter')
+            for patient_uuid in patient_uuids:
+                update_patient(repeater, patient_uuid)
+            for encounter_uuid in encounter_uuids:
+                import_encounter(repeater, encounter_uuid)
 
 
 @periodic_task(

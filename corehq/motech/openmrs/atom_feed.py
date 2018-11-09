@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import re
 import uuid
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 from datetime import datetime
 
 import pytz
@@ -25,7 +25,6 @@ from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.util.soft_assert import soft_assert
 
 
-UuidUpdatedAt = namedtuple('UuidUpdatedAt', 'uuid updated_at')
 _assert = soft_assert(['@'.join(('nhooper', 'dimagi.com'))])
 
 
@@ -139,10 +138,7 @@ def get_feed_updates(repeater, feed_name):
             if has_new_entries_since(last_polled_at, feed_xml):
                 for entry in feed_xml.xpath('./atom:entry', namespaces={'atom': 'http://www.w3.org/2005/Atom'}):
                     if has_new_entries_since(last_polled_at, entry, './atom:published'):
-                        yield UuidUpdatedAt(
-                            get_patient_uuid(entry) if feed_name == 'patient' else get_encounter_uuid(entry),
-                            get_timestamp(entry)
-                        )
+                        yield get_patient_uuid(entry) if feed_name == 'patient' else get_encounter_uuid(entry)
             next_page = feed_xml.xpath(
                 './atom:link[@rel="next-archive"]',
                 namespaces={'atom': 'http://www.w3.org/2005/Atom'}
@@ -225,7 +221,7 @@ def get_updatepatient_caseblock(case, patient, repeater):
         )
 
 
-def update_patient(repeater, patient_uuid, updated_at):
+def update_patient(repeater, patient_uuid):
     """
     Fetch patient from OpenMRS, submit case update for all mapped case
     properties.
@@ -286,7 +282,7 @@ def update_patient(repeater, patient_uuid, updated_at):
         )
 
 
-def import_encounter(repeater, encounter_uuid, updated_at):
+def import_encounter(repeater, encounter_uuid):
     # It's possible that an OpenMRS concept appears more than once in
     # form_configs. Use a defaultdict(list) so that earlier definitions
     # don't get overwritten by later ones:
