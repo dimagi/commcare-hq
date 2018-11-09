@@ -247,11 +247,12 @@ def get_form_question_values(form_json):
     # necessarily. If this causes problems we may need a more reliable way to get to it.
 
     metadata = {}
-    if form_json['form'].get('meta', {}).get('timeStart'):
-        metadata['timeStart'] = form_json['form']['meta']['timeStart']
-    if form_json['form'].get('meta', {}).get('timeEnd'):
-        metadata['timeEnd'] = form_json['form']['meta']['timeEnd']
-    if form_json.get('received_on'):
+    if 'meta' in form_json['form']:
+        if 'timeStart' in form_json['form']['meta']:
+            metadata['timeStart'] = form_json['form']['meta']['timeStart']
+        if 'timeEnd' in form_json['form']['meta']:
+            metadata['timeEnd'] = form_json['form']['meta']['timeEnd']
+    if 'received_on' in form_json:
         metadata['received_on'] = form_json['received_on']
     if metadata:
         _recurse_form_questions(metadata, [b'/metadata'], result)
