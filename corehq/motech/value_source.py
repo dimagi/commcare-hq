@@ -246,11 +246,13 @@ def get_form_question_values(form_json):
     # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
     # necessarily. If this causes problems we may need a more reliable way to get to it.
 
-    if 'meta' in form_json['form'] and 'received_on' in form_json:
-        metadata = {
-            'timeStart': form_json['form']['meta']['timeStart'],
-            'timeEnd': form_json['form']['meta']['timeEnd'],
-            'received_on': form_json['received_on'],
-        }
+    metadata = {}
+    if form_json['form'].get('meta', {}).get('timeStart'):
+        metadata['timeStart'] = form_json['form']['meta']['timeStart']
+    if form_json['form'].get('meta', {}).get('timeEnd'):
+        metadata['timeEnd'] = form_json['form']['meta']['timeEnd']
+    if form_json.get('received_on'):
+        metadata['received_on'] = form_json['received_on']
+    if metadata:
         _recurse_form_questions(metadata, [b'/metadata'], result)
     return result
