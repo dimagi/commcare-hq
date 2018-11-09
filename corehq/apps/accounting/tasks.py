@@ -411,8 +411,6 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
 @task(serializer='pickle', ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
-                                account_created_by,
-                                account_entry_point,
                                 amount,
                                 invoice_items,
                                 contact_emails):

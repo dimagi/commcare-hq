@@ -320,8 +320,6 @@ class DomainWireInvoiceFactory(object):
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
-            account_created_by=self.__class__.__name__,
-            account_entry_point=EntryPoint.SELF_STARTED,
             amount=amount,
             invoice_items=items,
             contact_emails=self.contact_emails
