@@ -500,8 +500,8 @@ def get_all_case_properties(app):
     return get_case_properties(app, app.get_case_types(), defaults=('name',), exclude_invalid_properties=True)
 
 
-def get_all_case_properties_for_case_type(domain, case_type, include_parent_properties=True):
-    return all_case_properties_by_domain(domain, include_parent_properties).get(case_type, [])
+def get_all_case_properties_for_case_type(domain, case_type):
+    return all_case_properties_by_domain(domain).get(case_type, [])
 
 
 @quickcache(vary_on=['app.get_id'])

@@ -1463,7 +1463,8 @@ class ExportDataSchema(Document):
                 app_id,
                 current_schema.last_app_versions,
             )
-        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
+        if app_id is not None:
+            app_build_ids.append(app_id)
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
@@ -1479,7 +1480,6 @@ class ExportDataSchema(Document):
                     current_schema,
                     app,
                     identifier,
-                    only_process_current_builds
                 )
             except Exception as e:
                 logging.exception('Failed to process app {}. {}'.format(app._id, e))
@@ -1637,12 +1637,6 @@ class ExportDataSchema(Document):
             current_schema.save()
 
         return current_schema
-
-    @classmethod
-    def _get_current_app_ids_for_domain(cls, domain, app_id):
-        if not app_id:
-            return []
-        return [app_id]
 
 
 class FormExportDataSchema(ExportDataSchema):
@@ -1985,19 +1979,12 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_latest_case_export_schema(domain, case_type)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, case_type, current_only=False):
-        if current_only:
-            case_property_mapping = {case_type: sorted(get_all_case_properties_for_case_type(
-                app.domain,
-                case_type,
-                include_parent_properties=False
-            ))}
-        else:
-            case_property_mapping = get_case_properties(
-                app,
-                [case_type],
-                include_parent_properties=False
-            )
+    def _process_app_build(cls, current_schema, app, case_type):
+        case_property_mapping = get_case_properties(
+            app,
+            [case_type],
+            include_parent_properties=False
+        )
         parent_types = (ParentCasePropertyBuilder.for_app(app)
                         .get_case_relationships_for_case_type(case_type))
         case_schemas = []
