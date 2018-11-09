@@ -220,6 +220,18 @@ def update_subscriptions():
     warn_active_subscriptions_per_domain_not_one()
     warn_subscriptions_without_domain()
 
+    check_credit_line_balances.delay()
+
+
+@task
+def check_credit_line_balances():
+    for credit_line in CreditLine.objects.all():
+        expected_balance = sum(credit_line.creditadjustment_set.values_list('amount', flat=True))
+        if expected_balance != credit_line.balance:
+            log_accounting_error(
+                'Credit line %s has balance %s, expected %s' % (credit_line.id, credit_line.balance, expected_balance)
+            )
+
 
 @periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
