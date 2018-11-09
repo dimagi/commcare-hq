@@ -355,7 +355,15 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             operation='archive',
         ))
         self.save()
-        xform_archived.send(sender="couchforms", xform=self)
+        try:
+            xform_archived.send(sender="couchforms", xform=self)
+        except Exception:  # TODO: Make this exception much more specific
+            UnfinishedArchiveStub.objects.create(
+                xform_id=self.form_id,
+                timestamp=datetime.datetime.utcnow(),
+                saved=False,
+                domain=self.domain,
+            )
 
     def unarchive(self, user_id=None):
         if not self.is_archived:

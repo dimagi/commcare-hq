@@ -391,8 +391,18 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if self.is_archived:
             return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.archive_form(self, user_id=user_id)
-        xform_archived.send(sender="form_processor", xform=self)
+        try:
+            pass
+            FormAccessorSQL.archive_form(self, user_id=user_id)
+            xform_archived.send(sender="form_processor", xform=self)
+        except Exception:
+            from couchforms.models import UnfinishedArchiveStub
+            UnfinishedArchiveStub.objects.create(
+                xform_id=self.form_id,
+                timestamp=datetime.utcnow(),
+                saved=False,
+                domain=self.domain,
+            )
 
     def unarchive(self, user_id=None):
         if not self.is_archived:
