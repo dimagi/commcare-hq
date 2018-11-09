@@ -90,10 +90,9 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
 
 @task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
-def _start_export_task(export_instance_id, last_access_cutoff):
+def _start_export_task(export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    if should_rebuild_export(export_instance, last_access_cutoff):
-        rebuild_export(export_instance, progress_tracker=_start_export_task)
+    rebuild_export(export_instance, progress_tracker=_start_export_task)
 
 
 def _get_saved_export_download_data(export_instance_id):
@@ -127,9 +126,7 @@ def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=Fal
     # associate task with the export instance
     download_data.set_task(
         _start_export_task.apply_async(
-            args=[
-                export_instance_id, last_access_cutoff
-            ],
+            args=[export_instance_id],
             queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
         )
     )

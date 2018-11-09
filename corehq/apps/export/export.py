@@ -461,14 +461,10 @@ def should_rebuild_export(export, last_access_cutoff):
     # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
     if isinstance(export, six.string_types):
         export = get_properly_wrapped_export_instance(export)
-    is_auto_rebuild = last_access_cutoff is not None
-    return not is_auto_rebuild or (
-        export.auto_rebuild_enabled
-        and (
-            export.last_accessed is None
-            or export.last_accessed > last_access_cutoff
-        )
-    )
+    return (export.auto_rebuild_enabled and
+            (export.last_accessed is None or
+             export.last_accessed > last_access_cutoff
+             ))
 
 
 def save_export_payload(export, payload):
