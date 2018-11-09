@@ -267,20 +267,20 @@ class CreateEncounterTask(WorkflowTask):
         encounter = {
             'encounterDatetime': self.start_datetime,
             'patient': self.person_uuid,
-            'form': self.openmrs_form,
             'encounterType': self.encounter_type,
         }
+        if self.openmrs_form:
+            encounter['form'] = self.openmrs_form
         if self.visit_uuid:
             encounter['visit'] = self.visit_uuid
         if self.location_uuid:
             encounter['location'] = self.location_uuid
-        # TODO: Determine the format for the value of encounterProviders
-        # if self.provider_uuid:
-        #     encounter['encounterProviders'] = self.provider_uuid  # returns 400
-        #     encounter['encounterProviders'] = [self.provider_uuid]  # returns 500
-        #     encounter['encounterProviders'] = '["{}"]'.format(self.provider_uuid)  # returns 400
-        #     encounter['encounterProviders'] = [{'uuid': self.provider_uuid}]  # returns 500
-        #     encounter['encounterProviders'] = '[{"uuid": "%s"}]' % self.provider_uuid  # returns 400
+        if self.provider_uuid:
+            encounter_role = get_unknown_encounter_role(self.requests)
+            encounter['encounterProviders'] = [{
+                'provider': self.provider_uuid,
+                'encounterRole': encounter_role['uuid']
+            }]
         response = self.requests.post('/ws/rest/v1/encounter', json=encounter, raise_for_status=True)
         self.encounter_uuid = response.json()['uuid']
 
@@ -719,6 +719,17 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 form_question_values={}
             ))
     return result
+
+
+def get_unknown_encounter_role(requests):
+    """
+    Return "Unknown" encounter role for legacy providers with no
+    encounter role set
+    """
+    response_json = requests.get('/ws/rest/v1/encounterrole').json()
+    for encounter_role in response_json['results']:
+        if encounter_role['display'] == 'Unknown':
+            return encounter_role
 
 
 def get_patient_identifier_types(requests):
