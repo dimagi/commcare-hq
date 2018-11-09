@@ -354,21 +354,26 @@ how to define it.
 Provider
 --------
 
-In OpenMRS, observations about a patient, like their height or their
-blood pressure, can be associated with a data provider. A "provider" is
-usually an OpenMRS user who can enter data.
+Every time a form is completed in OpenMRS, it
+[creates a new Encounter](https://wiki.openmrs.org/display/docs/Encounters+and+observations).
 
-It is useful to label data from CommCare. OpenMRS Configuration has a
-field called "Provider's Person UUID", and the value entered here is
-stored in OpenmrsConfig.openmrs_provider.
+Observations about a patient, like their height or their blood pressure,
+belong to an Encounter; just as a form submission in CommCare can have
+many form question values.
+
+The OpenMRS [Data Model](https://wiki.openmrs.org/display/docs/Data+Model)
+documentation explains that an Encounter can be associated with health
+care providers.
+
+It is useful to label data from CommCare by creating a Provider in
+OpenMRS for CommCare.
+
+OpenMRS Configuration has a field called "Provider UUID", and the value
+entered here is stored in OpenmrsConfig.openmrs_provider.
 
 There are three different kinds of entities involved in setting up a
 provider in OpenMRS: A Person instance; a Provider instance; and a User
 instance.
-
-**NOTE**: The value that OpenMRS expects in the "Provider's Person UUID"
-field is a **Person UUID**, not a **Provider UUID**. The distinction is
-not obvious in the OpenMRS interface.
 
 Use the following steps to create a provider for CommCare:
 
@@ -379,24 +384,29 @@ it into a given name ("CommCare") and a family name ("Provider").
 CommCare HQ's first Git commit is dated 2009-03-10, so that seems close
 enough to a date of birth. OpenMRS equates gender with sex, and is quite
 binary about it. You will have to decided whether CommCare is male or
-female. When you are done, click "Create Person".
-
-Make a note of the greyed UUID at the bottom of the next page. This is
-the value you will need for "Provider's Person UUID" in the
-configuration for the OpenMRS Repeater.
+female. When you are done, click "Create Person". On the next page, 
+"City/Village" is a required field. You can set "State/Province" to
+"Other" and set "City/Village" to "Cambridge". Then click "Save Person".
 
 Go back to the OpenMRS Administration page, choose "Manage Providers"
 and click "Add Provider". In the "Person" field, type the name of the
-person you just created. Then click Save.
+person you just created. You can also give it an Identifier, like
+"commcare". Then click Save.
+
+You will need the UUID of the new Provider. Find the Provider by
+entering its name, and selecting it.
+
+**Make a note of the greyed UUID**. This is the value you will need for
+"Provider UUID" in the configuration for the OpenMRS Repeater.
 
 Next, go back to the OpenMRS Administration page, choose "Manage Users"
 and click "Add User". Under "Use a person who already exists" enter the
 name of your new person and click "Next". Give your user a username
 (like "commcare"), and a password. **Under "Roles" select "Provider"**.
-Click "Save"
+Click "Save User".
 
 Now CommCare's "Provider UUID" will be recognised by OpenMRS as a
-provider. Copy the value of the person UUID you made a note of earlier
+provider. Copy the value of the Provider UUID you made a note of earlier
 into your OpenMRS configuration in CommCare HQ.
 
 
