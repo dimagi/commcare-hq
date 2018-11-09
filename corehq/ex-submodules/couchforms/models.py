@@ -517,3 +517,24 @@ class UnfinishedSubmissionStub(models.Model):
 
     class Meta(object):
         app_label = 'couchforms'
+
+
+class UnfinishedArchiveStub(models.Model):
+    xform_id = models.CharField(max_length=200)
+    timestamp = models.DateTimeField(db_index=True)
+    saved = models.BooleanField(default=False)
+    domain = models.CharField(max_length=256)
+    date_queued = models.DateTimeField(null=True, db_index=True)
+    attempts = models.IntegerField(default=0)
+
+    def __unicode__(self):
+        return six.text_type(
+            "UnfinishedArchiveStub("
+            "xform_id={s.xform_id},"
+            "timestamp={s.timestamp},"
+            "saved={s.saved},"
+            "domain={s.domain})"
+        ).format(s=self)
+
+    class Meta(object):
+        app_label = 'couchforms'
