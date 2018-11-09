@@ -232,14 +232,14 @@ class AppTranslationsGenerator:
                 # just add this occurrence
                 if occurrence_row_and_source in translations:
                     translations[occurrence_row_and_source].occurrences.append(
-                        (occurrence_row, index)
+                        ('', index)
                     )
                     continue
 
             translations[occurrence_row_and_source] = Translation(
                 source,
                 translation,
-                [(occurrence_row, index)],
+                [('', index)],
                 occurrence_row)
         return list(translations.values())
 
