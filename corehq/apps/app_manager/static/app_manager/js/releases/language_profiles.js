@@ -3,26 +3,26 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
     var _p = {};
     _p.profileUrl = 'profiles/';
 
-    var profileModel = function(profile_langs, name, id, practiceUser) {
+    var profileModel = function (profileLangs, name, id, practiceUser) {
         var self = {};
         self.id = id;
-        self.langs = ko.observableArray(profile_langs);
+        self.langs = ko.observableArray(profileLangs);
         self.name = ko.observable(name);
-        self.defaultLang = ko.observable(profile_langs[0]);
+        self.defaultLang = ko.observable(profileLangs[0]);
         self.practiceUser = ko.observable(practiceUser);
         return self;
-    }
+    };
 
     function setProfileUrl(url) {
         _p.profileUrl = url;
     }
 
-    var profileManager = function(app_profiles, app_langs, enable_practice_users, practice_users) {
+    var profileManager = function (appProfiles, appLangs, enablePracticeUsers, practiceUsers) {
         var self = {};
         self.app_profiles = ko.observableArray([]);
-        self.app_langs = app_langs;
-        self.enable_practice_users = enable_practice_users;
-        self.practice_users = [{'id': '', 'text': ''}].concat(practice_users);
+        self.app_langs = appLangs;
+        self.enable_practice_users = enablePracticeUsers;
+        self.practice_users = [{'id': '', 'text': ''}].concat(practiceUsers);
         self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your application profiles"),
             save: function () {
@@ -55,7 +55,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         var select2config = {
             'allowClear': true,
             'width': '100%',
-            'placeholder': gettext(practice_users.length > 0 ? 'Select a user' : 'No practice mode mobile workers available'),
+            'placeholder': gettext(practiceUsers.length > 0 ? 'Select a user' : 'No practice mode mobile workers available'),
         };
         self.addProfile = function (langs, name, id, practiceUser) {
             var profile = profileModel(langs, name, id, practiceUser);
@@ -67,7 +67,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
             }
             self.app_profiles.push(profile);
         };
-        _.each(app_profiles, function (value, key) {
+        _.each(appProfiles, function (value, key) {
             self.addProfile(value.langs, value.name, key, value.practice_mobile_worker_id || '');
         });
         self.newProfile = function () {
