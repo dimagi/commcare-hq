@@ -170,4 +170,4 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             .filter_path_by_user_input(self.domain, "Suffolk")
             .accessible_to_user(self.domain, self.web_user)
         )
-        self.assertEqual(len(no_locs), 0)
+        self.assertEqual(set(no_locs), set())

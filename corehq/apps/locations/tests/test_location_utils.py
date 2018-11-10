@@ -62,4 +62,4 @@ class TestGetLocationsAndChildren(MassachusettsTestCase):
 
     def test_get_locations_and_children_with_empty_list(self):
         result = SQLLocation.objects.get_locations_and_children([])
-        self.assertEqual(len(result), 0)
+        self.assertEqual(set(result), set())
