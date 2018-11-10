@@ -6,7 +6,6 @@ import six
 import datetime
 from copy import copy
 
-import six
 from django.core.serializers.json import (
     Serializer as JsonSerializer,
     DjangoJSONEncoder)
