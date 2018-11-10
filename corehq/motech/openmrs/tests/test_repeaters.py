@@ -231,6 +231,37 @@ class GetFormQuestionValuesTests(SimpleTestCase):
             value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
         self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
 
+    def test_received_on(self):
+        value = get_form_question_values({
+            'form': {
+                'foo': {'bar': 'baz'},
+            },
+            'received_on': '2018-11-06T18:30:00.000000Z',
+        })
+        self.assertDictEqual(value, {
+            '/data/foo/bar': 'baz',
+            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
+        })
+
+    def test_metadata(self):
+        value = get_form_question_values({
+            'form': {
+                'foo': {'bar': 'baz'},
+                'meta': {
+                    'timeStart': '2018-11-06T18:00:00.000000Z',
+                    'timeEnd': '2018-11-06T18:15:00.000000Z',
+                    'spam': 'ham',
+                },
+            },
+            'received_on': '2018-11-06T18:30:00.000000Z',
+        })
+        self.assertDictEqual(value, {
+            '/data/foo/bar': 'baz',
+            '/metadata/timeStart': '2018-11-06T18:00:00.000000Z',
+            '/metadata/timeEnd': '2018-11-06T18:15:00.000000Z',
+            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
+        })
+
 
 class ExportOnlyTests(SimpleTestCase):
 
@@ -240,7 +271,10 @@ class ExportOnlyTests(SimpleTestCase):
         should not be exported.
         """
         requests = mock.Mock()
-        info = mock.Mock(updates={'sex': 'M', 'dob': '1918-07-18'})
+        info = mock.Mock(
+            updates={'sex': 'M', 'dob': '1918-07-18'},
+            extra_fields={},
+        )
         case_config = copy.deepcopy(CASE_CONFIG)
         case_config['patient_identifiers'] = {}
         case_config['person_preferred_name'] = {}

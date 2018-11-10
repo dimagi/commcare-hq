@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from collections import namedtuple, defaultdict
-from datetime import timedelta
 import re
 
 from requests import RequestException
@@ -24,7 +23,6 @@ from corehq.motech.openmrs.const import (
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.finders import PatientFinder
-from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.value_source import CaseTriggerInfo
 
@@ -208,12 +206,13 @@ class UpdatePatientIdentifierTask(WorkflowTask):
 
 class CreateVisitTask(WorkflowTask):
 
-    def __init__(self, requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
-                 openmrs_form, visit_type, location_uuid=None):
+    def __init__(self, requests, person_uuid, provider_uuid, start_datetime, stop_datetime, values_for_concept,
+                 encounter_type, openmrs_form, visit_type, location_uuid=None):
         self.requests = requests
         self.person_uuid = person_uuid
         self.provider_uuid = provider_uuid
-        self.visit_datetime = visit_datetime
+        self.start_datetime = start_datetime
+        self.stop_datetime = stop_datetime
         self.values_for_concept = values_for_concept
         self.encounter_type = encounter_type
         self.openmrs_form = openmrs_form
@@ -223,16 +222,12 @@ class CreateVisitTask(WorkflowTask):
 
     def run(self):
         subtasks = []
-        start_datetime = to_omrs_datetime(self.visit_datetime)
         if self.visit_type:
-            stop_datetime = to_omrs_datetime(
-                self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
-            )
             visit = {
                 'patient': self.person_uuid,
                 'visitType': self.visit_type,
-                'startDatetime': start_datetime,
-                'stopDatetime': stop_datetime,
+                'startDatetime': self.start_datetime,
+                'stopDatetime': self.stop_datetime,
             }
             if self.location_uuid:
                 visit['location'] = self.location_uuid
@@ -241,7 +236,7 @@ class CreateVisitTask(WorkflowTask):
 
         subtasks.append(
             CreateEncounterTask(
-                self.requests, self.person_uuid, self.provider_uuid, start_datetime, self.values_for_concept,
+                self.requests, self.person_uuid, self.provider_uuid, self.start_datetime, self.values_for_concept,
                 self.encounter_type, self.openmrs_form, self.visit_uuid, self.location_uuid
             )
         )
