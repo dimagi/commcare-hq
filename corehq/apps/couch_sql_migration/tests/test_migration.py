@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.test import TestCase
 from django.test import override_settings
+from django.core.management.base import CommandError
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
@@ -31,11 +32,10 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
 from corehq.util.test_utils import (
     create_and_save_a_form, create_and_save_a_case, set_parent_case,
-    trap_extra_setup, TestFileMixin
-)
+    trap_extra_setup, TestFileMixin,
+    softer_assert)
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import patch_datadog
-from mock import patch, MagicMock
 from io import open
 
 
@@ -223,6 +223,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_form_ids('XFormDuplicate')))
         self._compare_diffs([])
 
+    @softer_assert()
     def test_deprecated_form_migration(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
@@ -564,6 +565,23 @@ class MigrationTestCase(BaseMigrationTestCase):
         ]
         for t_stat in tracked_stats:
             self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))
+
+    def test_dry_run(self):
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+        call_command(
+            'migrate_domain_from_couch_to_sql',
+            self.domain_name,
+            MIGRATE=True,
+            no_input=True,
+            dry_run=True
+        )
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with self.assertRaises(CommandError):
+            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+        self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, blow_away=True, no_input=True)
+        self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):

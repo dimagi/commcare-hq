@@ -12,8 +12,6 @@ from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
-SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID = 'sql-sms-to-es'
-
 
 def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0, **kwargs):
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
@@ -24,7 +22,7 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
         doc_prep_fn=lambda x: x
     )
     change_feed = KafkaChangeFeed(
-        topics=[topics.SMS], group_id=SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID,
+        topics=[topics.SMS], client_id='sql-sms-to-es',
         num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(

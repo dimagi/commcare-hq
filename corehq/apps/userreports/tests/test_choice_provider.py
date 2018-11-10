@@ -126,7 +126,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         choice_tuples = [
             (location.name, SearchableChoice(
                 location.location_id,
-                location.get_path_display(),
+                location.display_name,
                 searchable_text=[location.site_code, location.name]
             ))
             for location in six.itervalues(cls.locations)
@@ -137,7 +137,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         cls.choice_provider = LocationChoiceProvider(report, None)
         cls.choice_provider.configure({
             "include_descendants": False,
-            "show_full_path": True,
+            "show_full_path": False,
         })
         cls.static_choice_provider = StaticChoiceProvider(choices)
         cls.choice_query_context = partial(ChoiceQueryContext, user=cls.web_user)
@@ -177,7 +177,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         scoped_choices = [
             SearchableChoice(
                 location.location_id,
-                location.get_path_display(),
+                location.display_name,
                 searchable_text=[location.site_code, location.name]
             )
             for location in [

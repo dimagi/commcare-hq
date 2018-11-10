@@ -1,11 +1,19 @@
-/* global Stripe */
-hqDefine('domain/js/update_billing_contact_info', function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        stripeCardManager = hqImport("accounting/js/stripe_card_manager").stripeCardManager;
-
+hqDefine('domain/js/update_billing_contact_info', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'accounting/js/stripe_card_manager',
+    'accounting/js/lib/stripe',
+    'accounting/js/widgets',
+    'hqwebapp/js/knockout_bindings.ko', // openModal
+], function (
+    $,
+    initialPageData,
+    stripeCardManager,
+    Stripe
+) {
     $(function () {
         Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
-        var cardManager = new stripeCardManager({
+        var cardManager = stripeCardManager.stripeCardManager({
             cards: initialPageData.get("cards"),
             url: initialPageData.reverse("cards_view"),
         });

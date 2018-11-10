@@ -78,6 +78,7 @@ from corehq.apps.app_manager.models import (
     UpdateCaseAction,
     load_case_reserved_words,
     WORKFLOW_FORM,
+    CustomAssertion,
     CustomInstance,
     CaseReferences,
     CustomIcon,
@@ -365,6 +366,37 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 instance_path=instance.get("instancePath"),
             ) for instance in instances
         ]
+
+    if should_edit('custom_assertions'):
+        assertions = json.loads(request.POST.get('custom_assertions'))
+        try:  # validate that custom assertions can be added into the XML
+            for assertion in assertions:
+                etree.fromstring(
+                    '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
+                        **assertion
+                    )
+                )
+        except etree.XMLSyntaxError as error:
+            return json_response(
+                {'message': _("There was an issue with your custom assertions: {}").format(error.message)},
+                status_code=400
+            )
+
+        existing_assertions = {assertion.test: assertion for assertion in form.custom_assertions}
+        new_assertions = []
+        for assertion in assertions:
+            try:
+                new_assertion = existing_assertions[assertion.get('test')]
+                new_assertion.text[lang] = assertion.get('text')
+            except KeyError:
+                new_assertion = CustomAssertion(
+                    test=assertion.get('test'),
+                    text={lang: assertion.get('text')}
+                )
+            new_assertions.append(new_assertion)
+
+        form.custom_assertions = new_assertions
+
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
@@ -548,7 +580,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
     ]
 
 
-def get_form_view_context_and_template(request, domain, form, langs, messages=messages):
+def get_form_view_context_and_template(request, domain, form, langs, current_lang, messages=messages):
     xform_questions = []
     xform = None
     form_errors = []
@@ -681,6 +713,10 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'custom_instances': [
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
             for instance in form.custom_instances
+        ],
+        'custom_assertions': [
+            {'test': assertion.test, 'text': assertion.text.get(current_lang)}
+            for assertion in form.custom_assertions
         ],
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,

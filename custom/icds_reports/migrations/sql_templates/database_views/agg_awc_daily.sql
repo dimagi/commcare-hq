@@ -20,6 +20,7 @@ CREATE VIEW agg_awc_daily_view AS
         "awc_location"."district_map_location_name" AS "district_map_location_name",
         "awc_location"."state_map_location_name" AS "state_map_location_name",
         "awc_location"."aggregation_level" AS "aggregation_level",
+        "awc_location"."contact_phone_number" AS "contact_phone_number",
         "agg_awc"."date" AS "date",
         COALESCE("agg_awc"."cases_household", 0) AS "cases_household",
         COALESCE("agg_awc"."cases_person", 0) AS "cases_person",

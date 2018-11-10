@@ -30,7 +30,9 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             $menuToggle.text(gettext('Hide Full Menu'));
         };
 
-        if (initialPageData("appcues_test")) {
+        // Show the top HQ nav for new users, so they know how to get back to HQ,
+        // but hide it for more mature users so it's out of the way
+        if (initialPageData("domain_is_on_trial")) {
             showMenu();
         } else {
             hideMenu();

@@ -24,7 +24,7 @@ def get_group_pillow(pillow_id='GroupPillow', num_processes=1, process_num=0, **
         index_info=GROUP_INDEX_INFO,
     )
     change_feed = KafkaChangeFeed(
-        topics=[topics.GROUP], group_id='groups-to-es', num_processes=num_processes, process_num=process_num
+        topics=[topics.GROUP], client_id='groups-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,

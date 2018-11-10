@@ -62,14 +62,20 @@ SELECT
 FROM
 (
 	SELECT
+		user_location.user_dim_id as user_dim_id,
+		user_location.domain as domain,
+		location_dim.id as location_dim_id
+	FROM
+	(
+	SELECT
 		user_dim.id as user_dim_id,
 		user_staging.domain as domain,
-		UNNEST(user_staging.assigned_location_ids) AS location_id,
-		location_dim.id as location_dim_id
-FROM {{ user_staging }} AS user_staging
-LEFT JOIN {{ user_dim }} AS user_dim
-ON user_staging.user_id = user_dim.user_id
+		UNNEST(user_staging.assigned_location_ids) AS location_id
+	FROM {{ user_staging }} AS user_staging
+	LEFT JOIN {{ user_dim }} AS user_dim
+	ON user_staging.user_id = user_dim.user_id
+	WHERE user_staging.doc_type = 'CommCareUser'
+	) as user_location
 LEFT JOIN {{ location_dim }} AS location_dim
-ON location_id = location_dim.location_id
-WHERE user_staging.doc_type = 'CommCareUser'
+ON user_location.location_id = location_dim.location_id
 ) as mobileusers;

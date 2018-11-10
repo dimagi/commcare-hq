@@ -300,10 +300,13 @@
             <div class="ucr-preview-container fs-hide">
               <h3 data-bind="visible: !previewError()">{% trans 'Data Table' %}</h3>
               <p data-bind="visible: previewError" class="alert alert-warning">
-                {% blocktrans %}
-                  There was an error rendering your report preview. Please adjust your configuration to try again.
-                  If the issue persists, please report an issue.
-                {% endblocktrans %}
+                <span data-bind="text: previewErrorMessage"></span>
+                <span data-bind="visible: !previewErrorMessage()">
+                  {% blocktrans %}
+                    There was an error rendering your report preview. Please adjust your configuration to try again.
+                    If the issue persists, please report an issue.
+                  {% endblocktrans %}
+                </span>
               </p>
               <table id="preview" class="table"></table>
             </div>

@@ -8,8 +8,8 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     var vm = this;
     vm.label = "AWCs Reported Weighing Scale: Mother and Child";
     vm.steps = {
-        'map': {route: '/adult_weight_scale/map', label: 'Map View'},
-        'chart': {route: '/adult_weight_scale/chart', label: 'Chart View'},
+        'map': {route: '/awc_infrastructure/adult_weight_scale/map', label: 'Map View'},
+        'chart': {route: '/awc_infrastructure/adult_weight_scale/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',

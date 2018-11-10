@@ -143,20 +143,17 @@
             </p>
         </div>
     {% endif %}
-    {% if is_saas_environment and request.project.uses_new_reminders and request|ui_notify_enabled:"NEW_REMINDERS_FRAMEWORK" %}
+    {% if request|ui_notify_enabled:"DATA_FIND_BY_ID" %}
         <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
              style="position: absolute; width: 200px;"
-             data-target="#MessagingTab"
-             data-slug="{{ "NEW_REMINDERS_FRAMEWORK"|ui_notify_slug }}"
+             data-target="#ProjectDataTab"
+             data-slug="{{ "DATA_FIND_BY_ID"|ui_notify_slug }}"
              role="alert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
             <p class="lead">
-                {% blocktrans %}
-                We've made some updates to Broadcasts and Conditional Alerts.
-                <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/New+Reminders">Read more</a>
-                {% endblocktrans %}
+                {% trans 'Have you ever needed to find a form or a case by its ID? Check out the new "Find Data by ID" page!' %}
             </p>
         </div>
     {% endif %}

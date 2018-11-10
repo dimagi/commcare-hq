@@ -8,8 +8,8 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     var vm = this;
     vm.label = "Percent Aadhaar-seeded Beneficiaries";
     vm.steps = {
-        'map': {route: '/adhaar/map', label: 'Map View'},
-        'chart': {route: '/adhaar/chart', label: 'Chart View'},
+        'map': {route: '/demographics/adhaar/map', label: 'Map View'},
+        'chart': {route: '/demographics/adhaar/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage beneficiary',

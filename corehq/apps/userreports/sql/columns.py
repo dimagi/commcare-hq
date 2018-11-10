@@ -12,7 +12,7 @@ from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 
 def column_to_sql(column):
     column_name = column.database_column_name
-    if isinstance(column_name, six.binary_type):
+    if isinstance(column_name, bytes):
         column_name = column_name.decode('utf-8')
     return sqlalchemy.Column(
         column_name,

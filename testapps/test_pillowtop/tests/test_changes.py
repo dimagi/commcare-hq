@@ -49,7 +49,7 @@ class ChangeFeedDbTest(TestCase):
         for call_args in call_args_list:
             ordered_args, keyword_args = call_args
             self.assertEqual(1, len(ordered_args))
-            self.assertEqual(0, len(keyword_args))
+            self.assertEqual(1, len(keyword_args))
             ret.append(ordered_args[0])
         return ret
 

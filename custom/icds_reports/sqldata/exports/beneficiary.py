@@ -83,6 +83,9 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         def test_fucntion(x):
             return "%.2f" % x if x else "Data Not Entered"
 
+        def phone_number_fucntion(x):
+            return '"{}"'.format(x) if x else x
+
         columns = [
             DatabaseColumn(
                 'AWC Name',
@@ -103,6 +106,12 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 'Block Name',
                 SimpleColumn('block_name'),
                 slug='block_name'
+            ),
+            DatabaseColumn(
+                'AWW Phone Number',
+                SimpleColumn('contact_phone_number'),
+                format_fn=phone_number_fucntion,
+                slug='contact_phone_number'
             ),
             DatabaseColumn(
                 'Child Name',

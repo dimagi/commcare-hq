@@ -7,7 +7,9 @@ import glob
 import json
 import os
 import re
+from uuid import UUID
 
+from bulk_update.helper import bulk_update as bulk_update_helper
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -15,6 +17,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 import yaml
 
+from corehq.apps.userreports.app_manager.data_source_meta import REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -76,7 +79,7 @@ ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
 
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
-        raise BadValueError("Invalid ID")
+        raise BadValueError("Invalid ID: '{}'".format(value))
 
 
 class SQLColumnIndexes(DocumentSchema):
@@ -172,7 +175,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
-    icds_rebuild_related_docs = BooleanProperty(default=False)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
 
@@ -473,6 +475,7 @@ class ReportMeta(DocumentSchema):
     edited_manually = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
+    builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
 
 class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
@@ -521,7 +524,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def report_columns(self):
-        return [ReportColumnFactory.from_spec(c) for c in self.columns]
+        return [ReportColumnFactory.from_spec(c, self.is_static) for c in self.columns]
 
     @property
     @memoized
@@ -938,6 +941,62 @@ class AsyncIndicator(models.Model):
             for doc_id in doc_ids
         ])
 
+    @classmethod
+    def bulk_update_records(cls, configs_by_docs, domain, doc_type_by_id):
+        # type (Dict[str, List[str]], str, Dict[str, str]) -> None
+        # configs_by_docs should be a dict of doc_id -> list of config_ids
+        if not configs_by_docs:
+            return
+        doc_ids = list(configs_by_docs.keys())
+
+        current_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
+        to_update = []
+
+        for indicator in current_indicators:
+            new_configs = set(configs_by_docs[indicator.doc_id])
+            current_configs = set(indicator.indicator_config_ids)
+            if not new_configs.issubset(current_configs):
+                indicator.indicator_config_ids = sorted(current_configs.union(new_configs))
+                indicator.unsuccessful_attempts = 0
+                to_update.append(indicator)
+        if to_update:
+            bulk_update_helper(to_update)
+
+        new_doc_ids = set(doc_ids) - set([i.doc_id for i in current_indicators])
+        AsyncIndicator.objects.bulk_create([
+            AsyncIndicator(doc_id=doc_id, doc_type=doc_type_by_id[doc_id], domain=domain,
+                indicator_config_ids=sorted(configs_by_docs[doc_id]))
+            for doc_id in new_doc_ids
+        ])
+
+
+def get_datasource_config_infer_type(config_id, domain):
+    return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
+
+
+def guess_data_source_type(data_source_id):
+    """
+    Given a data source ID, try to guess its type (standard or aggregate).
+    """
+    # ints are definitely aggregate
+    if isinstance(data_source_id, int):
+        return DATA_SOURCE_TYPE_AGGREGATE
+    # static ids are standard
+    if id_is_static(data_source_id):
+        return DATA_SOURCE_TYPE_STANDARD
+    try:
+        # uuids are standard
+        UUID(data_source_id)
+        return DATA_SOURCE_TYPE_STANDARD
+    except ValueError:
+        try:
+            # int-like-things are aggregate
+            int(data_source_id)
+            return DATA_SOURCE_TYPE_AGGREGATE
+        except ValueError:
+            # default should be standard
+            return DATA_SOURCE_TYPE_STANDARD
+
 
 def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_STANDARD):
     def _raise_not_found():
@@ -945,25 +1004,28 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
             'The data source referenced by this report could not be found.'
         ))
 
-    is_static = id_is_static(config_id)
-    if is_static:
-        config = StaticDataSourceConfiguration.by_id(config_id)
-        if config.domain != domain:
-            _raise_not_found()
-    elif data_source_type == DATA_SOURCE_TYPE_STANDARD:
-        try:
-            config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
-        except DocumentNotFound:
-            _raise_not_found()
+    if data_source_type == DATA_SOURCE_TYPE_STANDARD:
+        is_static = id_is_static(config_id)
+        if is_static:
+            config = StaticDataSourceConfiguration.by_id(config_id)
+            if config.domain != domain:
+                _raise_not_found()
+        else:
+            try:
+                config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
+            except DocumentNotFound:
+                _raise_not_found()
+        return config, is_static
     elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
         try:
             config = AggregateTableDefinition.objects.get(id=int(config_id), domain=domain)
+            return config, False
         except AggregateTableDefinition.DoesNotExist:
             _raise_not_found()
     else:
         raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
-    return config, is_static
+
 
 
 def id_is_static(data_source_id):
@@ -977,6 +1039,8 @@ def report_config_id_is_static(config_id):
     Return True if the given report configuration id refers to a static report
     configuration.
     """
+    if config_id is None:
+        return False
     return any(
         config_id.startswith(prefix)
         for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]

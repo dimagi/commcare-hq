@@ -13,7 +13,7 @@
 
 {% block js %}{{ block.super }}
     {% include 'hqwebapp/includes/ui_element_js.html' %}
-    <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/select_2_ajax_widget_v4.js' %}"></script>
     <script src="{% static 'groups/js/group_members.js' %}"></script>
 {% endblock %}
 
@@ -219,7 +219,7 @@
                     </div>
                     <div class="modal-footer">
                         <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-                        <button type="submit" class="btn btn-primary">{% trans "Save changes" %}</button>
+                        <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
                     </div>
                 </form>
             </div>

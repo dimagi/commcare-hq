@@ -52,7 +52,7 @@ class TestDashboard2(YeksiTestCase):
                 [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}]
-            ], key=lambda x: x[0])
+            ], key=lambda x: x[0]['html'])
         )
         self.assertEqual(
             total_row,
@@ -108,7 +108,7 @@ class TestDashboard2(YeksiTestCase):
                 [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}]
-            ], key=lambda x: x[0])
+            ], key=lambda x: x[0]['html'])
         )
         self.assertEqual(
             total_row,
@@ -201,7 +201,7 @@ class TestDashboard2(YeksiTestCase):
                 [{'html': 'District Test'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}]
-            ], key=lambda x: x[0])
+            ], key=lambda x: x[0]['html'])
         )
         self.assertEqual(
             total_row,
@@ -253,7 +253,7 @@ class TestDashboard2(YeksiTestCase):
                 [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '100.00%'}, {'html': '100.00%'}]
-            ], key=lambda x: x[0])
+            ], key=lambda x: x[0]['html'])
         )
         self.assertEqual(
             total_row,

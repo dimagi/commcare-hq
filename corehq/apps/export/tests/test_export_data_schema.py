@@ -415,10 +415,10 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         v2items = [item for item in group_schema.items if item.last_occurrences[self.app_id] == 2]
         self.assertEqual(len(v2items), 2)
 
-        multichoice = filter(
+        multichoice = list(filter(
             lambda item: item.path == [PathNode(name='form'), PathNode(name='question2')],
             group_schema.items
-        )[0]
+        ))[0]
         self.assertEqual(len(multichoice.options), 3)
         self.assertEqual(
             len([o for o in multichoice.options if o.last_occurrences[self.app_id] == 2]),
@@ -1213,7 +1213,7 @@ class TestOrderingOfSchemas(SimpleTestCase):
         )
 
     def _assert_item_order(self, schema, path, items):
-        group_schema = list(filter(lambda gs: gs.path == path, schema.group_schemas))[0]
+        group_schema = [gs for gs in schema.group_schemas if gs.path == path][0]
 
         for item in group_schema.items:
             if not items:

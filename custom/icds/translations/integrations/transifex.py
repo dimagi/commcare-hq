@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
-import six
-import sys
 
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.conf import settings
-from memoized import memoized
 
+from corehq.apps.app_manager.dbaccessors import get_version_build_id
+from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.app_translations.generators import AppTranslationsGenerator, PoFileGenerator
 from corehq.apps.app_manager.app_translations.parser import TranslationsParser
 from custom.icds.translations.integrations.client import TransifexApiClient
@@ -46,20 +45,31 @@ class Transifex(object):
         self.use_version_postfix = use_version_postfix
         self.update_resource = update_resource
 
+    @cached_property
+    def app_id_to_build(self):
+        return self._find_build_id()
+
+    def _find_build_id(self):
+        # find build id if version specified
+        if self.version:
+            return get_version_build_id(self.domain, self.app_id, self.version)
+        else:
+            return self.app_id
+
     def send_translation_files(self):
         """
         submit translation files to transifex
         """
         app_trans_generator = AppTranslationsGenerator(
-            self.domain, self.app_id, self.version,
+            self.domain, self.app_id_to_build, self.version,
             self.key_lang, self.source_lang, self.lang_prefix,
             self.exclude_if_default, self.use_version_postfix)
-        with PoFileGenerator(app_trans_generator.translations, app_trans_generator.metadata) as po_file_generator:
+        with PoFileGenerator(app_trans_generator.translations,
+                             app_trans_generator.metadata) as po_file_generator:
             generated_files = po_file_generator.generate_translation_files()
-            return self._send_files_to_transifex(generated_files)
+            return self._send_files_to_transifex(generated_files, app_trans_generator)
 
-    @property
-    @memoized
+    @cached_property
     def client(self):
         transifex_account_details = settings.TRANSIFEX_DETAILS
         if transifex_account_details:
@@ -72,19 +82,37 @@ class Transifex(object):
         else:
             raise Exception(_("Transifex account details not available on this environment."))
 
-    def _send_files_to_transifex(self, generated_files):
+    @cached_property
+    def transifex_project_source_lang(self):
+        return self.client.transifex_lang_code(self.client.get_source_lang())
+
+    def _resource_name_in_project_lang(self, resource_slug, app_trans_generator):
+        """
+        return the name of the resource i.e module/form in source lang on Transifex
+
+        :param resource_slug: like module_moduleUniqueID
+        """
+        if MODULES_AND_FORMS_SHEET_NAME in resource_slug:
+            return MODULES_AND_FORMS_SHEET_NAME
+        module_or_form_unique_id = resource_slug.split('_')[1]
+        resource_name_in_all_langs = app_trans_generator.slug_to_name[module_or_form_unique_id]
+        return resource_name_in_all_langs.get(self.transifex_project_source_lang,
+                                              resource_name_in_all_langs.get('en', resource_slug))
+
+    def _send_files_to_transifex(self, generated_files, app_trans_generator):
         file_uploads = {}
-        for resource_name, path_to_file in generated_files:
+        for resource_slug, path_to_file in generated_files:
+            resource_name = self._resource_name_in_project_lang(resource_slug, app_trans_generator)
             if self.is_source_file:
                 response = self.client.upload_resource(
                     path_to_file,
-                    resource_name,
+                    resource_slug,
                     resource_name,
                     self.update_resource
                 )
             else:
                 response = self.client.upload_translation(
-                    path_to_file, resource_name,
+                    path_to_file, resource_slug,
                     resource_name, self.source_lang
                 )
             if response.status_code in [200, 201]:
@@ -93,8 +121,7 @@ class Transifex(object):
                 file_uploads[resource_name] = "{}: {}".format(response.status_code, response.content)
         return file_uploads
 
-    @property
-    @memoized
+    @cached_property
     def resource_slugs(self):
         if self._resource_slugs:
             return self._resource_slugs

@@ -160,6 +160,7 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'custom.icds_reports.middleware.ICDSAuditMiddleware',
+    'corehq.apps.domain.middleware.DomainAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -292,6 +293,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.http',
     'corehq.messaging.smsbackends.smsgh',
     'corehq.messaging.smsbackends.push',
+    'corehq.messaging.smsbackends.starfish',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
@@ -301,6 +303,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.messaging.smsbackends.karix',
+    'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -579,7 +582,6 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
-XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
@@ -592,7 +594,10 @@ CUSTOM_PROJECT_SMS_QUEUES = {
 
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
-SMS_QUEUE_ENABLED = False
+# This should always be set to True in production environments, and the sms_queue
+# celery worker(s) should be deployed. We set this to False for tests and (optionally)
+# for local testing.
+SMS_QUEUE_ENABLED = True
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -699,10 +704,6 @@ OPEN_EXCHANGE_RATES_API_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
-
-# for touchforms authentication
-TOUCHFORMS_API_USER = "changeme"
-TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -856,6 +857,7 @@ ZIPLINE_API_PASSWORD = ''
 ICDS_SMS_INDICATOR_DOMAINS = []
 
 KAFKA_BROKERS = ['localhost:9092']
+KAFKA_API_VERSION = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
@@ -890,6 +892,7 @@ AUTHPROXY_CERT = None
 ASYNC_INDICATORS_TO_QUEUE = 10000
 ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
+NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 
 UCR_COMPARISONS = {}
 
@@ -954,7 +957,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1265,6 +1268,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'kafka': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
     }
 }
 
@@ -1504,6 +1512,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
+    'corehq.messaging.smsbackends.starfish.models.StarfishBackend',
     'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
     'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
@@ -1516,6 +1525,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
     'corehq.messaging.smsbackends.karix.models.KarixBackend',
+    'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
 ]
 
 # The number of seconds to use as a timeout when making gateway requests
@@ -1841,8 +1851,23 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile_mpr_2a_deaths.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'asr_2_3_beneficiaries.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a3_children_delivered.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a_deaths.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3_children_registered.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3i_pregnancies.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4a6_preschool_education.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4b_iodized_salt.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_child_nutrition.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_pregnancy_nutrition.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6ac_pse_attendance.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6b_pse_attendance_per_year.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_7_growth_monitored.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_8_immunizations.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_9_vhnd.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10a_children_referred.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10b_pregnancies_referred.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_11_awc_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2ci_child_birth_list.json'),
@@ -1886,9 +1911,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'testing', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
-
 ]
 
 
@@ -1900,6 +1925,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
@@ -1911,7 +1937,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
@@ -2061,6 +2086,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
+    'reach-test': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
@@ -2094,6 +2120,34 @@ DOMAIN_MODULE_MAP = {
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
+
+    #vectorlink domains
+    'abtmali': 'custom.abt',
+    'airs': 'custom.abt',
+    'airs-testing': 'custom.abt',
+    'airsbenin': 'custom.abt',
+    'airsethiopia': 'custom.abt',
+    'airskenya': 'custom.abt',
+    'airsmadagascar': 'custom.abt',
+    'airsmozambique': 'custom.abt',
+    'airsrwanda': 'custom.abt',
+    'airstanzania': 'custom.abt',
+    'airszambia': 'custom.abt',
+    'airszimbabwe': 'custom.abt',
+    'vectorlink-benin': 'custom.abt',
+    'vectorlink-burkina-faso': 'custom.abt',
+    'vectorlink-ethiopia': 'custom.abt',
+    'vectorlink-ghana': 'custom.abt',
+    'vectorlink-kenya': 'custom.abt',
+    'vectorlink-madagascar': 'custom.abt',
+    'vectorlink-malawi': 'custom.abt',
+    'vectorlink-mali': 'custom.abt',
+    'vectorlink-mozambique': 'custom.abt',
+    'vectorlink-rwanda': 'custom.abt',
+    'vectorlink-tanzania': 'custom.abt',
+    'vectorlink-uganda': 'custom.abt',
+    'vectorlink-zambia': 'custom.abt',
+    'vectorlink-zimbabwe': 'custom.abt',
 }
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
@@ -2103,12 +2157,14 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-CASEXML_FORCE_DOMAIN_CHECK = True
-
 RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
+    ("production", "born-on-time-2"),
+    ("production", "hki-nepal-suaahara-2"),
     ("production", "malawi-fp-study"),
+    ("production", "no-lean-season"),
     ("production", "rec"),
+    ("production", "sauti-1"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####

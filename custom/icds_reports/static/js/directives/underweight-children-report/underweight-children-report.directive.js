@@ -24,8 +24,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     vm.label = "Prevalence of Underweight (Weight-for-Age)";
     vm.steps = {
-        'map': {route: '/underweight_children/map', label: 'Map View'},
-        'chart': {route: '/underweight_children/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/underweight_children/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/underweight_children/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',

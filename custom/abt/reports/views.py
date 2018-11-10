@@ -4,6 +4,7 @@ import io
 import json
 
 from django.http import HttpResponse
+from memoized import memoized
 
 import openpyxl
 from openpyxl.formatting.rule import CellIsRule
@@ -15,6 +16,7 @@ from sqlagg.filters import IN, BETWEEN
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.reports.util import get_INFilter_bindparams
+from corehq.apps.userreports.reports.util import ReportExport
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 from corehq.apps.userreports.util import get_table_name
 from corehq.util.soft_assert import soft_assert
@@ -133,9 +135,8 @@ class UniqueSOPSumDataSource(SqlData):
             'domain': domain,
         }
         for (key, value) in filter_values.items():
-            if key == 'date_of_data_collection' and value:
-                config['start_date'] = value.startdate
-                config['end_date'] = value.enddate
+            if key == 'date_of_data_collection':
+                continue
             elif key and value:
                 self.__setattr__(key, [x.value for x in value])
                 config[key] = self.__getattribute__(key)
@@ -149,8 +150,6 @@ class UniqueSOPSumDataSource(SqlData):
     @property
     def filters(self):
         filters = []
-        if 'start_date' in self.config and 'end_date' in self.config:
-            filters.append(BETWEEN("date_of_data_collection", "start_date", "end_date"))
         if 'country' in self.config:
             filters.append(IN('country', get_INFilter_bindparams('country', self.__getattribute__("country"))))
         if 'level_1' in self.config:
@@ -185,17 +184,11 @@ class CombinedDataSource(object):
         self.original_data_source = original_data_source
         self.filters_data = filter_values
 
-    def get_data(self, start, limit):
+    def get_data(self, start=None, limit=None):
         original_data = self.original_data_source.get_data(start, limit)
         unique_sops = UniqueSOPSumDataSource(self.original_data_source.domain, self.filters_data).get_data()
         group_columns = tuple(self.original_data_source.group_by[:-1])
         unique = {}
-
-        def get_loc_names(row, loc_levels):
-            locs = []
-            for loc in loc_levels:
-                locs.append(row[loc])
-            return tuple(locs)
 
         for row in unique_sops:
             loc_names = tuple(row[x] for x in group_columns)
@@ -244,10 +237,33 @@ class CombinedDataSource(object):
     def get_total_row(self):
         return self.original_data_source.get_total_row()
 
+    @property
+    def top_level_columns(self):
+        return self.original_data_source.top_level_columns
+
+    @property
+    def config(self):
+        return self.original_data_source.config
+
+
+class CustomReportExport(ReportExport):
+
+    @property
+    @memoized
+    def data_source(self):
+        original_data_source = super(CustomReportExport, self).data_source
+        return CombinedDataSource(original_data_source, self.filter_values)
+
 
 class FormattedSprayProgressReport(CustomConfigurableReport):
 
     @property
+    @memoized
     def data_source(self):
         original_data_source = super(FormattedSprayProgressReport, self).data_source
         return CombinedDataSource(original_data_source, self.filter_values)
+
+    @property
+    @memoized
+    def report_export(self):
+        return CustomReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values)

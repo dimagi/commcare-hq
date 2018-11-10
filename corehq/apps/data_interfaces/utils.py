@@ -66,11 +66,11 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
         missing_forms.discard(xform.form_id)
 
         if xform.domain != domain:
-            response['errors'].append(_("XFORM {form_id} does not belong to domain {domain}").format(
+            response['errors'].append(_("XForm {form_id} does not belong to domain {domain}").format(
                 form_id=xform.form_id, domain=domain))
             continue
 
-        xform_string = _("XFORM {form_id} for domain {domain} by user '{username}'").format(
+        xform_string = _("XForm {form_id} for domain {domain} by user '{username}'").format(
             form_id=xform.form_id,
             domain=xform.domain,
             username=username)

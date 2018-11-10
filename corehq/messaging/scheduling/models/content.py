@@ -60,14 +60,14 @@ class SMSContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return None
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient)
+        phone_entry_or_number = phone_entry or self.get_two_way_entry_or_phone_number(recipient)
         if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
@@ -102,7 +102,7 @@ class EmailContent(Content):
         renderer = self.get_template_renderer(recipient)
         return renderer.render(subject), renderer.render(message)
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         email_usage = EmailUsage.get_or_create_usage_record(logged_event.domain)
         is_trial = domain_is_on_trial(logged_event.domain)
 
@@ -199,7 +199,7 @@ class SMSSurveyContent(Content):
 
         return critical_section_for_smsforms_sessions(recipient.get_id)
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)
         if any([o is None for o in (app, module, form)]):
             logged_event.error(MessagingEvent.ERROR_CANNOT_FIND_FORM)
@@ -216,7 +216,10 @@ class SMSSurveyContent(Content):
         # very different if the contact is a user or is a case. So here if recipient
         # is a user we only allow them to fill out the survey as the user contact, and
         # not the user case contact.
-        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient, try_user_case=False)
+        phone_entry_or_number = (
+            phone_entry or
+            self.get_two_way_entry_or_phone_number(recipient, try_user_case=False)
+        )
 
         if phone_entry_or_number is None:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
@@ -378,7 +381,7 @@ class IVRSurveyContent(Content):
     # where the user is giving invalid answers or not answering at all.
     max_question_attempts = models.IntegerField(default=5)
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         pass
 
 
@@ -409,7 +412,7 @@ class SMSCallbackContent(Content):
     # See the explanation above to understand how this is used.
     reminder_intervals = JSONField(default=list)
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         pass
 
 
@@ -447,7 +450,7 @@ class CustomContent(Content):
 
         return messages
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,

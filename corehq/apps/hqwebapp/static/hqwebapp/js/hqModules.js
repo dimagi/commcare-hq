@@ -1,4 +1,3 @@
-/* globals jQuery */
 /*
  * hqModules provides a poor man's module system for js. It is not a module *loader*,
  * only a module *referencer*: "importing" a module doesn't automatically load it as
@@ -52,6 +51,8 @@ function hqDefine(path, dependencies, moduleAccessor) {
 
     (function (factory) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+            // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
+            // define calls, so it's important that this do nothing but pass through to require
             define(path, dependencies, factory);
         } else {
             var thirdPartyGlobals = {
@@ -67,6 +68,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'jquery.rmi/jquery.rmi',
                     'jquery-ui/ui/sortable',
                     'select2-3.5.2-legacy/select2',
+                    'select2/dist/js/select2.full.min',
                 ];
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
@@ -75,11 +77,6 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     args[i] = hqImport(dependency);
                 } else if (thirdPartyGlobals.hasOwnProperty(dependency)) {
                     args[i] = window[thirdPartyGlobals[dependency]];
-                } else if (!_.contains(thirdPartyPlugins, dependency)) {
-                    var message = "Could not find module '" + dependency + "'.";
-                    message += " Verify that its script tag appears before the script tag for '" + path + "'.";
-                    message += " If this is a third-party module, verify it appears in thirdPartyGlobals in hqModules.js.";
-                    console.warn(message);
                 }
             }
             if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {
@@ -112,7 +109,9 @@ function hqImport(path) {
 // introduce a circular dependency.
 function hqRequire(paths, callback) {
     if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
-        requirejs(paths, callback);
+        // HQ's requirejs build process (build_requirejs.py) replaces hqRequire calls with
+        // require calls, so it's important that this do nothing but pass through to require
+        require(paths, callback);
     } else {
         var args = [];
         for (var i = 0; i < paths.length; i++) {

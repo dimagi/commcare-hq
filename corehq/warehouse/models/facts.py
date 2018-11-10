@@ -132,9 +132,6 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     last_form_app_build_version = models.CharField(max_length=255, null=True)
     last_form_app_commcare_version = models.CharField(max_length=255, null=True)
 
-    class Meta:
-        unique_together = ('app_dim', 'user_dim')
-
     @classmethod
     def dependencies(cls):
         return [

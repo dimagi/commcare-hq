@@ -11,19 +11,18 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain, get_current_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException, AppLinkError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
-from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.util import get_static_report_mapping
-from corehq.util.couch import DocumentNotFound
 import six
 
 CASE_TYPE_CONFLICT_MSG = (
@@ -289,6 +288,21 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
+def update_linked_app_and_notify(domain, app_id, user_id, email):
+    app = get_current_app(domain, app_id)
+    try:
+        update_linked_app(app, user_id)
+    except AppLinkError as e:
+        message = six.text_type(e)
+    except Exception:
+        message = _("Something went wrong! There was an error. Please try again. "
+                    "If you see this error repeatedly please report it as issue.")
+    else:
+        message = _("Your linked application was successfully updated to the latest version.")
+    subject = _("Update Status for linked app %s") % app.name
+    send_html_email_async.delay(subject, email, message)
+
+
 def update_linked_app(app, user_id):
     if not app.domain_link:
         raise AppLinkError(_(
@@ -341,6 +355,9 @@ def update_linked_app(app, user_id):
             ))
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
+
+    # reapply linked application specific data
+    app.reapply_overrides()
 
 
 def clear_xmlns_app_id_cache(domain):

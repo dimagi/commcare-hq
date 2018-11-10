@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+from contextlib import contextmanager
 
 from couchdbkit import ResourceNotFound
 
@@ -10,66 +11,62 @@ from corehq.form_processor.models import Attachment
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
-from couchforms.exceptions import DuplicateError, MissingXMLNSError
-from dimagi.utils.couch import LockManager, ReleaseOnError
+from couchforms.exceptions import MissingXMLNSError
+from dimagi.utils.couch import release_lock
 import six
 
 
-class MultiLockManager(list):
+@contextmanager
+def locked_form(xform, interface):
+    """Context manager that locks a form and checks/prepares for duplicates
 
-    def __enter__(self):
-        return [lock_manager.__enter__() for lock_manager in self]
+    The lock is acquired on context manager enter and released on exit.
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        for lock_manager in self:
-            lock_manager.__exit__(exc_type, exc_val, exc_tb)
+    Historically this locked both the new (possibly duplicate) form ID
+    as well as any new ID generated in the process of handling a
+    duplicate form ID. The submitted form ID is still locked, but the
+    newly generated ID is not since it should be globally unique.
+    """
+    context = [xform]
+    lock = interface.acquire_lock_for_xform(xform.form_id)
+    try:
+        if interface.is_duplicate(xform.form_id):
+            new_form, dup_form = _handle_id_conflict(xform, xform.domain)
+            if dup_form:
+                assert dup_form.form_id != new_form.form_id, (new_form, dup_form)
+                context = [new_form, dup_form]
+            else:
+                assert new_form is xform, (new_form, xform)
+        yield context
+    finally:
+        release_lock(lock, degrade_gracefully=True)
 
 
 class FormProcessingResult(object):
 
-    def __init__(self, submitted_form, existing_duplicate=None):
+    def __init__(self, submitted_form):
         self.submitted_form = submitted_form
-        self.existing_duplicate = existing_duplicate
         self.interface = FormProcessorInterface(self.submitted_form.domain)
 
-    def _get_form_lock(self, form_id):
-        return self.interface.acquire_lock_for_xform(form_id)
-
     def get_locked_forms(self):
-        if self.existing_duplicate:
-            # Lock docs with their original ID's (before they got switched during deprecation)
-            old_id = self.existing_duplicate.form_id
-            new_id = self.submitted_form.form_id
-            assert old_id != new_id, 'Expecting form IDs to be different'
-            return MultiLockManager([
-                LockManager(self.submitted_form, self._get_form_lock(new_id)),
-                LockManager(self.existing_duplicate, self._get_form_lock(old_id)),
-            ])
-        else:
-            return MultiLockManager([
-                LockManager(self.submitted_form, self._get_form_lock(self.submitted_form.form_id))
-            ])
+        """Get a context manager whose context is a list of forms
 
-
-class LockedFormProcessingResult(FormProcessingResult):
-
-    def __init__(self, submitted_form):
-        super(LockedFormProcessingResult, self).__init__(submitted_form)
-        assert submitted_form.is_normal
-        self.lock = self._get_form_lock(submitted_form.form_id)
-
-    def get_locked_forms(self):
-        return MultiLockManager([LockManager(self.submitted_form, self.lock)])
+        The first form in the list is the newly submitted form, and will
+        always be present. The second is a form with a duplicate form ID
+        (if one exists); it will be omitted if there is no duplicate.
+        """
+        return locked_form(self.submitted_form, self.interface)
 
 
 def process_xform_xml(domain, instance, attachments=None, auth_context=None):
     """
     Create a new xform to ready to be saved to a database in a thread-safe manner
-    Returns a LockManager containing the new XFormInstance(SQL) and its lock,
-    or raises an exception if anything goes wrong.
 
     attachments is a dictionary of the request.FILES that are not the xform;
     key is parameter name, value is django MemoryFile object stream
+
+    :returns: FormProcessingResult containing the new XFormInstance(SQL)
+    or raises an exception if anything goes wrong.
     """
     attachments = attachments or {}
 
@@ -77,8 +74,6 @@ def process_xform_xml(domain, instance, attachments=None, auth_context=None):
         return _create_new_xform(domain, instance, attachments=attachments, auth_context=auth_context)
     except (MissingXMLNSError, XMLSyntaxError) as e:
         return _get_submission_error(domain, instance, e)
-    except DuplicateError as e:
-        return _handle_id_conflict(e.xform, domain)
 
 
 def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None):
@@ -94,6 +89,7 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None)
       - raise couchforms.XMLSyntaxError
       :param domain:
 
+    :returns: FormProcessingResult or raises an error
     """
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
     interface = FormProcessorInterface(domain)
@@ -114,12 +110,8 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None)
     attachments.append(Attachment(name='form.xml', raw_content=instance_xml, content_type='text/xml'))
     interface.store_attachments(xform, attachments)
 
-    result = LockedFormProcessingResult(xform)
-    with ReleaseOnError(result.lock):
-        if interface.is_duplicate(xform.form_id):
-            raise DuplicateError(xform)
-
-    return result
+    assert xform.is_normal
+    return FormProcessingResult(xform)
 
 
 def _get_submission_error(domain, instance, error):
@@ -141,6 +133,9 @@ def _handle_id_conflict(xform, domain):
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the
     previous form and overwrite it with the new form's contents.
+
+    :returns: A two-tuple: `(<new form>, <duplicate form or None>)`
+    The new form may have a different `form_id` than `xform.form_id`.
     """
 
     assert domain
@@ -154,8 +149,7 @@ def _handle_id_conflict(xform, domain):
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
-        xform = interface.assign_new_id(xform)
-        return FormProcessingResult(xform)
+        return interface.assign_new_id(xform), None
 
 
 def _handle_duplicate(new_doc):
@@ -165,6 +159,8 @@ def _handle_duplicate(new_doc):
     existing doc *must* be validated as an XFormInstance in the right domain
     and *must* include inline attachments
 
+    :returns: A two-tuple: `(<new form>, <duplicate form or None>)`
+    The new form may have a different `form_id` than `new_doc.form_id`.
     """
     interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
@@ -176,18 +172,19 @@ def _handle_duplicate(new_doc):
         # the form anyway.
         from couchforms.models import XFormInstance
         XFormInstance.get_db().delete_doc(conflict_id)
-        return FormProcessingResult(new_doc)
+        return new_doc, None
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = new_doc.xml_md5()
 
     if existing_md5 != new_md5:
+        _soft_assert = soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)
         if new_doc.xmlns != existing_doc.xmlns:
             # if the XMLNS has changed this probably isn't a form edit
             # it could be a UUID clash (yes we've had that before)
             # Assign a new ID to the form and process as normal + notify_admins
             xform = interface.assign_new_id(new_doc)
-            soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)(
+            _soft_assert(
                 False, "Potential UUID clash", {
                     'incoming_form_id': conflict_id,
                     'existing_form_id': existing_doc.form_id,
@@ -197,19 +194,26 @@ def _handle_duplicate(new_doc):
                     'domain': new_doc.domain,
                 }
             )
-            return FormProcessingResult(xform)
+            return xform, None
         else:
             # if the form contents are not the same:
             #  - "Deprecate" the old form by making a new document with the same contents
             #    but a different ID and a doc_type of XFormDeprecated
             #  - Save the new instance to the previous document to preserve the ID
             existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
-            return FormProcessingResult(new_doc, existing_doc)
+            _soft_assert(
+                False, "Form edit", {
+                    'form_id': new_doc.form_id,
+                    'deprecated_form': existing_doc.form_id,
+                    'domain': new_doc.domain,
+                }
+            )
+            return new_doc, existing_doc
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
         duplicate = interface.deduplicate_xform(new_doc)
-        return FormProcessingResult(duplicate, existing_doc)
+        return duplicate, existing_doc
 
 
 def apply_deprecation(existing_xform, new_xform, interface=None):

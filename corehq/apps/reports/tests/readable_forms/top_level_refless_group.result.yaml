@@ -1,18 +1,19 @@
 - calculate: null
   children:
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
-    tag: group, type: FieldList, value: ''}
+    label: '', label_ref: null, relevant: null, repeat: null, required: false, response: null,
+    setvalue: null, tag: group, type: FieldList, value: ''}
   - {calculate: null, comment: null, constraint: int(.) <= (int(today())+1), group: '',
-    hashtagValue: /progress_note/note/encounter_date, label: Date of Encounter, relevant: null,
-    repeat: null, required: true, response: null, setvalue: null, tag: input, type: Date,
-    value: /progress_note/note/encounter_date}
+    hashtagValue: /progress_note/note/encounter_date, label: Date of Encounter, label_ref: encounter_date,
+    relevant: null, repeat: null, required: true, response: null, setvalue: null,
+    tag: input, type: Date, value: /progress_note/note/encounter_date}
   - calculate: null
     comment: null
     constraint: null
     group: ''
     hashtagValue: /progress_note/note/times/missed_visit
     label: Missed Visit
+    label_ref: missed_visit
     options:
     - {label: 'Yes', value: 'yes'}
     - {label: 'No', value: 'no'}
@@ -25,48 +26,50 @@
     type: Select
     value: /progress_note/note/times/missed_visit
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: Activity Time, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: group, type: FieldList, value: ''}
+    label: Activity Time, label_ref: time_entry, relevant: null, repeat: null, required: false,
+    response: null, setvalue: null, tag: group, type: FieldList, value: ''}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/office,
-    label: PACT Office Visit, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/office}
+    label: PACT Office Visit, label_ref: time_office, relevant: null, repeat: null,
+    required: false, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/office}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/home,
-    label: Home Visit, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/home}
+    label: Home Visit, label_ref: time_home, relevant: null, repeat: null, required: false,
+    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/home}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/other,
-    label: Other Visit, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/other}
+    label: Other Visit, label_ref: time_other, relevant: null, repeat: null, required: false,
+    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/other}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/wait,
-    label: Time Waiting for Client, relevant: null, repeat: null, required: false,
-    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/wait}
+    label: Time Waiting for Client, label_ref: time_wait, relevant: null, repeat: null,
+    required: false, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/wait}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/accompaniment,
-    label: Accompaniment Time, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/accompaniment}
+    label: Accompaniment Time, label_ref: accompaniment, relevant: null, repeat: null,
+    required: false, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/accompaniment}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/phone,
-    label: Phone Call/Leave Message, relevant: null, repeat: null, required: false,
-    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/phone}
+    label: Phone Call/Leave Message, label_ref: time_phone, relevant: null, repeat: null,
+    required: false, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/phone}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/discussion,
-    label: Provider/Discussion Message, relevant: null, repeat: null, required: false,
-    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/discussion}
+    label: Provider/Discussion Message, label_ref: time_discussion, relevant: null,
+    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Int,
+    value: /progress_note/note/times/discussion}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/administrative,
-    label: Administrative, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/administrative}
+    label: Administrative, label_ref: time_administrative, relevant: null, repeat: null,
+    required: false, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/administrative}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/travel,
-    label: Travel, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/travel}
+    label: Travel, label_ref: time_travel, relevant: null, repeat: null, required: false,
+    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/travel}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
-    tag: group, type: FieldList, value: ''}
+    label: '', label_ref: null, relevant: null, repeat: null, required: false, response: null,
+    setvalue: null, tag: group, type: FieldList, value: ''}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/other_location,
-    label: Location of Other Visit, relevant: /progress_note/note/times/other > 0,
-    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Text,
-    value: /progress_note/note/times/other_location}
+    label: Location of Other Visit, label_ref: time_other_location, relevant: /progress_note/note/times/other
+      > 0, repeat: null, required: false, response: null, setvalue: null, tag: input,
+    type: Text, value: /progress_note/note/times/other_location}
   - calculate: null
     comment: null
     constraint: null
     group: ''
     hashtagValue: /progress_note/note/times/accompaniment_type
     label: Accompaniment Type
+    label_ref: accompaniment_type
     options:
     - {label: HIV MD, value: hivmd}
     - {label: PCP, value: pcp}
@@ -84,18 +87,19 @@
     type: Select
     value: /progress_note/note/times/accompaniment_type
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/accompaniment_other,
-    label: Specify Accompaniment Type, relevant: /progress_note/note/times/accompaniment_type
+    label: Specify Accompaniment Type, label_ref: accompaniment_other, relevant: /progress_note/note/times/accompaniment_type
       = 'other', repeat: null, required: false, response: null, setvalue: null, tag: input,
     type: Text, value: /progress_note/note/times/accompaniment_other}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
-    tag: group, type: FieldList, value: ''}
+    label: '', label_ref: null, relevant: null, repeat: null, required: false, response: null,
+    setvalue: null, tag: group, type: FieldList, value: ''}
   - calculate: null
     comment: null
     constraint: null
     group: ''
     hashtagValue: /progress_note/note/discussed_appointments
     label: Discussed scheduled appointments
+    label_ref: discussed_appointments
     options:
     - {label: 'Yes', value: 'yes'}
     - {label: 'No', value: 'no'}
@@ -113,6 +117,7 @@
     group: ''
     hashtagValue: /progress_note/note/discussed_goals
     label: Discussed goals for current/upcoming appointment
+    label_ref: discussed_goals
     options:
     - {label: 'Yes', value: 'yes'}
     - {label: 'No', value: 'no'}
@@ -130,6 +135,7 @@
     group: ''
     hashtagValue: /progress_note/note/discussed_followup
     label: Discussed follow up after appointment
+    label_ref: discussed_followup
     options:
     - {label: 'Yes', value: 'yes'}
     - {label: 'No', value: 'no'}
@@ -142,14 +148,15 @@
     type: Select
     value: /progress_note/note/discussed_followup
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
-    tag: group, type: FieldList, value: ''}
+    label: '', label_ref: null, relevant: null, repeat: null, required: false, response: null,
+    setvalue: null, tag: group, type: FieldList, value: ''}
   - calculate: null
     comment: null
     constraint: null
     group: ''
     hashtagValue: /progress_note/note/reviewed_cd
     label: "Reviewed patient\u2019s CD4 & VL"
+    label_ref: reviewed_cd
     options:
     - {label: 'Yes', value: 'yes'}
     - {label: 'No', value: 'no'}
@@ -167,6 +174,7 @@
     group: ''
     hashtagValue: /progress_note/note/discussed_qsp
     label: Discussed QSP
+    label_ref: discussed_qsp
     options:
     - {label: 'Yes', value: 'yes'}
     - {label: 'No', value: 'no'}
@@ -179,18 +187,20 @@
     type: Select
     value: /progress_note/note/discussed_qsp
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: Adherence, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: group, type: FieldList, value: ''}
+    label: Adherence, label_ref: adherence, relevant: null, repeat: null, required: false,
+    response: null, setvalue: null, tag: group, type: FieldList, value: ''}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/adherence/missed,
-    label: Doses Missed in the Last 7 Days, relevant: null, repeat: null, required: false,
-    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/adherence/missed}
+    label: Doses Missed in the Last 7 Days, label_ref: doses_missed, relevant: null,
+    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Int,
+    value: /progress_note/note/adherence/missed}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/adherence/possible,
-    label: Doses Possible in the Last 7 Days, relevant: null, repeat: null, required: false,
-    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/adherence/possible}
+    label: Doses Possible in the Last 7 Days, label_ref: doses_possible, relevant: null,
+    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Int,
+    value: /progress_note/note/adherence/possible}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/adherence/freetext,
-    label: 'Patient''s response to "How was it taking your meds today?"', relevant: null,
-    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Text,
-    value: /progress_note/note/adherence/freetext}
+    label: 'Patient''s response to "How was it taking your meds today?"', label_ref: adherence_freetext,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Text, value: /progress_note/note/adherence/freetext}
   - calculate: null
     comment: null
     constraint: null
@@ -198,6 +208,7 @@
     hashtagValue: /progress_note/note/adherence/self_report
     label: 'Patient Self Report: How much of your medicine did you take in the last
       week'
+    label_ref: self_report
     options:
     - {label: All, value: all}
     - {label: Most, value: most}
@@ -213,14 +224,15 @@
     type: Select
     value: /progress_note/note/adherence/self_report
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
-    tag: group, type: FieldList, value: ''}
+    label: '', label_ref: null, relevant: null, repeat: null, required: false, response: null,
+    setvalue: null, tag: group, type: FieldList, value: ''}
   - calculate: null
     comment: null
     constraint: null
     group: ''
     hashtagValue: /progress_note/note/newreferral
     label: New Referral(s)
+    label_ref: newreferral
     options:
     - {label: 'Yes', value: 'yes'}
     - {label: 'No', value: 'no'}
@@ -238,6 +250,7 @@
     group: ''
     hashtagValue: /progress_note/note/newbw
     label: New Bloodwork Record(s)
+    label_ref: newbw
     options:
     - {label: 'Yes', value: 'yes'}
     - {label: 'No', value: 'no'}
@@ -254,19 +267,20 @@
     - calculate: null
       children:
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/referrals/referral,
-        hashtagValue: /progress_note/note/referrals/referral, label: '', relevant: null,
-        repeat: /progress_note/note/referrals/referral, required: false, response: null,
-        setvalue: null, tag: group, type: FieldList, value: /progress_note/note/referrals/referral}
+        hashtagValue: /progress_note/note/referrals/referral, label: '', label_ref: null,
+        relevant: null, repeat: /progress_note/note/referrals/referral, required: false,
+        response: null, setvalue: null, tag: group, type: FieldList, value: /progress_note/note/referrals/referral}
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/referrals/referral,
         hashtagValue: /progress_note/note/referrals/referral/ref_date, label: Referral
-          Date, relevant: null, repeat: /progress_note/note/referrals/referral, required: false,
-        response: null, setvalue: null, tag: input, type: Date, value: /progress_note/note/referrals/referral/ref_date}
+          Date, label_ref: referral_date, relevant: null, repeat: /progress_note/note/referrals/referral,
+        required: false, response: null, setvalue: null, tag: input, type: Date, value: /progress_note/note/referrals/referral/ref_date}
       - calculate: null
         comment: null
         constraint: null
         group: /progress_note/note/referrals/referral
         hashtagValue: /progress_note/note/referrals/referral/ref_type
         label: Type of Referral
+        label_ref: referral_type
         options:
         - {label: Social, value: social}
         - {label: Medical, value: medical}
@@ -295,6 +309,7 @@
     group: ''
     hashtagValue: /progress_note/note/referrals/referral
     label: Referral
+    label_ref: referral
     relevant: null
     repeat: null
     required: false
@@ -308,19 +323,20 @@
     - calculate: null
       children:
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw,
-        hashtagValue: /progress_note/note/bwresults/bw, label: '', relevant: null,
-        repeat: /progress_note/note/bwresults/bw, required: false, response: null,
-        setvalue: null, tag: group, type: FieldList, value: /progress_note/note/bwresults/bw}
+        hashtagValue: /progress_note/note/bwresults/bw, label: '', label_ref: null,
+        relevant: null, repeat: /progress_note/note/bwresults/bw, required: false,
+        response: null, setvalue: null, tag: group, type: FieldList, value: /progress_note/note/bwresults/bw}
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw,
         hashtagValue: /progress_note/note/bwresults/bw/test_date, label: Date of Tests,
-        relevant: null, repeat: /progress_note/note/bwresults/bw, required: true,
-        response: null, setvalue: null, tag: input, type: Date, value: /progress_note/note/bwresults/bw/test_date}
+        label_ref: bloodwork_date, relevant: null, repeat: /progress_note/note/bwresults/bw,
+        required: true, response: null, setvalue: null, tag: input, type: Date, value: /progress_note/note/bwresults/bw/test_date}
       - calculate: null
         comment: null
         constraint: null
         group: /progress_note/note/bwresults/bw
         hashtagValue: /progress_note/note/bwresults/bw/tests
         label: Types of test performed
+        label_ref: bloodwork_types
         options:
         - {label: Viral Load, value: vl}
         - {label: CD4 Count, value: cd}
@@ -334,17 +350,17 @@
         value: /progress_note/note/bwresults/bw/tests
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw,
         hashtagValue: /progress_note/note/bwresults/bw/vl, label: Viral Load Result,
-        relevant: 'selected(../tests,''vl'')', repeat: /progress_note/note/bwresults/bw,
+        label_ref: vl_count, relevant: 'selected(../tests,''vl'')', repeat: /progress_note/note/bwresults/bw,
         required: true, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/bwresults/bw/vl}
       - calculate: null
         children:
         - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw/cd,
           hashtagValue: /progress_note/note/bwresults/bw/cd/cdcnt, label: CD4 Count
-            Result, relevant: null, repeat: /progress_note/note/bwresults/bw, required: true,
-          response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/bwresults/bw/cd/cdcnt}
+            Result, label_ref: cd_count, relevant: null, repeat: /progress_note/note/bwresults/bw,
+          required: true, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/bwresults/bw/cd/cdcnt}
         - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw/cd,
           hashtagValue: /progress_note/note/bwresults/bw/cd/cdper, label: CD4 Percent
-            Result (Optional), relevant: null, repeat: /progress_note/note/bwresults/bw,
+            Result (Optional), label_ref: cd_per, relevant: null, repeat: /progress_note/note/bwresults/bw,
           required: false, response: null, setvalue: null, tag: input, type: Int,
           value: /progress_note/note/bwresults/bw/cd/cdper}
         comment: null
@@ -352,6 +368,7 @@
         group: /progress_note/note/bwresults/bw
         hashtagValue: /progress_note/note/bwresults/bw/cd
         label: ''
+        label_ref: null
         relevant: selected(../tests,'cd')
         repeat: /progress_note/note/bwresults/bw
         required: false
@@ -376,6 +393,7 @@
     group: ''
     hashtagValue: /progress_note/note/bwresults/bw
     label: Bloodwork
+    label_ref: bloodwork
     relevant: null
     repeat: null
     required: false
@@ -385,14 +403,15 @@
     type: Repeat
     value: /progress_note/note/bwresults/bw
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: Conversations, relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: group, type: Group, value: ''}
+    label: Conversations, label_ref: convseration_header, relevant: null, repeat: null,
+    required: false, response: null, setvalue: null, tag: group, type: Group, value: ''}
   - calculate: null
     comment: null
     constraint: null
     group: ''
     hashtagValue: /progress_note/note/conversations/which
     label: In what topics did you have a discussion?
+    label_ref: conversations_which
     options:
     - {label: Introduction to the Health Promotion Curriculum, value: conversations_1}
     - {label: Me and IHV, value: conversations_2}
@@ -424,6 +443,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_1
     label: Introduction to the Health Promotion Curriculum
+    label_ref: conversations_1
     options:
     - {label: Initial Adherence Assessment, value: conversation_01_A_c}
     - {label: Introduce the Health Promotion Curriculum, value: conversation_01_B_c}
@@ -445,6 +465,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_2
     label: Me and IHV
+    label_ref: conversations_2
     options:
     - {label: Me and HIV, value: conversation_02_A_c}
     - {label: My Life Goals, value: conversation_02_B_c}
@@ -463,6 +484,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_3
     label: Using a Pillbox
+    label_ref: conversations_3
     options:
     - {label: How to read a pill bottle, value: conversation_03_A_c}
     - {label: Medication List, value: conversation_03_B_c}
@@ -484,6 +506,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_4
     label: Handling your ART Medications
+    label_ref: conversations_4
     options:
     - {label: Pharmacy Plan, value: conversation_04_A_c}
     - {label: Refilling your Medication, value: conversation_04_B_c}
@@ -505,6 +528,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_5
     label: What is Adherence
+    label_ref: conversations_5
     options:
     - {label: "Your patient\u2019s perceptions of treatment", value: conversation_05_A_c}
     - {label: 'What is adherence?', value: conversation_05_B_c}
@@ -526,6 +550,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_6
     label: Side Effects
+    label_ref: conversations_6
     options:
     - {label: Understanding Side Effects, value: conversation_06_A_d}
     - {label: Identifying Side Effects, value: conversation_06_B_d}
@@ -545,6 +570,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_7
     label: What is HIV and How does it Affect My Body
+    label_ref: conversations_7
     options:
     - {label: 'What is HIV and how does it affect my body?', value: conversation_07_A_c}
     - {label: The Immune System, value: conversation_07_B_c}
@@ -567,6 +593,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_8
     label: Identifying and Building Social Support Networks
+    label_ref: conversations_8
     options:
     - {label: Understanding Social Support, value: conversation_08_A_c}
     - {label: Community Influences, value: conversation_08_B_c}
@@ -586,6 +613,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_9
     label: Adherence Strengths and Difficulties
+    label_ref: conversations_9
     options:
     - {label: Your ART Experience, value: conversation_09_A_c}
     - {label: Adherence Strengths and Difficulties, value: conversation_09_B_c}
@@ -604,6 +632,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_10
     label: Medical Appointments and Providers
+    label_ref: conversations_10
     options:
     - {label: Appointment logistics, value: conversation_10_A_c}
     - {label: Communicating with Providers, value: conversation_10_B_c}
@@ -622,6 +651,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_11
     label: Health Maintenance
+    label_ref: conversations_11
     options:
     - {label: Introduction to Health Maintenance, value: conversation_11_A_d}
     - {label: Building Patient-Doctor Relationships, value: conversation_11_B_d}
@@ -642,6 +672,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_12
     label: Harm Reduction
+    label_ref: conversations_12
     options:
     - {label: 'What is Harm Reduction?', value: conversation_12_A_d}
     - {label: Risky sex and possible harms, value: conversation_12_B_d}
@@ -663,6 +694,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_13
     label: Harm Reduction - Substance Abuse
+    label_ref: conversations_13
     options:
     - {label: Assessment, value: conversation_13_A_d}
     - {label: Introduction to Harm Reduction, value: conversation_13_B_d}
@@ -685,6 +717,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_14
     label: Harm Reduction - Safety in Relationships
+    label_ref: conversations_14
     options:
     - {label: 'What is Harm Reduction?', value: conversation_14_A_d}
     - {label: Healthy Relationships, value: conversation_14_B_d}
@@ -706,6 +739,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_15
     label: Healthy Living - Diet and Exercise
+    label_ref: conversations_15
     options:
     - {label: Healthy eating assessment, value: conversation_15_A_d}
     - {label: 'Why does eating healthy matter HIV?', value: conversation_15_B_d}
@@ -727,6 +761,7 @@
     group: ''
     hashtagValue: /progress_note/note/conversations/conversations_16
     label: Wrap Up
+    label_ref: conversations_16
     options:
     - {label: Review the Patient Workbook tools, value: conversation_16_A_c}
     - {label: Review goals, value: conversation_16_B_c}
@@ -741,8 +776,8 @@
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/memo,
     label: "\nAny other notes from the meeting?\n\n     Please Include:\n     1) Environment/context\n\
       \     2) Themes/activities\n     3) Take-home message\n                    \
-      \                    ", relevant: null, repeat: null, required: false, response: null,
-    setvalue: null, tag: input, type: Text, value: /progress_note/note/memo}
+      \                    ", label_ref: notes, relevant: null, repeat: null, required: false,
+    response: null, setvalue: null, tag: input, type: Text, value: /progress_note/note/memo}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/meta/userID,
     label: meta/userID, relevant: null, repeat: null, required: null, response: null,
     setvalue: instance('commcaresession')/session/context/userid, tag: hidden, type: DataBindOnly,
@@ -781,6 +816,7 @@
   group: null
   hashtagValue: ''
   label: 'Client #____'
+  label_ref: odk_form_title
   relevant: null
   repeat: null
   required: false

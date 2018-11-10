@@ -20,6 +20,7 @@ CREATE VIEW daily_attendance_view AS
         "awc_location_months"."district_map_location_name" AS "district_map_location_name",
         "awc_location_months"."state_map_location_name" AS "state_map_location_name",
         "awc_location_months"."month" AS "month",
+        "awc_location_months"."contact_phone_number" AS "contact_phone_number",
         "daily_attendance"."doc_id" AS "doc_id",
         "daily_attendance"."pse_date" AS "pse_date",
         "daily_attendance"."awc_open_count" AS "awc_open_count",

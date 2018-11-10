@@ -13,7 +13,6 @@ from captcha.fields import CaptchaField
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.users.models import CouchUser
-from corehq.messaging.util import project_is_on_new_reminders
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -79,11 +78,10 @@ from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPL
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
-from corehq.apps.reminders.models import CaseReminderHandler
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -136,10 +134,10 @@ class ProjectSettingsForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.all().wrap_together(crispy.Fieldset, _('Override Project Timezone'))
+        self.helper.all().wrap_together(crispy.Fieldset, _('My Timezone'))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Override Project Timezone'),
+                _('My Timezone'),
                 crispy.Field('global_timezone', css_class='input-xlarge'),
                 twbscrispy.PrependedText(
                     'override_global_tz',
@@ -345,8 +343,8 @@ class SnapshotSettingsForm(forms.Form):
         data_cda = self.cleaned_data['cda_confirmed']
         data_publish = self.data.get('publish_on_submit', "no") == "yes"
         if data_publish and data_cda is False:
-            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your '
-                                        'project.')
+            raise forms.ValidationError(_('You must agree to our Content Distribution Agreement to publish your '
+                                          'project.'))
         return data_cda
 
     def clean_video(self):
@@ -379,8 +377,8 @@ class SnapshotSettingsForm(forms.Form):
 
         v_id = video_id(video)
         if not v_id:
-            raise forms.ValidationError('This is not a correctly formatted YouTube URL. Please use a different '
-                                        'URL.')
+            raise forms.ValidationError(_('This is not a correctly formatted YouTube URL. Please use a different '
+                                          'URL.'))
         return v_id
 
     def clean(self):
@@ -398,21 +396,17 @@ class SnapshotSettingsForm(forms.Form):
 
         sr = cleaned_data["share_reminders"]
         if sr:  # check that the forms referenced by the events in each reminders exist in the project
-            if project_is_on_new_reminders(self.dom):
-                referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
-                    self.dom.name)
-            else:
-                referenced_forms = CaseReminderHandler.get_referenced_forms(domain=self.dom.name)
+            referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
+                self.dom.name)
             if referenced_forms:
                 apps = [Application.get(app_id) for app_id in app_ids]
                 app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]
                 nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
                 nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
                 if nonexistent_forms:
-                    msg = """
-                        Your reminders reference forms that are not being published.
-                        Make sure the following forms are being published: %s
-                    """ % str([f.default_name() for f in nonexistent_forms]).strip('[]')
+                    forms_str = str([f.default_name() for f in nonexistent_forms]).strip('[]')
+                    msg = _("Your reminders reference forms that are not being published. Make sure the following "
+                            "forms are being published: %s") % forms_str
                     self._errors["share_reminders"] = self.error_class([msg])
 
         return cleaned_data
@@ -512,7 +506,7 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2Ajax):
+class CallCenterOwnerWidget(Select2AjaxV3):
 
     def set_domain(self, domain):
         self.domain = domain
@@ -1607,7 +1601,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
 
-        from corehq.apps.domain.views import DomainSubscriptionView
+        from corehq.apps.domain.views.accounting import DomainSubscriptionView
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
@@ -1637,9 +1631,13 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                                     css_class="btn btn-default"),
                 StrictButton(_("Subscribe to Plan"),
                              type="submit",
+                             id='btn-subscribe-to-plan',
                              css_class='btn btn-success disable-on-submit-no-spinner '
                                        'add-spinner-on-click'),
             ),
+            crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
+            crispy.Hidden(name="old_plan", value=current_subscription.plan_version.plan.edition),
+            crispy.Hidden(name="new_plan", value=plan_version.plan.edition)
         )
 
     def save(self, commit=True):
@@ -1651,7 +1649,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 if self.current_subscription is not None:
-                    if self.is_downgrade() and self.current_subscription.is_below_minimum_subscription:
+                    if self.is_downgrade_from_paid_plan() and \
+                            self.current_subscription.is_below_minimum_subscription:
                         self.current_subscription.update_subscription(
                             date_start=self.current_subscription.date_start,
                             date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
@@ -1695,8 +1694,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             )
             return False
 
-    def is_downgrade(self):
+    def is_downgrade_from_paid_plan(self):
         if self.current_subscription is None:
+            return False
+        elif self.current_subscription.is_trial:
             return False
         else:
             return is_downgrade(
@@ -1721,7 +1722,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
 
-        from corehq.apps.domain.views import DomainSubscriptionView
+        from corehq.apps.domain.views.accounting import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
             crispy.Fieldset(

@@ -10,9 +10,12 @@ from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.exceptions import XFormQuestionValueNotFound, KafkaPublishingError, PostSaveError
-from corehq.form_processor.models import Attachment
-from couchforms.const import ATTACHMENT_NAME
+from corehq.form_processor.exceptions import (
+    KafkaPublishingError,
+    PostSaveError,
+    XFormLockError,
+    XFormQuestionValueNotFound,
+)
 from memoized import memoized
 from ..utils import should_use_sql_backend
 import six
@@ -95,9 +98,10 @@ class FormProcessorInterface(object):
             return LedgerDBCouch()
 
     def acquire_lock_for_xform(self, xform_id):
-        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=5 * 60)
+        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=15 * 60)
         try:
-            lock.acquire()
+            if not lock.acquire(blocking=False):
+                raise XFormLockError(xform_id)
         except RedisError:
             lock = None
         return lock
@@ -164,12 +168,7 @@ class FormProcessorInterface(object):
         existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
         existing_form, new_form = self.processor.new_form_from_old(existing_form, xml,
                                                                    value_responses_map, user_id)
-        new_xml = etree.tostring(xml)
-        interface = FormProcessorInterface(xform.domain)
-        interface.store_attachments(new_form, [
-            Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
-        ])
-        interface.save_processed_models([new_form, existing_form])
+        self.save_processed_models([new_form, existing_form])
 
         return errors
 

@@ -1,7 +1,15 @@
-hqDefine("data_interfaces/js/manage_case_groups", function () {
-    var initialPagedata = hqImport('hqwebapp/js/initial_page_data');
+hqDefine("data_interfaces/js/manage_case_groups", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/crud_paginated_list_init',
+], function (
+    $,
+    _,
+    initialPageData
+) {
     $(function () {
-        var bulkUploadId = initialPagedata.get("bulk_upload_id");
+        var bulkUploadId = initialPageData.get("bulk_upload_id");
         if (bulkUploadId) {
             var isPollingActive = true,
                 attempts = 0;

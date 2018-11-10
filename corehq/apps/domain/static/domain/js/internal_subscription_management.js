@@ -1,4 +1,12 @@
-hqDefine('domain/js/internal_subscription_management', function () {
+hqDefine('domain/js/internal_subscription_management', [
+    'jquery',
+    'knockout',
+    'accounting/js/widgets',
+    'jquery-ui/ui/datepicker',
+], function (
+    $,
+    ko
+) {
     $(function () {
         var viewModel = {
             subscriptionType: ko.observable($('#id_subscription_type').val() || null),

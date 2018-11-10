@@ -17,12 +17,16 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
+from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
 from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, XMLNS_OPENMRS
+from corehq.motech.openmrs.openmrs_config import OpenmrsConfig, OpenmrsCaseConfig
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 from corehq.util.test_utils import TestFileMixin, _create_case
 import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
+    create_patient,
+    find_or_create_patient,
     get_case_location,
     get_case_location_ancestor_repeaters,
     get_ancestor_location_openmrs_uuid,
@@ -226,6 +230,66 @@ class GetFormQuestionValuesTests(SimpleTestCase):
             warnings.simplefilter("ignore", UnicodeWarning)
             value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
         self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
+
+    def test_received_on(self):
+        value = get_form_question_values({
+            'form': {
+                'foo': {'bar': 'baz'},
+            },
+            'received_on': '2018-11-06T18:30:00.000000Z',
+        })
+        self.assertDictEqual(value, {
+            '/data/foo/bar': 'baz',
+            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
+        })
+
+    def test_metadata(self):
+        value = get_form_question_values({
+            'form': {
+                'foo': {'bar': 'baz'},
+                'meta': {
+                    'timeStart': '2018-11-06T18:00:00.000000Z',
+                    'timeEnd': '2018-11-06T18:15:00.000000Z',
+                    'spam': 'ham',
+                },
+            },
+            'received_on': '2018-11-06T18:30:00.000000Z',
+        })
+        self.assertDictEqual(value, {
+            '/data/foo/bar': 'baz',
+            '/metadata/timeStart': '2018-11-06T18:00:00.000000Z',
+            '/metadata/timeEnd': '2018-11-06T18:15:00.000000Z',
+            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
+        })
+
+
+class ExportOnlyTests(SimpleTestCase):
+
+    def test_create_patient(self):
+        """
+        ValueSource instances with direction set to DIRECTION_IMPORT
+        should not be exported.
+        """
+        requests = mock.Mock()
+        info = mock.Mock(
+            updates={'sex': 'M', 'dob': '1918-07-18'},
+            extra_fields={},
+        )
+        case_config = copy.deepcopy(CASE_CONFIG)
+        case_config['patient_identifiers'] = {}
+        case_config['person_preferred_name'] = {}
+        case_config['person_preferred_address'] = {}
+        case_config['person_attributes'] = {}
+
+        case_config['person_properties']['gender']['direction'] = DIRECTION_IMPORT
+        case_config['person_properties']['birthdate']['direction'] = DIRECTION_EXPORT
+        case_config = OpenmrsCaseConfig(case_config)
+
+        create_patient(requests, info, case_config)
+        requests.post.assert_called_with(
+            '/ws/rest/v1/patient/',
+            json={'person': {'birthdate': '1918-07-18'}}
+        )
 
 
 class AllowedToForwardTests(TestCase):
@@ -452,6 +516,41 @@ class GetPatientTest(SimpleTestCase):
         patient = get_patient_by_identifier(
             requests_mock, 'e2b966d0-1d5f-11e0-b929-000c29ad1d07', '11111111/11/1111')
         self.assertEqual(patient['uuid'], '5ba94fa2-9cb3-4ae6-b400-7bf45783dcbf')
+
+
+class FindPatientTest(SimpleTestCase):
+
+    def test_create_missing(self):
+        """
+        create_patient should be called if PatientFinder.create_missing is set
+        """
+        openmrs_config = OpenmrsConfig.wrap({
+            'case_config': {
+                'patient_finder': {
+                    'create_missing': True,
+                    'doc_type': 'WeightedPropertyPatientFinder',
+                    'searchable_properties': [],
+                    'property_weights': [],
+                },
+                'patient_identifiers': {},
+                'match_on_ids': [],
+                'person_properties': {},
+                'person_preferred_address': {},
+                'person_preferred_name': {},
+            },
+            'form_configs': [],
+        })
+
+        with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
+                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch:
+            requests = mock.Mock()
+            info = mock.Mock(case_id='123')
+            CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
+            create_patient_patch.return_value = None
+
+            find_or_create_patient(requests, DOMAIN, info, openmrs_config)
+
+            create_patient_patch.assert_called()
 
 
 class SaveMatchIdsTests(SimpleTestCase):

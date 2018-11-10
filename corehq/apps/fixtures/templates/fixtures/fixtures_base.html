@@ -20,7 +20,7 @@
             {% endfor %}
         {% endif %}
         <li class="active">
-            <a href="{{ report.url }}" id="report-title">{% trans report.title|safe %}</a>
+            {% trans report.title|safe %}
         </li>
     </ol>
 {% endblock %}

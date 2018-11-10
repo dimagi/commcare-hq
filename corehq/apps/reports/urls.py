@@ -38,6 +38,7 @@ from .views import (
     case_forms,
     case_property_changes,
     case_property_names,
+    download_case_history,
     case_xml,
     edit_case_view,
     rebuild_case_view,
@@ -100,6 +101,7 @@ urlpatterns = [
         CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', case_xml, name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/properties/$', case_property_names, name="case_property_names"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/history/$', download_case_history, name="download_case_history"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/edit/$', edit_case_view, name="edit_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', rebuild_case_view, name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/resave/$', resave_case_view, name="resave_case"),
@@ -169,6 +171,9 @@ urlpatterns = [
         send_test_scheduled_report, name='send_test_scheduled_report'),
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
+
+    # V2 Reports
+    url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     # Internal Use
     url(r"^export/forms/all/$", export_all_form_metadata, name="export_all_form_metadata"),

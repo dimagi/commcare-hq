@@ -3,11 +3,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'users/js/roles.js' %}"></script>
-    <script src="{% static 'users/js/web_users.js' %}"></script>
-{% endblock %}
-
+{% requirejs_main 'users/js/web_users' %}
 {% block page_content %}
     {% registerurl "delete_invitation" domain %}
     {% registerurl "delete_request" domain %}
@@ -325,7 +321,7 @@
                               {% trans "Edit Shared Exports" %}
                               <span class="hq-help-template"
                                     data-title="{% trans "Edit Shared Exports" %}"
-                                    data-content="{% trans "Description." %}"></span>
+                                    data-content="{% trans "Access and edit the content and structure of shared exports." %}"></span>
                             </th>
                         {% endif %}
                         <th>

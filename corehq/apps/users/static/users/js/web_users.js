@@ -1,4 +1,14 @@
-hqDefine("users/js/web_users", function () {
+hqDefine("users/js/web_users",[
+    'jquery',
+    'knockout',
+    'underscore',
+    "hqwebapp/js/initial_page_data",
+    'users/js/roles',
+    'bootstrap', // for bootstrap modal
+    'hqwebapp/js/components.ko',    // pagination widget
+    'hqwebapp/js/knockout_bindings.ko', // for staticChecked data binding in web_users.html
+], function ($, ko, _, initialPageData, userRoles) {
+
     var webUsersList = function () {
         var self = {};
         self.users = ko.observableArray([]);
@@ -18,10 +28,9 @@ hqDefine("users/js/web_users", function () {
             self.users.removeAll();
             self.showSpinner(true);
             self.error('');
-
             $.ajax({
                 method: 'GET',
-                url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_web_users'),
+                url: initialPageData.reverse('paginate_web_users'),
                 data: {
                     page: page,
                     query: self.query() || '',
@@ -75,7 +84,7 @@ hqDefine("users/js/web_users", function () {
     });
 
     $(function () {
-        var url = hqImport("hqwebapp/js/initial_page_data").reverse;
+        var url = initialPageData.reverse;
         $('#restrict_users').on('change', function () {
             var $saveButton = $('#save_restrict_option');
             $saveButton
@@ -113,9 +122,9 @@ hqDefine("users/js/web_users", function () {
             e.preventDefault();
         });
 
-        var $userRolesTable = $('#user-roles-table'),
-            initialPageData = hqImport("hqwebapp/js/initial_page_data");
-        hqImport('users/js/roles').initUserRoles($userRolesTable, {
+        var $userRolesTable = $('#user-roles-table');
+
+        userRoles.initUserRoles($userRolesTable, {
             userRoles: initialPageData.get("user_roles"),
             defaultRole: initialPageData.get("default_role"),
             saveUrl: url("post_user_role"),

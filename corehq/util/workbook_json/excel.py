@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from tempfile import NamedTemporaryFile
 from zipfile import BadZipfile
+from tempfile import NamedTemporaryFile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 import six
 from six.moves import zip
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
 class InvalidExcelFileException(Exception):
@@ -188,19 +189,14 @@ class WorksheetJSONReader(IteratorJSONReader):
 
 class WorkbookJSONReader(object):
 
-    def __init__(self, f):
-        if isinstance(f, six.string_types):
-            filename = f
-        elif not isinstance(f, file):
+    def __init__(self, file_or_filename):
+        if isinstance(file_or_filename, InMemoryUploadedFile):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
-            filename = tmp.name
-            tmp.write(f.read())
+            tmp.write(file_or_filename.read())
             tmp.close()
-        else:
-            filename = f
-
+            file_or_filename = tmp.name
         try:
-            self.wb = openpyxl.load_workbook(filename, read_only=True, data_only=True)
+            self.wb = openpyxl.load_workbook(file_or_filename, read_only=True, data_only=True)
         except (BadZipfile, InvalidFileException, KeyError) as e:
             raise InvalidExcelFileException(six.text_type(e))
         self.worksheets_by_title = {}

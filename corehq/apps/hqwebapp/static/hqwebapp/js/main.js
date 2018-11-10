@@ -6,6 +6,7 @@ hqDefine('hqwebapp/js/main', [
     "hqwebapp/js/alert_user",
     "analytix/js/google",
     "hqwebapp/js/hq_extensions.jquery",
+    "jquery.cookie/jquery.cookie",
 ], function (
     $,
     ko,
@@ -308,7 +309,7 @@ hqDefine('hqwebapp/js/main', [
                 state = valueAccessor(),
                 deleteButton;
 
-            deleteButton = initDeleteButton({
+            deleteButton = DeleteButton.init({
                 save: function () {
                     deleteButton.ajax(saveOptions());
                 },

@@ -84,7 +84,6 @@ def cancel_replica_shards(es):
     pprint(indices.put_settings({"index.number_of_replicas": 0}, "_all"))
 
 
-
 def decommission_node(es):
     cluster = ClusterClient(es)
     print("The nodes are:")
@@ -92,13 +91,14 @@ def decommission_node(es):
     for node in nodes:
         print(node.name, node.docs)
     confirm("Are you sure you want to decommission a node?")
-    node_name = input("Which one would you like to decommission?\nname:")
+    node_names = input("Which one(s) would you like to decommission?\nname:").split(',')
     names = [node.name for node in nodes]
-    if node_name not in names:
-        print("You must enter one of {}".format(", ".join(names)))
-        return
-    confirm("This will remove all shards from {}, okay?".format(node_name))
-    cmd = {"transient": {"cluster.routing.allocation.exclude._name": node_name}}
+    for node_name in node_names:
+        if node_name not in names:
+            print("You must enter one of {}".format(", ".join(names)))
+            return
+    confirm("This will remove all shards from {}, okay?".format(','.join(node_names)))
+    cmd = {"transient": {"cluster.routing.allocation.exclude._name": ','.join(node_names)}}
     pprint(cluster.put_settings(cmd))
     print("The node is now being decommissioned.")
 

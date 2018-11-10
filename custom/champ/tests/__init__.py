@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import mock
 import postgres_copy
+import six
 import sqlalchemy
 import os
 
@@ -41,9 +42,12 @@ def setUpModule():
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
         for file_name in os.listdir(path):
             with open(os.path.join(path, file_name), encoding='utf-8') as f:
-                table_name = get_table_name(domain.name, file_name[:-4])
+                table_name = get_table_name(domain.name, file_name[:-4]).decode('utf-8')
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
+                postgres_copy.copy_from(
+                    f, table, engine, format='csv' if six.PY3 else b'csv',
+                    null='' if six.PY3 else b'', header=True
+                )
     _call_center_domain_mock.stop()
 
 
