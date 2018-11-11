@@ -32,13 +32,15 @@ def get_sql_previous_versions(form_id, form_accessor):
 
 
 class Command(BaseCommand):
+    def __init__(self):
+        self.forms = {}
+
     def add_arguments(self, parser):
         parser.add_argument('--source', help='sql/couch')
         parser.add_argument('--update', action='store_true', help='actually update')
         parser.add_argument('--inspect', action='store_true', help='just write findings to file')
 
-    @staticmethod
-    def _find_sql_forms_with_missing_attachments():
+    def _find_sql_forms_with_missing_attachments(self):
         """
         find all forms that are a result of a form edition
         find the deprecated form and then compare attachments between them
@@ -61,18 +63,17 @@ class Command(BaseCommand):
                     for attachment in original_attachments:
                         if attachment.name not in attachment_names:
                             assert attachment.form_id == original_form.form_id
-                            add_forms_with_attachments[edited_form.form_id].append(
-                                (attachment.attachment_id, original_form.form_id)
-                            )
+                            self.forms[edited_form.form_id] = edited_form
+                            add_forms_with_attachments[edited_form.form_id].append(attachment)
         return add_forms_with_attachments
 
-    @staticmethod
-    def _find_couch_forms_with_missing_attachments():
+    def _find_couch_forms_with_missing_attachments(self):
         """
         find deprecated form ids,
         then look for the new form and compare attachments between them
         :return:
         """
+        # ToDo: this needs to be relooked to address multiple edits if needed
         add_forms_with_attachments = defaultdict(list)
         deprecated_form_ids = [
             f['id'] for f in XFormDeprecated.view(
@@ -101,9 +102,10 @@ class Command(BaseCommand):
                 new_attachment_names = new_attachments.keys()
                 for attachment_name in original_attachments:
                     if attachment_name not in new_attachment_names:
-                        add_forms_with_attachments[deprecated_form.orig_id].append(
-                            (original_attachments[attachment_name]['key'], deprecated_form_id)
-                        )
+                        attachment = original_attachments[attachment_name]
+                        assert attachment.form_id == deprecated_form_id
+                        self.forms[new_form.form_id] = new_form
+                        add_forms_with_attachments[deprecated_form.orig_id].append(attachment)
         return add_forms_with_attachments
 
     @staticmethod
@@ -111,19 +113,9 @@ class Command(BaseCommand):
         pass
 
     @staticmethod
-    def _add_attachment_to_sql_form(from_form_id, form_id, attachment_id):
-        src_form = FormAccessorSQL.get_form(from_form_id)
-        attachment = None
-        for attachment_ in src_form.attachments.values():
-            if str(attachment_.attachment_id) == attachment_id:
-                attachment = attachment_
-                break
-        if not attachment:
-            print('Could not find attachment with id %s on form %s' %
-                  (attachment_id, from_form_id))
-        dest_form = FormAccessorSQL.get_form(form_id)
+    def _add_attachment_to_sql_form(form_id, attachment):
         new_att = XFormAttachmentSQL(
-            form=dest_form,
+            form_id=form_id,
             name=attachment.name,
             attachment_id=uuid.uuid4(),
             content_type=attachment.content_type,
@@ -135,6 +127,7 @@ class Command(BaseCommand):
         new_att.save()
 
     def handle(self, **options):
+        self.search_after_feature_release = options.get('after')
         if options.get('inspect') and options.get('update'):
             raise CommandError("Cant have updating with inspect")
         source = options.get("source") or 'sql'
@@ -144,8 +137,8 @@ class Command(BaseCommand):
             if options.get('update'):
                 print('starting with adding attachments. Need to update %s forms.' % len(forms_to_process))
                 for form_id, attachments in with_progress_bar(list(forms_to_process.items())):
-                    for attachment_id, original_form_id in attachments:
-                        self._add_attachment_to_sql_form(form_id, attachment_id)
+                    for attachment in attachments:
+                        self._add_attachment_to_sql_form(form_id, attachment)
         elif source == 'couch':
             print('looking for couch forms with missing attachments now')
             forms_to_process = self._find_couch_forms_with_missing_attachments()
@@ -158,5 +151,6 @@ class Command(BaseCommand):
                 writer = csv.writer(output_file)
                 for form_id in forms_to_process:
                     attachments = forms_to_process[form_id]
-                    for attachment_path, source_form_id in attachments:
-                        writer.writerow([form_id, source_form_id, attachment_path])
+                    for attachment, source_form_id, to_form in attachments:
+                        writer.writerow([form_id, source_form_id,
+                                         attachment.attachment_id, attachment.name])
