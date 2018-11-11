@@ -88,9 +88,13 @@ class Command(BaseCommand):
                     attachments = list(FormAccessorSQL.get_attachments_for_forms([edited_form.form_id]))
                     attachment_names = [a.name for a in attachments]
                     for attachment in original_attachments:
-                        if attachment.name not in attachment_names:
+                        if attachment.name != 'form.xml' and attachment.name not in attachment_names:
                             assert attachment.form_id == original_form.form_id
                             self.forms[edited_form.form_id] = edited_form
+                            for attachment_to_be_added in add_forms_with_attachments[edited_form.form_id]:
+                                if attachment_to_be_added.attachment_id == attachment.attachment_id:
+                                    # this attachment add request is already present
+                                    continue
                             add_forms_with_attachments[edited_form.form_id].append(attachment)
         return add_forms_with_attachments
 
