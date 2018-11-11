@@ -20,16 +20,34 @@ from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.util.log import with_progress_bar
 
 EDIT_FORM_FEATURE_LIVE_DATE = datetime.datetime(2018, 5, 14)  # actually 15th
+IGNORE_DOMAIN = ['qa-performance-testing']
 
 
-def get_sql_previous_versions(form_id, form_accessor):
+def get_sql_previous_versions(form_id, form_accessor, index=0, orig_form_id=None):
     """
     :param form_id: edited form id
     :return: all previous versions of a form including itself with the earliest being on top
     """
-    form_ = form_accessor.get_form(form_id)
+    orig_form_id = orig_form_id or form_id
+    try:
+        form_ = form_accessor.get_form(form_id)
+    except XFormNotFound:
+        try:
+            FormAccessorCouch.get_form(form_id)
+        except XFormNotFound:
+            print('missing form with id %s, looked everywhere. Orig form id %s' % (
+                form_id, orig_form_id
+            ))
+        else:
+            print('This form history eventually went into couch, kept till sql. %s' % orig_form_id)
+        return []
     if form_.deprecated_form_id:
-        return get_sql_previous_versions(form_.deprecated_form_id, form_accessor) + [form_]
+        index = index + 1
+        if index > 100:
+            if form_.domain not in IGNORE_DOMAIN:
+                print("too high index for form %s. Hence kept just till 10" % orig_form_id)
+            return [form_]
+        return get_sql_previous_versions(form_.deprecated_form_id, form_accessor, index, orig_form_id) + [form_]
     else:
         return [form_]
 
