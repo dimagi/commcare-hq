@@ -76,8 +76,11 @@ class Command(BaseCommand):
             print('scanning %s' % db_alias)
             edit_form_ids = (XFormOperationSQL.objects.using(db_alias)
                              .filter(operation='edit')
-                             .values_list('form_id', flat=True))
+                             .values_list('form_id', flat=True).order_by('-date').distinct())
             for edit_form_id in with_progress_bar(edit_form_ids):
+                if edit_form_id in self.forms:
+                    # this form was already covered by some other form in its hierarchy
+                    continue
                 edit_chain = get_sql_previous_versions(edit_form_id, form_accessor)
                 original_form = edit_chain[0]
                 original_attachments = list(FormAccessorSQL.get_attachments_for_forms([original_form.form_id]))
