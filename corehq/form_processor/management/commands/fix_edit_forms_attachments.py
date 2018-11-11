@@ -186,6 +186,6 @@ class Command(BaseCommand):
                 writer = csv.writer(output_file)
                 for form_id in forms_to_process:
                     attachments = forms_to_process[form_id]
-                    for attachment, source_form_id, to_form in attachments:
-                        writer.writerow([form_id, source_form_id,
+                    for attachment in attachments:
+                        writer.writerow([form_id, attachment.form_id,
                                          attachment.attachment_id, attachment.name])
