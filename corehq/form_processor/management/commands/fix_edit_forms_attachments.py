@@ -100,7 +100,11 @@ class Command(BaseCommand):
                 except ValueError as e:
                     # always is illegal doc id error
                     # https://github.com/dimagi/commcare-hq/blob/652089eb7b63e3967d674580cab55522b5327a22/corehq/blobs/mixin.py#L614
-                    print(deprecated_form_id)
+                    print('Value Error: Should be illegal doc id error. Form %s ' % deprecated_form_id)
+                    print(e)
+                    continue
+                except Exception as e:
+                    print('Unexpection failure for form %s' % deprecated_form_id)
                     print(e)
                     continue
                 original_attachments = deprecated_form.attachments
