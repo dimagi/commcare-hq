@@ -5,6 +5,7 @@ from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from collections import defaultdict
 import uuid
+import datetime
 
 from io import open
 import csv342 as csv
@@ -17,6 +18,8 @@ from corehq.form_processor.models import XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.util.log import with_progress_bar
+
+EDIT_FORM_FEATURE_LIVE_DATE = datetime.datetime(2018, 5, 14)  # actually 15th
 
 
 def get_sql_previous_versions(form_id, form_accessor):
@@ -34,11 +37,14 @@ def get_sql_previous_versions(form_id, form_accessor):
 class Command(BaseCommand):
     def __init__(self):
         self.forms = {}
+        self.search_after_feature_release = False
 
     def add_arguments(self, parser):
         parser.add_argument('--source', help='sql/couch')
         parser.add_argument('--update', action='store_true', help='actually update')
         parser.add_argument('--inspect', action='store_true', help='just write findings to file')
+        parser.add_argument('--after', action='store_true',
+                            help='search for edits after edit form feature release')
 
     def _find_sql_forms_with_missing_attachments(self):
         """
