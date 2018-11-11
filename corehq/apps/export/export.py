@@ -30,7 +30,6 @@ from corehq.apps.export.models.new import (
     SMSExportInstance,
 )
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 import six
 from io import open
 
