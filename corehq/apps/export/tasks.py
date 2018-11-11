@@ -161,10 +161,9 @@ def saved_exports():
     for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
         export_for_group_async.delay(group_config_id)
 
-    for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
-        last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        if should_rebuild_export(daily_saved_export_id, last_access_cutoff):
-            rebuild_saved_export(daily_saved_export_id, last_access_cutoff, manual=False)
+    last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    for daily_saved_export_id in get_all_daily_saved_export_instance_ids(last_access_cutoff):
+        rebuild_saved_export(daily_saved_export_id, last_access_cutoff, manual=False)
 
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)

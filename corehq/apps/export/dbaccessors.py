@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only
+from dimagi.utils.parsing import json_format_datetime
 
 
 def get_latest_case_export_schema(domain, case_type):
@@ -127,12 +128,17 @@ def _get_export_instance(cls, key):
     return [cls.wrap(result['doc']) for result in results]
 
 
-def get_all_daily_saved_export_instance_ids():
+def get_all_daily_saved_export_instance_ids(accessed_after):
+    """
+    get all saved exports accessed after the timestamp
+    :param last_access_cutoff:
+    :return:
+    """
     from .models import ExportInstance
     results = ExportInstance.get_db().view(
         "export_instances_by_is_daily_saved/view",
-        startkey=[True],
-        endkey=[True, {}],
+        startkey=[True, True, json_format_datetime(accessed_after)],
+        endkey=[True, True, {}],
         include_docs=False,
         reduce=False,
     ).all()

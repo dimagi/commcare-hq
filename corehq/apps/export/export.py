@@ -453,20 +453,6 @@ def rebuild_export(export_instance, progress_tracker):
             save_export_payload(export_instance, payload)
 
 
-def should_rebuild_export(export, last_access_cutoff):
-    """
-    :param last_access_cutoff: Any exports not accessed since this date will not be rebuilt.
-    :return: True if export should be rebuilt
-    """
-    # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
-    if isinstance(export, six.string_types):
-        export = get_properly_wrapped_export_instance(export)
-    return (export.auto_rebuild_enabled and
-            (export.last_accessed is None or
-             export.last_accessed > last_access_cutoff
-             ))
-
-
 def save_export_payload(export, payload):
     """
     Save the contents of an export file to disk for later retrieval.
