@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0073_ccsrecordmonthly_closed'),
+        ('icds_reports', '0074_expected_decimal'),
     ]
 
     operations = [
