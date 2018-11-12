@@ -367,7 +367,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if not xml:
             return None
 
-        xml = xml.encode('utf-8', errors='replace')
+        xml = xml.encode('utf-8')
 
         return etree.fromstring(xml)
 
