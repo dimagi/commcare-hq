@@ -195,9 +195,6 @@ class ConfigurableReportTableManagerMixin(object):
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         adapter.rebuild_table()
         if config.is_static:
-            # Todo; rebuild_indicators itself calls adapter.rebuild_table, so why is this needed
-            #       to discuss on PR.
-            # Add a comment on why
             rebuild_indicators.delay(adapter.config.get_id)
 
 
@@ -435,7 +432,6 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
-            auto_repopulate_tables=False,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
@@ -458,7 +454,6 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
-            auto_repopulate_tables=True,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
