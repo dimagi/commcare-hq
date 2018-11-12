@@ -126,11 +126,9 @@ class CaseProperty(ValueSource):
     case_property = StringProperty()
 
     def _get_commcare_value(self, case_trigger_info):
-        case_property_values = dict(
-            list(case_trigger_info.extra_fields.items()) +
-            list(case_trigger_info.updates.items())
-        )
-        return case_property_values.get(self.case_property)
+        if self.case_property in case_trigger_info.updates:
+            return case_trigger_info.updates[self.case_property]
+        return case_trigger_info.extra_fields.get(self.case_property)
 
 
 class FormQuestion(ValueSource):
