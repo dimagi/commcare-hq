@@ -473,7 +473,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
     )
 
 def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
-                        num_processes=1, process_num=0, **kwargs):
+                        num_processes=1, process_num=0, configs=None, **kwargs):
     # Todo; is ucr_division needed?
     change_feed = KafkaChangeFeed(
         [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
@@ -482,6 +482,8 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
         data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
         include_ucrs=include_ucrs,
     )
+    if configs:
+        ucr_processor.bootstrap(configs)
     checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,

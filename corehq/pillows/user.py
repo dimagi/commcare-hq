@@ -96,7 +96,7 @@ def add_demo_user_to_user_index():
 
 
 def get_user_es_processor():
-    ElasticProcessor(
+    return ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
