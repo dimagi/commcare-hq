@@ -972,24 +972,19 @@ class XForm(WrappedNode):
         """
         from corehq.apps.app_manager.util import first_elem
 
-        def _add_choices_for_select_questions(question):
-            if cnode.items is not None:
-                options = []
-                for item in cnode.items:
-                    translation = self._get_label_text(item, langs)
-                    try:
-                        value = item.findtext('{f}value').strip()
-                    except AttributeError:
-                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
-                    option = {
-                        'label': translation,
-                        'value': value
-                    }
-                    if include_translations:
-                        option['translations'] = self._get_label_translations(item, langs)
-                    options.append(option)
-                question['options'] = options
-            return question
+        def _get_select_question_option(item):
+            translation = self._get_label_text(item, langs)
+            try:
+                value = item.findtext('{f}value').strip()
+            except AttributeError:
+                raise XFormException(_("<item> ({}) has no <value>").format(translation))
+            option = {
+                'label': translation,
+                'value': value
+            }
+            if include_translations:
+                option['translations'] = self._get_label_translations(item, langs)
+            return option
 
         if not self.exists():
             return []
@@ -1047,7 +1042,8 @@ class XForm(WrappedNode):
             if include_translations:
                 question["translations"] = self._get_label_translations(node, langs)
 
-            question = _add_choices_for_select_questions(question)
+            if cnode.items is not None:
+                question['options'] = [_get_select_question_option(item) for item in cnode.items]
 
             questions.append(question)
 
