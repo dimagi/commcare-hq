@@ -881,13 +881,15 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
             filters=None,
         )
         view = self._create_view(report_config)
-        self.assertItemsEqual(
-            view.export_table[0][1],
-            [['state', 'age_range', 'report_column_display_number'],
-             ['MA', '0-6', 7],
-             ['MA', '7-12', 2],
-             ['TN', '13+', 1]]
-        )
+        table = view.export_table[0][1]
+        self.assertEqual(len(table), 4)
+        for table_row in [
+            ['state', 'age_range', 'report_column_display_number'],
+            ['MA', '0-6', 7],
+            ['MA', '7-12', 2],
+            ['TN', '13+', 1],
+        ]:
+            self.assertIn(table_row, table)
 
     def test_sum_when(self):
         report_config = self._create_report(
