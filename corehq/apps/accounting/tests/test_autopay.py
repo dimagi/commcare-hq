@@ -91,7 +91,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         not_autopayable_invoice = Invoice.objects.filter(subscription=self.non_autopay_subscription)
         date_due = not_autopayable_invoice.first().date_due
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
-        self.assertEqual(len(autopayable_invoices), 0)
+        self.assertEqual(list(autopayable_invoices), [])
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(Charge, 'create')

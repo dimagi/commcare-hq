@@ -423,8 +423,6 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
 @task(serializer='pickle', ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
-                                account_created_by,
-                                account_entry_point,
                                 amount,
                                 invoice_items,
                                 contact_emails):
@@ -489,7 +487,7 @@ def send_purchase_receipt(payment_record, domain,
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice, payment_method):
+def send_autopay_failed(invoice):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)

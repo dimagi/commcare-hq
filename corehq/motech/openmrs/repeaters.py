@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
+import six
 from itertools import chain
 
 from couchdbkit.ext.django.schema import SchemaProperty, StringProperty, DateTimeProperty, BooleanProperty
@@ -113,11 +114,11 @@ class OpenmrsRepeater(CaseRepeater):
 
     def send_request(self, repeat_record, payload):
         value_sources = chain(
-            self.openmrs_config.case_config.patient_identifiers.values(),
-            self.openmrs_config.case_config.person_properties.values(),
-            self.openmrs_config.case_config.person_preferred_name.values(),
-            self.openmrs_config.case_config.person_preferred_address.values(),
-            self.openmrs_config.case_config.person_attributes.values(),
+            six.itervalues(self.openmrs_config.case_config.patient_identifiers),
+            six.itervalues(self.openmrs_config.case_config.person_properties),
+            six.itervalues(self.openmrs_config.case_config.person_preferred_name),
+            six.itervalues(self.openmrs_config.case_config.person_preferred_address),
+            six.itervalues(self.openmrs_config.case_config.person_attributes),
         )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,

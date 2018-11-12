@@ -138,7 +138,7 @@ class FixtureDataTest(TestCase):
         """ % self.user.user_id, ElementTree.tostring(fixture))
 
         self.data_item.remove_user(self.user)
-        self.assertEqual(len(self.data_item.get_all_users()), 0)
+        self.assertEqual(set(self.data_item.get_all_users()), set())
 
         self.fixture_ownership = self.data_item.add_user(self.user)
         self.assertEqual({self.user.get_id}, set(self.data_item.get_all_users(wrap=False)))
