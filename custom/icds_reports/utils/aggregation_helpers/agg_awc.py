@@ -315,7 +315,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         FROM (
             SELECT DISTINCT(awc_id)
             FROM agg_awc
-            WHERE month = %(prev_month)s AND usage_num_hh_reg > 0 AND awc_id <> 'ALL'
+            WHERE month <= %(prev_month)s AND usage_num_hh_reg > 0 AND awc_id <> 'ALL'
         ) ut
         WHERE ut.awc_id = agg_awc.awc_id;
         """.format(
