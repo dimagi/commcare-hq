@@ -8,6 +8,7 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'schemas_by_xmlns_or_case_type': 'meta',
     'export_instances_by_domain': 'meta',
     'export_instances_by_is_daily_saved': 'meta',
+    'active_data_sources': 'meta',
     'receiverwrapper': 'receiverwrapper',
     'users_extra': (settings.USERS_GROUPS_DB, settings.NEW_USERS_GROUPS_DB),
     'deleted_users_by_username': settings.USERS_GROUPS_DB,
