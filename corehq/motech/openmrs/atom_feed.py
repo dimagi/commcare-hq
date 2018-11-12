@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import re
 import uuid
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from datetime import datetime
 
 import pytz
@@ -278,6 +278,61 @@ def update_patient(repeater, patient_uuid, updated_at):
         case_block = get_updatepatient_caseblock(case, patient, repeater)
 
     if case_block:
+        submit_case_blocks(
+            [case_block.as_string()],
+            repeater.domain,
+            xmlns=XMLNS_OPENMRS,
+            device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
+        )
+
+
+def import_encounter(repeater, encounter_uuid, updated_at):
+    # It's possible that an OpenMRS concept appears more than once in
+    # form_configs. Use a defaultdict(list) so that earlier definitions
+    # don't get overwritten by later ones:
+
+    def fields_from_observations(observations, mappings):
+        """
+        Traverse a tree of observations, and return the ones mapped to
+        case properties.
+        """
+        fields = {}
+        for obs in observations:
+            if obs['concept']['uuid'] in mappings:
+                for mapping in mappings[obs['concept']['uuid']]:
+                    fields[mapping.case_property] = mapping.value.deserialize(obs['value'])
+            if obs['groupMembers']:
+                fields.update(fields_from_observations(obs['groupMembers'], mappings))
+        return fields
+
+    response = repeater.requests.get(
+        '/ws/rest/v1/bahmnicore/bahmniencounter/' + encounter_uuid,
+        {'includeAll': 'true'},
+        raise_for_status=True
+    )
+    encounter = response.json()
+
+    observation_mappings = defaultdict(list)
+    for form_config in repeater.openmrs_config.form_configs:
+        for obs_mapping in form_config.openmrs_observations:
+            if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
+                observation_mappings[obs_mapping.concept].append(obs_mapping)
+
+    case_property_updates = fields_from_observations(encounter['observations'], observation_mappings)
+
+    case_type = repeater.white_listed_case_types[0]
+    case, error = importer_util.lookup_case(
+        EXTERNAL_ID,
+        encounter['patientUuid'],
+        repeater.domain,
+        case_type=case_type,
+    )
+    if case_property_updates:
+        case_block = CaseBlock(
+            case_id=case.get_id,
+            create=False,
+            update=case_property_updates,
+        )
         submit_case_blocks(
             [case_block.as_string()],
             repeater.domain,
