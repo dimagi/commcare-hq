@@ -6,7 +6,6 @@ import random
 import string
 from io import BytesIO
 import mock
-import six
 
 from django.urls import reverse
 from django.http import HttpResponse
