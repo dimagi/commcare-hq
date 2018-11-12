@@ -763,12 +763,14 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         )
         view = self._create_view(report_config)
 
-        self.assertItemsEqual(
-            view.export_table[0][1],
-            [['report_column_display_state', 'report_column_display_number'],
-             ['MA', 9],
-             ['TN', 1]]
-        )
+        table = view.export_table[0][1]
+        self.assertEqual(len(table), 3)
+        for table_row in [
+            ['report_column_display_state', 'report_column_display_number'],
+            ['MA', 9],
+            ['TN', 1],
+        ]:
+            self.assertIn(table_row, table)
 
     def test_with_prefilter(self):
         report_config = self._create_default_report(
