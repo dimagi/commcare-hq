@@ -17,6 +17,17 @@ from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHel
 
 
 class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
+    """This helper differs from the others in the following ways:
+
+    * It must insert into a temporary table before inserting into the final table
+    * It takes in multiple state_ids instead of one state_id
+    * It provides one aggregation query per state_id passed in
+
+    Future work:
+    * Partition the child_health_monthly table (may be done in citus work).
+      This would make it much easier to make it like other helpers
+    """
+
     base_tablename = 'child_health_monthly'
 
     def __init__(self, state_ids, month):
@@ -24,32 +35,30 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.month = transform_day_to_month(month)
 
     @property
-    def child_health_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.child_health_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
-    @property
     def child_health_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_health_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def child_tasks_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_tasks_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def person_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+
+    @property
+    def temporary_tablename(self):
+        return "tmp_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
@@ -300,10 +309,9 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ORDER BY child_health.awc_id
         )
         """.format(
-            tablename=self.tablename,
+            tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
-            ucr_child_monthly_table=self.child_health_monthly_ucr_tablename,
             agg_cf_table=AGG_COMP_FEEDING_TABLE,
             agg_thr_table=AGG_CHILD_HEALTH_THR_TABLE,
             child_health_case_ucr=self.child_health_case_ucr_tablename,
@@ -319,8 +327,18 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             "state_id_last_3": state_id[-3:],
         }
 
-    def aggregation_queries(self):
+    def pre_aggregation_queries(self):
         return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
+
+    def create_temporary_table(self):
+        return "CREATE TABLE \"{}\" (LIKE child_health_monthly INCLUDING INDEXES)".format(self.temporary_tablename)
+
+    def drop_temporary_table(self):
+        return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
+
+    def aggregation_query(self):
+        return "INSERT INTO \"{tablename}\" (SELECT * FROM \"{tmp_tablename}\")".format(
+            tablename=self.tablename, tmp_tablename=self.temporary_tablename)
 
     def indexes(self):
         return [

@@ -951,6 +951,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
             ["domain", "external_id", "type"],
+            ["domain", "type"],
         ]
         app_label = "form_processor"
         db_table = CommCareCaseSQL_DB_TABLE
@@ -1129,6 +1130,13 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     )
     TYPES_TO_PROCESS = (
         TYPE_FORM,
+    )
+    FORM_TYPE_ACTIONS_ORDER = (
+        TYPE_CASE_CREATE,
+        TYPE_CASE_INDEX,
+        TYPE_CASE_CLOSE,
+        TYPE_CASE_ATTACHMENT,
+        TYPE_LEDGER,
     )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,

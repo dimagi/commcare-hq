@@ -116,7 +116,7 @@
                     getFilterNames(),
                     function (item) {
                         var prefix = "t__";
-                        if (item.substring(prefix.length) === prefix) {
+                        if (item.substring(0, prefix.length) === prefix) {
                             return userTypes[item.substring(prefix.length)];
                         }
                         return item;

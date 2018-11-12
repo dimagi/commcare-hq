@@ -18,25 +18,29 @@ class IncentiveReport(object):
         excel_rows = []
         excel_rows.append(headers)
         for row in data:
-            home_visit_percent = row['valid_visits'] / row['expected_visits']
-            weighing_efficiency = row['wer_weighed'] / row['wer_eligible']
+            home_visit_percent = row['valid_visits'] / int(row['expected_visits']) if int(row['expected_visits']) else 1
+            weighing_efficiency = row['wer_weighed'] / row['wer_eligible'] if row['wer_eligible'] else 1
             if home_visit_percent > 1:
                 home_visit_percent = 1
+            if row['awc_num_open'] is None:
+                num_open = 'Data not entered'
+            else:
+                num_open = row['awc_num_open']
 
-            excel_rows.append(row['state_name'],
-                              row['district_name'],
-                              row['block_name'],
-                              row['supervisor_name'],
-                              row['awc_name'], row['aww_name'],
-                              row['contact_phone_number'],
-                              '{:.2%}'.format(home_visit_percent),
-                              row['awc_num_open'],
-                              '{:.2%}'.format(weighing_efficiency),
-                              'Yes' if weighing_efficiency > 0.6 and home_visit_percent > 0.6 else 'No')
+            excel_rows.append([row['state_name'],
+                               row['district_name'],
+                               row['block_name'],
+                               row['supervisor_name'],
+                               row['awc_name'], row['aww_name'],
+                               row['contact_phone_number'],
+                               '{:.2%}'.format(home_visit_percent),
+                               num_open,
+                               '{:.2%}'.format(weighing_efficiency),
+                               'Yes' if weighing_efficiency >= 0.6 and home_visit_percent >= 0.6 else 'No'])
 
         return [
             [
-                'Incentive Report',
+                'AWW Performance Report',
                 excel_rows
             ],
             [

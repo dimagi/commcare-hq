@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import timedelta
+
+from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
@@ -17,6 +20,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_ancestor_location_openmrs_uuid,
     get_patient,
 )
+from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import CaseTriggerInfo
@@ -109,6 +113,8 @@ class SyncPersonAttributesTask(WorkflowTask):
             for attribute in self.attributes
         }
         for person_attribute_type, value_source in self.openmrs_config.case_config.person_attributes.items():
+            if not value_source.check_direction(DIRECTION_EXPORT):
+                continue
             value = value_source.get_value(self.info)
             if person_attribute_type in existing_person_attributes:
                 attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
@@ -144,6 +150,8 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             for identifier in self.patient['identifiers']
         }
         for patient_identifier_type, value_source in self.openmrs_config.case_config.patient_identifiers.items():
+            if not value_source.check_direction(DIRECTION_EXPORT):
+                continue
             if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
                 # Don't try to sync the OpenMRS person UUID; It's not a
                 # user-defined identifier and it can't be changed.
@@ -188,12 +196,30 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         self.info.form_question_values.update(self.form_question_values)
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:
+                if form_config.openmrs_start_datetime:
+                    # ValueSource.get_value() serializes self._get_commcare_value() ...
+                    cc_start_datetime_str = form_config.openmrs_start_datetime._get_commcare_value(self.info)
+                    cc_start_datetime = string_to_utc_datetime(cc_start_datetime_str)
+                    # ... We need to call these separately so that we can
+                    # calculate stop_datetime from the CommCare value.
+                    start_datetime = form_config.openmrs_start_datetime.serialize(cc_start_datetime)
+                    # We also need to use openmrs_start_datetime.serialize()
+                    # for both values because they could be OpenMRS datetimes
+                    # or OpenMRS dates and their data types must match.
+                    stop_datetime = form_config.openmrs_start_datetime.serialize(
+                        cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
+                    )
+                else:
+                    cc_start_datetime = string_to_utc_datetime(self.form_json['form']['meta']['timeEnd'])
+                    start_datetime = to_omrs_datetime(cc_start_datetime)
+                    stop_datetime = to_omrs_datetime(cc_start_datetime + timedelta(days=1) - timedelta(seconds=1))
                 subtasks.append(
                     CreateVisitTask(
                         self.requests,
                         person_uuid=self.person_uuid,
                         provider_uuid=provider_uuid,
-                        visit_datetime=string_to_utc_datetime(self.form_json['form']['meta']['timeEnd']),
+                        start_datetime=start_datetime,
+                        stop_datetime=stop_datetime,
                         values_for_concept={obs.concept: [obs.value.get_value(self.info)]
                                             for obs in form_config.openmrs_observations
                                             if obs.value.get_value(self.info)},

@@ -2,8 +2,7 @@
   "domains": [
     "ipm-senegal",
     "test-pna",
-    "testing-ipm-senegal",
-    "ct-apr"
+    "testing-ipm-senegal"
   ],
   "server_environment": ["production", "pna"],
   "config": {

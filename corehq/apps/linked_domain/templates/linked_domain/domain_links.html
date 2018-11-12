@@ -34,8 +34,8 @@
                         <td data-bind="text: name"></td>
                         <td data-bind="text: last_update"></td>
                         <td>
-                            <button class="btn" data-bind="visible: showUpdate() && !update_url, click: update">
-                                {% trans "Update" %}
+                            <button class="btn btn-danger" data-bind="visible: showUpdate() && !update_url, click: update">
+                                {% trans "Overwrite" %}
                             </button>
                             <button class="btn btn-info disabled" data-bind="visible: showSpinner">
                                 <i class="fa fa-spinner"></i>

@@ -13,12 +13,6 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AGG_GROWTH_MONITORING_TABLE
     aggregate_child_table_prefix = 'icds_db_gm_form_'
 
-    @property
-    def _old_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.child_health_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
@@ -177,28 +171,3 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             previous_month_tablename=previous_month_tablename,
             tablename=tablename
         ), query_params
-
-    def compare_with_old_data_query(self):
-        # only partially implements this comparison for now
-        month = self.month.replace(day=1)
-        return """
-        SELECT agg.case_id
-        FROM "{child_health_monthly_ucr}" chm_ucr
-        FULL OUTER JOIN "{new_agg_table}" agg
-        ON chm_ucr.doc_id = agg.case_id AND chm_ucr.month = agg.month AND agg.state_id = chm_ucr.state_id
-        WHERE chm_ucr.month = %(month)s and agg.state_id = %(state_id)s AND
-              (chm_ucr.wer_eligible = 1 AND (
-                 (chm_ucr.nutrition_status_last_recorded = 'severely_underweight' AND agg.zscore_grading_wfa = 1) OR
-                 (chm_ucr.nutrition_status_last_recorded = 'moderately_underweight' AND agg.zscore_grading_wfa = 2) OR
-                 (chm_ucr.nutrition_status_last_recorded = 'normal' AND agg.zscore_grading_wfa IN (3,4)) OR
-                 (chm_ucr.nutrition_status_last_recorded IS NULL AND agg.zscore_grading_wfa = 0) OR
-                 (chm_ucr.weight_recorded_in_month = agg.weight_child AND agg.latest_time_end_processed BETWEEN %(month)s AND %(next_month)s)
-              ))
-        """.format(
-            child_health_monthly_ucr=self._old_ucr_tablename,
-            new_agg_table=self.aggregate_parent_table,
-        ), {
-            "month": month.strftime('%Y-%m-%d'),
-            "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
-            "state_id": self.state_id
-        }
