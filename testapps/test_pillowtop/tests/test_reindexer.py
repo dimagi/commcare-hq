@@ -137,17 +137,12 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
     # this class is only here so you can run these explicitly
     pass
 
+
 @generate_cases([
     ('app', 'ApplicationToElasticsearchPillow'),
-    ('case', 'kafka-case-ucr-es'),
-    ('form', 'kafka-xform-ucr-es'),
     ('domain', 'KafkaDomainPillow'),
-    ('user', 'UserPillow'),
-    ('group', 'GroupPillow'),
     ('ledger-v1', 'LedgerToElasticsearchPillow'),
     ('sms', 'SqlSMSPillow'),
-    ('report-case', 'kafka-case-ucr-es'),
-    ('report-xform', 'kafka-xform-ucr-es'),
 ], CheckpointCreationTest)
 def test_checkpoint_creation(self, reindex_id, pillow_name):
     # checks that checkpoipnts are set to the latest checkpoints after reindexing
