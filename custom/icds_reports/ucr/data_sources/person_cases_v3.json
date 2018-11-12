@@ -457,7 +457,6 @@
         "datatype": "string",
         "type": "raw",
         "property_name": "phone_number"
-        }
       }
     ],
     "named_expressions": {},
