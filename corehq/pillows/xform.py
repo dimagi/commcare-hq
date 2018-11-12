@@ -172,7 +172,7 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
     change_feed = KafkaChangeFeed(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
-    checkpoint = KafkaPillowCheckpoint(pillow_id, topics)
+
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
         ucr_division=ucr_division,
@@ -187,6 +187,7 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
     )
     # avoid circular dependency
     from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
+    from corehq.pillows.mappings.user_mapping import USER_INDEX
     xform_to_report_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_XFORM_INDEX_INFO,
@@ -195,6 +196,9 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
+    checkpoint_id = "{}-{}-{}-{}".format(
+        pillow_id, XFORM_INDEX_INFO.index, REPORT_XFORM_INDEX_INFO.index, USER_INDEX)
+    checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor

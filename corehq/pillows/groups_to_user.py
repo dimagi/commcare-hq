@@ -47,12 +47,14 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, pro
 
 def get_group_es_pillow(pillow_id='GroupESPillow', num_processes=1, process_num=0, **kwargs):
     assert pillow_id == 'GroupESPillow', 'Pillow ID is not allowed to change'
-    checkpoint = KafkaPillowCheckpoint(pillow_id, [topics.GROUP])
     to_user_es_processor = GroupsToUsersProcessor()
     to_group_es_processor = get_group_to_elasticsearch_processor()
     change_feed = KafkaChangeFeed(
         topics=[topics.GROUP], client_id='groups-to-users', num_processes=num_processes, process_num=process_num
     )
+    checkpoint_id = "{}-{}-{}".format(
+        pillow_id, USER_INDEX, to_group_es_processor.index_info.index)
+    checkpoint = KafkaPillowCheckpoint(checkpoint_id, [topics.GROUP])
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

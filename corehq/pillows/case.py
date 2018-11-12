@@ -81,7 +81,6 @@ def get_ucr_es_case_pillow(
     change_feed = KafkaChangeFeed(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
-    checkpoint = KafkaPillowCheckpoint(pillow_id, topics)
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
         ucr_division=ucr_division,
@@ -97,6 +96,9 @@ def get_ucr_es_case_pillow(
     )
     case_search_processor = get_case_search_processor()
 
+    checkpoint_id = "{}-{}-{}".format(
+        pillow_id, CASE_INDEX_INFO.index, case_search_processor.index_info.index)
+    checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
