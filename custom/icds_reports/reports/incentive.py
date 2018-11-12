@@ -18,7 +18,7 @@ class IncentiveReport(object):
         excel_rows = []
         excel_rows.append(headers)
         for row in data:
-            home_visit_percent = row['valid_visits'] / row['expected_visits'] if row['expected_visits'] else 1
+            home_visit_percent = row['valid_visits'] / int(row['expected_visits']) if int(row['expected_visits']) else 1
             weighing_efficiency = row['wer_weighed'] / row['wer_eligible'] if row['wer_eligible'] else 1
             if home_visit_percent > 1:
                 home_visit_percent = 1

@@ -14,6 +14,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
+from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
@@ -634,6 +635,25 @@ class AggAwcDaily(models.Model):
     class Meta:
         managed = False
         db_table = 'agg_awc_daily'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggAwcDailyAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        update_query, update_params = helper.update_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = helper.indexes()
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic(using=db_for_read_write(cls)):
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(*helper.create_table_query())
+                cursor.execute(agg_query, agg_params)
+                cursor.execute(update_query, update_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class DailyAttendance(models.Model):
@@ -1417,7 +1437,7 @@ class AWWIncentiveReport(models.Model):
     wer_eligible = models.SmallIntegerField(null=True)
     awc_num_open = models.SmallIntegerField(null=True)
     valid_visits = models.SmallIntegerField(null=True)
-    expected_visits = models.SmallIntegerField(null=True)
+    expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
 
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE

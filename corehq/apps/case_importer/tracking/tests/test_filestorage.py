@@ -21,7 +21,7 @@ class FilestorageTest(TestCase):
 @generate_cases([(transient_file_store,),
                  (persistent_file_store,)], FilestorageTest)
 def test_transient(self, file_store):
-    with open(self.filename, 'r', encoding='utf-8') as f:
+    with open(self.filename, 'rb') as f:
         identifier = file_store.write_file(f, 'test_file.txt', 'test-domain').identifier
 
     tmpfile = file_store.get_tempfile_ref_for_contents(identifier)

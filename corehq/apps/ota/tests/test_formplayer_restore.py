@@ -44,7 +44,7 @@ class FormplayerRestoreTest(TestCase):
         mock_restore.return_value = (HttpResponse('Success', status=200), None)
         resp = self._do_post({'version': 2.0, 'as': self.commcare_user.username})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content, "Success")
+        self.assertEqual(resp.content.decode('utf-8'), "Success")
 
     def test_missing_as_user_param(self):
         resp = self._do_post({'version': 2.0})

@@ -60,6 +60,7 @@ from custom.icds_reports.models import (
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport,
+    AggAwcDaily,
     AggAwc)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
@@ -86,7 +87,8 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney']
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari',
+    'h.heena', 'avarshney', 'rjain']
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
@@ -123,7 +125,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
 ]
 
 
@@ -409,7 +410,7 @@ def _run_custom_sql_script(commands, day=None):
 
 
 def aggregate_awc_daily(day):
-    _run_custom_sql_script(["SELECT aggregate_awc_daily(%s)"], day)
+    AggAwcDaily.aggregate(force_to_date(day))
 
 
 @track_time
@@ -494,7 +495,7 @@ def _agg_ccs_record_table(day):
 
 @track_time
 def _agg_awc_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(AggAwc)):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
         ], day)
