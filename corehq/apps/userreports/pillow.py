@@ -431,7 +431,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
     topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
-            data_source_provider=DynamicDataSourceProvider(),
+            data_source_providers=[DynamicDataSourceProvider()],
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
@@ -453,7 +453,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
     topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
-            data_source_provider=StaticDataSourceProvider(),
+            data_source_providers=[StaticDataSourceProvider()],
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,

@@ -129,7 +129,7 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kw
 def get_user_es_ucr_pillow(pillow_id='user-to-es-ucr-pillow', num_processes=1, process_num=0,
         skip_ucr=False, **kwargs):
     # Pillow that sends users to ES and UCR
-    assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
+    assert pillow_id == 'user-to-es-ucr-pillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = get_user_es_processor()
     ucr_processor = ConfigurableReportPillowProcessor(

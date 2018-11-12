@@ -4,7 +4,7 @@ from django.conf import settings
 
 from corehq.elastic import get_es_new
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
