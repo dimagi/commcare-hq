@@ -316,7 +316,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         from corehq.form_processor.utils.metadata import scrub_form_meta
         xml = self.get_xml()
         try:
-            form_json = convert_xform_to_json(xml.encode('utf-8'))
+            form_json = convert_xform_to_json(xml)
         except XMLSyntaxError:
             return {}
         # we can assume all sql domains are new timezone domains
@@ -367,7 +367,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if not xml:
             return None
 
-        xml = xml.encode('utf-8')
+        if isinstance(xml, six.text_type):
+            xml = xml.encode('utf-8', errors='replace')
 
         return etree.fromstring(xml)
 
@@ -381,7 +382,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @memoized
     def get_xml(self):
-        return self.get_attachment('form.xml').decode('utf-8')
+        return self.get_attachment('form.xml')
 
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').md5
