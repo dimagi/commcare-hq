@@ -2592,7 +2592,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 domain = self.get_app().domain
                 project = Domain.get_by_name(domain)
                 try:
-                    if not should_sync_hierarchical_fixture(project):
+                    if not should_sync_hierarchical_fixture(project, self.get_app()):
                         # discontinued feature on moving to flat fixture format
                         raise LocationXpathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
