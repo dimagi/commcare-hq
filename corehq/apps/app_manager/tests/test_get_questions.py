@@ -8,6 +8,7 @@ from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.app_manager.models import Application, Module
+from six.moves import filter
 
 QUESTIONS = [
     {
