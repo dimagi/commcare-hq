@@ -415,10 +415,10 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         v2items = [item for item in group_schema.items if item.last_occurrences[self.app_id] == 2]
         self.assertEqual(len(v2items), 2)
 
-        multichoice = list(filter(
-            lambda item: item.path == [PathNode(name='form'), PathNode(name='question2')],
-            group_schema.items
-        ))[0]
+        multichoice = [
+            item for item in group_schema.items
+            if item.path == [PathNode(name='form'), PathNode(name='question2')]
+        ][0]
         self.assertEqual(len(multichoice.options), 3)
         self.assertEqual(
             len([o for o in multichoice.options if o.last_occurrences[self.app_id] == 2]),
