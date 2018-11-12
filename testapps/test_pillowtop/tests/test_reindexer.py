@@ -174,6 +174,12 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
     ('sql-form', 'kafka-xform-ucr-es'),
     ('ledger-v2', 'LedgerToElasticsearchPillow'),
     ('groups-to-user', 'UserPillow'),
+    ('case', 'kafka-case-ucr-es'),
+    ('form', 'kafka-xform-ucr-es'),
+    ('report-case', 'kafka-case-ucr-es'),
+    ('report-xform', 'kafka-xform-ucr-es'),
+    ('user', 'user-to-es-ucr-pillow'),
+    ('group', 'GroupESPillow'),
 ], CheckpointCreationTest)
 def test_no_checkpoint_creation(self, reindex_id, pillow_name):
     # these pillows should not touch checkpoints since they are run with other
