@@ -378,7 +378,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
     end = _time_in_milliseconds()
-    tags = ['format:{}'.format(writer.format), 'export_id:{}'.format(export_instance.get_id)]
+    tags = ['format:{}'.format(writer.format)]
     _record_datadog_export_write_rows(write_total, total_bytes, total_rows, tags)
     _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
