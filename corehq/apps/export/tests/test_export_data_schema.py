@@ -44,6 +44,7 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
 )
+from six.moves import filter
 from six.moves import map
 from six.moves import zip
 
