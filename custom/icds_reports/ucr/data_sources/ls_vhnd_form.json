@@ -34,13 +34,13 @@
     },
     "configured_indicators": [
       {
-        "display_name": null,
+        "display_name": "Supervisor ID",
         "datatype": "string",
         "type": "expression",
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "column_id": "supervisor_id",
+        "column_id": "location_id",
         "expression": {
           "type": "named",
           "name": "user_location_id"
