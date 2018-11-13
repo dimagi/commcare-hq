@@ -132,7 +132,6 @@ def get_all_daily_saved_export_instance_ids(accessed_after=None):
     """
     get all saved exports accessed after the timestamp
     :param accessed_after: reports that have been accessed after this time
-    :return:
     """
     from .models import ExportInstance
     results = ExportInstance.get_db().view(
