@@ -152,9 +152,10 @@ class FormProcessorSQL(object):
                 LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
 
         if cases:
-            for case in cases:
-                if toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
-                        case.domain, toggles.NAMESPACE_DOMAIN):
+            sort_submissions = toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
+                processed_forms.submitted.domain, toggles.NAMESPACE_DOMAIN)
+            if sort_submissions:
+                for case in cases:
                     SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary()
                     CaseAccessorSQL.save_case(case)
 
