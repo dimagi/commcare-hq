@@ -59,9 +59,9 @@ class TestDemoUser(TestCase):
         demo_element = '<data key="{}">{}</data>'.format(COMMCARE_USER_TYPE_KEY, COMMCARE_USER_TYPE_DEMO)
 
         turn_off_demo_mode(self.user)
-        restore = self._raw_restore_response()
+        restore = self._raw_restore_response().decode('utf-8')
         self.assertFalse(demo_element in restore)
 
         turn_on_demo_mode(self.user, self.domain)
-        restore = self._raw_restore_response()
+        restore = self._raw_restore_response().decode('utf-8')
         self.assertTrue(demo_element in restore)
