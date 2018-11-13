@@ -51,6 +51,23 @@
       },
       {
         "display_name": null,
+        "column_id": "visit_type_entered",
+        "type": "boolean",
+        "filter": {
+          "type": "not",
+          "filter": {
+          "type": "boolean_expression",
+          "operator" : "in",
+          "expression": {
+	        "type": "property_path",
+	        "property_path": ["form", "meeting_type"]
+          },
+          "property_value": ["", null]
+        }
+        }
+      },
+      {
+        "display_name": null,
         "datatype": "string",
         "type": "expression",
         "transform": {},

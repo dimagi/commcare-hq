@@ -180,6 +180,23 @@
       },
       {
         "display_name": null,
+        "column_id": "location_entered",
+        "type": "boolean",
+        "filter": {
+          "type": "not",
+          "filter": {
+          "type": "boolean_expression",
+          "operator" : "in",
+          "expression": {
+	        "type": "property_path",
+	        "property_path": ["form", "location_form_filled"]
+          },
+          "property_value": ["", null]
+        }
+        }
+      },
+      {
+        "display_name": null,
         "transform": {},
         "datatype": "decimal",
         "expression": {
