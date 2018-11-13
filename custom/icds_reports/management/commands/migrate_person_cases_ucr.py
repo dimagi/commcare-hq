@@ -45,11 +45,11 @@ class Command(BaseCommand):
             ("last_referral_date", ),
             ("referral_reached_date", ),
             ("hh_caste",
-                "CASE WHEN F_sc_count = 1 OR M_sc_count = 1 THEN 'sc'"
-                "     WHEN F_st_count = 1 OR M_st_count = 1 THEN 'st'"
+                "CASE WHEN \"F_sc_count\" = 1 OR \"M_sc_count\" = 1 THEN 'sc'"
+                "     WHEN \"F_st_count\" = 1 OR \"M_st_count\" = 1 THEN 'st'"
                 "     ELSE NULL END"),
-            ("hh_minority", "CASE WHEN F_minority_count = 1 OR M_minority_count = 1 THEN 1 ELSE NULL END"),
-            ("disabled", "CASE WHEN F_disabled_count = 1 OR M_disabled_count = 1 THEN 1 ELSE NULL END"),
+            ("hh_minority", "CASE WHEN \"F_minority_count\" = 1 OR \"M_minority_count\" = 1 THEN 1 ELSE NULL END"),
+            ("disabled", "CASE WHEN \"F_disabled_count\" = 1 OR \"M_disabled_count\" = 1 THEN 1 ELSE NULL END"),
             ("disability_type", "CONCAT_WS(' ', "
                 "CASE WHEN disability_type_1 = 1 THEN 1 ELSE NULL END, "
                 "CASE WHEN disability_type_2 = 1 THEN 2 ELSE NULL END, "
