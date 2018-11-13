@@ -27,7 +27,7 @@ from .dbaccessors import (
     get_properly_wrapped_export_instance,
     get_all_daily_saved_export_instance_ids,
 )
-from .export import get_export_file, rebuild_export, should_rebuild_export
+from .export import get_export_file, rebuild_export
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
