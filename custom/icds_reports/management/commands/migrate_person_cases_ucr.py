@@ -24,6 +24,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         columns = (
             # person_v3, calculation from person_v2
+            ("doc_id", ),
+            ("inserted_at", ),
             ("awc_id", ),
             ("supervisor_id", ),
             ("block_id", ),
