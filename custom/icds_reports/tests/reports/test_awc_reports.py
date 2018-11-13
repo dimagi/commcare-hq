@@ -18,6 +18,7 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text
+from six.moves import filter
 
 
 class FirstDayOfAugust(datetime.datetime):
