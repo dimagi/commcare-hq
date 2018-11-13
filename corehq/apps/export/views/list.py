@@ -187,7 +187,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
                 reverse('download_daily_saved_export', args=[self.domain, export._id]))
             file_data = self._fmt_emailed_export_fileData(
                 export._id, export.file_size, export.last_updated,
-                export.last_accessed, download_url
+                export.last_accessed, export.last_runtime, download_url
             )
 
         location_restrictions = []
@@ -212,7 +212,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         }
 
     def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
-                                     last_accessed, download_url):
+                                     last_accessed, last_runtime, download_url):
         """
         Return a dictionary containing details about an emailed export file.
         This will eventually be passed to an Angular controller.
@@ -428,6 +428,7 @@ class DailySavedExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'name': export.name,
             'description': export.description,
+            'last_runtime': (str(timedelta(seconds=export.last_runtime)) if export.last_runtime else ''),
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': (

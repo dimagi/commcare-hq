@@ -15,6 +15,8 @@ from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
+
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename, TransientTempfile
@@ -382,6 +384,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     _record_datadog_export_write_rows(write_total, total_bytes, total_rows, tags)
     _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
+    _record_export_runtime(end - start, export_instance.get_id)
 
 
 def _time_in_milliseconds():
@@ -414,6 +417,13 @@ def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
             duration // n_rows,
             tags=tags,
         )
+
+
+def _record_export_runtime(runtime, export_id):
+    # reload the export again to avoid stale updates to pre-loaded export doc
+    export = get_properly_wrapped_export_instance(export_id)
+    export.last_runtime = runtime
+    export.save()
 
 
 def _get_base_query(export_instance):

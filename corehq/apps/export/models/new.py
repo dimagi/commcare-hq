@@ -36,7 +36,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.timezones.utils import get_timezone_for_domain
 from memoized import memoized
-from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
+from couchdbkit import (
+    SchemaListProperty,
+    SchemaProperty,
+    BooleanProperty,
+    DictProperty,
+)
 
 from corehq import feature_previews
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
@@ -671,6 +676,8 @@ class ExportInstance(BlobMixin, Document):
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
+
+    last_runtime = IntegerProperty()
 
     description = StringProperty(default='')
 

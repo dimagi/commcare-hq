@@ -120,6 +120,15 @@
                                 {% trans "Just now" %}&nbsp;&nbsp;&nbsp;
                             </span>
                             <strong>{% trans "Last Downloaded:" %}</strong> {{ export.emailedExport.fileData.lastAccessed }}
+                            {% endangularjs %}
+                            {% if request|toggle_enabled:"SUPPORT" %}
+                                {% angularjs %}
+                                <span ng-show="export.last_runtime">
+                                   <strong>{% trans "Last Runtime:" %}</strong> {{ export.last_runtime }}
+                                </span>
+                                {% endangularjs %}
+                            {% endif %}
+                            {% angularjs %}
                         </span>
                         &nbsp;&nbsp;
                         {% angularjs %}
