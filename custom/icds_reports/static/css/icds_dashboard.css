@@ -291,6 +291,11 @@ nvd3#sectorChart > div.title.h4 {
     padding: 20px 20px 80px;
 }
 
+.program-summary-report-content {
+    color: #ffffff !important;
+    padding: 20px 20px 160px;
+}
+
 .no-margin {
     margin: 0 !important;
 }
@@ -844,5 +849,5 @@ hr {
     font-size: 13px;
     font-style: italic;
     text-align: center;
-    padding: 20px 50px 0;
+    padding: 20px 50px;
 }
