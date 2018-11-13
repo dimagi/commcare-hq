@@ -90,7 +90,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
-        with open(file, 'r', encoding='utf-8') as f:
+        with open(file, 'rb') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     def _test_submission_error_post_save(self, openrosa_version):
@@ -137,7 +137,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)
-        self.assertEqual("this isn't even close to xml", log.get_xml())
+        self.assertEqual("this isn't even close to xml", log.get_xml().decode('utf-8'))
         self.assertEqual(log.form_data, {})
 
     def test_missing_xmlns(self):
@@ -151,7 +151,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn(message, log.problem)
-        with open(file, 'r', encoding='utf-8') as f:
+        with open(file, 'rb') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     @flag_enabled('DATA_MIGRATION')
