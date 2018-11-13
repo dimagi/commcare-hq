@@ -68,8 +68,7 @@ class Command(BaseCommand):
             ("is_pregnant",
                 "CASE WHEN pregnant_resident_count = 1 OR pregnant_migrant_count = 1 THEN 1 ELSE NULL END"),
             ("marital_status", ),
-            # may need to remove if https://github.com/dimagi/commcare-hq/pull/22247 hasn't been merged
-            ("phone_number", ),
+            ("phone_number", "NULL"),
         )
         query_columns = [
             "{} AS {}".format(col[0] if len(col) == 1 else col[1], col[0])
