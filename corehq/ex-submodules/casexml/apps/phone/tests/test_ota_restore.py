@@ -28,7 +28,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
 def get_registration_xml(restore_user):
-    return xml.tostring(xml.get_registration_element(restore_user))
+    return xml.tostring(xml.get_registration_element(restore_user)).decode('utf-8')
 
 
 class SimpleOtaRestoreTest(TestCase):
@@ -48,7 +48,7 @@ class SimpleOtaRestoreTest(TestCase):
 
     def test_username_doesnt_have_domain(self):
         user = create_restore_user(username=normalize_username('withdomain', domain='thedomain'))
-        restore_payload = get_registration_xml(user).decode('utf-8')
+        restore_payload = get_registration_xml(user)
         self.assertTrue('thedomain' not in restore_payload)
 
     def test_name_and_number(self):
@@ -66,7 +66,7 @@ class SimpleOtaRestoreTest(TestCase):
                 template = '<data key="{prefix}_{key}">{val}</data>'
             self.assertIn(
                 template.format(prefix=SYSTEM_PREFIX, key=key, val=val),
-                payload.decode('utf-8'),
+                payload,
             )
 
         assertRegistrationData("first_name", "mclovin")
