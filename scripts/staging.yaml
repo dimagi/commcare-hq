@@ -63,4 +63,5 @@ branches:
   - sr-mutliprocessors   # Sravan Nov 13
   - mk-284183 # MK Mov 13
   # mk-check-se # MK Nov 13
+  - vellum-staging  # Nick P Nov 13
 submodules: {}
