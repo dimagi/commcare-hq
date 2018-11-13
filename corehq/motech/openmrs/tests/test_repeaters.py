@@ -182,7 +182,7 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                 'openmrs-repeater-test',
                 self.get_json('followup'),
                 case_types=['paciente'],
-                extra_fields=['name', 'estado_tarv', 'tb'],
+                extra_fields=['name', 'estado_tarv', 'tb', 'bandersnatch'],
             ),
             [
                 CaseTriggerInfo(
@@ -197,6 +197,7 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                         'name': 'Elsa',
                         'estado_tarv': '1',
                         'tb': '0',
+                        'bandersnatch': None,
                     },
                     form_question_values={},
                 )
