@@ -22,6 +22,7 @@ from corehq.motech.openmrs.const import (
     PERSON_UUID_IDENTIFIER_TYPE_ID,
     XMLNS_OPENMRS,
 )
+from corehq.motech.openmrs.exceptions import OpenmrsConfigurationError
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.value_source import CaseTriggerInfo
@@ -730,6 +731,10 @@ def get_unknown_encounter_role(requests):
     for encounter_role in response_json['results']:
         if encounter_role['display'] == 'Unknown':
             return encounter_role
+    raise OpenmrsConfigurationError(
+        'The standard "Unknown" EncounterRole was not found on the OpenMRS server at "{}". Please notify the '
+        'administrator of that server.'.format(requests.base_url)
+    )
 
 
 def get_patient_identifier_types(requests):
