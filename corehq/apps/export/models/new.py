@@ -19,7 +19,7 @@ from django.db import models
 from django.db.models import Sum
 from django.http import Http404
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
-    get_case_properties, get_all_case_properties_for_case_type
+    get_case_properties
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
@@ -1679,7 +1679,7 @@ class FormExportDataSchema(ExportDataSchema):
         return get_latest_form_export_schema(domain, app_id, form_xmlns)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, form_xmlns, current_only=False):
+    def _process_app_build(cls, current_schema, app, form_xmlns):
         forms = app.get_forms_by_xmlns(form_xmlns, log_missing=False)
         if not forms:
             return current_schema
