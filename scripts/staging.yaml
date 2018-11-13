@@ -61,5 +61,5 @@ branches:
   - jls/ko-exports-list  # Jenny Nov 2
   - sr-mutliprocessors   # Sravan Nov 13
   - mk-284183 # MK Mov 13
-  - mk-check-se # MK Nov 13
+  # mk-check-se # MK Nov 13
 submodules: {}
