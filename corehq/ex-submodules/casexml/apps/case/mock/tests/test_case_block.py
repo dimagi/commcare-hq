@@ -22,14 +22,14 @@ class CaseBlockTest(SimpleTestCase):
             case_id=self.CASE_ID,
             date_opened=self.NOW,
             date_modified=self.NOW,
-        ).as_xml())
+        ).as_xml()).decode('utf-8')
         expected = (
             '<case case_id="test-case-id" date_modified="2012-01-24T00:00:00.000000Z" '
             'xmlns="http://commcarehq.org/case/transaction/v2">'
             '<update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update>'
             '</case>'
         )
-        self.assertEqual(actual.decode('utf-8'), expected)
+        self.assertEqual(actual, expected)
 
     def test_does_not_let_you_specify_a_keyword_twice(self):
         """Doesn't let you specify a keyword twice (here 'case_name')"""
@@ -50,11 +50,11 @@ class CaseBlockTest(SimpleTestCase):
             update={
                 'date_opened': self.FIVE_DAYS_FROM_NOW,
             },
-        ).as_xml())
+        ).as_xml()).decode('utf-8')
         actual = (
             '<case case_id="test-case-id" date_modified="2012-01-24T00:00:00.000000Z" '
             'xmlns="http://commcarehq.org/case/transaction/v2">'
             '<update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update>'
             '</case>'
         )
-        self.assertEqual(actual, expected.decode('utf-8'))
+        self.assertEqual(actual, expected)
