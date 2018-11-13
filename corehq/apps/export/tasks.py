@@ -104,7 +104,7 @@ def _get_saved_export_download_data(export_instance_id):
     return download_data
 
 
-def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=False):
+def rebuild_saved_export(export_instance_id, manual=False):
     """Kicks off a celery task to rebuild the export.
 
     If this is called while another one is already running for the same export
@@ -163,7 +163,7 @@ def saved_exports():
 
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
     for daily_saved_export_id in get_all_daily_saved_export_instance_ids(last_access_cutoff):
-        rebuild_saved_export(daily_saved_export_id, last_access_cutoff, manual=False)
+        rebuild_saved_export(daily_saved_export_id, manual=False)
 
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
