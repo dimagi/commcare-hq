@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test import TestCase, override_settings, SimpleTestCase
 
 from corehq.apps.hqadmin.utils import check_for_rewind
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.util.test_utils import generate_cases
 from pillowtop import get_all_pillow_instances
 from testapps.test_pillowtop.utils import real_pillow_settings
@@ -105,7 +106,7 @@ class TestPillowCheckpointSeqStore(TestCase):
         self.assertIsNone(store)
 
 
-class TestHistoricalPillowCheckpoint(TestCase):
+class TestHistoricalPillowCheckpoint(CallCenterDomainMockTest):
 
     @real_pillow_settings()
     def test_all_pillows(self):
