@@ -600,6 +600,6 @@ class TestFormMeta(BaseIndexTest):
             """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
 value="if(count(instance('commcaresession')/session/context/drift) = 1, \
 instance('commcaresession')/session/context/drift, '')"/>""" in
-            self.form.render_xform()
+            self.form.render_xform().decode('utf-8')
         )
-        self.assertTrue("<orx:drift/>" in self.form.render_xform())
+        self.assertTrue("<orx:drift/>" in self.form.render_xform().decode('utf-8'))
