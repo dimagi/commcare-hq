@@ -409,6 +409,21 @@ class AggAwc(models.Model):
         db_table = 'agg_awc'
 
 
+class AggLsReportTillSupervisor(models.Model):
+    unique_awc_vists = models.IntegerField()
+    vhnd_observed = models.IntegerField()
+    beneficiary_vists = models.IntegerField()
+    month = models.DateField()
+    state_id = models.TextField()
+    district_id = models.TextField()
+    block_id = models.TextField()
+    supervisor_id = models.TextField()
+    aggregation_level = models.SmallIntegerField()
+    class Meta:
+        managed = False
+        db_table = 'agg_ls_report'
+
+
 class AggCcsRecord(models.Model):
     state_id = models.TextField()
     district_id = models.TextField()
