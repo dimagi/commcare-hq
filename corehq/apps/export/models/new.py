@@ -1456,14 +1456,15 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
+        app_ids_for_domain = cls._get_current_app_ids_for_domain(domain, app_id)
         app_build_ids = []
         if not only_process_current_builds:
             app_build_ids = cls._get_app_build_ids_to_process(
                 domain,
-                app_id,
+                app_ids_for_domain,
                 current_schema.last_app_versions,
             )
-        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
+        app_build_ids.extend(app_ids_for_domain)
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
@@ -1667,12 +1668,15 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):
+        """Get all app IDs of 'current' apps that should be included in this schema"""
         if not app_id:
             return []
         return [app_id]
 
     @staticmethod
-    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
+    def _get_app_build_ids_to_process(domain, app_ids, last_app_versions):
+        """Get all built apps that should be included in this schema"""
+        app_id = app_ids[0] if app_ids else None
         return get_built_app_ids_with_submissions_for_app_id(
             domain,
             app_id,
@@ -1977,9 +1981,10 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_app_ids_in_domain(domain)
 
     @staticmethod
-    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
+    def _get_app_build_ids_to_process(domain, app_ids, last_app_versions):
         return get_built_app_ids_with_submissions_for_app_ids_and_versions(
             domain,
+            app_ids,
             last_app_versions
         )
 
