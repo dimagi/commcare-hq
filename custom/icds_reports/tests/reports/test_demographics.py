@@ -38,7 +38,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "registered_household",
+            "redirect": "demographics/registered_household",
             "all": None,
             "format": "number",
             "color": "red",
@@ -61,7 +61,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adhaar",
+            "redirect": "demographics/adhaar",
             "all": 1608,
             "format": "percent_and_div",
             "color": "green",
@@ -85,7 +85,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_children",
+            "redirect": "demographics/enrolled_children",
             "all": 1287,
             "format": "percent_and_div",
             "color": "red",
@@ -108,7 +108,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_women",
+            "redirect": "demographics/enrolled_women",
             "all": 155,
             "format": "percent_and_div",
             "color": "red",
@@ -131,7 +131,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            'redirect': 'lactating_enrolled_women',
+            'redirect': 'demographics/lactating_enrolled_women',
             "all": 166,
             "format": "percent_and_div",
             "color": "red",
@@ -154,7 +154,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adolescent_girls",
+            "redirect": "demographics/adolescent_girls",
             "all": 34,
             "format": "percent_and_div",
             "color": "red",
@@ -193,7 +193,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "registered_household",
+            "redirect": "demographics/registered_household",
             "all": None,
             "format": "number",
             "color": "green",
@@ -216,7 +216,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adhaar",
+            "redirect": "demographics/adhaar",
             "all": 1608,
             "format": "percent_and_div",
             "color": "green",
@@ -242,7 +242,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_children",
+            "redirect": "demographics/enrolled_children",
             "all": 1287,
             "format": "percent_and_div",
             "color": "green",
@@ -265,7 +265,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_women",
+            "redirect": "demographics/enrolled_women",
             "all": 155,
             "format": "percent_and_div",
             "color": "green",
@@ -288,7 +288,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "lactating_enrolled_women",
+            "redirect": "demographics/lactating_enrolled_women",
             "all": 166,
             "format": "percent_and_div",
             "color": "green",
@@ -311,7 +311,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adolescent_girls",
+            "redirect": "demographics/adolescent_girls",
             "all": 34,
             "format": "percent_and_div",
             "color": "green",
@@ -350,7 +350,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "registered_household",
+            "redirect": "demographics/registered_household",
             "all": None,
             "format": "number",
             "color": "green",
@@ -373,7 +373,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adhaar",
+            "redirect": "demographics/adhaar",
             "all": 1608,
             "format": "percent_and_div",
             "color": "green",
@@ -399,7 +399,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_children",
+            "redirect": "demographics/enrolled_children",
             "all": 1287,
             "format": "percent_and_div",
             "color": "green",
@@ -422,7 +422,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_women",
+            "redirect": "demographics/enrolled_women",
             "all": 155,
             "format": "percent_and_div",
             "color": "green",
@@ -445,7 +445,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "lactating_enrolled_women",
+            "redirect": "demographics/lactating_enrolled_women",
             "all": 166,
             "format": "percent_and_div",
             "color": "green",
@@ -468,7 +468,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adolescent_girls",
+            "redirect": "demographics/adolescent_girls",
             "all": 34,
             "format": "percent_and_div",
             "color": "green",

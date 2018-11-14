@@ -86,7 +86,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'all': get_value(daily_yesterday, 'awcs'),
             'format': 'div',
             'frequency': 'day',
-            'redirect': 'awc_daily_status',
+            'redirect': 'icds_cas_reach/awc_daily_status',
         }
     else:
         monthly_attendance_percent = percent_increase('awc_num_open', awc_this_month_data, awc_prev_month_data)
@@ -115,7 +115,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
                     'all': get_value(awc_this_month_data, 'all_awcs'),
                     'format': 'div',
                     'frequency': 'month',
-                    'redirect': 'awcs_covered'
+                    'redirect': 'icds_cas_reach/awcs_covered'
                 },
                 number_of_awc_open_yesterday
             ],

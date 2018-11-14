@@ -92,7 +92,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'all': None,
                     'format': 'number',
                     'frequency': frequency,
-                    'redirect': 'registered_household'
+                    'redirect': 'demographics/registered_household'
                 },
                 {
                     'label': _('Percent Aadhaar-seeded Beneficiaries'),
@@ -103,7 +103,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'adhaar'
+                    'redirect': 'demographics/adhaar'
                 }
             ],
             [
@@ -116,7 +116,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'all': get_value(data, 'child_health_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'enrolled_children'
+                    'redirect': 'demographics/enrolled_children'
                 },
                 {
                     'label': _('Percent pregnant women enrolled for Anganwadi Services'),
@@ -127,7 +127,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'all': get_value(data, 'ccs_pregnant_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'enrolled_women'
+                    'redirect': 'demographics/enrolled_women'
                 }
             ],
             [
@@ -141,7 +141,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'lactating_enrolled_women'
+                    'redirect': 'demographics/lactating_enrolled_women'
                 },
                 {
                     'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
@@ -152,7 +152,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
-                    'redirect': 'adolescent_girls'
+                    'redirect': 'demographics/adolescent_girls'
                 }
             ]
         ]
