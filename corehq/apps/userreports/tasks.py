@@ -238,9 +238,15 @@ def delete_data_source_task(domain, config_id):
     delete_data_source_shared(domain, config_id)
 
 
-@periodic_task(serializer='pickle',
-    run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
-)
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
+def preethi_reprocess_archive_stubs():
+    # Check for archive stubs
+    from couchforms.models import UnfinishedArchiveStub
+    stubs = UnfinishedArchiveStub.objects.filter()
+
+
+
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_queue_async_indicators_task():
     if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
@@ -436,10 +442,7 @@ def _build_async_indicators(indicator_doc_ids):
         )
 
 
-@periodic_task(serializer='pickle',
-    run_every=crontab(minute="*/5"),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
+@periodic_task(serializer='pickle', run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
 def async_indicators_metrics():
     now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()

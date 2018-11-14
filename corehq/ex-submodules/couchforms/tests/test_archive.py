@@ -202,3 +202,6 @@ class TestFormArchivingSQL(TestFormArchiving):
         self.assertEqual(len(stubs), 1)
         self.assertEqual(stubs[0].xform_id, xform.form_id)
 
+        from corehq.apps.userreports.tasks import preethi_reprocess_archive_stubs
+        preethi_reprocess_archive_stubs()
+
