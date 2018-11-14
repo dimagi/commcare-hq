@@ -676,7 +676,7 @@ class ExportInstance(BlobMixin, Document):
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
-    last_runtime = IntegerProperty()
+    last_duration = IntegerProperty()
 
     description = StringProperty(default='')
 
