@@ -939,11 +939,6 @@ except ImportError as error:
     from dev_settings import *
 
 
-COUCH_DATABASES['default'] = {
-    k: v.encode('utf-8') if isinstance(v, six.text_type) else v
-    for (k, v) in COUCH_DATABASES['default'].items()
-}
-
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
 # hosting environments use pgBouncer with transaction pooling. For more information, see:
 # https://docs.djangoproject.com/en/1.11/releases/1.11.1/#allowed-disabling-server-side-cursors-on-postgresql
