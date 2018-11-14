@@ -82,7 +82,6 @@ gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1
 httpagentparser==1.7.8
-httplib2==0.11.3
 idna==2.7
 ipaddress==1.0.22
 ipython-genutils==0.2.0   # via traitlets
@@ -183,7 +182,7 @@ wcwidth==0.1.7            # via prompt-toolkit
 webencodings==0.5.1
 werkzeug==0.11.15
 wrapt==1.10.11            # via ddtrace
-xhtml2pdf==0.2.2
+xhtml2pdf==0.2.3
 xlrd==1.0.0
 xlwt==1.3.0
 zeep==1.6.0
