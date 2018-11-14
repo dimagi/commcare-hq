@@ -25,7 +25,7 @@ from .const import SAVED_EXPORTS_QUEUE, EXPORT_DOWNLOAD_QUEUE
 from .dbaccessors import (
     get_case_inferred_schema,
     get_properly_wrapped_export_instance,
-    get_all_daily_saved_export_instance_ids,
+    get_daily_saved_export_ids_for_auto_rebuild,
 )
 from .export import get_export_file, rebuild_export
 from .models.new import EmailExportWhenDoneRequest
@@ -162,7 +162,7 @@ def saved_exports():
         export_for_group_async.delay(group_config_id)
 
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    for daily_saved_export_id in get_all_daily_saved_export_instance_ids(last_access_cutoff):
+    for daily_saved_export_id in get_daily_saved_export_ids_for_auto_rebuild(last_access_cutoff):
         rebuild_saved_export(daily_saved_export_id, manual=False)
 
 

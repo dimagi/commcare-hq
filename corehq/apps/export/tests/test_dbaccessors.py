@@ -18,7 +18,7 @@ from corehq.apps.export.dbaccessors import (
     get_case_export_instances,
     get_export_count_by_domain,
     get_deid_export_count,
-    get_all_daily_saved_export_instance_ids,
+    get_daily_saved_export_ids_for_auto_rebuild,
     get_properly_wrapped_export_instance,
     get_case_inferred_schema,
     get_form_inferred_schema,
@@ -130,6 +130,7 @@ class TestExportInstanceDBAccessors(TestCase):
         cls.form_instance_daily_saved = FormExportInstance(
             domain='wrong-domain',
             is_daily_saved_export=True,
+            auto_rebuild_enabled=True
         )
         cls.case_instance_deid = CaseExportInstance(
             domain=cls.domain,
@@ -144,6 +145,7 @@ class TestExportInstanceDBAccessors(TestCase):
         cls.case_instance_daily_saved = CaseExportInstance(
             domain='wrong-domain',
             is_daily_saved_export=True,
+            auto_rebuild_enabled=True
         )
 
         cls.instances = [
@@ -189,7 +191,7 @@ class TestExportInstanceDBAccessors(TestCase):
         self.assertEqual(len(instances), 0)
 
     def test_get_daily_saved_exports(self):
-        instance_ids = get_all_daily_saved_export_instance_ids()
+        instance_ids = get_daily_saved_export_ids_for_auto_rebuild()
         self.assertEqual(
             set(instance_ids),
             {self.form_instance_daily_saved._id, self.case_instance_daily_saved._id}

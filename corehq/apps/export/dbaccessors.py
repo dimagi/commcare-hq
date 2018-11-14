@@ -128,7 +128,7 @@ def _get_export_instance(cls, key):
     return [cls.wrap(result['doc']) for result in results]
 
 
-def get_all_daily_saved_export_instance_ids(accessed_after=None):
+def get_daily_saved_export_ids_for_auto_rebuild(accessed_after=None):
     """
     get all saved exports or accessed after the timestamp
     :param accessed_after: datetime to get reports that have been accessed after this timestamp
