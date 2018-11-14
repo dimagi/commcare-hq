@@ -1424,9 +1424,10 @@ class ExportDataSchema(Document):
         app_label = 'export'
 
     def get_number_of_apps_to_process(self):
+        app_ids_for_domain = self._get_current_app_ids_for_domain(self.domain, self.app_id)
         return len(self._get_app_build_ids_to_process(
             self.domain,
-            self.app_id,
+            app_ids_for_domain,
             self.last_app_versions,
         ))
 
