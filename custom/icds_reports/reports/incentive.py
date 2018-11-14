@@ -14,7 +14,7 @@ class IncentiveReport(object):
 
         def _format_infrastructure_data(data):
             return data if data else 'Data not entered'
-        
+
         data = AWWIncentiveReport.objects.filter(month=self.month, block_id=self.block).values('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number', 'wer_weighed', 'wer_eligible', 'awc_num_open', 'valid_visits', 'expected_visits')
 
         headers = ['State', 'District', 'Block', 'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number', 'Home Visits Conducted', 'Number of Days AWC was Open', 'Weighing Efficiency', 'Eligible for Incentive']
