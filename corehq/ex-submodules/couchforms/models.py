@@ -355,15 +355,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             operation='archive',
         ))
         self.save()
-        try:
-            xform_archived.send(sender="couchforms", xform=self)
-        except Exception:  # TODO: Make this exception much more specific
-            UnfinishedArchiveStub.objects.create(
-                xform_id=self.form_id,
-                timestamp=datetime.datetime.utcnow(),
-                saved=False,
-                domain=self.domain,
-            )
+        xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None):
         if not self.is_archived:
@@ -529,6 +521,7 @@ class UnfinishedSubmissionStub(models.Model):
 
 class UnfinishedArchiveStub(models.Model):
     xform_id = models.CharField(max_length=200)
+    user_id = models.CharField(max_length=200)
     timestamp = models.DateTimeField(db_index=True)
     saved = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
@@ -539,6 +532,7 @@ class UnfinishedArchiveStub(models.Model):
         return six.text_type(
             "UnfinishedArchiveStub("
             "xform_id={s.xform_id},"
+            "user_id={s.user_id},"
             "timestamp={s.timestamp},"
             "saved={s.saved},"
             "domain={s.domain})"

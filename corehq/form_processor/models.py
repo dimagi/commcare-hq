@@ -387,12 +387,12 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').md5
 
-    def archive(self, user_id=None):
-        if self.is_archived:
+    def archive(self, user_id=None, retry_archive=False):
+        if self.is_archived and not retry_archive:
             return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_post import unfinished_archive
-        with unfinished_archive(instance=self):
+        with unfinished_archive(instance=self, user_id=user_id):
             FormAccessorSQL.archive_form(self, user_id=user_id)
             xform_archived.send(sender="form_processor", xform=self)
 

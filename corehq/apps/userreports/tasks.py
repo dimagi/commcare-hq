@@ -238,9 +238,21 @@ def delete_data_source_task(domain, config_id):
     delete_data_source_shared(domain, config_id)
 
 
-@periodic_task(serializer='pickle',
-    run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
-)
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
+def reprocess_archive_stubs():
+    # Check for archive stubs
+    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+    from couchforms.models import UnfinishedArchiveStub
+    stubs = UnfinishedArchiveStub.objects.filter()
+    for stub in stubs:
+        xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
+        # Delete the original stub and run the archive function again. (A new stub will be created if it doesn't
+        # go through again)
+        UnfinishedArchiveStub.objects.filter(xform_id=stub.xform_id).all().delete()
+        xform.archive(user_id=stub.user_id, retry_archive=True)
+
+
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_queue_async_indicators_task():
     if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
@@ -436,10 +448,7 @@ def _build_async_indicators(indicator_doc_ids):
         )
 
 
-@periodic_task(serializer='pickle',
-    run_every=crontab(minute="*/5"),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
+@periodic_task(serializer='pickle', run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
 def async_indicators_metrics():
     now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()

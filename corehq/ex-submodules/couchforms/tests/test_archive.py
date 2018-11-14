@@ -11,6 +11,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.util.context_managers import drop_connected_signals
 from couchforms.signals import xform_archived, xform_unarchived
+from couchforms.models import UnfinishedArchiveStub
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin
@@ -86,8 +87,11 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         # Mock the send function throwing an error
         with mock.patch('couchforms.signals.xform_archived.send') as mock_send:
-            mock_send.side_effect = None
-            xform.archive(user_id='librarian')
+            try:
+                mock_send.side_effect = Exception
+                xform.archive(user_id='librarian')
+            except Exception:
+                pass
 
         # Get the form with the updated history
         xform = self.formdb.get_form(xform.form_id)
@@ -99,13 +103,26 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # The case should still exist because it was not rebuilt
         self.assertFalse(case.is_deleted)
 
+        # There should be a stub for the unfinished archive
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
+        self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
+
         [archival] = xform.history
         self.assertEqual('archive', archival.operation)
         self.assertEqual('librarian', archival.user)
 
-        stubs = UnfinishedArchiveStub.objects.filter(domain='test-domain')
-        self.assertEqual(len(stubs), 1)
-        self.assertEqual(stubs[0].xform_id, xform.form_id)
+        from corehq.apps.userreports.tasks import reprocess_archive_stubs
+        reprocess_archive_stubs()
+
+        # Get the case with the updated history
+        case = self.casedb.get_case(case_id)
+        
+        # The case and stub should both be deleted now
+        self.assertTrue(case.is_deleted)
+        unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
 
     def testSignal(self):
         global archive_counter, restore_counter

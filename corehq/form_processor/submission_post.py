@@ -544,11 +544,11 @@ def unfinished_submission(instance):
 
 
 @contextlib.contextmanager
-def unfinished_archive(instance):
+def unfinished_archive(instance, user_id):
     unfinished_archive_stub = None
     if not getattr(instance, 'deprecated_form_id', None):
-        # don't create stubs for form edits since we don't want to auto-reprocess them
         unfinished_archive_stub = UnfinishedArchiveStub.objects.create(
+            user_id=user_id,
             xform_id=instance.form_id,
             timestamp=datetime.datetime.utcnow(),
             saved=False,

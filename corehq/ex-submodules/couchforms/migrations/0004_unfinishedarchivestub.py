@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
             name='UnfinishedArchiveStub',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('user_id', models.CharField(max_length=200)),
                 ('xform_id', models.CharField(max_length=200)),
                 ('timestamp', models.DateTimeField(db_index=True)),
                 ('saved', models.BooleanField(default=False)),
