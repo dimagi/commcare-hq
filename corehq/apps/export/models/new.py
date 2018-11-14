@@ -1994,13 +1994,14 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, case_type):
-        case_property_mapping = get_case_properties(
-            app,
-            [case_type],
+        builder = ParentCasePropertyBuilder(
+            app.domain,
+            [app],
             include_parent_properties=False
         )
-        parent_types = (ParentCasePropertyBuilder.for_app(app)
-                        .get_case_relationships_for_case_type(case_type))
+        case_property_mapping = builder.get_case_property_map([case_type])
+
+        parent_types = builder.get_case_relationships_for_case_type(case_type)
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
