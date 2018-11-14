@@ -13,4 +13,7 @@ SOURCE_LANGUAGE_MAPPING = {
     'mal': 'ml',  # malayalam
     'mar': 'mr',  # marathi
     'snd': 'sd',  # sindhi for test
+    'mri': 'mi',  # maori
+    'khm': 'km',  # khmer
+    'lug': 'lg'   # ganda
 }

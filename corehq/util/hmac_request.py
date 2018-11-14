@@ -19,7 +19,7 @@ def convert_to_bytestring_if_unicode(shared_key):
 
 
 def get_hmac_digest(shared_key, data):
-    hm = hmac.new(convert_to_bytestring_if_unicode(shared_key), data, hashlib.sha256)
+    hm = hmac.new(convert_to_bytestring_if_unicode(shared_key), convert_to_bytestring_if_unicode(data), hashlib.sha256)
     digest = base64.b64encode(hm.digest())
     return digest
 

@@ -152,7 +152,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
         # transform format from ColumnValue to dict
         formatted_rows = [
-            {i.column.database_column_name: i.value for i in row}
+            {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
         doc_ids = set(row['doc_id'] for row in formatted_rows)
@@ -239,7 +239,7 @@ def get_indicator_table(indicator_config, custom_metadata=None):
 
 def _custom_index_name(table_name, column_ids):
     base_name = "ix_{}_{}".format(table_name, ','.join(column_ids))
-    base_hash = hashlib.md5(base_name).hexdigest()
+    base_hash = hashlib.md5(base_name.encode('utf-8')).hexdigest()
     return "{}_{}".format(base_name[:50], base_hash[:5])
 
 

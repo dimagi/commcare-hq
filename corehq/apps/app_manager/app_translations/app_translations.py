@@ -11,7 +11,6 @@ from lxml import etree
 import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
-from celery.task import task
 
 from corehq import toggles
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
@@ -239,7 +238,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
                          + media_image + media_audio + [unique_id])]
 
 
-def expected_bulk_app_sheet_headers(app):
+def expected_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
     '''
     Returns lists representing the expected structure of bulk app translation
     Excel file uploads and downloads.
@@ -250,8 +249,10 @@ def expected_bulk_app_sheet_headers(app):
         ["sheet2 name", [...]],
         ...
     ]
-    :param app:
-    :return:
+
+    exclude_module and exclude_form are functions that take in one argument
+    (form or module) and return True if the module/form should be excluded
+    from the returned list
     '''
     languages_list = ['default_' + l for l in app.langs]
     audio_lang_list = ['audio_' + l for l in app.langs]
@@ -274,12 +275,16 @@ def expected_bulk_app_sheet_headers(app):
     ])
 
     for mod_index, module in enumerate(app.get_modules()):
+        if exclude_module is not None and exclude_module(module):
+            continue
 
         module_string = "module" + str(mod_index + 1)
         headers.append([module_string, ['case_property', 'list_or_detail'] + languages_list])
 
         for form_index, form in enumerate(module.get_forms()):
             if form.form_type == 'shadow_form':
+                continue
+            if exclude_form is not None and exclude_form(form):
                 continue
 
             form_string = module_string + "_form" + str(form_index + 1)
@@ -291,15 +296,22 @@ def expected_bulk_app_sheet_headers(app):
     return headers
 
 
-def expected_bulk_app_sheet_rows(app):
+def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
     """
     Data rows for bulk app translation download
+
+    exclude_module and exclude_form are functions that take in one argument
+    (form or module) and return True if the module/form should be excluded
+    from the returned list
     """
 
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = OrderedDict({MODULES_AND_FORMS_SHEET_NAME: []})
 
     for mod_index, module in enumerate(app.get_modules()):
+        if exclude_module is not None and exclude_module(module):
+            continue
+
         # This is duplicated logic from expected_bulk_app_sheet_headers,
         # which I don't love.
         module_string = "module" + str(mod_index + 1)
@@ -395,6 +407,8 @@ def expected_bulk_app_sheet_rows(app):
                             )
 
             for form_index, form in enumerate(module.get_forms()):
+                if exclude_form is not None and exclude_form(form):
+                    continue
                 form_string = module_string + "_form" + str(form_index + 1)
                 xform = form.wrapped_xform()
 

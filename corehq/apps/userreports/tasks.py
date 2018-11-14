@@ -63,7 +63,7 @@ def _get_config_by_id(indicator_config_id):
 
 
 def _build_indicators(config, document_store, relevant_ids):
-    adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+    adapter = get_indicator_adapter(config, raise_errors=True)
 
     for doc in document_store.iter_documents(relevant_ids):
         if config.asynchronous:
@@ -84,7 +84,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
     if limit == -1:
         send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
-        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
@@ -104,7 +104,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
-        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
             config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
@@ -176,7 +176,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.after_table_build()
 
 
@@ -336,7 +336,7 @@ def _build_async_indicators(indicator_doc_ids):
 
     def doc_ids_from_rows(rows):
         formatted_rows = [
-            {column.column.database_column_name: column.value for column in row}
+            {column.column.database_column_name.decode('utf-8'): column.value for column in row}
             for row in rows
         ]
         return set(row['doc_id'] for row in formatted_rows)
@@ -387,7 +387,7 @@ def _build_async_indicators(indicator_doc_ids):
                         continue
                     adapter = None
                     try:
-                        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                        adapter = get_indicator_adapter(config)
                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         eval_context.reset_iteration()
                     except Exception as e:

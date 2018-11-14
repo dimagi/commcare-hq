@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from collections import namedtuple, defaultdict
-from datetime import timedelta
 import re
 
 from requests import RequestException
@@ -23,8 +22,8 @@ from corehq.motech.openmrs.const import (
     PERSON_UUID_IDENTIFIER_TYPE_ID,
     XMLNS_OPENMRS,
 )
+from corehq.motech.openmrs.exceptions import OpenmrsConfigurationError
 from corehq.motech.openmrs.finders import PatientFinder
-from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.value_source import CaseTriggerInfo
 
@@ -208,12 +207,13 @@ class UpdatePatientIdentifierTask(WorkflowTask):
 
 class CreateVisitTask(WorkflowTask):
 
-    def __init__(self, requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
-                 openmrs_form, visit_type, location_uuid=None):
+    def __init__(self, requests, person_uuid, provider_uuid, start_datetime, stop_datetime, values_for_concept,
+                 encounter_type, openmrs_form, visit_type, location_uuid=None):
         self.requests = requests
         self.person_uuid = person_uuid
         self.provider_uuid = provider_uuid
-        self.visit_datetime = visit_datetime
+        self.start_datetime = start_datetime
+        self.stop_datetime = stop_datetime
         self.values_for_concept = values_for_concept
         self.encounter_type = encounter_type
         self.openmrs_form = openmrs_form
@@ -223,16 +223,12 @@ class CreateVisitTask(WorkflowTask):
 
     def run(self):
         subtasks = []
-        start_datetime = to_omrs_datetime(self.visit_datetime)
         if self.visit_type:
-            stop_datetime = to_omrs_datetime(
-                self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
-            )
             visit = {
                 'patient': self.person_uuid,
                 'visitType': self.visit_type,
-                'startDatetime': start_datetime,
-                'stopDatetime': stop_datetime,
+                'startDatetime': self.start_datetime,
+                'stopDatetime': self.stop_datetime,
             }
             if self.location_uuid:
                 visit['location'] = self.location_uuid
@@ -241,7 +237,7 @@ class CreateVisitTask(WorkflowTask):
 
         subtasks.append(
             CreateEncounterTask(
-                self.requests, self.person_uuid, self.provider_uuid, start_datetime, self.values_for_concept,
+                self.requests, self.person_uuid, self.provider_uuid, self.start_datetime, self.values_for_concept,
                 self.encounter_type, self.openmrs_form, self.visit_uuid, self.location_uuid
             )
         )
@@ -272,15 +268,20 @@ class CreateEncounterTask(WorkflowTask):
         encounter = {
             'encounterDatetime': self.start_datetime,
             'patient': self.person_uuid,
-            'form': self.openmrs_form,
             'encounterType': self.encounter_type,
         }
+        if self.openmrs_form:
+            encounter['form'] = self.openmrs_form
         if self.visit_uuid:
             encounter['visit'] = self.visit_uuid
         if self.location_uuid:
             encounter['location'] = self.location_uuid
         if self.provider_uuid:
-            encounter['provider'] = self.provider_uuid
+            encounter_role = get_unknown_encounter_role(self.requests)
+            encounter['encounterProviders'] = [{
+                'provider': self.provider_uuid,
+                'encounterRole': encounter_role['uuid']
+            }]
         response = self.requests.post('/ws/rest/v1/encounter', json=encounter, raise_for_status=True)
         self.encounter_uuid = response.json()['uuid']
 
@@ -719,6 +720,21 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 form_question_values={}
             ))
     return result
+
+
+def get_unknown_encounter_role(requests):
+    """
+    Return "Unknown" encounter role for legacy providers with no
+    encounter role set
+    """
+    response_json = requests.get('/ws/rest/v1/encounterrole').json()
+    for encounter_role in response_json['results']:
+        if encounter_role['display'] == 'Unknown':
+            return encounter_role
+    raise OpenmrsConfigurationError(
+        'The standard "Unknown" EncounterRole was not found on the OpenMRS server at "{}". Please notify the '
+        'administrator of that server.'.format(requests.base_url)
+    )
 
 
 def get_patient_identifier_types(requests):

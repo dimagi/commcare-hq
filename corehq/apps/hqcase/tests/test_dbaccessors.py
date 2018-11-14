@@ -162,8 +162,8 @@ class DBAccessorsTest(TestCase):
         )
 
     def test_get_case_properties(self):
-        self.assertItemsEqual(
-            get_case_properties(self.domain),
+        self.assertEqual(
+            set(get_case_properties(self.domain)),
             {prop
              for case in self.cases if case.domain == self.domain
              for action in case.actions

@@ -55,8 +55,8 @@ class TestRelatedCases(TestCase):
         dad_case = CaseAccessors(self.domain).get_case(self.dad.case_id)
         related_cases = get_case_hierarchy_for_restore(dad_case)
         # cases "above" this one should not be included
-        self.assertItemsEqual(
-            [c.case_id for c in related_cases],
-            [self.dad.case_id, self.kid.case_id, self.kid2.case_id,
-             self.grandkid.case_id]
+        self.assertEqual(
+            set(c.case_id for c in related_cases),
+            {self.dad.case_id, self.kid.case_id, self.kid2.case_id,
+             self.grandkid.case_id}
         )
