@@ -420,12 +420,12 @@ def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
 
 
 def _record_export_duration(duration, export):
-    export.last_duration = duration
+    export.last_build_duration = duration
     try:
         export.save()
     except ResourceConflict:
-        export = get_properly_wrapped_export_instance(export.export_id)
-        export.last_duration = duration
+        export = get_properly_wrapped_export_instance(export.get_id)
+        export.last_build_duration = duration
         export.save()
 
 

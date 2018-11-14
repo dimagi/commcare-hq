@@ -123,8 +123,8 @@
                             {% endangularjs %}
                             {% if request|toggle_enabled:"SUPPORT" %}
                                 {% angularjs %}
-                                <span ng-show="export.last_duration">
-                                   <strong>{% trans "Last Duration:" %}</strong> {{ export.last_duration }}
+                                <span ng-show="export.last_build_duration">
+                                   <strong>{% trans "Last Build Duration:" %}</strong> {{ export.last_build_duration }}
                                 </span>
                                 {% endangularjs %}
                             {% endif %}
