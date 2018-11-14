@@ -6,6 +6,7 @@ import hashlib
 import json
 import random
 import re
+import six
 from copy import deepcopy
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
@@ -74,6 +75,8 @@ class TimedSchedule(Schedule):
             result.append('UTC_DEFAULT')
 
         schedule_info = json.dumps(result)
+        if six.PY3:
+            schedule_info = schedule_info.encode('utf-8')
         return hashlib.md5(schedule_info).hexdigest()
 
     @property

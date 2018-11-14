@@ -32,11 +32,11 @@ class FunctionalityChecklistMeta(QueryMeta):
         from asha_facilitators as orig,
             (
                 select
-                    max(date), case_id
+                    max(completed_on), case_id
                 from
                     asha_facilitators
                 where
-                    date between '2015-01-01' and '2015-02-01'
+                    completed_on between '2015-01-01' and '2015-02-01'
                     and owner_id = 'abcd'
                 group by case_id
             ) as max
@@ -67,7 +67,7 @@ class FunctionalityChecklistMeta(QueryMeta):
         asha_table = self.get_asha_table(metadata)
 
         max_date_query = sqlalchemy.select([
-            sqlalchemy.func.max(asha_table.c.date).label('date'),
+            sqlalchemy.func.max(asha_table.c.completed_on).label('completed_on'),
             asha_table.c.case_id.label('case_id')
         ])
 
@@ -88,7 +88,7 @@ class FunctionalityChecklistMeta(QueryMeta):
         checklist_query = checklist_query.where(
             asha_table.c.case_id == max_date_subquery.c.case_id
         ).where(
-            asha_table.c.date == max_date_subquery.c.date
+            asha_table.c.completed_on == max_date_subquery.c.completed_on
         )
 
         return connection.execute(checklist_query, **filter_values).fetchall()
@@ -159,7 +159,7 @@ class ASHAFacilitatorsData(SqlData):
                     filters=[
                         EQ('owner_id', 'af'),
                         EQ('is_checklist', 'is_checklist'),
-                        BETWEEN('date', 'startdate', 'enddate')
+                        BETWEEN('completed_on', 'startdate', 'enddate')
                     ],
                     alias="total_ashas_checklist"
                 )
@@ -170,7 +170,7 @@ class ASHAFacilitatorsData(SqlData):
             ),
             DatabaseColumn(
                 _("Set of home visits for newborn care as specified in the HBNC guidelines<br/>"
-                "(six visits in case of Institutional delivery and seven in case of a home delivery)"),
+                  "(six visits in case of Institutional delivery and seven in case of a home delivery)"),
                 FunctionalityChecklistColumn('hv_fx_newborns_visited', whens={1: 1}),
             ),
             DatabaseColumn(
@@ -203,7 +203,7 @@ class ASHAFacilitatorsData(SqlData):
             ),
             DatabaseColumn(
                 _("Successful referral of the IUD, "
-                "female sterilization or male sterilization cases and/or providing OCPs/Condoms"),
+                  "female sterilization or male sterilization cases and/or providing OCPs/Condoms"),
                 FunctionalityChecklistColumn('hv_fx_fp', whens={1: 1}),
             ),
             AggregateColumn(
@@ -224,7 +224,10 @@ class ASHAFacilitatorsData(SqlData):
 
     @property
     def filters(self):
-        return [BETWEEN("date", "startdate", "enddate"), EQ('owner_id', 'af')]
+        return [
+            BETWEEN("completed_on", "startdate", "enddate"),
+            EQ('owner_id', 'af')
+        ]
 
     @property
     def group_by(self):
@@ -248,11 +251,15 @@ class ASHAFunctionalityChecklistData(SqlData):
 
     @property
     def filters(self):
-        return [BETWEEN("date", "startdate", "enddate"), EQ('owner_id', 'af'), EQ('is_checklist', 'is_checklist')]
+        return [
+            BETWEEN("completed_on", "startdate", "enddate"),
+            EQ('owner_id', 'af'),
+            EQ('is_checklist', 'is_checklist')
+        ]
 
     @property
     def group_by(self):
-        return ['doc_id', 'date', 'hv_asha_name']
+        return ['doc_id', 'completed_on', 'hv_asha_name']
 
 
 class ASHAAFChecklistData(SqlData):

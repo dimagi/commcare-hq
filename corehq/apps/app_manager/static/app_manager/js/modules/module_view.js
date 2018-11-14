@@ -55,6 +55,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
             }
         }
 
+        var originalCaseType = initial_page_data('case_type');
+
         // Validation for case type
         var showCaseTypeError = function (message) {
             var $caseTypeError = $('#case_type_error');
@@ -64,6 +66,16 @@ hqDefine("app_manager/js/modules/module_view", function () {
         var hideCaseTypeError = function () {
             $('#case_type_error').css('display', 'none');
         };
+
+        var showCaseTypeChangedWarning = function () {
+            $('#case_type_changed_warning').css('display', 'block');
+            $('#case_type_form_group').addClass('has-error');
+        };
+        var hideCaseTypeChangedWarning = function () {
+            $('#case_type_changed_warning').css('display', 'none');
+            $('#case_type_form_group').removeClass('has-error');
+        };
+
         $('#case_type').on('textchange', function () {
             var $el = $(this),
                 value = $el.val(),
@@ -94,6 +106,12 @@ hqDefine("app_manager/js/modules/module_view", function () {
             } else {
                 $el.closest('.form-group').removeClass('has-error');
                 hideCaseTypeError();
+
+                if (value !== originalCaseType) {
+                    showCaseTypeChangedWarning();
+                } else {
+                    hideCaseTypeChangedWarning();
+                }
             }
         });
 

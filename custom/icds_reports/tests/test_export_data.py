@@ -909,11 +909,11 @@ class TestExportData(TestCase):
                         'Number of complementary feeding forms', 'Number of growth monitoring forms',
                         'Number of take home rations forms', 'Number of due list forms'
                     ],
-                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
                     ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
                     ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
                     ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
@@ -987,7 +987,7 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered',
-                        8, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        8, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered',

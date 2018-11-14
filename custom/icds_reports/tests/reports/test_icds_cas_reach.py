@@ -27,7 +27,7 @@ class TestICDSCASReach(TestCase):
                             "format": "div",
                             "color": "red",
                             "percent": 0.0,
-                            "value": 19,
+                            "value": 20,
                             "label": "AWCs Launched",
                             "frequency": "month",
                             "help_text": awcs_launched_help_text()
@@ -111,7 +111,7 @@ class TestICDSCASReach(TestCase):
                             "format": "div",
                             "help_text": awcs_launched_help_text(),
                             "percent": 0.0,
-                            "value": 19,
+                            "value": 20,
                             "label": "AWCs Launched"
                         },
                         {
@@ -193,7 +193,7 @@ class TestICDSCASReach(TestCase):
                             "format": "div",
                             "help_text": awcs_launched_help_text(),
                             "percent": 0.0,
-                            "value": 19,
+                            "value": 20,
                             "label": "AWCs Launched"
                         },
                         {

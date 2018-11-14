@@ -14,6 +14,8 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
+from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
@@ -409,6 +411,24 @@ class AggAwc(models.Model):
         managed = False
         db_table = 'agg_awc'
 
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggAwcHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        update_queries = helper.updates()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(agg_query, agg_params)
+            for query, params in update_queries:
+                cursor.execute(query, params)
+            for query in rollup_queries:
+                cursor.execute(query)
+            for query in index_queries:
+                cursor.execute(query)
+
 
 class AggCcsRecord(models.Model):
     state_id = models.TextField()
@@ -617,6 +637,25 @@ class AggAwcDaily(models.Model):
         managed = False
         db_table = 'agg_awc_daily'
 
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggAwcDailyAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        update_query, update_params = helper.update_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = helper.indexes()
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic(using=db_for_read_write(cls)):
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(*helper.create_table_query())
+                cursor.execute(agg_query, agg_params)
+                cursor.execute(update_query, update_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
+
 
 class DailyAttendance(models.Model):
     doc_id = models.TextField(primary_key=True)
@@ -725,7 +764,7 @@ class AggregateComplementaryFeedingForms(models.Model):
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
 
-        
+
 class AggregateCcsRecordComplementaryFeedingForms(models.Model):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
     Complementary Feeding form.
@@ -1399,7 +1438,7 @@ class AWWIncentiveReport(models.Model):
     wer_eligible = models.SmallIntegerField(null=True)
     awc_num_open = models.SmallIntegerField(null=True)
     valid_visits = models.SmallIntegerField(null=True)
-    expected_visits = models.SmallIntegerField(null=True)
+    expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
 
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE

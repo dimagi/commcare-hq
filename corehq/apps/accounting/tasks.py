@@ -220,6 +220,18 @@ def update_subscriptions():
     warn_active_subscriptions_per_domain_not_one()
     warn_subscriptions_without_domain()
 
+    check_credit_line_balances.delay()
+
+
+@task
+def check_credit_line_balances():
+    for credit_line in CreditLine.objects.all():
+        expected_balance = sum(credit_line.creditadjustment_set.values_list('amount', flat=True))
+        if expected_balance != credit_line.balance:
+            log_accounting_error(
+                'Credit line %s has balance %s, expected %s' % (credit_line.id, credit_line.balance, expected_balance)
+            )
+
 
 @periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
@@ -411,8 +423,6 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
 @task(serializer='pickle', ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
-                                account_created_by,
-                                account_entry_point,
                                 amount,
                                 invoice_items,
                                 contact_emails):
@@ -477,7 +487,7 @@ def send_purchase_receipt(payment_record, domain,
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice, payment_method):
+def send_autopay_failed(invoice):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)

@@ -603,7 +603,7 @@ class AsyncIndicatorTest(TestCase):
             self.assertEqual(errors.count(), 0)
             self.assertEqual(indicators.count(), 0)
 
-    @mock.patch('corehq.apps.userreports.tasks._get_config')
+    @mock.patch('corehq.apps.userreports.tasks._get_config_by_id')
     def test_async_save_fails(self, config):
         # process_changes will generate an exception when trying to use this config
         config.return_value = None
@@ -781,7 +781,7 @@ class RebuildTableTest(TestCase):
 
         # assert new date isn't in the config
         insp = reflection.Inspector.from_engine(self.engine)
-        table_name = get_table_name(self.config.domain, self.config.table_id)
+        table_name = get_table_name(self.config.domain, self.config.table_id).decode('utf-8')
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
         )
@@ -825,7 +825,7 @@ class RebuildTableTest(TestCase):
 
         # assert new date isn't in the config
         insp = reflection.Inspector.from_engine(self.engine)
-        table_name = get_table_name(self.config.domain, self.config.table_id)
+        table_name = get_table_name(self.config.domain, self.config.table_id).decode('utf-8')
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
         )
