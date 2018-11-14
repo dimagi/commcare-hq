@@ -13,6 +13,7 @@ from custom.icds_reports.models import ChildHealthMonthly
 
 FROM_TABLENAME = "config_report_icds-cas_static-person_cases_v2_b4b5d57a"
 TO_TABLENAME = "config_report_icds-cas_static-person_cases_v3_2ae0879a"
+TO_TABLENAME_PREFIX = "tbl_8700431e9d81e782b2499d5e5704a271_"
 
 
 def get_cursor(model):
@@ -84,13 +85,15 @@ class Command(BaseCommand):
             with get_cursor(ChildHealthMonthly) as cursor:
                 query_args = {'state_id': state_id, 'block_id': block_id, 'state_id_last_3': state_id[-3:]}
                 cursor.execute(
-                    "INSERT INTO \"{to_tablename}\" "
+                    "INSERT INTO \"{to_tablename_prefix}{state_id_last_3}\" "
                     "SELECT {columns} "
                     "FROM \"{from_tablename}\" "
                     "WHERE state_id = %(state_id)s "
                     "AND lower(substring(state_id, '.{{3}}$'::text)) = %(state_id_last_3)s "
-                    "AND block_id = %(block_id)s".format(
-                        to_tablename=TO_TABLENAME,
+                    "AND block_id = %(block_id)s"
+                    "ON CONFLICT DO NOTHING".format(
+                        to_tablename_prefix=TO_TABLENAME_PREFIX,
+                        state_id_last_3=state_id[-3:],
                         from_tablename=FROM_TABLENAME,
                         columns=", \n".join(query_columns)
                     ), query_args)
