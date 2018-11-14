@@ -294,7 +294,7 @@ class TestDashboard3(YeksiTestCase):
             ['Produit', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
              'Février 2018', 'Mars 2018']
         )
-        self.assertItemsEqual(
+        self.assertEqual(
             rows,
             sorted([
                 ['Produit A', '442.500', '717.500', '412.500', '150.000', '437.500', '150.000'],
