@@ -75,7 +75,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
         self.assertEqual(
             deprecated_xform.get_xml().decode('utf-8'),
-            original_xml.decode('utf-8')
+            original_xml
         )
         self.assertEqual(xform.get_xml().decode('utf-8'), edit_xml.decode('utf-8'))
 
