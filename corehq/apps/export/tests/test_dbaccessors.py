@@ -193,11 +193,6 @@ class TestExportInstanceDBAccessors(TestCase):
         self.assertEqual(len(instances), 0)
 
     def test_get_daily_saved_exports(self):
-        instance_ids = get_daily_saved_export_ids_for_auto_rebuild()
-        self.assertEqual(
-            set(instance_ids),
-            {self.form_instance_daily_saved._id, self.case_instance_daily_saved._id}
-        )
         recently_accessed_instance_ids = get_daily_saved_export_ids_for_auto_rebuild(
             datetime.utcnow() - timedelta(days=2))
         self.assertEqual(
