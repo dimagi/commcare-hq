@@ -117,9 +117,9 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'thr_form', 'is_ucr': False, 'name': 'icds_dashboard_child_health_thr_forms'},
     {'type': 'child_list', 'name': 'static-child_health_cases'},
     {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
-    {'type':'ls_vhnd', 'name':'static-ls_vhnd_form'},
-    {'type':'ls_home_visits', 'name':'static-ls_home_visit_forms_filled'},
-    {'type':'ls_awc_mgt', 'name':'static-awc_mgt_forms'}
+    {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
+    {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
+    {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'}
 ]
 
 SQL_FUNCTION_PATHS = [
@@ -509,6 +509,7 @@ def _agg_awc_table(day):
         "SELECT aggregate_awc_data(%s)"
     ], day)
 
+
 @track_time
 def _agg_ls_table(day):
     with transaction.atomic():
@@ -516,6 +517,7 @@ def _agg_ls_table(day):
             "SELECT create_new_aggregate_table_for_month('agg_ls_report', %s)",
         ], day)
         AggLsData.aggregate(force_to_date(day))
+
 
 @track_time
 def _agg_awc_table_weekly(day):

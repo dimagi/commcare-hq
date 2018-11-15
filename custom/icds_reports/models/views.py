@@ -200,6 +200,48 @@ class ChildHealthMonthlyView(models.Model):
         db_table = 'child_health_monthly_view'
 
 
+class AggLsMonthy(models.Model):
+    """
+    Contains rows for LS data.
+    This view is the join between tables:
+        1) agg_ls_report
+        2) agg_awc
+        3) awc_location_months
+    Following data is provided through this view:
+        1) location informations
+        2) LS data about beneficiary form, vhnd forms,
+           awc visits
+        3) number of awc launched
+    """
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
+
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    unique_awc_vists = models.IntegerField()
+    vhnd_observed = models.IntegerField()
+    beneficiary_vists = models.IntegerField()
+    num_launched_awcs = models.IntegerField(
+        blank=True, null=True,
+        help_text="number of AWCs that have at least one Household registration form"
+    )
+
+
 class AggAwcMonthly(models.Model):
     """Contains one row for the status of every AWC, Supervisor, Block,
     District and State at the end of each month

@@ -10,9 +10,7 @@ from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHel
 
 
 class AggLsDataHelper(BaseICDSAggregationHelper):
-    """
 
-    """
     base_tablename = 'agg_ls_report'
     awc_location_ucr = 'static-awc_location'
     ls_vhnd_ucr = 'static-ls_vhnd_form'
@@ -54,11 +52,6 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         return get_table_name(self.domain, config.table_id)
 
     def aggregate_query(self):
-        """
-
-        :return:
-        """
-
         return """
         INSERT INTO "{tablename}"
         (state_id, district_id, block_id, supervisor_id, month,
@@ -85,11 +78,6 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         }
 
     def updates(self):
-        """
-
-        :return:
-        """
-
         yield """
             UPDATE "{tablename}" agg_ls_report
             SET vhnd_observed = ut.vhnd_observed
@@ -100,7 +88,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 WHERE vhnd_date =  %(start_date)s
                 GROUP BY location_id
             ) ut
-            WHERE agg_ls_report.supervisor_id = ut.supervisor_id   
+            WHERE agg_ls_report.supervisor_id = ut.supervisor_id
         """.format(
             tablename=self.tablename,
             ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
@@ -139,9 +127,9 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
                 GROUP BY location_id
             ) ut
-            WHERE 
-              agg_ls_report.supervisor_id = ut.supervisor_id AND 
-              location_entered is not null AND 
+            WHERE
+              agg_ls_report.supervisor_id = ut.supervisor_id AND
+              location_entered is not null AND
               location_entered <> ''
         """.format(
             tablename=self.tablename,
@@ -168,14 +156,9 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         return indexes
 
     def rollup_query(self, agg_level):
-        """
+        locations = ['state_id', 'district_id', 'block_id', 'supervisor_id']
 
-        :return:
-        """
-
-        locations = ['state_id', 'district_id', 'block_id','supervisor_id']
-
-        for i in range(3, agg_level-1, -1):
+        for i in range(3, agg_level - 1, -1):
             locations[i] = "'All'"
 
         return """
@@ -204,6 +187,6 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
             agg_level=agg_level,
             to_table=self._tablename_func(agg_level),
             locations=','.join(locations),
-            from_table=self._tablename_func(agg_level+1),
-            group_by=','.join(locations[:agg_level+1])
+            from_table=self._tablename_func(agg_level + 1),
+            group_by=','.join(locations[:agg_level + 1])
         )

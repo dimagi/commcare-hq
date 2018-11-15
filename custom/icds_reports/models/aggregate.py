@@ -411,6 +411,15 @@ class AggAwc(models.Model):
 
 
 class AggLsData(models.Model):
+    """
+    Model refers to the agg_ls_report table in database.
+    Table contains the aggregated data from LS ucrs.
+    it currently contains the following data:
+        1) unique awc visits made by LS
+        2) beneficiary visits done by LS
+        3) vhnd forms submitted by LS
+        4) and LS location and month
+    """
     unique_awc_vists = models.IntegerField()
     vhnd_observed = models.IntegerField()
     beneficiary_vists = models.IntegerField()
@@ -428,16 +437,18 @@ class AggLsData(models.Model):
     @classmethod
     def aggregate(cls, month):
         """
+        Aggregates the LS data and roll up from supervisor level
+        to state level
         :return:
         """
         helper = AggLsDataHelper(month)
 
-        drop_table_queries = [helper.drop_table_if_exists(i) for i in range(4, 0,-1)]
+        drop_table_queries = [helper.drop_table_if_exists(i) for i in range(4, 0, -1)]
         create_table_queries = [helper.create_child_table(i) for i in range(4, 0, -1)]
 
         agg_query, agg_params = helper.aggregate_query()
         update_queries = helper.updates()
-        rollup_queries = [ helper.rollup_query(i) for i in range(3,0,-1)]
+        rollup_queries = [helper.rollup_query(i) for i in range(3, 0, -1)]
         index_queries = [helper.indexes(i) for i in range(4, 0, -1)]
         index_queries = [query for index_list in index_queries for query in index_list]
 
