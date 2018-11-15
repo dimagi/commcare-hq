@@ -380,42 +380,42 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                                       .accessible_to_user(domain, request_user)
                                       .location_ids())),
             )
-        elif HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
+
+        if HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
             # return all users with selected user_types
             user_type_filters.append(user_es.mobile_users())
             return q.OR(*user_type_filters)
+
+        # return matching user types and exact matches
+        location_ids = list(SQLLocation.active_objects
+                            .get_locations_and_children(location_ids)
+                            .location_ids())
+
+        group_id_filter = filters.term("__group_ids", group_ids)
+
+        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
+            group_and_location_filter = filters.AND(
+                group_id_filter,
+                user_es.location(location_ids),
+            )
         else:
-            # return matching user types and exact matches
-            location_ids = list(SQLLocation.active_objects
-                                .get_locations_and_children(location_ids)
-                                .location_ids())
-
-            group_id_filter = filters.term("__group_ids", group_ids)
-
-            if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
-                group_and_location_filter = filters.AND(
-                    group_id_filter,
-                    user_es.location(location_ids),
-                )
-            else:
-                group_and_location_filter = filters.OR(
-                    group_id_filter,
-                    user_es.location(location_ids),
-                )
-
-            id_filter = filters.OR(
-                filters.term("_id", user_ids),
-                group_and_location_filter,
+            group_and_location_filter = filters.OR(
+                group_id_filter,
+                user_es.location(location_ids),
             )
 
-            if user_type_filters:
-                return q.OR(
-                    id_filter,
-                    group_and_location_filter,
-                    filters.OR(*user_type_filters),
-                )
-            return q.filter(id_filter)
+        id_filter = filters.OR(
+            filters.term("_id", user_ids),
+            group_and_location_filter,
+        )
 
+        if user_type_filters:
+            return q.OR(
+                id_filter,
+                group_and_location_filter,
+                filters.OR(*user_type_filters),
+            )
+        return q.filter(id_filter)
 
     @staticmethod
     def _verify_users_are_accessible(domain, request_user, user_ids):
