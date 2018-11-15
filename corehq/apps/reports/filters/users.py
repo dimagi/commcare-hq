@@ -360,6 +360,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
+            user_type_filters.append(user_es.system_users())
         if HQUserType.WEB in user_types:
             user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
