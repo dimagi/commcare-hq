@@ -196,6 +196,13 @@ class CustomerInvoiceResource(ModelResource):
                   'date_start', 'date_end', 'is_hidden', 'is_hidden_to_ops', 'last_modified']
         resource_name = 'customer_invoice'
 
+    def dehydrate(self, bundle):
+        bundle.data['plan_versions'] = set(
+            ','.join(subscription.plan_version.id)
+            for subscription in bundle.obj.subscriptions.all()
+        )
+        return bundle
+
 
 class LineItemResource(ModelResource):
     invoice = fields.IntegerField('subscription_invoice_id', null=True)
