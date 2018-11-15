@@ -60,9 +60,8 @@ from custom.icds_reports.models import (
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport,
-    AggAwcDaily,
-    AggAwc)
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AwcLocation, DailyAttendance
+    AggAwc, AwcLocation)
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -87,22 +86,23 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney',
-                          'rnegi', 'rjain']
-
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney']
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
+CHILD_HEALTH_MONTHLY_UCR = 'static-child_cases_monthly_tableau_v2'
 if settings.SERVER_ENVIRONMENT == 'softlayer':
     # Currently QA needs more monthly data, so these are different than on ICDS
     # If this exists after July 1, ask Emord why these UCRs still exist
     CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
+    CHILD_HEALTH_MONTHLY_UCR = 'extended_child_health_monthly_tableau'
 
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
     {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
+    {'type': 'child_health_monthly', 'name': CHILD_HEALTH_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
@@ -266,8 +266,7 @@ def _create_aggregate_functions(cursor):
 def _update_aggregate_locations_tables():
     try:
         celery_task_logger.info("Starting icds reports update_location_tables")
-        with transaction.atomic(using=db_for_read_write(AwcLocation)):
-            AwcLocation.aggregate()
+        AwcLocation.aggregate()
         celery_task_logger.info("Ended icds reports update_location_tables_sql")
     except IntegrityError:
         # This has occurred when there's a location upload, but not all locations were updated.
@@ -290,7 +289,6 @@ def icds_aggregation_task(self, date, func):
         return
 
     celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
-
     try:
         func(date)
     except Error as exc:
@@ -408,7 +406,7 @@ def _run_custom_sql_script(commands, day=None):
 
 @track_time
 def aggregate_awc_daily(day):
-    with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
+    with transaction.atomic():
         AggAwcDaily.aggregate(force_to_date(day))
 
 
@@ -491,17 +489,17 @@ def _agg_ccs_record_table(day):
 
 @track_time
 def _agg_awc_table(day):
-    with transaction.atomic(using=db_for_read_write(AggAwc)):
-        _run_custom_sql_script([
-            "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
-        ], day)
-        AggAwc.aggregate(force_to_date(day))
+    _run_custom_sql_script([
+        "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"
+    ], day)
+    AggAwc.aggregate(force_to_date(day))
 
 
 @track_time
 def _agg_awc_table_weekly(day):
-    with transaction.atomic(using=db_for_read_write(AggAwc)):
-        AggAwc.aggregate_weekly(force_to_date(day))
+    _run_custom_sql_script([
+        "SELECT update_aggregate_awc_data(%s)"
+    ], day)
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
@@ -523,6 +521,7 @@ def recalculate_stagnant_cases():
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
         'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
         'static-icds-cas-static-child_cases_monthly_v2',
+        'static-icds-cas-static-child_cases_monthly_tableau_v2',
     ]
 
     stagnant_cases = set()

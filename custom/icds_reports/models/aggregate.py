@@ -14,8 +14,6 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
-from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_awc_weekly import AggAwcWeeklyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
@@ -40,6 +38,7 @@ from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_he
 from custom.icds_reports.utils.aggregation_helpers.thr_forms_child_health import \
     THRFormsChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_location import LocationAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.daily_attendance import DailyAttendanceAggregationHelper
@@ -200,11 +199,12 @@ class AwcLocation(models.Model):
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
 
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_table_query)
-            cursor.execute(agg_query)
-            cursor.execute(aww_query)
-            for rollup_query in rollup_queries:
-                cursor.execute(rollup_query)
+            with transaction.atomic():
+                cursor.execute(drop_table_query)
+                cursor.execute(agg_query)
+                cursor.execute(aww_query)
+                for rollup_query in rollup_queries:
+                    cursor.execute(rollup_query)
 
 
 class ChildHealthMonthly(models.Model):
@@ -445,31 +445,44 @@ class AggAwc(models.Model):
 
     @classmethod
     def aggregate(cls, month):
-        helper = AggAwcHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_queries = helper.updates()
+        helper = AggAwcAggregationHelper(month)
+        agg_query, agg_params = helper.aggregate_query()
+        daily_attendance_query, daily_attendance_params = helper.aggregate_daily_attendance_query()
+        monthly_child_query, monthly_child_params = helper.aggregate_monthly_child_health_query()
+        ccs_record_query, ccs_record_params = helper.aggregate_ccs_record_query()
+        household_query, household_params = helper.aggregate_household_query()
+        person_query, person_params = helper.aggregate_person_query()
+        children_immunized_query, children_immunized_params = helper.children_immunized_query()
+        number_anc_visits_query, number_anc_visits_params = helper.number_anc_visits_query()
+        usage_table_query, usage_table_params = helper.usage_table_query()
+        number_launched_awcs_query, number_launched_awcs_params = helper.number_launched_awcs_query()
+        latest_infrastructure_query, latest_infrastructure_params = helper.latest_infrastructure_query()
+        infra_last_update_query, infra_last_update_params = helper.infra_last_update_query()
+        location_is_test_query, location_is_test_params = helper.location_is_test_query()
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
         index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
         index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
-            cursor.execute(agg_query, agg_params)
-            for query, params in update_queries:
-                cursor.execute(query, params)
-            for query in rollup_queries:
-                cursor.execute(query)
-            for query in index_queries:
-                cursor.execute(query)
-
-    @classmethod
-    def aggregate_weekly(cls, month):
-        helper = AggAwcWeeklyAggregationHelper(month)
-        agg_query, agg_params = helper.aggregate_query()
-        with get_cursor(cls) as cursor:
-            cursor.execute(agg_query, agg_params)
-            for i in range(4, 0, -1):
-                rollup_query, rollup_params = helper.rollup_query(i)
-                cursor.execute(rollup_query, rollup_params)
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                cursor.execute(daily_attendance_query, daily_attendance_params)
+                cursor.execute(monthly_child_query, monthly_child_params)
+                cursor.execute(ccs_record_query, ccs_record_params)
+                cursor.execute(household_query, household_params)
+                cursor.execute(person_query, person_params)
+                cursor.execute(children_immunized_query, children_immunized_params)
+                cursor.execute(number_anc_visits_query, number_anc_visits_params)
+                cursor.execute(usage_table_query, usage_table_params)
+                cursor.execute(number_launched_awcs_query, number_launched_awcs_params)
+                cursor.execute(latest_infrastructure_query, latest_infrastructure_params)
+                cursor.execute(infra_last_update_query, infra_last_update_params)
+                cursor.execute(location_is_test_query, location_is_test_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class AggCcsRecord(models.Model):
@@ -680,23 +693,23 @@ class AggAwcDaily(models.Model):
         db_table = 'agg_awc_daily'
 
     @classmethod
-    def aggregate(cls, month):
-        helper = AggAwcDailyAggregationHelper(month)
+    def aggregate(cls, day):
+        helper = AggAwcDailyAggregationHelper(day)
+        curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_params = helper.aggregation_query()
-        update_query, update_params = helper.update_query()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = helper.indexes()
+        daily_attendance_query, daily_params = helper.aggregation_daily_attendance_query()
+        indexes_query = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(*helper.create_table_query())
-                cursor.execute(agg_query, agg_params)
-                cursor.execute(update_query, update_params)
-                for query in rollup_queries:
-                    cursor.execute(query)
-                for query in index_queries:
-                    cursor.execute(query)
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+            cursor.execute(daily_attendance_query, daily_params)
+            for iterator in range(4, 0, -1):
+                rollup_query, rollup_params = helper.rollup_query(iterator)
+                cursor.execute(rollup_query, rollup_params)
+            for index_query in indexes_query:
+                cursor.execute(index_query)
 
 
 class DailyAttendance(models.Model):
@@ -814,7 +827,7 @@ class AggregateComplementaryFeedingForms(models.Model):
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
 
-
+        
 class AggregateCcsRecordComplementaryFeedingForms(models.Model):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
     Complementary Feeding form.
@@ -1488,7 +1501,7 @@ class AWWIncentiveReport(models.Model):
     wer_eligible = models.SmallIntegerField(null=True)
     awc_num_open = models.SmallIntegerField(null=True)
     valid_visits = models.SmallIntegerField(null=True)
-    expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
+    expected_visits = models.SmallIntegerField(null=True)
 
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE
