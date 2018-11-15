@@ -17,7 +17,7 @@ class TestAWCMgtForms(BaseFormsTest):
             [{'user_id': 'cee18a35ce4fac591eba966c0d15d599',
               'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
               'doc_id': None,
-              'visit_type_entered': 1,
+              'visit_type_entered': 'vhnd_day',
               'home_visit_count': 1,
               'submitted_on': None}])
 
@@ -29,6 +29,6 @@ class TestAWCMgtForms(BaseFormsTest):
             [{'user_id': 'cee18a35ce4fac591eba966c0d15d599',
               'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
               'doc_id': None,
-              'visit_type_entered': 0,
+              'visit_type_entered': None,
               'home_visit_count': 1,
               'submitted_on': None}])

@@ -69,7 +69,7 @@
         "datatype": "date",
         "expression": {
           "expression": {
-            "datatype": "date",
+            "datatype": "datetime",
             "type": "property_path",
             "property_path": [
               "form",
@@ -83,33 +83,7 @@
         "is_nullable": true,
         "column_id": "submitted_on",
         "type": "expression"
-      },
-      {
-        "display_name": null,
-        "transform": {},
-        "datatype": "date",
-        "is_primary_key": false,
-        "create_index": true,
-        "is_nullable": true,
-        "column_id": "month",
-        "type": "expression",
-        "expression": {
-          "type": "month_start_date",
-          "date_expression": {
-            "type": "root_doc",
-            "expression": {
-              "datatype": "date",
-              "type": "property_path",
-              "property_path": [
-                "form",
-                "meta",
-                "timeEnd"
-              ]
-            }
-          }
-        }
       }
-
     ],
     "named_expressions": {
       "user_location_id": {
