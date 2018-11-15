@@ -38,7 +38,7 @@ from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_he
 from custom.icds_reports.utils.aggregation_helpers.thr_forms_child_health import \
     THRFormsChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_location import LocationAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.daily_attendance import DailyAttendanceAggregationHelper
@@ -445,7 +445,7 @@ class AggAwc(models.Model):
 
     @classmethod
     def aggregate(cls, month):
-        helper = AggAwcAggregationHelper(month)
+        helper = AggAwcHelper(month)
         agg_query, agg_params = helper.aggregate_query()
         daily_attendance_query, daily_attendance_params = helper.aggregate_daily_attendance_query()
         monthly_child_query, monthly_child_params = helper.aggregate_monthly_child_health_query()
