@@ -101,7 +101,7 @@ BEGIN
     'sum(num_launched_blocks) as sum_num_launched_blocks, ' ||
     'sum(num_launched_supervisors) as sum_num_launched_supervisors, '||
     'sum(num_launched_awcs) as sum_num_launched_awcs, '||
-    'sum(usage_awc_num_active) as  sum_usage_awc_num_active' || ' ' ||
+    'sum(usage_awc_num_active) as  sum_usage_awc_num_active ' ||
     'FROM agg_awc  ' ||
     'WHERE aggregation_level=3 AND month>='|| quote_literal(_month_start_6m) || ' ' ||
     'GROUP BY state_id, district_id, month) ut ' ||
@@ -126,7 +126,7 @@ BEGIN
     'sum(num_launched_blocks) as sum_num_launched_blocks, ' ||
     'sum(num_launched_supervisors) as sum_num_launched_supervisors, '||
     'sum(num_launched_awcs) as sum_num_launched_awcs, '||
-    'sum(usage_awc_num_active) as sum_usage_awc_num_active' || ' ' ||
+    'sum(usage_awc_num_active) as sum_usage_awc_num_active ' ||
     'FROM agg_awc  ' ||
     'WHERE aggregation_level=2 AND month>='|| quote_literal(_month_start_6m) || ' ' ||
     'GROUP BY state_id,month) ut ' ||
