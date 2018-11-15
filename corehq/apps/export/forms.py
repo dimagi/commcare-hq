@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import timedelta
 import dateutil
+import re
 from django import forms
 from django.urls import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -24,7 +25,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstanceFilters,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
-from corehq.apps.reports.filters.users import SubmitHistoryFilter, SubmitHistoryUtils
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter, SubmitHistoryUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -247,6 +248,21 @@ class BaseFilterExportDownloadForm(forms.Form):
         """
         raise NotImplementedError("must implement get_edit_url")
 
+    def get_export_filters(self, request, data):
+        '''
+        This implementaion applies to forms and cases, which implement get_model_filter,
+        but must be overridden for SMS exports.
+        '''
+        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(data)
+        accessible_location_ids = None
+        if not request.can_access_all_locations:
+            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
+                self.domain_object.name, request.couch_user
+            )
+        return self.get_model_filter(
+            mobile_user_and_group_slugs, request.can_access_all_locations, accessible_location_ids
+        )
+
     def format_export_data(self, export):
         return {
             'domain': self.domain_object.name,
@@ -257,6 +273,13 @@ class BaseFilterExportDownloadForm(forms.Form):
             'edit_url': self.get_edit_url(export),
             'has_case_history_table': export.has_case_history_table if self._export_type == 'case' else None
         }
+
+    def get_mobile_user_and_group_slugs(self, data):
+        mobile_user_and_group_slugs_regex = re.compile(
+            '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
+        )
+        matches = mobile_user_and_group_slugs_regex.findall(data[ExpandedMobileWorkerFilter.slug])
+        return [n[1] for n in matches]
 
 
 def _date_help_text(field):
@@ -543,13 +566,9 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
         return [
             crispy.Field(
                 'date_range',
-                ng_model='formData.date_range',
-                ng_required='true',
+                data_bind='value: dateRange',
             ),
         ]
-
-    def get_form_filter(self):
-        raise NotImplementedError
 
     def format_export_data(self, export):
         export_data = super(GenericFilterFormExportDownloadForm, self).format_export_data(export)
@@ -908,7 +927,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
 
-    def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
+    def get_model_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
         """
         :param mobile_user_and_group_slugs: slug from request like
         ['g__e80c5e54ab552245457d2546d0cdbb03', 'g__e80c5e54ab552245457d2546d0cdbb04',
@@ -979,11 +998,12 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
 
-    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
+    def get_multimedia_task_kwargs(self, export, download_id, form_data):
         """These are the kwargs for the Multimedia Download task,
         specific only to forms.
         """
         datespan = self.cleaned_data['date_range']
+        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(form_data)
         return {
             'domain': self.domain_object.name,
             'startdate': datespan.startdate.isoformat(),
@@ -1028,7 +1048,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         return reverse(EditNewCustomCaseExportView.urlname,
                        args=(self.domain_object.name, export.get_id))
 
-    def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
+    def get_model_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
         """
         Taking reference from CaseListMixin allow filters depending on locations access
         :param mobile_user_and_group_slugs: ['g__e80c5e54ab552245457d2546d0cdbb03', 't__0', 't__1']
@@ -1054,8 +1074,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         return [
             crispy.Field(
                 'date_range',
-                ng_model='formData.date_range',
-                ng_required='true',
+                data_bind='value: dateRange',
             ),
         ]
 
@@ -1088,12 +1107,14 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
         datespan = self.cleaned_data['date_range']
         return filter_builder.get_filters(datespan)
 
+    def get_export_filters(self, request, data):
+        return self.get_filter()
+
     @property
     def extra_fields(self):
         return [
             crispy.Field(
                 'date_range',
-                ng_model='formData.date_range',
-                ng_required='true',
+                data_bind='value: dateRange',
             ),
         ]
