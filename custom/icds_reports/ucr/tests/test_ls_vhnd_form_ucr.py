@@ -18,6 +18,6 @@ class TestLsVhndForms(BaseFormsTest):
                 'submitted_on': None,
                 'doc_id': None,
                 'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
-                'vhnd_date': datetime.date(2018, 8, 24),
-                'month': None}
+                'vhnd_date': datetime.date(2018, 8, 24)
+            }
             ])

@@ -29,6 +29,6 @@ class TestAWCMgtForms(BaseFormsTest):
             [{'user_id': 'cee18a35ce4fac591eba966c0d15d599',
               'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
               'doc_id': None,
-              'visit_type_entered': None,
+              'visit_type_entered': '',
               'home_visit_count': 1,
               'submitted_on': None}])

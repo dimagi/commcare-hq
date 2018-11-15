@@ -47,7 +47,7 @@ class TestAWCMgtForms(BaseFormsTest):
               'submitted_on': None,
               'awc_not_open_other': 0,
               'awc_location': None,
-              'location_entered': None,
+              'location_entered': '',
               'awc_not_open_holiday': 0,
               'awc_location_lat': None,
               'awc_not_open_unknown': 0,
