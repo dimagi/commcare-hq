@@ -18,6 +18,7 @@ from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsR
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.aww_incentive import AwwIncentiveAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_ls_data import AggLsDataHelper
 from custom.icds_reports.utils.aggregation_helpers.birth_preparedness_forms import \
     BirthPreparednessFormsAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.ccs_record_monthly import CcsRecordMonthlyAggregationHelper
@@ -409,7 +410,7 @@ class AggAwc(models.Model):
         db_table = 'agg_awc'
 
 
-class AggLsReportTillSupervisor(models.Model):
+class AggLsData(models.Model):
     unique_awc_vists = models.IntegerField()
     vhnd_observed = models.IntegerField()
     beneficiary_vists = models.IntegerField()
@@ -419,9 +420,43 @@ class AggLsReportTillSupervisor(models.Model):
     block_id = models.TextField()
     supervisor_id = models.TextField()
     aggregation_level = models.SmallIntegerField()
+
     class Meta:
         managed = False
         db_table = 'agg_ls_report'
+
+    @classmethod
+    def aggregate(cls, month):
+        """
+        :return:
+        """
+        helper = AggLsDataHelper(month)
+
+        drop_table_queries = [helper.drop_table_if_exists(i) for i in range(4, 0,-1)]
+        create_table_queries = [helper.create_child_table(i) for i in range(4, 0, -1)]
+
+        agg_query, agg_params = helper.aggregate_query()
+        update_queries = helper.updates()
+        rollup_queries = [ helper.rollup_query(i) for i in range(3,0,-1)]
+        index_queries = [helper.indexes(i) for i in range(4, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        with get_cursor(cls) as cursor:
+            for drop_table_query in drop_table_queries:
+                cursor.execute(drop_table_query)
+            for create_table_query, create_params in create_table_queries:
+                cursor.execute(create_table_query, create_params)
+
+            cursor.execute(agg_query, agg_params)
+
+            for update_query, query_params in update_queries:
+                cursor.execute(update_query, query_params)
+
+            for rollup_query in rollup_queries:
+                cursor.execute(rollup_query)
+
+            for index_query in index_queries:
+                cursor.execute(index_query)
 
 
 class AggCcsRecord(models.Model):

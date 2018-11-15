@@ -59,7 +59,8 @@ from custom.icds_reports.models import (
     CcsRecordMonthly,
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
-    AWWIncentiveReport
+    AWWIncentiveReport,
+    AggLsData
 )
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
@@ -244,7 +245,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res_ccs.get()
             res_child.get()
 
-            res_awc = icds_aggregation_task.delay(date=calculation_date, func=_agg_awc_table)
+            res_awc = chain(icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                            icds_aggregation_task.si(date=calculation_date, func=_agg_ls_table)
+                            ).apply_async()
             res_awc.get()
 
         chain(
@@ -506,6 +509,13 @@ def _agg_awc_table(day):
         "SELECT aggregate_awc_data(%s)"
     ], day)
 
+@track_time
+def _agg_ls_table(day):
+    with transaction.atomic():
+        _run_custom_sql_script([
+            "SELECT create_new_aggregate_table_for_month('agg_ls_report', %s)",
+        ], day)
+        AggLsData.aggregate(force_to_date(day))
 
 @track_time
 def _agg_awc_table_weekly(day):
