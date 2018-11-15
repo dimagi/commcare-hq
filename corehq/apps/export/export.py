@@ -420,7 +420,7 @@ def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
 
 
 def _record_export_duration(duration, export):
-    export.last_build_duration = duration / 1000
+    export.last_build_duration = duration
     try:
         export.save()
     except ResourceConflict:
