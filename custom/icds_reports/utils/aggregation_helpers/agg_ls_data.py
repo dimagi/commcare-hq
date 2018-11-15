@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from dateutil.relativedelta import relativedelta
+
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
@@ -19,6 +21,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
 
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
+        self.next_month_start = self.month_start + relativedelta(months=1)
 
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"), agg_level)
@@ -75,8 +78,8 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         FROM "{awc_location_ucr}"
         )
         """.format(
-            tablename = self.tablename,
-            awc_location_ucr = self._ucr_tablename(ucr_id=self.awc_location_ucr)
+            tablename=self.tablename,
+            awc_location_ucr=self._ucr_tablename(ucr_id=self.awc_location_ucr)
         ), {
             'start_date': self.month_start
         }
@@ -99,8 +102,8 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
             ) ut
             WHERE agg_ls_report.supervisor_id = ut.supervisor_id   
         """.format(
-            tablename = self.tablename,
-            ls_vhnd_ucr = self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
+            tablename=self.tablename,
+            ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
         ), {
             "start_date": self.month_start
         }
@@ -112,16 +115,17 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 SELECT count(distinct awc_id) as unique_awc_vists,
                 location_id as supervisor_id
                 FROM "{ls_home_visit_ucr}"
-                WHERE submitted_on = %(start_date)s
+                WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
                 GROUP BY location_id
             ) ut
             WHERE agg_ls_report.supervisor_id = ut.supervisor_id
             AND visit_type is not null and visit_type <> ''
         """.format(
-            tablename = self.tablename,
-            ls_vhnd_ucr = self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
+            tablename=self.tablename,
+            ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
         ), {
-            "start_date": self.month_start
+            "start_date": self.month_start,
+            "end_date": self.next_month_start
         }
 
         yield """
@@ -132,7 +136,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 count(distinct awc_id) as unique_awc_vists,
                 location_id as supervisor_id
                 FROM "{ls_awc_mgt_ucr}"
-                WHERE submitted_on=%(start_date)s
+                WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
                 GROUP BY location_id
             ) ut
             WHERE 
@@ -140,10 +144,11 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
               location_entered is not null AND 
               location_entered <> ''
         """.format(
-            tablename = self.tablename,
-            ls_vhnd_ucr = self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
+            tablename=self.tablename,
+            ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
         ), {
-            "start_date": self.month_start
+            "start_date": self.month_start,
+            "end_date": self.next_month_start
         }
 
     def indexes(self, aggregation_level):
