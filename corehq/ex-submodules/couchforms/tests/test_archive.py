@@ -11,7 +11,6 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.util.context_managers import drop_connected_signals
 from couchforms.signals import xform_archived, xform_unarchived
-from couchforms.models import UnfinishedArchiveStub
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin
