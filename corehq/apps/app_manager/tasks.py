@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 
 from celery.task import task
+from celery.utils.log import get_task_logger
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id, get_auto_generated_built_apps
 from corehq.apps.app_manager.exceptions import SavedAppBuildException
@@ -10,7 +11,10 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.decorators import serial_task
 
 
-@task(queue='background_queue', ignore_result=True)
+logger = get_task_logger(__name__)
+
+
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
 def create_user_cases(domain_name):
     from corehq.apps.callcenter.utils import sync_usercase
     for user in CommCareUser.by_domain(domain_name):
@@ -36,7 +40,7 @@ def make_async_build(app, username, release=False, comment=None):
         return copy
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
 def create_build_files_for_all_app_profiles(domain, build_id):
     app = get_app(domain, build_id)
     build_profiles = app.build_profiles
@@ -49,7 +53,7 @@ def create_build_files_for_all_app_profiles(domain, build_id):
         app.save()
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
     last_build_id = get_latest_build_id(domain, app_id)
     saved_builds = get_auto_generated_built_apps(domain, app_id)
@@ -60,4 +64,12 @@ def prune_auto_generated_builds(domain, app_id):
             continue
         if not app.is_auto_generated or app.copy_of != app_id or app.id == last_build_id:
             raise SavedAppBuildException("Attempted to delete build that should not be deleted")
-        app.delete()
+        app.delete_app()
+        logger.info("Pruned build {} from domain {}".format(app.id, domain))
+        app.save(increment_version=False)
+
+
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
+def update_linked_app_and_notify_task(domain, app_id, user_id, email):
+    from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
+    update_linked_app_and_notify(domain, app_id, user_id, email)

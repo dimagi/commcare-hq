@@ -14,14 +14,13 @@
         'ngMessages',
     ]);
 
-    list_exports.config(['$httpProvider', function($httpProvider) {
+    list_exports.config(['$httpProvider', function ($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
     }]);
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType,
-        $timeout
+        $scope, djangoRMI, bulk_download_url, $rootScope, modelType, $timeout
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -29,106 +28,6 @@
          *
          * It also generates a list of exports selected for bulk exports.
          */
-        var self = {};
-        $scope._ = _;  // allow use of underscore.js within the template
-        $scope.hasLoaded = false;
-        $scope.exports = [];
-        $scope.exportsListError = null;
-        $scope.bulk_download_url = bulk_download_url;
-        $scope.legacy_bulk_download_url = legacy_bulk_download_url;
-
-        self._numTries = 0;
-        self._getExportsList = function () {
-            // The method below lives in the subclasses of
-            // BaseExportListView.
-
-            var filterMyExports = function (val) {
-                return !!val.my_export;
-            };
-
-            var filterNotMyExports = function (val) {
-                return !val.my_export;
-            };
-
-            djangoRMI.get_exports_list({})
-                .success(function (data) {
-                    if (data.success) {
-                        $scope.exports = data.exports;
-                        $scope.myExports = data.exports.filter(filterMyExports);
-                        $scope.notMyExports = data.exports.filter(filterNotMyExports);
-                        _.each($scope.exports, function (exp) {
-                            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
-                                $rootScope.pollProgressBar(exp);
-                            }
-                        });
-                    } else {
-                        $scope.exportsListError = data.error;
-                    }
-                    $scope.hasLoaded = true;
-                })
-                .error(function () {
-                    // Retry in case the connection was flaky.
-                    if (self._numTries > 3) {
-                        $scope.hasLoaded = true;
-                        $scope.exportsListError = 'default';
-                        return;
-                    }
-                    self._numTries ++;
-                    self._getExportsList();
-                });
-        };
-        self._getExportsList();
-
-        // For Bulk Export
-        $scope.showBulkExportDownload = false;
-        $scope.bulkExportList = '[]';
-
-        $scope.updateBulkStatus = function () {
-            var selectedExports = _.filter($scope.exports, function (exp) {
-                return !!exp.addedToBulk;
-            });
-            $scope.showBulkExportDownload = !_.isEmpty(selectedExports);
-            $scope.bulkExportList = JSON.stringify(selectedExports);
-            var input = $('input[name="export_list"]');
-            input.val(JSON.stringify(selectedExports));
-
-            var useLegacyBulkExportUrl = _.every(selectedExports, function (e) {
-                return e.isLegacy;
-            });
-            var currentUrl = useLegacyBulkExportUrl ? $scope.legacy_bulk_download_url : $scope.bulk_download_url;
-            input.closest("form").attr("action", currentUrl);
-        };
-        $scope.downloadRequested = function($event) {
-            var $btn = $($event.target);
-            $btn.addClass('disabled');
-            $btn.text(gettext('Download Requested'));
-        };
-        $scope.copyLinkRequested = function($event, export_) {
-            export_.showLink = true;
-            var clipboard = new Clipboard($event.target, {
-                target: function (trigger) {
-                    return trigger.nextElementSibling;
-                },
-            });
-            clipboard.onClick($event);
-            clipboard.destroy();
-        };
-        $scope.selectAll = function () {
-            _.each($scope.exports, function (exp) {
-                exp.addedToBulk = true;
-            });
-            $scope.updateBulkStatus();
-        };
-        $scope.selectNone = function () {
-            _.each($scope.exports, function (exp) {
-                exp.addedToBulk = false;
-            });
-            $scope.updateBulkStatus();
-        };
-        $scope.sendExportAnalytics = function() {
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
-        };
-
         $rootScope.pollProgressBar = function (exp) {
             exp.emailedExport.updatingData = false;
             exp.emailedExport.taskStatus = {
@@ -151,6 +50,64 @@
                 });
             };
             tick();
+        };
+
+        $scope._ = _;  // allow use of underscore.js within the template
+        $scope.exports = hqImport('hqwebapp/js/initial_page_data').get('exports');
+        $scope.bulk_download_url = bulk_download_url;
+
+        $scope.myExports = $scope.exports.filter(function (val) { return !!val.my_export; });
+        $scope.notMyExports = $scope.exports.filter(function (val) { return !val.my_export; });
+        _.each($scope.exports, function (exp) {
+            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
+                $rootScope.pollProgressBar(exp);
+            }
+        });
+
+        // For Bulk Export
+        $scope.showBulkExportDownload = false;
+        $scope.bulkExportList = '[]';
+
+        $scope.updateBulkStatus = function () {
+            var selectedExports = _.filter($scope.exports, function (exp) {
+                return !!exp.addedToBulk;
+            });
+            $scope.showBulkExportDownload = !_.isEmpty(selectedExports);
+            $scope.bulkExportList = JSON.stringify(selectedExports);
+            var input = $('input[name="export_list"]');
+            input.val(JSON.stringify(selectedExports));
+
+            input.closest("form").attr("action", $scope.bulk_download_url);
+        };
+        $scope.downloadRequested = function ($event) {
+            var $btn = $($event.target);
+            $btn.addClass('disabled');
+            $btn.text(gettext('Download Requested'));
+        };
+        $scope.copyLinkRequested = function ($event, export_) {
+            export_.showLink = true;
+            var clipboard = new Clipboard($event.target, {
+                target: function (trigger) {
+                    return trigger.nextElementSibling;
+                },
+            });
+            clipboard.onClick($event);
+            clipboard.destroy();
+        };
+        $scope.selectAll = function () {
+            _.each($scope.exports, function (exp) {
+                exp.addedToBulk = true;
+            });
+            $scope.updateBulkStatus();
+        };
+        $scope.selectNone = function () {
+            _.each($scope.exports, function (exp) {
+                exp.addedToBulk = false;
+            });
+            $scope.updateBulkStatus();
+        };
+        $scope.sendExportAnalytics = function () {
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
         };
 
         $scope.updateEmailedExportData = function (component, exp) {
@@ -178,7 +135,7 @@
                 .success(function (data) {
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
-                        var event = (exp.isAutoRebuildEnabled ? "Disable": "Enable") + " Saved Export";
+                        var event = (exp.isAutoRebuildEnabled ? "Disable" : "Enable") + " Saved Export";
                         hqImport('analytix/js/google').track.event(exportType + " Exports", event, "Saved");
                         exp.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
                         component.savingAutoRebuildChange = false;
@@ -189,7 +146,7 @@
             // The filterModalExport is used as context for the FeedFilterFormController
             $rootScope.filterModalExport = export_;
         };
-        $scope.isLocationSafeForUser = function(export_) {
+        $scope.isLocationSafeForUser = function (export_) {
             return (!export_.emailedExport) || export_.emailedExport.isLocationSafeForUser;
         };
 
@@ -247,7 +204,7 @@
             $scope.formElement.emwf_form_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter);
         });
 
-        $scope.$watch("formData.date_range", function(newDateRange) {
+        $scope.$watch("formData.date_range", function (newDateRange) {
             if (!newDateRange) {
                 $scope.formData.date_range = "since";
             } else {
@@ -288,11 +245,11 @@
             });
         };
 
-        self._handleSubmitError = function(data) {
+        self._handleSubmitError = function (data) {
             $scope.hasFormSubmitError = true;
             $scope.formSubmitErrorMessage = data.error;
         };
-        self._clearSubmitError = function() {
+        self._clearSubmitError = function () {
             $scope.hasFormSubmitError = false;
             $scope.formSubmitErrorMessage = null;
         };

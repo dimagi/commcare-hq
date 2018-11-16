@@ -249,7 +249,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(SmallInteger, type(table.columns['pregnant_in_month'].type))
 
         # basic check on secondary column
-        self.assertEqual(Integer, type(table.columns['fu_forms_in_month'].type))
+        self.assertEqual(SmallInteger, type(table.columns['fu_forms_in_month'].type))
 
     def test_get_aggregation_start_period(self):
         self.assertEqual(self.case_date_opened,
@@ -324,6 +324,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(0, row.pregnant_in_month)
         self.assertEqual(None, row.fu_forms_in_month)
+        self.assertEqual(None, row.any_fu_forms_in_month)
         # and the closed case should still not exist
         self.assertEqual(0, aggregate_query.filter(
             doc_id_column == self.closed_case_id,
@@ -338,6 +339,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(1, row.pregnant_in_month)
         self.assertEqual(None, row.fu_forms_in_month)
+        self.assertEqual(None, row.any_fu_forms_in_month)
         # and the closed case is now live
         self.assertEqual(1, aggregate_query.filter(
             doc_id_column == self.closed_case_id,
@@ -352,6 +354,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(1, row.pregnant_in_month)
         self.assertEqual(1, row.fu_forms_in_month)
+        self.assertEqual(1, row.any_fu_forms_in_month)
         # the closed case is still live
         self.assertEqual(1, aggregate_query.filter(
             doc_id_column == self.closed_case_id,
@@ -366,6 +369,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(1, row.pregnant_in_month)
         self.assertEqual(2, row.fu_forms_in_month)
+        self.assertEqual(1, row.any_fu_forms_in_month)
         # the closed case should now be absent
         self.assertEqual(0, aggregate_query.filter(
             doc_id_column == self.closed_case_id,

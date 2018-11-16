@@ -1,14 +1,14 @@
 /* global FormplayerFrontend */
 /* eslint-env mocha */
 
-describe('SessionMiddle', function() {
+describe('SessionMiddle', function () {
     var Middleware = FormplayerFrontend.SessionNavigate.Middleware;
 
-    it('Should call middleware and apis with same arguments', function() {
+    it('Should call middleware and apis with same arguments', function () {
         var middlewareSpy = sinon.spy(),
             result,
             API = {
-                myRoute: sinon.spy(function(one, two, three) {
+                myRoute: sinon.spy(function (one, two, three) {
                     return one + two + three;
                 }),
             };

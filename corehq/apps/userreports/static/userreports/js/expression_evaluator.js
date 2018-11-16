@@ -44,7 +44,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
             }
         };
 
-        self.evaluateExpression = function() {
+        self.evaluateExpression = function () {
             self.uiFeedback("");
             if (self.hasError()) {
                 self.uiFeedback("Please fix all parsing errors before evaluating.");

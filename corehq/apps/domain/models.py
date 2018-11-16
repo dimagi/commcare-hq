@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 from datetime import datetime
 import time
 import uuid
+
+from django.db.transaction import atomic
 from six.moves import map
 
 from couchdbkit import PreconditionFailed
@@ -14,6 +16,7 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
@@ -26,6 +29,7 @@ from dimagi.ext.couchdbkit import (
 )
 from django.urls import reverse
 from django.db import models
+from django.db.models import F
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import quickcache
@@ -128,11 +132,33 @@ class CallCenterProperties(DocumentSchema):
 
     case_type = StringProperty()
 
+    form_datasource_enabled = BooleanProperty(default=True)
+    case_datasource_enabled = BooleanProperty(default=True)
+    case_actions_datasource_enabled = BooleanProperty(default=True)
+
     def fixtures_are_active(self):
         return self.enabled and self.use_fixtures
 
     def config_is_valid(self):
         return (self.use_user_location_as_owner or self.case_owner_id) and self.case_type
+
+    def update_from_app_config(self, config):
+        """Update datasources enabled based on app config.
+
+        Follows similar logic to CallCenterIndicators
+        :returns: True if changes were made
+        """
+        pre = (self.form_datasource_enabled, self.case_datasource_enabled, self.case_actions_datasource_enabled)
+        self.form_datasource_enabled = config.forms_submitted.enabled or bool(config.custom_form)
+        self.case_datasource_enabled = (
+            config.cases_total.enabled
+            or config.cases_opened.enabled
+            or config.cases_closed.enabled
+        )
+        self.case_actions_datasource_enabled = config.cases_active.enabled
+        post = (self.form_datasource_enabled, self.case_datasource_enabled, self.case_actions_datasource_enabled)
+        return pre != post
+
 
 
 class LicenseAgreement(DocumentSchema):
@@ -241,6 +267,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
        see data, reports, charts, etc."""
+
+    _blobdb_type_code = BLOB_CODES.domain
 
     name = StringProperty()
     is_active = BooleanProperty()
@@ -386,8 +414,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
-
-    uses_new_reminders = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -676,7 +702,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                   copy_by_id=None, share_reminders=True,
                   share_user_roles=True):
         from corehq.apps.app_manager.dbaccessors import get_app
-        from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
         from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -759,10 +785,24 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                     'FixtureDataType', doc_id, new_domain_name, user=user)
                 copy_data_items(doc_id, component._id)
 
+            def convert_form_unique_id_function(form_unique_id):
+                from corehq.apps.app_manager.models import FormBase
+                form = FormBase.get_form(form_unique_id)
+                form_app = form.get_app()
+                m_index, f_index = form_app.get_form_location(form.unique_id)
+                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
+                return form_copy.unique_id
+
             if share_reminders:
-                for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
-                    self.copy_component(
-                        'CaseReminderHandler', doc_id, new_domain_name, user=user)
+                for rule in AutomaticUpdateRule.by_domain(
+                    self.name,
+                    AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    active_only=False,
+                ):
+                    rule.copy_conditional_alert(
+                        new_domain_name,
+                        convert_form_unique_id_function=convert_form_unique_id_function,
+                    )
             if share_user_roles:
                 for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
@@ -772,44 +812,15 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 user.add_domain_membership(new_domain_name, is_admin=True)
             apply_update(user, add_dom_to_user)
 
-        def update_events(handler):
-            """
-            Change the form_unique_id to the proper form for each event in a newly copied CaseReminderHandler
-            """
-            from corehq.apps.app_manager.models import FormBase
-            for event in handler.events:
-                if not event.form_unique_id:
-                    continue
-                form = FormBase.get_form(event.form_unique_id)
-                form_app = form.get_app()
-                m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
-                event.form_unique_id = form_copy.unique_id
-
-        def update_for_copy(handler):
-            handler.active = False
-            update_events(handler)
-
-        if share_reminders:
-            for handler in CaseReminderHandler.get_handlers(new_domain_name):
-                apply_update(handler, update_for_copy)
-
         return new_domain
-
-    def reminder_should_be_copied(self, handler):
-        from corehq.apps.reminders.models import ON_DATETIME
-        return (handler.start_condition_type != ON_DATETIME and
-                handler.user_group_id is None)
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
-        from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 
         str_to_cls = {
             'UserRole': UserRole,
-            'CaseReminderHandler': CaseReminderHandler,
             'FixtureDataType': FixtureDataType,
             'FixtureDataItem': FixtureDataItem,
         }
@@ -823,10 +834,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         else:
             cls = str_to_cls[doc_type]
             db = cls.get_db()
-            if doc_type == 'CaseReminderHandler':
-                cur_doc = cls.get(id)
-                if not self.reminder_should_be_copied(cur_doc):
-                    return None
 
             new_id = db.copy_doc(id)['id']
 
@@ -1015,6 +1022,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             self.fetch_attachment(LOGO_ATTACHMENT),
             self.blobs[LOGO_ATTACHMENT].content_type
         )
+
+    def put_attachment(self, *args, **kw):
+        return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
 
     def get_case_display(self, case):
         """Get the properties display definition for a given case"""
@@ -1242,3 +1252,39 @@ class TransferDomainRequest(models.Model):
             'deactivate_url': self.deactivate_url(),
             'activate_url': self.activate_url(),
         }
+
+
+class DomainAuditRecordEntry(models.Model):
+    domain = models.TextField(unique=True, db_index=True)
+    cp_n_downloads_custom_exports = models.BigIntegerField(default=0)
+    cp_n_viewed_ucr_reports = models.BigIntegerField(default=0)
+    cp_n_viewed_non_ucr_reports = models.BigIntegerField(default=0)
+    cp_n_reports_created = models.BigIntegerField(default=0)
+    cp_n_reports_edited = models.BigIntegerField(default=0)
+    cp_n_saved_scheduled_reports = models.BigIntegerField(default=0)
+    cp_n_click_app_deploy = models.BigIntegerField(default=0)
+    cp_n_form_builder_entered = models.BigIntegerField(default=0)
+    cp_n_saved_app_changes = models.BigIntegerField(default=0)
+
+    @classmethod
+    @atomic
+    def update_calculations(cls, domain, model, method=None):
+        obj, is_new = cls.objects.get_or_create(domain=domain)
+
+        config = {
+            ('retrieve_download', None): "cp_n_downloads_custom_exports",
+            ('ConfigurableReportView', None): "cp_n_viewed_ucr_reports",
+            ('ProjectReportDispatcher', None): "cp_n_viewed_non_ucr_reports",
+            ('ReportConfiguration', 'create'): "cp_n_reports_created",
+            ('ReportConfiguration', 'update'): "cp_n_reports_edited",
+            ('ReportNotification', None): "cp_n_saved_scheduled_reports",
+            ('release_build', None): "cp_n_click_app_deploy",
+            ('form_source', None): "cp_n_form_builder_entered",
+            ('patch_xform', None): "cp_n_saved_app_changes",
+            ('edit_module_attr', None): "cp_n_saved_app_changes",
+            ('edit_app_attr', None): "cp_n_saved_app_changes"
+        }
+
+        property_to_update = config.get((model, method))
+        setattr(obj, property_to_update, F(property_to_update) + 1)
+        obj.save()

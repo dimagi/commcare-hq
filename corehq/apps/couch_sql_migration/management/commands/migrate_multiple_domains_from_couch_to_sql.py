@@ -8,7 +8,7 @@ from django.core.management.base import CommandError, BaseCommand
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, get_diff_db)
 from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
-    _blow_away_migration, _get_sigterm_handler
+    _blow_away_migration
 )
 from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_started, couch_sql_migration_in_progress,
@@ -21,10 +21,8 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 from corehq.util.markup import shell_green, SimpleTableWriter, TableRowFormatter
-from corehq.util.signals import SignalHandlerContext
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
-import signal
 from io import open
 
 
@@ -51,7 +49,9 @@ class Command(BaseCommand):
         self.stdout.write("Processing {} domains".format(len(domains)))
         for domain in with_progress_bar(domains, oneline=False):
             try:
-                self.migrate_domain(domain)
+                success, reason = self.migrate_domain(domain)
+                if not success:
+                    failed.append((domain, reason))
             except Exception as e:
                 if with_traceback:
                     traceback.print_exc()
@@ -70,12 +70,15 @@ class Command(BaseCommand):
     def migrate_domain(self, domain):
         if should_use_sql_backend(domain):
             self.stderr.write("{} already on the SQL backend".format(domain))
-            return
+            return True, None
+
+        if couch_sql_migration_in_progress(domain, include_dry_runs=True):
+            self.stderr.write("{} migration is already in progress".format(domain))
+            return False, "in progress"
 
         set_couch_sql_migration_started(domain)
 
-        with SignalHandlerContext([signal.SIGTERM, signal.SIGINT], _get_sigterm_handler(domain)):
-            do_couch_to_sql_migration(domain, with_progress=False, debug=False)
+        do_couch_to_sql_migration(domain, with_progress=False, debug=False)
 
         stats = self.get_diff_stats(domain)
         if stats:
@@ -85,10 +88,12 @@ class Command(BaseCommand):
             writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'], [
                 (doc_type,) + stat for doc_type, stat in stats.items()
             ])
-        else:
-            assert couch_sql_migration_in_progress(domain)
-            set_couch_sql_migration_complete(domain)
-            self.stdout.write(shell_green("Domain migrated: {}".format(domain)))
+            return False, "has diffs"
+
+        assert couch_sql_migration_in_progress(domain)
+        set_couch_sql_migration_complete(domain)
+        self.stdout.write(shell_green("Domain migrated: {}".format(domain)))
+        return True, None
 
     def get_diff_stats(self, domain):
         db = get_diff_db(domain)

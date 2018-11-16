@@ -1,7 +1,11 @@
-hqDefine("app_manager/js/summary/utils", function() {
-    var translateName = function(names, targetLang, allLangs) {
+hqDefine("app_manager/js/summary/utils",[
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function ($, _, initialPageData) {
+    var translateName = function (names, targetLang, allLangs) {
         var langs = [targetLang].concat(allLangs),
-            firstLang = _(langs).find(function(lang) {
+            firstLang = _(langs).find(function (lang) {
                 return names[lang];
             });
         if (!firstLang) {
@@ -10,7 +14,7 @@ hqDefine("app_manager/js/summary/utils", function() {
         return names[firstLang] + (firstLang === targetLang ? '' : ' [' + firstLang + ']');
     };
 
-    var formIcon = function(form) {
+    var formIcon = function (form) {
         var formIcon = 'fa fa-file-o appnav-primary-icon';
         if (form.action_type === 'open') {
             formIcon = 'fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg';
@@ -22,7 +26,7 @@ hqDefine("app_manager/js/summary/utils", function() {
         return formIcon;
     };
 
-    var moduleIcon = function(module) {
+    var moduleIcon = function (module) {
         var moduleIcon = 'fa fa-folder-open appnav-primary-icon';
         if (module.module_type === 'advanced') {
             moduleIcon = 'fa fa-flask appnav-primary-icon';
@@ -36,8 +40,8 @@ hqDefine("app_manager/js/summary/utils", function() {
         return moduleIcon;
     };
 
-    var questionIcon = function(question) {
-        var vellumType = hqImport("hqwebapp/js/initial_page_data").get('VELLUM_TYPES')[question.type];
+    var questionIcon = function (question) {
+        var vellumType = initialPageData.get('VELLUM_TYPES')[question.type];
         return 'hq-icon ' + (vellumType ? vellumType.icon : '');
     };
 

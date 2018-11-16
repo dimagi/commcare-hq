@@ -1,8 +1,17 @@
-/* global Stripe */
-hqDefine('accounting/js/payment_method_handler', function () {
-    var BillingHandler = function (formId, opts) {
+hqDefine('accounting/js/payment_method_handler', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'accounting/js/lib/stripe',
+], function (
+    $,
+    ko,
+    _,
+    Stripe
+) {
+    var billingHandler = function (formId, opts) {
         'use strict';
-        var self = this;
+        var self = {};
         self.CREDIT_CARD = 'cc';
         self.WIRE = 'wire';
 
@@ -37,14 +46,15 @@ hqDefine('accounting/js/payment_method_handler', function () {
                 error: self.handleGeneralError,
             });
         };
+        return self;
     };
 
-    var WireInvoiceHandler = function(formId, opts) {
+    var wireInvoiceHandler = function (formId, opts) {
         'use strict';
-        var self = this;
+        var self = {};
         opts = opts ? opts : {};
 
-        BillingHandler.apply(this, [formId, opts]);
+        self = billingHandler.apply(self, [formId, opts]);
         self.paymentMethod = ko.observable(self.WIRE);
 
         self.handleGeneralError = function (response, textStatus, errorThrown) {
@@ -52,7 +62,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
             self.serverErrorMsg(self.errorMessages[errorThrown]);
         };
 
-        self.handleSuccess = function(response) {
+        self.handleSuccess = function (response) {
             if (response.success) {
                 self.costItem().reset();
                 self.paymentIsComplete(true);
@@ -66,19 +76,20 @@ hqDefine('accounting/js/payment_method_handler', function () {
             self.submitForm();
         };
         self.hasAgreedToPrivacy = true; // No privacy policy for wire
+        return self;
     };
 
-    var PaymentMethodHandler = function (formId, opts) {
+    var paymentMethodHandler = function (formId, opts) {
         'use strict';
-        var self = this;
+        var self = {};
         opts = opts ? opts : {};
 
-        BillingHandler.apply(this, arguments);
+        self = billingHandler.apply(self, arguments);
         self.paymentMethod = ko.observable(self.CREDIT_CARD);
 
-        self.submitURL = self.submitURL || ko.computed(function(){
+        self.submitURL = self.submitURL || ko.computed(function () {
             var url = opts.credit_card_url;
-            if (self.paymentMethod() === self.WIRE){
+            if (self.paymentMethod() === self.WIRE) {
                 url = opts.wire_url;
             }
             return url;
@@ -109,14 +120,14 @@ hqDefine('accounting/js/payment_method_handler', function () {
             }
             return self.newCard();
         });
-        self.hasAgreedToPrivacy = ko.computed(function() {
-            if(self.paymentMethod() === self.CREDIT_CARD){
+        self.hasAgreedToPrivacy = ko.computed(function () {
+            if (self.paymentMethod() === self.CREDIT_CARD) {
                 return self.selectedCard() && self.selectedCard().cardFormIsValid();
             }
             return true;
         });
 
-        if (opts.wire_email){
+        if (opts.wire_email) {
             self.wireEmails(opts.wire_email);
         }
 
@@ -128,10 +139,10 @@ hqDefine('accounting/js/payment_method_handler', function () {
         });
 
         self.isSubmitDisabled = ko.computed(function () {
-            if (self.paymentMethod() === self.CREDIT_CARD){
+            if (self.paymentMethod() === self.CREDIT_CARD) {
                 return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
             }
-            else{
+            else {
                 return (self.paymentProcessing());
             }
         });
@@ -157,7 +168,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
             if (self.costItem().isValid() && self.paymentMethod() === self.CREDIT_CARD) {
                 self.selectedCard().process(self.submitForm);
             }
-            else{
+            else {
                 self.paymentProcessing(true);
                 self.submitForm();
             }
@@ -215,7 +226,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
             self.selectedCard().isProcessing(false);
         };
 
-        self.handleSuccess = function(response) {
+        self.handleSuccess = function (response) {
             if (response.success) {
                 self.costItem().reset(response);
                 if (response.wasSaved) {
@@ -233,16 +244,17 @@ hqDefine('accounting/js/payment_method_handler', function () {
             self.handleProcessingErrors(response);
         };
 
+        return self;
     };
 
-    PaymentMethodHandler.prototype = Object.create( BillingHandler.prototype );
-    PaymentMethodHandler.prototype.constructor = PaymentMethodHandler;
-    WireInvoiceHandler.prototype = Object.create( BillingHandler.prototype );
-    WireInvoiceHandler.prototype.constructor = WireInvoiceHandler;
+    paymentMethodHandler.prototype = Object.create(billingHandler.prototype);
+    paymentMethodHandler.prototype.constructor = paymentMethodHandler;
+    wireInvoiceHandler.prototype = Object.create(billingHandler.prototype);
+    wireInvoiceHandler.prototype.constructor = wireInvoiceHandler;
 
-    var BaseCostItem = function () {
+    var baseCostItem = function () {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.reset = function () {
             throw new Error("Missing implementation for reset");
@@ -251,13 +263,13 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.isValid = function () {
             throw new Error("missing implementation for isValid");
         };
-
+        return self;
     };
 
-    var ChargedCostItem = function (initData) {
+    var chargedCostItem = function (initData) {
         'use strict';
-        BaseCostItem.call(this, initData);
-        var self = this;
+        var self = {};
+        self = baseCostItem.call(self, initData);
 
         self.balance = ko.observable();
 
@@ -317,16 +329,17 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.isValid = ko.computed(function () {
             return self.isLeftoverAmountEnough() && self.isAmountWithinRange();
         });
+        return self;
     };
 
-    ChargedCostItem.prototype = Object.create( BaseCostItem.prototype );
-    ChargedCostItem.prototype.constructor = ChargedCostItem;
+    chargedCostItem.prototype = Object.create(baseCostItem.prototype);
+    chargedCostItem.prototype.constructor = chargedCostItem;
 
 
-    var Invoice = function (initData) {
+    var invoice = function (initData) {
         'use strict';
-        ChargedCostItem.call(this, initData);
-        var self = this;
+        var self = {};
+        self = chargedCostItem.call(self, initData);
 
         self.paginatedItem = initData.paginatedItem;
         self.paginatedList = initData.paginatedList;
@@ -342,21 +355,22 @@ hqDefine('accounting/js/payment_method_handler', function () {
 
         self.reset = function (response) {
             self.paginatedList.refreshList(self.paginatedItem);
-            if(response.success){
+            if (response.success) {
                 var oldBalance = self.paginatedList.totalDue();
                 self.paginatedList.totalDue(oldBalance - response.changedBalance);
             }
         };
+        return self;
     };
 
-    Invoice.prototype = Object.create( ChargedCostItem.prototype );
-    Invoice.prototype.constructor = Invoice;
+    invoice.prototype = Object.create(chargedCostItem.prototype);
+    invoice.prototype.constructor = invoice;
 
     /* initData contains totalBalance and paginatedListModel */
-    var TotalCostItem = function (initData) {
+    var totalCostItem = function (initData) {
         'use strict';
-        ChargedCostItem.call(this, initData);
-        var self = this;
+        var self = {};
+        self = chargedCostItem.call(self, initData);
 
         self.balance(initData.totalBalance);
         self.customPaymentAmount(self.balance());
@@ -366,25 +380,28 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.reset =  function () {
             initData.paginatedListModel.refreshList();
         };
+
+        return self;
     };
 
-    TotalCostItem.prototype = Object.create( ChargedCostItem.prototype );
-    TotalCostItem.prototype.constructor = TotalCostItem;
+    totalCostItem.prototype = Object.create(chargedCostItem.prototype);
+    totalCostItem.prototype.constructor = totalCostItem;
 
-    var PrepaymentItems = function(data){
+    var prepaymentItems = function (data) {
         'use strict';
-        BaseCostItem.call(this, data);
-        var self = this;
+        var self = {};
+        self = baseCostItem.call(self, data);
+
         self.products = data.products;
         self.features = data.features;
         self.general_credit = data.general_credit;
 
-        self.amount = ko.computed(function(){
-            var product_sum = _.reduce(self.products(), function(memo, product){
+        self.amount = ko.computed(function () {
+            var product_sum = _.reduce(self.products(), function (memo, product) {
                 return memo + parseFloat(product.addAmount());
             }, 0);
 
-            var feature_sum =_.reduce(self.features(), function(memo, feature){
+            var feature_sum = _.reduce(self.features(), function (memo, feature) {
                 return memo + parseFloat(feature.addAmount());
             }, 0);
             var sum = product_sum + feature_sum + parseFloat(self.general_credit().addAmount());
@@ -393,11 +410,11 @@ hqDefine('accounting/js/payment_method_handler', function () {
 
         self.reset = function (response) {
             var items = self.products().concat(self.features());
-            _.each(response.balances, function(balance){
-                var update_balance = _.find(items, function(item){
+            _.each(response.balances, function (balance) {
+                var update_balance = _.find(items, function (item) {
                     return item.creditType() === balance.type;
                 });
-                if (update_balance){
+                if (update_balance) {
                     update_balance.amount(balance.balance);
                 }
             });
@@ -406,12 +423,13 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.isValid = function () {
             return self.amount() >= 0.5;
         };
+        return self;
     };
 
-    var CreditCostItem = function (initData) {
+    var creditCostItem = function (initData) {
         'use strict';
-        BaseCostItem.call(this, initData);
-        var self = this;
+        var self = {};
+        self = baseCostItem.call(self, initData);
 
         self.creditType = ko.observable(initData.creditType);
         self.category = ko.observable(initData.category);
@@ -437,10 +455,11 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.isValid = function () {
             return self.amount() >= 0.5;
         };
+        return self;
     };
 
-    CreditCostItem.prototype = Object.create( BaseCostItem.prototype );
-    CreditCostItem.prototype.constructor = CreditCostItem;
+    creditCostItem.prototype = Object.create(baseCostItem.prototype);
+    creditCostItem.prototype.constructor = creditCostItem;
 
     var stripeCardModel = function () {
         'use strict';
@@ -456,8 +475,8 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.isProcessing = ko.observable(false);
         self.newSavedCard = ko.observable(false);
 
-        self.autopayCard = ko.computed(function(){
-            if (!self.newSavedCard()){
+        self.autopayCard = ko.computed(function () {
+            if (!self.newSavedCard()) {
                 return false;
             }
         });
@@ -527,11 +546,11 @@ hqDefine('accounting/js/payment_method_handler', function () {
         return self;
     };
     return {
-        WireInvoiceHandler: WireInvoiceHandler,
-        PaymentMethodHandler: PaymentMethodHandler,
-        Invoice: Invoice,
-        TotalCostItem: TotalCostItem,
-        PrepaymentItems: PrepaymentItems,
-        CreditCostItem: CreditCostItem,
+        wireInvoiceHandler: wireInvoiceHandler,
+        paymentMethodHandler: paymentMethodHandler,
+        invoice: invoice,
+        totalCostItem: totalCostItem,
+        prepaymentItems: prepaymentItems,
+        creditCostItem: creditCostItem,
     };
 });

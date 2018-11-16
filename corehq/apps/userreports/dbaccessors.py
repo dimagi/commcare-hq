@@ -22,11 +22,11 @@ def get_report_configs_for_domain(domain):
     from corehq.apps.userreports.models import ReportConfiguration
     return sorted(
         get_docs_in_domain_by_class(domain, ReportConfiguration),
-        key=lambda report: report.title,
+        key=lambda report: report.title or '',
     )
 
 
-def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=False):
+def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=False, include_aggregate=False):
     from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
     key = [domain]
     if referenced_doc_type:
@@ -47,6 +47,9 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
             static_ds = [ds for ds in static_ds if ds.referenced_doc_type == referenced_doc_type]
         datasources.extend(sorted(static_ds, key=lambda config: config.display_name))
 
+    if include_aggregate:
+        from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+        datasources.extend(AggregateTableDefinition.objects.filter(domain=domain).all())
     return datasources
 
 

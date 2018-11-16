@@ -1,6 +1,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import logging
 from collections import namedtuple
 import os
 import sys
@@ -108,7 +110,7 @@ def get_db_name(dbname, is_test):
 
     :param is_test: Add test prefix if true.
     """
-    if isinstance(dbname, six.binary_type):
+    if isinstance(dbname, bytes):
         dbname = dbname.decode('utf-8')
 
     return (TEST_DATABASE_PREFIX + dbname) if is_test else dbname
@@ -261,7 +263,8 @@ def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
         ),
         'ignore_exceptions': [
             'KeyboardInterrupt'
-        ]
+        ],
+        'CELERY_LOGLEVEL': logging.FATAL
     }
 
 

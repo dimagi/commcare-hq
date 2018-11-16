@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import json
 import os
 from io import BytesIO
+import datetime
 
 from botocore.response import StreamingBody
 from django.test import TestCase
@@ -11,7 +12,7 @@ from django.urls import reverse
 from mock import patch
 
 from corehq.apps.export.models import CaseExportInstance
-from corehq.apps.export.models.new import DailySavedExportNotification, DataFile
+from corehq.apps.export.models.new import DataFile
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (
@@ -19,17 +20,20 @@ from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
 )
-from corehq.apps.export.views import (
-    CreateNewCustomCaseExportView,
-    CreateNewCustomFormExportView,
-    CreateNewDailySavedCaseExport,
-    DailySavedExportListView,
-    DataFileDownloadDetail,
+from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )
-from corehq.blobs import _db
-from corehq.util.test_utils import generate_cases
+from corehq.apps.export.views.list import (
+    DailySavedExportListView,
+)
+from corehq.apps.export.views.new import (
+    CreateNewCustomCaseExportView,
+    CreateNewCustomFormExportView,
+    CreateNewDailySavedCaseExport,
+)
+from corehq.apps.export.views.utils import DataFileDownloadDetail
+from corehq.util.test_utils import flag_enabled, generate_cases
 from io import open
 
 
@@ -77,33 +81,41 @@ class DataFileDownloadDetailTest(ViewTestCase):
         super(DataFileDownloadDetailTest, cls).setUpClass()
         with open(os.path.abspath(__file__), 'rb') as f:
             cls.content = f.read()
-
-        _db.append(FakeDB({'abc': cls.content}))
-        cls.data_file = DataFile(
-            domain=cls.domain.name,
-            filename='foo.txt',
-            description='all of the foo',
-            content_type='text/plain',
-            blob_id='abc',
-            content_length=len(cls.content)
-        )
-        cls.data_file.save()
+            f.seek(0)
+            cls.data_file = DataFile.save_blob(
+                f,
+                domain=cls.domain.name,
+                filename='foo.txt',
+                description='all of the foo',
+                content_type='text/plain',
+                delete_after=datetime.datetime.utcnow() + datetime.timedelta(days=3)
+            )
 
     @classmethod
     def tearDownClass(cls):
         super(DataFileDownloadDetailTest, cls).tearDownClass()
         cls.data_file.delete()
-        _db.pop()
 
-    def test_data_file_download(self):
-        data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
-            'domain': self.domain.name, 'pk': self.data_file.pk, 'filename': 'foo.txt'
+    def setUp(self):
+        super(DataFileDownloadDetailTest, self).setUp()
+        self.data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
+            'domain': self.domain.name, 'pk': self.data_file.id, 'filename': 'foo.txt'
         })
+
+    @flag_enabled('DATA_FILE_DOWNLOAD')
+    def test_data_file_download(self):
         try:
-            resp = self.client.get(data_file_url)
+            resp = self.client.get(self.data_file_url)
         except TypeError as err:
             self.fail('Getting a data file raised a TypeError: {}'.format(err))
         self.assertEqual(resp.getvalue(), self.content)
+
+    @flag_enabled('DATA_FILE_DOWNLOAD')
+    def test_data_file_download_expired(self):
+        self.data_file._meta.expires_on = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+        self.data_file._meta.save()
+        resp = self.client.get(self.data_file_url)
+        self.assertEqual(resp.status_code, 404)
 
 
 @generate_cases([
@@ -111,17 +123,15 @@ class DataFileDownloadDetailTest(ViewTestCase):
     (1000, 1999),
     (12000, None)
 ], DataFileDownloadDetailTest)
+@flag_enabled('DATA_FILE_DOWNLOAD')
 def test_data_file_download_partial(self, start, end):
-    data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
-        'domain': self.domain, 'pk': self.data_file.pk, 'filename': 'foo.txt'
-    })
     content_length = len(self.content)
     if end:
         range = '{}-{}'.format(start, end)
     else:
         range = '{}-'.format(start)
 
-    resp = self.client.get(data_file_url, HTTP_RANGE='bytes={}'.format(range))
+    resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes={}'.format(range))
     self.assertEqual(resp.status_code, 206)
     expected_range_header = 'bytes {}-{}/{}'.format(start, end or (content_length - 1), content_length)
     self.assertEqual(resp['Content-Range'], expected_range_header)
@@ -236,26 +246,10 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-    @patch('corehq.apps.export.models.new.domain_has_daily_saved_export_access', lambda x: True)
-    @patch.object(DailySavedExportNotification, 'user_added_before_feature_release')
-    @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
-    def test_view_daily_saved_export_notification(self, user_created_mock):
-        self.assertFalse(DailySavedExportNotification.notified(self.user.user_id, self.domain))
-
-        user_created_mock.return_value = False
-        self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
-        self.assertFalse(DailySavedExportNotification.notified(self.user.user_id, self.domain))
-
-        user_created_mock.return_value = True
-        self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
-        self.assertTrue(DailySavedExportNotification.notified(self.user.user_id, self.domain))
-
-        with patch.object(DailySavedExportNotification, 'mark_notified') as notification:
-            self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
-            self.assertTrue(DailySavedExportNotification.notified(self.user.user_id, self.domain))
-            assert not notification.called
-
-    @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.export.views.list.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.export.views.new.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.export.views.utils.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.accounting.utils.domain_has_privilege', lambda x, y: True)
     @patch("corehq.apps.export.tasks.rebuild_export")
     def test_edit_daily_saved_export_filters(self, _):
         # Create an export
@@ -295,7 +289,6 @@ class ExportViewTest(ViewTestCase):
 
         filter_form_data = {
             "emwf_case_filter": [],
-            "type_or_group": "group",
             "date_range": "range",
             "start_date": "1992-01-30",
             "end_date": "2016-10-01",

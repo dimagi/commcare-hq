@@ -237,6 +237,8 @@ class AppCaseMetadata(JsonObject):
         return prop
 
     def add_property_detail(self, detail_type, root_case_type, module_id, column):
+        if column.useXpathExpression:
+            return column.field
         prop = self.get_property(root_case_type, column.field)
         prop.add_detail(detail_type, module_id, column.header, column.format)
         return prop
@@ -350,7 +352,7 @@ def get_readable_form_data(xform_data, questions, process_label=None):
 def strip_form_data(data):
     data = data.copy()
     # remove all case, meta, attribute nodes from the top level
-    for key in data.keys():
+    for key in list(data.keys()):
         if (
             not form_key_filter(key) or
             key in ('meta', 'case', 'commcare_usercase') or
@@ -600,7 +602,15 @@ def get_data_cleaning_data(form_data, instance):
                     'label': question.label,
                     'icon': question.icon,
                     'value': question.response,
+                    'options': [{
+                        'id': option.value,
+                        'text': option.label,
+                    } for option in question.options],
                 }
+                if question.type == 'MSelect':
+                    question_response_map[value].update({
+                        'multiple': True,
+                    })
                 ordered_question_values.append(value)
 
     _add_to_question_response_map(form_data)

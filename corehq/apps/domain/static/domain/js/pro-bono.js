@@ -1,7 +1,7 @@
 hqDefine('domain/js/pro-bono', [
     'jquery',
     'select2-3.5.2-legacy/select2',
-], function(
+], function (
     $
 ) {
     var _validateEmail = function (email) {
@@ -13,7 +13,7 @@ hqDefine('domain/js/pro-bono', [
     $(function () {
         $('#id_contact_email').select2({
             createSearchChoice: function (term, data) {
-                var matchedData = $(data).filter(function() {
+                var matchedData = $(data).filter(function () {
                     return this.text.localeCompare(term) === 0;
                 });
 

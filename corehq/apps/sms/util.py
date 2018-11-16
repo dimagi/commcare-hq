@@ -223,7 +223,8 @@ def touchforms_error_is_config_error(domain, touchforms_error):
     # What we want to do is try and pick out the types of exceptions
     # that are configuration errors such as an xpath reference error
     # or misconfigured case sharing settings.
-    exception_text = touchforms_error.response_data.get('exception', '').lower()
+    exception_text = touchforms_error.response_data.get('exception') or ''
+    exception_text = exception_text.lower()
     return any(s in exception_text for s in (
         'case sharing settings',
         'error in calculation',

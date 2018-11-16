@@ -1,8 +1,8 @@
-hqDefine("app_manager/js/details/case_claim", function() {
+hqDefine("app_manager/js/details/case_claim", function () {
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
         searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
         var self = {},
-            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
+            DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
         var searchProperty = function (name, label) {
             var self = {};
@@ -107,7 +107,7 @@ hqDefine("app_manager/js/details/case_claim", function() {
                 }
             );
         };
-        self._getRelevant = function() {
+        self._getRelevant = function () {
             if (self.default_relevant()) {
                 if (!self.relevant() || self.relevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;

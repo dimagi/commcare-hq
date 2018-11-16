@@ -8,7 +8,7 @@ from django.test.utils import override_settings
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.util.test_utils import TestFileMixin
+from corehq.util.test_utils import TestFileMixin, softer_assert
 from django.test.client import Client
 from django.urls import reverse
 import os
@@ -106,6 +106,7 @@ class SubmissionTest(TestCase):
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
         )
 
+    @softer_assert()
     def test_submit_deprecated_form(self):
         self._submit('simple_form.xml')
         response = self._submit('simple_form_edited.xml', url=reverse("receiver_secure_post", args=[self.domain]))

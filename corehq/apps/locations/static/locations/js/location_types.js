@@ -4,22 +4,22 @@ hqDefine('locations/js/location_types', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
-    'select2-3.5.2-legacy/select2',
-], function(
+    'select2/dist/js/select2.full.min',
+], function (
     $,
     ko,
     _,
     initialPageData,
     googleAnalytics
-){
+) {
     'use strict';
     var ROOT_LOCATION_ID = -1;
 
-    function LocationSettingsViewModel(locTypes, commtrackEnabled) {
-        var self = this;
+    function locationSettingsViewModel(locTypes, commtrackEnabled) {
+        var self = {};
         self.loc_types = ko.observableArray();
-        self.loc_types($.map(locTypes, function(locType) {
-            return new LocationTypeModel(locType, commtrackEnabled, self);
+        self.loc_types($.map(locTypes, function (locType) {
+            return locationTypeModel(locType, commtrackEnabled, self);
         }));
 
         self.json_payload = ko.observable();
@@ -27,23 +27,23 @@ hqDefine('locations/js/location_types', [
         self.loc_types_error = ko.observable(false);
         self.advanced_mode = ko.observable(false);
 
-        self.loc_type_options = function(locType) {
-            return self.loc_types().filter(function(type) {
+        self.loc_type_options = function (locType) {
+            return self.loc_types().filter(function (type) {
                 return type.name !== locType.name;
             });
         };
 
-        self.loc_types_by_id = function() {
-            return _.reduce(self.loc_types(), function(memo, locType){
+        self.loc_types_by_id = function () {
+            return _.reduce(self.loc_types(), function (memo, locType) {
                 memo[locType.pk] = locType;
                 return memo;
             }, {});
         };
 
-        self.loc_types_by_parent = function() {
-            return _.reduce(self.loc_types(), function(memo, locType){
+        self.loc_types_by_parent = function () {
+            return _.reduce(self.loc_types(), function (memo, locType) {
                 var parentType = locType.parent_type() || 0;
-                if (memo[parentType]){
+                if (memo[parentType]) {
                     memo[parentType].push(locType);
                 } else {
                     memo[parentType] = [locType];
@@ -52,10 +52,10 @@ hqDefine('locations/js/location_types', [
             }, {});
         };
 
-        self.types_by_index = function(locationTypes){
-            return _.reduce(locationTypes, function(memo, locType){
+        self.types_by_index = function (locationTypes) {
+            return _.reduce(locationTypes, function (memo, locType) {
                 var level = locType.level();
-                if (memo[level]){
+                if (memo[level]) {
                     memo[level].push(locType);
                 } else {
                     memo[level] = [locType];
@@ -64,29 +64,29 @@ hqDefine('locations/js/location_types', [
             }, {}, self);
         };
 
-        self.remove_loctype = function(locType) {
+        self.remove_loctype = function (locType) {
             self.loc_types.remove(locType);
         };
 
-        self.new_loctype = function() {
+        self.new_loctype = function () {
             var parentPK = (_.last(self.loc_types()) || {}).pk;
-            var newLocType = new LocationTypeModel({parent_type: parentPK}, commtrackEnabled, self);
-            newLocType.onBind = function() {
+            var newLocType = locationTypeModel({parent_type: parentPK}, commtrackEnabled, self);
+            newLocType.onBind = function () {
                 var $inp = $(self.$e).find('.loctype_name');
                 $inp.focus();
-                setTimeout(function() { $inp.select(); }, 0);
+                setTimeout(function () { $inp.select(); }, 0);
             };
             self.loc_types.push(newLocType);
             $(".include-only").last().select2();
             googleAnalytics.track.event('Organization Levels', 'New Organization Level');
         };
 
-        self.validate = function() {
+        self.validate = function () {
             self.loc_types_error(false);
 
             var valid = true;
 
-            $.each(self.loc_types(), function(i, e) {
+            $.each(self.loc_types(), function (i, e) {
                 if (!e.validate()) {
                     valid = false;
                 }
@@ -102,7 +102,7 @@ hqDefine('locations/js/location_types', [
                 });
                 var duplicates = [];
                 _.each(countsByValue, function (count, value) {
-                    if (field === 'code' && value === ''){
+                    if (field === 'code' && value === '') {
                         // exclude empty codes
                         // if code is empty, the backend will autofill it as name
                         return;
@@ -121,7 +121,7 @@ hqDefine('locations/js/location_types', [
             });
 
             var topLevelLoc = false;
-            $.each(self.loc_types(), function(i, e) {
+            $.each(self.loc_types(), function (i, e) {
                 if (!e.parent_type()) {
                     topLevelLoc = true;
                 }
@@ -137,13 +137,13 @@ hqDefine('locations/js/location_types', [
             return valid;
         };
 
-        self.has_cycles = function() {
+        self.has_cycles = function () {
             var locTypeParents = {};
-            $.each(self.loc_types(), function(i, locType) {
+            $.each(self.loc_types(), function (i, locType) {
                 locTypeParents[locType.pk] = locType.parent_type();
             });
 
-            var alreadyVisited = function(lt, visited) {
+            var alreadyVisited = function (lt, visited) {
                 if (visited.indexOf(lt) !== -1) {
                     return true;
                 } else if (!locTypeParents[lt]) {
@@ -163,7 +163,7 @@ hqDefine('locations/js/location_types', [
             return false;
         };
 
-        self.presubmit = function() {
+        self.presubmit = function () {
             if (!self.validate()) {
                 return false;
             }
@@ -173,24 +173,25 @@ hqDefine('locations/js/location_types', [
             return true;
         };
 
-        self.to_json = function() {
+        self.to_json = function () {
             return {
-                loc_types: $.map(self.loc_types(), function(e) { return e.to_json(); }),
+                loc_types: $.map(self.loc_types(), function (e) { return e.to_json(); }),
             };
         };
+        return self;
     }
 
     // Make a fake pk to refer to this location type even if the name changes
     var getFakePK = function () {
         var counter = 0;
-        return function() {
+        return function () {
             counter ++;
             return "fake-pk-" + counter;
         };
     }();
 
-    function LocationTypeModel(locType, commtrackEnabled, viewModel) {
-        var self = this;
+    function locationTypeModel(locType, commtrackEnabled, viewModel) {
+        var self = {};
         var name = locType.name || '';
         self.pk = locType.pk || getFakePK();
         self.name = ko.observable(name);
@@ -212,7 +213,7 @@ hqDefine('locations/js/location_types', [
         self.duplicate_name_error = ko.observable(false);
         self.duplicate_code_error = ko.observable(false);
 
-        self.validate = function() {
+        self.validate = function () {
             self.name_error(false);
             if (!self.name()) {
                 self.name_error(true);
@@ -221,17 +222,17 @@ hqDefine('locations/js/location_types', [
             return true;
         };
 
-        self.children = function(){
+        self.children = function () {
             var allChildren = [self],
                 toCheck = [self];
-            if (!self.view.has_cycles()){
-                while (toCheck.length > 0){
+            if (!self.view.has_cycles()) {
+                while (toCheck.length > 0) {
                     var currentLoc = toCheck.pop(),
                         children = self.view.loc_types_by_parent()[currentLoc.pk];
-                    if (children){
-                        children.forEach(function(child){
+                    if (children) {
+                        children.forEach(function (child) {
                             allChildren.push(child);
-                            if (self.view.loc_types_by_parent()[child.pk]){
+                            if (self.view.loc_types_by_parent()[child.pk]) {
                                 toCheck.push(child);
                             }
                         }, self);
@@ -241,17 +242,17 @@ hqDefine('locations/js/location_types', [
             return allChildren;
         };
 
-        self.parents = function(){
+        self.parents = function () {
             var parents = [],
                 toCheck = [self];
             if (!self.view.has_cycles()) {
-                while (toCheck.length > 0){
+                while (toCheck.length > 0) {
                     var currentLoc = toCheck.pop(),
                         parentType = currentLoc.parent_type();
-                    if (parentType && self.view.loc_types_by_id()[parentType]){
+                    if (parentType && self.view.loc_types_by_id()[parentType]) {
                         var parent = self.view.loc_types_by_id()[parentType];
                         parents.push(parent);
-                        if (parent.parent_type()){
+                        if (parent.parent_type()) {
                             toCheck.push(parent);
                         }
                     }
@@ -260,51 +261,51 @@ hqDefine('locations/js/location_types', [
             return parents;
         };
 
-        self.level = function(){
+        self.level = function () {
             // Count the number of parents
             return self.parents().length;
         };
 
-        self.compiled_name = function(){
+        self.compiled_name = function () {
             // Shows all types that have the same level as this one "type1 | type2"
             var compiledName = "",
                 locationTypesSameLevel = self.view.types_by_index(self.view.loc_types())[self.level()];
 
-            locationTypesSameLevel.forEach(function(locationType, index){
+            locationTypesSameLevel.forEach(function (locationType, index) {
                 compiledName += locationType.name();
-                if (index !== locationTypesSameLevel.length - 1){
+                if (index !== locationTypesSameLevel.length - 1) {
                     compiledName += " | ";
                 }
             });
             return compiledName;
         };
 
-        self.expand_from_options = function() {
+        self.expand_from_options = function () {
             // traverse all locations upwards, include a root option
-            var rootType = new LocationTypeModel(
+            var rootType = locationTypeModel(
                     {name: "root", pk: ROOT_LOCATION_ID},
-                    commtrackEnabled, this
+                    commtrackEnabled, self
                 ),
                 parents = self.parents();
             parents.push(rootType);
             return parents.reverse();
         };
 
-        self.expand_to_options = function(){
+        self.expand_to_options = function () {
             // display all locations with the same index as being on the same level
             var locsToReturn = [],
                 locs = self.children();
-            if (self.expand_from() && self.expand_from() !== ROOT_LOCATION_ID){
+            if (self.expand_from() && self.expand_from() !== ROOT_LOCATION_ID) {
                 locs = self.view.loc_types_by_id()[self.expand_from()].children();
             }
-            if (self.expand_from() && self.expand_from() === ROOT_LOCATION_ID){
+            if (self.expand_from() && self.expand_from() === ROOT_LOCATION_ID) {
                 locs = self.view.loc_types();
             }
             var locsSameLevels = self.view.types_by_index(locs);
-            for (var level in locsSameLevels){
+            for (var level in locsSameLevels) {
                 // Only display a single child at each level
                 var childToAdd = locsSameLevels[level][0];
-                locsToReturn.push(new LocationTypeModel({
+                locsToReturn.push(locationTypeModel({
                     name: childToAdd.compiled_name(),
                     pk: childToAdd.pk,
                 }, false, self.view));
@@ -315,14 +316,14 @@ hqDefine('locations/js/location_types', [
             };
         };
 
-        self.include_without_expanding_options = function(){
-            if (self.expand_from() !== ROOT_LOCATION_ID){
+        self.include_without_expanding_options = function () {
+            if (self.expand_from() !== ROOT_LOCATION_ID) {
                 var typesSameLevels = self.view.types_by_index(self.view.loc_types()),
                     levelsToReturn = [];
-                for (var level in typesSameLevels){
+                for (var level in typesSameLevels) {
                     // Only display a single child at each level
                     var levelToAdd = typesSameLevels[level][0];
-                    levelsToReturn.push(new LocationTypeModel({
+                    levelsToReturn.push(locationTypeModel({
                         name: levelToAdd.compiled_name(),
                         pk: levelToAdd.pk,
                     }, false, self.view));
@@ -333,11 +334,11 @@ hqDefine('locations/js/location_types', [
             }
         };
 
-        self.include_only_options = function(){
+        self.include_only_options = function () {
             return self.view.loc_types();
         };
 
-        self.to_json = function() {
+        self.to_json = function () {
             return {
                 pk: self.pk,
                 name: self.name(),
@@ -354,20 +355,21 @@ hqDefine('locations/js/location_types', [
                 include_only: self.include_only() || [],
             };
         };
+        return self;
     }
 
-    $(function() {
+    $(function () {
         var locTypes = initialPageData.get('location_types'),
             commtrackEnabled = initialPageData.get('commtrack_enabled'),
-            model = new LocationSettingsViewModel(locTypes, commtrackEnabled);
+            model = locationSettingsViewModel(locTypes, commtrackEnabled);
 
-        var warnBeforeUnload = function() {
+        var warnBeforeUnload = function () {
             return gettext("You have unsaved changes.");
         };
 
         var $settings = $('#settings');
         if ($settings.length) {
-            $settings.submit(function() {
+            $settings.submit(function () {
                 var valid = model.presubmit();
                 if (valid) {
                     // Don't warn if they're leaving the page due to form submission
@@ -378,12 +380,12 @@ hqDefine('locations/js/location_types', [
             $settings.koApplyBindings(model);
         }
 
-        $("form#settings").on("change input", function() {
-            $(this).find(":submit").addClass("btn-success").enable();
+        $("form#settings").on("change input", function () {
+            $(this).find(":submit").addClass("btn-primary").enable();
             window.onbeforeunload = warnBeforeUnload;
         });
 
-        $("form#settings button").on("click", function() {
+        $("form#settings button").on("click", function () {
             $("form#settings").find(":submit").addClass("btn-success").enable();
             window.onbeforeunload = warnBeforeUnload;
         });
@@ -392,7 +394,7 @@ hqDefine('locations/js/location_types', [
     });
 
     return {
-        'LocationSettingsViewModel': LocationSettingsViewModel,
-        'LocationTypeModel': LocationTypeModel,
+        'locationSettingsViewModel': locationSettingsViewModel,
+        'locationTypeModel': locationTypeModel,
     };
 });

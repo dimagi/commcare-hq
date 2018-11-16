@@ -19,6 +19,8 @@ from custom.icds_reports.models.aggregate import (
     AggregateBirthPreparednesForms,
     AggregateInactiveAWW,
     AggregateAwcInfrastructureForms,
+    AggregateCcsRecordComplementaryFeedingForms,
+    AWWIncentiveReport
 )
 from custom.icds_reports.models.views import (
     AggAwcDailyView,
@@ -27,7 +29,9 @@ from custom.icds_reports.models.views import (
     AggAwcMonthly,
     AggCcsRecordMonthly,
     AggChildHealthMonthly,
-    AwcLocationMonths
+    AwcLocationMonths,
+    DishaIndicatorView,
+    CcsRecordMonthlyView
 )
 from custom.icds_reports.models.util import (
     UcrTableNameMapping,

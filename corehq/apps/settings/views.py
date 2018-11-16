@@ -11,7 +11,7 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
 )
 from corehq.apps.settings.utils import get_temp_file
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.forms import AddPhoneNumberForm
 from django.conf import settings
 from django.contrib import messages
@@ -27,7 +27,7 @@ from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_laz
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required, two_factor_exempt)
 from django.urls import reverse
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.util.quickcache import quickcache
 from memoized import memoized
@@ -113,7 +113,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     api_key = None
     template_name = 'settings/edit_my_account.html'
 
-    @use_select2
+    @use_select2_v4
     @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):

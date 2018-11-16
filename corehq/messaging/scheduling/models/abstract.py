@@ -4,6 +4,7 @@ import jsonfield
 import uuid
 from memoized import memoized
 from django.db import models, transaction
+from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
 from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
 from corehq.apps.sms.models import (
@@ -134,12 +135,12 @@ class Schedule(models.Model):
     @property
     @memoized
     def memoized_language_set(self):
-        from corehq.messaging.scheduling.models import SMSContent, EmailContent
+        from corehq.messaging.scheduling.models import SMSContent, EmailContent, SMSCallbackContent
 
         result = set()
         for event in self.memoized_events:
             content = event.memoized_content
-            if isinstance(content, SMSContent):
+            if isinstance(content, (SMSContent, SMSCallbackContent)):
                 result |= set(content.message)
             elif isinstance(content, EmailContent):
                 result |= set(content.subject)
@@ -161,8 +162,39 @@ class Schedule(models.Model):
 
         return False
 
+    @cached_property
+    def memoized_uses_ivr_survey(self):
+        """
+        Prefixed with memoized_ to make it obvious that this property is
+        memoized and also relies on self.memoized_events.
+        """
+        from corehq.messaging.scheduling.models import IVRSurveyContent
+
+        for event in self.memoized_events:
+            if isinstance(event.content, IVRSurveyContent):
+                return True
+
+        return False
+
+    @cached_property
+    def memoized_uses_sms_callback(self):
+        """
+        Prefixed with memoized_ to make it obvious that this property is
+        memoized and also relies on self.memoized_events.
+        """
+        from corehq.messaging.scheduling.models import SMSCallbackContent
+
+        for event in self.memoized_events:
+            if isinstance(event.content, SMSCallbackContent):
+                return True
+
+        return False
+
     @property
     def references_parent_case(self):
+        if self.stop_date_case_property_name and property_references_parent(self.stop_date_case_property_name):
+            return True
+
         return False
 
     def delete_related_events(self):
@@ -183,6 +215,7 @@ class ContentForeignKeyMixin(models.Model):
     sms_survey_content = models.ForeignKey('scheduling.SMSSurveyContent', null=True, on_delete=models.CASCADE)
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
+    sms_callback_content = models.ForeignKey('scheduling.SMSCallbackContent', null=True, on_delete=models.CASCADE)
 
     class Meta(object):
         abstract = True
@@ -199,6 +232,8 @@ class ContentForeignKeyMixin(models.Model):
             return self.ivr_survey_content
         elif self.custom_content_id:
             return self.custom_content
+        elif self.sms_callback_content_id:
+            return self.sms_callback_content
 
         raise NoAvailableContent()
 
@@ -214,13 +249,14 @@ class ContentForeignKeyMixin(models.Model):
     @content.setter
     def content(self, value):
         from corehq.messaging.scheduling.models import (SMSContent, EmailContent,
-            SMSSurveyContent, IVRSurveyContent, CustomContent)
+            SMSSurveyContent, IVRSurveyContent, CustomContent, SMSCallbackContent)
 
         self.sms_content = None
         self.email_content = None
         self.sms_survey_content = None
         self.ivr_survey_content = None
         self.custom_content = None
+        self.sms_callback_content = None
 
         if isinstance(value, SMSContent):
             self.sms_content = value
@@ -232,6 +268,8 @@ class ContentForeignKeyMixin(models.Model):
             self.ivr_survey_content = value
         elif isinstance(value, CustomContent):
             self.custom_content = value
+        elif isinstance(value, SMSCallbackContent):
+            self.sms_callback_content = value
         else:
             raise UnknownContentType()
 
@@ -245,6 +283,16 @@ class Event(ContentForeignKeyMixin):
     class Meta(object):
         abstract = True
 
+    def create_copy(self):
+        """
+        The point of this method is to create a copy of this object with no
+        primary keys set or references to other objects. It's used in the
+        process of copying schedules to a different project in the copy
+        conditional alert workflow, so there should also not be any
+        unresolved project-specific references in the returned copy.
+        """
+        raise NotImplementedError()
+
 
 class Content(models.Model):
     # If this this content is being invoked in the context of a case,
@@ -255,15 +303,32 @@ class Content(models.Model):
     # (i.e., this was scheduled content), this is the ScheduleInstance.
     schedule_instance = None
 
+    # Set to True if any necessary critical section locks have
+    # already been acquired. This is currently only used for SMSSurveyContent
+    # under certain circumstances.
+    critical_section_already_acquired = False
+
     class Meta(object):
         abstract = True
 
-    def set_context(self, case=None, schedule_instance=None):
+    def create_copy(self):
+        """
+        The point of this method is to create a copy of this object with no
+        primary keys set or references to other objects. It's used in the
+        process of copying schedules to a different project in the copy
+        conditional alert workflow, so there should also not be any
+        unresolved project-specific references in the returned copy.
+        """
+        raise NotImplementedError()
+
+    def set_context(self, case=None, schedule_instance=None, critical_section_already_acquired=False):
         if case:
             self.case = case
 
         if schedule_instance:
             self.schedule_instance = schedule_instance
+
+        self.critical_section_already_acquired = critical_section_already_acquired
 
     @staticmethod
     def get_workflow(logged_event):
@@ -357,7 +422,7 @@ class Content(models.Model):
 
         return result
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
         representing the contact who should receive the content.
@@ -388,7 +453,8 @@ class Content(models.Model):
             send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
                 logged_subevent=logged_subevent)
         else:
-            send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata)
+            send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata,
+                logged_subevent=logged_subevent)
 
 
 class Broadcast(models.Model):

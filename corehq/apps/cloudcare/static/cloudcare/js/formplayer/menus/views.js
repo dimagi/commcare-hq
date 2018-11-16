@@ -2,7 +2,7 @@
 
 FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
     Views.MenuView = Marionette.ItemView.extend({
-        tagName: function() {
+        tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
                 return 'div';
             } else {
@@ -331,10 +331,10 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
-                columnSortable: function(index) {
+                columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
-                columnVisible: function(index) {
+                columnVisible: function (index) {
                     return !(this.widthHints && this.widthHints[index] === 0);
                 },
             };
@@ -469,8 +469,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
     Views.DetailTabView = Marionette.ItemView.extend({
         tagName: "li",
-        className: function() {
-            return this.options.model.get('active') ? 'active': '';
+        className: function () {
+            return this.options.model.get('active') ? 'active' : '';
         },
         template: "#detail-view-tab-item-template",
         events: {

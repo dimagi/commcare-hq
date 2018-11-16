@@ -1,6 +1,6 @@
 /* globals hqDefine moment */
 hqDefine('app_manager/js/forms/app_notifications', function () {
-    var getMessage = function(redisMessage, userId) {
+    var getMessage = function (redisMessage, userId) {
         var msgObj = JSON.parse(redisMessage);
         // only show notifications from other users
         if (msgObj.user_id !== userId) {
@@ -9,11 +9,11 @@ hqDefine('app_manager/js/forms/app_notifications', function () {
         return "";
     };
 
-    var alertUser = function(userId, callback, context) {
+    var alertUser = function (userId, callback, context) {
         if (!callback) {
             callback = hqImport("hqwebapp/js/alert_user").alert_user;
         }
-        return function(redisMessage) {
+        return function (redisMessage) {
             var message = getMessage(redisMessage, userId);
             if (message) {
                 callback.apply(context, [message, 'info', true]);

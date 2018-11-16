@@ -1,5 +1,5 @@
 /* global Stripe */
-hqDefine("domain/js/confirm_billing_info", function() {
+hqDefine("domain/js/confirm_billing_info", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         stripeCardManager = hqImport("accounting/js/stripe_card_manager");
 
@@ -12,12 +12,16 @@ hqDefine("domain/js/confirm_billing_info", function() {
         $navigateForm.submit();
     });
 
+    document.getElementById('btn-subscribe-to-plan').onclick = function () {
+        document.getElementById('downgrade-email-note').value = initialPageData.get("downgrade_email_note");
+    };
+
     Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
-    var cardManager = new stripeCardManager.stripeCardManager({
+    var cardManager = stripeCardManager.stripeCardManager({
         cards: initialPageData.get("cards"),
         url: initialPageData.reverse("cards_view"),
     });
-    $(function() {
+    $(function () {
         $("#card-manager").koApplyBindings(cardManager);
     });
 });

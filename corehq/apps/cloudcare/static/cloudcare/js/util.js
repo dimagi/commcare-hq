@@ -10,7 +10,7 @@ hqDefine('cloudcare/js/util', function () {
         showSpinner: false,
     });
 
-    var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
+    var getFormUrl = function (urlRoot, appId, moduleId, formId, instanceId) {
         // TODO: make this cleaner
         var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
         if (instanceId) {
@@ -98,7 +98,7 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
-    var clearUserDataComplete = function(isError) {
+    var clearUserDataComplete = function (isError) {
         hideLoading();
         if (isError) {
             showError(

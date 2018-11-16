@@ -1,5 +1,5 @@
-describe('Formplayer utils', function() {
-    it('Should determine if two answers are equal', function() {
+describe('Formplayer utils', function () {
+    it('Should determine if two answers are equal', function () {
         var result;
 
         result = Formplayer.Utils.answersEqual('ben', 'bob');

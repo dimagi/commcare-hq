@@ -45,7 +45,7 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
         doc_filter_fn=report_case_filter,
     )
     kafka_change_feed = KafkaChangeFeed(
-        topics=topics.CASE_TOPICS, group_id='report-cases-to-es', num_processes=num_processes,
+        topics=topics.CASE_TOPICS, client_id='report-cases-to-es', num_processes=num_processes,
         process_num=process_num
     )
     return ConstructedPillow(

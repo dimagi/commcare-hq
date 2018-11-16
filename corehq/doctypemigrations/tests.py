@@ -36,7 +36,7 @@ class TestDocTypeMigrations(TestCase):
             {'doc_type': 'CommCareUser', 'username': 'fatima@example.com',
              '_attachments': {
                  "greeting.txt": {
-                     "content_type": "text/plain", "data": base64.b64encode("hi"),
+                     "content_type": "text/plain", "data": base64.b64encode(b"hi").decode('utf-8'),
                      "digest": "md5-QTVOnBwGnrw6Tx9YG1ZRyA==", "revpos": 1,
                  }
              }},

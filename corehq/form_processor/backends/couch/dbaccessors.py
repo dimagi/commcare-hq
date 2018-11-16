@@ -92,7 +92,7 @@ class FormAccessorCouch(AbstractFormAccessor):
                     )
         else:
             # xforms are expected to at least have the XML attachment
-            raise ResourceNotFound(msg="XForm attachment missing: {}".format(form_id))
+            raise ResourceNotFound("XForm attachment missing: {}".format(form_id))
         return doc
 
     @staticmethod
@@ -195,6 +195,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain(domain, type=None):
         return get_case_ids_in_domain(domain, type=type)
+
+    @staticmethod
+    def iter_case_ids_by_domain_and_type(domain, type_=None):
+        return get_case_ids_in_domain(domain, type=type_)
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):

@@ -71,11 +71,11 @@ class DatabaseShardInfo(object):
         return '\n'.join(formatted_rows)
 
 
-def get_database_shard_info(database):
+def get_database_shard_info_for_testing(database):
     sharded_models = list(get_all_sharded_models())
     shard_info = DatabaseShardInfo(database)
     for model in sharded_models:
-        data = get_count_of_models_by_shard(database, model)
+        data = get_count_of_models_by_shard_for_testing(database, model)
         shard_info.add_model_data(model, data)
     return shard_info
 
@@ -92,22 +92,22 @@ def get_count_of_unmatched_models_by_shard(database, model):
     The list will be empty if no invalid data is found.
     """
     cursor = connections[database].cursor()
-    query = _get_unmatched_shard_count_query(model)
+    query = _get_unmatched_shard_count_query_for_testing(model)
     valid_shards = partition_config.get_shards_on_db(database)
     cursor.execute(query, [valid_shards])
     results = cursor.fetchall()
     return results
 
 
-def get_count_of_models_by_shard(database, model):
+def get_count_of_models_by_shard_for_testing(database, model):
     cursor = connections[database].cursor()
-    query = _get_counts_by_shard_query(model)
+    query = _get_counts_by_shard_query_for_testing(model)
     cursor.execute(query)
     results = cursor.fetchall()
     return results
 
 
-def _get_unmatched_shard_count_query(model):
+def _get_unmatched_shard_count_query_for_testing(model):
     # syntax of this query is a bit weird because of a couple django / postgres ARRAY oddities
     # https://stackoverflow.com/a/22008870/8207
     # https://stackoverflow.com/a/11730789/8207
@@ -117,11 +117,11 @@ def _get_unmatched_shard_count_query(model):
         ) as countsByShard
         where not shard_id = ANY(%s);
     """.format(
-        counts_by_shard_query=_get_counts_by_shard_query(model),
+        counts_by_shard_query=_get_counts_by_shard_query_for_testing(model),
     )
 
 
-def _get_counts_by_shard_query(model):
+def _get_counts_by_shard_query_for_testing(model):
     # have to cast to varchar because some tables have uuid types
     field_type = model._meta.get_field(model.partition_attr)
     if isinstance(field_type, UUIDField):

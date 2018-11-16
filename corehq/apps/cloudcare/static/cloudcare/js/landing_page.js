@@ -1,6 +1,6 @@
 /* globals FormplayerFrontend */
-hqDefine("cloudcare/js/landing_page", function() {
-    $(function() {
+hqDefine("cloudcare/js/landing_page", function () {
+    $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
         window.GMAPS_API_KEY = initialPageData("maps_api_key"); // maps api is loaded on-demand
         var options = {

@@ -10,7 +10,12 @@
  *      Required:
  *          saveUrl
  *          properties: An object, where keys are the property name and values may be either strings or objects.
- *              If strings, they are assumed to be the property values. If objects, they should have a 'value' key
+ *              If strings, they are assumed to be the property values. If objects, they may include the properties
+ *                  value: Required. A string. Space-separated values if this is a multi-select (see below)
+ *                  options: Optional. A list of objects, each with a 'text' and 'id' key. If provided, a select
+ *                      box with a free text option will be displayed instead of a text box.
+ *                  multiple: Optional. If true (and options is provided), a multi-select box with a free text
+ *                      option will be displayed instead of a text box.
  *              with the property value and may then have arbitrary other properties to be used for display (see
  *              displayProperties below).
  *      Optional:
@@ -29,7 +34,9 @@ hqDefine("reports/js/data_corrections", [
     "underscore",
     "hqwebapp/js/assert_properties",
     "analytix/js/kissmetrix",
-], function(
+    "hqwebapp/js/components.ko",     // pagination
+    "select2/dist/js/select2.full.min",
+], function (
     $,
     ko,
     _,
@@ -37,7 +44,7 @@ hqDefine("reports/js/data_corrections", [
     kissAnalytics
 ) {
     // Represents a single property/value pair, e.g., a form question and its response
-    var PropertyModel = function(options) {
+    var PropertyModel = function (options) {
         // Don't assert properties of options because PropertyModel allows for
         // arbitrary keys to be used as display properties. Do error if any of
         // these arbitrary keys conflict with existing PropertyModel members.
@@ -51,12 +58,48 @@ hqDefine("reports/js/data_corrections", [
         self.name = options.name;
         self.value = ko.observable(options.value || '');
         self.dirty = ko.observable(false);
+        self.options = options.options || [];
+        self.multiple = options.multiple === undefined ? false : options.multiple;
+
+        // Account for select questions where the value is not one of the given options
+        if (self.options.length) {
+            if (self.value()) {
+                _.each(self.value().split(' '), function (value) {
+                    if (!_.find(self.options, function (option) { return value === option.id; })) {
+                        self.options.unshift({id: value, text: value});
+                    }
+                });
+            }
+
+            // Single selects need to include a blank option for the allowClear and placeholder options to work
+            if (!self.multiple) {
+                self.options.unshift({id: '', text: ''});
+            }
+        }
+
+        // Update hidden value for multiselects. See data_corrections_modal.html for context.
+        self.updateSpaceSeparatedValue = function (model, e) {
+            var newValue = $(e.currentTarget).val(),
+                oldValue = self.value(),
+                dirty = self.dirty();
+
+            if (_.isArray(newValue)) {
+                oldValue = oldValue ? oldValue.split(" ") : [];
+                dirty = dirty || oldValue.length !== newValue.length ||
+                        oldValue.length !== _.intersection(oldValue, newValue).length;
+                newValue = newValue.join(" ");
+            } else {
+                dirty = dirty || oldValue !== newValue;
+            }
+            self.dirty(dirty);
+            self.value(newValue);
+        };
 
         return self;
     };
 
     // Controls the full modal UI
-    var DataCorrectionsModel = function(options) {
+    var DataCorrectionsModel = function (options) {
         assertProperties.assert(options, ['saveUrl', 'properties'],
             ['propertyNames', 'propertyNamesUrl', 'displayProperties', 'propertyPrefix', 'propertySuffix', 'analyticsDescriptor']);
         var self = {};
@@ -68,13 +111,13 @@ hqDefine("reports/js/data_corrections", [
         // Handle modal size: small, large or full-screen, with one, two, or three columns, respectively.
         self.itemsPerColumn = 12;
         self.columnsPerPage = ko.observable(1);
-        self.itemsPerPage = ko.computed(function() {
+        self.itemsPerPage = ko.computed(function () {
             return self.itemsPerColumn * self.columnsPerPage();
         });
         self.columnClass = ko.observable('');
         self.isFullScreenModal = ko.observable(false);
         self.isLargeModal = ko.observable(false);
-        self.propertyNames.subscribe(function(newValue) {
+        self.propertyNames.subscribe(function (newValue) {
             self.columnsPerPage(Math.min(3, Math.ceil(newValue.length / self.itemsPerColumn)));
             self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
             self.isLargeModal(self.columnsPerPage() === 2);
@@ -85,17 +128,17 @@ hqDefine("reports/js/data_corrections", [
         // Support for displaying different property attributes (e.g., name and id)
         self.displayProperties = _.isEmpty(options.displayProperties) ? [{ property: 'name' }] : options.displayProperties;
         self.displayProperty = ko.observable(_.first(self.displayProperties).property);
-        self.updateDisplayProperty = function(newValue) {
+        self.updateDisplayProperty = function (newValue) {
             self.displayProperty(newValue);
             self.initQuery();
             self.generateSearchableNames();
         };
-        self.breakWord = function(str) {
+        self.breakWord = function (str) {
             // Break words on slashes (as in question paths) or underscores (as in case properties and also questions)
             // Don't break on slashes that are present because they're in an HTML end tag
             return str.replace(/([^<]\s*[\/_])/g, "$1\u200B");     // eslint-disable-line no-useless-escape
         };
-        var innerTemplate = _.map(self.displayProperties, function(p) {
+        var innerTemplate = _.map(self.displayProperties, function (p) {
             return _.template("<span data-bind='html: $root.breakWord(<%= property %>), visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
         }).join("");
         self.propertyTemplate = {
@@ -108,7 +151,7 @@ hqDefine("reports/js/data_corrections", [
         // to simplify the knockout template.
         self.visibleItems = ko.observableArray([]);
         self.visibleColumns = ko.observableArray([]);
-        self.render = function() {
+        self.render = function () {
             var added = 0,
                 index = 0;
 
@@ -145,36 +188,17 @@ hqDefine("reports/js/data_corrections", [
             }
         };
 
-        // Pagination
-        self.currentPage = ko.observable();
-        self.totalPages = ko.observable();  // observable because it will change if there's a search query
-        self.incrementPage = function(increment) {
-            var newCurrentPage = self.currentPage() + increment;
-            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages()) {
-                return;
-            }
-            self.currentPage(newCurrentPage);
-        };
-
-        // Track an array of page numbers, e.g., [1, 2, 3], used by the pagination UI.
-        // Having it as an array makes knockout rendering simpler.
-        self.visiblePages = ko.observableArray([]);
-        self.totalPages.subscribe(function(newValue) {
-            self.visiblePages(_.map(_.range(newValue), function(p) { return p + 1; }));
-        });
-        self.currentPage.subscribe(self.render);
-
         // Search
         self.query = ko.observable();
-        self.matchesQuery = function(propertyName) {
+        self.matchesQuery = function (propertyName) {
             return !self.query() || propertyName.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
-        self.initQuery = function() {
+        self.initQuery = function () {
             self.query("");
         };
-        self.query.subscribe(function() {
+        self.query.subscribe(function () {
             self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length / self.itemsPerPage()) || 1);
+            self.totalFilteredItems(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length) || 1);
             self.render();
         });
 
@@ -182,14 +206,14 @@ hqDefine("reports/js/data_corrections", [
         // search against, ordered the same way properties are displayed. Regenerate this list each time
         // the current display property changes.
         self.searchableNames = [];
-        self.generateSearchableNames = function() {
+        self.generateSearchableNames = function () {
             if (self.displayProperty() === 'name') {
                 self.searchableNames = self.propertyNames();
             } else {
                 var displayPropertyObj = _.findWhere(self.displayProperties, { property: self.displayProperty() }),
                     search = displayPropertyObj.search || displayPropertyObj.property;
                 self.searchableNames = [];
-                _.each(self.propertyNames(), function(name) {
+                _.each(self.propertyNames(), function (name) {
                     if (self.properties[name]) {
                         self.searchableNames.push(self.properties[name][search]);
                     }
@@ -197,21 +221,29 @@ hqDefine("reports/js/data_corrections", [
             }
         };
 
+        // Pagination
+        self.currentPage = ko.observable();
+        self.totalFilteredItems = ko.observable();
+        self.totalItems = ko.computed(function () {  // how many items to display in pagination
+            return self.query() ? self.totalFilteredItems() : self.propertyNames().length;
+        });
+        self.currentPage.subscribe(self.render);
+
         // Saving
-        self.submitForm = function(model, e) {
+        self.submitForm = function (model, e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
             $.post({
                 url: options.saveUrl,
                 data: {
-                    properties: JSON.stringify(_.mapObject(self.properties, function(model) {
+                    properties: JSON.stringify(_.mapObject(self.properties, function (model) {
                         return model.value();
                     })),
                 },
-                success: function() {
+                success: function () {
                     window.location.reload();
                 },
-                error: function() {
+                error: function () {
                     $button.enableButton();
                     self.showRetry(true);
                 },
@@ -221,12 +253,12 @@ hqDefine("reports/js/data_corrections", [
 
         // Analytics
         self.analyticsDescriptor = options.analyticsDescriptor;
-        self.trackOpen = function() {
+        self.trackOpen = function () {
             if (self.analyticsDescriptor) {
                 kissAnalytics.track.event("Clicked " + self.analyticsDescriptor + " Button");
             }
         };
-        self.trackSave = function() {
+        self.trackSave = function () {
             if (self.analyticsDescriptor) {
                 kissAnalytics.track.event("Clicked Save on " + self.analyticsDescriptor + " Modal");
             }
@@ -234,21 +266,21 @@ hqDefine("reports/js/data_corrections", [
 
         // Control visibility around loading (spinner is shown if names are fetched via ajax) and error handling.
         self.showSpinner = ko.observable(true);
-        self.showPagination = ko.computed(function() {
+        self.showPagination = ko.computed(function () {
             return !self.showSpinner() && self.propertyNames().length > self.itemsPerPage();
         });
         self.showError = ko.observable(false);
         self.showRetry = ko.observable(false);
-        self.disallowSave = ko.computed(function() {
+        self.disallowSave = ko.computed(function () {
             return self.showSpinner() || self.showError();
         });
-        self.showNoData = ko.computed(function() {
+        self.showNoData = ko.computed(function () {
             return !self.showError() && self.visibleItems().length === 0;
         });
 
         // Setup to do once property names exist
-        self.init = function() {
-            self.properties = _.extend({}, _.mapObject(options.properties, function(data, name) {
+        self.init = function () {
+            self.properties = _.extend({}, _.mapObject(options.properties, function (data, name) {
                 if (typeof(data) === "string") {
                     data = { value: data };
                 }
@@ -267,8 +299,8 @@ hqDefine("reports/js/data_corrections", [
         };
 
         // Initialization: fetch property names if needed
-        var _loadPropertyNames = function(names) {
-            _.each(names, function(name) {
+        var _loadPropertyNames = function (names) {
+            _.each(names, function (name) {
                 self.propertyNames.push(name);
             });
             self.showSpinner(false);
@@ -278,7 +310,7 @@ hqDefine("reports/js/data_corrections", [
             $.get({
                 url: options.propertyNamesUrl,
                 success: _loadPropertyNames,
-                error: function() {
+                error: function () {
                     self.showSpinner(false);
                     self.showError(true);
                 },
@@ -290,14 +322,36 @@ hqDefine("reports/js/data_corrections", [
         return self;
     };
 
-    var init = function($trigger, $modal, options) {
+    var init = function ($trigger, $modal, options) {
         var model = undefined;
         if ($trigger.length && $modal.length) {
-            $trigger.click(function() {
-                $modal.modal();
-            });
-            model = new DataCorrectionsModel(options);
+            model = DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
+            $trigger.click(function () {
+                $modal.modal();
+
+                $modal.find(".modal-body select").each(function () {
+                    var $el = $(this),
+                        multiple = !!$el.attr("multiple"),
+                        select2Options = {
+                            width: '100%',
+                            tags: true,
+                        };
+                    if (!multiple) {
+                        // Allow clearing in a single select, including adding a blank option
+                        // so placeholder and allowClear work properly
+                        select2Options = _.extend(select2Options, {
+                            allowClear: true,
+                            placeholder: gettext('Select a value'),
+                        });
+                    }
+                    $el.select2(select2Options);
+                    if (multiple) {
+                        var $input = $el.siblings("input");
+                        $el.val($input.val().split(" ")).trigger("change");
+                    }
+                });
+            });
         }
         return model;
     };

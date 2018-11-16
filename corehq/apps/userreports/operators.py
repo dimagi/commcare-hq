@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import wraps
 
+import six
+
 from corehq.apps.userreports.exceptions import BadSpecError
 
 
@@ -30,10 +32,18 @@ def less_than_equal(input, reference):
 
 
 def greater_than(input, reference):
+    if isinstance(input, six.string_types) and isinstance(reference, six.integer_types):
+        return True
+    elif isinstance(input, six.integer_types) and isinstance(reference, six.string_types):
+        return False
     return input > reference
 
 
 def greater_than_equal(input, reference):
+    if isinstance(input, six.string_types) and isinstance(reference, six.integer_types):
+        return True
+    elif isinstance(input, six.integer_types) and isinstance(reference, six.string_types):
+        return False
     return input >= reference
 
 

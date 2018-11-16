@@ -148,7 +148,6 @@ class ReportDataTest(TestCase):
     def _add_some_rows(self, count):
         rows = [ReportDataTestRow(uuid.uuid4().hex, i, i) for i in range(count)]
         self._add_rows(rows)
-        self.adapter.refresh_table()
         return rows
 
     def _add_rows(self, rows):

@@ -6,12 +6,7 @@
     {% trans "SMS Languages" %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
-    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
-    <script src="{% static 'sms/js/languages.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'sms/js/sms_language_main' %}
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>

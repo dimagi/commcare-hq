@@ -79,6 +79,7 @@
     - hq.secure_submissions
     - hq.translation_strategy
     - hq.mobile_ucr_restore_version
+    - hq.location_fixture_restore
 
 - title: 'Disabled'
   id: app-settings-disabled

@@ -4,10 +4,7 @@
 {% load timezone_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "sms/js/compose.js" %}"></script>
-{% endblock %}
-
+{% requirejs_main "sms/js/compose" %}
 
 {% block page_content %}
     {% initial_page_data 'sms_contacts' sms_contacts %}

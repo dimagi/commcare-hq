@@ -19,10 +19,8 @@
             placeholder="{{ select.placeholder }}"
             name="{{ slug }}" />
     {% endif %}
-    {% if search_help_inline %}
-        <span class="help-block">
-            <i class="fa fa-info-circle"></i>
-            {{ search_help_inline }}
-        </span>
-    {% endif %}
+    <span class="help-block">
+        <i class="fa fa-info-circle"></i>
+        {{ filter_help_inline }} {{ search_help_inline }}
+    </span>
 {% endblock %}

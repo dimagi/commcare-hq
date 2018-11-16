@@ -22,14 +22,14 @@ hqDefine('hqwebapp/js/components/inline_edit', [
     'knockout',
     'underscore',
     'DOMPurify/dist/purify.min',
-], function(
+], function (
     $,
     ko,
     _,
     DOMPurify
 ) {
     return {
-        viewModel: function(params) {
+        viewModel: function (params) {
             var self = this;
 
             // Attributes passed on to the input
@@ -68,18 +68,18 @@ hqDefine('hqwebapp/js/components/inline_edit', [
             self.postSave = params.postSave;
 
             // On edit, set editing mode, which controls visibility of inner components
-            self.edit = function() {
+            self.edit = function () {
                 self.isEditing(true);
             };
 
-            self.beforeUnload = function() {
+            self.beforeUnload = function () {
                 return gettext("You have unsaved changes.");
             };
 
             // Save to server
             // On button press, flip back to read-only mode and show a spinner.
             // On server success, just hide the spinner. On error, display error and go back to edit mode.
-            self.save = function() {
+            self.save = function () {
                 self.isEditing(false);
 
                 if (self.url) {
@@ -125,13 +125,13 @@ hqDefine('hqwebapp/js/components/inline_edit', [
             };
 
             // Revert to last value and switch modes
-            self.cancel = function() {
+            self.cancel = function () {
                 self.readOnlyValue = self.serverValue;
                 self.value(self.readOnlyValue);
                 self.isEditing(false);
                 self.hasError(false);
             };
         },
-        template: '<div data-bind="template: { name: \'ko-inline-edit-template\' }"></div>'
+        template: '<div data-bind="template: { name: \'ko-inline-edit-template\' }"></div>',
     };
 });

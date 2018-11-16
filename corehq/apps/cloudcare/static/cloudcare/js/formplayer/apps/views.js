@@ -30,11 +30,11 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
             e.preventDefault();
             FormplayerFrontend.trigger("sync");
         },
-        onClickRestoreAs: function(e) {
+        onClickRestoreAs: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("restore_as:list", this.appId);
         },
-        onClickSettings: function(e) {
+        onClickSettings: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("settings:list");
         },
@@ -71,10 +71,10 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
         onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
 
-        initialize: function(options) {
+        initialize: function (options) {
             this.appId = options.appId;
         },
-        templateHelpers: function() {
+        templateHelpers: function () {
             var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
                 appName;
             appName = currentApp.get('name');
@@ -86,7 +86,7 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
                 appName: appName,
             };
         },
-        startApp: function(e) {
+        startApp: function (e) {
             e.preventDefault();
             hqImport('analytix/js/kissmetrix').track.event("[app-preview] User clicked Start App");
             hqImport('analytix/js/google').track.event("App Preview", "User clicked Start App");
@@ -106,17 +106,17 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
         onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
 
-        initialize: function(options) {
+        initialize: function (options) {
             this.appId = options.appId;
         },
-        templateHelpers: function() {
+        templateHelpers: function () {
             var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
                 appName = currentApp.get('name');
             return {
                 appName: appName,
             };
         },
-        startApp: function() {
+        startApp: function () {
             FormplayerFrontend.trigger("app:select", this.appId);
         },
     });

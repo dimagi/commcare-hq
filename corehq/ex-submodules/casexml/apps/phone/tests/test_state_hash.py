@@ -14,9 +14,8 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.tests.utils import use_sql_backend
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class StateHashTest(TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         super(StateHashTest, cls).setUpClass()

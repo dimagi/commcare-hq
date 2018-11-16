@@ -52,3 +52,7 @@ secondary_tables:
         aggregation_type: sum
         config_params:
           referenced_column: count  # in ucr "count" is an auto-created column that has a 1 in every row
+      - column_id: any_fu_forms_in_month
+        aggregation_type: nonzero_sum
+        config_params:
+          referenced_column: count  # in ucr "count" is an auto-created column that has a 1 in every row

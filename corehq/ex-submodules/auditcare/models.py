@@ -155,7 +155,7 @@ class ModelActionAudit(AuditEvent):
             #if it's an existing version, then save it
             instance_copy.pop('_rev')
             json_string = json.dumps(instance_copy)
-        return hashlib.sha1(json_string).hexdigest()
+        return hashlib.sha1(json_string.encode('utf-8') if six.PY3 else json_string).hexdigest()
 
     def compute_changes(self, save=False):
         """

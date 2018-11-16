@@ -1,12 +1,12 @@
 /* globals hqImport */
-hqDefine("app_manager/js/add_ons", function() {
+hqDefine("app_manager/js/add_ons", function () {
     var sectionChanger = hqImport("app_manager/js/section_changer");
 
     function EditAddOns(addOns, layout, saveUrl) {
         var self = this;
 
         self.addOns = addOns;
-        self.sections = _.map(layout, function(s) {
+        self.sections = _.map(layout, function (s) {
             return _.extend(s, {
                 collapse: sectionChanger.shouldCollapse("add-ons", s.slug, s.collapse),
             });
@@ -15,7 +15,7 @@ hqDefine("app_manager/js/add_ons", function() {
             unsavedMessage: gettext("You have unsaved changes."),
             save: function () {
                 // Send server map of slug => enabled
-                var data = _.mapObject(self.addOns, function(a) { return a ? 'on' : ''; });
+                var data = _.mapObject(self.addOns, function (a) { return a ? 'on' : ''; });
                 self.saveButton.ajax({
                     url: saveUrl,
                     type: 'post',
@@ -26,13 +26,13 @@ hqDefine("app_manager/js/add_ons", function() {
                 });
             },
         });
-        self.update = function(addOn, e) {
+        self.update = function (addOn, e) {
             self.addOns[addOn.slug] = e.currentTarget.checked;
             self.saveButton.fire('change');
         };
     }
 
-    $(function() {
+    $(function () {
         var $addOns = $("#add-ons");
         if ($addOns.length) {
             $addOns.koApplyBindings(new EditAddOns(

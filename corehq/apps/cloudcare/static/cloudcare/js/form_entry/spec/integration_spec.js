@@ -1,10 +1,10 @@
-describe('Integration', function() {
+describe('Integration', function () {
     var questionJSON,
         formJSON,
         repeatJSON,
         repeatNestJSON;
 
-    beforeEach(function() {
+    beforeEach(function () {
         questionJSONMulti = {
             "caption_audio": null,
             "caption": "Do you want to modify the visit number?",
@@ -51,13 +51,13 @@ describe('Integration', function() {
         this.clock = sinon.useFakeTimers();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         $.unsubscribe();
         this.clock.restore();
     });
 
 
-    it('Should reconcile questions answered at the same time for strings', function() {
+    it('Should reconcile questions answered at the same time for strings', function () {
         var self = this;
         var questionJSONString2 = {};
         $.extend(questionJSONString2, questionJSONString);
@@ -109,7 +109,7 @@ describe('Integration', function() {
         assert.equal(stringQ2.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
     });
 
-    it('Should reconcile questions answered at the same time for multi', function() {
+    it('Should reconcile questions answered at the same time for multi', function () {
         var form = new Form(_.clone(formJSON));
         var multiQ = form.children()[0];
         var stringQ = form.children()[1];
@@ -151,7 +151,7 @@ describe('Integration', function() {
         assert.equal(multiQ.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
     });
 
-    it('Should properly reconcile Geo', function() {
+    it('Should properly reconcile Geo', function () {
 
         var json1 = {
             "session_id": "dd7a29281cdb46eeb593e7f1b2b6830a",

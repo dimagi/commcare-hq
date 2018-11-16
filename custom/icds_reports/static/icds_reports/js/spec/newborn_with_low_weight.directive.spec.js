@@ -166,9 +166,9 @@ describe('Newborn Low Weight Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Of all the children born in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
+            'Of all the children born and weighed in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
             '\n' +
-            'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. '
+            'Newborns with Low Birth Weight are closely associated with fetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. '
         );
     });
 

@@ -69,8 +69,8 @@ hqDefine('app_manager/js/app_manager_utils', function () {
         }
     };
 
-    var handleAjaxAppChange = function(callback) {
-        $(document).ajaxComplete(function(e, xhr, options) {
+    var handleAjaxAppChange = function (callback) {
+        $(document).ajaxComplete(function (e, xhr, options) {
             var match = options.url.match(/\/apps\/(.*)/);
             if (match) {
                 var suffix = match[1];  // first captured group

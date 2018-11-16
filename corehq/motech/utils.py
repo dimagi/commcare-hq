@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 import json
 from base64 import b64decode, b64encode
 
@@ -37,7 +37,7 @@ def b64_aes_encrypt(message):
 
     >>> settings.SECRET_KEY = 'xyzzy'
     >>> encrypted = b64_aes_encrypt('Around you is a forest.')
-    >>> encrypted == 'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
+    >>> encrypted == b'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
     True
 
     """
@@ -59,7 +59,7 @@ def b64_aes_decrypt(message):
 
     >>> settings.SECRET_KEY = 'xyzzy'
     >>> decrypted = b64_aes_decrypt(b'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
-    >>> decrypted == 'Around you is a forest.'
+    >>> decrypted == b'Around you is a forest.'
     True
 
     """

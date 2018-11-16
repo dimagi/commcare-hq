@@ -14,10 +14,10 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
         };
         this.edit = true;
         this.show_delete = show_del_button;
-        this.on('change', function() {
+        this.on('change', function () {
             this.val(this.ui.find(".enum-key").val(), this.ui.find(".enum-value").val());
         });
-        this.on('remove', function() {
+        this.on('remove', function () {
             this.ui.remove();
         });
 
@@ -27,16 +27,16 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
         key_input.change(function () {
             that.fire('change');
         });
-        val_input.change(function() {
+        val_input.change(function () {
             that.fire('change');
         });
         this.$edit_view.append(key_input);
         this.$edit_view.append(' <i class="fa fa-arrow-right"></i> ');
         this.$edit_view.append(val_input);
-        if(this.show_delete) {
+        if (this.show_delete) {
             var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
             $deleteButton.append('<i class="fa fa-remove"></i> ' + django.gettext('Delete'));
-            $deleteButton.click(function() {
+            $deleteButton.click(function () {
                 that.fire('remove');
                 return false;
             });
@@ -48,7 +48,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
         this.setEdit(this.edit);
     };
     InputMap.prototype = {
-        val: function(map_key, map_val, translated_map_val) {
+        val: function (map_key, map_val, translated_map_val) {
             if (map_key === undefined) {
                 return this.value;
             } else {
@@ -72,17 +72,17 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
                     });
 
                 }
-                if(map_key) {
+                if (map_key) {
                     this.$noedit_view.html('<strong>' + $('<div>').text(map_key).html() + '</strong> &rarr; ' + (
                         map_val ? $('<div>').text(map_val).html() : '<i class="fa fa-remove"></i>'
                     ));
-                }else{
+                } else {
                     this.$noedit_view.text("");
                 }
                 return this;
             }
         },
-        setEdit: function(edit) {
+        setEdit: function (edit) {
             this.edit = edit;
             this.$edit_view.detach();
             this.$noedit_view.detach();
@@ -95,7 +95,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
         },
     };
 
-    module.new = function(show_del_button) {
+    module.new = function (show_del_button) {
         return new InputMap(show_del_button);
     };
 

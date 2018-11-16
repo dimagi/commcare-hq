@@ -17,11 +17,11 @@ hqDefine("hqwebapp/js/alert_user", [
     "knockout",
     "hqwebapp/js/hq.helpers",
 ],
-function(
+function (
     $,
     ko
 ) {
-    var message_alert = function(message, tags) {
+    var message_alert = function (message, tags) {
         var alert_obj = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
@@ -35,7 +35,7 @@ function(
     };
     var message_alerts = ko.observableArray();
 
-    var alert_user = function(message, emphasis, append) {
+    var alert_user = function (message, emphasis, append) {
         var tags = "alert-" + emphasis;
         if (!append || message_alerts().length === 0) {
             message_alerts.push(message_alert(message, tags));
@@ -48,9 +48,9 @@ function(
         }
     };
 
-    $(function() {
+    $(function () {
         // remove closed alerts from backend model
-        $(document).on('close.bs.alert','.message-alert', function() {
+        $(document).on('close.bs.alert','.message-alert', function () {
             message_alerts.remove(ko.dataFor(this));
         });
 

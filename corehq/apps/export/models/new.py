@@ -12,30 +12,36 @@ from collections import defaultdict, OrderedDict, namedtuple
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
+from django.core.exceptions import ValidationError
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
-from django.urls import reverse
 from django.db import models
+from django.db.models import Sum
 from django.http import Http404
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
-from corehq.blobs import get_blob_db
-from corehq.blobs.atomic import AtomicBlobs
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.util import random_url_id
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.global_request import get_request_domain
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
 from memoized import memoized
-from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
+from couchdbkit import (
+    SchemaListProperty,
+    SchemaProperty,
+    BooleanProperty,
+    DictProperty,
+)
 
 from corehq import feature_previews
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
@@ -53,13 +59,12 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.web import get_url_base
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
@@ -106,6 +111,7 @@ from corehq.apps.export.utils import (
 import six
 from six.moves import range
 from six.moves import map
+from six.moves import filter
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -633,7 +639,7 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
-    user_types = ListProperty(IntegerProperty, default=[HQUserType.REGISTERED])
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE])
 
 
 class ExportInstance(BlobMixin, Document):
@@ -670,11 +676,14 @@ class ExportInstance(BlobMixin, Document):
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
+    last_build_duration = IntegerProperty()
 
     description = StringProperty(default='')
 
     sharing = StringProperty(default=SharingOption.EDIT_AND_EXPORT, choices=SharingOption.CHOICES)
     owner_id = StringProperty(default=None)
+
+    _blobdb_type_code = CODES.data_export
 
     class Meta(object):
         app_label = 'export'
@@ -1421,9 +1430,10 @@ class ExportDataSchema(Document):
         app_label = 'export'
 
     def get_number_of_apps_to_process(self):
+        app_ids_for_domain = self._get_current_app_ids_for_domain(self.domain, self.app_id)
         return len(self._get_app_build_ids_to_process(
             self.domain,
-            self.app_id,
+            app_ids_for_domain,
             self.last_app_versions,
         ))
 
@@ -1453,18 +1463,19 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
+        app_ids_for_domain = cls._get_current_app_ids_for_domain(domain, app_id)
         app_build_ids = []
         if not only_process_current_builds:
             app_build_ids = cls._get_app_build_ids_to_process(
                 domain,
-                app_id,
+                app_ids_for_domain,
                 current_schema.last_app_versions,
             )
-        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
+        app_build_ids.extend(app_ids_for_domain)
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
-            if doc_type not in ('Application', 'LinkedApplication'):
+            if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
                 continue
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
@@ -1664,12 +1675,15 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):
+        """Get all app IDs of 'current' apps that should be included in this schema"""
         if not app_id:
             return []
         return [app_id]
 
     @staticmethod
-    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
+    def _get_app_build_ids_to_process(domain, app_ids, last_app_versions):
+        """Get all built apps that should be included in this schema"""
+        app_id = app_ids[0] if app_ids else None
         return get_built_app_ids_with_submissions_for_app_id(
             domain,
             app_id,
@@ -1865,9 +1879,18 @@ class FormExportDataSchema(ExportDataSchema):
         schema = cls()
         question_keyfn = lambda q: q['repeat']
 
-        question_groups = [(x, list(y)) for x, y in groupby(
-            sorted(questions, key=question_keyfn), question_keyfn
-        )]
+        question_groups = [
+            (None, [q for q in questions if question_keyfn(q) is None])
+        ] + [
+            (x, list(y)) for x, y in groupby(
+                sorted(
+                    (q for q in questions if question_keyfn(q) is not None),
+                    key=question_keyfn,
+                ),
+                question_keyfn
+            )
+        ]
+
         if None not in [x[0] for x in question_groups]:
             # If there aren't any questions in the main table, a group for
             # it anyways.
@@ -1965,9 +1988,10 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_app_ids_in_domain(domain)
 
     @staticmethod
-    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
+    def _get_app_build_ids_to_process(domain, app_ids, last_app_versions):
         return get_built_app_ids_with_submissions_for_app_ids_and_versions(
             domain,
+            app_ids,
             last_app_versions
         )
 
@@ -1977,12 +2001,14 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, case_type):
-        case_property_mapping = get_case_properties(
-            app,
-            [case_type],
+        builder = ParentCasePropertyBuilder(
+            app.domain,
+            [app],
             include_parent_properties=False
         )
-        parent_types = ParentCasePropertyBuilder(app).get_case_relationships_for_case_type(case_type)
+        case_property_mapping = builder.get_case_property_map([case_type])
+
+        parent_types = builder.get_case_relationships_for_case_type(case_type)
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
@@ -2488,10 +2514,10 @@ class StockFormExportColumn(ExportColumn):
         new_doc = None
         if isinstance(value, list):
             try:
-                new_doc = filter(
+                new_doc = list(filter(
                     lambda node: node.get('@type') == question_id,
                     value,
-                )[0]
+                ))[0]
             except IndexError:
                 new_doc = None
         else:
@@ -2596,68 +2622,81 @@ class ExportMigrationMeta(Document):
         app_label = 'export'
 
 
-class DailySavedExportNotification(models.Model):
-    user_id = models.CharField(max_length=255, db_index=True)
-    domain = models.CharField(max_length=255, db_index=True)
+def _meta_property(name):
+    def fget(self):
+        return getattr(self._meta, name)
+    return property(fget)
+
+
+class DataFile(object):
+    """DataFile is a thin wrapper around BlobMeta"""
+    id = _meta_property("id")
+    domain = _meta_property("parent_id")
+    filename = _meta_property("name")
+    blob_id = _meta_property("key")
+    content_type = _meta_property("content_type")
+    content_length = _meta_property("content_length")
+    delete_after = _meta_property("expires_on")
+
+    def __init__(self, meta):
+        self._meta = meta
+
+    @property
+    def description(self):
+        return self._meta.properties["description"]
 
     @classmethod
-    def notified(cls, user_id, domain):
-        return bool(cls.objects.filter(user_id=user_id, domain=domain).count())
+    def get(cls, domain, pk):
+        return cls(cls.meta_query(domain).get(pk=pk))
 
-    @classmethod
-    def mark_notified(cls, user_id, domain):
-        cls.objects.get_or_create(user_id=user_id, domain=domain)
-
-    @classmethod
-    def user_added_before_feature_release(cls, user_added_on):
-        return user_added_on < datetime(2017, 1, 25)
-
-    @classmethod
-    def user_to_be_notified(cls, domain, user):
-        return (
-            cls.user_added_before_feature_release(user.created_on) and
-            not DailySavedExportNotification.notified(user.user_id, domain) and
-            (
-                domain_has_daily_saved_export_access(domain) or
-                domain_has_excel_dashboard_access(domain)
-            )
+    @staticmethod
+    def meta_query(domain):
+        Q = models.Q
+        db = get_db_alias_for_partitioned_doc(domain)
+        return BlobMeta.objects.using(db).filter(
+            Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
+            parent_id=domain,
+            type_code=CODES.data_file,
         )
 
+    @classmethod
+    def get_all(cls, domain):
+        return [cls(meta) for meta in cls.meta_query(domain).order_by("name")]
 
-class DataFile(models.Model):
-    domain = models.CharField(max_length=126, db_index=True)
-    filename = models.CharField(max_length=255)
-    description = models.CharField(max_length=255)
-    content_type = models.CharField(max_length=255)
-    blob_id = models.CharField(max_length=255)
-    content_length = models.IntegerField(null=True)
+    @classmethod
+    def get_total_size(cls, domain):
+        return cls.meta_query(domain).aggregate(total=Sum('content_length'))["total"]
 
-    class Meta(object):
-        app_label = 'export'
+    @classmethod
+    def save_blob(cls, file_obj, domain, filename, description, content_type, delete_after):
+        if delete_after is None:
+            raise ValidationError(
+                'delete_after can be None only for legacy files that were added before August 2018'
+            )
+        return cls(get_blob_db().put(
+            file_obj,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.data_file,
+            name=filename,
+            key=random_url_id(16),
+            content_type=content_type,
+            expires_on=delete_after,
+            properties={"description": description},
+        ))
 
     def get_blob(self):
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id)
+            blob = db.get(key=self._meta.key)
         except (KeyError, NotFound) as err:
             raise NotFound(str(err))
         return blob
 
-    def save_blob(self, file_obj):
-        with AtomicBlobs(get_blob_db()) as db:
-            info = db.put(file_obj, random_url_id(16))
-            self.blob_id = info.identifier
-            self.content_length = info.length
-            self.save()
+    def delete(self):
+        get_blob_db().delete(key=self._meta.key)
 
-    def _delete_blob(self):
-        db = get_blob_db()
-        db.delete(self.blob_id)
-        self.blob_id = ''
-
-    def delete(self, using=None, keep_parents=False):
-        self._delete_blob()
-        return super(DataFile, self).delete(using, keep_parents)
+    DoesNotExist = BlobMeta.DoesNotExist
 
 
 class EmailExportWhenDoneRequest(models.Model):

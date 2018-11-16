@@ -1,22 +1,22 @@
-hqDefine('app_manager/js/forms/advanced/case_properties', function() {
+hqDefine('app_manager/js/forms/advanced/case_properties', function () {
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
 
     var CasePropertyBase = {
         mapping: {
             include: ['key', 'path', 'required'],
         },
-        wrap: function(data, action) {
+        wrap: function (data, action) {
             var self = ko.mapping.fromJS(data, CaseProperty.mapping);
             self.action = action;
-            self.isBlank = ko.computed(function() {
+            self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
             });
-            self.caseType = ko.computed(function() {
+            self.caseType = ko.computed(function () {
                 return self.action.case_type();
             });
             self.updatedDescription = ko.observable('');
             self.description = ko.computed({
-                read: function() {
+                read: function () {
                     if (self.updatedDescription()) {
                         return self.updatedDescription();
                     }
@@ -26,7 +26,7 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function() {
                         return type[self.key()] || '';
                     }
                 },
-                write: function(value) {
+                write: function (value) {
                     self.updatedDescription(value);
                 },
             });
@@ -36,19 +36,19 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function() {
 
     var CaseProperty = {
         mapping: CasePropertyBase.mapping,
-        wrap: function(data, action) {
+        wrap: function (data, action) {
             var self = CasePropertyBase.wrap(data, action);
 
             // for compatibility with common templates
             self.case_transaction = {
                 // template: case-config:case-properties:question
                 allow: {
-                    repeats: function() {
+                    repeats: function () {
                         return action.allow.repeats();
                     },
                 },
                 // template: case-config:case-transaction:case-properties
-                suggestedSaveProperties: ko.computed(function() {
+                suggestedSaveProperties: ko.computed(function () {
                     return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
                         self.action.case_properties()
@@ -56,16 +56,16 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function() {
                 }),
             };
 
-            self.defaultKey = ko.computed(function() {
+            self.defaultKey = ko.computed(function () {
                 var path = self.path() || '';
                 var value = path.split('/');
                 value = value[value.length - 1];
                 return value;
             });
-            self.repeat_context = function() {
+            self.repeat_context = function () {
                 return action.caseConfig.get_repeat_context(self.path());
             };
-            self.validate = ko.computed(function() {
+            self.validate = ko.computed(function () {
                 if (self.path() || self.key()) {
                     if (action.propertyCounts()[self.key()] > 1) {
                         return gettext("Property updated by two questions");
@@ -85,29 +85,29 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function() {
     };
 
     var CasePreloadProperty = {
-        wrap: function(data, action) {
+        wrap: function (data, action) {
             var self = CasePropertyBase.wrap(data, action);
 
             // for compatibility with common templates
             self.case_transaction = {
                 // template: case-config:case-properties:question
                 allow: {
-                    repeats: function() {
+                    repeats: function () {
                         return action.allow.repeats();
                     },
                 },
                 // template: case-config:case-transaction:case-preload
-                suggestedPreloadProperties: ko.computed(function() {
+                suggestedPreloadProperties: ko.computed(function () {
                     return caseConfigUtils.filteredSuggestedProperties(
                         self.action.suggestedProperties(),
                         self.action.preload()
                     );
                 }),
             };
-            self.defaultKey = ko.computed(function() {
+            self.defaultKey = ko.computed(function () {
                 return '';
             });
-            self.validateProperty = ko.computed(function() {
+            self.validateProperty = ko.computed(function () {
                 if (self.path() || self.key()) {
                     if (action.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
                         return gettext("Reserved word: ") + '<strong>' + self.key() + '</strong>';
@@ -117,7 +117,7 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function() {
                 }
                 return null;
             });
-            self.validateQuestion = ko.computed(function() {
+            self.validateQuestion = ko.computed(function () {
                 if (self.path()) {
                     if (action.preloadCounts()[self.path()] > 1) {
                         return gettext("Two properties load to the same question");

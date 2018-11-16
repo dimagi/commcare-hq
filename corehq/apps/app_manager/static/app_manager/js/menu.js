@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/menu", function() {
+hqDefine("app_manager/js/menu", function () {
     var setPublishStatus = function (isOn) {
         var layout = hqImport("hqwebapp/js/layout");
         if (isOn) {
@@ -12,9 +12,14 @@ hqDefine("app_manager/js/menu", function() {
         $('#langs select').change(function () {
             var lang = $(this).find('option:selected').attr('value'),
                 loc = window.location,
-                baseUrl = loc.origin + loc.pathname,
-                querystring = loc.search + (loc.search ? '&' : '?') + "lang=" + lang;
-            $(document).attr('location', baseUrl + querystring + loc.hash);
+                params = {},
+                searchString = "";
+            if (loc.search) {
+                params = $.unparam(loc.search.slice(1));
+            }
+            params['lang'] = lang;
+            searchString = "?" + $.param(params);
+            $(document).attr('location', loc.pathname + searchString + loc.hash);
         });
     };
 
@@ -33,12 +38,12 @@ hqDefine("app_manager/js/menu", function() {
         setInterval(_checkPublishStatus, 20000);
 
         // sniff ajax calls to other urls that make app changes
-        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
+        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function () {
             setPublishStatus(true);
         });
     };
 
-    $(function() {
+    $(function () {
         initLangs();
         initPublishStatus();
     });

@@ -15,6 +15,7 @@
 {% initial_page_data 'number_of_apps_to_process' number_of_apps_to_process %}
 {% initial_page_data 'format_options' format_options %}
 {% initial_page_data 'sharing_options' sharing_options %}
+{% initial_page_data 'has_other_owner' has_other_owner %}
 {% initial_page_data 'has_daily_saved_export_access' has_daily_saved_export_access %}
 {% initial_page_data 'has_excel_dashboard_access' has_excel_dashboard_access %}
 {% initial_page_data 'full_path' request.get_full_path %}
@@ -38,7 +39,7 @@
         </a>
     </div>
     {% endif %}
-    {% include "export/partial/customize_export_header.html" %}
+    {% include "export/partials/customize_export_header.html" %}
     <form class="form-horizontal" method="post">
         {% csrf_token %}
         <fieldset>
@@ -153,7 +154,7 @@
                 </div>
             </div>
             {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-            <div class="form-group">
+            <div class="form-group" data-bind="css: { 'has-warning': hasOtherOwner && sharing() != initialSharing }">
                 <label
                     for="sharing-select"
                     class="col-sm-3 col-md-2 control-label">
@@ -167,6 +168,24 @@
                             value: sharing
                         ">
                     </select>
+                    <div class="help-block" data-bind="visible: hasOtherOwner && sharing() != initialSharing">
+                        <div data-bind="visible: sharing() == 'private'">
+                            {% blocktrans %}
+                            This export was created by <strong>{{ owner_name }}</strong>.
+                            If you change the sharing settings for this export you will lose the ability
+                            to view and edit the export.
+                            Only <strong>{{ owner_name }}</strong> will have access to it.
+                            {% endblocktrans %}
+                        </div>
+                        <div data-bind="visible: sharing() == 'export_only'">
+                            {% blocktrans %}
+                            This export was created by <strong>{{ owner_name }}</strong>.
+                            If you change the sharing settings for this export you will lose the ability
+                            to edit the export.
+                            Only <strong>{{ owner_name }}</strong> will be able to edit it.
+                            {% endblocktrans %}
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endif %}
@@ -260,7 +279,7 @@
         </div>
     </form>
 </div>
-{% include "export/partial/new_customize_export_templates.html" %}
+{% include "export/partials/new_customize_export_templates.html" %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}

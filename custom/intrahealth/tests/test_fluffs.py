@@ -44,10 +44,6 @@ class TestFluffs(IntraHealthTestCase):
                 )
             ).xform
 
-    @classmethod
-    def tearDownClass(cls):
-        super(TestFluffs, cls).tearDownClass()
-
     def test_taux_de_satifisfaction_fluff(self):
         with real_pillow_settings():
             management.call_command(

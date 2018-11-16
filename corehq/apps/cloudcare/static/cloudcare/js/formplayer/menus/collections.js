@@ -65,7 +65,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             } else if (response.details) {
                 _.extend(this, _.pick(response, this.detailProperties));
                 return response.details;
-            } else if (response.tree){
+            } else if (response.tree) {
                 // form entry time, doggy
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
             }

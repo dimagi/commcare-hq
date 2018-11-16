@@ -1,6 +1,6 @@
-hqDefine('reports/js/charts/multibar_chart', function() {
+hqDefine('reports/js/charts/multibar_chart', function () {
     var init = function (data) {
-        nv.addGraph(function() {
+        nv.addGraph(function () {
             var chartConfig = data.configDict,
                 chartData = data.chartData,
                 chartId = '#' + data.chartId,
@@ -28,7 +28,7 @@ hqDefine('reports/js/charts/multibar_chart', function() {
             chart.tooltips(chartConfig.tooltips);
             // Customize tooltip message
             if (data.chartTooltipFormat) {
-                chart.tooltipContent(function(key, y, e) { return e + data.chartTooltipFormat + y; });
+                chart.tooltipContent(function (key, y, e) { return e + data.chartTooltipFormat + y; });
             }
             chart.stacked(chartConfig.stacked);
             chart.margin(chartConfig.margin);

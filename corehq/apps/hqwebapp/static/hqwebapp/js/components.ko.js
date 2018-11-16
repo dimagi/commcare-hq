@@ -4,7 +4,7 @@ hqDefine("hqwebapp/js/components.ko", [
     'underscore',
     'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/components/pagination',
-], function(
+], function (
     $,
     ko,
     _,
@@ -16,13 +16,13 @@ hqDefine("hqwebapp/js/components.ko", [
         'pagination': pagination,
     };
 
-    _.each(components, function(moduleName, elementName) {
+    _.each(components, function (moduleName, elementName) {
         ko.components.register(elementName, moduleName);
     });
 
-    $(function() {
-        _.each(_.keys(components), function(elementName) {
-            _.each($(elementName), function(el) {
+    $(function () {
+        _.each(_.keys(components), function (elementName) {
+            _.each($(elementName), function (el) {
                 var $el = $(el);
                 if (!($el.data('apply-bindings') === false)) {
                     $(el).koApplyBindings();

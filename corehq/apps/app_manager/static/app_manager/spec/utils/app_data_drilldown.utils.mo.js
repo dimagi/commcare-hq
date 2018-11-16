@@ -1,4 +1,4 @@
-(function() {
+(function () {
     'use strict';
 
     window.AppDrill = {};
@@ -7,10 +7,10 @@
         GET_DRILLDOWN_VALUES: '/fake/app/drilldown/vals',
     };
 
-    window.AppDrill.prepareTests = function() {
-        beforeEach(function() {
+    window.AppDrill.prepareTests = function () {
+        beforeEach(function () {
             var drilldownApp = angular.module('ngtest.AppDataDrilldownApp', ['hq.app_data_drilldown']);
-            drilldownApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+            drilldownApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
                 djangoRMIProvider.configure({
                     get_app_data_drilldown_values: {
                         url: AppDrill.mockBackendUrls.GET_DRILLDOWN_VALUES,
@@ -25,16 +25,16 @@
             drilldownApp.constant('modelType', null);
             module('ngtest.AppDataDrilldownApp');
             // Kickstart the injectors previously registered with calls to angular.mock.module
-            inject(function() {});
+            inject(function () {});
         });
 
-        beforeEach(inject(function($injector) {
+        beforeEach(inject(function ($injector) {
             AppDrill.$rootScope = $injector.get('$rootScope');
             AppDrill.$httpBackend = $injector.get('$httpBackend');
             AppDrill.$interval = $injector.get('$interval');
 
             var $controller = $injector.get('$controller');
-            AppDrill.createController = function() {
+            AppDrill.createController = function () {
                 AppDrill.currentScope = AppDrill.$rootScope.$new();
                 return $controller('DrilldownToFormController', {
                     '$scope': AppDrill.currentScope,
@@ -43,7 +43,7 @@
         }));
     };
 
-    window.AppDrill.getCaseTypeResponse = function() {
+    window.AppDrill.getCaseTypeResponse = function () {
         return {
             success: true,
             app_types: [{
@@ -93,7 +93,7 @@
         };
     };
 
-    window.AppDrill.getSingleAppResponse = function() {
+    window.AppDrill.getSingleAppResponse = function () {
         return {
             success: true,
             app_types: [{
@@ -178,7 +178,7 @@
         };
     };
 
-    window.AppDrill.getMultiAppTypesResponse = function() {
+    window.AppDrill.getMultiAppTypesResponse = function () {
         return {
             success: true,
             app_types: [{

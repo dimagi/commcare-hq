@@ -8,8 +8,8 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     var vm = this;
     vm.label = "Adolescent Girls (11-14 years)";
     vm.steps = {
-        'map': {route: '/adolescent_girls/map', label: 'Map View'},
-        'chart': {route: '/adolescent_girls/chart', label: 'Chart View'},
+        'map': {route: '/demographics/adolescent_girls/map', label: 'Map View'},
+        'chart': {route: '/demographics/adolescent_girls/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',

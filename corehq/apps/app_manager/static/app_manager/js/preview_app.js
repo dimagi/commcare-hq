@@ -1,7 +1,7 @@
 /* globals $ */
 /* globals window */
 
-hqDefine('app_manager/js/preview_app', function() {
+hqDefine('app_manager/js/preview_app', function () {
     'use strict';
     var module = {};
     var _private = {};
@@ -35,7 +35,7 @@ hqDefine('app_manager/js/preview_app', function() {
 
     _private.isFormdesigner = false;
 
-    _private.showAppPreview = function(triggerAnalytics) {
+    _private.showAppPreview = function (triggerAnalytics) {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).addClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
 
@@ -49,7 +49,7 @@ hqDefine('app_manager/js/preview_app', function() {
         if (localStorage.getItem(module.DATA.TABLET)) $offsetContainer.addClass('offset-for-tablet');
     };
 
-    _private.hideAppPreview = function(triggerAnalytics) {
+    _private.hideAppPreview = function (triggerAnalytics) {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).removeClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
 
@@ -63,7 +63,7 @@ hqDefine('app_manager/js/preview_app', function() {
         }
     };
 
-    _private.tabletView = function(triggerAnalytics) {
+    _private.tabletView = function (triggerAnalytics) {
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
         $appPreview.addClass('preview-tablet-mode');
         $(module.SELECTORS.OFFSET_FOR_PREVIEW).addClass('offset-for-tablet');
@@ -74,7 +74,7 @@ hqDefine('app_manager/js/preview_app', function() {
         }
     };
 
-    _private.phoneView = function(triggerAnalytics) {
+    _private.phoneView = function (triggerAnalytics) {
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
         $appPreview.removeClass('preview-tablet-mode');
         $(module.SELECTORS.OFFSET_FOR_PREVIEW).removeClass('offset-for-tablet');
@@ -85,11 +85,11 @@ hqDefine('app_manager/js/preview_app', function() {
         }
     };
 
-    _private.navigateBack = function() {
+    _private.navigateBack = function () {
         _private.triggerPreviewEvent('back');
     };
 
-    _private.triggerPreviewEvent = function(action) {
+    _private.triggerPreviewEvent = function (action) {
         var $appPreviewIframe = $(module.SELECTORS.PREVIEW_WINDOW_IFRAME),
             previewWindow = $appPreviewIframe[0].contentWindow;
         previewWindow.postMessage({
@@ -97,7 +97,7 @@ hqDefine('app_manager/js/preview_app', function() {
         }, window.location.origin);
     };
 
-    _private.toggleTabletView = function() {
+    _private.toggleTabletView = function () {
         _private.toggleLocalStorageDatum(module.DATA.TABLET);
         if (localStorage.getItem(module.DATA.TABLET)) {
             _private.tabletView(true);
@@ -109,7 +109,7 @@ hqDefine('app_manager/js/preview_app', function() {
         }, 501);
     };
 
-    _private.toggleLocalStorageDatum = function(datum) {
+    _private.toggleLocalStorageDatum = function (datum) {
         if (localStorage.getItem(datum) === datum) {
             localStorage.removeItem(datum);
         } else {
@@ -211,16 +211,16 @@ hqDefine('app_manager/js/preview_app', function() {
         layoutController.setBalancePreviewFn(_resizeAppPreview);
         $('.js-preview-toggle-tablet-view').click(_private.toggleTabletView);
         $('.js-preview-back').click(_private.triggerPreviewEvent.bind(this, 'back'));
-        $('.js-preview-refresh').click(function() {
+        $('.js-preview-refresh').click(function () {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
             _private.triggerPreviewEvent('refresh');
             hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Refresh App Preview");
             hqImport('analytix/js/google').track.event("App Preview", "Clicked Refresh App Preview");
         });
-        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
+        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function () {
             $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
         });
-        var onload = function() {
+        var onload = function () {
             if (localStorage.getItem(module.DATA.TABLET)) {
                 _private.tabletView();
             } else {

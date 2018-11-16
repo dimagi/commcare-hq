@@ -171,6 +171,9 @@ def _create_custom_app_strings(app, lang, for_default=False):
             if custom_icon_form and custom_icon_text:
                 yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, form=form)
 
+            for id, custom_assertion in enumerate(form.custom_assertions):
+                yield id_strings.custom_assertion_locale(module, form, id), trans(custom_assertion.text)
+
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
             yield (
                 id_strings.case_list_form_locale(module),
@@ -206,7 +209,7 @@ class AppStringsBase(object):
         messages = {}
         for part in self.app_strings_parts(app, lang, for_default=for_default):
             messages.update(part)
-        return commcare_translations.dumps(messages).encode('utf-8')
+        return commcare_translations.dumps(messages)
 
     def app_strings_parts(self, app, lang, for_default=False):
         raise NotImplementedError()
@@ -271,7 +274,7 @@ class AppStringsBase(object):
         messages[key] = ("This form requires the user's location to be "
                          "marked as 'Tracks Stock'.")
 
-        return commcare_translations.dumps(messages).encode('utf-8')
+        return commcare_translations.dumps(messages)
 
 
 class DumpKnownAppStrings(AppStringsBase):

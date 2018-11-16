@@ -8,10 +8,6 @@ class AmbiguousBlobStorageError(Error):
     """Ambiguous blob storage backend error"""
 
 
-class ArgumentError(Error):
-    """Raised on call with wrong arguments"""
-
-
 class BadName(Error):
     """Blob name error"""
 

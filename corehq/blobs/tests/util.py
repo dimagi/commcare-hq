@@ -5,15 +5,35 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from uuid import uuid4
 
+from django.conf import settings
+
 import corehq.blobs as blobs
 from corehq.blobs.fsdb import FilesystemBlobDB
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.s3db import S3BlobDB
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.util import random_url_id
+from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
+    get_db_aliases_for_partitioned_query,
+)
 
 
 def get_id():
     return random_url_id(8)
+
+
+def new_meta(**kw):
+    kw.setdefault("domain", "test")
+    kw.setdefault("parent_id", "test")
+    kw.setdefault("type_code", blobs.CODES.form_xml)
+    return BlobMeta(**kw)
+
+
+def get_meta(meta):
+    """Fetch a new copy of the given metadata from the database"""
+    db = get_db_alias_for_partitioned_doc(meta.parent_id)
+    return BlobMeta.objects.using(db).get(id=meta.id)
 
 
 class TemporaryBlobDBMixin(object):
@@ -40,25 +60,18 @@ class TemporaryBlobDBMixin(object):
             self.clean_db()
 
     def clean_db(self):
-        raise NotImplementedError("abstract method")
+        if settings.USE_PARTITIONED_DATABASE:
+            # partitioned databases are in autocommit mode, and django's
+            # per-test transaction does not roll back changes there, so
+            # blob metadata needs to be cleaned up here
+            for dbname in get_db_aliases_for_partitioned_query():
+                BlobMeta.objects.using(dbname).all().delete()
 
     def __enter__(self):
         return self
 
     def __exit__(self, *exc_info):
         self.close()
-
-
-@contextmanager
-def install_blob_db(db, uninstall_first=True):
-    """Temporarily install the given blob db"""
-    blobs._db.append(db)
-    assert blobs.get_blob_db() is db, 'got wrong blob db'
-    try:
-        yield db
-    finally:
-        assert blobs._db[-1] is db, blobs._db[-1]
-        blobs._db.pop()
 
 
 class TemporaryFilesystemBlobDB(TemporaryBlobDBMixin, FilesystemBlobDB):
@@ -68,6 +81,7 @@ class TemporaryFilesystemBlobDB(TemporaryBlobDBMixin, FilesystemBlobDB):
         super(TemporaryFilesystemBlobDB, self).__init__(rootdir)
 
     def clean_db(self):
+        super(TemporaryFilesystemBlobDB, self).clean_db()
         rmtree(self.rootdir)
         self.rootdir = None
 
@@ -85,6 +99,7 @@ class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
     def clean_db(self):
         if not self._s3_bucket_exists:
             return
+        super(TemporaryS3BlobDB, self).clean_db()
         assert self.s3_bucket_name.startswith("test-"), self.s3_bucket_name
         s3_bucket = self._s3_bucket()
         summaries = s3_bucket.objects.all()

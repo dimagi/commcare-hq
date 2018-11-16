@@ -481,10 +481,10 @@ COPY_FORM_TO_APP = StaticToggle(
 
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
-    'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    # TODO: Create Confluence docs and add help link
+    'Offer hosting and sharing data files for downloading from a secure dropzone',
+    TAG_SOLUTIONS,
+    help_link='https://confluence.dimagi.com/display/ccinternal/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -654,6 +654,14 @@ CASE_LIST_EXPLORER = StaticToggle(
     save_fn=_enable_search_index,
 )
 
+EXPLORE_CASE_DATA = StaticToggle(
+    'explore_case_data',
+    'Show the Explore Case Data report (in dev)',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
@@ -813,6 +821,15 @@ MOBILE_UCR = StaticToggle(
     always_enabled={'icds-cas'}
 )
 
+MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
+    'mobile_ucr_linked_domain',
+    ('Mobile UCR: Configure viewing user configurable reports on the mobile when using linked domains. '
+     'NOTE: This won\'t work without developer intervention'),
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas', 'fmoh-echis-staging'}
+)
+
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
     "(Deprecated) Allow project to restrict web user permissions by location",
@@ -896,6 +913,17 @@ CUSTOM_INSTANCES = StaticToggle(
         'Currently used by SimPrints-integrated projects.'
     ),
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+CUSTOM_ASSERTIONS = StaticToggle(
+    'custom_assertions',
+    'Inject custom assertions into the suite',
+    TAG_SOLUTIONS,
+    description=(
+        'Enables the insertion of custom assertions into the suite file. '
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/User+defined+assert+blocks",
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -1078,18 +1106,11 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
-ABT_REMINDER_RECIPIENT = StaticToggle(
-    'abt_reminder_recipient',
-    "ABT: Custom reminder recipients",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
-    'auto_case_updates',
-    'Enable enhancements to the Auto Case Update feature.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
+COPY_CONDITIONAL_ALERTS = StaticToggle(
+    'copy_conditional_alerts',
+    'Allow copying conditional alerts to another project (or within the same project).',
+    TAG_SOLUTIONS,
+    [NAMESPACE_USER],
 )
 
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
@@ -1223,6 +1244,13 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ALLOW_LOCATION_UPDATE_OVER_SMS = StaticToggle(
+    'allow_location_update_over_sms',
+    'Allow users to update their location over SMS.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1295,6 +1323,7 @@ ICDS = StaticToggle(
     relevant_environments={'icds', 'icds-new', 'softlayer'},
     always_enabled={
         "icds-dashboard-qa",
+        "reach-test",
         "icds-sql",
         "icds-test",
         "icds-cas",
@@ -1589,6 +1618,14 @@ AGGREGATE_UCRS = StaticToggle(
 )
 
 
+SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
+    'show_raw_data_sources_in_report_builder',
+    'Allow building report builder reports directly from raw UCR Data Sources',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 RELATED_LOCATIONS = StaticToggle(
     'related_locations',
     'REACH: Enable experimental location many-to-many mappings',
@@ -1596,4 +1633,38 @@ RELATED_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
+)
+
+ICDS_DISHA_API = StaticToggle(
+    'icds_disha_access',
+    'ICDS: Access DISHA API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
+)
+
+ALLOW_BLANK_CASE_TAGS = StaticToggle(
+    'allow_blank_case_tags',
+    'eCHIS: Allow blank case tags',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
+    'filter_on_groups_and_locations',
+    '[ONSE] Change filter from groups OR locations to groups AND locations in all reports and exports in the '
+    'ONSE domain with group and location filters',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='For reports filtered by groups and locations, change the OR logic to an AND, so that '
+                '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
+                'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
+                'have group and location filters, such as the Submissions by Form report.',
+)
+
+SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
+    'sort_out_of_order_form_submissions_sql',
+    'Sort out of order form submissions in the SQL update strategy',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
 )

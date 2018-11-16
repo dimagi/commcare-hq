@@ -1,5 +1,4 @@
 /* global _, LocationModalController, LocationFilterController */
-
 var transformLocationTypeName = function(locationTypeName) {
     if (locationTypeName === 'awc') {
         return locationTypeName.toUpperCase();
@@ -92,6 +91,11 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     vm.apply = function() {
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        hqImport('analytix/js/google').track.event(
+            'Location Filter',
+            'Location Changed',
+            vm.selectedLocationId.location_id
+        );
         $uibModalInstance.close(vm.selectedLocations);
     };
 

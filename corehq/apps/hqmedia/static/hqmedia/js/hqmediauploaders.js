@@ -1,9 +1,9 @@
 /* globals HQMediaUploaderTypes */
-hqDefine("hqmedia/js/hqmediauploaders", function() {
+hqDefine("hqmedia/js/hqmediauploaders", function () {
     var HQMediaUploaders = {};  // This will be referenced by the media references
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-    _.each(initial_page_data("uploaders"), function(uploader) {
-        HQMediaUploaders[uploader.slug] = new HQMediaUploaderTypes[uploader.uploader_type] (
+    _.each(initial_page_data("uploaders"), function (uploader) {
+        HQMediaUploaders[uploader.slug] = new HQMediaUploaderTypes[uploader.uploader_type](
             uploader.slug,
             uploader.media_type,
             _.extend({
@@ -13,7 +13,7 @@ hqDefine("hqmedia/js/hqmediauploaders", function() {
         HQMediaUploaders[uploader.slug].init();
     });
 
-    var get = function() {
+    var get = function () {
         return HQMediaUploaders;
     };
 

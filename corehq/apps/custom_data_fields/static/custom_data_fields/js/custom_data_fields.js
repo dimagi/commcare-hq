@@ -1,10 +1,10 @@
-hqDefine('custom_data_fields/js/custom_data_fields', function() {
-    function Choice (choice) {
+hqDefine('custom_data_fields/js/custom_data_fields', function () {
+    function Choice(choice) {
         var self = this;
         self.value = ko.observable(choice);
     }
 
-    function CustomDataField () {
+    function CustomDataField() {
         var self = this;
         self.slug = ko.observable();
         self.label = ko.observable();
@@ -83,7 +83,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
         };
     }
 
-    function CustomDataFieldsModel () {
+    function CustomDataFieldsModel() {
         var self = this;
         self.data_fields = ko.observableArray();
         self.purge_existing = ko.observable(false);
@@ -112,7 +112,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
                 var custom_field = new CustomDataField();
                 custom_field.init(field);
                 self.data_fields.push(custom_field);
-                custom_field.choices.subscribe(function() {
+                custom_field.choices.subscribe(function () {
                     $("#save-custom-fields").prop("disabled", false);
                 });
             });
@@ -122,7 +122,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
             var fields = [];
             var fieldsToRemove = [];
             _.each(self.data_fields(), function (field) {
-                if(field.slug() || field.label()) {
+                if (field.slug() || field.label()) {
                     fields.push(field.serialize());
                 } else {
                     fieldsToRemove.push(field);
@@ -163,19 +163,19 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
     $(function () {
         var customDataFieldsModel = new CustomDataFieldsModel();
         customDataFieldsModel.init(hqImport('hqwebapp/js/initial_page_data').get('custom_fields'));
-        customDataFieldsModel.data_fields.subscribe(function() {
+        customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);
         });
 
         $('#custom-fields-form').koApplyBindings(customDataFieldsModel);
 
-        $('form[id="custom-fields-form"]').on("change", null, null, function() {
+        $('form[id="custom-fields-form"]').on("change", null, null, function () {
             $("#save-custom-fields").prop("disabled", false);
-        }).on("input", null, null, function() {
+        }).on("input", null, null, function () {
             $("#save-custom-fields").prop("disabled", false);
         });
 
-        $('.modal-footer button').on("click", function() {
+        $('.modal-footer button').on("click", function () {
             $(":submit").prop("disabled", false);
         });
     });

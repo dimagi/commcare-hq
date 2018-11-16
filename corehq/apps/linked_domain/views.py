@@ -9,9 +9,12 @@ from django.utils.translation import ugettext_lazy, ugettext
 from django.views import View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain
+from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
 from corehq.apps.domain.decorators import login_or_api_key, domain_admin_required
-from corehq.apps.domain.views import BaseAdminProjectSettingsView, DomainViewMixin
+from corehq.apps.domain.views.base import DomainViewMixin
+from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP
@@ -49,6 +52,22 @@ def user_roles(request, domain):
 
 @login_or_api_key
 @require_linked_domain
+def case_search_config(request, domain):
+    try:
+        config = CaseSearchConfig.objects.get(domain=domain).to_json()
+    except CaseSearchConfig.DoesNotExist:
+        config = None
+
+    try:
+        addition = CaseSearchQueryAddition.objects.get(domain=domain).to_json()
+    except CaseSearchQueryAddition.DoesNotExist:
+        addition = None
+
+    return JsonResponse({'config': config, 'addition': addition})
+
+
+@login_or_api_key
+@require_linked_domain
 def get_latest_released_app_source(request, domain, app_id):
     master_app = get_app(None, app_id)
     if master_app.domain != domain:
@@ -63,7 +82,7 @@ def get_latest_released_app_source(request, domain, app_id):
 
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
-    page_title = ugettext_lazy("Domain Links")
+    page_title = ugettext_lazy("Linked Projects")
     template_name = 'linked_domain/domain_links.html'
 
     @property
@@ -175,6 +194,8 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         update_model_type(master_link, type_, detail_obj)
         master_link.update_last_pull(type_, self.request.couch_user._id, model_details=detail_obj)
 
+        track_workflow(self.request.couch_user.username, "Linked domain: updated '{}' model".format(type_))
+
         timezone = get_timezone_for_request()
         return {
             'success': True,
@@ -187,13 +208,16 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         link = DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).first()
         link.deleted = True
         link.save()
+
+        track_workflow(self.request.couch_user.username, "Linked domain: domain link deleted")
+
         return {
             'success': True,
         }
 
 
 class DomainLinkHistoryReport(GenericTabularReport):
-    name = 'Project Link History'
+    name = 'Linked Project History'
     base_template = "reports/base_template.html"
     section_name = 'Project Settings'
     slug = 'project_link_report'

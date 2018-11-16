@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/managed_app", function() {
+hqDefine("app_manager/js/managed_app", function () {
     $(function () {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             init = hqImport('app_manager/js/app_manager').init,
@@ -10,7 +10,7 @@ hqDefine("app_manager/js/managed_app", function() {
             latestCommcareVersion: initial_page_data('latest_commcare_version') || null,
         });
 
-        $('.btn-langcode-preprocessed').each( function () {
+        $('.btn-langcode-preprocessed').each(function () {
             hqImport('hqwebapp/js/ui-element').langcode_tag_btn($(this), $(this).text());
             if ($(this).hasClass('langcode-input')) {
                 var $langcodeInput = $(this).parent().find("input");
@@ -48,10 +48,10 @@ hqDefine("app_manager/js/managed_app", function() {
             if (inSelectElement) { return; }
             $(this).css('overflow','hidden');
         });
-        $tabContent.on('focus', '.collapse', function() {
+        $tabContent.on('focus', '.collapse', function () {
             inSelectElement = true;
         });
-        $tabContent.on('blur', '.collapse', function() {
+        $tabContent.on('blur', '.collapse', function () {
             inSelectElement = false;
         });
     });

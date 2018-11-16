@@ -22,7 +22,7 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
                 }),
                 url: formplayerUrl + '/get_sessions',
                 success: function (parsed, response) {
-                    if (response.hasOwnProperty('exception')){
+                    if (response.hasOwnProperty('exception')) {
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
@@ -65,7 +65,7 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
             return defer.promise();
         },
 
-        deleteSession: function(session) {
+        deleteSession: function (session) {
             var user = FormplayerFrontend.request('currentUser');
             var options = {
                 data: JSON.stringify({
@@ -75,7 +75,7 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
                     "restoreAs": user.restoreAs,
                 }),
                 url: user.formplayer_url + '/delete-incomplete-form',
-                complete: function(xhr) {
+                complete: function (xhr) {
                     if (xhr.responseJSON.status === 'error') {
                         FormplayerFrontend.trigger(
                             'showError',

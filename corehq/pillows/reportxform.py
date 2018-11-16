@@ -48,7 +48,7 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
         doc_filter_fn=report_xform_filter
     )
     kafka_change_feed = KafkaChangeFeed(
-        topics=topics.FORM_TOPICS, group_id='report-forms-to-es',
+        topics=topics.FORM_TOPICS, client_id='report-forms-to-es',
         num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(

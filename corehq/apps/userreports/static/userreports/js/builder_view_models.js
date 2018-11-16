@@ -2,7 +2,7 @@
 hqDefine('userreports/js/builder_view_models', function () {
     'use strict';
 
-    var getOrDefault = function(options, key, default_) {
+    var getOrDefault = function (options, key, default_) {
         if (options[key] === undefined) {
             return default_;
         } else {
@@ -20,7 +20,7 @@ hqDefine('userreports/js/builder_view_models', function () {
      * @param {Boolean} hasDisplayText - whether this list has a Display Text column.
      * @constructor
      */
-    var PropertyListItem = function(getDefaultDisplayText, getPropertyObject, hasDisplayText) {
+    var PropertyListItem = function (getDefaultDisplayText, getPropertyObject, hasDisplayText) {
         var self = this;
 
         self.property = ko.observable("");
@@ -38,13 +38,13 @@ hqDefine('userreports/js/builder_view_models', function () {
 
         // True if the display text should be updated when the property changes
         self.inheritDisplayText = ko.observable(!self.displayText());
-        self.property.subscribe(function(newValue) {
-            if (self.inheritDisplayText()){
+        self.property.subscribe(function (newValue) {
+            if (self.inheritDisplayText()) {
                 var newDisplayText = getDefaultDisplayText(newValue);
                 self.displayText(newDisplayText);
             }
         });
-        self.displayText.subscribe(function(value){
+        self.displayText.subscribe(function (value) {
             if (!value) {
                 // If the display text has been cleared, go back to inherting
                 // it from the property
@@ -57,10 +57,10 @@ hqDefine('userreports/js/builder_view_models', function () {
         // This is useful because sometimes the displayText is changed
         // programatically when the user changes self.property.
         self.inputBoundDisplayText = ko.computed({
-            read: function() {
+            read: function () {
                 return self.displayText();
             },
-            write: function(value) {
+            write: function (value) {
                 // User has made changes to display text
                 self.inheritDisplayText(false);
                 self.displayTextModifiedByUser(true);
@@ -69,11 +69,11 @@ hqDefine('userreports/js/builder_view_models', function () {
             owner: self,
         });
 
-        self.displayTextIsValid = ko.pureComputed(function(){
+        self.displayTextIsValid = ko.pureComputed(function () {
             // Blank display text is not allowed
             return Boolean(self.displayText() || !self.hasDisplayText);
         });
-        self.showDisplayTextError = ko.pureComputed(function(){
+        self.showDisplayTextError = ko.pureComputed(function () {
             // This should also return true if the user has tried to submit the form
             return !self.displayTextIsValid() && (self.displayTextModifiedByUser() || self.showWarnings());
         });
@@ -84,7 +84,7 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.format = ko.observable("");
 
         var constants = hqImport('userreports/js/constants');
-        self.calculationOptions = ko.pureComputed(function() {
+        self.calculationOptions = ko.pureComputed(function () {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
                 return propObject.aggregation_options;
@@ -126,13 +126,13 @@ hqDefine('userreports/js/builder_view_models', function () {
         // exists in the app, then dataSourceField will be the name of the
         // property that no longer exists
         self.dataSourceField = ko.observable("");
-        self.isEditable = ko.pureComputed(function(){
+        self.isEditable = ko.pureComputed(function () {
             return !self.existsInCurrentVersion();
         });
 
         // True if validation messages should be shown on any and all fields
         self.showWarnings = ko.observable(false);
-        self.isValid = ko.computed(function(){
+        self.isValid = ko.computed(function () {
             return Boolean(self.property() && self.existsInCurrentVersion() && self.displayTextIsValid());
         });
     };
@@ -155,7 +155,7 @@ hqDefine('userreports/js/builder_view_models', function () {
      *  Return True if the item is valid, and start showing warnings if
      *  we weren't already.
      */
-    PropertyListItem.prototype.validate = function() {
+    PropertyListItem.prototype.validate = function () {
         var self = this;
         self.showWarnings(true);
         return self.isValid();
@@ -165,7 +165,7 @@ hqDefine('userreports/js/builder_view_models', function () {
     /**
      * Knockout view model controlling the filter property list.
      */
-    var PropertyList = function(options) {
+    var PropertyList = function (options) {
         var self = this;
         options = options || {};
 
@@ -217,14 +217,14 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.hasCalculationCol = getOrDefault(options, 'hasCalculationCol', false);
         self.hasFilterValueCol = getOrDefault(options, 'hasFilterValueCol', false);
 
-        self.columns = ko.observableArray(_.map(getOrDefault(options, 'initialCols', []), function(i) {
+        self.columns = ko.observableArray(_.map(getOrDefault(options, 'initialCols', []), function (i) {
             return wrapListItem(i);
         }));
-        self.serializedProperties = ko.computed(function(){
+        self.serializedProperties = ko.computed(function () {
             return JSON.stringify(
                 _.map(
-                    _.filter(self.columns(), function(c){return c.existsInCurrentVersion();}),
-                    function(c){return c.toJS();})
+                    _.filter(self.columns(), function (c) {return c.existsInCurrentVersion();}),
+                    function (c) {return c.toJS();})
             );
         });
         self.showWarnings = ko.observable(false);
@@ -248,7 +248,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             }
         };
     };
-    PropertyList.prototype._createListItem = function() {
+    PropertyList.prototype._createListItem = function () {
         return new PropertyListItem(
             this.getDefaultDisplayText.bind(this),
             this.getPropertyObject.bind(this),
@@ -260,19 +260,19 @@ hqDefine('userreports/js/builder_view_models', function () {
         var columnsValid = !_.contains(
             _.map(
                 this.columns(),
-                function(c){return c.validate();}
+                function (c) {return c.validate();}
             ),
             false
         );
         var columnLengthValid = !(this.requireColumns && !this.columns().length);
-        if (this.noColumnsValidationCallback && !columnLengthValid){
+        if (this.noColumnsValidationCallback && !columnLengthValid) {
             this.noColumnsValidationCallback();
         }
         return columnsValid && columnLengthValid;
     };
     PropertyList.prototype.buttonHandler = function () {
         this.columns.push(this._createListItem());
-        if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
+        if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)) {
             hqImport('userreports/js/report_analytix').track.event(this.analyticsAction, this.analyticsLabel);
             hqImport('analytix/js/kissmetrix').track.event("Clicked " + this.analyticsAction + " in Report Builder");
         }
@@ -301,7 +301,7 @@ hqDefine('userreports/js/builder_view_models', function () {
      * @param {string} property_id
      * @returns {object}
      */
-    PropertyList.prototype.getPropertyObject = function(property_id) {
+    PropertyList.prototype.getPropertyObject = function (property_id) {
         return _.find(this.propertyOptions, function (opt) {return opt.id === property_id;});
     };
 
@@ -388,7 +388,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             calcHelpText: django.gettext("Column format selection will determine how each row's value is calculated."),
             requireColumns: reportType !== "chart",
             requireColumnsText: "At least one column is required",
-            noColumnsValidationCallback: function(){
+            noColumnsValidationCallback: function () {
                 hqImport('userreports/js/report_analytix').track.event(
                     'Click On Done (No Columns)',
                     reportType
@@ -416,7 +416,7 @@ hqDefine('userreports/js/builder_view_models', function () {
                 self.validationErrorText(
                     django.gettext("Please check above for any errors in your configuration.")
                 );
-                _.defer(function(el){
+                _.defer(function (el) {
                     $(el).find('.disable-on-submit').enableButton();
                 }, formElement);
             }

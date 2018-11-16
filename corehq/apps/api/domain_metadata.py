@@ -6,7 +6,7 @@ from corehq.apps.api.resources.auth import AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.serializers import XFormInstanceSerializer
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
 from corehq.apps.es.domains import DomainES
@@ -66,10 +66,27 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
                        .size(1)
                        .run()
                        .hits[0])
-            return {
+            base_properties = {
                 prop_name: es_data[prop_name]
                 for prop_name in es_data if prop_name[:3] == 'cp_'
             }
+            try:
+                audit_record = DomainAuditRecordEntry.objects.get(domain=domain.name)
+            except DomainAuditRecordEntry.DoesNotExist:
+                audit_record = None
+            extra_properties = [
+                "cp_n_downloads_custom_exports",
+                "cp_n_viewed_ucr_reports",
+                "cp_n_viewed_non_ucr_reports",
+                "cp_n_reports_created",
+                "cp_n_reports_edited",
+                "cp_n_saved_scheduled_reports",
+                "cp_n_click_app_deploy",
+                "cp_n_saved_app_changes",
+            ]
+            for prop in extra_properties:
+                base_properties.update({prop: getattr(audit_record, prop, 0)})
+            return base_properties
         except IndexError:
             logging.exception('Problem getting calculated properties for {}'.format(domain.name))
             return {}
@@ -137,7 +154,7 @@ class GIRResource(ModelResource):
         resource_name = 'gir_tables'
         fields = [
             'id', 'month', 'domain_name', 'country', 'sector', 'subsector', 'bu',
-            'self_service', 'test_domain', 'start_date', 'device_id', 'wam', 'pam',
+            'self_service', 'test_domain', 'start_date', 'device_id', 'pam',
             'wams_current', 'active_users', 'using_and_performing', 'not_performing',
             'inactive_experienced', 'inactive_not_experienced', 'not_experienced',
             'not_performing_not_experienced', 'active_ever', 'possibly_exp', 'ever_exp',

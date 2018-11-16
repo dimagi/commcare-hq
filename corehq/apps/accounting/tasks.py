@@ -33,7 +33,7 @@ from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceError,
 )
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory, CustomerAccountInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -51,7 +51,8 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
-    DomainUserHistory
+    DomainUserHistory,
+    InvoicingPlan
 )
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
@@ -199,7 +200,15 @@ def warn_active_subscriptions_per_domain_not_one():
             log_accounting_error("There is no active subscription for domain %s" % domain_name)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
+def warn_subscriptions_without_domain():
+    domains_with_active_subscription = Subscription.visible_objects.filter(
+        is_active=True,
+    ).values_list('subscriber__domain', flat=True).distinct()
+    for domain_name in set(domains_with_active_subscription) - set(Domain.get_all_names()):
+        log_accounting_error('Domain %s has an active subscription but does not exist.' % domain_name)
+
+
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions(datetime.date.today())
     deactivate_subscriptions()
@@ -209,9 +218,22 @@ def update_subscriptions():
     warn_subscriptions_still_active()
     warn_subscriptions_not_active()
     warn_active_subscriptions_per_domain_not_one()
+    warn_subscriptions_without_domain()
+
+    check_credit_line_balances.delay()
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+@task
+def check_credit_line_balances():
+    for credit_line in CreditLine.objects.all():
+        expected_balance = sum(credit_line.creditadjustment_set.values_list('amount', flat=True))
+        if expected_balance != credit_line.balance:
+            log_accounting_error(
+                'Credit line %s has balance %s, expected %s' % (credit_line.id, credit_line.balance, expected_balance)
+            )
+
+
+@periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
@@ -232,6 +254,38 @@ def generate_invoices(based_on_date=None):
                 invoice_start, invoice_end, domain)
             invoice_factory.create_invoices()
             log_accounting_info("Sent invoices for domain %s" % domain.name)
+        except CreditLineError as e:
+            log_accounting_error(
+                "There was an error utilizing credits for "
+                "domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
+            )
+        except InvoiceError as e:
+            log_accounting_error(
+                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
+            )
+        except Exception as e:
+            log_accounting_error(
+                "Error occurred while creating invoice for "
+                "domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
+            )
+    all_customer_billing_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
+    for account in all_customer_billing_accounts:
+        try:
+            if account.invoicing_plan == InvoicingPlan.QUARTERLY:
+                customer_invoice_start = invoice_start - relativedelta(months=2)
+            elif account.invoicing_plan == InvoicingPlan.YEARLY:
+                customer_invoice_start = invoice_start - relativedelta(months=11)
+            else:
+                customer_invoice_start = invoice_start
+            invoice_factory = CustomerAccountInvoiceFactory(
+                account=account,
+                date_start=customer_invoice_start,
+                date_end=invoice_end
+            )
+            invoice_factory.create_invoice()
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
@@ -316,7 +370,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -326,7 +380,7 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_dimagi_contact_subscription_ending_60_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
@@ -366,11 +420,9 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(serializer='pickle', ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
-                                account_created_by,
-                                account_entry_point,
                                 amount,
                                 invoice_items,
                                 contact_emails):
@@ -398,7 +450,7 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(serializer='pickle', ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
@@ -434,8 +486,8 @@ def send_purchase_receipt(payment_record, domain,
     )
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice, payment_method):
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
+def send_autopay_failed(invoice):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
@@ -471,7 +523,7 @@ def send_autopay_failed(invoice, payment_method):
 
 
 # Email this out every Monday morning.
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
 def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
@@ -566,13 +618,13 @@ def weekly_digest():
         })
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
     if app_id:
         try:
@@ -635,7 +687,7 @@ def assign_explicit_community_subscription(domain_name, start_date, method, acco
     )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
 def run_downgrade_process(today=None):
     today = today or datetime.date.today()
 
@@ -680,8 +732,7 @@ def _is_subscription_eligible_for_downgrade_process(subscription):
 
 
 def _apply_downgrade_process(subscription, oldest_unpaid_invoice, total, today):
-    from corehq.apps.domain.views import DomainSubscriptionView
-    from corehq.apps.domain.views import DomainBillingStatementsView
+    from corehq.apps.domain.views.accounting import DomainBillingStatementsView, DomainSubscriptionView
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
     domain = subscription.subscriber.domain
@@ -763,7 +814,7 @@ def _create_overdue_notification(invoice, context):
     note.activate()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def archive_logos(self, domain_name):
     try:
@@ -782,7 +833,7 @@ def archive_logos(self, domain_name):
         raise e
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def restore_logos(self, domain_name):
     try:
@@ -801,7 +852,7 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -860,7 +911,7 @@ def send_prepaid_credits_export():
     writer.writerow(headers)
     for row in body:
         writer.writerow([
-            val if isinstance(val, six.text_type) else six.binary_type(val)
+            val if isinstance(val, six.text_type) else bytes(val)
             for val in row
         ])
 
@@ -874,7 +925,7 @@ def send_prepaid_credits_export():
     )
 
 
-@task(queue="email_queue")
+@task(serializer='pickle', queue="email_queue")
 def email_enterprise_report(domain, slug, couch_user):
     account = BillingAccount.get_account_by_domain(domain)
     report = EnterpriseReport.create(slug, account.id, couch_user)
@@ -902,7 +953,7 @@ def email_enterprise_report(domain, slug, couch_user):
     send_html_email_async(subject, couch_user.username, body)
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
 def calculate_users_in_all_domains():
     for domain in Domain.get_all_names():
         num_users = CommCareUser.total_by_domain(domain)

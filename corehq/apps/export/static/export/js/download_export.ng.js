@@ -11,7 +11,7 @@
         'ngMessages',
     ]);
 
-    download_export.config(['$httpProvider', function($httpProvider) {
+    download_export.config(['$httpProvider', function ($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -52,7 +52,6 @@
                 });
         }
 
-        $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
         $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
             $('form[name="exportFiltersForm"]'));
@@ -64,51 +63,12 @@
 
         $scope.preparingExport = false;
 
-        $scope.hasGroups = false;
-        $scope.groupsLoading = true;
-        $scope.groupsError = false;
-        self._groupRetries = 0;
-
         $scope.prepareExportError = null;
-
-        self._handleGroupError = function () {
-            $scope.groupsLoading = false;
-            $scope.groupsError = true;
-        };
-
-        self._handleGroupRetry = function () {
-            if (self._groupRetries > 3) {
-                self._handleGroupError();
-            } else {
-                self._groupRetries ++;
-                self._getGroups();
-            }
-        };
-
-        self._updateGroups = function (data) {
-            if (data.success) {
-                $scope.groupsLoading = false;
-                $scope.hasGroups = data.groups.length > 0;
-                if (formElement.group()) formElement.group().select2({
-                    data: data.groups,
-                });
-            } else {
-                self._handleGroupRetry();
-            }
-        };
-
-        self._getGroups = function () {
-            djangoRMI.get_group_options({})
-                .success(self._updateGroups)
-                .error(self._handleGroupRetry);
-        };
-
-        self._getGroups();
 
         var exportType = $scope.exportList[0].export_type;
         self.exportType = hqImport('export/js/utils').capitalize(exportType);
         if (exportType === 'case') {
-            self.has_case_history_table = _.any($scope.exportList, function(export_) {
+            self.has_case_history_table = _.any($scope.exportList, function (export_) {
                 return export_.has_case_history_table;
             });
         }
@@ -129,9 +89,6 @@
         };
 
         $scope.isFormInvalid = function () {
-            if ($scope.formData.type_or_group === 'group') {
-                return _.isEmpty($scope.formData.group);
-            }
             return _.isEmpty($scope.formData.user_types);
         };
 
@@ -140,7 +97,31 @@
                 $('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export");
+            var userTypes = hqImport("hqwebapp/js/initial_page_data").get('user_types');
+            function getFilterName(exportType) {
+                return (exportType === "form" ? "emw" : "case_list_filter");
+            }
+
+            var filterNamesAsString = $("#exportFiltersFormId").find("input[name="
+                        + getFilterName($scope.exportList[0].export_type) + "]")
+                .val();
+
+            function getFilterNames() {
+                return (filterNamesAsString ? filterNamesAsString.split(',') : []);
+            }
+
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
+                "Export type": $scope.exportList[0].export_type,
+                "filters": _.map(
+                    getFilterNames(),
+                    function (item) {
+                        var prefix = "t__";
+                        if (item.substring(0, prefix.length) === prefix) {
+                            return userTypes[item.substring(prefix.length)];
+                        }
+                        return item;
+                    }
+                ).join()});
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
@@ -390,7 +371,7 @@
             self._promise = $interval(self._checkDownloadProgress, 2000);
         };
 
-        self.startMultimediaDownload = function(downloadId, exportType) {
+        self.startMultimediaDownload = function (downloadId, exportType) {
             self.isMultimediaDownload = true;
             self.startDownload(downloadId, exportType);
         };

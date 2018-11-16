@@ -4,24 +4,24 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
     'use strict';
     var module = {};
 
-    var KeyValList = function(guid, modal_title) {
+    var KeyValList = function (guid, modal_title) {
         var that = this;
         hqImport("hqwebapp/js/main").eventize(this);
         this.ui = $('<div class="enum-pairs" />');
         this.value = {};
         this.translated_value = {};
         this.edit = true;
-        this.modal_id = 'enumModal-'+guid;
+        this.modal_id = 'enumModal-' + guid;
         this.modal_title = modal_title;
 
         this.$edit_view = $('<div class="well well-sm" />');
         this.$noedit_view = $('<div />');
         this.$formatted_view = $('<input type="hidden" />');
-        this.$modal_trigger = $('<a class="btn btn-default enum-edit" href="#'+this.modal_id+'" ' +
+        this.$modal_trigger = $('<a class="btn btn-default enum-edit" href="#' + this.modal_id + '" ' +
             'data-toggle="modal" />').html('<i class="fa fa-pencil"></i> ' + django.gettext('Edit'));
 
         // Create new modal controller for this element
-        var $enumModal = $('<div id="'+this.modal_id+'" class="modal fade hq-enum-modal" />');
+        var $enumModal = $('<div id="' + this.modal_id + '" class="modal fade hq-enum-modal" />');
         var $modalDialog = $('<div class="modal-dialog"/>');
         var $modalContent = $('<div class="modal-content" />');
 
@@ -43,13 +43,13 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
 
         $('#hq-modal-home').append($enumModal);
 
-        $('#'+this.modal_id).on('hide.bs.modal', function() {
+        $('#' + this.modal_id).on('hide.bs.modal', function () {
             var $inputMap = $(this).find('form .hq-input-map'),
                 pairs = {};
-            for (var i=0; i < $inputMap.length; i++) {
+            for (var i = 0; i < $inputMap.length; i++) {
                 var key = $($inputMap[i]).find('.enum-key').val(),
                     mapVal = $($inputMap[i]).find('.enum-value').val();
-                if (key !== undefined){
+                if (key !== undefined) {
                     pairs[key] = mapVal.toString();
                 }
             }
@@ -57,8 +57,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
             that.fire('change');
         });
 
-        $('#'+this.modal_id+' a').click(function() {
-            if($(this).attr('data-enum-action') === 'add') {
+        $('#' + this.modal_id + ' a').click(function () {
+            if ($(this).attr('data-enum-action') === 'add') {
                 $(this).parent().parent().find('fieldset').append(hqImport('hqwebapp/js/ui-element').input_map(true).ui);
                 $(this).parent().parent().find('fieldset input.enum-key').last().focus();
             }
@@ -69,11 +69,11 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
         this.setEdit(this.edit);
     };
     KeyValList.prototype = {
-        val: function(original_pairs, translated_pairs) {
+        val: function (original_pairs, translated_pairs) {
             if (original_pairs === undefined) {
                 return this.value;
             } else {
-                var $modal_fields = $('#'+this.modal_id+' form fieldset');
+                var $modal_fields = $('#' + this.modal_id + ' form fieldset');
                 $modal_fields.text('');
                 this.$noedit_view.text('');
                 this.$edit_view.html(django.gettext('Click <strong>Edit</strong> below to add mappings'));
@@ -93,7 +93,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
             }
 
         },
-        setEdit: function(edit) {
+        setEdit: function (edit) {
             this.edit = edit;
             this.$edit_view.detach();
             this.$noedit_view.detach();
@@ -109,7 +109,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
         },
     };
 
-    module.new = function(guid, modalTitle) {
+    module.new = function (guid, modalTitle) {
         return new KeyValList(guid, modalTitle);
     };
 

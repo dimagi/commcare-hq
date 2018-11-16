@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
+import six
 
 from architect import install
 from django.utils.translation import ugettext as _
@@ -53,7 +54,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         properties['__tablename__'] = table.name
         properties['__table_args__'] = ({'extend_existing': True},)
 
-        type_ = type(b"TemporaryTableDef", (Base,), properties)
+        type_ = type("TemporaryTableDef" if six.PY3 else b"TemporaryTableDef", (Base,), properties)
         return type_
 
     def _install_partition(self):
@@ -62,7 +63,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             partition = install(
                 'partition', type='range', subtype=config.subtype,
                 constraint=config.constraint, column=config.column, db=self.engine.url,
-                orm='sqlalchemy'
+                orm='sqlalchemy', return_null=True
             )
             mapping = self.get_sqlalchemy_mapping()
             partition(mapping)
@@ -99,10 +100,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=self.get_table().name))
             else:
                 self.get_table().drop(connection, checkfirst=True)
-
-    def refresh_table(self):
-        # SQL is always fresh
-        pass
 
     @unit_testing_only
     def clear_table(self):
@@ -147,19 +144,16 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def bulk_save(self, docs):
-        rows = []
-        for doc in docs:
-            rows.extend(self.get_all_values(doc))
-        self.save_rows(rows)
-
     def save_rows(self, rows):
+        """
+        Saves rows to a data source after deleting the old rows
+        """
         if not rows:
             return
 
         # transform format from ColumnValue to dict
         formatted_rows = [
-            {i.column.database_column_name: i.value for i in row}
+            {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
         doc_ids = set(row['doc_id'] for row in formatted_rows)
@@ -177,6 +171,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_helper.session_context() as session:
             session.execute(delete)
             session.execute(insert)
+
+    def bulk_save(self, docs):
+        rows = []
+        for doc in docs:
+            rows.extend(self.get_all_values(doc))
+        self.save_rows(rows)
+
+    def bulk_delete(self, doc_ids):
+        table = self.get_table()
+        delete = table.delete(table.c.doc_id.in_(doc_ids))
+        with self.session_helper.session_context() as session:
+            session.execute(delete)
 
     def delete(self, doc):
         table = self.get_table()
@@ -209,7 +215,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 def get_indicator_table(indicator_config, custom_metadata=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
     table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
-    columns_by_col_id = {col.database_column_name for col in indicator_config.get_columns()}
+    columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
     for index in indicator_config.sql_column_indexes:
         if set(index.column_ids).issubset(columns_by_col_id):
@@ -234,7 +240,7 @@ def get_indicator_table(indicator_config, custom_metadata=None):
 
 def _custom_index_name(table_name, column_ids):
     base_name = "ix_{}_{}".format(table_name, ','.join(column_ids))
-    base_hash = hashlib.md5(base_name).hexdigest()
+    base_hash = hashlib.md5(base_name.encode('utf-8')).hexdigest()
     return "{}_{}".format(base_name[:50], base_hash[:5])
 
 

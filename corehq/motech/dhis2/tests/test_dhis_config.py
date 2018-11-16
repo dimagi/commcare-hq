@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
+import six
 
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
@@ -46,7 +47,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            e.exception.message,
+            six.text_type(e.exception),
             "Property program_id is required."
         )
 
@@ -61,7 +62,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            e.exception.message,
+            six.text_type(e.exception),
             'Property event_date is required.'
         )
 
@@ -118,7 +119,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            e.exception.message,
+            six.text_type(e.exception),
             "Property data_element_id is required."
         )
 
@@ -183,5 +184,8 @@ class TestDhisConfigValidation(SimpleTestCase):
         org_unit_value_source = dict(repeater.dhis2_config.form_configs[0].org_unit_id)
         self.assertDictEqual(org_unit_value_source, {
             'doc_type': 'ConstantString',
-            'value': 'dhis2_location_id'
+            'value': 'dhis2_location_id',
+            'commcare_data_type': None,
+            'external_data_type': None,
+            'direction': None,
         })

@@ -143,15 +143,8 @@ class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
         cls.api_key.delete()
         cls.user.delete()
 
-        SubscriptionAdjustment.objects.all().delete()
-
-        if cls.subscription:
-            cls.subscription.delete()
-
-        if cls.account:
-            cls.account.delete()
-
         for domain in Domain.get_all():
+            Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)
             domain.delete()
 
         super(APIResourceTest, cls).tearDownClass()
@@ -324,8 +317,7 @@ class TestXFormInstanceResource(APIResourceTest):
         start_date = datetime(1969, 6, 14)
         end_date = datetime(2011, 1, 2)
         expected = [
-            {'range': {'received_on': {'from': start_date.isoformat()}}},
-            {'range': {'received_on': {'to': end_date.isoformat()}}},
+            {'range': {'received_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
             {'term': {'doc_type': 'xforminstance'}},
             {'term': {'domain.exact': 'qwerty'}},
         ]
@@ -819,7 +811,7 @@ class TestWebUserResource(APIResourceTest):
                                                    content_type='application/json',
                                                    failure_code=400)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, '{"error": "An admin can have only one role : Admin"}')
+        self.assertEqual(response.content.decode('utf-8'), '{"error": "An admin can have only one role : Admin"}')
 
     def test_create_with_invalid_non_admin_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -830,7 +822,7 @@ class TestWebUserResource(APIResourceTest):
                                                    content_type='application/json',
                                                    failure_code=400)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, '{"error": "Invalid User Role Jack of all trades"}')
+        self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role Jack of all trades"}')
 
     def test_create_with_missing_non_admin_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -841,7 +833,7 @@ class TestWebUserResource(APIResourceTest):
                                                    content_type='application/json',
                                                    failure_code=400)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, '{"error": "Please assign role for non admin user"}')
+        self.assertEqual(response.content.decode('utf-8'), '{"error": "Please assign role for non admin user"}')
 
     def test_update(self):
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
@@ -914,7 +906,7 @@ class TestRepeaterResource(APIResourceTest):
         api_repeaters = json.loads(response.content)['objects']
         self.assertEqual(len(api_repeaters), 2)
 
-        api_case_repeater = filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters)[0]
+        api_case_repeater = [r for r in api_repeaters if r['type'] == 'CaseRepeater'][0]
         self.assertEqual(api_case_repeater['id'], case_repeater._id)
         self.assertEqual(api_case_repeater['url'], case_repeater.url)
         self.assertEqual(api_case_repeater['domain'], case_repeater.domain)
@@ -1992,7 +1984,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         query_dict.update({"some_filter": "bar"})
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
             self.domain.name, "123", 100, 50, 3450, query_dict)
-        self.assertEqual(next, self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
+        self.assertEqual(next.decode('utf-8'), self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
 
         # It's the last page
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
@@ -2009,11 +2001,13 @@ class TestConfigurableReportDataResource(APIResourceTest):
         )
         self.addCleanup(user_in_wrong_domain.delete)
         user_in_wrong_domain.save()
-        credentials = base64.b64encode("{}:{}".format(
-            user_in_wrong_domain_name, user_in_wrong_domain_password)
+        credentials = base64.b64encode(
+            "{}:{}".format(
+                user_in_wrong_domain_name, user_in_wrong_domain_password
+            ).encode('utf-8')
         )
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
-            HTTP_AUTHORIZATION='Basic ' + credentials
+            HTTP_AUTHORIZATION=b'Basic ' + credentials
         )
         self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"

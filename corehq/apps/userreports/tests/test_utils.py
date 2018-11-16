@@ -28,11 +28,11 @@ class UtilitiesTestCase(SimpleTestCase):
         self.assertEqual(truncated, '\\xe8 string_6be7bea3')
 
     def test_table_name(self):
-        self.assertEqual('config_report_domain_table_7a7a33ec', get_table_name('domain', 'table'))
+        self.assertEqual(b'config_report_domain_table_7a7a33ec', get_table_name('domain', 'table'))
 
     def test_table_name_unicode(self):
         self.assertEqual(
-            "config_report_domain_unicode\\\\xe8_8aece1af",
+            b"config_report_domain_unicode\\\\xe8_8aece1af",
             get_table_name('domain', 'unicode\u00e8')
         )
 
@@ -43,7 +43,7 @@ class UtilitiesTestCase(SimpleTestCase):
 
     def test_long_table_name(self):
         name = get_table_name('this_is_a_long_domain', 'and_a_long_table_name')
-        name_expected = 'config_report_this_is_a_long_domain_and_a_long_table_n_6ac28759'
+        name_expected = b'config_report_this_is_a_long_domain_and_a_long_table_n_6ac28759'
         self.assertEqual(name, name_expected)
 
     def test_column_unicode(self):

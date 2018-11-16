@@ -1,8 +1,8 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, Marionette, $){
+FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, Marionette, $) {
     Apps.Controller = {
-        listApps: function(){
+        listApps: function () {
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
 
                 var appGridView = new Apps.Views.GridView({
@@ -17,7 +17,7 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
          *
          * Renders a SingleAppView.
          */
-        singleApp: function(appId) {
+        singleApp: function (appId) {
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
                 var singleAppView = new Apps.Views.SingleAppView({
                     appId: appId,
@@ -25,7 +25,7 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
                 FormplayerFrontend.regions.main.show(singleAppView);
             });
         },
-        landingPageApp: function(appId) {
+        landingPageApp: function (appId) {
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
                 var landingPageAppView = new Apps.Views.LandingPageAppView({
                     appId: appId,
@@ -33,7 +33,7 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
                 FormplayerFrontend.regions.main.show(landingPageAppView);
             });
         },
-        listSettings: function() {
+        listSettings: function () {
             var currentUser = FormplayerFrontend.request('currentUser'),
                 settings = [],
                 collection,

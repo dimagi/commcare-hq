@@ -6,7 +6,7 @@ from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-from custom.icds_reports.utils import percent
+from custom.icds_reports.utils import percent, percent_or_not_entered
 from custom.icds_reports.utils.mixins import ExportableMixin
 
 
@@ -27,6 +27,11 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
             columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
+            columns.append(DatabaseColumn(
+                'AWW Phone Number',
+                SimpleColumn('contact_phone_number'),
+                slug='contact_phone_number')
+            )
         return columns
 
     @property
@@ -35,7 +40,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
         agg_columns = [
             AggregateColumn(
                 'Percentage AWCs reported clean drinking water',
-                percent,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_clean_water'),
                     SumColumn('num_awc_infra_last_update', alias='awcs')
@@ -44,7 +49,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             ),
             AggregateColumn(
                 'Percentage AWCs reported functional toilet',
-                percent,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_functional_toilet'),
                     AliasColumn('awcs')
@@ -53,7 +58,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             ),
             AggregateColumn(
                 'Percentage AWCs reported medicine kit',
-                percent,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_medicine_kits'),
                     AliasColumn('awcs')
@@ -62,7 +67,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             ),
             AggregateColumn(
                 'Percentage AWCs reported weighing scale: infants',
-                percent,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_infant_weighing_scale'),
                     AliasColumn('awcs')
@@ -71,7 +76,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
             ),
             AggregateColumn(
                 'Percentage AWCs reported weighing scale: mother and child',
-                percent,
+                percent_or_not_entered,
                 [
                     SumColumn('infra_adult_weighing_scale'),
                     AliasColumn('awcs')

@@ -21,7 +21,7 @@ logging = get_task_logger(__name__)
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
 
 
-@task
+@task(serializer='pickle')
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
                             license_name=None, author=None, attribution_notes=None):
     """
@@ -109,7 +109,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     status.save()
 
 
-@task
+@task(serializer='pickle')
 def build_application_zip(include_multimedia_files, include_index_files, app,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):
@@ -147,11 +147,12 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                     z.writestr(path, data, file_compression)
 
-    common_kwargs = dict(
-        mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
-        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id, expiry=(1 * 60 * 60)
-    )
+    common_kwargs = {
+        'mimetype': 'application/zip' if compress_zip else 'application/x-zip-compressed',
+        'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
+        'download_id': download_id,
+        'expiry': (1 * 60 * 60),
+    }
     if use_transfer:
         expose_file_download(
             fpath,

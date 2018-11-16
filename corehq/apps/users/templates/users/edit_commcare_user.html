@@ -11,10 +11,9 @@
         <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
         <script src="{% static 'registration/js/password.js' %}"></script>
     {% endif %}
-    {% if implement_password_obfuscation %}
-        {% include "nic_compliance/password_encoder.html" %}
-    {% endif %}
+    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
     <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/widgets_v3.js' %}"></script><!-- custom user data -->
     <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
 {% endblock %}
 
@@ -22,6 +21,7 @@
     {% initial_page_data "couch_user_id" couch_user.user_id %}
     {% initial_page_data "couch_user_username" couch_user.username %}
     {% initial_page_data "hide_password_feedback" hide_password_feedback %}
+    {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
     {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
     {% initial_page_data "path" request.path %}
     {% if couch_user.is_demo_user %}
@@ -42,7 +42,7 @@
     </ul>
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
-            {% include 'users/partial/basic_info_form.html' with user_type="mobile"%}
+            {% include 'users/partials/basic_info_form.html' with user_type="mobile"%}
         </div>
 
         <div class="tab-pane" id="groups">
@@ -79,11 +79,11 @@
                     <i class="fa fa-external-link"></i> {% trans "User Location" %}
                 </a>
             {% endif %}
-            {% include "users/partial/edit_commtrack_user_settings.html" %}
+            {% include "users/partials/edit_commtrack_user_settings.html" %}
         </div>
         {% endif %}
         <div class="tab-pane" id="user-password">
-            {% include 'users/partial/reset_password.html' %}
+            {% include 'users/partials/reset_password.html' %}
         </div>
         {% if not is_currently_logged_in_user %}
         <div class="tab-pane" id="user-permanent">
@@ -154,7 +154,7 @@
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-    {% include 'users/partial/basic_info_modals.html' with user_type='mobile' %}
+    {% include 'users/partials/basic_info_modals.html' with user_type='mobile' %}
     {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
         <div class="modal-dialog">

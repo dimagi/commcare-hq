@@ -13,30 +13,30 @@ function Entry(question, options) {
     self.entryId = _.uniqueId(this.datatype);
 
     // Returns true if the rawAnswer is valid, false otherwise
-    self.isValid = function(rawAnswer) {
+    self.isValid = function (rawAnswer) {
         return self.getErrorMessage(rawAnswer) === null;
     };
 
     // Returns an error message given the answer. null if no error
-    self.getErrorMessage = function(rawAnswer) {
+    self.getErrorMessage = function (rawAnswer) {
         return null;
     };
 
-    self.clear = function() {
+    self.clear = function () {
         self.answer(Formplayer.Const.NO_ANSWER);
     };
-    self.afterRender = function() {
+    self.afterRender = function () {
         // Override with any logic that comes after rendering the Entry
     };
     if (self.answer) {
         self.answer.subscribe(self.onAnswerChange.bind(self));
     }
 }
-Entry.prototype.onAnswerChange = function(newValue) {};
+Entry.prototype.onAnswerChange = function (newValue) {};
 
 // This should set the answer value if the answer is valid. If the raw answer is valid, this
 // function performs any sort of processing that needs to be done before setting the answer.
-Entry.prototype.onPreProcess = function(newValue) {
+Entry.prototype.onPreProcess = function (newValue) {
     if (this.isValid(newValue)) {
         this.answer(newValue);
     }
@@ -46,7 +46,7 @@ Entry.prototype.onPreProcess = function(newValue) {
 /**
  * Serves as the base for all entries that take an array answer.
  */
-EntryArrayAnswer = function(question, options) {
+EntryArrayAnswer = function (question, options) {
     var self = this;
     Entry.call(self, question, options);
     self.rawAnswer = ko.observableArray(_.clone(question.answer()));
@@ -57,18 +57,18 @@ EntryArrayAnswer = function(question, options) {
 };
 EntryArrayAnswer.prototype = Object.create(Entry.prototype);
 EntryArrayAnswer.prototype.constructor = Entry;
-EntryArrayAnswer.prototype.onAnswerChange = function(newValue) {
+EntryArrayAnswer.prototype.onAnswerChange = function (newValue) {
     if (Formplayer.Utils.answersEqual(this.answer(), this.previousAnswer)) {
         return;
     }
     this.question.onchange();
     this.previousAnswer = this.answer();
 };
-EntryArrayAnswer.prototype.onPreProcess = function(newValue) {
+EntryArrayAnswer.prototype.onPreProcess = function (newValue) {
     var processed;
     if (this.isValid(newValue)) {
         if (newValue.length) {
-            processed = _.map(newValue, function(d) { return +d; });
+            processed = _.map(newValue, function (d) { return +d; });
         } else {
             processed = Formplayer.Const.NO_ANSWER;
         }
@@ -85,7 +85,7 @@ EntryArrayAnswer.prototype.onPreProcess = function(newValue) {
 /**
  * Serves as the base for all entries that take an answer that is not an array.
  */
-EntrySingleAnswer = function(question, options) {
+EntrySingleAnswer = function (question, options) {
     var self = this;
 
     Entry.call(self, question, options);
@@ -107,7 +107,7 @@ EntrySingleAnswer = function(question, options) {
 };
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
 EntrySingleAnswer.prototype.constructor = Entry;
-EntrySingleAnswer.prototype.onAnswerChange = function(newValue) {
+EntrySingleAnswer.prototype.onAnswerChange = function (newValue) {
     this.question.onchange();
 };
 
@@ -155,7 +155,7 @@ function FreeTextEntry(question, options) {
     self.lengthLimit = options.lengthLimit || 100000;
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
 
-    self.isValid = function(rawAnswer) {
+    self.isValid = function (rawAnswer) {
         var errmsg = self.getErrorMessage(rawAnswer);
         if (errmsg) {
             return false;
@@ -163,11 +163,11 @@ function FreeTextEntry(question, options) {
         return true;
     };
 
-    self.getErrorMessage = function(raw) {
+    self.getErrorMessage = function (raw) {
         return null;
     };
 
-    self.helpText = function() {
+    self.helpText = function () {
         if (isPassword) {
             return gettext('Password');
         }
@@ -181,7 +181,7 @@ function FreeTextEntry(question, options) {
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 FreeTextEntry.prototype.constructor = EntrySingleAnswer;
-FreeTextEntry.prototype.onPreProcess = function(newValue) {
+FreeTextEntry.prototype.onPreProcess = function (newValue) {
     if (this.isValid(newValue)) {
         this.answer(newValue === '' ? Formplayer.Const.NO_ANSWER : newValue);
     }
@@ -197,11 +197,11 @@ function IntEntry(question, options) {
     self.templateType = 'str';
     self.lengthLimit = options.lengthLimit || 9;
 
-    self.getErrorMessage = function(rawAnswer) {
+    self.getErrorMessage = function (rawAnswer) {
         return (isNaN(+rawAnswer) || +rawAnswer != Math.floor(+rawAnswer) ? "Not a valid whole number" : null);
     };
 
-    self.helpText = function() {
+    self.helpText = function () {
         return 'Number';
     };
 
@@ -209,7 +209,7 @@ function IntEntry(question, options) {
 IntEntry.prototype = Object.create(FreeTextEntry.prototype);
 IntEntry.prototype.constructor = FreeTextEntry;
 
-IntEntry.prototype.onPreProcess = function(newValue) {
+IntEntry.prototype.onPreProcess = function (newValue) {
     if (this.isValid(newValue)) {
         if (newValue === '') {
             this.answer(Formplayer.Const.NO_ANSWER);
@@ -226,14 +226,14 @@ function PhoneEntry(question, options) {
     this.templateType = 'str';
     this.lengthLimit = options.lengthLimit || 15;
 
-    this.getErrorMessage = function(rawAnswer) {
+    this.getErrorMessage = function (rawAnswer) {
         if (rawAnswer === '') {
             return null;
         }
         return (!(/^[+\-]?\d*(\.\d+)?$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
     };
 
-    this.helpText = function() {
+    this.helpText = function () {
         return 'Phone number or Numeric ID';
     };
 
@@ -249,11 +249,11 @@ function FloatEntry(question, options) {
     IntEntry.call(this, question, options);
     this.templateType = 'str';
 
-    this.getErrorMessage = function(rawAnswer) {
+    this.getErrorMessage = function (rawAnswer) {
         return (isNaN(+rawAnswer) ? "Not a valid number" : null);
     };
 
-    this.helpText = function() {
+    this.helpText = function () {
         return 'Decimal';
     };
 }
@@ -271,11 +271,11 @@ function MultiSelectEntry(question, options) {
     self.choices = question.choices;
     self.isMulti = true;
 
-    self.onClear = function() {
+    self.onClear = function () {
         self.rawAnswer([]);
     };
 
-    self.isValid = function(rawAnswer) {
+    self.isValid = function (rawAnswer) {
         return _.isArray(rawAnswer);
     };
 }
@@ -292,16 +292,16 @@ function SingleSelectEntry(question, options) {
     self.choices = question.choices;
     self.templateType = 'select';
     self.isMulti = false;
-    self.onClear = function() {
+    self.onClear = function () {
         self.rawAnswer(Formplayer.Const.NO_ANSWER);
     };
-    self.isValid = function() {
+    self.isValid = function () {
         return true;
     };
 }
 SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
-SingleSelectEntry.prototype.onPreProcess = function(newValue) {
+SingleSelectEntry.prototype.onPreProcess = function (newValue) {
     if (this.isValid(newValue)) {
         if (newValue === Formplayer.Const.NO_ANSWER) {
             this.answer(newValue);
@@ -316,8 +316,8 @@ function DropdownEntry(question, options) {
     EntrySingleAnswer.call(this, question, options);
     self.templateType = 'dropdown';
 
-    self.options = ko.pureComputed(function() {
-        return _.map(question.choices(), function(choice, idx) {
+    self.options = ko.pureComputed(function () {
+        return _.map(question.choices(), function (choice, idx) {
             return {
                 text: choice,
                 idx: idx + 1,
@@ -327,7 +327,7 @@ function DropdownEntry(question, options) {
 }
 DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DropdownEntry.prototype.constructor = EntrySingleAnswer;
-DropdownEntry.prototype.onPreProcess = function(newValue) {
+DropdownEntry.prototype.onPreProcess = function (newValue) {
     // When newValue is undefined it means we've unset the select question.
     if (newValue === Formplayer.Const.NO_ANSWER || newValue === undefined) {
         this.answer(Formplayer.Const.NO_ANSWER);
@@ -354,21 +354,21 @@ function ComboboxEntry(question, options) {
     self.templateType = 'str';
     self.placeholderText = gettext('Type to filter answers');
 
-    self.options = ko.computed(function() {
-        return _.map(question.choices(), function(choice, idx) {
+    self.options = ko.computed(function () {
+        return _.map(question.choices(), function (choice, idx) {
             return {
                 name: choice,
                 id: idx + 1,
             };
         });
     });
-    self.options.subscribe(function() {
+    self.options.subscribe(function () {
         self.renderAtwho();
         if (!self.isValid(self.rawAnswer())) {
             self.question.error(gettext('Not a valid choice'));
         }
     });
-    self.helpText = function() {
+    self.helpText = function () {
         return 'Combobox';
     };
 
@@ -380,7 +380,7 @@ function ComboboxEntry(question, options) {
         );
     }
 
-    self.renderAtwho = function() {
+    self.renderAtwho = function () {
         var $input = $('#' + self.entryId),
             limit = Infinity,
             $atwhoView;
@@ -394,8 +394,8 @@ function ComboboxEntry(question, options) {
             limit: limit,
             suffix: '',
             callbacks: {
-                filter: function(query, data) {
-                    var results = _.filter(data, function(item) {
+                filter: function (query, data) {
+                    var results = _.filter(data, function (item) {
                         return ComboboxEntry.filter(query, item, self.matchType);
                     });
                     $atwhoView = $('.atwho-container .atwho-view');
@@ -404,33 +404,33 @@ function ComboboxEntry(question, options) {
                     });
                     return results;
                 },
-                matcher: function() {
+                matcher: function () {
                     return $input.val();
                 },
-                sorter: function(query, data) {
+                sorter: function (query, data) {
                     return data;
                 },
             },
         });
     };
-    self.isValid = function(value) {
+    self.isValid = function (value) {
         if (!value) {
             return true;
         }
         return _.include(
-            _.map(self.options(), function(option) {
+            _.map(self.options(), function (option) {
                 return option.name;
             }),
             value
         );
     };
 
-    self.afterRender = function() {
+    self.afterRender = function () {
         self.renderAtwho();
     };
 }
 
-ComboboxEntry.filter = function(query, d, matchType) {
+ComboboxEntry.filter = function (query, d, matchType) {
     var match;
     if (matchType === Formplayer.Const.COMBOBOX_MULTIWORD) {
         // Multiword filter, matches any choice that contains all of the words in the query
@@ -440,7 +440,7 @@ ComboboxEntry.filter = function(query, d, matchType) {
         var wordsInQuery = query.split(' ');
         var wordsInChoice = d.name.split(' ');
 
-        match = _.all(wordsInQuery, function(word) {
+        match = _.all(wordsInQuery, function (word) {
             return _.include(wordsInChoice, word);
         });
     } else if (matchType === Formplayer.Const.COMBOBOX_FUZZY) {
@@ -462,7 +462,7 @@ ComboboxEntry.filter = function(query, d, matchType) {
 
 ComboboxEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 ComboboxEntry.prototype.constructor = EntrySingleAnswer;
-ComboboxEntry.prototype.onPreProcess = function(newValue) {
+ComboboxEntry.prototype.onPreProcess = function (newValue) {
     var value;
     if (newValue === Formplayer.Const.NO_ANSWER || newValue === '') {
         this.answer(Formplayer.Const.NO_ANSWER);
@@ -470,7 +470,7 @@ ComboboxEntry.prototype.onPreProcess = function(newValue) {
         return;
     }
 
-    value = _.find(this.options(), function(d) {
+    value = _.find(this.options(), function (d) {
         return d.name === newValue;
     });
     if (value) {
@@ -482,11 +482,11 @@ ComboboxEntry.prototype.onPreProcess = function(newValue) {
 };
 
 $.datetimepicker.setDateFormatter({
-    parseDate: function(date, format) {
+    parseDate: function (date, format) {
         var d = moment(date, format);
         return d.isValid() ? d.toDate() : false;
     },
-    formatDate: function(date, format) {
+    formatDate: function (date, format) {
         return moment(date).format(format);
     },
 });
@@ -508,7 +508,7 @@ function DateTimeEntryBase(question, options) {
     // Set min date to 100 years in the past
     minDate = moment(thisYear - 100, 'YYYY').toDate();
 
-    self.afterRender = function() {
+    self.afterRender = function () {
         self.$picker = $('#' + self.entryId);
         var datepickerOpts = {
             timepicker: self.timepicker,
@@ -520,14 +520,14 @@ function DateTimeEntryBase(question, options) {
             maxDate: maxDate,
             minDate: minDate,
             scrollInput: false,
-            onChangeDateTime: function(newDate) {
+            onChangeDateTime: function (newDate) {
                 if (!newDate) {
                     self.answer(Formplayer.Const.NO_ANSWER);
                     return;
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
             },
-            onGenerate: function() {
+            onGenerate: function () {
                 var $dt = $(this);
                 if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
                     $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
@@ -567,7 +567,7 @@ function DateTimeEntryBase(question, options) {
 }
 DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
 DateTimeEntryBase.prototype.constructor = EntrySingleAnswer;
-DateTimeEntryBase.prototype.convertServerToClientFormat = function(date) {
+DateTimeEntryBase.prototype.convertServerToClientFormat = function (date) {
     return moment(date, this.serverFormat).format(this.clientFormat);
 };
 
@@ -624,11 +624,11 @@ function GeoPointEntry(question, options) {
         anszoom: 6,
     };
 
-    self.onClear = function() {
+    self.onClear = function () {
         self.rawAnswer([]);
     };
 
-    self.gMapsCallback = function() {
+    self.gMapsCallback = function () {
         self.geocoder = new google.maps.Geocoder();
         self.map = new google.maps.Map($('#' + self.entryId)[0], {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -642,7 +642,7 @@ function GeoPointEntry(question, options) {
         google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
     };
 
-    self.afterRender = function() {
+    self.afterRender = function () {
         if (typeof google === "undefined" && !window.gMapsRequested) {
             // First entry to attempt to load google
             window.gMapsRequested = true;
@@ -656,18 +656,18 @@ function GeoPointEntry(question, options) {
         }
     };
 
-    self.updateCenter = function() {
+    self.updateCenter = function () {
         var center = self.map.getCenter();
         self.rawAnswer([center.lat(), center.lng()]);
     };
 
-    self.formatLat = function() {
+    self.formatLat = function () {
         return self.formatCoordinate(self.rawAnswer()[0] || null, ['N', 'S']);
     };
-    self.formatLon = function() {
+    self.formatLon = function () {
         return self.formatCoordinate(self.rawAnswer()[1] || null, ['E', 'W']);
     };
-    self.formatCoordinate = function(coordinate, cardinalities) {
+    self.formatCoordinate = function (coordinate, cardinalities) {
         var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities[1];
         if (coordinate !== null) {
             return cardinality + intpad(intpad(Math.abs(coordinate).toFixed(5), 8));
@@ -675,11 +675,11 @@ function GeoPointEntry(question, options) {
         return '??.?????';
     };
 
-    self.search = function(form) {
+    self.search = function (form) {
         var query = $(form).find('.query').val();
         self.geocoder.geocode({
             'address': query,
-        }, function(results, status) {
+        }, function (results, status) {
             if (status === google.maps.GeocoderStatus.OK) {
                 self.map.fitBounds(results[0].geometry.viewport);
                 self.map.setCenter(results[0].geometry.location);

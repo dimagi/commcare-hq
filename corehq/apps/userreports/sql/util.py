@@ -20,8 +20,8 @@ def get_column_name(path, suffix=None, add_hash=True):
         front = "/".join(parts[:-1])
         end = parts[-1]
         front = front.encode('unicode-escape')
-        end = end.encode('unicode-escape')
-        return hashlib.sha1('{}_{}'.format(hashlib.sha1(front).hexdigest(), end)).hexdigest()[:8]
+        end = end.encode('unicode-escape').decode('utf-8')
+        return hashlib.sha1('{}_{}'.format(hashlib.sha1(front).hexdigest(), end).encode('utf-8')).hexdigest()[:8]
 
     new_parts = path.split("/")
     if add_hash:

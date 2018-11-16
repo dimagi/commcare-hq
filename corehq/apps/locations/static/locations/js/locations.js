@@ -3,13 +3,13 @@ hqDefine('locations/js/locations', [
     'hqwebapp/js/initial_page_data',
     'locations/js/utils',
     'locations/js/location_tree',
-], function(
+], function (
     $,
     initialPageData,
     locationUtils,
-    LocationModels
+    locationModels
 ) {
-    $(function() {
+    $(function () {
         var locs = initialPageData.get('locations'),
             can_edit_root = initialPageData.get('can_edit_root'),
             hierarchy = initialPageData.get('hierarchy'),
@@ -20,12 +20,12 @@ hqDefine('locations/js/locations', [
             can_edit_root: can_edit_root,
         };
 
-        var tree_model = new LocationModels.LocationTreeViewModel(hierarchy, options);
+        var treeModel = locationModels.locationTreeViewModel(hierarchy, options);
 
-        $('#location_tree').koApplyBindings(tree_model);
-        tree_model.load(locs);
+        $('#location_tree').koApplyBindings(treeModel);
+        treeModel.load(locs);
 
-        var model = new LocationModels.LocationSearchViewModel(tree_model, options);
+        var model = locationModels.locationSearchViewModel(treeModel, options);
         $('#location_search').koApplyBindings(model);
 
         locationUtils.enableLocationSearchSelect();

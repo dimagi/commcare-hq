@@ -1,27 +1,22 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load djangular_tags %}
 {% load crispy_forms_tags %}
 
-<script type="text/ng-template" id="start.tpl">
-    <h2>{% trans "Telerivet Setup" %}</h2>
-    <div ng-controller="TelerivetSetupController" ng-cloak>
-        <div>
-            <p>
-                {% blocktrans %}
-                This guide will walk you through setting up an Android phone as a Telerivet gateway.
-                Before continuing, be sure that you have in front of you:
-                <ol>
-                    <li>The Android phone that will act as the Telerivet gateway. It should be connected to wifi and be capable of sending and receiving SMS.</li>
-                    <li>Another phone capable of sending and receiving SMS that will be used to test the gateway setup.</li>
-                </ol>
-                {% endblocktrans %}
-            </p>
-        </div>
-        <div class="form-actions">
-            <a class="btn btn-primary col-sm-2" href="#/step1">
-                {% trans "Continue" %} &raquo;
-            </a>
-        </div>
-    </div>
-</script>
+<h2>{% trans "Telerivet Setup" %}</h2>
+<div>
+    <p>
+        {% blocktrans %}
+        This guide will walk you through setting up an Android phone as a Telerivet gateway.
+        Before continuing, be sure that you have in front of you:
+        <ol>
+            <li>The Android phone that will act as the Telerivet gateway. It should be connected to wifi and be capable of sending and receiving SMS.</li>
+            <li>Another phone capable of sending and receiving SMS that will be used to test the gateway setup.</li>
+        </ol>
+        {% endblocktrans %}
+    </p>
+</div>
+<div class="form-actions">
+    <button class="btn btn-primary col-sm-2" data-bind="click: nextStep">
+        {% trans "Continue" %} &raquo;
+    </button>
+</div>

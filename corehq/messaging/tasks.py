@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.reminders import tasks as reminders_tasks
-from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -24,7 +22,7 @@ def get_sync_key(case_id):
     return 'sync-case-for-messaging-%s' % case_id
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging(self, domain, case_id):
     if REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
@@ -38,7 +36,7 @@ def sync_case_for_messaging(self, domain, case_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
     try:
@@ -57,22 +55,11 @@ def _sync_case_for_messaging(domain, case_id):
 
     if case is None or case.is_deleted:
         sms_tasks.delete_phone_numbers_for_owners([case_id])
-        reminders_tasks.delete_reminders_for_cases(domain, [case_id])
         delete_schedule_instances_for_cases(domain, [case_id])
         return
 
     if use_phone_entries():
         sms_tasks._sync_case_phone_number(case)
-
-    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-        # This runs rules from the old reminders framework. ICDS only uses
-        # the new reminders framework now, so we can spare redis and couch
-        # some hits by not running this at all.
-        # When all environments are on the new framework, we can remove these
-        # lines entirely.
-        handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)
-        if handler_ids:
-            reminders_tasks._process_case_changed_for_case(domain, case, handler_ids)
 
     rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
@@ -115,13 +102,13 @@ def get_case_ids_for_messaging_rule(domain, case_type):
         )
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
 def set_rule_complete(rule_id):
     AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=False)
     MessagingRuleProgressHelper(rule_id).set_rule_complete()
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
 def run_messaging_rule(domain, rule_id):
     rule = _get_cached_rule(domain, rule_id)
     if not rule:

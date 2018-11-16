@@ -28,7 +28,7 @@ hqDefine('accounting/js/billing_account_form', [
             initialPageData.get('is_customer_billing_account'), initialPageData.get('enterprise_admin_emails'));
         $('#account-form').koApplyBindings(baForm);
 
-        $("#show_emails").click(function() {
+        $("#show_emails").click(function () {
             $('#emails-text').show();
             $(this).parent().hide();
         });

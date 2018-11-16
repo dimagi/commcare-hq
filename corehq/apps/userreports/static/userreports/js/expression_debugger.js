@@ -1,5 +1,5 @@
 /* globals ace */
-hqDefine('userreports/js/expression_debugger', function() {
+hqDefine('userreports/js/expression_debugger', function () {
     $(function () {
         var ExpressionModel = hqImport('userreports/js/expression_evaluator').ExpressionModel;
         var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("expression_evaluator");

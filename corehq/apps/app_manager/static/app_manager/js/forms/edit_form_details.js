@@ -30,13 +30,13 @@ hqDefine('app_manager/js/forms/edit_form_details', function () {
             type: 'POST',
             dataType: 'JSON',
             data: { name: module.name() },
-            success: function (data){
+            success: function (data) {
                 $.ajax({
                     url: module.updateCommentUrl,
                     type: 'POST',
                     dataType: 'JSON',
                     data: { comment: module.comment() },
-                    success: function (data){
+                    success: function (data) {
                         _updateCallbackFn(module.name(), module.comment());
                     },
                 });

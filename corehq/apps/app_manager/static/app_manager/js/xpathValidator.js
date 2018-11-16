@@ -13,7 +13,7 @@ ko.bindingHandlers.xpathValidator = (function () {
      */
     var XPathValidator = function (xpathText, allowCaseHashtags) {
         var self = {};
-        if (!ko.isObservable(xpathText)){
+        if (!ko.isObservable(xpathText)) {
             self.xpathText = ko.observable(xpathText);
         } else {
             self.xpathText = xpathText;

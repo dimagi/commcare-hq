@@ -22,11 +22,14 @@ class DataSourceResumeBuildTest(SimpleTestCase):
 
         case_type = 'type1'
         self._resume_helper.add_completed_case_type_or_xmlns(case_type)
-        self.assertEqual([case_type], self._resume_helper.get_completed_case_type_or_xmlns())
+        self.assertEqual([case_type.encode('utf-8')], self._resume_helper.get_completed_case_type_or_xmlns())
 
         case_type_2 = 'type2'
         self._resume_helper.add_completed_case_type_or_xmlns(case_type_2)
-        self.assertEqual([case_type, case_type_2], self._resume_helper.get_completed_case_type_or_xmlns())
+        self.assertEqual(
+            [case_type.encode('utf-8'), case_type_2.encode('utf-8')],
+            self._resume_helper.get_completed_case_type_or_xmlns()
+        )
 
     def test_clear_resume_info(self):
         self._resume_helper.add_completed_case_type_or_xmlns('type1')

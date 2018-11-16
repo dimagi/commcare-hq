@@ -12,6 +12,10 @@ DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE = _(
     'In order to view this data using the Report Builder you will have to delete this report '
     'and then build it again. Click below to delete it.'
 )
+DATA_SOURCE_MISSING_APP_ERROR_MESSAGE = _(
+    "Report builder data source doesn't reference an application. "
+    "It is likely this report has been customized and it is no longer editable. "
+)
 
 UCR_SQL_BACKEND = "SQL"
 
@@ -52,3 +56,15 @@ NAMED_FILTER_PREFIX = 'NamedFilter'
 
 DATA_SOURCE_TYPE_STANDARD = 'standard'
 DATA_SOURCE_TYPE_AGGREGATE = 'aggregate'
+
+
+AGGGREGATION_TYPE_AVG = 'avg'
+AGGGREGATION_TYPE_COUNT_UNIQUE = 'count_unique'
+AGGGREGATION_TYPE_COUNT = 'count'
+AGGGREGATION_TYPE_MIN = 'min'
+AGGGREGATION_TYPE_MAX = 'max'
+AGGGREGATION_TYPE_MONTH = 'month'
+AGGGREGATION_TYPE_SUM = 'sum'
+AGGGREGATION_TYPE_SIMPLE = 'simple'
+AGGGREGATION_TYPE_YEAR = 'year'
+AGGGREGATION_TYPE_NONZERO_SUM = 'nonzero_sum'

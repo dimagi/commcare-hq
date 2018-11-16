@@ -6,11 +6,11 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
 
     // To autogenerate cssid from random string
     // copied from http://stackoverflow.com/questions/7627000/javascript-convert-string-to-safe-class-name-for-css
-    var makeSafeForCSS = function(name) {
+    var makeSafeForCSS = function (name) {
         if (!name) {
             return "";
         }
-        return name.replace(/[^a-z0-9]/g, function(s) {
+        return name.replace(/[^a-z0-9]/g, function (s) {
             var c = s.charCodeAt(0);
             if (c === 32) return '-';
             if (c >= 65 && c <= 90) return '_' + s.toLowerCase();
@@ -27,19 +27,19 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
     * @param mappingContext: an object which has context of current UI language and whether
     *                 `value` of MapItem is a file-path to an icon or a simple string
     */
-    var MapItem = function(item, index, mappingContext){
+    var MapItem = function (item, index, mappingContext) {
         var self = this;
         this.key = ko.observable(item.key);
         this.editing = ko.observable(false);
 
-        this.cssId = ko.computed(function(){
+        this.cssId = ko.computed(function () {
             return makeSafeForCSS(this.key()) || '_blank_';
         }, this);
 
 
         // util function to generate icon-name of the format "module<module_id>_list_icon_<property_name>_<hash_of_item.key>"
-        this.generateIconPath = function(){
-            var randomFourDigits = Math.floor(Math.random()*9000) + 1000;
+        this.generateIconPath = function () {
+            var randomFourDigits = Math.floor(Math.random() * 9000) + 1000;
             var iconPrefix =  "jr://file/commcare/image/module" + mappingContext.module_id + "_list_icon_" + mappingContext.property_name.val() + "_";
             return iconPrefix + randomFourDigits + ".png";
         };
@@ -66,37 +66,37 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             });
         }
 
-        this.toggleEditMode = function() {
+        this.toggleEditMode = function () {
             this.editing(!this.editing());
         };
 
-        this.value = ko.computed(function() {
+        this.value = ko.computed(function () {
             // ko.observable for item.value
             var new_value = [];
             var langs = _.union(_(item.value).keys(), [mappingContext.lang]) ;
-            _.each(langs, function(lang){
+            _.each(langs, function (lang) {
                 // return ko reference to path in `iconManager` for current UI language value
-                if (mappingContext.values_are_icons() && lang === mappingContext.lang){
+                if (mappingContext.values_are_icons() && lang === mappingContext.lang) {
                     new_value.push([lang, self.iconManager.customPath]);
                 }
                 // return new ko.observable for other languages
-                else{
+                else {
                     new_value.push([lang, ko.observable(item.value[lang])]);
                 }
             });
             return _.object(new_value);
         }, this);
 
-        this.key.subscribe(function(newValue) {
-            if(mappingContext.duplicatedItems.indexOf(newValue) === -1 && mappingContext._isItemDuplicated(newValue)) {
+        this.key.subscribe(function (newValue) {
+            if (mappingContext.duplicatedItems.indexOf(newValue) === -1 && mappingContext._isItemDuplicated(newValue)) {
                 mappingContext.duplicatedItems.push(newValue);
             }
 
         });
 
-        this.key.subscribe(function(oldValue) {
+        this.key.subscribe(function (oldValue) {
             var index = mappingContext.duplicatedItems.indexOf(oldValue);
-            if(index !== -1 && !mappingContext._isItemDuplicated(oldValue, 2)) {
+            if (index !== -1 && !mappingContext._isItemDuplicated(oldValue, 2)) {
                 mappingContext.duplicatedItems.remove(oldValue);
             }
         }, null, "beforeChange");
@@ -105,7 +105,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
     /**
      * A MapList is an ordered list MapItem objects
      */
-    var MapList = function(o) {
+    var MapList = function (o) {
         var self = this;
         self.lang = o.lang;
         self.langs = [o.lang].concat(o.langs);
@@ -117,7 +117,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         self.multimedia = o.multimedia;
         self.property_name = o.property_name;
 
-        self.labels = ko.computed(function() {
+        self.labels = ko.computed(function () {
             if (this.values_are_icons()) {
                 return {
                     placeholder: django.gettext('Calculation'),
@@ -164,7 +164,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         };
         self.removeItem = function (item) {
             self.items.remove(item);
-            if(!self._isItemDuplicated(ko.utils.unwrapObservable(item.key)))
+            if (!self._isItemDuplicated(ko.utils.unwrapObservable(item.key)))
                 self.duplicatedItems.remove(ko.utils.unwrapObservable(item.key));
         };
         self.addItem = function () {
@@ -173,30 +173,30 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
 
             var item = new MapItem(raw_item, self.items.length, self);
             self.items.push(item);
-            if(self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
+            if (self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
                 self.duplicatedItems.push('');
             }
         };
 
-        self._isItemDuplicated = function(key, max_counts) {
-            if(typeof(max_counts) === 'undefined') max_counts = 1;
+        self._isItemDuplicated = function (key, max_counts) {
+            if (typeof(max_counts) === 'undefined') max_counts = 1;
             var items = self.getItems();
             var counter = 0;
-            for(var i = 0; i < items.length; i++) {
+            for (var i = 0; i < items.length; i++) {
                 var item = items[i];
-                if(ko.utils.unwrapObservable(item.key) === key) {
+                if (ko.utils.unwrapObservable(item.key) === key) {
                     counter++;
-                    if(counter > max_counts) return true;
+                    if (counter > max_counts) return true;
                 }
             }
             return false;
         };
 
-        self.isItemDuplicated = function(key) {
+        self.isItemDuplicated = function (key) {
             return self.duplicatedItems.indexOf(key) !== -1;
         };
 
-        self.hasBadXML = function(key) {
+        self.hasBadXML = function (key) {
             if (self.values_are_icons() || self.values_are_conditions()) {
                 // Expressions can contain whatever
                 return false;
@@ -206,13 +206,13 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             return key.match(/[&<>"']/);
         };
 
-        self.keyHasError = function(key) {
+        self.keyHasError = function (key) {
             return self.isItemDuplicated(key) || self.hasBadXML(key);
         };
 
-        self.hasError = function() {
+        self.hasError = function () {
             return self.duplicatedItems().length > 0
-                || _.find(self.items(), function(i) { return self.hasBadXML(i.key()); });
+                || _.find(self.items(), function (i) { return self.hasBadXML(i.key()); });
         };
 
         self.getItems = function () {
@@ -250,12 +250,12 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                 property_name: o.property_name,
             });
             $modalDiv.koApplyBindings({
-                modalTitle: ko.computed(function() {
+                modalTitle: ko.computed(function () {
                     return 'Edit Mapping for ' + this.property_name.val();
                 }, this),
                 mapList: copy,
                 save: function (data, e) {
-                    if(copy.duplicatedItems().length > 0) {
+                    if (copy.duplicatedItems().length > 0) {
                         e.stopImmediatePropagation();
                     } else {
                         m.setItems(copy.getItems());

@@ -4,7 +4,7 @@ hqDefine("linked_domain/js/domain_links", [
     'underscore',
     'knockout',
     'hqwebapp/js/alert_user',
-], function(
+], function (
     RMI,
     initialPageData,
     _,
@@ -14,7 +14,7 @@ hqDefine("linked_domain/js/domain_links", [
     var _private = {};
     _private.RMI = function () {};
 
-    var ModelStatus = function(data) {
+    var ModelStatus = function (data) {
         var self = this;
         self.type = data.type;
         self.name = data.name;
@@ -23,14 +23,14 @@ hqDefine("linked_domain/js/domain_links", [
         self.showUpdate = ko.observable(data.can_update);
         self.update_url = null;
 
-        if (self.type === 'app' && self.detail && self.detail.app_id){
+        if (self.type === 'app' && self.detail && self.detail.app_id) {
             self.update_url = initialPageData.reverse('app_settings', self.detail.app_id);
         }
         self.hasError = ko.observable(false);
         self.hasSuccess = ko.observable(false);
         self.showSpinner = ko.observable(false);
 
-        self.update = function() {
+        self.update = function () {
             self.showSpinner(true);
             self.showUpdate(false);
             _private.RMI("update_linked_model", {"model": {
@@ -41,14 +41,14 @@ hqDefine("linked_domain/js/domain_links", [
                 self.hasSuccess(true);
                 self.showSpinner(false);
             })
-                .fail(function() {
+                .fail(function () {
                     self.hasError(true);
                     self.showSpinner(false);
                 });
         };
     };
 
-    var DomainLinksViewModel = function(data){
+    var DomainLinksViewModel = function (data) {
         var self = this;
         self.domain = data.domain;
         self.master_link = data.master_link;
@@ -63,20 +63,20 @@ hqDefine("linked_domain/js/domain_links", [
         self.can_update = data.can_update;
         self.models = data.models;
 
-        self.model_status = _.map(data.model_status, function(model_status) {
+        self.model_status = _.map(data.model_status, function (model_status) {
             return new ModelStatus(model_status);
         });
 
-        self.linked_domains = ko.observableArray(_.map(data.linked_domains, function(link) {
+        self.linked_domains = ko.observableArray(_.map(data.linked_domains, function (link) {
             return new DomainLink(link);
         }));
 
-        self.deleteLink = function(link) {
+        self.deleteLink = function (link) {
             _private.RMI("delete_domain_link", {"linked_domain": link.linked_domain()})
                 .done(function () {
                     self.linked_domains.remove(link);
                 })
-                .fail(function() {
+                .fail(function () {
                     alert_user.alert_user(gettext('Something unexpected happened.\n' +
                         'Please try again, or report an issue if the problem persists.'), 'danger');
                 });
@@ -90,9 +90,9 @@ hqDefine("linked_domain/js/domain_links", [
         self.master_domain = link.master_domain;
         self.remote_base_url = ko.observable(link.remote_base_url);
         self.last_update = link.last_update;
-        if (self.is_remote){
+        if (self.is_remote) {
             self.domain_link = self.linked_domain;
-        } else{
+        } else {
             self.domain_link = initialPageData.reverse('domain_links', self.linked_domain());
         }
     };
@@ -105,7 +105,7 @@ hqDefine("linked_domain/js/domain_links", [
     };
 
 
-    $(function() {
+    $(function () {
         var view_data = initialPageData.get('view_data');
         var csrfToken = $("#csrfTokenContainer").val();
         setRMI(initialPageData.reverse('linked_domain:domain_link_rmi'), csrfToken);

@@ -420,4 +420,4 @@ class TestGetProperties(SimpleTestCase):
     ("property = 'value' or property = 'other_value'", ['property']),
 ], TestGetProperties)
 def test_get_properties_from_ast(self, expression, expected_values):
-    self.assertItemsEqual(expected_values, get_properties_from_ast(parse_xpath(expression)))
+    self.assertEqual(set(expected_values), set(get_properties_from_ast(parse_xpath(expression))))

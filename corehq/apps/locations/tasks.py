@@ -148,7 +148,7 @@ def _archive_users(location_type):
         loc.save()
 
 
-@task
+@task(serializer='pickle')
 def download_locations_async(domain, download_id, include_consumption, headers_only):
     DownloadBase.set_progress(download_locations_async, 0, 100)
     dump_locations(domain, download_id, include_consumption=include_consumption,
@@ -191,7 +191,7 @@ def import_locations_async(domain, file_ref_id, user_id):
     }
 
 
-@task
+@task(serializer='pickle')
 def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_ids):
     """
     Update location fixtures for users given locations

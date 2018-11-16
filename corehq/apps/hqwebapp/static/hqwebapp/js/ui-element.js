@@ -16,11 +16,11 @@ hqDefine('hqwebapp/js/ui-element', function () {
         return hqImport('hqwebapp/js/ui_elements/ui-element-select').new(options);
     };
 
-    module.map_list = function(guid, modalTitle) {
+    module.map_list = function (guid, modalTitle) {
         return hqImport('hqwebapp/js/ui_elements/ui-element-key-val-list').new(guid, modalTitle);
     };
 
-    module.input_map = function(show_del_button) {
+    module.input_map = function (show_del_button) {
         return hqImport('hqwebapp/js/ui_elements/ui-element-input-map').new(show_del_button);
     };
 

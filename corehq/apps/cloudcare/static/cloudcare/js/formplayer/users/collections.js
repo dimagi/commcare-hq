@@ -1,11 +1,11 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Users.Collections", function(Collections, FormplayerFrontend, Backbone) {
+FormplayerFrontend.module("Users.Collections", function (Collections, FormplayerFrontend, Backbone) {
     /**
      * This collection represents a mobile worker user
      */
     Collections.User = Backbone.Collection.extend({
-        url: function() {
+        url: function () {
             if (!this.domain) {
                 throw new Error('Cannot instantiate collection without domain');
             }
@@ -13,12 +13,12 @@ FormplayerFrontend.module("Users.Collections", function(Collections, FormplayerF
         },
         model: FormplayerFrontend.Users.Models.User,
 
-        initialize: function(models, options) {
+        initialize: function (models, options) {
             options = options || {};
             this.domain = options.domain;
         },
 
-        parse: function(responseObject) {
+        parse: function (responseObject) {
             this.total = responseObject.response.total;
             return responseObject.response.itemList;
         },

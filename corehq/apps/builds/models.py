@@ -7,6 +7,8 @@ from corehq.apps.app_manager.const import APP_V2
 from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
+from corehq.apps.domain import SHARED_DOMAIN
+from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
 from itertools import groupby
@@ -41,6 +43,7 @@ class CommCareBuild(BlobMixin, Document):
     version = SemanticVersionProperty()
     time = DateTimeProperty()
     j2me_enabled = BooleanProperty(default=True)
+    _blobdb_type_code = BLOB_CODES.commcarebuild
 
     def put_file(self, payload, path, filename=None):
         """
@@ -55,7 +58,7 @@ class CommCareBuild(BlobMixin, Document):
             'jad': 'text/vnd.sun.j2me.app-descriptor',
             'jar': 'application/java-archive',
         }.get(path.split('.')[-1])
-        self.put_attachment(payload, path, content_type)
+        self.put_attachment(payload, path, content_type, domain=SHARED_DOMAIN)
 
     def fetch_file(self, path, filename=None):
         if filename:

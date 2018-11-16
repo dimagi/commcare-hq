@@ -37,7 +37,7 @@ hqDefine('registration/js/new_user.ko', function () {
     };
 
     // Can't set up analytics until the values for the A/B tests are ready
-    _kissmetrics.whenReadyAlways(function() {
+    _kissmetrics.whenReadyAlways(function () {
         _kissmetrics.track.event("Viewed CommCare signup page");
 
         _private.submitSuccessAnalytics = function (data) {
@@ -54,6 +54,13 @@ hqDefine('registration/js/new_user.ko', function () {
             _kissmetrics.identify(data.email);
             _kissmetrics.identifyTraits(appcuesData);
             _kissmetrics.track.event(appcuesEvent, appcuesData);
+
+            if (data.deniedEmail) {
+                _kissmetrics.track.event("Created account after previous denial due to enterprise restricting signups", {
+                    email: data.email,
+                    previousAttempt: data.deniedEmail,
+                });
+            }
         };
     });
 
@@ -122,9 +129,10 @@ hqDefine('registration/js/new_user.ko', function () {
             .extend({
                 emailRFC2822: true,
             });
+        self.deniedEmail = ko.observable('');
         self.emailDelayed = ko.pureComputed(self.email)
             .extend(_rateLimit)
-            .extend( {
+            .extend({
                 validation: {
                     async: true,
                     validator: function (val, params, callback) {
@@ -134,7 +142,14 @@ hqDefine('registration/js/new_user.ko', function () {
                                 {email: val},
                                 {
                                     success: function (result) {
-                                        callback(result.isValid);
+                                        if (result.restrictedByDomain) {
+                                            _kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
+                                            self.deniedEmail(val);
+                                        }
+                                        callback({
+                                            isValid: result.isValid,
+                                            message: result.message,
+                                        });
                                     },
                                 }
                             );
@@ -142,7 +157,6 @@ hqDefine('registration/js/new_user.ko', function () {
                             _private.resetEmailFeedback(false);
                         }
                     },
-                    message: django.gettext("There is already a user with this email."),
                 },
             });
         if (defaults.email) {
@@ -216,7 +230,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.isPersonaChoiceOtherNeeded = ko.computed(function () {
             return self.eulaConfirmed() && self.isPersonaChoiceOther() && !self.personaOther();
         });
-        self.isPersonaValid = ko.computed(function() {
+        self.isPersonaValid = ko.computed(function () {
             if (!self.hasPersonaFields) {
                 return true;
             }
@@ -230,7 +244,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.steps = ko.observableArray(steps);
         self.currentStep = ko.observable(0);
 
-        self.currentStep.subscribe(function(newValue) {
+        self.currentStep.subscribe(function (newValue) {
             if (newValue === 1) {
                 _kissmetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
             }
@@ -238,8 +252,8 @@ hqDefine('registration/js/new_user.ko', function () {
 
         var _getDataForSubmission = function () {
             var password = self.password();
-            if (typeof(hex_parser) !== 'undefined') {
-                password = (new hex_parser()).encode(self.password());
+            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
+                password = (hqImport("nic_compliance/js/encoder")()).encode(self.password());
             }
             var data = {
                 full_name: self.fullName(),
@@ -362,7 +376,7 @@ hqDefine('registration/js/new_user.ko', function () {
 
             _private.rmi(
                 "register_new_user",
-                {data : submitData},
+                {data: submitData},
                 {
                     success: function (response) {
                         if (response.errors !== undefined
@@ -379,6 +393,7 @@ hqDefine('registration/js/new_user.ko', function () {
                             self.isSubmitSuccess(true);
                             _private.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
+                                deniedEmail: self.deniedEmail(),
                                 appcuesAbTest: response.appcues_ab_test ? 'On' : 'Off',
                             }));
                         }

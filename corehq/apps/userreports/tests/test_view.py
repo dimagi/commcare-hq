@@ -101,8 +101,6 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         data_source_config.save()
         self.addCleanup(data_source_config.delete)
         tasks.rebuild_indicators(data_source_config._id)
-        adapter = get_indicator_adapter(data_source_config)
-        adapter.refresh_table()
 
         report_config = ReportConfiguration(
             domain=self.domain,

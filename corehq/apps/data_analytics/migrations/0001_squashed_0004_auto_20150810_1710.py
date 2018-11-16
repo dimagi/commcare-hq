@@ -12,8 +12,6 @@ from django.db import models, migrations
 
 class Migration(migrations.Migration):
 
-    replaces = [(b'data_analytics', '0001_initial'), (b'data_analytics', '0002_auto_20150810_1658'), (b'data_analytics', '0003_auto_20150810_1710'), (b'data_analytics', '0004_auto_20150810_1710')]
-
     dependencies = [
     ]
 

@@ -173,3 +173,19 @@
   values: ['1.0', '1.5', '2.0']
   value_names: ['1.0', '1.5', '2.0']
   default: '1.0'
+
+- id: location_fixture_restore
+  name: App Aware Location Fixture Format
+  description: Location Fixture format that is provided in the restore for this app
+  toggle: HIERARCHICAL_LOCATION_FIXTURE
+  values:
+    - 'project_default'
+    - 'both_fixtures'
+    - 'only_flat_fixture'
+    - 'only_hierarchical_fixture'
+  value_names:
+    - 'Project Default'
+    - 'Both Hierarchical and Flat Fixture'
+    - 'Only Flat Fixture'
+    - 'Only Hierarchical Fixture'
+  default: 'project_default'

@@ -8,7 +8,7 @@ from corehq.util.decorators import serial_task
 from django.conf import settings
 
 
-@periodic_task(run_every=crontab(minute='*/30', hour='0-5'), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/30', hour='0-5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_continuous_indexing_task():
     preindex_couch_views.delay()
 

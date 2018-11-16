@@ -73,19 +73,23 @@ from six.moves import map
 
 
 class HQUserType(object):
-    REGISTERED = 0
+    ACTIVE = 0
     DEMO_USER = 1
     ADMIN = 2
     UNKNOWN = 3
     COMMTRACK = 4
+    DEACTIVATED = 5
+    WEB = 6
     human_readable = [settings.COMMCARE_USER_TERM,
                       ugettext_noop("demo_user"),
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommCare Supply")]
-    toggle_defaults = (True, False, False, False, False)
+                      ugettext_noop("CommCare Supply"),
+                      ugettext_noop("Deactivated Mobile Workers"),
+                      ugettext_noop("Web Users"), ]
+    toggle_defaults = (True, False, False, False, False, True, True)
     count = len(human_readable)
-    included_defaults = (True, True, True, True, False)
+    included_defaults = (True, True, True, True, False, True, True)
 
     @classmethod
     def use_defaults(cls):
@@ -94,12 +98,12 @@ class HQUserType(object):
     @classmethod
     def all_but_users(cls):
         no_users = [True] * cls.count
-        no_users[cls.REGISTERED] = False
+        no_users[cls.ACTIVE] = False
         return cls._get_manual_filterset(cls.included_defaults, no_users)
 
     @classmethod
     def commtrack_defaults(cls):
-        # this is just a convenience method for clairty on commtrack projects
+        # this is just a convenience method for clarity on commtrack projects
         return cls.all()
 
     @classmethod

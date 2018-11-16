@@ -118,12 +118,6 @@ from corehq.apps.app_manager.views.settings import (
     edit_commcare_settings,
     PromptSettingsUpdateView,
 )
-from corehq.apps.app_manager.views.translations import (
-    download_bulk_app_translations,
-    download_bulk_ui_translations,
-    upload_bulk_app_translations,
-    upload_bulk_ui_translations,
-)
 from corehq.apps.app_manager.views.formdesigner import (
     form_source,
     form_source_legacy,

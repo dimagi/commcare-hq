@@ -13,6 +13,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.tzmigration.api import set_tz_migration_started, \
     set_tz_migration_complete, force_phone_timezones_should_be_processed
 from corehq.apps.tzmigration.planning import PlanningDB
+from corehq.blobs import CODES
 from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
@@ -98,7 +99,7 @@ def commit_plan(domain, planning_db):
 
 
 def _get_submission_xml(xform, db):
-    xml = BlobHelper(xform, db).fetch_attachment('form.xml')
+    xml = BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml')
     if isinstance(xml, six.text_type):
         xml = xml.encode('utf-8')
     return xml

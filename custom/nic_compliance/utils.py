@@ -2,15 +2,22 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 import base64
+import hashlib
 from datetime import timedelta
 from django.conf import settings
+from django.urls import resolve
 
 from django.contrib.auth.hashers import get_hasher
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.util.view_utils import get_request
-from custom.nic_compliance.const import EXPIRE_LOGIN_ATTEMPTS_IN, REDIS_LOGIN_ATTEMPTS_LIST_PREFIX
+from custom.nic_compliance.const import (
+    EXPIRE_LOGIN_ATTEMPTS_IN,
+    REDIS_LOGIN_ATTEMPTS_LIST_PREFIX,
+    MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK,
+    USERS_TO_TRACK_FOR_REPLAY_ATTACK,
+)
 
 PASSWORD_HASHER = get_hasher()
 # Passwords set with expected padding length and format would respect this regex
@@ -28,7 +35,7 @@ def extract_password(obfuscated_password):
         # b64 decode the encoded internal block to get raw internal block
         # raw internal block = (paddling_left + encoded_password + padding_right)
         try:
-            decoded_internal_block = base64.b64decode(encoded_internal_block)
+            decoded_internal_block = base64.b64decode(encoded_internal_block).decode('utf-8')
         except TypeError:
             return ''
         # match regex for padding along with b64 encoded password and find matches
@@ -54,8 +61,7 @@ def extract_password(obfuscated_password):
             # completely
             return ''
     else:
-        # return the password received AS-IS
-        return obfuscated_password
+        return None
 
 
 def hash_password(password):
@@ -66,39 +72,47 @@ def verify_password(password, encoded_password):
     return PASSWORD_HASHER.verify(password, encoded_password)
 
 
-def obfuscated_passwords_redis_key_for_user(username):
-    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + username
-
-
-def get_obfuscated_passwords(username):
-    client = get_redis_client()
-    return client.get(obfuscated_passwords_redis_key_for_user(username), [])
+def obfuscated_password_redis_key_for_user(username, obfuscated_password):
+    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + hashlib.md5("%s%s" % (
+        username, obfuscated_password
+    )).hexdigest()
 
 
 def get_raw_password(obfuscated_password, username=None):
+    client = get_redis_client()
+
     def replay_attack():
         # Replay attack where the same obfuscated password used from previous login attempt
-        obfuscated_passwords = get_obfuscated_passwords(username)
-        for submitted_obfuscated_password in obfuscated_passwords:
-            if verify_password(obfuscated_password, submitted_obfuscated_password):
-                return True
+        key_name = obfuscated_password_redis_key_for_user(username, obfuscated_password)
+        if client.get(key_name):
+            return True
 
     def record_login_attempt():
-        client = get_redis_client()
-        key_name = obfuscated_passwords_redis_key_for_user(username)
-        obfuscated_passwords = client.get(key_name, [])
-        client.set(key_name, obfuscated_passwords + [hash_password(obfuscated_password)])
-        client.expire(key_name, timedelta(EXPIRE_LOGIN_ATTEMPTS_IN))
+        key_name = obfuscated_password_redis_key_for_user(username, obfuscated_password)
+        client.set(key_name, True)
+        client.expire(key_name, timedelta(days=EXPIRE_LOGIN_ATTEMPTS_IN))
+
+    def _mobile_request_to_track(username):
+        # To be added just for audit test and should be removed to implement for all users
+        if username not in USERS_TO_TRACK_FOR_REPLAY_ATTACK:
+            return False
+        return resolve(request.path).url_name in MOBILE_REQUESTS_TO_TRACK_FOR_REPLAY_ATTACK
 
     def _decode_password():
-        # force check for replay attack and recording login attempt only for web sign in by checking for username
-        # Also skip those two checks in case of 2-step authentication by checking for auth-username which is not
-        # present in consecutive token step's POST params
-        if username and request and request.POST.get('auth-username'):
+        raw_password = extract_password(obfuscated_password)
+        if raw_password is None:
+            # if there was no obfuscation done, just return the raw password
+            # and skip any further checks
+            return obfuscated_password
+        # In case of 2-step authentication for web skip by checking for auth-username which is
+        # present in first step
+        if username and (
+                (request and request.POST.get('auth-username')) or
+                _mobile_request_to_track(username)):
             if replay_attack():
                 return ''
             record_login_attempt()
-        return extract_password(obfuscated_password)
+        return raw_password
 
     if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
         request = get_request()

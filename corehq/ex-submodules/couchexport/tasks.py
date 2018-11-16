@@ -16,7 +16,7 @@ from couchexport.export import SchemaMismatchException, ExportConfiguration
 logging = get_task_logger(__name__)
 
 
-@task
+@task(serializer='pickle')
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
     try:
         export_files = custom_export.get_export_files(format=format, process=export_async, **kwargs)
@@ -43,7 +43,7 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
             return cache_file_to_be_served(None, None, download_id, format, filename)
 
 
-@task
+@task(serializer='pickle')
 def rebuild_schemas(index):
     """
     Resets the schema for all checkpoints to the latest version based off the
@@ -61,7 +61,7 @@ def rebuild_schemas(index):
     return counter
 
 
-@task
+@task(serializer='pickle')
 def bulk_export_async(bulk_export_helper, download_id,
                       filename="bulk_export", expiry=10*60*60, domain=None):
 

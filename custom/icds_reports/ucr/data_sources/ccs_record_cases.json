@@ -1,9 +1,12 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -1155,6 +1158,18 @@
           "type": "property_name",
           "property_name": "num_pnc_visits"
         }
+     },
+     {
+        "transform": {},
+        "datatype": "small_integer",
+        "type": "expression",
+        "is_nullable": true,
+        "column_id": "num_anc_complete",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "num_anc_complete"
+        }
      }
     ],
     "named_expressions": {
@@ -1888,6 +1903,15 @@
       }
     },
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "3"
+        }
+      ]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [

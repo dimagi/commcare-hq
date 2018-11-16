@@ -28,7 +28,7 @@ class TestAWCDailyStatus(TestCase):
                     "period": "Daily",
                     'extended_info': [
                         {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "0"},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "19"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "20"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },
@@ -41,7 +41,7 @@ class TestAWCDailyStatus(TestCase):
                 "data": {
                     "st1": {
                         "in_day": 0,
-                        "all": 8,
+                        "all": 9,
                         'original_name': ["st1"],
                         "fillKey": "0%-50%"
                     },
@@ -78,7 +78,7 @@ class TestAWCDailyStatus(TestCase):
                         },
                         {
                             "indicator": "Total number of AWCs that have been launched:",
-                            "value": "19"
+                            "value": "20"
                         },
                         {
                             "indicator": "% of AWCs open yesterday:",
@@ -91,7 +91,7 @@ class TestAWCDailyStatus(TestCase):
                 "data": {
                     "st1": {
                         "in_day": 0,
-                        "all": 8,
+                        "all": 9,
                         "original_name": ["st1"],
                         "fillKey": "0%-50%"
                     },
@@ -120,7 +120,7 @@ class TestAWCDailyStatus(TestCase):
                     'month': (2017, 5, 28),
                     'state_id': 'st1',
                     'district_id': 'd1',
-                    'aggregation_level': 3
+                    'aggregation_level': 4
                 },
                 loc_level='block',
             ),
@@ -131,7 +131,7 @@ class TestAWCDailyStatus(TestCase):
                     "period": "Daily",
                     'extended_info': [
                         {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "0"},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "8"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "9"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },
@@ -144,7 +144,7 @@ class TestAWCDailyStatus(TestCase):
                 'data': {
                     'block_map': {
                         'in_day': 0,
-                        'all': 8,
+                        'all': 9,
                         'original_name': ['b1', 'b2'],
                         'fillKey': '0%-50%'
                     }
@@ -323,7 +323,7 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 19,
+                                "y": 20,
                                 "x": 1495929600000,
                                 "all": 0
                             }
@@ -497,31 +497,31 @@ class TestAWCDailyStatus(TestCase):
                 "top_five": [
                     {
                         'loc_name': 'st1',
-                        'value': 0
+                        'percent': 0
                     },
                     {
                         'loc_name': 'st2',
-                        'value': 0
+                        'percent': 0
                     }
                 ],
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "value": 0
+                        "percent": 0
                     },
                     {
                         "loc_name": "st2",
-                        "value": 0
+                        "percent": 0
                     }
                 ],
                 "bottom_five": [
                     {
                         'loc_name': 'st1',
-                        'value': 0
+                        'percent': 0
                     },
                     {
                         'loc_name': 'st2',
-                        'value': 0
+                        'percent': 0
                     }
                 ]
             }
@@ -546,7 +546,7 @@ class TestAWCDailyStatus(TestCase):
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,
-                        "all": 1
+                        "all": 2
                     },
                     "s1": {
                         "in_day": 0,
@@ -587,7 +587,7 @@ class TestAWCDailyStatus(TestCase):
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,
-                        "all": 1
+                        "all": 2
                     },
                     "s1": {
                         "in_day": 0,

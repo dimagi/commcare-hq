@@ -81,7 +81,7 @@ class BaseDumpLoadTest(TestCase):
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
         dump_output = output_stream.getvalue()
-        dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
+        dump_lines = [line.strip() for line in dump_output.split(b'\n') if line.strip()]
         total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
         expected_model_counts = _normalize_object_counter(expected_object_counts)
@@ -227,12 +227,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             pre_json = serializers.serialize('python', [pre])[0]
             post_json = serializers.serialize('python', [post])[0]
             self.assertDictEqual(pre_json, post_json)
-
-    def tearDown(self):
-        from corehq.apps.data_interfaces.models import AutomaticUpdateAction, AutomaticUpdateRuleCriteria
-        AutomaticUpdateAction.objects.all().delete()
-        AutomaticUpdateRuleCriteria.objects.all().delete()
-        super(TestSQLDumpLoad, self).tearDown()
 
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
@@ -439,15 +433,15 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         names = ['Cape Winelands', 'Paarl', 'Cape Town']
         location_ids = [locations[name].location_id for name in names]
         result = SQLLocation.objects.get_locations_and_children(location_ids)
-        self.assertItemsEqual(
-            [loc.name for loc in result],
-            ['Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City']
+        self.assertEqual(
+            set(loc.name for loc in result),
+            {'Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City'}
         )
 
         result = SQLLocation.objects.get_locations_and_children([locations['Gauteng'].location_id])
-        self.assertItemsEqual(
-            [loc.name for loc in result],
-            ['Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs']
+        self.assertEqual(
+            set(loc.name for loc in result),
+            {'Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs'}
         )
 
     def test_sms(self):

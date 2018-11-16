@@ -20,7 +20,7 @@ hqDefine('notifications/js/notifications_service_main', [
         notificationsService.relativelyPositionUINotify('.alert-ui-notify-relative');
         notificationsService.initUINotify('.alert-ui-notify');
 
-        $(document).on('click', '.notification-link', function() {
+        $(document).on('click', '.notification-link', function () {
             googleAnalytics.track.event('Notification', 'Opened Message', this.href);
         });
         googleAnalytics.track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');

@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('form_uuid', models.CharField(max_length=255)),
                 ('server_date', models.DateTimeField()),
                 ('type', models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild')])),
-                ('case', models.ForeignKey(related_query_name=b'xform', related_name='xform_set', db_column=b'case_uuid', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE)),
+                ('case', models.ForeignKey(related_query_name=b'xform', related_name='xform_set', db_column='case_uuid', to_field='case_uuid', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['server_date'],

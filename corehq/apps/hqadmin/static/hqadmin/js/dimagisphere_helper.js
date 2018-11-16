@@ -1,6 +1,6 @@
 /* globals hqDefine, d3, nv, WS4Redis */
 hqDefine('hqadmin/js/dimagisphere_helper', function () {
-    var dimagisphere = (function() {
+    var dimagisphere = (function () {
         var self = {};
 
         self.formData = {
@@ -57,7 +57,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
         return self;
     })();
 
-    $(function() {
+    $(function () {
         var filter = {},
             initial_page_data = $("body").data();
 
@@ -97,7 +97,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
 
                 // when the bar for a domain is clicked on, we can filter on that domain
                 // isn't in use with just this one chart and the map, but maybe if there are other charts added
-                d3.selectAll(".discreteBar").on('click', function(d) {
+                d3.selectAll(".discreteBar").on('click', function (d) {
                     if (filter.domain && filter.domain === d.domain) {
                         filter.domain = null;
                     } else {
@@ -114,10 +114,10 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
 
         // charts
         var chart, chartData;
-        nv.addGraph(function() {
+        nv.addGraph(function () {
             chart = nv.models.discreteBarChart()
-                .x(function(d) { return d.domain; })
-                .y(function(d) { return d.count; })
+                .x(function (d) { return d.domain; })
+                .y(function (d) { return d.count; })
                 .staggerLabels(true)
                 .tooltips(false)
                 .showValues(true)
@@ -131,7 +131,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
         function formatChartData(data) {
             var values = $.map(data, function (count, domain) { return {'domain': domain, 'count': count}; });
             if (filter.country) {
-                values = values.filter(function(obj) {
+                values = values.filter(function (obj) {
                     if (tvmode) {
                         return obj.domain === filter.country;
                     } else {
@@ -225,7 +225,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             layer.on({
                 mouseover: highlightFeature,
                 mouseout: resetHighlight,
-                click: function() {
+                click: function () {
                     // when a country is clicked on, we filter by country name
                     if (filter.country === layer.feature.properties.name) {
                         filter.country = null;
@@ -280,21 +280,21 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
         var createLegend = function () {
             var div = L.DomUtil.create('div', 'info legend');
 
-            var activeCountValues = COUNTRY_ACTIVE_COLORS.map(function(e, i) {
-                return i+1;
+            var activeCountValues = COUNTRY_ACTIVE_COLORS.map(function (e, i) {
+                return i + 1;
             });
 
             // get the upper bounds for each bucket
-            var countValues = COUNTRY_COLORS.map(function(e, i) {
-                var bound = dimagisphere.formData.maxFormsByCountry * (i+1) / COUNTRY_COLORS.length;
-                return Math.max(0, (i < COUNTRY_COLORS.length -1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
+            var countValues = COUNTRY_COLORS.map(function (e, i) {
+                var bound = dimagisphere.formData.maxFormsByCountry * (i + 1) / COUNTRY_COLORS.length;
+                return Math.max(0, (i < COUNTRY_COLORS.length - 1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
             });
 
             // only include legend items that are actually used right now
             // when there is a low number of maxForms, they may not all be included
             var indicesToRemove = [];
-            var colors = COUNTRY_COLORS.filter(function(elem, index) {
-                if (countValues[index] <= 0 || (index > 0 && countValues[index] === countValues[index-1])) {
+            var colors = COUNTRY_COLORS.filter(function (elem, index) {
+                if (countValues[index] <= 0 || (index > 0 && countValues[index] === countValues[index - 1])) {
                     indicesToRemove.push(index);
                     return false;
                 } else {
@@ -302,7 +302,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 }
             });
 
-            countValues = countValues.filter(function(elem, index) {
+            countValues = countValues.filter(function (elem, index) {
                 return indicesToRemove.indexOf(index) <= -1;
             });
 
@@ -323,9 +323,9 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             // loop through our form count intervals and generate a label with a colored square for each interval
             for (var n = 0; n < countValues.length; n++) {
                 div.innerHTML += '<i style="background:' + colors[n] + '"></i> ';
-                if (countValues[n-1] !==  undefined) {
-                    if (countValues[n-1] +1 < countValues[n]) {
-                        div.innerHTML += (countValues[n-1] + 1) + '&ndash;';
+                if (countValues[n - 1] !==  undefined) {
+                    if (countValues[n - 1] + 1 < countValues[n]) {
+                        div.innerHTML += (countValues[n - 1] + 1) + '&ndash;';
                     }
                 } else if (countValues[n] > 1) {
                     div.innerHTML += '1&ndash;';

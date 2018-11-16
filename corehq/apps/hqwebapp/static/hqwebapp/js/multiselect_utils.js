@@ -71,10 +71,10 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             ),
             afterInit: function () {
                 var that = this,
-                    $selectableSearch = $('#'+searchSelectableId),
-                    $selectionSearch = $('#'+searchSelectedId),
-                    selectableSearchString = '#'+that.$container.attr('id')+' .ms-elem-selectable:not(.ms-selected)',
-                    selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
+                    $selectableSearch = $('#' + searchSelectableId),
+                    $selectionSearch = $('#' + searchSelectedId),
+                    selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
+                    selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
 
                 that.search_left = $selectableSearch.quicksearch(selectableSearchString)
                     .on('keydown', function (e) {
@@ -108,14 +108,14 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         }
                     });
             },
-            afterSelect: function(){
+            afterSelect: function () {
                 this.search_left.cache();
                 // remove search option so that user doesn't get confused
                 this.search_right.val('').search('');
                 $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
                 this.search_right.cache();
             },
-            afterDeselect: function(){
+            afterDeselect: function () {
                 // remove search option so that user doesn't get confused
                 this.search_left.val('').search('');
                 $('#' + selectAllId).removeClass('disabled').prop('disabled', false);

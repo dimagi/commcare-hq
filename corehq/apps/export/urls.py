@@ -1,42 +1,47 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url
-from corehq.apps.export.views import (
-    CreateNewCustomFormExportView,
-    CreateNewCustomCaseExportView,
-    EditNewCustomFormExportView,
-    EditNewCustomCaseExportView,
-    DeleteNewCustomExportView,
-    DownloadFormExportView,
-    DownloadCaseExportView,
-    FormExportListView,
-    CaseExportListView,
-    BulkDownloadFormExportView,
-    DeIdFormExportListView,
+from corehq.apps.export.views.download import (
     DownloadNewFormExportView,
     BulkDownloadNewFormExportView,
     DownloadNewCaseExportView,
     DownloadNewSmsExportView,
-    GenerateSchemaFromAllBuildsView,
-    download_daily_saved_export,
-    DashboardFeedListView,
-    CreateNewCaseFeedView,
-    CreateNewFormFeedView,
+    add_export_email_request,
+)
+from corehq.apps.export.views.edit import (
+    EditNewCustomFormExportView,
+    EditNewCustomCaseExportView,
     EditCaseFeedView,
     EditCaseDailySavedExportView,
     EditFormFeedView,
     EditFormDailySavedExportView,
+)
+from corehq.apps.export.views.list import (
     DailySavedExportListView,
-    CreateNewDailySavedCaseExport,
-    CreateNewDailySavedFormExport,
+    FormExportListView,
+    CaseExportListView,
+    DashboardFeedListView,
+    DeIdFormExportListView,
     DeIdDailySavedExportListView,
     DeIdDashboardFeedListView,
+    download_daily_saved_export,
+)
+from corehq.apps.export.views.new import (
+    CreateNewCustomFormExportView,
+    CreateNewCustomCaseExportView,
+    CreateNewDailySavedCaseExport,
+    CreateNewDailySavedFormExport,
+    CreateNewCaseFeedView,
+    CreateNewFormFeedView,
+    CopyExportView,
+    DeleteNewCustomExportView,
+)
+from corehq.apps.export.views.utils import (
     DashboardFeedPaywall,
     DailySavedExportPaywall,
-    CopyExportView,
     DataFileDownloadList,
     DataFileDownloadDetail,
-    add_export_email_request
+    GenerateSchemaFromAllBuildsView,
 )
 
 urlpatterns = [
@@ -65,7 +70,7 @@ urlpatterns = [
     url(r"^custom/download_data_files/$",
         DataFileDownloadList.as_view(),
         name=DataFileDownloadList.urlname),
-    url(r"^custom/download_data_files/(?P<pk>\d+)/(?P<filename>.*)$",
+    url(r"^custom/download_data_files/(?P<pk>[\w\-]+)/(?P<filename>.*)$",
         DataFileDownloadDetail.as_view(),
         name=DataFileDownloadDetail.urlname),
 
@@ -90,21 +95,12 @@ urlpatterns = [
         name=CreateNewDailySavedCaseExport.urlname),
 
     # Download views
-    url(r"^custom/form/download/bulk/$",
-        BulkDownloadFormExportView.as_view(),
-        name=BulkDownloadFormExportView.urlname),
     url(r"^custom/new/form/download/bulk/$",
         BulkDownloadNewFormExportView.as_view(),
         name=BulkDownloadNewFormExportView.urlname),
-    url(r"^custom/form/download/(?P<export_id>[\w\-]+)/$",
-        DownloadFormExportView.as_view(),
-        name=DownloadFormExportView.urlname),
     url(r"^custom/new/form/download/(?P<export_id>[\w\-]+)/$",
         DownloadNewFormExportView.as_view(),
         name=DownloadNewFormExportView.urlname),
-    url(r"^custom/case/download/(?P<export_id>[\w\-]+)/$",
-        DownloadCaseExportView.as_view(),
-        name=DownloadCaseExportView.urlname),
     url(r"^custom/new/case/download/(?P<export_id>[\w\-]+)/$",
         DownloadNewCaseExportView.as_view(),
         name=DownloadNewCaseExportView.urlname),

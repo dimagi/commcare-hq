@@ -33,7 +33,7 @@ hqDefine('analytix/js/hubspot', [
      * @param {object} data
      */
     var identify = function (data) {
-        _ready.done(function() {
+        _ready.done(function () {
             _logger.debug.log(data, "Identify");
             _hsq.push(['identify', data]);
         });
@@ -46,7 +46,7 @@ hqDefine('analytix/js/hubspot', [
      */
     var trackEvent = function (eventId, value) {
         var originalArgs = arguments;
-        _ready.done(function() {
+        _ready.done(function () {
             _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], originalArgs), 'Track Event');
             _hsq.push(['trackEvent', {
                 id: eventId,
@@ -55,8 +55,13 @@ hqDefine('analytix/js/hubspot', [
         });
     };
 
+    var then = function (successCallback, failureCallback) {
+        _ready.then(successCallback, failureCallback);
+    };
+
     return {
         identify: identify,
+        then: then,
         trackEvent: trackEvent,
     };
 });

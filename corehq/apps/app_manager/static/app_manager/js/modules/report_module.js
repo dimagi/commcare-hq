@@ -20,11 +20,11 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 var currentChart = reportCharts[currentReportId][j];
                 var graphConfig = graphConfigs[currentChart.chart_id] || {
                     graph_type: 'bar',
-                    series: _.map(currentChart.y_axis_columns, function() { return {}; }),
+                    series: _.map(currentChart.y_axis_columns, function () { return {}; }),
                 };
 
                 // Add series placeholders
-                _.each(currentChart.y_axis_columns, function(column, index) {
+                _.each(currentChart.y_axis_columns, function (column, index) {
                     if (graphConfig.series[index]) {
                         var dataPathPlaceholder = dataPathPlaceholders && dataPathPlaceholders[currentReportId]
                             ? dataPathPlaceholders[currentReportId][currentChart.chart_id]
@@ -47,37 +47,37 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 graphEl.setName(reportName);
                 self.graphUiElements[currentReportId][currentChart.chart_id] = graphEl;
 
-                graphEl.on("change", function() {
+                graphEl.on("change", function () {
                     changeSaveButton();
                 });
             }
         }
 
         self.name = ko.observable(reportName);
-        self.name.subscribe(function(newValue) {
-            _.each(self.graphUiElements, function(reportGraphElements) {
-                _.each(reportGraphElements, function(uiElement) {
+        self.name.subscribe(function (newValue) {
+            _.each(self.graphUiElements, function (reportGraphElements) {
+                _.each(reportGraphElements, function (uiElement) {
                     uiElement.setName(newValue);
                 });
             });
         });
 
-        self.currentGraphUiElements = ko.computed(function() {
+        self.currentGraphUiElements = ko.computed(function () {
             return self.graphUiElements[reportId()];
         });
 
-        self.currentCharts = ko.computed(function() {
+        self.currentCharts = ko.computed(function () {
             return reportCharts[reportId()];
         });
 
-        self.getCurrentGraphUiElement = function(chartId) {
+        self.getCurrentGraphUiElement = function (chartId) {
             return self.currentGraphUiElements()[chartId];
         };
 
         self.toJSON = function () {
             var chartsToConfigs = {};
             var currentChartsToConfigs = self.currentGraphUiElements();
-            _.each(currentChartsToConfigs, function(graphConfig, chartId) {
+            _.each(currentChartsToConfigs, function (graphConfig, chartId) {
                 chartsToConfigs[chartId] = graphConfig.val();
             });
             return chartsToConfigs;
@@ -99,7 +99,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         var self = {};
 
         self.reportFilters = JSON.parse(JSON.stringify(reportFilters || {}));
-        _.each(self.reportFilters, function(filtersInReport, id) {
+        _.each(self.reportFilters, function (filtersInReport, id) {
             for (var i = 0; i < filtersInReport.length; i++) {
                 var filter = filtersInReport[i];
                 if (id === savedReportId && filterValues.hasOwnProperty(filter.slug)) {
@@ -123,7 +123,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     'period',
                     'ancestor_location_type_name',
                 ];
-                for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
+                for (var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     var startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
                     if (startVal === 0) {
                         filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(0);
@@ -137,7 +137,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     return selectedReportId() + '/' + filter.slug;
                 });
 
-                if(filter.choices !== undefined && filter.show_all) {
+                if (filter.choices !== undefined && filter.show_all) {
                     filter.choices.unshift({value: "_all", display: gettext("Show All")});
                 }
             }
@@ -166,14 +166,14 @@ hqDefine('app_manager/js/modules/report_module', function () {
                         AncestorLocationTypeFilter: ['ancestor_location_type_name'],
                         NumericFilter: ['operator', 'operand'],
                     };
-                    _.each(docTypeToField, function(field, docType) {
-                        if(filter.selectedValue.doc_type() === docType) {
-                            _.each(field, function(value) {
+                    _.each(docTypeToField, function (field, docType) {
+                        if (filter.selectedValue.doc_type() === docType) {
+                            _.each(field, function (value) {
                                 selectedFilterValues[filter.slug][value] = filter.selectedValue[value]();
                             });
                         }
                     });
-                    if(filter.selectedValue.doc_type() === 'StaticChoiceListFilter') {
+                    if (filter.selectedValue.doc_type() === 'StaticChoiceListFilter') {
                         selectedFilterValues[filter.slug].value = filter.selectedValue.value().split(select2Separator);
                     }
                 }
@@ -181,11 +181,11 @@ hqDefine('app_manager/js/modules/report_module', function () {
             return selectedFilterValues;
         };
 
-        self.addSubscribersToSaveButton = function() {
-            var addSubscriberToSaveButton = function(observable) {
+        self.addSubscribersToSaveButton = function () {
+            var addSubscriberToSaveButton = function (observable) {
                 observable.subscribe(changeSaveButton);
             };
-            _.each(self.reportFilters, function(filtersInReport) {
+            _.each(self.reportFilters, function (filtersInReport) {
                 for (var i = 0; i < filtersInReport.length; i++) {
                     var filter = filtersInReport[i];
                     _.each(filter.selectedValue, addSubscriberToSaveButton);
@@ -231,7 +231,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.graphConfig = graphConfigModel(self.reportId, self.display(), availableReportIds, reportCharts,
             graphConfigs, columnXpathTemplate, dataPathPlaceholders,
             self.lang, languages, changeSaveButton);
-        self.display.subscribe(function(newValue) {
+        self.display.subscribe(function (newValue) {
             self.graphConfig.name(newValue);
         });
         self.filterConfig = filterConfigModel(reportId, self.reportId, filterValues, reportFilters, changeSaveButton);
@@ -240,7 +240,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
             self.showCodes(!self.showCodes());
         };
 
-        self.validateDisplay = ko.computed(function() {
+        self.validateDisplay = ko.computed(function () {
             if (!self.display()) {
                 return gettext("Display text is required");
             }
@@ -424,7 +424,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.validateSlug = function (instanceId) {
             var allInstanceIds = instanceIdsElsewhere.concat(getInstanceIdsInThisModule()),
                 isDuplicate = _.filter(allInstanceIds, function (iid) {return iid === instanceId;})
-                              .length > 1;
+                    .length > 1;
             if (isDuplicate) {
                 return gettext("This code is used in multiple places.");
             }

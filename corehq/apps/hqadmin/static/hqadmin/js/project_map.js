@@ -1,13 +1,13 @@
 /* globals hqDefine */
 hqDefine('hqadmin/js/project_map', function () {
-    $(function() {
+    $(function () {
         // courtesy of http://colorbrewer2.org/
         var COUNTRY_COLORS = ['#fef0d9','#fdd49e','#fdbb84','#fc8d59','#e34a33','#b30000'];
         var PROJECT_COUNTS_THRESHOLD = [10, 20, 30, 40, 50];
         var USER_COUNTS_THRESHOLD = [10, 100, 500, 1000, 4000];
         var mapboxAccessToken = $("#map").data("token");
 
-        var selectionModel;
+        var model;
 
         function colorAll() {
             if (countriesGeo !== undefined) {
@@ -17,7 +17,7 @@ hqDefine('hqadmin/js/project_map', function () {
             }
         }
 
-        var dataController = function() {
+        var dataController = function () {
             var that = {};
             var maxNumProjects = 0;
             var maxNumUsers = 0;
@@ -37,13 +37,13 @@ hqDefine('hqadmin/js/project_map', function () {
                     users_per_country = data.users_per_country;
                     totalNumProjects = data.total_num_projects;
     
-                    Object.keys(projects_per_country).map(function(country) {
+                    Object.keys(projects_per_country).map(function (country) {
                         if (projects_per_country[country] > maxNumProjects) {
                             maxNumProjects = projects_per_country[country];
                         }
                     });
     
-                    Object.keys(users_per_country).map(function(country) {
+                    Object.keys(users_per_country).map(function (country) {
                         if (users_per_country[country] > maxNumUsers) {
                             maxNumUsers = users_per_country[country];
                         }
@@ -96,30 +96,31 @@ hqDefine('hqadmin/js/project_map', function () {
                 return totalNumUsers;
             };
     
-            that.isProjectCountMap = function (){
+            that.isProjectCountMap = function () {
                 return is_project_count_map;
             };
     
-            var SelectionModel = function () {
-                var self = this;
+            var selectionModel = function () {
+                var self = {};
                 self.selectedCountry = ko.observable('country name');
                 self.selectedProject = ko.observable('project name');
                 self.internalTableProperties = ['Name', 'Organization', 'Notes', 'Sector', 'Sub-Sector', 'Active Users', 'Countries'];
                 self.externalTableProperties = ['Sector', 'Sub-Sector', 'Active Users', 'Countries'];
                 self.topFiveProjects = ko.observableArray();
+                return self;
             };
     
-            selectionModel = new SelectionModel();
-            $('#modal').koApplyBindings(selectionModel);
+            model = selectionModel();
+            $('#modal').koApplyBindings(model);
     
             Object.freeze(that);
             return that;
         }();
     
-        var modalController = function(){
+        var modalController = function () {
             var that = {};
     
-            that.showProjectsTable = function(countryName) {
+            that.showProjectsTable = function (countryName) {
                 var modalContent = $('.modal-content');
                 modalContent.addClass('show-table');
                 modalContent.removeClass('show-project-info');
@@ -150,8 +151,8 @@ hqDefine('hqadmin/js/project_map', function () {
             bounds = L.latLngBounds(southWest, northEast);
     
         map.setMaxBounds(bounds);
-        map.on('drag', function(){
-            map.panInsideBounds(bounds, {animate:false});
+        map.on('drag', function () {
+            map.panInsideBounds(bounds, {animate: false});
         });
     
         function getColor(featureId) {
@@ -168,8 +169,8 @@ hqDefine('hqadmin/js/project_map', function () {
         }
     
         function getColorScaleIndex(count, scales) {
-            for (var i = 0; i < scales.length; i++){
-                if (count < scales[i]){
+            for (var i = 0; i < scales.length; i++) {
+                if (count < scales[i]) {
                     return i;
                 }
             }
@@ -215,7 +216,7 @@ hqDefine('hqadmin/js/project_map', function () {
         }
     
         function formatCountryNames(countries) {
-            return countries.map(function(country) {
+            return countries.map(function (country) {
                 var formattedCountryName = country.charAt(0).toUpperCase();
                 if (country.indexOf(",") > -1) {
                     formattedCountryName += country.substring(1, country.indexOf(",")).toLowerCase();
@@ -230,19 +231,19 @@ hqDefine('hqadmin/js/project_map', function () {
             layer.on({
                 mouseover: highlightFeature,
                 mouseout: resetHighlight,
-                click: function() {
-                    if (dataController.getCount(feature.properties.name)){
-                        selectionModel.selectedCountry(feature.properties.name);
-                        modalController.showProjectsTable(selectionModel.selectedCountry());
+                click: function () {
+                    if (dataController.getCount(feature.properties.name)) {
+                        model.selectedCountry(feature.properties.name);
+                        modalController.showProjectsTable(model.selectedCountry());
                         var country = (feature.properties.name).toUpperCase();
-                        selectionModel.topFiveProjects.removeAll();
+                        model.topFiveProjects.removeAll();
                         $.ajax({
                             url: "/hq/admin/top_five_projects_by_country/?country=" + country,
                             datatype: "json",
-                        }).done(function(data){
+                        }).done(function (data) {
                             if (data.internal) {
-                                data[country].forEach(function(project){
-                                    selectionModel.topFiveProjects.push({
+                                data[country].forEach(function (project) {
+                                    model.topFiveProjects.push({
                                         name: project['name'],
                                         organization: project['organization_name'],
                                         description: project['internal']['notes'],
@@ -253,8 +254,8 @@ hqDefine('hqadmin/js/project_map', function () {
                                     });
                                 });
                             } else {
-                                data[country].forEach(function(project){
-                                    selectionModel.topFiveProjects.push({
+                                data[country].forEach(function (project) {
+                                    model.topFiveProjects.push({
                                         sector: project['internal']['area'],
                                         sub_sector: project['internal']['sub_area'],
                                         active_users: project['cp_n_active_cc_users'],
@@ -305,9 +306,9 @@ hqDefine('hqadmin/js/project_map', function () {
             }
             for (var i = 0; i < thresholds.length; i++) {
                 div.innerHTML += '<i style="background:' + COUNTRY_COLORS[i] + '"></i> ';
-                if (thresholds[i-1] !==  undefined) {
-                    if (thresholds[i-1] +1 < thresholds[i]) {
-                        div.innerHTML += (thresholds[i-1] + 1) + '&ndash;';
+                if (thresholds[i - 1] !==  undefined) {
+                    if (thresholds[i - 1] + 1 < thresholds[i]) {
+                        div.innerHTML += (thresholds[i - 1] + 1) + '&ndash;';
                     }
                 } else if (thresholds[i] > 1) {
                     div.innerHTML += '1&ndash;';
@@ -315,7 +316,7 @@ hqDefine('hqadmin/js/project_map', function () {
                 div.innerHTML += thresholds[i] + '<br>';
             }
             div.innerHTML += '<i style="background:' + COUNTRY_COLORS[thresholds.length] + '"></i> '
-                             + (thresholds[thresholds.length-1] + 1)+ '+';
+                             + (thresholds[thresholds.length - 1] + 1) + '+';
     
             return div;
         };
@@ -339,29 +340,29 @@ hqDefine('hqadmin/js/project_map', function () {
         // todo: should probably be getting this from somewhere else and possibly not on every page load.
         $.getJSON('https://raw.githubusercontent.com/dimagi/world.geo.json/master/countries.geo.json', function (data) {
             countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
-            dataController.refreshProjectData({}, function() {
+            dataController.refreshProjectData({}, function () {
     
                 stats.addTo(map);
     
                 var references = window.location.hash.substring(1).split('#');
                 if (references.length === 2) {
                     // country, then project
-                    selectionModel.selectedCountry(references[0]);
-                    selectionModel.selectedProject(references[1]);
+                    model.selectedCountry(references[0]);
+                    model.selectedProject(references[1]);
                     modalController.showProjectInfo(references[0], references[1]);
                     $('#modal').modal();
                 } else if (references.length === 1 && references[0].length > 0) {
                     // just a country
-                    selectionModel.selectedCountry(references[0]);
+                    model.selectedCountry(references[0]);
                     modalController.showProjectsTable(references[0]);
                     $('#modal').modal();
                 }
             });
         });
     
-        $('.btn-toggle').click(function() {
+        $('.btn-toggle').click(function () {
             dataController.toggleMap();
-            dataController.refreshProjectData({}, function(){});
+            dataController.refreshProjectData({}, function () {});
             $(this).find('.btn').toggleClass('btn-primary');
             $(this).find('.btn').toggleClass('btn-default');
         });

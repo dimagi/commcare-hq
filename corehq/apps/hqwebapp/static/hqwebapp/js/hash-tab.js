@@ -1,4 +1,4 @@
-$(function(){
+$(function () {
     // http://stackoverflow.com/questions/12131273/twitter-bootstrap-tabs-url-doesnt-change#answer-12138756
     // todo: consider adding this to hq.helpers
     var hash = window.location.hash;

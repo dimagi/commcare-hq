@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
+import six
+from itertools import chain
 
-from couchdbkit.ext.django.schema import SchemaProperty, StringProperty
+from couchdbkit.ext.django.schema import SchemaProperty, StringProperty, DateTimeProperty, BooleanProperty
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
@@ -37,6 +39,15 @@ class OpenmrsRepeater(CaseRepeater):
 
     location_id = StringProperty(default='')
     openmrs_config = SchemaProperty(OpenmrsConfig)
+
+    # self.white_listed_case_types must have exactly one case type set
+    # for Atom feed integration to add cases for OpenMRS patients.
+    # self.location_id must be set to determine their case owner. The
+    # owner is set to the first CommCareUser instance found at that
+    # location.
+    atom_feed_enabled = BooleanProperty(default=False)
+    atom_feed_last_polled_at = DateTimeProperty(default=None)
+    atom_feed_last_page = StringProperty(default=None)
 
     def __eq__(self, other):
         return (
@@ -102,10 +113,17 @@ class OpenmrsRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
+        value_sources = chain(
+            six.itervalues(self.openmrs_config.case_config.patient_identifiers),
+            six.itervalues(self.openmrs_config.case_config.person_properties),
+            six.itervalues(self.openmrs_config.case_config.person_preferred_name),
+            six.itervalues(self.openmrs_config.case_config.person_preferred_address),
+            six.itervalues(self.openmrs_config.case_config.person_attributes),
+        )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[identifier.case_property
-                          for identifier in self.openmrs_config.case_config.patient_identifiers.values()])
+            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')]
+        )
         form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(

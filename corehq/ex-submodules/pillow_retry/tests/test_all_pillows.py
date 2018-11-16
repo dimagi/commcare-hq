@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
 import uuid
 
 from django.conf import settings
@@ -11,7 +12,6 @@ from pillow_retry.models import PillowError
 from pillowtop import get_all_pillow_configs
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import PillowRuntimeContext
 
 
 class ExceptionA(Exception):
@@ -44,7 +44,10 @@ class PillowtopRetryAllPillowsTests(TestCase):
         pillow = _pillow_instance_from_config_with_mock_process_change(pillow_config)
         if pillow.retry_errors:
             exc_class = Exception
-            exc_class_string = 'exceptions.Exception'
+            if six.PY3:
+                exc_class_string = 'builtins.Exception'
+            else:
+                exc_class_string = 'exceptions.Exception'
         else:
             exc_class = DocumentMissingError
             exc_class_string = 'pillowtop.dao.exceptions.DocumentMissingError'
@@ -53,7 +56,6 @@ class PillowtopRetryAllPillowsTests(TestCase):
         doc = self._get_random_doc()
         pillow.process_with_error_handling(
             Change(id=doc['id'], sequence_id='3', document=doc),
-            PillowRuntimeContext(changes_seen=0)
         )
 
         errors = PillowError.objects.filter(pillow=pillow.pillow_id).all()

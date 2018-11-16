@@ -14,10 +14,10 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
             });
             // Find all forms that could potentially be included in the current module:
             // Forms belonging to the source module and to the source module's children
-            self.sourceForms = ko.pureComputed(function() {
-                return self.selectedModule().forms().concat(_.flatten(_.map(_.filter(self.modules(), function(m) {
+            self.sourceForms = ko.pureComputed(function () {
+                return self.selectedModule().forms().concat(_.flatten(_.map(_.filter(self.modules(), function (m) {
                     return m.rootId === self.selectedModuleId();
-                }), function(m) {
+                }), function (m) {
                     return m.forms();
                 })));
             });

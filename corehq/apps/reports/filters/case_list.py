@@ -17,12 +17,12 @@ class CaseListFilterUtils(EmwfUtils):
     @memoized
     def static_options(self):
         options = super(CaseListFilterUtils, self).static_options
-        # replace [All mobile workers] with case-list-specific options
+        # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
         assert options[0][0] == "t__0"
         return [
             ("all_data", _("[All Data]")),
             ('project_data', _("[Project Data]"))
-        ] + options[1:]
+        ] + options[2:]
 
     def _group_to_choice_tuple(self, group):
         if group.case_sharing:
@@ -33,9 +33,12 @@ class CaseListFilterUtils(EmwfUtils):
 
 @location_safe
 class CaseListFilter(ExpandedMobileWorkerFilter):
+
+    label = _("Case Owner(s)")
     slug = 'case_list_filter'
     options_url = 'case_list_options'
     default_selections = [('project_data', _("[Project Data]"))]
+    placeholder = _("Add case owners to filter this report.")
 
     @property
     @memoized

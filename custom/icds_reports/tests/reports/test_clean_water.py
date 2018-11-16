@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test.utils import override_settings
 
+from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
 from django.test import TestCase
@@ -24,8 +25,7 @@ class TestCleanWater(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Of the AWCs that have submitted an Infrastructure Details form, the percentage "
-                            "of AWCs that reported having a source of clean drinking water. ",
+                    "info": awcs_reported_clean_drinking_water_help_text(),
                     "average": 96.15384615384616,
                     'extended_info': [
                         {
@@ -74,8 +74,7 @@ class TestCleanWater(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Of the AWCs that have submitted an Infrastructure Details form, the percentage "
-                            "of AWCs that reported having a source of clean drinking water. ",
+                    "info": awcs_reported_clean_drinking_water_help_text(),
                     "average": 100.0,
                     'extended_info': [
                         {
@@ -197,8 +196,7 @@ class TestCleanWater(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Of the AWCs that have submitted an Infrastructure Details form, "
-                        "the percentage of AWCs that reported having a source of clean drinking water. ",
+                "info": awcs_reported_clean_drinking_water_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "in_month": 3,

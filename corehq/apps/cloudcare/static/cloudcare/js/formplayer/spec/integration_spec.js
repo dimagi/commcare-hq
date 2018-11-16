@@ -1,11 +1,11 @@
 /* global FormplayerFrontend, Util, Backbone */
 /* eslint-env mocha */
 
-describe('FormplayerFrontend Integration', function() {
-    describe('Start up', function() {
+describe('FormplayerFrontend Integration', function () {
+    describe('Start up', function () {
         var options,
             server;
-        beforeEach(function() {
+        beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
             options = {
                 username: 'batman',
@@ -15,12 +15,12 @@ describe('FormplayerFrontend Integration', function() {
             sinon.stub(Backbone.history, 'start').callsFake(sinon.spy());
         });
 
-        afterEach(function() {
+        afterEach(function () {
             server.restore();
             Backbone.history.start.restore();
         });
 
-        it('should start the formplayer frontend app', function() {
+        it('should start the formplayer frontend app', function () {
             FormplayerFrontend.start(options);
 
             var user = FormplayerFrontend.request('currentUser');
@@ -28,7 +28,7 @@ describe('FormplayerFrontend Integration', function() {
             assert.equal(user.domain, options.domain);
         });
 
-        it('should correctly restore display options', function() {
+        it('should correctly restore display options', function () {
             var newOptions = _.clone(options),
                 user;
             newOptions.phoneMode = true;

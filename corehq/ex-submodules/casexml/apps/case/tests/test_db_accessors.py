@@ -59,7 +59,7 @@ class TestExtensionCaseIds(TestCase):
             )
         )
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
-        self.assertItemsEqual(returned_cases, [extension_id])
+        self.assertEqual(set(returned_cases), {extension_id})
 
     def test_extension_of_multiple_hosts_returned(self):
         """ Should return an extension from any host if there are multiple indices """
@@ -84,9 +84,9 @@ class TestExtensionCaseIds(TestCase):
         )
 
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_2_id])
-        self.assertItemsEqual(returned_cases, [extension_id])
+        self.assertEqual(set(returned_cases), {extension_id})
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
-        self.assertItemsEqual(returned_cases, [extension_id])
+        self.assertEqual(set(returned_cases), {extension_id})
 
     def test_host_with_multiple_extensions(self):
         """ Return all extensions from a single host """
@@ -115,7 +115,7 @@ class TestExtensionCaseIds(TestCase):
         )
 
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
-        self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
+        self.assertEqual(set(returned_cases), {extension_id, extension_2_id})
 
     def test_extensions_from_list(self):
         """ Given a list of hosts, should return all extensions """
@@ -145,7 +145,7 @@ class TestExtensionCaseIds(TestCase):
             )
         )
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id, host_2_id])
-        self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
+        self.assertEqual(set(returned_cases), {extension_id, extension_2_id})
 
 
 @use_sql_backend
@@ -181,7 +181,7 @@ class TestIndexedCaseIds(TestCase):
             )
         )
         returned_cases = CaseAccessors(self.domain).get_indexed_case_ids([extension_id])
-        self.assertItemsEqual(returned_cases, [host_id])
+        self.assertEqual(set(returned_cases), {host_id})
 
 
 @use_sql_backend

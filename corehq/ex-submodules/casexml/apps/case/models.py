@@ -18,7 +18,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
-from corehq.blobs.mixin import DeferredBlobMixin
+from corehq.blobs.mixin import DeferredBlobMixin, CODES
 from corehq.form_processor.abstract_models import AbstractCommCareCase, DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.signals import case_post_save
@@ -178,8 +178,9 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
     case_attachments = SchemaDictProperty(CommCareCaseAttachment)
-    
+
     server_modified_on = DateTimeProperty()
+    _blobdb_type_code = CODES._default
 
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)

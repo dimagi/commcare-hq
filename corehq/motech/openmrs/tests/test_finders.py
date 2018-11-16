@@ -1,9 +1,13 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
+import doctest
+
 from django.test import SimpleTestCase
 
 from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatientFinder
+from corehq.motech.openmrs.openmrs_config import get_property_map, OpenmrsCaseConfig
+import corehq.motech.openmrs.finders_utils
 
 
 PATIENT = {
@@ -61,14 +65,26 @@ class PatientFinderTests(SimpleTestCase):
         })
         self.assertIsInstance(finder, WeightedPropertyPatientFinder)
 
+    def test_create_missing_default(self):
+        """
+        PatientFinder.create_missing should default to false
+        """
+        finder = PatientFinder.wrap({
+            'doc_type': 'WeightedPropertyPatientFinder',
+            'searchable_properties': [],
+            'property_weights': [],
+        })
+        self.assertFalse(finder.create_missing)
+
+
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):
     """
-    Tests WeightedPropertyPatientFinder.set_property_map()
+    Tests get_property_map() for WeightedPropertyPatientFinder.
     """
 
     def setUp(self):
-        self.case_config = {
+        self.case_config = OpenmrsCaseConfig.wrap({
             'patient_identifiers': {
                 'uuid': {'doc_type': 'CaseProperty', 'case_property': 'openmrs_uuid'},
                 'e2b97b70-1d5f-11e0-b929-000c29ad1d07': {'doc_type': 'CaseProperty', 'case_property': 'nid'}
@@ -100,25 +116,35 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
                     }
                 },
             },
-        }
+        })
         self.finder = WeightedPropertyPatientFinder.wrap({
             'doc_type': 'WeightedPropertyPatientFinder',
             'searchable_properties': ['last_name'],
             'property_weights': [
-                {"case_property": "first_name", "weight": 0.45},
+                {
+                    "case_property": "first_name",
+                    "weight": 0.45,
+                    "match_type": "levenshtein",
+                    "match_params": [0.2]
+                },
                 {"case_property": "last_name", "weight": 0.45},
-                {"case_property": "dob", "weight": 0.2},
+                {
+                    "case_property": "dob",
+                    "weight": 0.2,
+                    "match_type": "days_diff",
+                    "match_params": [364]
+                },
                 {"case_property": "address_2", "weight": 0.2},
             ],
         })
-        self.finder.set_property_map(self.case_config)
+        self.finder._property_map = get_property_map(self.case_config)
 
     def test_person_properties_jsonpath(self):
         for prop in ('sex', 'dob'):
-            matches = self.finder._property_map[prop].jsonpath.find(PATIENT)
-            self.assertEqual(len(matches), 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
-                self.finder._property_map[prop].jsonpath
-            ))
+            jsonpath, _ = self.finder._property_map[prop]
+            matches = jsonpath.find(PATIENT)
+            self.assertEqual(len(matches), 1,
+                             'jsonpath "{}" did not uniquely match a patient value'.format(jsonpath))
             patient_value = matches[0].value
             self.assertEqual(patient_value, {
                 'sex': 'F',
@@ -127,10 +153,10 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
 
     def test_person_preferred_name_jsonpath(self):
         for prop in ('first_name', 'last_name'):
-            matches = self.finder._property_map[prop].jsonpath.find(PATIENT)
-            self.assertEqual(len(matches), 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
-                self.finder._property_map[prop].jsonpath
-            ))
+            jsonpath, _ = self.finder._property_map[prop]
+            matches = jsonpath.find(PATIENT)
+            self.assertEqual(len(matches), 1,
+                             'jsonpath "{}" did not uniquely match a patient value'.format(jsonpath))
             patient_value = matches[0].value
             self.assertEqual(patient_value, {
                 'first_name': 'Mahapajapati',
@@ -139,10 +165,10 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
 
     def test_person_preferred_address_jsonpath(self):
         for prop in ('address_1', 'address_2'):
-            matches = self.finder._property_map[prop].jsonpath.find(PATIENT)
-            self.assertEqual(len(matches), 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
-                self.finder._property_map[prop].jsonpath
-            ))
+            jsonpath, _ = self.finder._property_map[prop]
+            matches = jsonpath.find(PATIENT)
+            self.assertEqual(len(matches), 1,
+                             'jsonpath "{}" did not uniquely match a patient value'.format(jsonpath))
             patient_value = matches[0].value
             self.assertEqual(patient_value, {
                 'address_1': '56 Barnet Street',
@@ -151,10 +177,10 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
 
     def test_person_attributes_jsonpath(self):
         for prop in ('caste', 'class'):
-            matches = self.finder._property_map[prop].jsonpath.find(PATIENT)
-            self.assertEqual(len(matches), 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
-                self.finder._property_map[prop].jsonpath
-            ))
+            jsonpath, _ = self.finder._property_map[prop]
+            matches = jsonpath.find(PATIENT)
+            self.assertEqual(len(matches), 1,
+                             'jsonpath "{}" did not uniquely match a patient value'.format(jsonpath))
             patient_value = matches[0].value
             self.assertEqual(patient_value, {
                 'caste': 'Buddhist',
@@ -163,10 +189,10 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
 
     def test_patient_identifiers_jsonpath(self):
         for prop in ('openmrs_uuid', 'nid'):
-            matches = self.finder._property_map[prop].jsonpath.find(PATIENT)
-            self.assertEqual(len(matches), 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
-                self.finder._property_map[prop].jsonpath
-            ))
+            jsonpath, _ = self.finder._property_map[prop]
+            matches = jsonpath.find(PATIENT)
+            self.assertEqual(len(matches), 1,
+                             'jsonpath "{}" did not uniquely match a patient value'.format(jsonpath))
             patient_value = matches[0].value
             self.assertEqual(patient_value, {
                 'openmrs_uuid': '94c0e9c0-1bea-4467-b3c3-823e36c5adf5',
@@ -175,11 +201,11 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
 
     def test_get_score_ge_1(self):
         case = CaseMock({
-            'first_name': 'Mahapajapati',
+            'first_name': 'Mapajapati',
             'last_name': 'Gotami',
             'address_1': '56 Barnet Street',
             'address_2': 'Gardens',
-            'dob': '1984-01-01T00:00:00.000+0200',
+            'dob': '1984-12-03T00:00:00.000-0400',
         })
         score = self.finder.get_score(PATIENT, case)
         self.assertGreaterEqual(score, 1)
@@ -190,7 +216,14 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
             'last_name': 'Gotami',
             'address_1': '585 Massachusetts Ave',
             'address_2': 'Cambridge',
-            'dob': '1984-12-03T00:00:00.000-0400',
+            'dob': '1983-01-01T00:00:00.000+0200',
         })
         score = self.finder.get_score(PATIENT, case)
         self.assertLess(score, 1)
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(corehq.motech.openmrs.finders_utils)
+        self.assertEqual(results.failed, 0)

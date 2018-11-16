@@ -31,7 +31,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 // then parse the appId from the response.
                 if (urlObject.appId === undefined || urlObject.appId === null) {
                     if (menuResponse.appId === null || menuResponse.appId === undefined) {
-                        FormplayerFrontend.request('showError', "Response did not contain appId even though it was" +
+                        FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
                             "required. If this persists, please report an issue to CommCareHQ");
                         FormplayerFrontend.trigger("apps:list");
                         return;
@@ -46,13 +46,13 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     Menus.Util.handleLocationRequest(options);
                 }
                 Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
-            }).fail(function() {
+            }).fail(function () {
                 // if it didn't go through, then it displayed an error message.
                 // the right thing to do is then to just stay in the same place.
             });
         },
 
-        selectDetail: function(caseId, detailIndex, isPersistent) {
+        selectDetail: function (caseId, detailIndex, isPersistent) {
             var urlObject = Util.currentUrlToObject();
             if (!isPersistent) {
                 urlObject.addStep(caseId);
@@ -60,7 +60,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject, isPersistent);
             $.when(fetchingDetails).done(function (detailResponse) {
                 Menus.Controller.showDetail(detailResponse, detailIndex, caseId);
-            }).fail(function() {
+            }).fail(function () {
                 FormplayerFrontend.trigger('navigateHome');
             });
         },
@@ -202,22 +202,22 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     Menus.Util = {
-        handleLocationRequest: function(optionsFromLastRequest) {
-            var success = function(position) {
+        handleLocationRequest: function (optionsFromLastRequest) {
+            var success = function (position) {
                 FormplayerFrontend.regions.loadingProgress.empty();
                 Menus.Util.recordPosition(position);
                 Menus.Controller.selectMenu(optionsFromLastRequest);
             };
 
-            var error = function(err) {
+            var error = function (err) {
                 FormplayerFrontend.regions.loadingProgress.empty();
                 FormplayerFrontend.trigger('showError',
                     getErrorMessage(err) +
                     "Without access to your location, computations that rely on the here() function will show up blank.");
             };
 
-            var getErrorMessage = function(err) {
-                switch(err.code) {
+            var getErrorMessage = function (err) {
+                switch (err.code) {
                     case err.PERMISSION_DENIED:
                         return "You denied CommCare HQ permission to read your browser's current location. ";
                     case err.TIMEOUT:
@@ -237,7 +237,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             }
         },
 
-        startOrStopLocationWatching: function(shouldWatchLocation) {
+        startOrStopLocationWatching: function (shouldWatchLocation) {
             if (navigator.geolocation) {
                 var watching = Boolean(sessionStorage.lastLocationWatchId);
                 if (!watching && shouldWatchLocation) {
@@ -249,7 +249,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             }
         },
 
-        recordPosition: function(position) {
+        recordPosition: function (position) {
             sessionStorage.locationLat = position.coords.latitude;
             sessionStorage.locationLon = position.coords.longitude;
             sessionStorage.locationAltitude = position.coords.altitude;
@@ -260,7 +260,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var detailCollection,
                 breadcrumbModels;
 
-            breadcrumbModels = _.map(breadcrumbs, function(breadcrumb, idx) {
+            breadcrumbModels = _.map(breadcrumbs, function (breadcrumb, idx) {
                 return {
                     data: breadcrumb,
                     id: idx,

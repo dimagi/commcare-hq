@@ -1,19 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import logging
-import re
-import requests
 from smtplib import SMTPSenderRefused
-import uuid
 
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
 from django.utils.translation import ugettext as _
-from requests.exceptions import SSLError
 
 import six
-from six.moves.urllib.parse import urlencode
 
 
 NO_HTML_EMAIL_MESSAGE = """
@@ -37,7 +31,6 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                                NO_HTML_EMAIL_MESSAGE)
     elif not isinstance(text_content, six.text_type):
         text_content = text_content.decode('utf-8')
-
 
     from_header = {'From': email_from}  # From-header
     connection = get_connection()

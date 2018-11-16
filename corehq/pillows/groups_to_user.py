@@ -31,7 +31,7 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, pro
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, [topics.GROUP])
     processor = GroupsToUsersProcessor()
     change_feed = KafkaChangeFeed(
-        topics=[topics.GROUP], group_id='groups-to-users', num_processes=num_processes, process_num=process_num
+        topics=[topics.GROUP], client_id='groups-to-users', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,

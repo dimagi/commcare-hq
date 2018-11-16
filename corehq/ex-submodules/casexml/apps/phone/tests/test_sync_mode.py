@@ -53,7 +53,6 @@ PARENT_TYPE = "mother"
 CHILD_RELATIONSHIP = "child"
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class BaseSyncTest(TestCase):
     """
     Shared functionality among tests
@@ -1288,7 +1287,7 @@ class SyncTokenCachingTest(BaseSyncTest):
 
         original_name = config.restore_payload_path_cache.get_value()
         self.assertTrue(original_name)
-        get_blob_db().delete(original_name)
+        get_blob_db().delete(key=original_name)
 
         # resyncing should recreate the cache
         next_config = RestoreConfig(

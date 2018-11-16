@@ -27,14 +27,14 @@ describe("PropertyListItem Behavior", function () {
         assert.equal(item.displayText(), "foo");
     });
 
-    it ("Does not update displayText if user has edited it", function () {
+    it("Does not update displayText if user has edited it", function () {
         var item = new PropertyListItem(identityFunc, nullFunc);
         item.inputBoundDisplayText("foo");
         item.property("bar");
         assert.equal(item.displayText(), "foo");
     });
 
-    it ("Updates displayText if user has cleared it", function () {
+    it("Updates displayText if user has cleared it", function () {
         var item = new PropertyListItem(identityFunc, nullFunc);
         item.inputBoundDisplayText("foo");
         item.property("bar");

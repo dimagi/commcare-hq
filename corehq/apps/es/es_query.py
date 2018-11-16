@@ -313,6 +313,25 @@ class ESQuery(object):
         es.es_query['query']['filtered']['query'] = query
         return es
 
+    def add_query(self, new_query, clause):
+        """
+        Add a query to the current list of queries
+        """
+        current_query = self._query.get(queries.BOOL)
+        if current_query is None:
+            return self.set_query(
+                queries.BOOL_CLAUSE(
+                    queries.CLAUSES[clause]([new_query])
+                )
+            )
+        elif current_query.get(clause) and isinstance(current_query[clause], list):
+            current_query[clause] += [new_query]
+        else:
+            current_query.update(
+                queries.CLAUSES[clause]([new_query])
+            )
+        return self
+
     def get_query(self):
         return self.es_query['query']['filtered']['query']
 

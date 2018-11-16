@@ -35,10 +35,10 @@ def quote_nan(value):
     """
     Returns value in single quotes if value is not a number
 
-    >>> quote_nan('foo')
-    u"'foo'"
-    >>> quote_nan('1')
-    u'1'
+    >>> quote_nan('foo') if six.PY3 else quote_nan('foo').encode('utf-8')
+    "'foo'"
+    >>> quote_nan('1') if six.PY3 else quote_nan('1').encode('utf-8')
+    '1'
 
     """
     try:
@@ -177,12 +177,12 @@ def mk_oc_username(cc_username):
 
     Strips off "@domain.name", replaces non-alphanumerics, and pads with "_" if less than 5 characters
 
-    >>> mk_oc_username('eric.idle@montypython.com')
-    u'eric_idle'
-    >>> mk_oc_username('eric')
-    u'eric_'
-    >>> mk_oc_username('I3#')
-    u'I3___'
+    >>> mk_oc_username('eric.idle@montypython.com') if six.PY3 else mk_oc_username('eric.idle@montypython.com').encode('utf-8')
+    'eric_idle'
+    >>> mk_oc_username('eric') if six.PY3 else mk_oc_username('eric').encode('utf-8')
+    'eric_'
+    >>> mk_oc_username('I3#') if six.PY3 else mk_oc_username('I3#').encode('utf-8')
+    'I3___'
 
     """
     username = cc_username.split('@')[0]
@@ -238,7 +238,7 @@ def oc_format_date(answer):
 
     """
     if isinstance(answer, datetime):
-        return answer.isoformat(sep=b' ')
+        return answer.isoformat(sep=' ' if six.PY3 else b' ')
     if isinstance(answer, (date, time)):
         return answer.isoformat()
     return answer

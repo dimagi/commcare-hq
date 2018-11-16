@@ -1,19 +1,19 @@
 /* eslint-env mocha */
 /* globals SampleExportInstances */
 
-describe('ExportInstance model', function() {
+describe('ExportInstance model', function () {
     var constants = hqImport('export/js/const');
     var viewModels = hqImport('export/js/models');
     var basicFormExport, savedFormExport;
     hqImport('hqwebapp/js/initial_page_data').registerUrl(
         "build_schema", "/a/---/data/export/build_full_schema/"
     );
-    beforeEach(function() {
+    beforeEach(function () {
         basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
         savedFormExport = _.clone(SampleExportInstances.saved, { saveUrl: 'http://saveurl/' });
     });
 
-    it('Should create an instance from JSON', function() {
+    it('Should create an instance from JSON', function () {
         var instance = new viewModels.ExportInstance(basicFormExport);
 
         assert.equal(instance.tables().length, 1);
@@ -21,7 +21,7 @@ describe('ExportInstance model', function() {
         var table = instance.tables()[0];
         assert.equal(table.columns().length, 2);
 
-        _.each(table.columns(), function(column) {
+        _.each(table.columns(), function (column) {
             assert.ok(column.item);
             assert.isTrue(column instanceof viewModels.ExportColumn);
             assert.isDefined(column.show());
@@ -36,7 +36,7 @@ describe('ExportInstance model', function() {
         });
     });
 
-    it('Should serialize an instance into JS object', function() {
+    it('Should serialize an instance into JS object', function () {
         var instance = new viewModels.ExportInstance(basicFormExport);
         var obj = instance.toJS();
         assert.equal(obj.tables.length, 1);
@@ -44,7 +44,7 @@ describe('ExportInstance model', function() {
         var table = obj.tables[0];
         assert.equal(table.columns.length, 2);
 
-        _.each(table.columns, function(column) {
+        _.each(table.columns, function (column) {
             assert.ok(column.item);
             assert.isFalse(column instanceof viewModels.ExportColumn);
             assert.isDefined(column.show);
@@ -58,35 +58,35 @@ describe('ExportInstance model', function() {
             assert.isDefined(item.tag);
         });
     });
-    describe('#isNew', function() {
+    describe('#isNew', function () {
         var instance, instanceSaved;
-        beforeEach(function() {
+        beforeEach(function () {
             instance = new viewModels.ExportInstance(basicFormExport);
             instanceSaved = new viewModels.ExportInstance(savedFormExport);
         });
 
-        it('should correctly determine if instance is new', function() {
+        it('should correctly determine if instance is new', function () {
             assert.isTrue(instance.isNew());
         });
 
-        it('should correctly determine if instance is new', function() {
+        it('should correctly determine if instance is new', function () {
             assert.isFalse(instanceSaved.isNew());
         });
 
     });
 
-    describe('#onBeginSchemaBuild', function() {
+    describe('#onBeginSchemaBuild', function () {
         var instance;
-        beforeEach(function() {
+        beforeEach(function () {
             instance = new viewModels.ExportInstance(basicFormExport);
             sinon.spy($, "ajax");
         });
 
-        afterEach(function() {
+        afterEach(function () {
             $.ajax.restore();
         });
 
-        it('should trigger build', function() {
+        it('should trigger build', function () {
             instance.onBeginSchemaBuild(instance, {});
 
             assert.equal(instance.buildSchemaProgress(), 0);
@@ -96,12 +96,12 @@ describe('ExportInstance model', function() {
 
     });
 
-    describe('#checkBuildSchemaProgress', function() {
+    describe('#checkBuildSchemaProgress', function () {
         var instance,
             requests,
             clock,
             xhr;
-        beforeEach(function() {
+        beforeEach(function () {
             requests = [];
             instance = new viewModels.ExportInstance(basicFormExport);
             clock = sinon.useFakeTimers();
@@ -111,12 +111,12 @@ describe('ExportInstance model', function() {
             };
         });
 
-        afterEach(function() {
+        afterEach(function () {
             xhr.restore();
             clock.restore();
         });
 
-        it('successfully check for pending build', function() {
+        it('successfully check for pending build', function () {
             var successSpy = sinon.spy(),
                 response = {
                     success: false,
@@ -162,12 +162,12 @@ describe('ExportInstance model', function() {
         });
     });
 
-    describe('#save', function() {
+    describe('#save', function () {
         var server,
             recordSaveAnalyticsSpy,
             instance;
 
-        beforeEach(function() {
+        beforeEach(function () {
             instance = new viewModels.ExportInstance(basicFormExport);
             recordSaveAnalyticsSpy = sinon.spy();
             server = sinon.fakeServer.create();
@@ -175,12 +175,12 @@ describe('ExportInstance model', function() {
             sinon.stub(instance, 'recordSaveAnalytics', recordSaveAnalyticsSpy);
         });
 
-        afterEach(function() {
+        afterEach(function () {
             server.restore();
             instance.recordSaveAnalytics.restore();
         });
 
-        it('Should save a model', function() {
+        it('Should save a model', function () {
             server.respondWith(
                 "POST",
                 instance.saveUrl,
@@ -200,7 +200,7 @@ describe('ExportInstance model', function() {
             assert.isTrue(recordSaveAnalyticsSpy.called);
         });
 
-        it('Should crash on saving export', function() {
+        it('Should crash on saving export', function () {
             server.respondWith(
                 "POST",
                 instance.saveUrl,

@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* globals Form */
 
-describe('Fullform UI', function() {
+describe('Fullform UI', function () {
     var questionJSON,
         answerSpy,
         formSpec,
@@ -14,7 +14,7 @@ describe('Fullform UI', function() {
         repeatJSON,
         repeatNestJSON;
 
-    beforeEach(function() {
+    beforeEach(function () {
         formSpec = {
             "type": "url",
             "val": "http://dummy/dummy.xml",
@@ -158,12 +158,12 @@ describe('Fullform UI', function() {
 
     });
 
-    afterEach(function() {
+    afterEach(function () {
         $.unsubscribe();
         this.clock.restore();
     });
 
-    it('Should render a basic form and reconcile', function() {
+    it('Should render a basic form and reconcile', function () {
         var form = new Form(formJSON),
             newJson = [questionJSON];
 
@@ -173,7 +173,7 @@ describe('Fullform UI', function() {
         assert.equal(form.children().length, 1);
     });
 
-    it('Should render a repeater question', function() {
+    it('Should render a repeater question', function () {
         formJSON.tree = [repeatJSON];
         var form = new Form(formJSON);
         assert.equal(form.children().length, 1);
@@ -190,7 +190,7 @@ describe('Fullform UI', function() {
         assert.equal(form.children()[0].children()[0].children()[0].type(), Formplayer.Const.QUESTION_TYPE);
     });
 
-    it('Should reconcile question choices', function() {
+    it('Should reconcile question choices', function () {
         formJSON.tree = [questionJSON];
         var form = new Form(formJSON),
             question = form.children()[0];
@@ -204,7 +204,7 @@ describe('Fullform UI', function() {
         assert.equal(question.choices().length, 1);
     });
 
-    it('Should reconcile a GeoPointEntry', function() {
+    it('Should reconcile a GeoPointEntry', function () {
         questionJSON.datatype = Formplayer.Const.GEO;
         questionJSON.answer = null;
         formJSON.tree = [questionJSON];
@@ -224,7 +224,7 @@ describe('Fullform UI', function() {
         assert.sameMembers(question.answer(), [3,3]);
     });
 
-    it('Should only subscribe once', function() {
+    it('Should only subscribe once', function () {
         /**
          * This specifically ensures that we unsubscribe from events when we change forms
          */
@@ -244,7 +244,7 @@ describe('Fullform UI', function() {
     });
 
 
-    it('Should throttle answers', function() {
+    it('Should throttle answers', function () {
         questionJSON.datatype = Formplayer.Const.STRING;
         var question = new Question(questionJSON);
         question.answer('abc');
@@ -258,7 +258,7 @@ describe('Fullform UI', function() {
         assert.equal(spy.callCount, 2);
     });
 
-    it('Should not be valid if question has serverError', function() {
+    it('Should not be valid if question has serverError', function () {
         questionJSON.datatype = Formplayer.Const.STRING;
         var question = new Question(questionJSON);
 
@@ -270,7 +270,7 @@ describe('Fullform UI', function() {
 
     });
 
-    it('Should handle a constraint error', function() {
+    it('Should handle a constraint error', function () {
         var form = new Form(formJSON);
         var question = new Question(questionJSON, form);
 
@@ -285,7 +285,7 @@ describe('Fullform UI', function() {
         assert.isOk(question.serverError());
     });
 
-    it('Should find nested questions', function() {
+    it('Should find nested questions', function () {
         var form = new Form(nestedGroupJSON);
         assert.isTrue(form.children()[0].hasAnyNestedQuestions());
         assert.isFalse(form.children()[1].hasAnyNestedQuestions());

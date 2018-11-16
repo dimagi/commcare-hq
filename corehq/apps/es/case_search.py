@@ -68,18 +68,18 @@ class CaseSearchES(CaseES):
             positive_clause = clause != queries.MUST_NOT
             return (
                 # fuzzy match
-                self._add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
+                self.add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
                 # non-fuzzy match. added to improve the score of exact matches
-                ._add_query(case_property_text_query(case_property_name, value),
+                .add_query(case_property_text_query(case_property_name, value),
                             queries.SHOULD if positive_clause else clause))
         else:
-            return self._add_query(exact_case_property_text_query(case_property_name, value), clause)
+            return self.add_query(exact_case_property_text_query(case_property_name, value), clause)
 
     def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
         """
         Search for all cases where case property `case_property_name` matches the regular expression in `regex`
         """
-        return self._add_query(
+        return self.add_query(
             _base_property_query(case_property_name, queries.regexp(
                 "{}.{}".format(CASE_PROPERTIES_PATH, VALUE), regex)
             ),
@@ -91,7 +91,7 @@ class CaseSearchES(CaseES):
         """
         Search for all cases where case property `case_property_name` fulfills the range criteria.
         """
-        return self._add_query(
+        return self.add_query(
             case_property_range_query(case_property_name, gt, gte, lt, lte),
             clause
         )
@@ -101,7 +101,7 @@ class CaseSearchES(CaseES):
         """
         Search for all cases where case property `case_property_name` fulfills the date range criteria.
         """
-        return self._add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
+        return self.add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
 
     def xpath_query(self, domain, xpath):
         """Search for cases using an XPath predicate expression.
@@ -117,29 +117,13 @@ class CaseSearchES(CaseES):
         from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
         return self.filter(build_filter_from_xpath(domain, xpath))
 
-    def _add_query(self, new_query, clause):
-        current_query = self._query.get(queries.BOOL)
-        if current_query is None:
-            return self.set_query(
-                queries.BOOL_CLAUSE(
-                    queries.CLAUSES[clause]([new_query])
-                )
-            )
-        elif current_query.get(clause) and isinstance(current_query[clause], list):
-            current_query[clause] += [new_query]
-        else:
-            current_query.update(
-                queries.CLAUSES[clause]([new_query])
-            )
-        return self
-
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`
         """
         if isinstance(case_ids, six.string_types):
             case_ids = [case_ids]
 
-        return self._add_query(
+        return self.add_query(
             reverse_index_case_query(case_ids, identifier),
             queries.MUST,
         )

@@ -936,6 +936,8 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
         'corehq.apps.accounting.interface.IsHiddenFilter',
     ]
 
+    account = None
+
     @property
     def headers(self):
         header = DataTablesHeader(
@@ -1117,6 +1119,16 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
 
+        subscriber_domain = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber_domain is not None:
+            invoices_for_domain = []
+            for invoice in queryset.all():
+                for subscription in invoice.subscriptions.all():
+                    if subscription.subscriber.domain == subscriber_domain:
+                        invoices_for_domain.append(invoice.pk)
+                        break
+            queryset = queryset.filter(id__in=invoices_for_domain)
+
         return queryset
 
     @property
@@ -1161,6 +1173,9 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             'month': statement_start.strftime("%B"),
             'rows': self.rows,
         })
+
+    def filter_by_account(self, account):
+        self.account = account
 
 
 def _get_domain_from_payment_record(payment_record):

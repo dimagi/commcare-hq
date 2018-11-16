@@ -100,10 +100,10 @@ COUCH_DATABASES = {
     'default': {
         # for production this ought to be set to true on your configured couch instance
         'COUCH_HTTPS': False,
-        'COUCH_SERVER_ROOT': b'couch:5984',  # 6984 for https couch
+        'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
         'COUCH_USERNAME': '',
         'COUCH_PASSWORD': '',
-        'COUCH_DATABASE_NAME': b'commcarehq'
+        'COUCH_DATABASE_NAME': 'commcarehq'
     }
 }
 
@@ -235,11 +235,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     LESS_DEBUG = True
     COMPRESS_OFFLINE = False
-
-    XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
-
-    TOUCHFORMS_API_USER = 'admin@example.com'
-    TOUCHFORMS_API_PASSWORD = 'password'
 
     FORMPLAYER_URL = 'http://formplayer:8010'
 

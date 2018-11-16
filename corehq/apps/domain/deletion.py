@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import itertools
 import logging
 from datetime import date
 
@@ -15,7 +16,11 @@ from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
+from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
 
@@ -136,10 +141,21 @@ def _delete_all_cases(domain_name):
 def _delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_accessor = FormAccessors(domain_name)
-    form_ids = form_accessor.get_all_form_ids_in_domain()
+    form_ids = list(itertools.chain(*[
+        form_accessor.get_all_form_ids_in_domain(doc_type=doc_type)
+        for doc_type in doc_type_to_state
+    ]))
     for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
         form_accessor.soft_delete_forms(list(form_id_chunk))
     logger.info('Deleting forms complete.')
+
+
+def _delete_data_files(domain_name):
+    db = get_db_alias_for_partitioned_doc(domain_name)
+    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.using(db).filter(
+        parent_id=domain_name,
+        type_code=CODES.data_file,
+    )))
 
 
 def _delete_custom_data_fields(domain_name):
@@ -197,8 +213,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain'),
-    ModelDeletion('data_interfaces', 'AutomaticUpdateAction', 'rule__domain'),
-    ModelDeletion('data_interfaces', 'AutomaticUpdateRuleCriteria', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleCriteria', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'rule__domain'),
@@ -206,9 +220,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain'),
     ModelDeletion('data_interfaces', 'DomainCaseRuleRun', 'domain'),
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
-    ModelDeletion('export', 'DailySavedExportNotification', 'domain'),
-    ModelDeletion('export', 'DataFile', 'domain'),
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
+    CustomDeletion('export', _delete_data_files),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),

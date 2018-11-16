@@ -2,8 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import random
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
+from io import BytesIO
 from mock import patch
 
 from dateutil.relativedelta import relativedelta
@@ -39,16 +40,14 @@ from corehq.apps.case_search.models import (
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateAction,
     AutomaticUpdateRule,
-    AutomaticUpdateRuleCriteria,
     CaseRuleAction,
     CaseRuleCriteria,
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
 from corehq.apps.domain.models import Domain, TransferDomainRequest
-from corehq.apps.export.models.new import DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
+from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
@@ -76,8 +75,10 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
+from corehq.blobs import get_blob_db, NotFound
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, doc_type_to_state
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
 from couchforms.models import UnfinishedSubmissionStub
@@ -291,14 +292,28 @@ class TestDeleteDomain(TestCase):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_form_deletion(self):
+        form_states = [state_tuple[0] for state_tuple in XFormInstanceSQL.STATES]
+
         for domain_name in [self.domain.name, self.domain2.name]:
-            create_form_for_test(domain_name)
-            self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
+            for form_state in form_states:
+                create_form_for_test(domain_name, state=form_state)
+            for doc_type in doc_type_to_state:
+                self.assertEqual(
+                    len(FormAccessors(domain_name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                    1
+                )
 
         self.domain.delete()
 
-        self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
-        self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
+        for doc_type in doc_type_to_state:
+            self.assertEqual(
+                len(FormAccessors(self.domain.name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                0
+            )
+            self.assertEqual(
+                len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain(doc_type=doc_type)),
+                1
+            )
 
     def _assert_queryset_count(self, queryset_list, count):
         for queryset in queryset_list:
@@ -469,9 +484,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_data_interfaces(self, domain_name, count):
         self._assert_queryset_count([
-            AutomaticUpdateAction.objects.filter(rule__domain=domain_name),
             AutomaticUpdateRule.objects.filter(domain=domain_name),
-            AutomaticUpdateRuleCriteria.objects.filter(rule__domain=domain_name),
             CaseRuleAction.objects.filter(rule__domain=domain_name),
             CaseRuleCriteria.objects.filter(rule__domain=domain_name),
             CaseRuleSubmission.objects.filter(domain=domain_name),
@@ -481,8 +494,6 @@ class TestDeleteDomain(TestCase):
     def test_data_interfaces(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             automatic_update_rule = AutomaticUpdateRule.objects.create(domain=domain_name)
-            AutomaticUpdateAction.objects.create(rule=automatic_update_rule)
-            AutomaticUpdateRuleCriteria.objects.create(rule=automatic_update_rule)
             CaseRuleAction.objects.create(rule=automatic_update_rule)
             CaseRuleCriteria.objects.create(rule=automatic_update_rule)
             CaseRuleSubmission.objects.create(
@@ -499,10 +510,6 @@ class TestDeleteDomain(TestCase):
         self._assert_data_interfaces(self.domain.name, 0)
         self._assert_data_interfaces(self.domain2.name, 1)
 
-        self.assertEqual(AutomaticUpdateAction.objects.count(), 1)
-        self.assertEqual(AutomaticUpdateAction.objects.filter(rule__domain=self.domain2.name).count(), 1)
-        self.assertEqual(AutomaticUpdateRuleCriteria.objects.count(), 1)
-        self.assertEqual(AutomaticUpdateRuleCriteria.objects.filter(rule__domain=self.domain2.name).count(), 1)
         self.assertEqual(CaseRuleAction.objects.count(), 1)
         self.assertEqual(CaseRuleAction.objects.filter(rule__domain=self.domain2.name).count(), 1)
         self.assertEqual(CaseRuleCriteria.objects.count(), 1)
@@ -525,19 +532,32 @@ class TestDeleteDomain(TestCase):
 
     def _assert_export_counts(self, domain_name, count):
         self._assert_queryset_count([
-            DailySavedExportNotification.objects.filter(domain=domain_name),
-            DataFile.objects.filter(domain=domain_name),
+            DataFile.meta_query(domain_name),
             EmailExportWhenDoneRequest.objects.filter(domain=domain_name),
         ], count)
 
     def test_export_delete(self):
+        blobdb = get_blob_db()
+        data_files = []
         for domain_name in [self.domain.name, self.domain2.name]:
-            DailySavedExportNotification.objects.create(domain=domain_name)
-            DataFile.objects.create(domain=domain_name)
+            data_files.append(DataFile.save_blob(
+                BytesIO((domain_name + " csv").encode('utf-8')),
+                domain=domain_name,
+                filename="data.csv",
+                description="data file",
+                content_type="text/csv",
+                delete_after=datetime.utcnow() + timedelta(minutes=10),
+            ))
             EmailExportWhenDoneRequest.objects.create(domain=domain_name)
             self._assert_export_counts(domain_name, 1)
 
         self.domain.delete()
+
+        with self.assertRaises(NotFound):
+            blobdb.get(key=data_files[0].blob_id)
+
+        with blobdb.get(key=data_files[1].blob_id) as f:
+            self.assertEqual(f.read(), (self.domain2.name + " csv").encode('utf-8'))
 
         self._assert_export_counts(self.domain.name, 0)
         self._assert_export_counts(self.domain2.name, 1)
@@ -866,8 +886,3 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
-
-    def test_assert_sql_domain(self):
-        self.domain.delete()
-        with self.assertRaises(AssertionError):
-            call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)

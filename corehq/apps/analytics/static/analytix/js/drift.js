@@ -27,12 +27,12 @@ hqDefine('analytix/js/drift', [
             scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + apiId + '.js';
 
         _logger = logging.getLoggerForApi('Drift');
-        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function() {
+        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
             _drift = window.driftt = window.drift = window.driftt || [];
-            if (!_drift.init && !_drift.invoked ) {
+            if (!_drift.init && !_drift.invoked) {
                 _drift.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ];
                 _drift.factory = function (methodName) {
-                    return function() {
+                    return function () {
                         var methodFn = Array.prototype.slice.call(arguments);
                         methodFn.unshift(methodName);
                         _drift.push(methodFn);
@@ -46,7 +46,7 @@ hqDefine('analytix/js/drift', [
 
             _drift.SNIPPET_VERSION = '0.3.1';
 
-            _drift.on('emailCapture',function(e){
+            _drift.on('emailCapture',function (e) {
                 hubspot.identify({email: e.data.email});
                 hubspot.trackEvent('Identified via Drift');
             });

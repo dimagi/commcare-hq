@@ -1,5 +1,5 @@
-hqDefine("cloudcare/js/preview_app/main", function() {
-    $(function() {
+hqDefine("cloudcare/js/preview_app/main", function () {
+    $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
         window.GMAPS_API_KEY = initialPageData('maps_api_key'); // maps api is loaded on-demand
         hqImport('cloudcare/js/preview_app/preview_app').start({
@@ -23,7 +23,7 @@ hqDefine("cloudcare/js/preview_app/main", function() {
         // Adjust for those pesky scrollbars
         _.each($('.scrollable-container'), function (sc) {
             var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
-            $(sc).addClass('has-scrollbar-'+scrollWidth);
+            $(sc).addClass('has-scrollbar-' + scrollWidth);
         });
     });
 });

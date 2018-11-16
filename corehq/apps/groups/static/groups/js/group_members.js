@@ -1,5 +1,5 @@
 /* globals django */
-hqDefine("groups/js/group_members", function() {
+hqDefine("groups/js/group_members", function () {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
     $(function () {
@@ -28,8 +28,8 @@ hqDefine("groups/js/group_members", function() {
 
         // Delete group event
         var $deleteGroupModalForm = $("#delete_group_modal form");
-        $("button:submit", $deleteGroupModalForm).click(function(){
-            hqImport('analytix/js/google').track.event("Editing Group", "Deleted Group", initial_page_data("group_id"), "", {}, function() {
+        $("button:submit", $deleteGroupModalForm).click(function () {
+            hqImport('analytix/js/google').track.event("Editing Group", "Deleted Group", initial_page_data("group_id"), "", {}, function () {
                 $deleteGroupModalForm.submit();
             });
             return false;
@@ -54,7 +54,7 @@ hqDefine("groups/js/group_members", function() {
         });
 
         function outcome(isSuccess, name, id, gaEventLabel, additionalCallback) {
-            return function() {
+            return function () {
                 var alertClass, message;
                 if (isSuccess) {
                     alertClass = 'alert-success';
@@ -73,14 +73,14 @@ hqDefine("groups/js/group_members", function() {
                     additionalCallback();
                 }
 
-                if (gaEventLabel){
+                if (gaEventLabel) {
                     hqImport('analytix/js/google').track.event('Editing Group', gaEventLabel, initial_page_data("group_id"));
                 }
             };
         }
 
-        $(function() {
-            $('#edit_membership').submit(function() {
+        $(function () {
+            $('#edit_membership').submit(function () {
                 var _showMembershipUpdating = function () {
                         $('#edit_membership').fadeOut();
                         $('#membership_updating').fadeIn();
@@ -97,7 +97,7 @@ hqDefine("groups/js/group_members", function() {
                 });
                 return false;
             });
-            $('#edit-group-settings').submit(function() {
+            $('#edit-group-settings').submit(function () {
                 $(this).find(':button').disableButton();
                 $(this).ajaxSubmit({
                     success: outcome(true, "Group settings", "#edit-group-settings", "Edit Settings"),
@@ -105,14 +105,14 @@ hqDefine("groups/js/group_members", function() {
                 });
                 return false;
             });
-            $('#group-case-sharing-input').change(function() {
-                if($('#group-case-sharing-input').val() === 'true' && !initial_page_data("domain_uses_case_sharing")) {
+            $('#group-case-sharing-input').change(function () {
+                if ($('#group-case-sharing-input').val() === 'true' && !initial_page_data("domain_uses_case_sharing")) {
                     $('#group-case-sharing-warning').prop("hidden", false);
                 } else {
                     $('#group-case-sharing-warning').prop('hidden', true);
                 }
             });
-            $('#group-data-form').submit(function() {
+            $('#group-data-form').submit(function () {
                 $(this).find(':button').prop('disabled', true);
                 $(this).ajaxSubmit({
                     success: outcome(true, "Group data", "#group-data-form", "Edit Group Data"),
@@ -122,7 +122,7 @@ hqDefine("groups/js/group_members", function() {
             });
         });
 
-        $('#initiate-verification-workflow').submit(function() {
+        $('#initiate-verification-workflow').submit(function () {
             var button = $('#submit-verification');
             button.prop('disabled', true);
             button.text(gettext("Please wait and do not navigate away..."));

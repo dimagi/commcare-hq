@@ -71,9 +71,9 @@ urlpatterns = [
         name='expression_debugger'),
     url(r'^data_source_debugger/$', DataSourceDebuggerView.as_view(),
         name='data_source_debugger'),
-    url(r'^export_status/(?P<download_id>[0-9a-fA-Z]{25,32})/(?P<subreport_slug>[\w-]+)/$',
+    url(r'^export_status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/(?P<subreport_slug>[\w-]+)/$',
         DownloadUCRStatusView.as_view(), name=DownloadUCRStatusView.urlname),
-    url(r'^export_job_poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
+    url(r'^export_job_poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         ucr_download_job_poll, name='ucr_download_job_poll'),
 
     # Update Report Description

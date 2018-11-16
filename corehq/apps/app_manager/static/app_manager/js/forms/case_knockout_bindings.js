@@ -1,6 +1,6 @@
 (function () {
     var utils = {
-        getIcon: function(question) {
+        getIcon: function (question) {
             if (question.tag === 'upload') {
                 return '<i class="fa fa-paperclip"></i> ';
             }
@@ -26,7 +26,7 @@
         },
         truncateValue: function (value, MAXLEN) {
             MAXLEN = MAXLEN || 40;
-            return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN/2) + "..." + value.slice(value.length - MAXLEN/2));
+            return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN / 2) + "..." + value.slice(value.length - MAXLEN / 2));
         },
     };
 
@@ -88,7 +88,7 @@ ko.bindingHandlers.casePropertyAutocomplete = {
      * Replace any spaces in free text with underscores.
      */
     init: function (element, valueAccessor) {
-        $(element).on('textchange', function() {
+        $(element).on('textchange', function () {
             var $el = $(this);
             if ($el.val().match(/\s/)) {
                 var pos = $el.caret('pos');
@@ -100,7 +100,7 @@ ko.bindingHandlers.casePropertyAutocomplete = {
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
         function wrappedValueAccessor() {
-            return _.map(ko.unwrap(valueAccessor()), function(value) {
+            return _.map(ko.unwrap(valueAccessor()), function (value) {
                 if (value.indexOf("attachment:") === 0) {
                     var text = value.substring(11),
                         html = '<i class="fa fa-paperclip"></i> ' + text;
@@ -128,11 +128,11 @@ ko.extenders.withPrevious = function (target) {
 };
 
 ko.bindingHandlers.numericValue = {
-    init : function(element, valueAccessor, allBindingsAccessor) {
+    init: function (element, valueAccessor, allBindingsAccessor) {
         var underlyingObservable = valueAccessor();
         var interceptor = ko.dependentObservable({
             read: underlyingObservable,
-            write: function(value) {
+            write: function (value) {
                 if ($.isNumeric(value)) {
                     underlyingObservable(parseFloat(value));
                 } else if (value === '') {
@@ -140,7 +140,7 @@ ko.bindingHandlers.numericValue = {
                 }
             },
         });
-        ko.bindingHandlers.value.init(element, function() { return interceptor; }, allBindingsAccessor);
+        ko.bindingHandlers.value.init(element, function () { return interceptor; }, allBindingsAccessor);
     },
-    update : ko.bindingHandlers.value.update,
+    update: ko.bindingHandlers.value.update,
 };

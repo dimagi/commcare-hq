@@ -2,13 +2,13 @@ hqDefine('hqcase/js/explode_cases', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'select2-3.5.2-legacy/select2',
-], function(
+    'select2/dist/js/select2.full.min',
+], function (
     $,
     ko,
     initialPageData
 ) {
-    $(function(){
+    $(function () {
         $('#explode').koApplyBindings({
             factor: ko.observable(''),
             user_id: ko.observable(''),

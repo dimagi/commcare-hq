@@ -4,13 +4,13 @@ hqDefine("scheduling/js/broadcasts_list", [
     'datatables',
     'datatables.fixedColumns',
     'datatables.bootstrap',
-], function(
+], function (
     $,
     initialPageData
 ) {
     var scheduledTable = null;
 
-    $(function() {
+    $(function () {
         var listBroadcastsUrl = initialPageData.reverse("new_list_broadcasts");
 
         scheduledTable = $("#scheduled-table").dataTable({
@@ -21,7 +21,7 @@ hqDefine("scheduling/js/broadcasts_list", [
             "processing": false,
             "serverSide": true,
             "ajaxSource": listBroadcastsUrl,
-            "fnServerParams": function(aoData) {
+            "fnServerParams": function (aoData) {
                 aoData.push({"name": "action", "value": "list_scheduled"});
             },
             "sDom": "rtp",
@@ -43,22 +43,22 @@ hqDefine("scheduling/js/broadcasts_list", [
                 {
                     "targets": [0],
                     "className": "text-center",
-                    "render": function(data, type, row) {
+                    "render": function (data, type, row) {
                         return '<button data-id="' + row.id + '" class="btn btn-danger broadcast-delete">'
                                 + '<i class="fa fa-remove"></i></button>';
                     },
                 },
                 {
                     "targets": [1],
-                    "render": function(data, type, row) {
+                    "render": function (data, type, row) {
                         var url = initialPageData.reverse('edit_schedule', 'scheduled', row.id);
                         return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
                 {
                     "targets": [3],
-                    "render": function(data, type, row) {
-                        if(row.active) {
+                    "render": function (data, type, row) {
+                        if (row.active) {
                             return '<span class="label label-success">' + gettext("Active") + '</span>';
                         } else {
                             return '<span class="label label-danger">' + gettext("Inactive") + '</span>';
@@ -67,7 +67,7 @@ hqDefine("scheduling/js/broadcasts_list", [
                 },
                 {
                     "targets": [4],
-                    "render": function(data, type, row) {
+                    "render": function (data, type, row) {
                         var disabled = row.editable ? '' : ' disabled ';
                         if (row.active) {
                             return '<button data-id="' + row.id + '"' + disabled + 'data-action="deactivate_scheduled_broadcast" class="btn btn-default broadcast-activate">'
@@ -89,7 +89,7 @@ hqDefine("scheduling/js/broadcasts_list", [
             "processing": false,
             "serverSide": true,
             "ajaxSource": listBroadcastsUrl,
-            "fnServerParams": function(aoData) {
+            "fnServerParams": function (aoData) {
                 aoData.push({"name": "action", "value": "list_immediate"});
             },
             "dom": "rtp",
@@ -107,7 +107,7 @@ hqDefine("scheduling/js/broadcasts_list", [
             "columnDefs": [
                 {
                     "targets": [0],
-                    "render": function(data, type, row) {
+                    "render": function (data, type, row) {
                         var url = initialPageData.reverse('edit_schedule', 'immediate', row.id);
                         return "<a href='" + url + "'>" + row.name + "</a>";
                     },
@@ -141,7 +141,7 @@ hqDefine("scheduling/js/broadcasts_list", [
                 broadcast_id: broadcastId,
             },
         })
-            .always(function() {
+            .always(function () {
                 scheduledTable.fnDraw(false);
             });
     }

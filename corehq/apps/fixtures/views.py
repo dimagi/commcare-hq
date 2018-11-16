@@ -18,7 +18,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
 from corehq.apps.fixtures.download import prepare_fixture_download, prepare_fixture_html
@@ -369,7 +369,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'title': _(self.page_title),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Fixture upload failed for some reason and we have noted this failure. "
-                            "Please make sure the excel file is correctly formatted and try again."),
+                            "Please make sure the Excel file is correctly formatted and try again."),
             'next_url': reverse('edit_lookup_tables', args=[self.domain]),
             'next_url_text': _("Return to manage lookup tables"),
         })

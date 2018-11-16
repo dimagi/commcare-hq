@@ -6,6 +6,7 @@ from datetime import datetime
 
 import mock
 import postgres_copy
+import six
 import sqlalchemy
 
 from django.conf import settings
@@ -19,16 +20,15 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
-    create_views,
     move_ucr_data_into_aggregation_tables,
-    _aggregate_child_health_pnc_forms)
+    _aggregate_child_health_pnc_forms,
+    _aggregate_gm_forms)
 from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
     'ccs_monthly': 'config_report_icds-cas_static-ccs_record_cases_monthly_d0e2e49e',
     'child_cases': 'config_report_icds-cas_static-child_health_cases_a46c129f',
-    'child_monthly': 'config_report_icds-cas_static-child_cases_monthly_tabl_551fd064',
     'daily_feeding': 'config_report_icds-cas_static-daily_feeding_forms_85b1167f',
     'household_cases': 'config_report_icds-cas_static-household_cases_eadc276d',
     'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
@@ -45,6 +45,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
     'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
     'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
+    'agg_awc': 'agg_awc'
 }
 
 
@@ -118,9 +119,18 @@ def setUpModule():
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
                 if not table_name.startswith('icds_dashboard_'):
-                    postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
+                    columns = [
+                        '"{}"'.format(c.strip())  # quote to preserve case
+                        for c in f.readline().split(',')
+                    ]
+                    postgres_copy.copy_from(
+                        f, table, engine, format='csv' if six.PY3 else b'csv',
+                        null='' if six.PY3 else b'', columns=columns
+                    )
 
-        _aggregate_child_health_pnc_forms('st1', datetime(2017, 3, 31))
+        for state_id in ('st1', 'st2'):
+            _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
+            _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
@@ -136,9 +146,6 @@ def setUpModule():
             raise
         finally:
             _call_center_domain_mock.stop()
-
-        with connections['icds-ucr'].cursor() as cursor:
-            create_views(cursor)
 
 
 def tearDownModule():

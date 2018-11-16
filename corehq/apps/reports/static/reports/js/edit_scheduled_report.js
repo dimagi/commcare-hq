@@ -4,15 +4,15 @@ hqDefine("reports/js/edit_scheduled_report", [
     "analytix/js/google",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/multiselect_utils",
-    "hqwebapp/js/widgets",  // autocomplete widget for email recipient list
-], function(
+    "hqwebapp/js/widgets_v4",  // autocomplete widget for email recipient list
+], function (
     $,
     _,
     googleAnalytics,
     initialPageData,
     multiselectUtils
 ) {
-    var add_options_to_select = function($select, opt_list, selected_val) {
+    var add_options_to_select = function ($select, opt_list, selected_val) {
         for (var i = 0; i < opt_list.length; i++) {
             var $opt = $('<option />').val(opt_list[i][0]).text(opt_list[i][1]);
             if (opt_list[i][0] === selected_val) {
@@ -23,7 +23,7 @@ hqDefine("reports/js/edit_scheduled_report", [
         return $select;
     };
 
-    var update_day_input = function(weekly_options, monthly_options, day_value) {
+    var update_day_input = function (weekly_options, monthly_options, day_value) {
         var $interval = $interval || $('[name="interval"]');
         $('#div_id_day').remove();
         if ($interval.val() !== 'daily') {
@@ -37,16 +37,16 @@ hqDefine("reports/js/edit_scheduled_report", [
         }
     };
 
-    var ScheduledReportFormHelper = function(options) {
+    var ScheduledReportFormHelper = function (options) {
         var self = this;
         self.weekly_options = options.weekly_options;
         self.monthly_options = options.monthly_options;
         self.day_value = options.day_value;
 
-        self.init = function() {
-            $(function() {
+        self.init = function () {
+            $(function () {
                 update_day_input(self.weekly_options, self.monthly_options, self.day_value);
-                $('[name="interval"]').change(function() {
+                $('[name="interval"]').change(function () {
                     update_day_input(self.weekly_options, self.monthly_options);
                 });
             });
@@ -58,18 +58,18 @@ hqDefine("reports/js/edit_scheduled_report", [
     var languagesForSelect = initialPageData.get('languages_for_select');
     var isOwner = initialPageData.get('is_owner');
 
-    var updateUcrElements = function(selectedConfigs){
+    var updateUcrElements = function (selectedConfigs) {
         var showUcrElements = _.any(
-            selectedConfigs, function(i){return isConfigurableMap[i] === true;}
+            selectedConfigs, function (i) {return isConfigurableMap[i] === true;}
         );
 
-        if (showUcrElements){
+        if (showUcrElements) {
             $("#ucr-privacy-warning").show();
 
             // Figure out which options to show in the select2
-            var languageLists = _.map(selectedConfigs, function(i){return languagesMap[i];});
-            var languageSet = _.reduce(languageLists, function(memo, list){
-                _.map(list, function(e){
+            var languageLists = _.map(selectedConfigs, function (i) {return languagesMap[i];});
+            var languageSet = _.reduce(languageLists, function (memo, list) {
+                _.map(list, function (e) {
                     memo[e] = true;
                 });
                 return memo;
@@ -103,7 +103,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     $('#id_language').select2({
         placeholder: gettext("Select a language..."),
     });
-    $("#id_config_ids").change(function(){
+    $("#id_config_ids").change(function () {
         updateUcrElements($(this).val());
     });
     if (!isOwner) {
@@ -130,7 +130,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     });
     scheduled_report_form_helper.init();
 
-    $('#id-scheduledReportForm').submit(function() {
+    $('#id-scheduledReportForm').submit(function () {
         googleAnalytics.track.event('Scheduled Reports', 'Create a scheduled report', '-', "", {}, function () {
             document.getElementById('id-scheduledReportForm').submit();
         });

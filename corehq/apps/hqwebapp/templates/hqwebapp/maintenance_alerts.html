@@ -1,8 +1,8 @@
 {% extends 'hqwebapp/base_page.html' %}
 {% load hq_shared_tags %}
-{% block js %}
-    <script src="{% static "hqwebapp/js/maintenance_alerts.js" %}"></script>
-{% endblock %}
+
+{% requirejs_main "hqwebapp/js/maintenance_alerts" %}
+
 {% block page_content %}
     {% initial_page_data 'alerts' alerts %}
 

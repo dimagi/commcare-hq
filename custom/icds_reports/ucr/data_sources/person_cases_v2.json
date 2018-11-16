@@ -1,9 +1,12 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -2793,12 +2796,6 @@
       {
         "column_ids": [
           "supervisor_id",
-          "owner_id"
-        ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
           "opened_on"
         ]
       },
@@ -2812,12 +2809,6 @@
         "column_ids": [
           "awc_id",
           "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "awc_id",
-          "owner_id"
         ]
       },
       {

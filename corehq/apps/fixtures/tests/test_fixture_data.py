@@ -105,7 +105,7 @@ class FixtureDataTest(TestCase):
         delete_all_users()
         delete_all_fixture_data_types()
         get_fixture_data_types_in_domain.clear(self.domain)
-        get_blob_db().delete(self.domain, FIXTURE_BUCKET)
+        get_blob_db().delete(key=FIXTURE_BUCKET + '/' + self.domain)
         super(FixtureDataTest, self).tearDown()
 
     def test_xml(self):
@@ -119,8 +119,8 @@ class FixtureDataTest(TestCase):
         """, ElementTree.tostring(self.data_item.to_xml()))
 
     def test_ownership(self):
-        self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
+        self.assertEqual({self.data_item.get_id}, set(FixtureDataItem.by_user(self.user, wrap=False)))
+        self.assertEqual({self.user.get_id}, set(self.data_item.get_all_users(wrap=False)))
 
         fixture, = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
 
@@ -138,10 +138,10 @@ class FixtureDataTest(TestCase):
         """ % self.user.user_id, ElementTree.tostring(fixture))
 
         self.data_item.remove_user(self.user)
-        self.assertItemsEqual([], self.data_item.get_all_users())
+        self.assertEqual(set(self.data_item.get_all_users()), set())
 
         self.fixture_ownership = self.data_item.add_user(self.user)
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
+        self.assertEqual({self.user.get_id}, set(self.data_item.get_all_users(wrap=False)))
 
     def test_fixture_removal(self):
         """
@@ -292,10 +292,9 @@ class FixtureDataTest(TestCase):
 
         fixtures = call_fixture_generator(fixturegenerators.item_lists, frank)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
-        self.assertTrue(get_blob_db().exists(self.domain, FIXTURE_BUCKET))
+        self.assertTrue(get_blob_db().exists(key=FIXTURE_BUCKET + '/' + self.domain))
 
-        bytes_ = six.binary_type
-        fixtures = [ElementTree.fromstring(f) if isinstance(f, bytes_) else f
+        fixtures = [ElementTree.fromstring(f) if isinstance(f, bytes) else f
             for f in call_fixture_generator(fixturegenerators.item_lists, sammy)]
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
 

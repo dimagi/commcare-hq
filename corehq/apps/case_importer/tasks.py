@@ -13,6 +13,7 @@ from corehq.util.datadog.gauges import datadog_gauge_task
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqadmin.tasks import AbnormalUsageAlert, send_abnormal_usage_alert
 from corehq.apps.case_importer.const import LookupErrors, ImportErrors
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.locations.models import SQLLocation
@@ -32,7 +33,7 @@ CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 
 
-@task
+@task(serializer='pickle')
 def bulk_import_async(config, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
     try:
@@ -44,6 +45,9 @@ def bulk_import_async(config, domain, excel_id):
         with case_upload.get_spreadsheet() as spreadsheet:
             result = do_import(spreadsheet, config, domain, task=bulk_import_async,
                                record_form_callback=case_upload.record_form)
+
+        _alert_on_result(result, domain)
+
         # return compatible with soil
         return {
             'messages': result
@@ -54,7 +58,7 @@ def bulk_import_async(config, domain, excel_id):
         store_task_result.delay(excel_id)
 
 
-@task
+@task(serializer='pickle')
 def store_task_result(upload_id):
     case_upload = CaseUpload.get(upload_id)
     case_upload.store_task_result()
@@ -62,7 +66,6 @@ def store_task_result(upload_id):
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE,
               record_form_callback=None):
-    columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = num_chunks = 0
     errors = importer_util.ImportErrorDetail()
 
@@ -121,7 +124,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         return err
 
     row_count = spreadsheet.max_row
-    for i, row in enumerate(spreadsheet.iter_rows()):
+    for i, row in enumerate(spreadsheet.iter_row_dicts()):
         if task:
             set_task_progress(task, i, row_count)
 
@@ -129,9 +132,9 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         if i == 0:
             continue
 
-        search_id = importer_util.parse_search_id(config, columns, row)
+        search_id = importer_util.parse_search_id(config, row)
 
-        fields_to_update = importer_util.populate_updated_fields(config, columns, row)
+        fields_to_update = importer_util.populate_updated_fields(config, row)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             continue
@@ -302,6 +305,21 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         'errors': errors.as_dict(),
         'num_chunks': num_chunks,
     }
+
+
+def _alert_on_result(result, domain):
+    """ Check import result and send internal alerts based on result
+
+    :param result: dict that should include key "created_count" pointing to an int
+    """
+
+    if result['created_count'] > 10000:
+        message = "A case import just uploaded {num} new cases to HQ. {domain} might be scaling operations".format(
+            num=result['created_count'],
+            domain=domain
+        )
+        alert = AbnormalUsageAlert(source="case importer", domain=domain, message=message)
+        send_abnormal_usage_alert.delay(alert)
 
 
 total_bytes = datadog_gauge_task(

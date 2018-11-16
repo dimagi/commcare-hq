@@ -1,4 +1,4 @@
-hqDefine("soil/js/file_download", function() {
+hqDefine("soil/js/file_download", function () {
     $(function () {
         var autoRefresh = '';
         var pollDownloader = function () {
@@ -6,10 +6,10 @@ hqDefine("soil/js/file_download", function() {
                 downloadId = $downloadContainer.data("downloadId");
             if (!$('#ready_' + downloadId).length) {
                 $.ajax($downloadContainer.data("url"), {
-                    success: function(data) {
+                    success: function (data) {
                         $("#display_" + downloadId).html(data);
                     },
-                    error: function(data) {
+                    error: function (data) {
                         $("#display_" + downloadId).html(data.responseText);
                         clearInterval(autoRefresh);
                     },

@@ -2,15 +2,14 @@ hqDefine('locations/js/import', [
     'jquery',
     'knockout',
     'analytix/js/google',
-    'commtrack/js/location_bulk_upload_file',
-], function(
+], function (
     $,
     ko,
     googleAnalytics
 ) {
-    $(function() {
+    $(function () {
         googleAnalytics.track.click($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
-        $("button[type='submit']").click(function() {
+        $("button[type='submit']").click(function () {
             googleAnalytics.track.event('Organization Structure', 'Bulk Import', 'Upload');
         });
 
@@ -25,7 +24,7 @@ hqDefine('locations/js/import', [
             var self = {};
             self.base_url = baseUrl;
             self.include_consumption = ko.observable(false);
-            self.url = ko.computed(function() {
+            self.url = ko.computed(function () {
                 return (
                     self.base_url + "?"
                     + (self.include_consumption() ? "include_consumption=true" : "")

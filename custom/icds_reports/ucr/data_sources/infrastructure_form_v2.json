@@ -1,11 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
-    "icds-cas"
+    "reach-sandbox",
+    "reach-test",
+    "icds-cas",
+    "cas-lab"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds-new",
+    "icds"
   ],
   "config": {
     "table_id": "static-infrastructure_form_v2",

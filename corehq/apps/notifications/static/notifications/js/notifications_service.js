@@ -48,7 +48,7 @@ hqDefine('notifications/js/notifications_service', [
         self.isInfo = ko.computed(function () {
             return self.type() === 'info';
         });
-        self.markAsRead = function() {
+        self.markAsRead = function () {
             _private.RMI("mark_as_read", {id: self.id()});
             self.isRead(true);
             return true;
@@ -62,12 +62,12 @@ hqDefine('notifications/js/notifications_service', [
         self.lastSeenNotificationDate = ko.observable();
 
         self.hasUnread = ko.computed(function () {
-            return _.some(self.notifications(), function(note) {
+            return _.some(self.notifications(), function (note) {
                 return !note.isRead();
             });
         });
 
-        self.seen = ko.computed(function() {
+        self.seen = ko.computed(function () {
 
             if (!self.hasUnread()) {
                 return true;
@@ -97,16 +97,16 @@ hqDefine('notifications/js/notifications_service', [
                 });
         };
 
-        self.bellClickHandler = function() {
+        self.bellClickHandler = function () {
             if (self.notifications().length === 0) {
                 return;
             }
 
             _private.RMI("save_last_seen", {"notification_id": self.notifications()[0].id()})
-                .done(function(data) {
+                .done(function (data) {
                     self.lastSeenNotificationDate(data.activated);
                 })
-                .fail(function(jqXHR, textStatus, errorThrown) {
+                .fail(function (jqXHR, textStatus, errorThrown) {
                     console.log(errorThrown); // eslint-disable-line no-console
                     self.hasError(true);
                 });
@@ -114,7 +114,7 @@ hqDefine('notifications/js/notifications_service', [
     };
 
     module.serviceModel = {};
-    module.initService = function(notificationsKoSelector) {
+    module.initService = function (notificationsKoSelector) {
         if ($(notificationsKoSelector).length < 1) {
             return;
         }

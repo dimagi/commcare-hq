@@ -38,9 +38,9 @@ def determine_authtype_from_header(request, default=DIGEST):
     client should send the initial request with an Authorization header.
     """
     auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    if auth_header.startswith(b'basic '):
+    if auth_header.startswith('basic '):
         return BASIC
-    elif auth_header.startswith(b'digest '):
+    elif auth_header.startswith('digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
     elif all(ApiKeyAuthentication().extract_credentials(request)):
@@ -94,7 +94,7 @@ def get_username_and_password_from_request(request):
     elif auth[0].lower() == BASIC:
         username, password = base64.b64decode(auth[1]).split(b':', 1)
         # decode password submitted from mobile app login
-        password = decode_password(password)
+        password = decode_password(password, username)
         username, password = _decode(username), _decode(password)
     return username, password
 

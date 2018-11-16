@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_data_chart, \
     get_awcs_covered_sector_data
 from django.test import TestCase
@@ -25,11 +26,9 @@ class TestAWCSCovered(TestCase):
             {
                 "rightLegend": {
                     "info": (
-                        "Total AWCs that have launched ICDS-CAS. "
-                        "AWCs are considered launched after submitting at least "
-                        "one Household Registration form. <br /><br />"
-                        'Number of AWCs launched: 19 <br />'
-                        'Number of States launched: 2'
+                        "{}<br /><br />"
+                        'Number of AWCs launched: 20 <br />'
+                        'Number of States launched: 2'.format(awcs_launched_help_text())
                     )
                 },
                 "fills": {
@@ -41,7 +40,7 @@ class TestAWCSCovered(TestCase):
                     "st1": {
                         "districts": 1,
                         "blocks": 2,
-                        "awcs": 8,
+                        "awcs": 9,
                         "states": 1,
                         "supervisors": 4,
                         'original_name': ["st1"],
@@ -77,11 +76,9 @@ class TestAWCSCovered(TestCase):
             {
                 "rightLegend": {
                     "info": (
-                        "Total AWCs that have launched ICDS-CAS. "
-                        "AWCs are considered launched after submitting at least "
-                        "one Household Registration form. <br /><br />"
-                        'Number of AWCs launched: 8 <br />'
-                        'Number of Blocks launched: 2'
+                        "{}<br /><br />"
+                        'Number of AWCs launched: 9 <br />'
+                        'Number of Blocks launched: 2'.format(awcs_launched_help_text())
                     )
                 },
                 "fills": {
@@ -93,7 +90,7 @@ class TestAWCSCovered(TestCase):
                     'block_map': {
                         'states': 1,
                         'blocks': 2,
-                        'awcs': 8,
+                        'awcs': 9,
                         'original_name': ['b1', 'b2'],
                         'districts': 1,
                         'supervisors': 4,
@@ -124,7 +121,7 @@ class TestAWCSCovered(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "value": 8
+                        "value": 9
                     }
                 ],
                 "top_five": [
@@ -134,7 +131,7 @@ class TestAWCSCovered(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "value": 8
+                        "value": 9
                     }
                 ],
                 "chart_data": [
@@ -154,12 +151,12 @@ class TestAWCSCovered(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 19.0,
+                                "y": 20.0,
                                 "x": 1491004800000,
                                 "all": 0
                             },
                             {
-                                "y": 19.0,
+                                "y": 20.0,
                                 "x": 1493596800000,
                                 "all": 0
                             }
@@ -174,7 +171,7 @@ class TestAWCSCovered(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "value": 8
+                        "value": 9
                     }
                 ]
             }
@@ -196,11 +193,9 @@ class TestAWCSCovered(TestCase):
             ),
             {
                 "info": (
-                    "Total AWCs that have launched ICDS-CAS. "
-                    "AWCs are considered launched after submitting at least "
-                    "one Household Registration form. <br /><br />"
-                    "Number of AWCs launched: 3 <br />"
-                    "Number of Supervisors launched: 2"
+                    "{}<br /><br />"
+                    "Number of AWCs launched: 4 <br />"
+                    "Number of Supervisors launched: 2".format(awcs_launched_help_text())
                 ),
                 "tooltips_data": {
                     "s2": {
@@ -208,7 +203,7 @@ class TestAWCSCovered(TestCase):
                         "states": 1,
                         "supervisors": 1,
                         "blocks": 1,
-                        "awcs": 1
+                        "awcs": 2
                     }, 
                     "s1": {
                         "districts": 1,
@@ -230,7 +225,7 @@ class TestAWCSCovered(TestCase):
                             ],
                             [
                                 "s2",
-                                1
+                                2
                             ]
                         ],
                         "key": ""

@@ -9,7 +9,7 @@ function shiftDates(days) {
     $("#paramSelectorForm").submit();
 }
 
-$(function() {
+$(function () {
     $('.date-picker').datepicker({
         changeMonth: true,
         changeYear: true,
@@ -17,14 +17,14 @@ $(function() {
         dateFormat: 'yy-mm-dd',
         numberOfMonths: 2,
     });
-    $('#startdate').change(function(){
+    $('#startdate').change(function () {
         $("#enddate").datepicker('option', 'minDate', $('#startdate').val());
     }).trigger('change');
-    $("#previous_date").click(function(e){
+    $("#previous_date").click(function (e) {
         e.preventDefault();
         shiftDates(-7);
     });
-    $("#next_date").click(function(e){
+    $("#next_date").click(function (e) {
         e.preventDefault();
         shiftDates(7);
     });

@@ -1,13 +1,13 @@
 /* globals hqImport */
 /* eslint-env mocha */
 
-describe('Debugger', function() {
+describe('Debugger', function () {
     var EvaluateXPath = hqImport('cloudcare/js/debugger/debugger').EvaluateXPath,
         API = hqImport('cloudcare/js/debugger/debugger').API,
         CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry;
 
-    describe('EvaluateXPath', function() {
-        it('should correctly match xpath input', function() {
+    describe('EvaluateXPath', function () {
+        it('should correctly match xpath input', function () {
             var evalXPath = new EvaluateXPath(),
                 result;
 
@@ -32,21 +32,21 @@ describe('Debugger', function() {
         });
     });
 
-    describe('Update logic', function() {
+    describe('Update logic', function () {
         var ccDebugger;
 
-        beforeEach(function() {
+        beforeEach(function () {
             ccDebugger = new CloudCareDebugger();
             sinon.stub(API, 'evaluateXPath').returns($.Deferred());
             sinon.stub(API, 'formattedQuestions').returns($.Deferred());
         });
 
-        afterEach(function() {
+        afterEach(function () {
             API.evaluateXPath.restore();
             API.formattedQuestions.restore();
         });
 
-        it('Should update when opened', function() {
+        it('Should update when opened', function () {
             assert.isTrue(ccDebugger.isMinimized());
 
             ccDebugger.toggleState();

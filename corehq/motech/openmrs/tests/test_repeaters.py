@@ -17,15 +17,19 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
+from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
 from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, XMLNS_OPENMRS
+from corehq.motech.openmrs.openmrs_config import OpenmrsConfig, OpenmrsCaseConfig
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 from corehq.util.test_utils import TestFileMixin, _create_case
 import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
+    create_patient,
+    find_or_create_patient,
     get_case_location,
     get_case_location_ancestor_repeaters,
-    get_openmrs_location_uuid,
+    get_ancestor_location_openmrs_uuid,
     get_patient_by_identifier,
     get_patient_by_uuid,
     get_relevant_case_updates_from_form_json,
@@ -127,16 +131,29 @@ CASE_CONFIG = {
 
 @mock.patch.object(CaseAccessors, 'get_cases', lambda self, case_ids, ordered=False: [{
     '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
-        type='paciente', case_id='65e55473-e83b-4d78-9dde-eaf949758997')
+        case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+        type='paciente',
+        name='Elsa',
+        estado_tarv='1',
+        tb='0',
+    )
 }[case_id] for case_id in case_ids])
 class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
     def test_get_case_updates_for_registration(self):
+        """
+        get_relevant_case_updates_from_form_json should fetch case
+        updates from teh given form JSON
+        """
         self.assertEqual(
             get_relevant_case_updates_from_form_json(
-                'openmrs-repeater-test', self.get_json('registration'), ['paciente'], {}),
+                'openmrs-repeater-test',
+                self.get_json('registration'),
+                case_types=['paciente'],
+                extra_fields=[]
+            ),
             [
                 CaseTriggerInfo(
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
@@ -156,9 +173,17 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
         )
 
     def test_get_case_updates_for_followup(self):
+        """
+        Specifying `extra_fields` should fetch the current value from
+        the case
+        """
         self.assertEqual(
             get_relevant_case_updates_from_form_json(
-                'openmrs-repeater-test', self.get_json('followup'), ['paciente'], {}),
+                'openmrs-repeater-test',
+                self.get_json('followup'),
+                case_types=['paciente'],
+                extra_fields=['name', 'estado_tarv', 'tb', 'bandersnatch'],
+            ),
             [
                 CaseTriggerInfo(
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
@@ -168,7 +193,12 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                     },
                     created=False,
                     closed=False,
-                    extra_fields={},
+                    extra_fields={
+                        'name': 'Elsa',
+                        'estado_tarv': '1',
+                        'tb': '0',
+                        'bandersnatch': None,
+                    },
                     form_question_values={},
                 )
             ]
@@ -179,6 +209,7 @@ class GetPatientByUuidTests(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GetPatientByUuidTests, cls).setUpClass()
         cls.patient = {
             'uuid': 'c83d9989-585f-4db3-bf55-ca1d0ee7c0af',
             'display': 'Luis Safiana Bassilo'
@@ -187,10 +218,6 @@ class GetPatientByUuidTests(SimpleTestCase):
         response.json.return_value = cls.patient
         cls.requests = mock.Mock()
         cls.requests.get.return_value = response
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
     def test_none(self):
         patient = get_patient_by_uuid(self.requests, uuid=None)
@@ -230,16 +257,78 @@ class GetFormQuestionValuesTests(SimpleTestCase):
             value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
         self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
 
+    def test_received_on(self):
+        value = get_form_question_values({
+            'form': {
+                'foo': {'bar': 'baz'},
+            },
+            'received_on': '2018-11-06T18:30:00.000000Z',
+        })
+        self.assertDictEqual(value, {
+            '/data/foo/bar': 'baz',
+            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
+        })
+
+    def test_metadata(self):
+        value = get_form_question_values({
+            'form': {
+                'foo': {'bar': 'baz'},
+                'meta': {
+                    'timeStart': '2018-11-06T18:00:00.000000Z',
+                    'timeEnd': '2018-11-06T18:15:00.000000Z',
+                    'spam': 'ham',
+                },
+            },
+            'received_on': '2018-11-06T18:30:00.000000Z',
+        })
+        self.assertDictEqual(value, {
+            '/data/foo/bar': 'baz',
+            '/metadata/timeStart': '2018-11-06T18:00:00.000000Z',
+            '/metadata/timeEnd': '2018-11-06T18:15:00.000000Z',
+            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
+        })
+
+
+class ExportOnlyTests(SimpleTestCase):
+
+    def test_create_patient(self):
+        """
+        ValueSource instances with direction set to DIRECTION_IMPORT
+        should not be exported.
+        """
+        requests = mock.Mock()
+        info = mock.Mock(
+            updates={'sex': 'M', 'dob': '1918-07-18'},
+            extra_fields={},
+        )
+        case_config = copy.deepcopy(CASE_CONFIG)
+        case_config['patient_identifiers'] = {}
+        case_config['person_preferred_name'] = {}
+        case_config['person_preferred_address'] = {}
+        case_config['person_attributes'] = {}
+
+        case_config['person_properties']['gender']['direction'] = DIRECTION_IMPORT
+        case_config['person_properties']['birthdate']['direction'] = DIRECTION_EXPORT
+        case_config = OpenmrsCaseConfig(case_config)
+
+        create_patient(requests, info, case_config)
+        requests.post.assert_called_with(
+            '/ws/rest/v1/patient/',
+            json={'person': {'birthdate': '1918-07-18'}}
+        )
+
 
 class AllowedToForwardTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AllowedToForwardTests, cls).setUpClass()
         cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123')
 
     @classmethod
     def tearDownClass(cls):
         cls.owner.delete()
+        super(AllowedToForwardTests, cls).tearDownClass()
 
     def test_update_from_openmrs(self):
         """
@@ -292,8 +381,13 @@ class CaseLocationTests(LocationHierarchyTestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.openmrs_capetown_uuid = '50017a7f-296d-4ab9-8d3a-b9498bcbf385'
         with mock.patch('corehq.apps.locations.document_store.publish_location_saved', mock.Mock()):
             super(CaseLocationTests, cls).setUpClass()
+
+            cape_town = cls.locations['Cape Town']
+            cape_town.metadata[LOCATION_OPENMRS_UUID] = cls.openmrs_capetown_uuid
+            cape_town.save()
 
     def tearDown(self):
         delete_all_users()
@@ -343,25 +437,22 @@ class CaseLocationTests(LocationHierarchyTestCase):
 
     def test_openmrs_location_uuid_set(self):
         """
-        get_openmrs_location_uuid should return the OpenMRS location UUID that corresponds to a case's location
+        get_ancestor_location_openmrs_uuid should return the OpenMRS
+        location UUID that corresponds to a case's location
         """
-        openmrs_capetown_uuid = '50017a7f-296d-4ab9-8d3a-b9498bcbf385'
         cape_town = self.locations['Cape Town']
-        cape_town.metadata[LOCATION_OPENMRS_UUID] = openmrs_capetown_uuid
-        with mock.patch('corehq.apps.locations.document_store.publish_location_saved', mock.Mock()):
-            cape_town.save()
-
         case_id = uuid.uuid4().hex
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=cape_town.location_id)
 
         self.assertEqual(
-            get_openmrs_location_uuid(self.domain, case_id),
-            openmrs_capetown_uuid
+            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            self.openmrs_capetown_uuid
         )
 
-    def test_openmrs_location_uuid_none(self):
+    def test_openmrs_location_uuid_ancestor(self):
         """
-        get_openmrs_location_uuid should return the OpenMRS location UUID that corresponds to a case's location
+        get_ancestor_location_openmrs_uuid should return the OpenMRS
+        location UUID that corresponds to a case's location's ancestor
         """
         gardens = self.locations['Gardens']
         self.assertIsNone(gardens.metadata.get(LOCATION_OPENMRS_UUID))
@@ -369,7 +460,24 @@ class CaseLocationTests(LocationHierarchyTestCase):
         case_id = uuid.uuid4().hex
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=gardens.location_id)
 
-        self.assertIsNone(get_openmrs_location_uuid(self.domain, case_id))
+        self.assertEqual(
+            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            self.openmrs_capetown_uuid
+        )
+
+    def test_openmrs_location_uuid_none(self):
+        """
+        get_ancestor_location_openmrs_uuid should return None if a
+        case's location and its ancestors do not have an OpenMRS
+        location UUID
+        """
+        joburg = self.locations['Johannesburg']
+        self.assertIsNone(joburg.metadata.get(LOCATION_OPENMRS_UUID))
+
+        case_id = uuid.uuid4().hex
+        form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=joburg.location_id)
+
+        self.assertIsNone(get_ancestor_location_openmrs_uuid(self.domain, case_id))
 
     def test_get_case_location_ancestor_repeaters_same(self):
         """
@@ -434,6 +542,41 @@ class GetPatientTest(SimpleTestCase):
         patient = get_patient_by_identifier(
             requests_mock, 'e2b966d0-1d5f-11e0-b929-000c29ad1d07', '11111111/11/1111')
         self.assertEqual(patient['uuid'], '5ba94fa2-9cb3-4ae6-b400-7bf45783dcbf')
+
+
+class FindPatientTest(SimpleTestCase):
+
+    def test_create_missing(self):
+        """
+        create_patient should be called if PatientFinder.create_missing is set
+        """
+        openmrs_config = OpenmrsConfig.wrap({
+            'case_config': {
+                'patient_finder': {
+                    'create_missing': True,
+                    'doc_type': 'WeightedPropertyPatientFinder',
+                    'searchable_properties': [],
+                    'property_weights': [],
+                },
+                'patient_identifiers': {},
+                'match_on_ids': [],
+                'person_properties': {},
+                'person_preferred_address': {},
+                'person_preferred_name': {},
+            },
+            'form_configs': [],
+        })
+
+        with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
+                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch:
+            requests = mock.Mock()
+            info = mock.Mock(case_id='123')
+            CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
+            create_patient_patch.return_value = None
+
+            find_or_create_patient(requests, DOMAIN, info, openmrs_config)
+
+            create_patient_patch.assert_called()
 
 
 class SaveMatchIdsTests(SimpleTestCase):

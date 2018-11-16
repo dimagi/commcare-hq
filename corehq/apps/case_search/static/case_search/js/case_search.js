@@ -3,14 +3,14 @@ hqDefine('case_search/js/case_search', [
     'knockout',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/initial_page_data',
-], function(
+], function (
     $,
     ko,
     alertUser,
     initialPageData
-){
+) {
     'use strict';
-    var caseSearchModel = function(caseDataUrl){
+    var caseSearchModel = function (caseDataUrl) {
         var self = {};
         self.type = ko.observable();
         self.owner_id = ko.observable();
@@ -24,7 +24,7 @@ hqDefine('case_search/js/case_search', [
         self.xpath = ko.observable();
         self.parameters = ko.observableArray();
 
-        self.addParameter = function(){
+        self.addParameter = function () {
             self.parameters.push({
                 key: "",
                 value: "",
@@ -33,11 +33,11 @@ hqDefine('case_search/js/case_search', [
                 regex: '',
             });
         };
-        self.removeParameter = function(){
+        self.removeParameter = function () {
             self.parameters.remove(this);
         };
 
-        self.submit = function(){
+        self.submit = function () {
             self.results([]);
             self.count("-");
             self.took(null);
@@ -53,13 +53,13 @@ hqDefine('case_search/js/case_search', [
                     xpath: self.xpath(),
                 }
                 )},
-                success: function(data){
+                success: function (data) {
                     self.results(data.values);
                     self.count(data.count);
                     self.took(data.took);
                     self.query(data.query);
                 },
-                error: function(response){
+                error: function (response) {
                     alertUser.alert_user(response.responseJSON.message, 'danger');
                 },
             });
@@ -68,7 +68,7 @@ hqDefine('case_search/js/case_search', [
         return self;
     };
 
-    $(function() {
+    $(function () {
         $("#case-search").koApplyBindings(caseSearchModel(initialPageData.reverse('case_data')));
     });
 });

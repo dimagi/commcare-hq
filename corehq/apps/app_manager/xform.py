@@ -166,6 +166,8 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
+        if isinstance(xml, bytes):
+            xml = xml.decode('utf-8')
         if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
         else:
@@ -181,8 +183,7 @@ class WrappedNode(object):
 
     def find(self, xpath, *args, **kwargs):
         if self.xml is not None:
-            return WrappedNode(self.xml.find(
-                xpath.format(**self.namespaces), *args, **kwargs))
+            return WrappedNode(self.xml.find(xpath.format(**self.namespaces), *args, **kwargs))
         else:
             return WrappedNode(None)
 
@@ -282,7 +283,7 @@ class ItextNode(object):
     @property
     @memoized
     def rendered_values(self):
-        return sorted([str.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
+        return sorted([bytes.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
 
     def __repr__(self):
         return self.id
@@ -608,7 +609,11 @@ class XForm(WrappedNode):
         self._scheduler_case_updates_populated = False
 
     def __str__(self):
-        return ET.tostring(self.xml) if self.xml is not None else ''
+        text = ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
+        if six.PY3:
+            return text
+        else:
+            return text.encode('utf-8')
 
     @property
     @raise_if_none("Can't find <model>")
@@ -800,7 +805,8 @@ class XForm(WrappedNode):
         from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
         instance_declarations = self.get_instance_ids()
         missing_unknown_instances = set()
-        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(domain, [self.render()])
+        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(
+            domain, [self.render().decode('utf-8')])
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)
@@ -916,6 +922,16 @@ class XForm(WrappedNode):
 
         return label
 
+    def get_label_ref(self, prompt):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_ref(prompt.find('..'))
+
+        label_node = prompt.find('{f}label')
+        if label_node.exists():
+            if 'ref' in label_node.attrib:
+                return self._normalize_itext_id(label_node.attrib['ref'])
+        return None
+
     def resolve_path(self, path, path_context=""):
         if path == "":
             return path_context
@@ -941,7 +957,8 @@ class XForm(WrappedNode):
         return list(self.translations().keys())
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False, form=None):
+                      include_groups=False, include_translations=False,
+                      exclude_select_with_itemsets=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -951,8 +968,28 @@ class XForm(WrappedNode):
         :param include_triggers: When set to True will return label questions as well as regular questions
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
+        :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         """
         from corehq.apps.app_manager.util import first_elem
+
+        def _add_choices_for_select_questions(question):
+            if cnode.items is not None:
+                options = []
+                for item in cnode.items:
+                    translation = self.get_label_text(item, langs)
+                    try:
+                        value = item.findtext('{f}value').strip()
+                    except AttributeError:
+                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
+                    option = {
+                        'label': translation,
+                        'value': value
+                    }
+                    if include_translations:
+                        option['translations'] = self.get_label_translations(item, langs)
+                    options.append(option)
+                question['options'] = options
+            return question
 
         if not self.exists():
             return []
@@ -960,8 +997,12 @@ class XForm(WrappedNode):
         questions = []
         repeat_contexts = set()
         group_contexts = set()
-        excluded_paths = set()
+        excluded_paths = set()  # prevent adding the same question twice
 
+        # control_nodes will contain all nodes in question tree (the <h:body> of an xform)
+        # The question tree doesn't contain every question - notably, it's missing hidden values - so
+        # we also need to look at the data tree (the <model> in the xform's <head>). Getting the leaves
+        # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
@@ -984,8 +1025,13 @@ class XForm(WrappedNode):
             if node.tag_name == 'trigger' and not include_triggers:
                 continue
 
+            if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
+                    and cnode.node.find('{f}itemset').exists()):
+                continue
+
             question = {
                 "label": self.get_label_text(node, langs),
+                "label_ref": self.get_label_ref(node),
                 "tag": node.tag_name,
                 "value": path,
                 "repeat": repeat,
@@ -994,29 +1040,15 @@ class XForm(WrappedNode):
                 "relevant": cnode.relevant,
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
-                "comment": self._get_comment(leaf_data_nodes, path),
+                "comment": self.get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self.get_setvalue(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
-            if cnode.items is not None:
-                options = []
-                for item in cnode.items:
-                    translation = self.get_label_text(item, langs)
-                    try:
-                        value = item.findtext('{f}value').strip()
-                    except AttributeError:
-                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
-                    option = {
-                        'label': translation,
-                        'value': value
-                    }
-                    if include_translations:
-                        option['translations'] = self.get_label_translations(item, langs)
-                    options.append(option)
-                question['options'] = options
+            question = _add_choices_for_select_questions(question)
+
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
@@ -1041,7 +1073,7 @@ class XForm(WrappedNode):
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                     "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
-                    "comment": self._get_comment(leaf_data_nodes, path),
+                    "comment": self.get_comment(path),
                     "setvalue": self.get_setvalue(path)
                 }
 
@@ -1196,9 +1228,9 @@ class XForm(WrappedNode):
         for_each_control_node(self.find('{h}body'))
         return control_nodes
 
-    def _get_comment(self, leaf_data_nodes, path):
+    def get_comment(self, path):
         try:
-            return leaf_data_nodes[path].attrib.get('{v}comment')
+            return self.get_flattened_data_nodes()[path].attrib.get('{v}comment')
         except KeyError:
             return None
 
@@ -1229,8 +1261,11 @@ class XForm(WrappedNode):
         return path
 
     def get_leaf_data_nodes(self):
+        return self.get_flattened_data_nodes(leaves_only=True)
+
+    def get_flattened_data_nodes(self, leaves_only=False):
         if not self.exists():
-            return []
+            return {}
 
         data_nodes = {}
 
@@ -1239,7 +1274,7 @@ class XForm(WrappedNode):
             for child in children:
                 path = self.resolve_path(child.tag_name, path_context)
                 for_each_data_node(child, path_context=path)
-            if not children and path_context:
+            if (not leaves_only or not children) and path_context:
                 data_nodes[path_context] = parent
 
         for_each_data_node(self.data_node)

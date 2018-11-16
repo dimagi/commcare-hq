@@ -15,8 +15,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
 
     vm.label = "Newborns with Low Birth Weight";
     vm.steps = {
-        'map': {route: '/low_birth/map', label: 'Map View'},
-        'chart': {route: '/low_birth/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/low_birth/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/low_birth/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: '% Newborns',
@@ -24,9 +24,9 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.filters = ['age'];
 
     vm.rightLegend = {
-        info: 'Of all the children born in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
+        info: 'Of all the children born and weighed in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
         '\n' +
-        'Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ',
+        'Newborns with Low Birth Weight are closely associated with fetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -81,9 +81,9 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Of all the children born in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
+        'captionContent': ' Of all the children born and weighed in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
         '\n' +
-        'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ',
+        'Newborns with Low Birth Weight are closely associated with fetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

@@ -5,11 +5,11 @@ describe('Render a case list', function () {
     var fixtures = hqImport("corehq/apps/cloudcare/static/cloudcare/js/formplayer/spec/fixtures");
     describe('#getMenuView', function () {
         var server;
-        beforeEach(function() {
+        beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
         });
 
-        afterEach(function() {
+        afterEach(function () {
             server.restore();
         });
 
@@ -34,19 +34,19 @@ describe('Render a case list', function () {
         });
     });
 
-    describe('#getMenus', function() {
+    describe('#getMenus', function () {
         var server,
             clock,
             user,
             requests;
 
-        before(function() {
+        before(function () {
             hqImport("hqwebapp/js/initial_page_data").register("apps", [{
                 "_id": "my-app-id",
             }]);
         });
 
-        beforeEach(function() {
+        beforeEach(function () {
             window.gettext = sinon.spy();
 
             FormplayerFrontend.regions = {
@@ -73,12 +73,12 @@ describe('Render a case list', function () {
             FormplayerFrontend.Apps.API.primeApps(user.restoreAs, new Backbone.Collection());
         });
 
-        afterEach(function() {
+        afterEach(function () {
             server.restore();
             clock.restore();
         });
 
-        it('Should execute an async restore using sync db', function() {
+        it('Should execute an async restore using sync db', function () {
             FormplayerFrontend.trigger('sync');
 
             // Should have fired off a request for a restore
@@ -89,7 +89,7 @@ describe('Render a case list', function () {
                 202,
                 { "Content-Type": "application/json" },
                 JSON.stringify({
-                    "exception":"Asynchronous restore under way for asdf",
+                    "exception": "Asynchronous restore under way for asdf",
                     "done": 9,
                     "total": 30,
                     "retryAfter": 30,
@@ -129,7 +129,7 @@ describe('Render a case list', function () {
             assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
         });
 
-        it('Should execute an async restore', function() {
+        it('Should execute an async restore', function () {
             var promise = FormplayerFrontend.request('app:select:menus', {
                 appId: 'my-app-id',
                 // Bypass permissions check by using preview mode

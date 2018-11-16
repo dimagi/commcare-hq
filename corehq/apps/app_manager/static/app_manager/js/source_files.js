@@ -1,23 +1,28 @@
 /* globals hqDefine */
-hqDefine('app_manager/js/source_files', function() {
-    $(function(){
-        $('.toggle-next').click(function(e){
+hqDefine('app_manager/js/source_files',[
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'select2/dist/js/select2.full.min',
+], function ($, _, initialPageData) {
+    $(function () {
+        $('.toggle-next').click(function (e) {
             e.preventDefault();
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
     
-        var current_version = hqImport('hqwebapp/js/initial_page_data').get('current_version'),
-            built_versions = hqImport('hqwebapp/js/initial_page_data').get('built_versions'),
+        var currentVersion = initialPageData.get('current_version'),
+            builtVersions = initialPageData.get('built_versions'),
             $form = $("#compare-form"),
             $input = $form.find("input");
-    
-        built_versions = _.sortBy(_.filter(built_versions, function(v) {
-            return v.version != current_version;
-        }), function(v) { return parseInt(v.version); }).reverse();
-        var version_map = _.indexBy(built_versions, 'version');
+
+        builtVersions = _.sortBy(_.filter(builtVersions, function (v) {
+            return v.version !== currentVersion;
+        }), function (v) { return parseInt(v.version); }).reverse();
+        var versionMap = _.indexBy(builtVersions, 'version');
     
         $input.select2({
-            data: _.map(built_versions, function(v) {
+            data: _.map(builtVersions, function (v) {
                 return {
                     id: v.version,
                     text: v.version + ": " + (v.comment || "no comment"),
@@ -25,16 +30,16 @@ hqDefine('app_manager/js/source_files', function() {
             }),
         });
     
-        $form.find("button").click(function() {
+        $form.find("button").click(function () {
             var version = $input.val();
             if (!version) {
                 alert("Please enter a version to compare");
                 return;
-            } else if (!version_map[version]) {
+            } else if (!versionMap[version]) {
                 alert(version + " is not a valid version");
                 return;
             }
-            window.location = hqImport('hqwebapp/js/initial_page_data').reverse('diff', version_map[version].build_id);
+            window.location = initialPageData.reverse('diff', versionMap[version].build_id);
         });
     });
 });

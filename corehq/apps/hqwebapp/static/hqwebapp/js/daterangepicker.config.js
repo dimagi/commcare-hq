@@ -14,7 +14,7 @@
     $.fn.getDateRangeSeparator = function () {
         return ' to ';
     };
-    $.fn.createDateRangePicker = function(
+    $.fn.createDateRangePicker = function (
         range_labels, separator, startdate, enddate
     ) {
         var ranges = {};
@@ -56,7 +56,7 @@
             $el.daterangepicker(config);
 
             // Add clearing functionality
-            $el.on('cancel.daterangepicker', function() {
+            $el.on('cancel.daterangepicker', function () {
                 $el.val(gettext("Show All Dates"));
 
                 // Clear startdate and enddate filters
@@ -70,7 +70,7 @@
             });
         }
 
-        if (! hasStartAndEndDate){
+        if (! hasStartAndEndDate) {
             $(this).val("");
         }
     };

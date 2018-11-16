@@ -43,7 +43,7 @@ hqDefine('app_manager/js/case_config_utils', function () {
             }
             return options;
         },
-        refreshQuestions: function(questions_observable, url, formUniqueId, event){
+        refreshQuestions: function (questions_observable, url, formUniqueId, event) {
             var $el = $(event.currentTarget);
             $el.find('i').addClass('fa-spin');
             $.get({
@@ -51,12 +51,12 @@ hqDefine('app_manager/js/case_config_utils', function () {
                 data: {
                     form_unique_id: formUniqueId,
                 },
-                success: function(data) {
+                success: function (data) {
                     $el.addClass('btn-success').removeClass('btn-danger');
                     questions_observable(data);
                     $el.find('i').removeClass('fa-spin');
                 },
-                error: function() {
+                error: function () {
                     $el.removeClass('btn-success').addClass('btn-danger');
                     $el.find('i').removeClass('fa-spin');
                     hqImport("hqwebapp/js/alert_user").alert_user(gettext("Something went wrong refreshing "
