@@ -402,7 +402,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             if password:
                 password = six.text_type(password)
             try:
-                username = normalize_username(str(username), domain)
+                username = normalize_username(six.text_type(username), domain)
             except TypeError:
                 username = None
             except ValidationError:
