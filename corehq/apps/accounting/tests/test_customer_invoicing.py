@@ -321,8 +321,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
             account=self.account,
         )
 
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal(1120.0000))
@@ -347,9 +346,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
             subscription=self.sub2
         )
 
-        invoice_date = utils.months_from_date(self.subscription.date_start,
-                                              random.randint(2, self.subscription_length))
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal(1110.0000))
