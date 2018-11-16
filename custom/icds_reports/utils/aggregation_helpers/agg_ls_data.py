@@ -80,7 +80,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
     def updates(self):
         yield """
             UPDATE "{tablename}" agg_ls_report
-            SET agg_ls_report.vhnd_observed = ut.vhnd_observed
+            SET vhnd_observed = ut.vhnd_observed
             FROM (
                 SELECT count(*) as vhnd_observed,
                 location_id as supervisor_id
@@ -99,7 +99,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
 
         yield """
             UPDATE "{tablename}" agg_ls_report
-            SET agg_ls_report.unique_awc_vists = ut.unique_awc_vists
+            SET unique_awc_vists = ut.unique_awc_vists
             FROM (
                 SELECT count(distinct awc_id) as unique_awc_vists,
                 location_id as supervisor_id
@@ -119,14 +119,14 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
 
         yield """
             UPDATE "{tablename}" agg_ls_report
-            SET agg_ls_report.beneficiary_vists = ut.beneficiary_vists
+            SET beneficiary_vists = ut.beneficiary_vists
             FROM (
                 SELECT
                 count(*) as beneficiary_vists,
                 location_id as supervisor_id
                 FROM "{ls_home_visit_ucr}"
                 WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
-                AND visit_type is not null AND visit_type <> ''
+                AND visit_type_entered is not null AND visit_type_entered <> ''
                 GROUP BY location_id
             ) ut
             WHERE agg_ls_report.supervisor_id = ut.supervisor_id
@@ -161,7 +161,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
             locations[i] = "'All'"
 
         return """
-            INSERT INTO "{to_table}" agg_ls_report(
+            INSERT INTO "{to_table}" (
             vhnd_observed,
             beneficiary_vists,
             unique_awc_vists,
