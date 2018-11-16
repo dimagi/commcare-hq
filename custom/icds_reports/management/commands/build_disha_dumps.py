@@ -10,7 +10,7 @@ from custom.icds_reports.reports.disha import build_dumps_for_month
 
 
 class Command(BaseCommand):
-    help = "Build DISHA data dumps for given month"
+    help = "Build DISHA data dumps for given month for all states"
 
     def add_arguments(self, parser):
         def valid_date(s):
@@ -30,7 +30,7 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
             dest='rebuild',
-            help='If True, dump is built for all states, otherwise only for missing states',
+            help='Rebuilds dumps. Default is to skip if a state has a dump built',
         )
 
     def handle(self, month, rebuild, *args, **kwargs):
