@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from decimal import Decimal
 
-from django.test import TestCase
-from django.test.testcases import SimpleTestCase
+from django.test.testcases import SimpleTestCase, TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.es import FormES
@@ -58,7 +58,7 @@ class XFormPillowTest(TestCase):
         self.assertEqual(1, results.total)
 
         # soft delete the form
-        with process_pillow_changes('XFormToElasticsearchPillow'):
+        with process_pillow_changes('kafka-xform-ucr-es', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 FormAccessors(self.domain).soft_delete_forms([form.form_id])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
@@ -68,7 +68,7 @@ class XFormPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self):
-        with process_pillow_changes('XFormToElasticsearchPillow'):
+        with process_pillow_changes('kafka-xform-ucr-es', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 metadata = TestFormMetadata(domain=self.domain)
                 form = get_form_ready_to_save(metadata, is_db_test=True)
