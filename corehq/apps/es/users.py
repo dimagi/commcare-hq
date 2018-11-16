@@ -98,12 +98,6 @@ def unknown_users():
     """
     return filters.doc_type("UnknownUser")
 
-def system_users():
-    """
-    Returns system users. system users have a user_id of system
-    """
-    return username("system")
-
 
 def admin_users():
     """
