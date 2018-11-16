@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS agg_ls_monthly CASCADE;
-CREATE VIEW agg_ls_monthly AS
+DROP VIEW IF EXISTS agg_ls_report_monthly CASCADE;
+CREATE VIEW agg_ls_report_monthly AS
 SELECT
 "awc_location_months"."supervisor_id" AS "supervisor_id",
 "awc_location_months"."supervisor_name" AS "supervisor_name",
