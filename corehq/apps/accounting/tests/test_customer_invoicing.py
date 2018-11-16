@@ -15,7 +15,8 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     CustomerInvoice,
     InvoicingPlan,
-    DomainUserHistory
+    DomainUserHistory,
+    CreditLine
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -212,6 +213,39 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(num_product_line_items, 2)
         for product_line_item in invoice.lineitem_set.get_products().all():
             self.assertEqual(product_line_item.quantity, 12)
+
+    def test_account_level_product_credits(self):
+        CreditLine.add_credit(
+            amount=self.subscription.plan_version.product_rate.monthly_fee / 2,
+            account=self.account,
+            is_product=True
+        )
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('1050.0000'))
+
+    def test_subscription_level_product_credits(self):
+        CreditLine.add_credit(
+            self.subscription.plan_version.product_rate.monthly_fee / 2,
+            is_product=True,
+            subscription=self.subscription
+        )
+        CreditLine.add_credit(
+            self.sub2.plan_version.product_rate.monthly_fee / 4,
+            is_product=True,
+            subscription=self.sub2,
+        )
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('800.0000'))
 
 
 class TestUserLineItem(BaseCustomerInvoiceCase):
