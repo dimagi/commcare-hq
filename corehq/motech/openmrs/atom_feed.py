@@ -312,20 +312,43 @@ def import_encounter(repeater, encounter_uuid):
     case_property_updates = fields_from_observations(encounter['observations'], repeater.observation_mappings)
 
     if case_property_updates:
+        case_blocks = []
+        patient_uuid = encounter['patientUuid']
         case_type = repeater.white_listed_case_types[0]
         case, error = importer_util.lookup_case(
             EXTERNAL_ID,
-            encounter['patientUuid'],
+            patient_uuid,
             repeater.domain,
             case_type=case_type,
         )
-        case_block = CaseBlock(
-            case_id=case.get_id,
+        if case:
+            case_id = case.get_id
+
+        elif error == LookupErrors.NotFound:
+            # The encounter is for a patient that has not yet been imported
+            patient = get_patient_by_uuid(repeater.requests, patient_uuid)
+            owner = get_one_commcare_user_at_location(repeater.domain, repeater.location_id)
+            case_block = get_addpatient_caseblock(case_type, owner, patient, repeater)
+            case_blocks.append(case_block)
+            case_id = case_block.case_id
+
+        else:
+            _assert(
+                error != LookupErrors.MultipleResults,
+                'More than one case found matching unique OpenMRS UUID. '
+                'domain: "{}". case external_id: "{}". repeater: "{}".'.format(
+                    repeater.domain, patient_uuid, repeater.get_id
+                )
+            )
+            return
+
+        case_blocks.append(CaseBlock(
+            case_id=case_id,
             create=False,
             update=case_property_updates,
-        )
+        ))
         submit_case_blocks(
-            [case_block.as_string()],
+            [cb.as_string() for cb in case_blocks],
             repeater.domain,
             xmlns=XMLNS_OPENMRS,
             device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
