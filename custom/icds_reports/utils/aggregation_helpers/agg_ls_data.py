@@ -85,7 +85,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 SELECT count(*) as vhnd_observed,
                 location_id as supervisor_id
                 FROM "{ls_vhnd_ucr}"
-                WHERE vhnd_date =  %(start_date)s
+                WHERE vhnd_date > %(start_date)s AND vhnd_date < %(end_date)s
                 GROUP BY location_id
             ) ut
             WHERE agg_ls_report.supervisor_id = ut.supervisor_id
@@ -93,7 +93,8 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
             tablename=self.tablename,
             ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
         ), {
-            "start_date": self.month_start
+            "start_date": self.month_start,
+            "end_date": self.next_month_start
         }
 
         yield """
