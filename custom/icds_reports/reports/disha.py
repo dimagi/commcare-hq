@@ -40,9 +40,9 @@ class DishaDump(object):
             return False
 
     def get_json_export(self):
-        dump = self._get_file_ref()
-        if dump:
-            return dump.get_file_from_blobdb().read()
+        file_ref = self._get_file_ref()
+        if file_ref:
+            return file_ref.get_file_from_blobdb().read()
         else:
             return ""
 
