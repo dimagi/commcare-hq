@@ -46,6 +46,7 @@ from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, g
 from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
+from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
@@ -251,12 +252,15 @@ def save_copy(request, domain, app_id):
     if not errors:
         try:
             user_id = request.couch_user.get_id
-            copy = app.make_build(
-                comment=comment,
-                user_id=user_id,
-                previous_version=app.get_latest_app(released_only=False)
-            )
-            copy.save(increment_version=False)
+            timer = datadog_bucket_timer('commcare.app_build.new_release', tags=[],
+                                         timing_buckets=(1, 10, 30, 60, 120, 240))
+            with timer:
+                copy = app.make_build(
+                    comment=comment,
+                    user_id=user_id,
+                    previous_version=app.get_latest_app(released_only=False)
+                )
+                copy.save(increment_version=False)
             CouchUser.get(user_id).set_has_built_app()
         finally:
             # To make a RemoteApp always available for building
