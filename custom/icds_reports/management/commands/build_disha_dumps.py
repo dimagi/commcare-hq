@@ -10,7 +10,7 @@ from custom.icds_reports.reports.disha import build_dumps_for_month
 
 
 class Command(BaseCommand):
-    help = "Build DISHA data dumps"
+    help = "Build DISHA data dumps for given month"
 
     def add_arguments(self, parser):
         def valid_date(s):
@@ -25,6 +25,13 @@ class Command(BaseCommand):
             type=valid_date,
             help="Month of DISHA dump - format = YYYY-MM-DD",
         )
+        parser.add_argument(
+            '--force-rebuild',
+            action='store_true',
+            default=False,
+            dest='rebuild',
+            help='If True, dump is built for all states, otherwise only for missing states',
+        )
 
-    def handle(self, month, *args, **kwargs):
-        build_dumps_for_month(month)
+    def handle(self, month, rebuild, *args, **kwargs):
+        build_dumps_for_month(month, rebuild)

@@ -11,6 +11,7 @@ from corehq.util.files import TransientTempfile
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.views import DishaIndicatorView
 from custom.icds_reports.models.helper import IcdsFile
+from memoized import memoized
 
 
 logger = logging.getLogger(__name__)
@@ -28,8 +29,18 @@ class DishaDump(object):
     def _blob_id(self):
         return 'disha_dump-{}-{}.json'.format(self.state_name.replace(" ", ""), self.month.strftime('%Y-%m-%d'))
 
-    def get_data(self):
-        dump = IcdsFile.objects.filter(blob_id=self._blob_id()).first()
+    @memoized
+    def _get_file_ref(self):
+        return IcdsFile.objects.filter(blob_id=self._blob_id()).first()
+
+    def export_exists(self):
+        if self._get_file_ref():
+            return True
+        else:
+            return False
+
+    def get_json_export(self):
+        dump = self._get_file_ref()
         if dump:
             return dump.get_file_from_blobdb().read()
         else:
@@ -58,7 +69,7 @@ class DishaDump(object):
         #       'rows': List of lists of rows, in the same order as columns
         #   }
         #
-        # The chunk_size should not be too low, otherwise there will be too many
+        # The below chunk_size should not be too low, otherwise there will be too many
         #   queries to for each chunk, it should not be too high otherwise
         #   there would be memory errors while writing json formatted data to file
         chunk_size = 4000000
@@ -84,7 +95,7 @@ class DishaDump(object):
                     f.write(u",")
             f.write(u"]}")
 
-    def build(self):
+    def build_export_json(self):
         with TransientTempfile() as temp_path:
             self._write_data_in_chunks(temp_path)
             with open(temp_path, 'r', encoding='utf-8') as f:
@@ -93,10 +104,14 @@ class DishaDump(object):
                 blob_ref.save()
 
 
-def build_dumps_for_month(month):
+def build_dumps_for_month(month, rebuild=False):
     states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
 
     for state_name in states:
-        logger.info("Calculating for state {}".format(state_name))
-        DishaDump(state_name, month).build()
-        logger.info("Finished for state {}".format(state_name))
+        dump = DishaDump(state_name, month)
+        if dump.export_exists() and not rebuild:
+            logger.info("Skipping, export is already generated for state {}".format(state_name))
+        else:
+            logger.info("Generating for state {}".format(state_name))
+            dump.build_export_json()
+            logger.info("Finished for state {}".format(state_name))
