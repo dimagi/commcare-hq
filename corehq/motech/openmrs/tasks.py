@@ -30,6 +30,8 @@ from corehq.motech.openmrs.atom_feed import (
     update_patient,
 )
 from corehq.motech.openmrs.const import (
+    ATOM_FEED_NAME_ENCOUNTER,
+    ATOM_FEED_NAME_PATIENT,
     IMPORT_FREQUENCY_WEEKLY,
     IMPORT_FREQUENCY_MONTHLY,
     OPENMRS_ATOM_FEED_POLL_INTERVAL,
@@ -262,8 +264,8 @@ def import_patients():
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
         if repeater.atom_feed_enabled and not repeater.paused:
-            patient_uuids = get_feed_updates(repeater, 'patient')
-            encounter_uuids = get_feed_updates(repeater, 'encounter')
+            patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
+            encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
             for patient_uuid in patient_uuids:
                 update_patient(repeater, patient_uuid)
             for encounter_uuid in encounter_uuids:

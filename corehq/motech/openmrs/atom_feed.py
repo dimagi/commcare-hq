@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import re
 import uuid
-from collections import defaultdict
 from datetime import datetime
 
 import pytz
@@ -19,9 +18,15 @@ from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.motech.const import DIRECTION_IMPORT
-from corehq.motech.openmrs.const import XMLNS_OPENMRS, OPENMRS_ATOM_FEED_DEVICE_ID
+from corehq.motech.openmrs.const import (
+    ATOM_FEED_NAME_PATIENT,
+    ATOM_FEED_NAMES,
+    OPENMRS_ATOM_FEED_DEVICE_ID,
+    XMLNS_OPENMRS,
+)
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
+from corehq.motech.openmrs.repeaters import AtomFeedStatus
 from corehq.util.soft_assert import soft_assert
 
 
@@ -34,7 +39,7 @@ def get_feed_xml(requests, feed_name, page):
         # the most recent changes. This shows updating patients
         # successfully, but does not replay all OpenMRS changes.
         page = 'recent'
-    assert feed_name in ('patient', 'encounter')
+    assert feed_name in ATOM_FEED_NAMES
     feed_url = '/'.join(('/ws/atomfeed', feed_name, page))
     resp = requests.get(feed_url)
     root = etree.fromstring(resp.content)
@@ -118,13 +123,11 @@ def get_feed_updates(repeater, feed_name):
     def has_new_entries_since(last_polled_at, element, xpath='./atom:updated'):
         return not last_polled_at or get_timestamp(element, xpath) > last_polled_at
 
-    assert feed_name in ('patient', 'encounter')
-    if feed_name == 'patient':
-        last_polled_at = repeater.patients_last_polled_at
-        page = repeater.patients_last_page
-    else:
-        last_polled_at = repeater.encounters_last_polled_at
-        page = repeater.encounters_last_page
+    assert feed_name in ATOM_FEED_NAMES
+    atom_feed_status = repeater.atom_feed_status.get(feed_name, AtomFeedStatus())
+    last_polled_at = atom_feed_status['last_polled_at']
+    page = atom_feed_status['last_page']
+    get_uuid = get_patient_uuid if feed_name == ATOM_FEED_NAME_PATIENT else get_encounter_uuid
     # The OpenMRS Atom feeds' timestamps are timezone-aware. So when we
     # compare timestamps in has_new_entries_since(), this timestamp
     # must also be timezone-aware. repeater.patients_last_polled_at is
@@ -138,7 +141,7 @@ def get_feed_updates(repeater, feed_name):
             if has_new_entries_since(last_polled_at, feed_xml):
                 for entry in feed_xml.xpath('./atom:entry', namespaces={'atom': 'http://www.w3.org/2005/Atom'}):
                     if has_new_entries_since(last_polled_at, entry, './atom:published'):
-                        yield get_patient_uuid(entry) if feed_name == 'patient' else get_encounter_uuid(entry)
+                        yield get_uuid(entry)
             next_page = feed_xml.xpath(
                 './atom:link[@rel="next-archive"]',
                 namespaces={'atom': 'http://www.w3.org/2005/Atom'}
@@ -159,12 +162,10 @@ def get_feed_updates(repeater, feed_name):
         # Don't update repeater if OpenMRS is offline
         return
     else:
-        if feed_name == 'patient':
-            repeater.patients_last_polled_at = datetime.utcnow()
-            repeater.patients_last_page = page
-        else:
-            repeater.encounters_last_polled_at = datetime.utcnow()
-            repeater.encounters_last_page = page
+        repeater.atom_feed_status[feed_name] = AtomFeedStatus(
+            last_polled_at=datetime.utcnow(),
+            last_page=page,
+        )
         repeater.save()
 
 
@@ -308,22 +309,16 @@ def import_encounter(repeater, encounter_uuid):
     )
     encounter = response.json()
 
-    observation_mappings = defaultdict(list)
-    for form_config in repeater.openmrs_config.form_configs:
-        for obs_mapping in form_config.openmrs_observations:
-            if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
-                observation_mappings[obs_mapping.concept].append(obs_mapping)
+    case_property_updates = fields_from_observations(encounter['observations'], repeater.observation_mappings)
 
-    case_property_updates = fields_from_observations(encounter['observations'], observation_mappings)
-
-    case_type = repeater.white_listed_case_types[0]
-    case, error = importer_util.lookup_case(
-        EXTERNAL_ID,
-        encounter['patientUuid'],
-        repeater.domain,
-        case_type=case_type,
-    )
     if case_property_updates:
+        case_type = repeater.white_listed_case_types[0]
+        case, error = importer_util.lookup_case(
+            EXTERNAL_ID,
+            encounter['patientUuid'],
+            repeater.domain,
+            case_type=case_type,
+        )
         case_block = CaseBlock(
             case_id=case.get_id,
             create=False,

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import doctest
+import inspect
 import os
 import re
 from datetime import datetime
@@ -18,7 +19,7 @@ from corehq.motech.openmrs.atom_feed import (
     get_patient_uuid,
     import_encounter,
 )
-from corehq.motech.openmrs.openmrs_config import OpenmrsFormConfig
+from corehq.motech.openmrs.openmrs_config import OpenmrsFormConfig, ObservationMapping
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -32,16 +33,15 @@ class CaseMock(dict):
 class GetTimestampTests(SimpleTestCase):
 
     def setUp(self):
-        self.feed_xml = """<?xml version="1.0" encoding="UTF-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Patient AOP</title>
-  <updated>2018-05-15T14:02:08Z</updated>
-  <entry>
-    <title>Patient</title>
-    <updated>2018-04-26T10:56:10Z</updated>
-  </entry>
-</feed>
-"""
+        self.feed_xml = inspect.cleandoc("""<?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+              <title>Patient AOP</title>
+              <updated>2018-05-15T14:02:08Z</updated>
+              <entry>
+                <title>Patient</title>
+                <updated>2018-04-26T10:56:10Z</updated>
+              </entry>
+            </feed>""")
 
     def test_no_node(self):
         xml = re.sub(r'<updated.*</updated>', '', self.feed_xml)
@@ -71,17 +71,16 @@ class GetTimestampTests(SimpleTestCase):
 class GetPatientUuidTests(SimpleTestCase):
 
     def setUp(self):
-        self.feed_xml = """<?xml version="1.0" encoding="UTF-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Patient AOP</title>
-  <entry>
-    <title>Patient</title>
-    <content type="application/vnd.atomfeed+xml">
-      <![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]>
-    </content>
-  </entry>
-</feed>
-"""
+        self.feed_xml = inspect.cleandoc("""<?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+              <title>Patient AOP</title>
+              <entry>
+                <title>Patient</title>
+                <content type="application/vnd.atomfeed+xml">
+                  <![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]>
+                </content>
+              </entry>
+            </feed>""")
 
     def test_no_content_node(self):
         xml = re.sub(r'<content.*</content>', '', self.feed_xml, flags=re.DOTALL)
@@ -133,6 +132,17 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                 "case_property": "height"
             }]
         })]
+        self.repeater.observation_mappings = {
+            '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA': [ObservationMapping.wrap({
+                'case_property': 'height',
+                'concept': '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+                'value': {
+                    'doc_type': 'FormQuestion',
+                    'form_question': '/data/height',
+                }
+            })]
+        }
+
         response = Mock()
         response.json.return_value = self.get_json('encounter')
         self.repeater.requests.get.return_value = response
@@ -148,14 +158,13 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             import_encounter(self.repeater, 'c719b87f-d221-493b-bec7-c212aa813f5d')
 
             case_block_re = """
-<case case_id="abcdef" »
-      date_modified="[\\d\\-T\\:\\.Z]+" »
-      xmlns="http://commcarehq.org/case/transaction/v2">
-  <update>
-    <height>105</height>
-  </update>
-</case>
-"""
+                <case case_id="abcdef" »
+                      date_modified="[\\d\\-T\\:\\.Z]+" »
+                      xmlns="http://commcarehq.org/case/transaction/v2">
+                  <update>
+                    <height>105</height>
+                  </update>
+                </case>"""
             case_block_re = ''.join((l.strip() for l in case_block_re.split('\n'))).replace('»', '')
             ([case_block], domain), kwargs = submit_case_blocks_patch.call_args
             self.assertRegexpMatches(case_block, case_block_re)
