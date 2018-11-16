@@ -64,5 +64,4 @@ branches:
   - mk-284183 # MK Mov 13
   # mk-check-se # MK Nov 13
   - vellum-staging  # Nick P Nov 13
-  - np/customer_invoice-plan_versions  # Nick P Nov 15
 submodules: {}
