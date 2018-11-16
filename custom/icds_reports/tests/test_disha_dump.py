@@ -20,7 +20,7 @@ class DishaFileBuildTest(SimpleTestCase):
             def count(self, *args, **kwargs):
                 return len(self)
 
-        data = [['a'], ['b'], ['c']]
+        data = [['a'], ['b'], ['b\u0105z']]
         disha_get_rows_mock.return_value = CountableList(data)
 
         month = date(2018, 8, 1)
