@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.core.serializers.json import DjangoJSONEncoder
-from io import BytesIO
+from io import open
 
 import json
 import logging
+from corehq.apps.reports.util import batch_qs
+from corehq.util.files import TransientTempfile
 
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.views import DishaIndicatorView
@@ -34,23 +35,62 @@ class DishaDump(object):
         else:
             return ""
 
-    def build(self):
+    def _get_columns(self):
         columns = [field.name for field in DishaIndicatorView._meta.fields]
         columns.remove("month")
-        indicators = DishaIndicatorView.objects.filter(
+        return columns
+
+    def _get_rows(self):
+        return DishaIndicatorView.objects.filter(
             month=self.month,
             state_name__iexact=self.state_name
-        ).values_list(*columns)
-        data = {
-            "month": str(self.month),
-            "state_name": self.state_name,
-            "column_names": columns,
-            "rows": list(indicators)
-        }
-        file = BytesIO(json.dumps(data, cls=DjangoJSONEncoder))
-        blob_ref, _ = IcdsFile.objects.get_or_create(blob_id=self._blob_id(), data_type='disha_dumps')
-        blob_ref.store_file_in_blobdb(file, expired=DISHA_DUMP_EXPIRY)
-        blob_ref.save()
+            # batch_qs requires ordered queryset
+        ).order_by('pk').values_list(*self._get_columns())
+
+    def _write_data_in_chunks(self, temp_path):
+        # Writes indicators in json format to the file at temp_path
+        #   in chunks so as to avoid memory errors while doing json.dumps.
+        #   The structure of the json is as below
+        #   {
+        #       'month': '2018-09-01',
+        #       'state_name': 'Andhra Pradesh',
+        #       'columns': [<List of disha columns>],
+        #       'rows': List of lists of rows, in the same order as columns
+        #   }
+        #
+        # The chunk_size should not be too low, otherwise there will be too many
+        #   queries to for each chunk, it should not be too high otherwise
+        #   there would be memory errors while writing json formatted data to file
+        chunk_size = 4000000
+        columns = self._get_columns()
+        indicators = self._get_rows()
+        metadata_line = u'{{'\
+            '"month":"{month}", '\
+            '"state_name": "{state_name}", '\
+            '"column_names": {columns}, '\
+            '"rows": ['.format(
+                month=self.month,
+                state_name=self.state_name,
+                columns=json.dumps(columns, ensure_ascii=False))
+        with open(temp_path, 'w', encoding='utf-8') as f:
+            f.write(metadata_line)
+            written_count = 0
+            for _, end, total, chunk in batch_qs(indicators, chunk_size):
+                chunk_string = json.dumps(list(chunk), ensure_ascii=False)
+                # chunk is list of lists, so skip enclosing brackets
+                f.write(chunk_string[1:-1])
+                written_count += len(chunk)
+                if written_count != total:
+                    f.write(u",")
+            f.write(u"]}")
+
+    def build(self):
+        with TransientTempfile() as temp_path:
+            self._write_data_in_chunks(temp_path)
+            with open(temp_path, 'r', encoding='utf-8') as f:
+                blob_ref, _ = IcdsFile.objects.get_or_create(blob_id='sd', data_type='disha_dumps')
+                blob_ref.store_file_in_blobdb(f, expired=1)
+                blob_ref.save()
 
 
 def build_dumps_for_month(month):
