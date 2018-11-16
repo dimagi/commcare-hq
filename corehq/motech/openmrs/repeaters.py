@@ -4,7 +4,7 @@ import json
 import six
 from itertools import chain
 
-from couchdbkit.ext.django.schema import SchemaProperty, StringProperty, DateTimeProperty, BooleanProperty
+from dimagi.ext.couchdbkit import SchemaProperty, StringProperty, DateTimeProperty, BooleanProperty
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
