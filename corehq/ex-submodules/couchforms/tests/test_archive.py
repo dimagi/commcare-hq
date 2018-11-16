@@ -108,6 +108,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(len(unfinished_archive_stubs), 1)
         self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
         self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
+        self.assertEqual(unfinished_archive_stubs[0].archive, True)
 
         [archival] = xform.history
         self.assertEqual('archive', archival.operation)
@@ -121,6 +122,62 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         # The case and stub should both be deleted now
         self.assertTrue(case.is_deleted)
+        unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
+
+    def testUnfinishedUnarchiveStub(self):
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
+        xml_data = self.get_xml('basic')
+        result = submit_form_locally(
+            xml_data,
+            'test-domain',
+        )
+        xform = result.xform
+        self.assertTrue(xform.is_normal)
+        self.assertEqual(0, len(xform.history))
+
+        # Archive the form successfully
+        xform.archive(user_id='librarian')
+
+        # Mock the unarchive function throwing an error
+        with mock.patch('couchforms.signals.xform_unarchived.send') as mock_send:
+            try:
+                mock_send.side_effect = Exception
+                xform.unarchive(user_id='librarian')
+            except Exception:
+                pass
+
+        # Get the form with the updated history
+        xform = self.formdb.get_form(xform.form_id)
+
+        # The archive and unarchive actions should be in the history
+        self.assertEqual(2, len(xform.history))
+        self.assertFalse(xform.is_archived)
+        case = self.casedb.get_case(case_id)
+
+        # The case should not exist because the unarchived form was not rebuilt
+        self.assertTrue(case.is_deleted)
+
+        # There should be a stub for the unfinished unarchive
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
+        self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
+        self.assertEqual(unfinished_archive_stubs[0].archive, False)
+
+        self.assertEqual('archive', xform.history[0].operation)
+        self.assertEqual('librarian', xform.history[0].user)
+        self.assertEqual('unarchive', xform.history[1].operation)
+        self.assertEqual('librarian', xform.history[1].user)
+
+        from corehq.apps.userreports.tasks import preethi_reprocess_archive_stubs
+        preethi_reprocess_archive_stubs()
+
+        # Get the case with the updated history
+        case = self.casedb.get_case(case_id)
+
+        # The case should be back, and the stud should be deleted now
+        self.assertFalse(case.is_deleted)
         unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
 

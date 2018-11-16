@@ -351,7 +351,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             return
 
         from corehq.form_processor.submission_post import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id):
+        with unfinished_archive(instance=self, user_id=user_id, archive=True):
             self.doc_type = "XFormArchived"
             self.history.append(XFormOperation(
                 user=user_id,
@@ -360,16 +360,18 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             self.save()
             xform_archived.send(sender="couchforms", xform=self)
 
-    def unarchive(self, user_id=None):
-        if not self.is_archived:
+    def unarchive(self, user_id=None, retry_archive=False):
+        if not self.is_archived and not retry_archive:
             return
-        self.doc_type = "XFormInstance"
-        self.history.append(XFormOperation(
-            user=user_id,
-            operation='unarchive',
-        ))
-        XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
-        xform_unarchived.send(sender="couchforms", xform=self)
+        from corehq.form_processor.submission_post import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=False):
+            self.doc_type = "XFormInstance"
+            self.history.append(XFormOperation(
+                user=user_id,
+                operation='unarchive',
+            ))
+            XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
+            xform_unarchived.send(sender="couchforms", xform=self)
 
 
 class XFormError(XFormInstance):
@@ -526,7 +528,7 @@ class UnfinishedArchiveStub(models.Model):
     xform_id = models.CharField(max_length=200)
     user_id = models.CharField(max_length=200)
     timestamp = models.DateTimeField(db_index=True)
-    saved = models.BooleanField(default=False)
+    archive = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
     date_queued = models.DateTimeField(null=True, db_index=True)
     attempts = models.IntegerField(default=0)
@@ -537,7 +539,7 @@ class UnfinishedArchiveStub(models.Model):
             "xform_id={s.xform_id},"
             "user_id={s.user_id},"
             "timestamp={s.timestamp},"
-            "saved={s.saved},"
+            "archive={s.saved},"
             "domain={s.domain})"
         ).format(s=self)
 

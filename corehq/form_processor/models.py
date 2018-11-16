@@ -392,17 +392,19 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_post import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id):
+        with unfinished_archive(instance=self, user_id=user_id, archive=True):
             FormAccessorSQL.archive_form(self, user_id=user_id)
             xform_archived.send(sender="form_processor", xform=self)
 
-    def unarchive(self, user_id=None):
-        if not self.is_archived:
+    def unarchive(self, user_id=None, retry_archive=False):
+        if not self.is_archived and not retry_archive:
             return
 
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.unarchive_form(self, user_id=user_id)
-        xform_unarchived.send(sender="form_processor", xform=self)
+        from corehq.form_processor.submission_post import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=False):
+            FormAccessorSQL.unarchive_form(self, user_id=user_id)
+            xform_unarchived.send(sender="form_processor", xform=self)
 
     def __unicode__(self):
         return (

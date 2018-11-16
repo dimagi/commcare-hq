@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('user_id', models.CharField(max_length=200)),
                 ('xform_id', models.CharField(max_length=200)),
                 ('timestamp', models.DateTimeField(db_index=True)),
-                ('saved', models.BooleanField(default=False)),
+                ('archive', models.BooleanField(default=False)),
                 ('domain', models.CharField(max_length=256)),
                 ('date_queued', models.DateTimeField(db_index=True, null=True)),
                 ('attempts', models.IntegerField(default=0)),

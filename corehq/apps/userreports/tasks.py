@@ -246,10 +246,13 @@ def reprocess_archive_stubs():
     stubs = UnfinishedArchiveStub.objects.filter()
     for stub in stubs:
         xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
-        # Delete the original stub and run the archive function again. (A new stub will be created if it doesn't
-        # go through again)
+        # Delete the original stub and run the archive/unarchive function again. (A new stub will be created if
+        # it doesn't go through again)
         UnfinishedArchiveStub.objects.filter(xform_id=stub.xform_id).all().delete()
-        xform.archive(user_id=stub.user_id, retry_archive=True)
+        if stub.archive:
+            xform.archive(user_id=stub.user_id, retry_archive=True)
+        else:
+            xform.unarchive(user_id=stub.user_id, retry_archive=True)
 
 
 @periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
