@@ -346,16 +346,19 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def xml_md5(self):
         return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
 
-    def archive(self, user_id=None):
-        if self.is_archived:
+    def archive(self, user_id=None, retry_archive=False):
+        if self.is_archived and not retry_archive:
             return
-        self.doc_type = "XFormArchived"
-        self.history.append(XFormOperation(
-            user=user_id,
-            operation='archive',
-        ))
-        self.save()
-        xform_archived.send(sender="couchforms", xform=self)
+
+        from corehq.form_processor.submission_post import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id):
+            self.doc_type = "XFormArchived"
+            self.history.append(XFormOperation(
+                user=user_id,
+                operation='archive',
+            ))
+            self.save()
+            xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None):
         if not self.is_archived:

@@ -118,7 +118,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         # Get the case with the updated history
         case = self.casedb.get_case(case_id)
-        
+
         # The case and stub should both be deleted now
         self.assertTrue(case.is_deleted)
         unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
