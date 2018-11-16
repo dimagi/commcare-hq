@@ -47,7 +47,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
     'ls_awc_mgt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
     'ls_home_vists': 'config_report_icds-cas_static-ls_home_visit_forms_fill_53a43d79',
-    'ls_vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
+    'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
     'agg_awc': 'agg_awc',
 }
 

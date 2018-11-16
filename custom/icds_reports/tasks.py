@@ -513,9 +513,6 @@ def _agg_awc_table(day):
 @track_time
 def _agg_ls_table(day):
     with transaction.atomic():
-        _run_custom_sql_script([
-            "SELECT create_new_aggregate_table_for_month('agg_ls_report', %s)",
-        ], day)
         AggLsData.aggregate(force_to_date(day))
 
 

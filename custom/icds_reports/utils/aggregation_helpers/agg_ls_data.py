@@ -80,7 +80,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
     def updates(self):
         yield """
             UPDATE "{tablename}" agg_ls_report
-            SET vhnd_observed = ut.vhnd_observed
+            SET agg_ls_report.vhnd_observed = ut.vhnd_observed
             FROM (
                 SELECT count(*) as vhnd_observed,
                 location_id as supervisor_id
@@ -99,19 +99,19 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
 
         yield """
             UPDATE "{tablename}" agg_ls_report
-            SET unique_awc_vists = ut.unique_awc_vists
+            SET agg_ls_report.unique_awc_vists = ut.unique_awc_vists
             FROM (
                 SELECT count(distinct awc_id) as unique_awc_vists,
                 location_id as supervisor_id
-                FROM "{ls_home_visit_ucr}"
+                FROM "{ls_awc_mgt_ucr}"
                 WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
+                AND location_entered is not null and location_entered <> ''
                 GROUP BY location_id
             ) ut
             WHERE agg_ls_report.supervisor_id = ut.supervisor_id
-            AND visit_type is not null and visit_type <> ''
         """.format(
             tablename=self.tablename,
-            ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
+            ls_awc_mgt_ucr=self._ucr_tablename(ucr_id=self.ls_awc_mgt_ucr)
         ), {
             "start_date": self.month_start,
             "end_date": self.next_month_start
@@ -119,22 +119,20 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
 
         yield """
             UPDATE "{tablename}" agg_ls_report
-            SET unique_awc_vists = ut.unique_awc_vists
+            SET agg_ls_report.beneficiary_vists = ut.beneficiary_vists
             FROM (
                 SELECT
-                count(distinct awc_id) as unique_awc_vists,
+                count(*) as beneficiary_vists,
                 location_id as supervisor_id
-                FROM "{ls_awc_mgt_ucr}"
+                FROM "{ls_home_visit_ucr}"
                 WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
+                AND visit_type is not null AND visit_type <> ''
                 GROUP BY location_id
             ) ut
-            WHERE
-              agg_ls_report.supervisor_id = ut.supervisor_id AND
-              location_entered is not null AND
-              location_entered <> ''
+            WHERE agg_ls_report.supervisor_id = ut.supervisor_id
         """.format(
             tablename=self.tablename,
-            ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
+            ls_home_visit_ucr=self._ucr_tablename(ucr_id=self.ls_home_visit_ucr)
         ), {
             "start_date": self.month_start,
             "end_date": self.next_month_start
@@ -178,9 +176,9 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
                 sum(unique_awc_vists) as unique_awc_vists,
-                agg_level,
+                {agg_level},
                 {locations},
-                month,
+                month
                 FROM "{from_table}"
                 GROUP BY {group_by}, month
             )
@@ -189,5 +187,5 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
             to_table=self._tablename_func(agg_level),
             locations=','.join(locations),
             from_table=self._tablename_func(agg_level + 1),
-            group_by=','.join(locations[:agg_level + 1])
+            group_by=','.join(locations[:agg_level])
         )
