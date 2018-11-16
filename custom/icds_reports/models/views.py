@@ -240,10 +240,12 @@ class AggLsMonthy(models.Model):
         blank=True, null=True,
         help_text="number of AWCs that have at least one Household registration form"
     )
+
     class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'agg_ls_report_monthly'
+
 
 class AggAwcMonthly(models.Model):
     """Contains one row for the status of every AWC, Supervisor, Block,
