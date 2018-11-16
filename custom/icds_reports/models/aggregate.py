@@ -450,8 +450,7 @@ class AggLsData(models.Model):
     supervisor_id = models.TextField()
     aggregation_level = models.SmallIntegerField()
 
-    class Meta:
-        managed = False
+    class Meta(object):
         db_table = 'agg_ls_report'
 
     @classmethod

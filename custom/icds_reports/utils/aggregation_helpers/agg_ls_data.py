@@ -26,7 +26,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
 
     def drop_table_if_exists(self, agg_level):
         return """
-        DROP TABLE IS EXISTS "{table_name}"
+        DROP TABLE IF EXISTS "{table_name}"
         """.format(table_name=self._tablename_func(agg_level))
 
     def create_child_table(self, agg_level):
