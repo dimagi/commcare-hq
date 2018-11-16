@@ -337,28 +337,28 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
 class AggLsAggregationTest(AggregationScriptTestBase):
     always_include_columns = {'state_id', 'district_id', 'block_id', 'supervisor_id'}
 
-    def test_agg_ls(self):
+    def test_agg_ls_2017_05_01_4(self):
         self._load_and_compare_data(
             'agg_ls_report_2017-05-01_4',
             os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_4_sorted.csv'),
             sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
         )
 
-    def test_agg_ls(self):
+    def test_agg_ls_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_ls_report_2017-05-01_3',
             os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_3_sorted.csv'),
             sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
         )
 
-    def test_agg_ls(self):
+    def test_agg_ls_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_ls_report_2017-05-01_2',
             os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_2_sorted.csv'),
             sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
         )
 
-    def test_agg_ls(self):
+    def test_agg_ls_2017_05_01_1(self):
         self._load_and_compare_data(
             'agg_ls_report_2017-05-01_1',
             os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_1_sorted.csv'),
