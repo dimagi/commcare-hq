@@ -616,6 +616,7 @@ class CcsRecordMonthlyView(models.Model):
     using_ifa = models.IntegerField(blank=True, null=True)
     lactating = models.IntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
+    open_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -867,8 +868,6 @@ class DishaIndicatorView(models.Model):
     functional_toilet_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     # agg_ccs_record_monthly indicators
-    tetanus_complete_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
     resting_during_pregnancy_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     extra_meal_percent = models.DecimalField(

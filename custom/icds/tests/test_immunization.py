@@ -101,14 +101,14 @@ class ImmunizationUtilTestCase(BaseICDSTest):
         return p
 
     def test_get_immunization_products(self):
-        self.assertItemsEqual(
-            [p.product_id for p in get_immunization_products(self.domain, 'child')],
-            [self.dpt2.get_id, self.dpt3.get_id]
+        self.assertEqual(
+            {p.product_id for p in get_immunization_products(self.domain, 'child')},
+            {self.dpt2.get_id, self.dpt3.get_id}
         )
 
-        self.assertItemsEqual(
-            [p.product_id for p in get_immunization_products(self.domain, 'pregnancy')],
-            [self.tt1.get_id, self.ttbooster.get_id, self.anc1.get_id, self.anc2.get_id]
+        self.assertEqual(
+            {p.product_id for p in get_immunization_products(self.domain, 'pregnancy')},
+            {self.tt1.get_id, self.ttbooster.get_id, self.anc1.get_id, self.anc2.get_id}
         )
 
     def test_ledger_values(self):

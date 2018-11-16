@@ -39,7 +39,7 @@ def close_cases(case_ids, domain, user, device_id, case_db=None):
         create=False,
         case_id=case_id,
         close=True,
-    ).as_xml()) for case_id in case_ids]
+    ).as_xml()).decode('utf-8') for case_id in case_ids]
 
     return submit_case_blocks(
         case_blocks,

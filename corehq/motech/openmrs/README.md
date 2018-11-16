@@ -309,8 +309,7 @@ skew towards false negatives (Type I errors). In other words, it is much
 better not to choose a patient than to choose the wrong patient.
 
 
-Creating Missing Patients
-^^^^^^^^^^^^^^^^^^^^^^^^^
+### Creating Missing Patients
 
 If a corresponding OpenMRS patient is not found for a CommCare case,
 then a PatientFinder has the option to create a patient in OpenMRS. This
@@ -339,8 +338,7 @@ an identifier. You can find this out from the OpenMRS Administration UI,
 or by testing the OpenMRS REST API.
 
 
-WeightedPropertyPatientFinder
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### WeightedPropertyPatientFinder
 
 The first (and currently only) subclass of `PatientFinder` is the
 `WeightedPropertyPatientFinder` class. As the name suggests, it assigns
@@ -351,24 +349,99 @@ See [the source code](finders.py) for more details on its properties and
 how to define it.
 
 
+OpenmrsFormConfig
+-----------------
+
+MOTECH sends case updates as changes to patient properties and
+attributes. Form submissions can also create Visits, Encounters and
+Observations in OpenMRS.
+
+Configure this in the "Form configs" section of the OpenMRS Forwarder
+configuration.
+
+An example value of Form configs might look like this:
+
+    [
+      {
+        "doc_type": "OpenmrsFormConfig",
+        "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
+        "openmrs_start_datetime": {
+          "form_question": "/metadata/timeStart",
+          "doc_type": "FormQuestion",
+          "external_data_type": "omrs_date"
+        },
+        "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
+        "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+        "openmrs_observations": [
+          {
+            "doc_type": "ObservationMapping",
+            "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "value": {
+              "form_question": "/data/height",
+              "doc_type": "FormQuestion"
+            }
+          },
+          {
+            "doc_type": "ObservationMapping",
+            "concept": "5089AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "value": {
+              "form_question": "/data/weight",
+              "doc_type": "FormQuestion"
+            }
+          }
+        ]
+      }
+    ]
+
+This example will use two form question values, "/data/height" and
+"/data/weight". They are sent as values of OpenMRS concepts
+5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA and 5089AAAAAAAAAAAAAAAAAAAAAAAAAAAA
+respectively.
+
+Set the UUIDs of Visit type and Encounter type appropriately according
+to the context of the form in the CommCare app.
+
+"openmrs_start_datetime" is an optional setting. By default, MOTECH will
+set the start of the Visit and the Encounter to the time when the form
+was completed on the mobile worker's device.
+
+To change which timestamp is used, the following "form questions" are
+available:
+* "/metadata/timeStart": The timestamp, according to the mobile worker's
+  device, when the form was started
+* "/metadata/timeEnd": The timestamp, according to the mobile worker's
+  device, when the form was completed
+* "/metadata/received_on": The timestamp when the form was submitted
+  to HQ.
+
+The value's default data type is datetime. But some organisations may
+need the value to be submitted to OpenMRS as just a date. To do this,
+change the "external_data_type" to "omrs_date", as shown in the example.
+
+
 Provider
 --------
 
-In OpenMRS, observations about a patient, like their height or their
-blood pressure, can be associated with a data provider. A "provider" is
-usually an OpenMRS user who can enter data.
+Every time a form is completed in OpenMRS, it
+[creates a new Encounter](https://wiki.openmrs.org/display/docs/Encounters+and+observations).
 
-It is useful to label data from CommCare. OpenMRS Configuration has a
-field called "Provider's Person UUID", and the value entered here is
-stored in OpenmrsConfig.openmrs_provider.
+Observations about a patient, like their height or their blood pressure,
+belong to an Encounter; just as a form submission in CommCare can have
+many form question values.
+
+The OpenMRS [Data Model](https://wiki.openmrs.org/display/docs/Data+Model)
+documentation explains that an Encounter can be associated with health
+care providers.
+
+It is useful to label data from CommCare by creating a Provider in
+OpenMRS for CommCare.
+
+OpenMRS Configuration has a field called "Provider UUID", and the value
+entered here is stored in OpenmrsConfig.openmrs_provider.
 
 There are three different kinds of entities involved in setting up a
 provider in OpenMRS: A Person instance; a Provider instance; and a User
 instance.
-
-**NOTE**: The value that OpenMRS expects in the "Provider's Person UUID"
-field is a **Person UUID**, not a **Provider UUID**. The distinction is
-not obvious in the OpenMRS interface.
 
 Use the following steps to create a provider for CommCare:
 
@@ -379,24 +452,29 @@ it into a given name ("CommCare") and a family name ("Provider").
 CommCare HQ's first Git commit is dated 2009-03-10, so that seems close
 enough to a date of birth. OpenMRS equates gender with sex, and is quite
 binary about it. You will have to decided whether CommCare is male or
-female. When you are done, click "Create Person".
-
-Make a note of the greyed UUID at the bottom of the next page. This is
-the value you will need for "Provider's Person UUID" in the
-configuration for the OpenMRS Repeater.
+female. When you are done, click "Create Person". On the next page, 
+"City/Village" is a required field. You can set "State/Province" to
+"Other" and set "City/Village" to "Cambridge". Then click "Save Person".
 
 Go back to the OpenMRS Administration page, choose "Manage Providers"
 and click "Add Provider". In the "Person" field, type the name of the
-person you just created. Then click Save.
+person you just created. You can also give it an Identifier, like
+"commcare". Then click Save.
+
+You will need the UUID of the new Provider. Find the Provider by
+entering its name, and selecting it.
+
+**Make a note of the greyed UUID**. This is the value you will need for
+"Provider UUID" in the configuration for the OpenMRS Repeater.
 
 Next, go back to the OpenMRS Administration page, choose "Manage Users"
 and click "Add User". Under "Use a person who already exists" enter the
 name of your new person and click "Next". Give your user a username
 (like "commcare"), and a password. **Under "Roles" select "Provider"**.
-Click "Save"
+Click "Save User".
 
 Now CommCare's "Provider UUID" will be recognised by OpenMRS as a
-provider. Copy the value of the person UUID you made a note of earlier
+provider. Copy the value of the Provider UUID you made a note of earlier
 into your OpenMRS configuration in CommCare HQ.
 
 
@@ -499,6 +577,42 @@ patient:
 The **name of cases** updated from the Atom feed are set to the display
 name of the *person* (not the display name of patient because it often
 includes punctuation and an identifier).
+
+
+Import-Only and Export-Only Values
+----------------------------------
+
+In configurations like Atom feed integration that involve both sending
+data to OpenMRS and importing data from OpenMRS, sometimes some values
+should only be imported, or only exported.
+
+Use the "direction" property to determine whether a value should only be
+exported, only imported, or (the default behaviour) both.
+
+For example, to import a patient value named "hivStatus" as a case
+property named "hiv_status" but not export it, use `"direction": "in"`:
+
+    {
+      "hivStatus": {
+        "doc_type": "CaseProperty",
+        "case_property": "hiv_status",
+        "direction": "in"
+      }
+    }
+
+To export a form question, for example, but not import it, use
+`"direction": "out"`:
+
+    {
+      "hivStatus": {
+        "doc_type": "FormQuestion",
+        "case_property": "hiv_status",
+        "direction": "out"
+      }
+    }
+
+Omit "direction", or set it to `null`, for values that should be both
+imported and exported.
 
 
 Data Types

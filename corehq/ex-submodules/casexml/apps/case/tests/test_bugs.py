@@ -137,11 +137,11 @@ class CaseBugTest(TestCase, TestFileMixin):
             CaseBlock(create=True, case_id=case_id, update={
                 'p1': 'v1',
                 'p2': 'v2',
-            }).as_string(),
+            }).as_string().decode('utf-8'),
             CaseBlock(case_id=case_id, update={
                 'p2': 'v4',
                 'p3': 'v3',
-            }).as_string(),
+            }).as_string().decode('utf-8'),
         ]
         form, [case] = submit_case_blocks(case_blocks, 'test-domain')
         self.assertEqual('v1', case.dynamic_case_properties()['p1'])
@@ -310,27 +310,6 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['child_cases']))
         self.assertEqual(2, len(hierarchy['child_cases'][0]['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases'][0]['child_cases']))
-
-    def test_full_ancestry(self):
-        """get_case_hierarchy should return the full parentage tree for any case
-        """
-        factory = CaseFactory('baggins-of-hobbiton')
-        bagginses = ['balbo', 'mungo', 'bungo', 'bilbo']
-        cases = {}
-        for level, baggins in enumerate(bagginses):
-            cases[baggins] = factory.create_or_update_case(
-                CaseStructure(
-                    case_id=baggins,
-                    attrs={
-                        'case_type': 'baggins',
-                        'update': {'name': baggins},
-                        'create': True},
-                    indices=[CaseIndex(CaseStructure(case_id=bagginses[level - 1]))] if level != 0 else None,
-                    walk_related=False,
-                )
-            )[0]
-        hierarchy = get_case_hierarchy(cases['bungo'], {})
-        self.assertEqual(4, len(hierarchy['case_list']))
 
     @softer_assert()
     def test_missing_transactions(self):

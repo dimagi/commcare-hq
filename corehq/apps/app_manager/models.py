@@ -70,7 +70,6 @@ from couchdbkit import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.util.quickcache import quickcache
@@ -1083,6 +1082,10 @@ class FormBase(DocumentSchema):
     def is_a_disabled_release_form(self):
         return self.is_release_notes_form and not self.enable_release_notes
 
+    @property
+    def timing_context(self):
+        return self.get_app().timing_context
+
     def validate_for_build(self, validate_module=True):
         errors = []
 
@@ -1152,7 +1155,8 @@ class FormBase(DocumentSchema):
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self, 'form_filter') and self.form_filter:
-            is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
+            with self.timing_context("validate_xpath"):
+                is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
             if not is_valid:
                 error = {
                     'type': 'form filter has xpath error',
@@ -1203,6 +1207,7 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
+    @time_method()
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
@@ -1223,12 +1228,14 @@ class FormBase(DocumentSchema):
         The returned function requires two arguments
         `(case_property_name, data_path)` and returns a string.
         """
-        try:
-            valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[])}
-        except XFormException as e:
-            # punt on invalid xml (sorry, no rich attachments)
-            valid_paths = {}
+        valid_paths = {}
+        if toggles.MM_CASE_PROPERTIES.enabled(self.get_app().domain):
+            try:
+                valid_paths = {question['value']: question['tag']
+                               for question in self.get_questions(langs=[])}
+            except XFormException as e:
+                # punt on invalid xml (sorry, no rich attachments)
+                valid_paths = {}
 
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
@@ -1865,6 +1872,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return actions_use_usercase(self.active_actions())
 
+    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
         if xml_valid:
@@ -2586,7 +2594,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 domain = self.get_app().domain
                 project = Domain.get_by_name(domain)
                 try:
-                    if not should_sync_hierarchical_fixture(project):
+                    if not should_sync_hierarchical_fixture(project, self.get_app()):
                         # discontinued feature on moving to flat fixture format
                         raise LocationXpathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
@@ -3218,6 +3226,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
+    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
         if xml_valid:
@@ -3423,6 +3432,7 @@ class ShadowForm(AdvancedForm):
             open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
         )
 
+    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
         if not self.shadow_parent_form_id:
@@ -5437,6 +5447,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
+        from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
@@ -5960,7 +5971,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return files
 
     @time_method()
-    @memoized
     def create_all_files(self, build_profile_id=None):
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {

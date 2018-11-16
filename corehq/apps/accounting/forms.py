@@ -1965,7 +1965,8 @@ class TriggerCustomerInvoiceForm(forms.Form):
             invoice_factory = CustomerAccountInvoiceFactory(
                 date_start=invoice_start,
                 date_end=invoice_end,
-                account=account
+                account=account,
+                recipients=[settings.ACCOUNTS_EMAIL]
             )
             invoice_factory.create_invoice()
         except BillingAccount.DoesNotExist:

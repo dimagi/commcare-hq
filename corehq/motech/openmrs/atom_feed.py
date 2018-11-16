@@ -18,6 +18,7 @@ from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
+from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.openmrs.const import XMLNS_OPENMRS, OPENMRS_ATOM_FEED_DEVICE_ID
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
@@ -151,6 +152,8 @@ def get_addpatient_caseblock(case_type, owner, patient, repeater):
 
     fields_to_update = {}
     for prop, (jsonpath, value_source) in property_map.items():
+        if not value_source.check_direction(DIRECTION_IMPORT):
+            continue
         matches = jsonpath.find(patient)
         if matches:
             patient_value = matches[0].value
@@ -177,6 +180,8 @@ def get_updatepatient_caseblock(case, patient, repeater):
 
     fields_to_update = {}
     for prop, (jsonpath, value_source) in property_map.items():
+        if not value_source.check_direction(DIRECTION_IMPORT):
+            continue
         matches = jsonpath.find(patient)
         if matches:
             patient_value = matches[0].value

@@ -10,8 +10,6 @@ from django.http import HttpResponseRedirect, Http404
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-from celery.task import task
-
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain, get_current_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
@@ -290,7 +288,6 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
 def update_linked_app_and_notify(domain, app_id, user_id, email):
     app = get_current_app(domain, app_id)
     try:
