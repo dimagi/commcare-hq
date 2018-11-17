@@ -135,3 +135,15 @@ END; $$ LANGUAGE plpgsql;
 CREATE TRIGGER blobs_blobmeta_trigger
     INSTEAD OF INSERT OR UPDATE OR DELETE ON blobs_blobmeta
     FOR EACH ROW EXECUTE PROCEDURE mutate_blobs_blobmeta();
+
+
+-- Indexes to improve performance of delete functions.
+-- This should not add any form processing overhead since there should
+-- be no more inserts into form_processor_xformattachmentsql.
+CREATE INDEX form_processor_xformattachmentsql_blobmeta_key
+ON public.form_processor_xformattachmentsql (((
+    CASE
+        WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+        ELSE COALESCE(blob_bucket, 'form/' || attachment_id) || '/'
+    END || blob_id
+)::varchar(255)));
