@@ -35,7 +35,7 @@ SELECT
     att."name",
     (CASE
         WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(att.blob_bucket, 'form/' || att.attachment_id)
+        ELSE COALESCE(att.blob_bucket, 'form/' || att.attachment_id) || '/'
     END || att.blob_id)::VARCHAR(255) AS "key",
     CASE
         WHEN att."name" = 'form.xml' THEN 1 -- corehq.blobs.CODES.form_xml
