@@ -222,70 +222,70 @@ class WebconnectorJS(View):
 
     def get(self, request):
         return HttpResponse(
-'''
-(function() {
-    // Create the connector object
-    var myConnector = tableau.makeConnector();
-
-    // Define the schema
-    myConnector.getSchema = function(schemaCallback) {
-        var cols = [{
-            id: "id",
-            dataType: tableau.dataTypeEnum.string
-        }, {
-            id: "mag",
-            alias: "magnitude",
-            dataType: tableau.dataTypeEnum.float
-        }, {
-            id: "title",
-            alias: "title",
-            dataType: tableau.dataTypeEnum.string
-        }, {
-            id: "location",
-            dataType: tableau.dataTypeEnum.geometry
-        }];
-
-        var tableSchema = {
-            id: "earthquakeFeed",
-            alias: "Earthquakes with magnitude greater than 4.5 in the last seven days",
-            columns: cols
-        };
-
-        schemaCallback([tableSchema]);
-    };
-
-    // Download the data
-    myConnector.getData = function(table, doneCallback) {
-        $.getJSON("http://localhost:8000/hq/admin/4.5_week.geojson", function(resp) {
-            var feat = resp.features,
-                tableData = [];
-
-            // Iterate over the JSON object
-            for (var i = 0, len = feat.length; i < len; i++) {
-                tableData.push({
-                    "id": feat[i].id,
-                    "mag": feat[i].properties.mag,
-                    "title": feat[i].properties.title,
-                    "location": feat[i].geometry
+            '''
+            (function() {
+                // Create the connector object
+                var myConnector = tableau.makeConnector();
+            
+                // Define the schema
+                myConnector.getSchema = function(schemaCallback) {
+                    var cols = [{
+                        id: "id",
+                        dataType: tableau.dataTypeEnum.string
+                    }, {
+                        id: "mag",
+                        alias: "magnitude",
+                        dataType: tableau.dataTypeEnum.float
+                    }, {
+                        id: "title",
+                        alias: "title",
+                        dataType: tableau.dataTypeEnum.string
+                    }, {
+                        id: "location",
+                        dataType: tableau.dataTypeEnum.geometry
+                    }];
+            
+                    var tableSchema = {
+                        id: "earthquakeFeed",
+                        alias: "Earthquakes with magnitude greater than 4.5 in the last seven days",
+                        columns: cols
+                    };
+            
+                    schemaCallback([tableSchema]);
+                };
+            
+                // Download the data
+                myConnector.getData = function(table, doneCallback) {
+                    $.getJSON("http://localhost:8000/hq/admin/4.5_week.geojson", function(resp) {
+                        var feat = resp.features,
+                            tableData = [];
+            
+                        // Iterate over the JSON object
+                        for (var i = 0, len = feat.length; i < len; i++) {
+                            tableData.push({
+                                "id": feat[i].id,
+                                "mag": feat[i].properties.mag,
+                                "title": feat[i].properties.title,
+                                "location": feat[i].geometry
+                            });
+                        }
+            
+                        table.appendRows(tableData);
+                        doneCallback();
+                    });
+                };
+            
+                tableau.registerConnector(myConnector);
+            
+                // Create event listeners for when the user submits the form
+                $(document).ready(function() {
+                    $("#submitButton").click(function() {
+                        tableau.connectionName = "USGS Earthquake Feed"; // This will be the data source name in Tableau
+                        tableau.submit(); // This sends the connector object to Tableau
+                    });
                 });
-            }
-
-            table.appendRows(tableData);
-            doneCallback();
-        });
-    };
-
-    tableau.registerConnector(myConnector);
-
-    // Create event listeners for when the user submits the form
-    $(document).ready(function() {
-        $("#submitButton").click(function() {
-            tableau.connectionName = "USGS Earthquake Feed"; // This will be the data source name in Tableau
-            tableau.submit(); // This sends the connector object to Tableau
-        });
-    });
-})();
-'''
+            })();
+            '''
         )
 
 
@@ -294,15 +294,6 @@ class GeoJson(View):
 
     def get(self, request):
         return JsonResponse({
-          # "type": "FeatureCollection",
-          # "metadata": {
-          #   # "generated": 1542578182000,
-          #   # "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson",
-          #   # "title": "USGS Magnitude 4.5+ Earthquakes, Past Week",
-          #   # "status": 200,
-          #   # "api": "1.5.8",
-          #   # "count": 101
-          # },
           "features": [
             {
               "type": "Feature",
@@ -344,102 +335,5 @@ class GeoJson(View):
               },
               "id": "us1000htm5"
             },
-            # {
-            #   "type": "Feature",
-            #   "properties": {
-            #     "mag": 4.8,
-            #     "place": "Southern East Pacific Rise",
-            #     "time": 1542570527810,
-            #     "updated": 1542574911040,
-            #     "tz": -420,
-            #     "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us1000htm4",
-            #     "detail": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/us1000htm4.geojson",
-            #     "felt": None,
-            #     "cdi": None,
-            #     "mmi": None,
-            #     "alert": None,
-            #     "status": "reviewed",
-            #     "tsunami": 0,
-            #     "sig": 354,
-            #     "net": "us",
-            #     "code": "1000htm4",
-            #     "ids": ",us1000htm4,",
-            #     "sources": ",us,",
-            #     "types": ",geoserve,origin,phase-data,",
-            #     "nst": None,
-            #     "dmin": 8.826,
-            #     "rms": 1.07,
-            #     "gap": 173,
-            #     "magType": "mb",
-            #     "type": "earthquake",
-            #     "title": "M 4.8 - Southern East Pacific Rise"
-            #   },
-            #   "geometry": {
-            #     "type": "Point",
-            #     "coordinates": [
-            #       -105.7322,
-            #       -35.4258,
-            #       10
-            #     ]
-            #   },
-            #   "id": "us1000htm4"
-            # },
-            # {
-            #   "type": "Feature",
-            #   "properties": {
-            #     "mag": 4.6,
-            #     "place": "37km WSW of Mouzaki, Greece",
-            #     "time": 1541973811550,
-            #     "updated": 1542001163381,
-            #     "tz": 60,
-            #     "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us1000hqnf",
-            #     "detail": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/us1000hqnf.geojson",
-            #     "felt": 1,
-            #     "cdi": 2,
-            #     "mmi": None,
-            #     "alert": None,
-            #     "status": "reviewed",
-            #     "tsunami": 0,
-            #     "sig": 326,
-            #     "net": "us",
-            #     "code": "1000hqnf",
-            #     "ids": ",us1000hqnf,",
-            #     "sources": ",us,",
-            #     "types": ",dyfi,geoserve,origin,phase-data,",
-            #     "nst": None,
-            #     "dmin": 2.054,
-            #     "rms": 1.02,
-            #     "gap": 98,
-            #     "magType": "mb",
-            #     "type": "earthquake",
-            #     "title": "M 4.6 - 37km WSW of Mouzaki, Greece"
-            #   },
-            #   "geometry": {
-            #     "type": "Point",
-            #     "coordinates": [
-            #       20.4119,
-            #       37.6287,
-            #       10
-            #     ]
-            #   },
-            #   "id": "us1000hqnf"
-            # }
           ],
-          # "bbox": [
-          #   -179.9727,
-          #   -62.0088,
-          #   8.66,
-          #   177.5889,
-          #   71.4431,
-          #   567.14
-          # ]
         })
-        return HttpResponse(
-'''
-{"type":"FeatureCollection","metadata":{"generated":1542578182000,"url":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson","title":"USGS Magnitude 4.5+ Earthquakes, Past Week","status":200,"api":"1.5.8","count":101},"features":[
-{"type":"Feature","properties":{"mag":6.7,"place":"245km SE of Lambasa, Fiji","time":1542572745970,"updated":1542574666040,"tz":-720,"url":"https://earthquake.usgs.gov/earthquakes/eventpage/us1000htm5","detail":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/us1000htm5.geojson","felt":None,"cdi":None,"mmi":2.96,"alert":"green","status":"reviewed","tsunami":1,"sig":691,"net":"us","code":"1000htm5","ids":",pt18322000,at00pieoqx,us1000htm5,","sources":",pt,at,us,","types":",geoserve,impact-link,losspager,moment-tensor,origin,phase-data,shakemap,","nst":None,"dmin":2.906,"rms":1.02,"gap":72,"magType":"mww","type":"earthquake","title":"M 6.7 - 245km SE of Lambasa, Fiji"},"geometry":{"type":"Point","coordinates":[-178.9,-17.8972,533.6]},"id":"us1000htm5"},
-{"type":"Feature","properties":{"mag":4.8,"place":"Southern East Pacific Rise","time":1542570527810,"updated":1542574911040,"tz":-420,"url":"https://earthquake.usgs.gov/earthquakes/eventpage/us1000htm4","detail":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/us1000htm4.geojson","felt":None,"cdi":None,"mmi":None,"alert":None,"status":"reviewed","tsunami":0,"sig":354,"net":"us","code":"1000htm4","ids":",us1000htm4,","sources":",us,","types":",geoserve,origin,phase-data,","nst":None,"dmin":8.826,"rms":1.07,"gap":173,"magType":"mb","type":"earthquake","title":"M 4.8 - Southern East Pacific Rise"},"geometry":{"type":"Point","coordinates":[-105.7322,-35.4258,10]},"id":"us1000htm4"},
-{"type":"Feature","properties":{"mag":4.6,"place":"37km WSW of Mouzaki, Greece","time":1541973811550,"updated":1542001163381,"tz":60,"url":"https://earthquake.usgs.gov/earthquakes/eventpage/us1000hqnf","detail":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/us1000hqnf.geojson","felt":1,"cdi":2,"mmi":None,"alert":None,"status":"reviewed","tsunami":0,"sig":326,"net":"us","code":"1000hqnf","ids":",us1000hqnf,","sources":",us,","types":",dyfi,geoserve,origin,phase-data,","nst":None,"dmin":2.054,"rms":1.02,"gap":98,"magType":"mb","type":"earthquake","title":"M 4.6 - 37km WSW of Mouzaki, Greece"},"geometry":{"type":"Point","coordinates":[20.4119,37.6287,10]},"id":"us1000hqnf"}],"bbox":[-179.9727,-62.0088,8.66,177.5889,71.4431,567.14]
-}
-'''
-        )
