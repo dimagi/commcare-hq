@@ -7,7 +7,7 @@ from corehq.apps.hqadmin.views.data import (
     doc_in_es,
     raw_couch,
     raw_doc,
-)
+    Webconnector, WebconnectorJS, GeoJson)
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
     mass_email,
@@ -47,6 +47,9 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
 urlpatterns = [
+    url(r'^webconnector.html$', Webconnector.as_view(), name=Webconnector.urlname),
+    url(r'^earthquakeWDC.js$', WebconnectorJS.as_view(), name=WebconnectorJS.urlname),
+    url(r'^4.5_week.geojson$', GeoJson.as_view(), name=GeoJson.urlname),
     url(r'^$', default, name="default_admin_report"),
     url(r'^system/$', SystemInfoView.as_view(), name=SystemInfoView.urlname),
     url(r'^system/recent_changes/$', RecentCouchChangesView.as_view(),
