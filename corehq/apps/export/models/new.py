@@ -11,7 +11,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
-from couchdbkit.ext.django.schema import IntegerProperty
+from dimagi.ext.couchdbkit import IntegerProperty
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
