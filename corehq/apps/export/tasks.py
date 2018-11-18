@@ -25,9 +25,9 @@ from .const import SAVED_EXPORTS_QUEUE, EXPORT_DOWNLOAD_QUEUE
 from .dbaccessors import (
     get_case_inferred_schema,
     get_properly_wrapped_export_instance,
-    get_all_daily_saved_export_instance_ids,
+    get_daily_saved_export_ids_for_auto_rebuild,
 )
-from .export import get_export_file, rebuild_export, should_rebuild_export
+from .export import get_export_file, rebuild_export
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
@@ -90,10 +90,9 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
 
 @task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
-def _start_export_task(export_instance_id, last_access_cutoff):
+def _start_export_task(export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    if should_rebuild_export(export_instance, last_access_cutoff):
-        rebuild_export(export_instance, progress_tracker=_start_export_task)
+    rebuild_export(export_instance, progress_tracker=_start_export_task)
 
 
 def _get_saved_export_download_data(export_instance_id):
@@ -105,7 +104,7 @@ def _get_saved_export_download_data(export_instance_id):
     return download_data
 
 
-def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=False):
+def rebuild_saved_export(export_instance_id, manual=False):
     """Kicks off a celery task to rebuild the export.
 
     If this is called while another one is already running for the same export
@@ -127,9 +126,7 @@ def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=Fal
     # associate task with the export instance
     download_data.set_task(
         _start_export_task.apply_async(
-            args=[
-                export_instance_id, last_access_cutoff
-            ],
+            args=[export_instance_id],
             queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
         )
     )
@@ -164,9 +161,9 @@ def saved_exports():
     for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
         export_for_group_async.delay(group_config_id)
 
-    for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
-        last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_saved_export(daily_saved_export_id, last_access_cutoff, manual=False)
+    last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    for daily_saved_export_id in get_daily_saved_export_ids_for_auto_rebuild(last_access_cutoff):
+        rebuild_saved_export(daily_saved_export_id, manual=False)
 
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)

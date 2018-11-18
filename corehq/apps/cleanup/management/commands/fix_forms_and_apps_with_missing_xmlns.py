@@ -232,7 +232,7 @@ def set_xmlns_on_form(form_id, xmlns, app_build, log_file, dry_run):
         xml = form_in_build.source
         wrapped_xml = XForm(xml)
 
-        data = wrapped_xml.data_node.render()
+        data = wrapped_xml.data_node.render().decode('utf-8')
         data = data.replace("undefined", xmlns, 1)
         wrapped_xml.instance_node.remove(wrapped_xml.data_node.xml)
         wrapped_xml.instance_node.append(parse_xml(data))

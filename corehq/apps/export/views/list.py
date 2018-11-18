@@ -428,6 +428,8 @@ class DailySavedExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'name': export.name,
             'description': export.description,
+            'last_build_duration': (str(timedelta(milliseconds=export.last_build_duration))
+                                    if export.last_build_duration else ''),
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': (

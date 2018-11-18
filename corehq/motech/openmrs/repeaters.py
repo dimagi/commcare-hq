@@ -6,11 +6,6 @@ from collections import defaultdict
 import six
 from itertools import chain
 
-from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
-from django.urls import reverse
-
-from corehq.motech.const import DIRECTION_IMPORT
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -19,7 +14,11 @@ from dimagi.ext.couchdbkit import (
     SchemaProperty,
     StringProperty,
 )
+from django.utils.functional import cached_property
+from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
 
+from corehq.motech.const import DIRECTION_IMPORT
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator

@@ -179,6 +179,20 @@
         "type": "expression"
       },
       {
+        "display_name": "Location Entered",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": ["form", "location_form_filled"]
+        },
+        "column_id": "location_entered"
+      },
+      {
         "display_name": null,
         "transform": {},
         "datatype": "decimal",
