@@ -247,6 +247,10 @@ re-fetching it using the same command above. Feel free to add it to your
 $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 ```
 
+#### Browser Settings
+
+We recommend disabling the cache. In Chrome, go to Dev Tools > Settings > Preferences > Network and check "Disable cache (while DevTools is open)"
+
 
 Running CommCare HQ
 -------------------
