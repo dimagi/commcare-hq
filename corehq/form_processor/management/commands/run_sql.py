@@ -11,22 +11,6 @@ from six.moves import input
 
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
-
-# see https://github.com/dimagi/commcare-hq/pull/21631
-BLOBMETA_KEY_SQL = """
-CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
-ON public.form_processor_xformattachmentsql (((
-    CASE
-        WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(blob_bucket, 'form/' || attachment_id) || '/'
-    END || blob_id
-)::varchar(255)))
-"""
-
-STATEMENTS = {
-    "blobmeta_key": BLOBMETA_KEY_SQL,
-}
-
 MULTI_DB = 'Execute on ALL (%s) databases in parallel. Continue?'
 
 
@@ -58,11 +42,28 @@ class Command(BaseCommand):
                 traceback.print_exc()
 
 
+def confirm(msg):
+    return input(msg + "\n(y/N) ").lower() == 'y'
+
+
 def run_sql(db_name, sql):
     print("running on %s database" % db_name)
     with connections[db_name].cursor() as cursor:
         cursor.execute(sql)
 
 
-def confirm(msg):
-    return input(msg + "\n(y/N) ").lower() == 'y'
+# see https://github.com/dimagi/commcare-hq/pull/21631
+BLOBMETA_KEY_SQL = """
+CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
+ON public.form_processor_xformattachmentsql (((
+    CASE
+        WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+        ELSE COALESCE(blob_bucket, 'form/' || attachment_id) || '/'
+    END || blob_id
+)::varchar(255)))
+"""
+
+
+STATEMENTS = {
+    "blobmeta_key": BLOBMETA_KEY_SQL,
+}
