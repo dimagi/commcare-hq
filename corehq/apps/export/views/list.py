@@ -425,7 +425,7 @@ class DailySavedExportListView(BaseExportListView):
 @require_POST
 @login_and_domain_required
 def commit_filters(request, domain):
-    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    permissions = ExportsPermissionsManager(request.POST.get('model_type'), domain, request.couch_user)
     if not permissions.has_edit_permissions:
         raise Http404
     export_id = request.POST.get('export_id')
