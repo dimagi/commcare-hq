@@ -47,11 +47,6 @@ class CaseListExplorer(CaseListReport):
         SelectOpenCloseFilter,
     ]
 
-    @classmethod
-    def get_subpages(cls):
-        # Override parent implementation
-        return []
-
     @property
     @memoized
     def es_results(self):
