@@ -97,7 +97,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform = self.formdb.get_form(xform.form_id)
         self.assertEqual(1, len(xform.history))
         self.assertTrue(xform.is_archived)
-
         [archival] = xform.history
         self.assertEqual('archive', archival.operation)
         self.assertEqual('librarian', archival.user)
@@ -115,6 +114,15 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         # Manually call the periodic celery task that reruns archiving/unarchiving actions
         reprocess_archive_stubs()
+
+        # Make sure the history doesn't have duplicate entries
+        xform = self.formdb.get_form(xform.form_id)
+        self.assertEqual(1, len(xform.history))
+        self.assertTrue(xform.is_archived)
+        [archival] = xform.history
+        self.assertEqual('archive', archival.operation)
+        self.assertEqual('librarian', archival.user)
+
 
         # The case and stub should both be deleted now
         case = self.casedb.get_case(case_id)
@@ -148,7 +156,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform = self.formdb.get_form(xform.form_id)
         self.assertEqual(2, len(xform.history))
         self.assertFalse(xform.is_archived)
-
         self.assertEqual('archive', xform.history[0].operation)
         self.assertEqual('librarian', xform.history[0].user)
         self.assertEqual('unarchive', xform.history[1].operation)
@@ -167,6 +174,15 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         # Manually call the periodic celery task that reruns archiving/unarchiving actions
         reprocess_archive_stubs()
+
+        # Make sure the history doesn't have duplicate entries
+        xform = self.formdb.get_form(xform.form_id)
+        self.assertEqual(2, len(xform.history))
+        self.assertFalse(xform.is_archived)
+        self.assertEqual('archive', xform.history[0].operation)
+        self.assertEqual('librarian', xform.history[0].user)
+        self.assertEqual('unarchive', xform.history[1].operation)
+        self.assertEqual('librarian', xform.history[1].user)
 
         # The case should be back, and the stub should be deleted now
         case = self.casedb.get_case(case_id)

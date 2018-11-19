@@ -546,16 +546,16 @@ class FormAccessorSQL(AbstractFormAccessor):
         return attachments
 
     @staticmethod
-    def archive_form(form, user_id=None):
+    def archive_form(form, retry_archive, user_id=None):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, True)
+        FormAccessorSQL._archive_unarchive_form(form, user_id, True, retry_archive)
         form.state = XFormInstanceSQL.ARCHIVED
         publish_form_saved(form)
 
     @staticmethod
-    def unarchive_form(form, user_id=None):
+    def unarchive_form(form, retry_archive, user_id=None):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, False)
+        FormAccessorSQL._archive_unarchive_form(form, user_id, False, retry_archive)
         form.state = XFormInstanceSQL.NORMAL
         publish_form_saved(form)
 
@@ -611,13 +611,14 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @transaction.atomic
-    def _archive_unarchive_form(form, user_id, archive):
+    def _archive_unarchive_form(form, user_id, archive, retry_archive):
         from casexml.apps.case.xform import get_case_ids_from_form
         from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
         form_id = form.form_id
         case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
         with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
+            if not retry_archive:
+                cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
 
     @staticmethod
