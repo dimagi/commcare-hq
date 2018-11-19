@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 import sys
 import traceback
 
-import attr
 import gevent
 from django.core.management.base import BaseCommand
 from django.db import connections
@@ -13,13 +12,8 @@ from six.moves import input
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
-@attr.s
-class Statement(object):
-    sql = attr.ib()
-    help = attr.ib(default="")
-
-
-BLOBMETA_KEY = Statement("""
+# see https://github.com/dimagi/commcare-hq/pull/21631
+BLOBMETA_KEY_SQL = """
 CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
 ON public.form_processor_xformattachmentsql (((
     CASE
@@ -27,10 +21,10 @@ ON public.form_processor_xformattachmentsql (((
         ELSE COALESCE(blob_bucket, 'form/' || attachment_id) || '/'
     END || blob_id
 )::varchar(255)))
-""", help="See https://github.com/dimagi/commcare-hq/pull/21631")
+"""
 
 STATEMENTS = {
-    "blobmeta_key": BLOBMETA_KEY,
+    "blobmeta_key": BLOBMETA_KEY_SQL,
 }
 
 MULTI_DB = 'Execute on ALL (%s) databases in parallel. Continue?'
@@ -44,7 +38,7 @@ class Command(BaseCommand):
         parser.add_argument('-d', '--db_name', help='Django DB alias to run on')
 
     def handle(self, name, db_name, **options):
-        sql = STATEMENTS[name].sql
+        sql = STATEMENTS[name]
         db_names = get_db_aliases_for_partitioned_query()
         if db_name or len(db_names) == 1:
             run_sql(db_name or db_names[0], sql)
