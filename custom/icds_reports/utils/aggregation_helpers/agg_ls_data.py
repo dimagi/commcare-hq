@@ -52,6 +52,10 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         return get_table_name(self.domain, config.table_id)
 
     def aggregate_query(self):
+        """
+        Returns the base aggregate query which is used to insert all the locations
+        into the LS data table.
+        """
         return """
         INSERT INTO "{tablename}"
         (state_id, district_id, block_id, supervisor_id, month,
@@ -78,6 +82,14 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         }
 
     def updates(self):
+        """
+        Returns the update query.
+        This query updated the ls databased on the form submissions.
+        Following data is updated with the returned queries:
+            1) vhnd forms submitted
+            2) unique awcs visits made by LS
+            3) number of beneficiary form visited
+        """
         yield """
             UPDATE "{tablename}" agg_ls_report
             SET vhnd_observed = ut.vhnd_observed
@@ -139,22 +151,33 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         }
 
     def indexes(self, aggregation_level):
+        """
+        Returns queries to create indices  for columns
+        district_id, block_id, supervisor_id and state_id based on
+        aggregation level
+        """
         indexes = []
         agg_locations = ['state_id']
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self._tablename_func(aggregation_level)))
             agg_locations.append('district_id')
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self._tablename_func(aggregation_level)))
             agg_locations.append('block_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self._tablename_func(aggregation_level)))
             agg_locations.append('supervisor_id')
 
-        indexes.append('CREATE INDEX ON "{}" ({})'.format(self.tablename, ', '.join(agg_locations)))
+        indexes.append('CREATE INDEX ON "{}" ({})'.format(self._tablename_func(aggregation_level),
+                                                          ', '.join(agg_locations)))
         return indexes
 
     def rollup_query(self, agg_level):
+        """
+        Returns the roll up query to the agg_level passed as argument.
+        Roll up query is used to roll up the data from supervisor level
+        to block level to district level to state level
+        """
         locations = ['state_id', 'district_id', 'block_id', 'supervisor_id']
 
         for i in range(3, agg_level - 1, -1):
