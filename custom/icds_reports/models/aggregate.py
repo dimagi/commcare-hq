@@ -446,43 +446,20 @@ class AggAwc(models.Model):
     @classmethod
     def aggregate(cls, month):
         helper = AggAwcHelper(month)
-        agg_query, agg_params = helper.aggregate_query()
-        daily_attendance_query, daily_attendance_params = helper.aggregate_daily_attendance_query()
-        monthly_child_query, monthly_child_params = helper.aggregate_monthly_child_health_query()
-        ccs_record_query, ccs_record_params = helper.aggregate_ccs_record_query()
-        household_query, household_params = helper.aggregate_household_query()
-        person_query, person_params = helper.aggregate_person_query()
-        children_immunized_query, children_immunized_params = helper.children_immunized_query()
-        number_anc_visits_query, number_anc_visits_params = helper.number_anc_visits_query()
-        usage_table_query, usage_table_params = helper.usage_table_query()
-        number_launched_awcs_query, number_launched_awcs_params = helper.number_launched_awcs_query()
-        latest_infrastructure_query, latest_infrastructure_params = helper.latest_infrastructure_query()
-        infra_last_update_query, infra_last_update_params = helper.infra_last_update_query()
-        location_is_test_query, location_is_test_params = helper.location_is_test_query()
+        agg_query, agg_params = helper.aggregation_query()
+        update_queries = helper.updates()
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
         index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
         index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(agg_query, agg_params)
-                cursor.execute(daily_attendance_query, daily_attendance_params)
-                cursor.execute(monthly_child_query, monthly_child_params)
-                cursor.execute(ccs_record_query, ccs_record_params)
-                cursor.execute(household_query, household_params)
-                cursor.execute(person_query, person_params)
-                cursor.execute(children_immunized_query, children_immunized_params)
-                cursor.execute(number_anc_visits_query, number_anc_visits_params)
-                cursor.execute(usage_table_query, usage_table_params)
-                cursor.execute(number_launched_awcs_query, number_launched_awcs_params)
-                cursor.execute(latest_infrastructure_query, latest_infrastructure_params)
-                cursor.execute(infra_last_update_query, infra_last_update_params)
-                cursor.execute(location_is_test_query, location_is_test_params)
-                for query in rollup_queries:
-                    cursor.execute(query)
-                for query in index_queries:
-                    cursor.execute(query)
+            cursor.execute(agg_query, agg_params)
+            for query, params in update_queries:
+                cursor.execute(query, params)
+            for query in rollup_queries:
+                cursor.execute(query)
+            for query in index_queries:
+                cursor.execute(query)
 
 
 class AggCcsRecord(models.Model):
@@ -693,23 +670,23 @@ class AggAwcDaily(models.Model):
         db_table = 'agg_awc_daily'
 
     @classmethod
-    def aggregate(cls, day):
-        helper = AggAwcDailyAggregationHelper(day)
-        curr_month_query, curr_month_params = helper.create_table_query()
+    def aggregate(cls, month):
+        helper = AggAwcDailyAggregationHelper(month)
         agg_query, agg_params = helper.aggregation_query()
-        daily_attendance_query, daily_params = helper.aggregation_daily_attendance_query()
-        indexes_query = helper.indexes()
+        update_query, update_params = helper.update_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
-            cursor.execute(daily_attendance_query, daily_params)
-            for iterator in range(4, 0, -1):
-                rollup_query, rollup_params = helper.rollup_query(iterator)
-                cursor.execute(rollup_query, rollup_params)
-            for index_query in indexes_query:
-                cursor.execute(index_query)
+            with transaction.atomic(using=db_for_read_write(cls)):
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(*helper.create_table_query())
+                cursor.execute(agg_query, agg_params)
+                cursor.execute(update_query, update_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class DailyAttendance(models.Model):
