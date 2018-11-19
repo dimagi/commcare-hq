@@ -14,7 +14,7 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.userreports.exceptions import (
     InvalidQueryColumn,
     UserReportsError,
-)
+    translate_programming_error, TableNotFoundWarning)
 from corehq.util.soft_assert import soft_assert
 import six
 
@@ -34,6 +34,9 @@ def catch_and_raise_exceptions(func):
             ProgrammingError,
             InvalidQueryColumn,
         ) as e:
+            error = translate_programming_error(e)
+            if isinstance(error, TableNotFoundWarning):
+                raise error
             if not settings.UNIT_TESTING:
                 _soft_assert(False, six.text_type(e))
             raise UserReportsError(six.text_type(e))
