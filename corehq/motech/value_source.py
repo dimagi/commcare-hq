@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from collections import namedtuple
 
-from couchdbkit.ext.django.schema import DocumentSchema
+from dimagi.ext.couchdbkit import DocumentSchema
 
 from corehq.motech.serializers import serializers
 from corehq.motech.const import (
@@ -126,7 +126,32 @@ class CaseProperty(ValueSource):
     case_property = StringProperty()
 
     def _get_commcare_value(self, case_trigger_info):
-        return case_trigger_info.updates.get(self.case_property)
+        """
+        Return the case property value from case updates, otherwise
+        return it from extra_fields.
+
+        extra_fields are current values of the case properties that have
+        been included in an integration.
+
+        >>> info = CaseTriggerInfo(
+        ...     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+        ...     updates={'foo': 1},
+        ...     created=False,
+        ...     closed=False,
+        ...     extra_fields={'foo': 0, 'bar': 2},
+        ...     form_question_values={},
+        ... )
+        >>> CaseProperty(case_property="foo")._get_commcare_value(info)
+        1
+        >>> CaseProperty(case_property="bar")._get_commcare_value(info)
+        2
+        >>> type(CaseProperty(case_property="baz")._get_commcare_value(info))
+        <type 'NoneType'>
+
+        """
+        if self.case_property in case_trigger_info.updates:
+            return case_trigger_info.updates[self.case_property]
+        return case_trigger_info.extra_fields.get(self.case_property)
 
 
 class FormQuestion(ValueSource):

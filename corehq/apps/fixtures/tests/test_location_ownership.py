@@ -95,10 +95,10 @@ class TestLocationOwnership(LocationHierarchyTestCase):
 
     def test_sees_own_fixture_and_parent_fixture(self):
         fixture_items = FixtureDataItem.by_user(self.boston_user)
-        self.assertItemsEqual(
-            [(self._get_value(item, 'cost'), self._get_value(item, 'location_name'))
-             for item in fixture_items],
-            [('8', 'Suffolk'), ('10', 'Boston')]
+        self.assertEqual(
+            set((self._get_value(item, 'cost'), self._get_value(item, 'location_name'))
+                for item in fixture_items),
+            {('8', 'Suffolk'), ('10', 'Boston')}
         )
 
     def test_has_no_assigned_fixture(self):

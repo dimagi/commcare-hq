@@ -906,7 +906,7 @@ class TestRepeaterResource(APIResourceTest):
         api_repeaters = json.loads(response.content)['objects']
         self.assertEqual(len(api_repeaters), 2)
 
-        api_case_repeater = list(filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters))[0]
+        api_case_repeater = [r for r in api_repeaters if r['type'] == 'CaseRepeater'][0]
         self.assertEqual(api_case_repeater['id'], case_repeater._id)
         self.assertEqual(api_case_repeater['url'], case_repeater.url)
         self.assertEqual(api_case_repeater['domain'], case_repeater.domain)
@@ -2001,11 +2001,13 @@ class TestConfigurableReportDataResource(APIResourceTest):
         )
         self.addCleanup(user_in_wrong_domain.delete)
         user_in_wrong_domain.save()
-        credentials = base64.b64encode("{}:{}".format(
-            user_in_wrong_domain_name, user_in_wrong_domain_password)
+        credentials = base64.b64encode(
+            "{}:{}".format(
+                user_in_wrong_domain_name, user_in_wrong_domain_password
+            ).encode('utf-8')
         )
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
-            HTTP_AUTHORIZATION='Basic ' + credentials
+            HTTP_AUTHORIZATION=b'Basic ' + credentials
         )
         self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"

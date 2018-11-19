@@ -21,6 +21,10 @@ def month_formatter(day):
     return transform_day_to_month(day).strftime('%Y-%m-%d')
 
 
+def date_to_string(date):
+    return date.strftime('%Y-%m-%d')
+
+
 def recalculate_aggregate_table(model_class):
     """Expects a class (not instance) of models.Model
 

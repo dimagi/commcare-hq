@@ -131,16 +131,29 @@ CASE_CONFIG = {
 
 @mock.patch.object(CaseAccessors, 'get_cases', lambda self, case_ids, ordered=False: [{
     '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
-        type='paciente', case_id='65e55473-e83b-4d78-9dde-eaf949758997')
+        case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+        type='paciente',
+        name='Elsa',
+        estado_tarv='1',
+        tb='0',
+    )
 }[case_id] for case_id in case_ids])
 class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
     def test_get_case_updates_for_registration(self):
+        """
+        get_relevant_case_updates_from_form_json should fetch case
+        updates from teh given form JSON
+        """
         self.assertEqual(
             get_relevant_case_updates_from_form_json(
-                'openmrs-repeater-test', self.get_json('registration'), ['paciente'], {}),
+                'openmrs-repeater-test',
+                self.get_json('registration'),
+                case_types=['paciente'],
+                extra_fields=[]
+            ),
             [
                 CaseTriggerInfo(
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
@@ -160,9 +173,17 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
         )
 
     def test_get_case_updates_for_followup(self):
+        """
+        Specifying `extra_fields` should fetch the current value from
+        the case
+        """
         self.assertEqual(
             get_relevant_case_updates_from_form_json(
-                'openmrs-repeater-test', self.get_json('followup'), ['paciente'], {}),
+                'openmrs-repeater-test',
+                self.get_json('followup'),
+                case_types=['paciente'],
+                extra_fields=['name', 'estado_tarv', 'tb', 'bandersnatch'],
+            ),
             [
                 CaseTriggerInfo(
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
@@ -172,7 +193,12 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                     },
                     created=False,
                     closed=False,
-                    extra_fields={},
+                    extra_fields={
+                        'name': 'Elsa',
+                        'estado_tarv': '1',
+                        'tb': '0',
+                        'bandersnatch': None,
+                    },
                     form_question_values={},
                 )
             ]
@@ -271,7 +297,10 @@ class ExportOnlyTests(SimpleTestCase):
         should not be exported.
         """
         requests = mock.Mock()
-        info = mock.Mock(updates={'sex': 'M', 'dob': '1918-07-18'})
+        info = mock.Mock(
+            updates={'sex': 'M', 'dob': '1918-07-18'},
+            extra_fields={},
+        )
         case_config = copy.deepcopy(CASE_CONFIG)
         case_config['patient_identifiers'] = {}
         case_config['person_preferred_name'] = {}

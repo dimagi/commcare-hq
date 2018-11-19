@@ -87,6 +87,7 @@ def stock_level_config_for_domain(domain, commtrack_enabled):
         return ct_config.stock_levels_config
 
 
+@six.python_2_unicode_compatible
 class LocationType(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
@@ -195,7 +196,7 @@ class LocationType(models.Model):
             sync_administrative_status.delay(self, sync_supply_points=sync_supply_points)
             self._administrative_old = self.administrative
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def __repr__(self):

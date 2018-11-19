@@ -821,8 +821,6 @@ class DishaIndicatorView(models.Model):
     functional_toilet_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     # agg_ccs_record_monthly indicators
-    tetanus_complete_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
     resting_during_pregnancy_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     extra_meal_percent = models.DecimalField(

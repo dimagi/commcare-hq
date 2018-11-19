@@ -1632,7 +1632,7 @@ class SelfRegistrationInvitation(models.Model):
         it gives the user the option to install the given app.
         """
         app_info_url = cls.get_app_info_url(domain, app_id)
-        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url)
+        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url.encode('utf-8')).decode('utf-8')
 
     def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
@@ -2460,7 +2460,7 @@ class PhoneLoadBalancingMixin(object):
             # process to figure out which one is next.
             return self.load_balancing_numbers[0]
 
-        hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
+        hashed_destination_phone_number = hashlib.sha1(destination_phone_number.encode('utf-8')).hexdigest()
         index = int(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
         return self.load_balancing_numbers[index]
 

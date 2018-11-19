@@ -60,9 +60,8 @@ from custom.icds_reports.models import (
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport,
-    AggAwcDaily,
-    AggAwc)
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW
+    AggAwc, AwcLocation)
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -87,8 +86,8 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari',
-    'h.heena', 'avarshney', 'rjain']
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney',
+                          'rnegi', 'rjain']
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
@@ -119,16 +118,14 @@ UCR_TABLE_NAME_MAPPING = [
 
 SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
 ]
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23),
+               acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
@@ -163,7 +160,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
-            _update_aggregate_locations_tables(cursor)
+
+        _update_aggregate_locations_tables()
 
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -264,13 +262,11 @@ def _create_aggregate_functions(cursor):
         raise
 
 
-def _update_aggregate_locations_tables(cursor):
+def _update_aggregate_locations_tables():
     try:
-        path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
         celery_task_logger.info("Starting icds reports update_location_tables")
-        with open(path, "r", encoding='utf-8') as sql_file:
-            sql_to_execute = sql_file.read()
-            cursor.execute(sql_to_execute)
+        with transaction.atomic(using=db_for_read_write(AwcLocation)):
+            AwcLocation.aggregate()
         celery_task_logger.info("Ended icds reports update_location_tables_sql")
     except IntegrityError:
         # This has occurred when there's a location upload, but not all locations were updated.
@@ -293,7 +289,6 @@ def icds_aggregation_task(self, date, func):
         return
 
     celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
-
     try:
         func(date)
     except Error as exc:
@@ -409,8 +404,10 @@ def _run_custom_sql_script(commands, day=None):
                 cursor.execute(command, [day])
 
 
+@track_time
 def aggregate_awc_daily(day):
-    AggAwcDaily.aggregate(force_to_date(day))
+    with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
+        AggAwcDaily.aggregate(force_to_date(day))
 
 
 @track_time
@@ -469,10 +466,7 @@ def _ccs_record_monthly_table(day):
 
 @track_time
 def _daily_attendance_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_table_for_month('daily_attendance', %s)",
-        "SELECT insert_into_daily_attendance(%s)"
-    ], day)
+    DailyAttendance.aggregate(force_to_date(day))
 
 
 @track_time
@@ -497,7 +491,7 @@ def _agg_ccs_record_table(day):
 def _agg_awc_table(day):
     with transaction.atomic(using=db_for_read_write(AggAwc)):
         _run_custom_sql_script([
-            "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
+            "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"
         ], day)
         AggAwc.aggregate(force_to_date(day))
 

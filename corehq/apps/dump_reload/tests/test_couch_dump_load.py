@@ -218,7 +218,7 @@ class TestDumpLoadToggles(SimpleTestCase):
         output_stream.seek(0)
         dumped = [json.loads(line.strip()) for line in output_stream.readlines()]
         for dump in dumped:
-            self.assertItemsEqual(expected_items[dump['slug']], dump['enabled_users'])
+            self.assertEqual(set(expected_items[dump['slug']]), set(dump['enabled_users']))
 
     def _get_mocked_toggles(self):
         from toggle.models import generate_toggle_id

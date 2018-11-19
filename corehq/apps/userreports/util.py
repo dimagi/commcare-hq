@@ -132,10 +132,6 @@ def get_indicator_adapter(config, raise_errors=False):
 
 
 def get_table_name(domain, table_id):
-    """
-    Returns bytes.
-    """
-
     def _hash(domain, table_id):
         return hashlib.sha1(
             '{}_{}'.format(
@@ -149,7 +145,7 @@ def get_table_name(domain, table_id):
     return truncate_value(
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
-    ).encode('utf-8')
+    )
 
 
 def is_ucr_table(table_name):
