@@ -52,7 +52,7 @@ class FunctionalityChecklistMeta(QueryMeta):
     def append_column(self, column):
         self.columns.append(column.sql_column)
 
-    def execute(self, metadata, connection, filter_values):
+    def execute(self, connection, filter_values):
         max_date_query = sqlalchemy.select([
             sqlalchemy.func.max(sqlalchemy.column('completed_on')).label('completed_on'),
             sqlalchemy.column('case_id').label('case_id')

@@ -762,7 +762,7 @@ class IntraHealthQueryMeta(QueryMeta):
         assert len(filters) > 0
         self.filter = AND(self.filters) if len(self.filters) > 1 else self.filters[0]
 
-    def execute(self, metadata, connection, filter_values):
+    def execute(self, connection, filter_values):
         return connection.execute(self._build_query(filter_values)).fetchall()
 
     def _build_query(self, filter_values):
