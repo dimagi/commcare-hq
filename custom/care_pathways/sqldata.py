@@ -113,7 +113,7 @@ class CareQueryMeta(QueryMeta):
         return sqlalchemy.select(
             [sqlalchemy.func.count(s1.c.doc_id).label(self.key)] + group_by,
             group_by=[s1.c.maxmin] + filter_cols + group_by,
-            having=AND(having).build_expression(s1),
+            having=AND(having).build_expression(),
             from_obj=join(s1, s2, s1.c.group_case_id == s2.c.group_case_id)
         ).params(filter_values)
 
