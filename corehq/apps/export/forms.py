@@ -37,7 +37,7 @@ from corehq.apps.reports.util import (
     case_users_filter,
     datespan_from_beginning,
 )
-from corehq.apps.hqwebapp.crispy import B3MultiField, CrispyTemplate
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2AjaxV3
 from corehq.pillows import utils
 
@@ -100,6 +100,7 @@ class CreateExportTagForm(forms.Form):
             model_field.widget.attrs['readonly'] = True
             model_field.widget.attrs['disabled'] = True
 
+        # This form appears inside a modal, so it's differently proportioned than most forms
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-2'
@@ -216,10 +217,8 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
 
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3'
-        self.helper.field_class = 'col-sm-5'
 
         self.helper.layout = Layout(
             *self.extra_fields
@@ -308,6 +307,7 @@ class DashboardFeedFilterForm(forms.Form):
             reverse(SubmitHistoryFilter.options_url, args=(self.domain_object.name,))
         )
 
+        # This form appears inside a modal, so it's differently proportioned than most forms
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'

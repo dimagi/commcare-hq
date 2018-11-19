@@ -401,6 +401,8 @@ class DailySavedExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'name': export.name,
             'description': export.description,
+            'lastBuildDuration': (str(timedelta(milliseconds=export.last_build_duration))
+                                  if export.last_build_duration else ''),
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': (
@@ -506,6 +508,7 @@ class FormExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'name': export.name,
             'description': export.description,
+            'lastBuildDuration': '',
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': owner_username,
@@ -572,6 +575,7 @@ class CaseExportListView(BaseExportListView):
             'name': export.name,
             'case_type': export.case_type,
             'description': export.description,
+            'lastBuildDuration': '',
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': owner_username,

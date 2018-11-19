@@ -18,6 +18,11 @@ either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
+
+import six
+
+
 def match_all():
     return {"match_all": {}}
 
@@ -70,8 +75,7 @@ def range_filter(field, gt=None, gte=None, lt=None, lte=None):
 def date_range(field, gt=None, gte=None, lt=None, lte=None):
     """Range filter that accepts datetime objects as arguments"""
     def format_date(date):
-        # TODO This probably needs more sophistication...
-        return date.isoformat()
+        return date if isinstance(date, six.string_types) else date.isoformat()
     params = [d if d is None else format_date(d) for d in [gt, gte, lt, lte]]
     return range_filter(field, *params)
 

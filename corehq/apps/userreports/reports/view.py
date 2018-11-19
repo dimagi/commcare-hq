@@ -7,10 +7,11 @@ from contextlib import contextmanager, closing
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 
+from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
+from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.reports_core.filters import Choice, PreFilter
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
@@ -145,6 +146,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
@@ -329,7 +331,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
-            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())

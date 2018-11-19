@@ -113,6 +113,12 @@
                                 </span>
                                 <strong>{% trans "Last Downloaded:" %}</strong>
                                 <span data-bind="text: emailedExport.fileData.lastAccessed()"></span>
+                                {% if request|toggle_enabled:"SUPPORT" %}
+                                    <span data-bind="if: lastBuildDuration">
+                                        <strong>{% trans "Last Build Duration:" %}</strong>
+                                        <span data-bind="text: lastBuildDuration"></span>
+                                    </span>
+                                {% endif %}
                             </span>
                             &nbsp;&nbsp;
                             <div data-bind="if: isLocationSafeForUser()">

@@ -124,7 +124,7 @@ def number_of_ucr_reports(domain):
     return len(ucr_reports)
 
 
-def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=False):
+def get_indicator_adapter(config, raise_errors=False):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     if raise_errors:
         return ErrorRaisingIndicatorSqlAdapter(config)
@@ -132,10 +132,6 @@ def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=Fals
 
 
 def get_table_name(domain, table_id):
-    """
-    Returns bytes.
-    """
-
     def _hash(domain, table_id):
         return hashlib.sha1(
             '{}_{}'.format(
@@ -149,7 +145,7 @@ def get_table_name(domain, table_id):
     return truncate_value(
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
-    ).encode('utf-8')
+    )
 
 
 def is_ucr_table(table_name):

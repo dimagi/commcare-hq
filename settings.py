@@ -160,7 +160,6 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'custom.icds_reports.middleware.ICDSAuditMiddleware',
-    'corehq.apps.domain.middleware.DomainAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -938,11 +937,6 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
-
-COUCH_DATABASES['default'] = {
-    k: v.encode('utf-8') if isinstance(v, six.text_type) else v
-    for (k, v) in COUCH_DATABASES['default'].items()
-}
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
 # hosting environments use pgBouncer with transaction pooling. For more information, see:
@@ -1868,7 +1862,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10a_children_referred.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10b_pregnancies_referred.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_11_awc_visits.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2ci_child_birth_list.json'),
@@ -1938,7 +1931,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
@@ -1948,7 +1940,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
@@ -2161,8 +2155,12 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
 
 RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
+    ("production", "born-on-time-2"),
+    ("production", "hki-nepal-suaahara-2"),
     ("production", "malawi-fp-study"),
+    ("production", "no-lean-season"),
     ("production", "rec"),
+    ("production", "sauti-1"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####

@@ -74,8 +74,10 @@ class TranslationsParser(object):
                 index = int(occurrence[1])
                 rows[index] = po_entry
         # ensure the number of final translations is same as the highest index
-        if rows:
-            assert len(rows) == int(max(rows.keys()))
+        # if rows:
+            # ToDo: Add this message
+            # if len(rows) != int(max(rows.keys())):
+                # add a message for the user
         # sort by index to have the expected order
         return [po_entry for i, po_entry in sorted(rows.items())]
 

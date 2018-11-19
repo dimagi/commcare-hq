@@ -25,19 +25,19 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def ccs_record_monthly_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def ccs_record_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def pregnant_tasks_cases_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-pregnant-tasks_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def tablename(self):

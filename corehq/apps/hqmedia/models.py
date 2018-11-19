@@ -786,7 +786,7 @@ class HQMediaMixin(Document):
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
-        for path, map_item in self.multimedia_map.items():
+        for path, map_item in list(self.multimedia_map.items()):
             if not filter_multimedia or not map_item.form_media or path in requested_media:
                 media_item = raw_docs.get(map_item.multimedia_id)
                 if media_item:

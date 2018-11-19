@@ -15,7 +15,8 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     CustomerInvoice,
     InvoicingPlan,
-    DomainUserHistory
+    DomainUserHistory,
+    CreditLine
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -213,6 +214,39 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         for product_line_item in invoice.lineitem_set.get_products().all():
             self.assertEqual(product_line_item.quantity, 12)
 
+    def test_account_level_product_credits(self):
+        CreditLine.add_credit(
+            amount=self.subscription.plan_version.product_rate.monthly_fee / 2,
+            account=self.account,
+            is_product=True
+        )
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('1050.0000'))
+
+    def test_subscription_level_product_credits(self):
+        CreditLine.add_credit(
+            self.subscription.plan_version.product_rate.monthly_fee / 2,
+            is_product=True,
+            subscription=self.subscription
+        )
+        CreditLine.add_credit(
+            self.sub2.plan_version.product_rate.monthly_fee / 4,
+            is_product=True,
+            subscription=self.sub2,
+        )
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('800.0000'))
+
 
 class TestUserLineItem(BaseCustomerInvoiceCase):
     def setUp(self):
@@ -220,6 +254,8 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         self.user_rate = self.subscription.plan_version.feature_rates \
             .filter(feature__feature_type=FeatureType.USER).get()
         self.advanced_rate = self.advanced_plan.feature_rates.filter(feature__feature_type=FeatureType.USER).get()
+        self.invoice_date = utils.months_from_date(self.subscription.date_start,
+                                                   random.randint(2, self.subscription_length))
 
     def test_under_limit(self):
         num_users = random.randint(0, self.user_rate.monthly_limit)
@@ -228,9 +264,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         num_users_advanced = random.randint(0, self.advanced_rate.monthly_limit)
         generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
 
-        invoice_date = utils.months_from_date(self.subscription.date_start,
-                                              random.randint(2, self.subscription_length))
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -253,9 +287,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         num_users_advanced = self.advanced_rate.monthly_limit + 1
         generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
 
-        invoice_date = utils.months_from_date(self.subscription.date_start,
-                                              random.randint(2, self.subscription_length))
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -274,6 +306,71 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
                 self.assertEqual(user_line_item.unit_cost, self.advanced_rate.per_excess_fee)
                 self.assertEqual(user_line_item.total, self.advanced_rate.per_excess_fee * num_to_charge)
                 self.assertEqual(user_line_item.subtotal, self.advanced_rate.per_excess_fee * num_to_charge)
+
+    def test_account_level_user_credits(self):
+        # Add User usage
+        num_users = self.user_rate.monthly_limit + 10
+        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_users)
+        num_users_advanced = self.advanced_rate.monthly_limit + 1
+        generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
+
+        # Cover the cost of 1 User
+        CreditLine.add_credit(
+            amount=Decimal(2.0000),
+            feature_type=FeatureType.USER,
+            account=self.account,
+        )
+
+        tasks.generate_invoices(self.invoice_date)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal(1120.0000))
+
+    def test_subscription_level_user_credits(self):
+        # Add User usage
+        num_users = self.user_rate.monthly_limit + 10
+        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_users)
+        num_users_advanced = self.advanced_rate.monthly_limit + 1
+        generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
+
+        # Cover the cost of 1 User on the Standard subscription
+        CreditLine.add_credit(
+            amount=Decimal(2.0000),
+            feature_type=FeatureType.USER,
+            subscription=self.subscription
+        )
+        # Cover the cost of 5 Users on the Advanced subscription
+        CreditLine.add_credit(
+            amount=Decimal(10.0000),
+            feature_type=FeatureType.USER,
+            subscription=self.sub2
+        )
+
+        tasks.generate_invoices(self.invoice_date)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal(1110.0000))
+
+    def test_one_subscription_level_user_credit(self):
+        # Add User usage
+        num_users = self.user_rate.monthly_limit + 10
+        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_users)
+        num_users_advanced = self.advanced_rate.monthly_limit + 1
+        generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
+
+        # Cover the cost of 2 Users on the Advanced subscription
+        CreditLine.add_credit(
+            amount=Decimal(4.0000),
+            feature_type=FeatureType.USER,
+            subscription=self.sub2
+        )
+
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
+        tasks.generate_invoices(invoice_date)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal(1118.0000))
 
 
 class TestSmsLineItem(BaseCustomerInvoiceCase):
@@ -294,11 +391,11 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         super(TestSmsLineItem, self).tearDown()
 
     def test_under_limit(self):
-        num_sms = random.randint(1, self.sms_rate.monthly_limit // 2)
+        num_sms = self.sms_rate.monthly_limit // 2
         arbitrary_sms_billables_for_domain(
             self.domain, self.sms_date, num_sms, direction=INCOMING
         )
-        num_sms_advanced = random.randint(1, self.advanced_rate.monthly_limit // 2)
+        num_sms_advanced = self.advanced_rate.monthly_limit // 2
         arbitrary_sms_billables_for_domain(
             self.domain2, self.sms_date, num_sms_advanced, direction=INCOMING
         )
@@ -344,6 +441,75 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
                 )
             self.assertEqual(sms_line_item.unit_cost, sms_cost)
             self.assertEqual(sms_line_item.total, sms_cost)
+
+    def test_subscription_level_sms_credits(self):
+        # Add SMS usage
+        arbitrary_sms_billables_for_domain(
+            self.domain, self.sms_date, self.sms_rate.monthly_limit + 1
+        )
+        arbitrary_sms_billables_for_domain(
+            self.domain2, self.sms_date, num_sms=self.advanced_rate.monthly_limit + 10
+        )
+
+        # Cover the cost of 1 SMS on the Standard subscription
+        CreditLine.add_credit(
+            amount=Decimal(0.7500),
+            feature_type=FeatureType.SMS,
+            subscription=self.subscription
+        )
+        # Cover the cost of 10 SMS on the Advanced subscription
+        CreditLine.add_credit(
+            amount=Decimal(7.5000),
+            feature_type=FeatureType.SMS,
+            subscription=self.sub2,
+        )
+
+        tasks.generate_invoices(self.invoice_date)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('1100.0000'))
+
+    def test_one_subscription_level_sms_credit(self):
+        # Add SMS usage
+        arbitrary_sms_billables_for_domain(
+            self.domain, self.sms_date, self.sms_rate.monthly_limit + 1
+        )
+        arbitrary_sms_billables_for_domain(
+            self.domain2, self.sms_date, num_sms=self.advanced_rate.monthly_limit + 10
+        )
+
+        # Cover the cost of 1 SMS on the Standard subscription
+        CreditLine.add_credit(
+            amount=Decimal(0.7500),
+            feature_type=FeatureType.SMS,
+            subscription=self.subscription
+        )
+
+        tasks.generate_invoices(self.invoice_date)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('1107.5000'))
+
+    def test_account_level_sms_credits(self):
+        # Add SMS usage
+        arbitrary_sms_billables_for_domain(
+            self.domain, self.sms_date, self.sms_rate.monthly_limit + 1
+        )
+        arbitrary_sms_billables_for_domain(
+            self.domain2, self.sms_date, num_sms=self.advanced_rate.monthly_limit + 10
+        )
+
+        # Cover the cost of 1 SMS
+        CreditLine.add_credit(
+            amount=Decimal(0.5000),
+            feature_type=FeatureType.SMS,
+            account=self.account,
+        )
+
+        tasks.generate_invoices(self.invoice_date)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('1107.7500'))
 
     def _create_sms_line_items(self):
         tasks.generate_invoices(self.invoice_date)

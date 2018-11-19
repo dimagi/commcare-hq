@@ -44,6 +44,7 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
 )
+from six.moves import filter
 from six.moves import map
 from six.moves import zip
 
@@ -415,10 +416,10 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         v2items = [item for item in group_schema.items if item.last_occurrences[self.app_id] == 2]
         self.assertEqual(len(v2items), 2)
 
-        multichoice = filter(
-            lambda item: item.path == [PathNode(name='form'), PathNode(name='question2')],
-            group_schema.items
-        )[0]
+        multichoice = [
+            item for item in group_schema.items
+            if item.path == [PathNode(name='form'), PathNode(name='question2')]
+        ][0]
         self.assertEqual(len(multichoice.options), 3)
         self.assertEqual(
             len([o for o in multichoice.options if o.last_occurrences[self.app_id] == 2]),
@@ -1173,7 +1174,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         # One for case, one for case history, one for parent case
         self.assertEqual(len(schema.group_schemas), 3)
-        main_table = filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas)[0]
+        main_table = next(filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas))
         self.assertEqual(
             len([item for item in main_table.items if item.doc_type == 'CaseIndexItem']),
             1
