@@ -269,8 +269,8 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @classmethod
     def get_subpages(cls):
         def _case_name(request=None, **context):
-            if 'case' in context and 'name' in context['case']:
-                return mark_safe(context['case']['name'])
+            if 'case' in context:
+                return mark_safe(context['case'].name)
             else:
                 return _('View Case')
 
