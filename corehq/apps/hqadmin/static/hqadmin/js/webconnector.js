@@ -64,4 +64,4 @@ hqDefine('hqadmin/js/webconnector', [
         });
     })();
 
-}
+});
