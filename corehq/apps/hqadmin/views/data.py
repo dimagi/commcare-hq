@@ -188,6 +188,8 @@ class Webconnector(View):
 
     def get(self, request):
         context = {
+            'button_text': 'Get Case Data',
+            'title': 'CommCare HQ Case Data',
             'web_connector_js': reverse(WebconnectorJS.urlname),
         }
 
