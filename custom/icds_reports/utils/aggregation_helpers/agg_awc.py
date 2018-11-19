@@ -392,20 +392,33 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             FROM (
               SELECT
                 doc_id as awc_id,
-                state_is_test,
-                district_is_test,
-                block_is_test,
-                supervisor_is_test,
-                awc_is_test
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
               FROM "{awc_location_tablename}"
               GROUP BY awc_id
             ) ut
-            WHERE ut.awc_id = agg_awc.awc_id
+            WHERE ut.awc_id = agg_awc.awc_id AND (
+                (
+                  agg_awc.state_is_test IS NULL OR
+                  agg_awc.district_is_test IS NULL OR
+                  agg_awc.block_is_test IS NULL OR
+                  agg_awc.supervisor_is_test IS NULL OR
+                  agg_awc.awc_is_test IS NULL
+                ) OR (
+                  ut.state_is_test != agg_awc.state_is_test OR
+                  ut.district_is_test != agg_awc.district_is_test OR
+                  ut.block_is_test != agg_awc.block_is_test OR
+                  ut.supervisor_is_test != agg_awc.supervisor_is_test OR
+                  ut.awc_is_test != agg_awc.awc_is_test
+                )
+            )
         """.format(
             tablename=self.tablename,
-            awc_location_tablename=self._ucr_tablename('static-awc_location'),
+            awc_location_tablename='awc_location',
         ), {
-            "start_date": self.month_start
         }
 
     def rollup_query(self, aggregation_level):

@@ -115,34 +115,42 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ('state_id', 'state_id'),
             ('state_name', 'state_name'),
             ('state_site_code', 'state_site_code'),
-            ('aggregation_level', "'{}'".format(aggregation_level)),
+            ('aggregation_level', '{}'.format(aggregation_level)),
             ('block_map_location_name', lambda col: col if aggregation_level > 2 else "'All'"),
             ('district_map_location_name', lambda col: col if aggregation_level > 1 else "'All'"),
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'NULL'),
             ('contact_phone_number', 'NULL'),
-            ('state_is_test', 'state_is_test'),
-            ('district_is_test', lambda col: col if aggregation_level > 1 else "0"),
-            ('block_is_test', lambda col: col if aggregation_level > 2 else "0"),
-            ('supervisor_is_test', lambda col: col if aggregation_level > 3 else "0"),
-            ('awc_is_test', lambda col: col if aggregation_level > 4 else "0")
+            ('state_is_test', 'MAX(state_is_test)'),
+            (
+                'district_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 1 else "0"
+            ),
+            (
+                'block_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 2 else "0"
+            ),
+            (
+                'supervisor_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 3 else "0"
+            ),
+            (
+                'awc_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 4 else "0"
+            )
         )
 
         def _transform_column(column_tuple):
             column = column_tuple[0]
 
-            if len(column_tuple) == 2:
-                agg_col = column_tuple[1]
-                if isinstance(agg_col, six.string_types):
-                    return column_tuple
-                elif callable(agg_col):
-                    return (column, agg_col(column))
-
-            return (column, 'SUM({})'.format(column))
+            agg_col = column_tuple[1]
+            if callable(agg_col):
+                return (column, agg_col(column))
+            return column_tuple
 
         columns = list(map(_transform_column, columns))
 
-        end_text_column = ["id", "name", "site_code", "map_location_name", "is_test"]
+        end_text_column = ["id", "name", "site_code", "map_location_name"]
 
         group_by = ["state_{}".format(name) for name in end_text_column]
         if aggregation_level > 1:
