@@ -24,7 +24,7 @@ from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
-from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, OR
+from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, OR
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
@@ -2193,9 +2193,8 @@ class ContainsFilter(SqlFilter):
         self.column_name = column_name
         self.contains = contains
 
-    def build_expression(self, table):
-        column = get_column(table, self.column_name)
-        return column.like("%{0}%".format(self.contains))
+    def build_expression(self):
+        return sqlalchemy.column(self.column_name).like("%{0}%".format(self.contains))
 
 
 class CustomEQFilter(SqlFilter):
@@ -2207,9 +2206,8 @@ class CustomEQFilter(SqlFilter):
         self.column_name = column_name
         self.parameter = parameter
 
-    def build_expression(self, table):
-        column = get_column(table, self.column_name)
-        return column.match(self.parameter)
+    def build_expression(self):
+        return sqlalchemy.column(self.column_name).match(self.parameter)
 
 
 class YeksiSqlData(SqlData):

@@ -17,10 +17,9 @@ from sqlagg.filters import (
     LTFilter,
     NOTEQFilter,
     NOTNULLFilter,
-    get_column,
     ANDFilter,
     ORFilter)
-from sqlalchemy import bindparam
+from sqlalchemy import bindparam, column
 
 from corehq.apps.es import filters
 from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
@@ -136,8 +135,8 @@ class QuarterFilterValue(FilterValue):
 
 class IsDistinctFromFilter(BasicFilter):
 
-    def build_expression(self, table):
-        return get_column(table, self.column_name).is_distinct_from(bindparam(self.parameter))
+    def build_expression(self):
+        return column(self.column_name).is_distinct_from(bindparam(self.parameter))
 
 
 class NumericFilterValue(FilterValue):
@@ -182,9 +181,9 @@ class BasicBetweenFilter(BasicFilter):
     PreFilterValue.value['operator'] and instantiate either filter the
     same way.
     """
-    def build_expression(self, table):
+    def build_expression(self):
         assert len(self.parameter) == 2
-        return get_column(table, self.column_name).between(
+        return column(self.column_name).between(
             bindparam(self.parameter[0]), bindparam(self.parameter[1])
         )
 
