@@ -34,7 +34,7 @@
     </div>
 {% endif %}
 
-<div id="export-list">
+<div id="export-list" class="ko-template">
     {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
     <div class="panel panel-default">
         <div class="panel-heading">{{ my_export_type }}</div>
