@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
-from collections import namedtuple
+import sqlalchemy
 
 from django.urls import reverse
 from memoized import memoized
@@ -19,9 +19,7 @@ from sqlagg.filters import (
     NOTNULLFilter,
     ANDFilter,
     ORFilter)
-from sqlalchemy import bindparam, column
 
-from corehq.apps.es import filters
 from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
@@ -136,7 +134,7 @@ class QuarterFilterValue(FilterValue):
 class IsDistinctFromFilter(BasicFilter):
 
     def build_expression(self):
-        return column(self.column_name).is_distinct_from(bindparam(self.parameter))
+        return sqlalchemy.column(self.column_name).is_distinct_from(sqlalchemy.bindparam(self.parameter))
 
 
 class NumericFilterValue(FilterValue):
@@ -183,8 +181,8 @@ class BasicBetweenFilter(BasicFilter):
     """
     def build_expression(self):
         assert len(self.parameter) == 2
-        return column(self.column_name).between(
-            bindparam(self.parameter[0]), bindparam(self.parameter[1])
+        return sqlalchemy.column(self.column_name).between(
+            sqlalchemy.bindparam(self.parameter[0]), sqlalchemy.bindparam(self.parameter[1])
         )
 
 
