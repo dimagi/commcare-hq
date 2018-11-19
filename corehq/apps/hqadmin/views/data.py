@@ -190,20 +190,10 @@ class Webconnector(View):
         context = {
             'button_text': 'Get Case Data',
             'title': 'CommCare HQ Case Data',
-            'web_connector_js': reverse(WebconnectorJS.urlname),
         }
 
         return HttpResponse(
             render(request, 'hqadmin/webconnector.html', context)
-        )
-
-
-class WebconnectorJS(View):
-    urlname = 'webconnectorjs'
-
-    def get(self, request):
-        return HttpResponse(
-            render(request, 'hqadmin/webconnector.js')
         )
 
 
