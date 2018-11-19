@@ -208,7 +208,10 @@ class GeoJson(View):
     urlname = 'geojson'
 
     def get(self, request):
-        return JsonResponse({
+        return JsonResponse(self.get_json())
+
+    def get_json(self):
+        return {
           "features": [
             {
               "type": "Feature",
@@ -251,4 +254,4 @@ class GeoJson(View):
               "id": "us1000htm5"
             },
           ],
-        })
+        }
