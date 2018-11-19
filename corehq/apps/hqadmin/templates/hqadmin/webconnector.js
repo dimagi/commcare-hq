@@ -40,7 +40,7 @@
                 tableData.push({
                     "id": cases[i].id,
                     "name": cases[i].name,
-                    "abc": cases[i].properties.abc
+                    "abc": cases[i].properties['abc']
                 });
             }
 
