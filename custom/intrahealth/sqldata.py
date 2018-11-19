@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import sqlalchemy
-from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
+from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
     MonthColumn
 from collections import defaultdict
@@ -763,25 +763,21 @@ class IntraHealthQueryMeta(QueryMeta):
         self.filter = AND(self.filters) if len(self.filters) > 1 else self.filters[0]
 
     def execute(self, metadata, connection, filter_values):
-        try:
-            table = metadata.tables[self.table_name]
-        except KeyError:
-            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
-        return connection.execute(self._build_query(table, filter_values)).fetchall()
+        return connection.execute(self._build_query(filter_values)).fetchall()
 
-    def _build_query(self, table, filter_values):
+    def _build_query(self, filter_values):
         raise NotImplementedError()
 
 
 class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, table, filter_values):
-        key_column = table.c[self.key]
+    def _build_query(self, filter_values):
+        key_column = sqlalchemy.column(self.key)
         sum_query = sqlalchemy.alias(
             sqlalchemy.select(
-                self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [table.c.month],
-                group_by=self.group_by + [table.c.month],
-                whereclause=self.filter.build_expression(table),
+                self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [sqlalchemy.column('month')],
+                group_by=self.group_by + [sqlalchemy.column('month')],
+                whereclause=self.filter.build_expression(),
             ), name='s')
 
         return select(
@@ -793,13 +789,13 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
 class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, table, filter_values):
-        key_column = table.c[self.key]
+    def _build_query(self, filter_values):
+        key_column = sqlalchemy.column(self.key)
         subquery = sqlalchemy.alias(
             sqlalchemy.select(
                 self.group_by + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
-                group_by=self.group_by + [table.c.month],
-                whereclause=self.filter.build_expression(table),
+                group_by=self.group_by + [sqlalchemy.column('month')],
+                whereclause=self.filter.build_expression(),
             ),
             name='cq')
 

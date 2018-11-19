@@ -8,13 +8,11 @@ from django.conf import settings
 
 from sqlagg import (
     ColumnNotFoundException,
-    TableNotFoundException,
 )
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.userreports.exceptions import (
     InvalidQueryColumn,
-    TableNotFoundWarning,
     UserReportsError,
 )
 from corehq.util.soft_assert import soft_assert
@@ -39,8 +37,6 @@ def catch_and_raise_exceptions(func):
             if not settings.UNIT_TESTING:
                 _soft_assert(False, six.text_type(e))
             raise UserReportsError(six.text_type(e))
-        except TableNotFoundException:
-            raise TableNotFoundWarning
     return _inner
 
 

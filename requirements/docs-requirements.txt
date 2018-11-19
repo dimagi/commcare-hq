@@ -5,6 +5,7 @@
 #    `make requirements` or `make upgrade-requirements`
 #
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+git+git://github.com/dimagi/sql-agg@sk/reflect#egg=sqlagg==0.12.0.alpha
 alabaster==0.7.12         # via sphinx
 alembic==0.8.6
 amqp==1.4.9
@@ -152,7 +153,6 @@ sphinx-rtd-theme==0.3.0
 sphinx==1.7.2
 sphinxcontrib-django==0.3.1
 sphinxcontrib-websupport==1.1.0  # via sphinx
-sqlagg==0.11.1
 sqlalchemy==1.2.12
 stripe==1.67.0
 suds-jurko==0.6

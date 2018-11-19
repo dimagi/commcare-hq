@@ -8,6 +8,7 @@ git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 -e git+git://github.com/dimagi/couchdbkit-debugpanel.git#egg=couchdbkit-debugpanel
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
 -e git+git://github.com/nickpell/django-package-monitor@np/handle-no-semver#egg=django-package-monitor
+git+git://github.com/dimagi/sql-agg@sk/reflect#egg=sqlagg==0.12.0.alpha
 alabaster==0.7.12         # via sphinx
 alembic==0.8.6
 amqp==1.4.9
@@ -193,7 +194,6 @@ snowballstemmer==1.2.1    # via sphinx
 socketpool==0.5.3
 sphinx-rtd-theme==0.1.9
 sphinx==1.3.1
-sqlagg==0.11.1
 sqlalchemy-postgres-copy==0.5.0
 sqlalchemy==1.2.12
 sqlparse==0.2.4           # via django-debug-toolbar
