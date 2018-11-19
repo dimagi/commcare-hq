@@ -522,7 +522,6 @@ def recalculate_stagnant_cases():
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
         'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
         'static-icds-cas-static-child_cases_monthly_v2',
-        'static-icds-cas-static-child_cases_monthly_tableau_v2',
     ]
 
     stagnant_cases = set()
