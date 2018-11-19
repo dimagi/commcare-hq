@@ -796,7 +796,7 @@ class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
                 self.group_by + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
                 group_by=self.group_by + [sqlalchemy.column('month')],
                 whereclause=self.filter.build_expression(),
-            ),
+            ).select_from(sqlalchemy.table(self.table_name)),
             name='cq')
 
         return sqlalchemy.select(

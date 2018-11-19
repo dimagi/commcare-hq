@@ -87,13 +87,14 @@ class CareQueryMeta(QueryMeta):
                     sqlalchemy.column('group_id'),
                     (sqlalchemy.func.max(sqlalchemy.column('prop_value')) + sqlalchemy.func.min(sqlalchemy.column('prop_value'))).label('maxmin')
                 ] + filter_cols + external_cols,
-                from_obj=sqlalchemy.table(self.table_name),
                 group_by=(
                     [
                         sqlalchemy.column('doc_id'), sqlalchemy.column('group_case_id'),
                         sqlalchemy.column('group_name'), sqlalchemy.column('group_id')
-                    ] + filter_cols + external_cols)),
-            name='x')
+                    ] + filter_cols + external_cols)
+            ).select_from(sqlalchemy.table(self.table_name)),
+            name='x'
+        )
         s2 = alias(
             sqlalchemy.select(
                 [
@@ -102,9 +103,9 @@ class CareQueryMeta(QueryMeta):
                         cast(func.max(sqlalchemy.column('gender')), Integer) + cast(func.min(sqlalchemy.column('gender')), Integer), VARCHAR
                     ).label('gender')
                 ] + table_card_group,
-                from_obj=sqlalchemy.table(self.table_name),
                 group_by=[sqlalchemy.column('group_case_id')] + table_card_group + having_group_by, having=group_having
-            ), name='y'
+            ).select_from(sqlalchemy.table(self.table_name)),
+            name='y'
         )
         group_by = list(self.group_by)
         if 'group_case_id' in group_by:
