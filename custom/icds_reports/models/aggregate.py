@@ -199,12 +199,11 @@ class AwcLocation(models.Model):
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
-                cursor.execute(drop_table_query)
-                cursor.execute(agg_query)
-                cursor.execute(aww_query)
-                for rollup_query in rollup_queries:
-                    cursor.execute(rollup_query)
+            cursor.execute(drop_table_query)
+            cursor.execute(agg_query)
+            cursor.execute(aww_query)
+            for rollup_query in rollup_queries:
+                cursor.execute(rollup_query)
 
 
 class ChildHealthMonthly(models.Model):

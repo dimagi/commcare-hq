@@ -92,18 +92,15 @@ DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id i
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
-CHILD_HEALTH_MONTHLY_UCR = 'static-child_cases_monthly_tableau_v2'
 if settings.SERVER_ENVIRONMENT == 'softlayer':
     # Currently QA needs more monthly data, so these are different than on ICDS
     # If this exists after July 1, ask Emord why these UCRs still exist
     CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
-    CHILD_HEALTH_MONTHLY_UCR = 'extended_child_health_monthly_tableau'
 
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
     {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
-    {'type': 'child_health_monthly', 'name': CHILD_HEALTH_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
@@ -292,7 +289,6 @@ def icds_aggregation_task(self, date, func):
         return
 
     celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
-    func(date)
     try:
         func(date)
     except Error as exc:
