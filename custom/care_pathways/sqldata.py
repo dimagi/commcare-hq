@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import *
+from sqlagg.filters import EQ, NOTEQ, AND, IN, RawFilter, ANDFilter
 from sqlalchemy.sql.expression import join, alias, cast
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.sqltypes import Integer, VARCHAR
