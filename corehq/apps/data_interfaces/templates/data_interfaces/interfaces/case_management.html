@@ -6,9 +6,9 @@
 {% block reportcontent %}
     <div id="data-interfaces-reassign-cases">
         <div class="row">
-            <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
+            <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selectedCases">
                 <label for="reassign_owner_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
-                <span data-bind="visible: should_show_owners">
+                <span data-bind="visible: shouldShowOwners">
                     <input type="hidden" name="reassign_owner"
                         id="reassign_owner_select"
                         style="width: 300px;"
