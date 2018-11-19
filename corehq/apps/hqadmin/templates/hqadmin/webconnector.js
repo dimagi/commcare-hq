@@ -29,6 +29,11 @@
         schemaCallback([tableSchema]);
     };
 
+    myConnector.init = function(initCallback) {
+        tableau.authType = tableau.authTypeEnum.none;
+        initCallback();
+    }
+
     // Download the data
     myConnector.getData = function(table, doneCallback) {
         $.getJSON("http://localhost:8000/hq/admin/4.5_week.geojson", function(resp) {
