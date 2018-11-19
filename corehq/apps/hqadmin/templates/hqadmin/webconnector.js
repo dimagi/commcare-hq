@@ -8,21 +8,16 @@
             id: "id",
             dataType: tableau.dataTypeEnum.string
         }, {
-            id: "mag",
-            alias: "magnitude",
-            dataType: tableau.dataTypeEnum.float
-        }, {
-            id: "title",
-            alias: "title",
+            id: "name",
             dataType: tableau.dataTypeEnum.string
         }, {
-            id: "location",
-            dataType: tableau.dataTypeEnum.geometry
+            id: "abc",
+            dataType: tableau.dataTypeEnum.string
         }];
 
         var tableSchema = {
-            id: "earthquakeFeed",
-            alias: "Earthquakes with magnitude greater than 4.5 in the last seven days",
+            id: "cases",
+            alias: "Case List",
             columns: cols
         };
 
@@ -37,16 +32,15 @@
     // Download the data
     myConnector.getData = function(table, doneCallback) {
         $.getJSON("http://localhost:8000/hq/admin/4.5_week.geojson", function(resp) {
-            var feat = resp.features,
+            var cases = resp.cases,
                 tableData = [];
 
             // Iterate over the JSON object
-            for (var i = 0, len = feat.length; i < len; i++) {
+            for (var i = 0, len = cases.length; i < len; i++) {
                 tableData.push({
-                    "id": feat[i].id,
-                    "mag": feat[i].properties.mag,
-                    "title": feat[i].properties.title,
-                    "location": feat[i].geometry
+                    "id": cases[i].id,
+                    "name": cases[i].name,
+                    "abc": cases[i]['properties'].abc
                 });
             }
 

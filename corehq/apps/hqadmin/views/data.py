@@ -28,6 +28,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
 from corehq.elastic import ES_META, run_query
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
     CommCareCaseSQLRawDocSerializer
@@ -211,47 +212,28 @@ class GeoJson(View):
         return JsonResponse(self.get_json())
 
     def get_json(self):
+
+        domain = 'example'
+
+        case_ids = CaseAccessors(domain).get_case_ids_in_domain()
+
+        cases = CaseAccessors(domain).get_cases(case_ids)
+
         return {
-          "features": [
-            {
-              "type": "Feature",
-              "properties": {
-                "mag": 6.7,
-                "place": "245km SE of Lambasa, Fiji",
-                "time": 1542572745970,
-                "updated": 1542574666040,
-                "tz": -720,
-                "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us1000htm5",
-                "detail": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/us1000htm5.geojson",
-                "felt": None,
-                "cdi": None,
-                "mmi": 2.96,
-                "alert": "green",
-                "status": "reviewed",
-                "tsunami": 1,
-                "sig": 691,
-                "net": "us",
-                "code": "1000htm5",
-                "ids": ",pt18322000,at00pieoqx,us1000htm5,",
-                "sources": ",pt,at,us,",
-                "types": ",geoserve,impact-link,losspager,moment-tensor,origin,phase-data,shakemap,",
-                "nst": None,
-                "dmin": 2.906,
-                "rms": 1.02,
-                "gap": 72,
-                "magType": "mww",
-                "type": "earthquake",
-                "title": "M 6.7 - 245km SE of Lambasa, Fiji"
-              },
-              "geometry": {
-                "type": "Point",
-                "coordinates": [
-                  -178.9,
-                  -17.8972,
-                  533.6
-                ]
-              },
-              "id": "us1000htm5"
-            },
-          ],
+            "cases": [
+                self.get_case_json(case) for case in cases
+            ],
         }
+
+    def get_case_json(self, case):
+        return {
+            'id': case.case_id,
+            'name': case.name,
+            'properties': {
+                case_prop: case.dynamic_case_properties().get(case_prop)
+                for case_prop in self.get_case_properties()
+            }
+        }
+
+    def get_case_properties(self):
+        return ['abc']
