@@ -14,7 +14,6 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColu
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains, TableCardDataIndividualFormatter, TableCardDataGroupsFormatter, \
     get_domains_with_next, TableCardDataGroupsIndividualFormatter
-from sqlalchemy import select, column, table
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import re
 from django.utils import html
@@ -79,27 +78,39 @@ class CareQueryMeta(QueryMeta):
         table_card_group = []
         if 'group_name' in self.group_by:
             table_card_group.append('group_name')
-        s1 = alias(select([column('doc_id'), column('group_case_id'), column('group_name'), column('group_id'),
-                           (sqlalchemy.func.max(column('prop_value')) +
-                            sqlalchemy.func.min(column('prop_value'))).label('maxmin')] + filter_cols +
-                          external_cols, from_obj=table,
-                          group_by=([column('doc_id'), column('group_case_id'), column('group_name'), column('group_id')] +
-                                    filter_cols + external_cols)), name='x')
+        s1 = alias(
+            sqlalchemy.select(
+                [
+                    sqlalchemy.column('doc_id'),
+                    sqlalchemy.column('group_case_id'),
+                    sqlalchemy.column('group_name'),
+                    sqlalchemy.column('group_id'),
+                    (sqlalchemy.func.max(sqlalchemy.column('prop_value')) + sqlalchemy.func.min(sqlalchemy.column('prop_value'))).label('maxmin')
+                ] + filter_cols + external_cols,
+                from_obj=sqlalchemy.table(self.table_name),
+                group_by=(
+                    [
+                        sqlalchemy.column('doc_id'), sqlalchemy.column('group_case_id'),
+                        sqlalchemy.column('group_name'), sqlalchemy.column('group_id')
+                    ] + filter_cols + external_cols)),
+            name='x')
         s2 = alias(
-            select(
-                [column('group_case_id'),
-                 sqlalchemy.cast(
-                     cast(func.max(column('gender')), Integer) + cast(func.min(column('gender')), Integer), VARCHAR
-                 ).label('gender')] + table_card_group,
-                from_obj=table(self.table_name),
-                group_by=[column('group_case_id')] + table_card_group + having_group_by, having=group_having
+            sqlalchemy.select(
+                [
+                    sqlalchemy.column('group_case_id'),
+                    sqlalchemy.cast(
+                        cast(func.max(sqlalchemy.column('gender')), Integer) + cast(func.min(sqlalchemy.column('gender')), Integer), VARCHAR
+                    ).label('gender')
+                ] + table_card_group,
+                from_obj=sqlalchemy.table(self.table_name),
+                group_by=[sqlalchemy.column('group_case_id')] + table_card_group + having_group_by, having=group_having
             ), name='y'
         )
         group_by = list(self.group_by)
         if 'group_case_id' in group_by:
             group_by[group_by.index('group_case_id')] = s1.c.group_case_id
             group_by[group_by.index('group_name')] = s1.c.group_name
-        return select(
+        return sqlalchemy.select(
             [sqlalchemy.func.count(s1.c.doc_id).label(self.key)] + group_by,
             group_by=[s1.c.maxmin] + filter_cols + group_by,
             having=AND(having).build_expression(s1),
@@ -144,9 +155,9 @@ class GeographySqlData(SqlData):
 
 
 class IEQ(EQ):
-    def build_expression(self, table):
+    def build_expression(self):
         return self.operator(
-            func.lower(get_column(table, self.column_name)), func.lower(bindparam(self.parameter))
+            func.lower(sqlalchemy.column(self.column_name)), func.lower(sqlalchemy.bindparam(self.parameter))
         )
 
 
