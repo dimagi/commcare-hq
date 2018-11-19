@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.contrib import messages
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from elasticsearch import TransportError
@@ -271,22 +270,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     name = ugettext_lazy('Case List')
     slug = 'case_list'
-
-    @classmethod
-    def get_subpages(cls):
-        def _case_name(request=None, **context):
-            if 'case' in context and 'name' in context['case']:
-                return mark_safe(context['case']['name'])
-            else:
-                return _('View Case')
-
-        from corehq.apps.reports.views import CaseDataView
-        return [
-            {
-                'title': _case_name,
-                'urlname': CaseDataView.urlname,
-            },
-        ]
 
     @property
     def view_response(self):
