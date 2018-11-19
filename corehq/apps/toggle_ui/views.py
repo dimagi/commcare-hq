@@ -32,7 +32,7 @@ from corehq.toggles import (
 )
 from corehq.util.soft_assert import soft_assert
 from toggle.models import Toggle
-from toggle.shortcuts import clear_toggle_cache, parse_toggle
+from toggle.shortcuts import parse_toggle
 import six
 
 NOT_FOUND = "Not Found"
@@ -281,8 +281,6 @@ def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enable
             assert ':' not in entry, entry
             username = entry
             toggle_js_user_cachebuster.clear(username)
-
-        clear_toggle_cache(toggle_slug, entry, namespace=namespace)
 
 
 def _clear_caches_for_dynamic_toggle(toggle_meta):
