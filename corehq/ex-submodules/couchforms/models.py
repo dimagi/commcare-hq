@@ -349,29 +349,30 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def archive(self, user_id=None, retry_archive=False):
         if self.is_archived and not retry_archive:
             return
-
+        self.doc_type = "XFormArchived"
+        self.save()
         from corehq.form_processor.submission_post import unfinished_archive
         with unfinished_archive(instance=self, user_id=user_id, archive=True):
-            self.doc_type = "XFormArchived"
+            xform_archived.send(sender="couchforms", xform=self)
             self.history.append(XFormOperation(
                 user=user_id,
                 operation='archive',
             ))
             self.save()
-            xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None, retry_archive=False):
         if not self.is_archived and not retry_archive:
             return
+        self.doc_type = "XFormInstance"
+        XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
         from corehq.form_processor.submission_post import unfinished_archive
         with unfinished_archive(instance=self, user_id=user_id, archive=False):
-            self.doc_type = "XFormInstance"
+            xform_unarchived.send(sender="couchforms", xform=self)
             self.history.append(XFormOperation(
                 user=user_id,
                 operation='unarchive',
             ))
-            XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
-            xform_unarchived.send(sender="couchforms", xform=self)
+            self.save()
 
 
 class XFormError(XFormInstance):
