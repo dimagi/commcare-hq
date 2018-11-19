@@ -451,7 +451,9 @@ def app_from_template(request, domain, slug):
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_async_build(app, request.user.username, release=True, comment=comment)
+    build = make_async_build(app, request.user.username, allow_prune=False, comment=comment)
+    build.is_released = True
+    build.save(increment_version=False)
     cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
