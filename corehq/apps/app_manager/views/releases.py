@@ -213,6 +213,7 @@ def release_build(request, domain, app_id, saved_app_id):
     if saved_app.copy_of != app_id:
         raise Http404
     saved_app.is_released = is_released
+    saved_app.is_auto_generated = False
     saved_app.save(increment_version=False)
     from corehq.apps.app_manager.signals import app_post_release
     app_post_release.send(Application, application=saved_app)
@@ -404,6 +405,7 @@ def update_build_comment(request, domain, app_id):
     except ResourceNotFound:
         raise Http404()
     build.build_comment = request.POST.get('comment')
+    build.is_auto_generated = False
     build.save()
     return json_response({'status': 'success'})
 
