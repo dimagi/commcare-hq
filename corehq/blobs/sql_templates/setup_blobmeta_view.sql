@@ -140,7 +140,7 @@ CREATE TRIGGER blobs_blobmeta_trigger
 -- Indexes to improve performance of delete functions.
 -- This should not add any form processing overhead since there should
 -- be no more inserts into form_processor_xformattachmentsql.
-CREATE INDEX form_processor_xformattachmentsql_blobmeta_key
+CREATE INDEX IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
 ON public.form_processor_xformattachmentsql (((
     CASE
         WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
