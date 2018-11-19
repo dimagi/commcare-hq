@@ -186,6 +186,9 @@ class Webconnector(View):
     urlname = 'webconnector'
 
     def get(self, request):
+
+        js_url = reverse(WebconnectorJS.urlname)
+
         return HttpResponse(
             '''
             <html>
@@ -199,7 +202,7 @@ class Webconnector(View):
                 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" crossorigin="anonymous"></script>
             
                 <script src="https://connectors.tableau.com/libs/tableauwdc-2.3.latest.js" type="text/javascript"></script>
-                <script src="http://localhost:8000/hq/admin/earthquakeWDC.js" type="text/javascript"></script>
+                <script src="%s" type="text/javascript"></script>
             </head>
             
             <body>
@@ -214,6 +217,7 @@ class Webconnector(View):
             
             </html>
             '''
+            % js_url
         )
 
 
