@@ -1,5 +1,7 @@
 hqDefine('hqadmin/js/webconnector', [
+    'hqwebapp/js/initial_page_data',
 ], function (
+    initialPageData
 ) {
 
     (function () {
