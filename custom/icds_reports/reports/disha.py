@@ -75,7 +75,7 @@ class DishaDump(object):
         chunk_size = 4000000
         columns = self._get_columns()
         indicators = self._get_rows()
-        metadata_line = u'{{'\
+        metadata_line = '{{'\
             '"month":"{month}", '\
             '"state_name": "{state_name}", '\
             '"column_names": {columns}, '\
@@ -92,8 +92,8 @@ class DishaDump(object):
                 f.write(chunk_string[1:-1])
                 written_count += len(chunk)
                 if written_count != total:
-                    f.write(u",")
-            f.write(u"]}")
+                    f.write(",")
+            f.write("]}")
 
     def build_export_json(self):
         with TransientTempfile() as temp_path:
