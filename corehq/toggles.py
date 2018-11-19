@@ -821,6 +821,15 @@ MOBILE_UCR = StaticToggle(
     always_enabled={'icds-cas'}
 )
 
+MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
+    'mobile_ucr_linked_domain',
+    ('Mobile UCR: Configure viewing user configurable reports on the mobile when using linked domains. '
+     'NOTE: This won\'t work without developer intervention'),
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas', 'fmoh-echis-staging'}
+)
+
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
     "(Deprecated) Allow project to restrict web user permissions by location",
@@ -914,6 +923,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
         'Enables the insertion of custom assertions into the suite file. '
     ),
     namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/User+defined+assert+blocks",
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -1650,4 +1660,11 @@ FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
                 '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
                 'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
                 'have group and location filters, such as the Submissions by Form report.',
+)
+
+SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
+    'sort_out_of_order_form_submissions_sql',
+    'Sort out of order form submissions in the SQL update strategy',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
 )

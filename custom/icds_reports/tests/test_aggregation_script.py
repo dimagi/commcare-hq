@@ -17,7 +17,7 @@ from six.moves import range
 from io import open
 
 from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
-from custom.icds_reports.utils.aggregation import InactiveAwwsAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.inactive_awws import InactiveAwwsAggregationHelper
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
@@ -103,7 +103,8 @@ class AggregationScriptTestBase(TestCase):
 
             for key in dict1.keys():
                 if key != 'id':
-                    value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
+                    value1 = dict1[key] if isinstance(dict1[key], six.text_type) else dict1[key].decode('utf-8')
+                    value1 = value1.replace('\r\n', '\n')
                     value2 = dict2.get(key, '').replace('\r\n', '\n')
                     if value1 != value2:
                         differences.add(key)

@@ -203,7 +203,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         for index_info in indexes_referencing_deleted_cases
         if index_info.case_id not in deleted_ids
     ]

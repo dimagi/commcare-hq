@@ -25,7 +25,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
@@ -1812,7 +1812,7 @@ class DishaAPIView(View):
         if state_name not in self.valid_state_names:
             return JsonResponse(self.message('invalid_state'), status=400)
 
-        data = DishaDump(state_name, query_month).get_data()
+        data = DishaDump(state_name, query_month).get_json_export()
         if not data:
             return JsonResponse({"message": "Data is not updated for this month"})
         return HttpResponse(data, content_type='application/json')

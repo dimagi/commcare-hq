@@ -42,7 +42,6 @@ import httpagentparser
 from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
-from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 from corehq.apps.users.models import CouchUser
@@ -85,7 +84,6 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
-from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 import six
 from six.moves import range
@@ -507,17 +505,6 @@ def dropbox_upload(request, download_id):
         )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
-
-# TODO jschweers: Remove this in Q2 2018 if it hasn't been triggered,
-# change initial_page_data.js to throw an error
-@require_GET
-def assert_initial_page_data(request):
-    _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-    _assert(False, 'Initial page data called before page load complete', {
-        'page': request.META['HTTP_REFERER'],
-    })
-    return json_response({'success': True})
 
 
 @require_superuser
@@ -1131,20 +1118,6 @@ def osdd(request, template='osdd.xml'):
     return response
 
 
-@require_superuser
-def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-
-    return render(request, template, {
-        'alerts': [{
-            'created': six.text_type(alert.created),
-            'active': alert.active,
-            'html': alert.html,
-            'id': alert.id,
-        } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
-    })
-
-
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
     page_title = ugettext_noop("Maintenance Alerts")
@@ -1234,18 +1207,6 @@ def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
     return render(request, template, {
         'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)
-    })
-
-
-@require_superuser
-def couch_doc_counts(request, domain):
-    from casexml.apps.case.models import CommCareCase
-    from couchforms.models import XFormInstance
-    start = string_to_datetime(request.GET.get('start')) if request.GET.get('start') else None
-    end = string_to_datetime(request.GET.get('end')) if request.GET.get('end') else None
-    return json_response({
-        cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
-        for cls in [CommCareCase, XFormInstance]
     })
 
 

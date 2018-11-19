@@ -18,6 +18,7 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text
+from six.moves import filter
 
 
 class FirstDayOfAugust(datetime.datetime):
@@ -49,9 +50,9 @@ class TestAWCReport(TestCase):
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3141')
         self.assertEqual(data['mother_name'], 'शियामु बाई')
-        self.assertEqual(filter(lambda r: r['x'] == 53, data['weight'])[0]['y'], 12.6)
-        self.assertEqual(filter(lambda r: r['x'] == 53, data['height'])[0]['y'], 96.0)
-        self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
+        self.assertEqual(next(filter(lambda r: r['x'] == 53, data['weight']))['y'], 12.6)
+        self.assertEqual(next(filter(lambda r: r['x'] == 53, data['height']))['y'], 96.0)
+        self.assertEqual(next(filter(lambda r: r['x'] == 96.0, data['wfl']))['y'], 12.6)
 
     def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
         data = get_beneficiary_details(
@@ -2473,6 +2474,10 @@ class TestAWCReport(TestCase):
                 awc_id='a15'
             )
             self.assertEqual(
+                len(data['data']),
+                1
+            )
+            self.assertEqual(
                 data['data'][0],
                 {
                     'age': 23,
@@ -2486,32 +2491,6 @@ class TestAWCReport(TestCase):
                     'opened_on': None,
                     'person_name': None,
                     'trimester': 2,
-                }
-            )
-
-    def test_awc_report_pregnant_second_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
-            data = get_awc_report_pregnant(
-                start=0,
-                length=10,
-                order='age',
-                reversed_order=False,
-                awc_id='a15'
-            )
-            self.assertEqual(
-                data['data'][1],
-                {
-                    'age': 28,
-                    'anemic': 'Unknown',
-                    'beneficiary': 'Yes',
-                    'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
-                    'edd': None,
-                    'last_date_thr': None,
-                    'num_anc_complete': None,
-                    'number_of_thrs_given': 21,
-                    'opened_on': None,
-                    'person_name': None,
-                    'trimester': 3,
                 }
             )
 

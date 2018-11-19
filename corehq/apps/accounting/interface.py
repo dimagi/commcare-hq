@@ -1119,6 +1119,16 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
 
+        subscriber_domain = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber_domain is not None:
+            invoices_for_domain = []
+            for invoice in queryset.all():
+                for subscription in invoice.subscriptions.all():
+                    if subscription.subscriber.domain == subscriber_domain:
+                        invoices_for_domain.append(invoice.pk)
+                        break
+            queryset = queryset.filter(id__in=invoices_for_domain)
+
         return queryset
 
     @property

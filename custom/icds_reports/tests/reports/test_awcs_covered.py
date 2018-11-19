@@ -27,7 +27,7 @@ class TestAWCSCovered(TestCase):
                 "rightLegend": {
                     "info": (
                         "{}<br /><br />"
-                        'Number of AWCs launched: 19 <br />'
+                        'Number of AWCs launched: 20 <br />'
                         'Number of States launched: 2'.format(awcs_launched_help_text())
                     )
                 },
@@ -40,7 +40,7 @@ class TestAWCSCovered(TestCase):
                     "st1": {
                         "districts": 1,
                         "blocks": 2,
-                        "awcs": 8,
+                        "awcs": 9,
                         "states": 1,
                         "supervisors": 4,
                         'original_name': ["st1"],
@@ -77,7 +77,7 @@ class TestAWCSCovered(TestCase):
                 "rightLegend": {
                     "info": (
                         "{}<br /><br />"
-                        'Number of AWCs launched: 8 <br />'
+                        'Number of AWCs launched: 9 <br />'
                         'Number of Blocks launched: 2'.format(awcs_launched_help_text())
                     )
                 },
@@ -90,7 +90,7 @@ class TestAWCSCovered(TestCase):
                     'block_map': {
                         'states': 1,
                         'blocks': 2,
-                        'awcs': 8,
+                        'awcs': 9,
                         'original_name': ['b1', 'b2'],
                         'districts': 1,
                         'supervisors': 4,
@@ -121,7 +121,7 @@ class TestAWCSCovered(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "value": 8
+                        "value": 9
                     }
                 ],
                 "top_five": [
@@ -131,7 +131,7 @@ class TestAWCSCovered(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "value": 8
+                        "value": 9
                     }
                 ],
                 "chart_data": [
@@ -151,12 +151,12 @@ class TestAWCSCovered(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 19.0,
+                                "y": 20.0,
                                 "x": 1491004800000,
                                 "all": 0
                             },
                             {
-                                "y": 19.0,
+                                "y": 20.0,
                                 "x": 1493596800000,
                                 "all": 0
                             }
@@ -171,7 +171,7 @@ class TestAWCSCovered(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "value": 8
+                        "value": 9
                     }
                 ]
             }
@@ -194,7 +194,7 @@ class TestAWCSCovered(TestCase):
             {
                 "info": (
                     "{}<br /><br />"
-                    "Number of AWCs launched: 3 <br />"
+                    "Number of AWCs launched: 4 <br />"
                     "Number of Supervisors launched: 2".format(awcs_launched_help_text())
                 ),
                 "tooltips_data": {
@@ -203,7 +203,7 @@ class TestAWCSCovered(TestCase):
                         "states": 1,
                         "supervisors": 1,
                         "blocks": 1,
-                        "awcs": 1
+                        "awcs": 2
                     }, 
                     "s1": {
                         "districts": 1,
@@ -225,7 +225,7 @@ class TestAWCSCovered(TestCase):
                             ],
                             [
                                 "s2",
-                                1
+                                2
                             ]
                         ],
                         "key": ""

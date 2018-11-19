@@ -40,7 +40,7 @@ class Command(BaseCommand):
             configs.append(config)
 
         for config in configs:
-            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+            adapter = get_indicator_adapter(config)
             adapter.build_table()
             # normally called after rebuilding finishes
             adapter.after_table_build()

@@ -763,12 +763,14 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         )
         view = self._create_view(report_config)
 
-        self.assertItemsEqual(
-            view.export_table[0][1],
-            [['report_column_display_state', 'report_column_display_number'],
-             ['MA', 9],
-             ['TN', 1]]
-        )
+        table = view.export_table[0][1]
+        self.assertEqual(len(table), 3)
+        for table_row in [
+            ['report_column_display_state', 'report_column_display_number'],
+            ['MA', 9],
+            ['TN', 1],
+        ]:
+            self.assertIn(table_row, table)
 
     def test_with_prefilter(self):
         report_config = self._create_default_report(
@@ -879,13 +881,15 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
             filters=None,
         )
         view = self._create_view(report_config)
-        self.assertItemsEqual(
-            view.export_table[0][1],
-            [['state', 'age_range', 'report_column_display_number'],
-             ['MA', '0-6', 7],
-             ['MA', '7-12', 2],
-             ['TN', '13+', 1]]
-        )
+        table = view.export_table[0][1]
+        self.assertEqual(len(table), 4)
+        for table_row in [
+            ['state', 'age_range', 'report_column_display_number'],
+            ['MA', '0-6', 7],
+            ['MA', '7-12', 2],
+            ['TN', '13+', 1],
+        ]:
+            self.assertIn(table_row, table)
 
     def test_sum_when(self):
         report_config = self._create_report(
@@ -921,9 +925,11 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
             filters=None,
         )
         view = self._create_view(report_config)
-        self.assertItemsEqual(
-            view.export_table[0][1],
-            [['state', 'under_six_month_olds', 'report_column_display_number'],
-             ['MA', 2, 9],
-             ['TN', 0, 1]]
-        )
+        table = view.export_table[0][1]
+        self.assertEqual(len(table), 3)
+        for table_row in [
+            ['state', 'under_six_month_olds', 'report_column_display_number'],
+            ['MA', 2, 9],
+            ['TN', 0, 1],
+        ]:
+            self.assertIn(table_row, table)

@@ -3,11 +3,15 @@ from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 
 from celery.task import task
+from celery.utils.log import get_task_logger
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id, get_auto_generated_built_apps
 from corehq.apps.app_manager.exceptions import SavedAppBuildException
 from corehq.apps.users.models import CommCareUser
 from corehq.util.decorators import serial_task
+
+
+logger = get_task_logger(__name__)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
@@ -61,4 +65,11 @@ def prune_auto_generated_builds(domain, app_id):
         if not app.is_auto_generated or app.copy_of != app_id or app.id == last_build_id:
             raise SavedAppBuildException("Attempted to delete build that should not be deleted")
         app.delete_app()
+        logger.info("Pruned build {} from domain {}".format(app.id, domain))
         app.save(increment_version=False)
+
+
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
+def update_linked_app_and_notify_task(domain, app_id, user_id, email):
+    from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
+    update_linked_app_and_notify(domain, app_id, user_id, email)

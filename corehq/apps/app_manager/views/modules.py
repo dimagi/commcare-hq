@@ -15,8 +15,7 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 from django.contrib import messages
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
-    get_per_type_defaults
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
@@ -207,6 +206,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
         }
 
     return {
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'shadow_module_options': {
             'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
@@ -282,12 +282,7 @@ def _setup_case_property_builder(app):
     defaults = ('name', 'date-opened', 'status', 'last_modified')
     if app.case_sharing:
         defaults += ('#owner_name',)
-    per_type_defaults = None
-    if is_usercase_in_use(app.domain):
-        per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
-    builder = ParentCasePropertyBuilder(app, defaults=defaults,
-                                        per_type_defaults=per_type_defaults)
-    return builder
+    return ParentCasePropertyBuilder.for_app(app, defaults=defaults)
 
 
 # Parent case selection in case list: get modules whose case type is the parent of the given module's case type
@@ -386,7 +381,7 @@ def _case_list_form_not_allowed_reasons(module):
     if not module.all_forms_require_a_case():
         reasons.append(_("all forms in this case list must update a case, "
                          "which means that registration forms must go in a different case list"))
-    if isinstance(module, Module):
+    if hasattr(module, 'parent_select'):
         app = module.get_app()
         if (not app.build_version or app.build_version < LooseVersion('2.23')) and module.parent_select.active:
             reasons.append(_("'Parent Selection' is configured"))

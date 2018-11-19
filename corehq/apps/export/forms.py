@@ -941,7 +941,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         return user_types
 
     def get_edit_url(self, export):
-        from corehq.apps.export.views import EditNewCustomFormExportView
+        from corehq.apps.export.views.edit import EditNewCustomFormExportView
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
 
@@ -982,7 +982,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             'export_is_legacy': False,
             'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
             'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
-            'group': self.data['group'],
             'download_id': download_id
         }
 
@@ -1013,7 +1012,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         )
 
     def get_edit_url(self, export):
-        from corehq.apps.export.views import EditNewCustomCaseExportView
+        from corehq.apps.export.views.edit import EditNewCustomCaseExportView
         return reverse(EditNewCustomCaseExportView.urlname,
                        args=(self.domain_object.name, export.get_id))
 

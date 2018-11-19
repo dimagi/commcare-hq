@@ -194,6 +194,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         for processor in self.batch_processors:
             if not changes_chunk:
                 return set(), 0
+
+            changes_chunk = self._deduplicate_changes(changes_chunk)
             retry_changes = set()
             timer = TimingContext()
             with timer:
@@ -347,6 +349,17 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
 
             if processing_time:
                 datadog_histogram('commcare.change_feed.processing_time', processing_time, tags=tags)
+
+    @staticmethod
+    def _deduplicate_changes(changes_chunk):
+        seen = set()
+        unique = []
+        for change in reversed(changes_chunk):
+            if change.id not in seen:
+                unique.append(change)
+                seen.add(change.id)
+        unique.reverse()
+        return unique
 
 
 class ChangeEventHandler(six.with_metaclass(ABCMeta, object)):

@@ -13,7 +13,7 @@ from casexml.apps.phone.restore import RestoreContent, RestoreResponse
 from casexml.apps.phone.xml import get_case_element, get_registration_element_for_case
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import WEBAPPS_CASE_MIGRATION
@@ -51,9 +51,9 @@ class MigrationView(BaseMigrationView, FormView):
 
 
 def get_case_hierarchy_for_restore(case):
-    from corehq.apps.reports.view_helpers import get_children
+    from corehq.apps.reports.view_helpers import get_case_hierarchy
     return [
-        c for c in get_children(case)['case_list']
+        c for c in get_case_hierarchy(case, {})['case_list']
         if not c.closed
     ]
 
