@@ -14,8 +14,6 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
-from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
@@ -41,6 +39,15 @@ from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_he
 from custom.icds_reports.utils.aggregation_helpers.thr_forms_child_health import \
     THRFormsChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.awc_location import LocationAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.daily_attendance import DailyAttendanceAggregationHelper
+
+
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
 
 
 class CcsRecordMonthly(models.Model):
@@ -173,11 +180,31 @@ class AwcLocation(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
+    state_is_test = models.SmallIntegerField(blank=True, null=True)
+    district_is_test = models.SmallIntegerField(blank=True, null=True)
+    block_is_test = models.SmallIntegerField(blank=True, null=True)
+    supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
+    awc_is_test = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
+
+    @classmethod
+    def aggregate(cls):
+        helper = LocationAggregationHelper()
+        drop_table_query = helper.drop_table_query()
+        agg_query = helper.aggregate_query()
+        aww_query = helper.aww_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(drop_table_query)
+            cursor.execute(agg_query)
+            cursor.execute(aww_query)
+            for rollup_query in rollup_queries:
+                cursor.execute(rollup_query)
 
 
 class ChildHealthMonthly(models.Model):
@@ -406,6 +433,11 @@ class AggAwc(models.Model):
     cases_person_adolescent_girls_11_14_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_15_18_all = models.IntegerField(null=True)
     infra_infant_weighing_scale = models.IntegerField(null=True)
+    state_is_test = models.SmallIntegerField(blank=True, null=True)
+    district_is_test = models.SmallIntegerField(blank=True, null=True)
+    block_is_test = models.SmallIntegerField(blank=True, null=True)
+    supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
+    awc_is_test = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -735,10 +767,18 @@ class DailyAttendance(models.Model):
         managed = False
         db_table = 'daily_attendance'
 
+    @classmethod
+    def aggregate(cls, month):
+        helper = DailyAttendanceAggregationHelper(month=month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregate_query()
+        indexes_query = helper.indexes()
 
-def get_cursor(model):
-    db = db_for_read_write(model)
-    return connections[db].cursor()
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+            cursor.execute(indexes_query)
 
 
 class AggregateComplementaryFeedingForms(models.Model):

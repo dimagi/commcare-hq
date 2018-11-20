@@ -1812,7 +1812,7 @@ class DishaAPIView(View):
         if state_name not in self.valid_state_names:
             return JsonResponse(self.message('invalid_state'), status=400)
 
-        data = DishaDump(state_name, query_month).get_data()
+        data = DishaDump(state_name, query_month).get_json_export()
         if not data:
             return JsonResponse({"message": "Data is not updated for this month"})
         return HttpResponse(data, content_type='application/json')
