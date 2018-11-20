@@ -14,10 +14,10 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0075_drop_agg_funcs'),
+        ('icds_reports', '0076_awc_locations_test_columns'),
     ]
 
     operations = [
-        migrator.get_migration('update_tables31.sql')
+        migrator.get_migration('update_tables32.sql')
     ]
     operations.extend(get_view_migrations())
