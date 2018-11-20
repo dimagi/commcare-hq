@@ -1,0 +1,39 @@
+/* styles for Google Optimize A/B tests */
+
+.optimize-abtest {
+  a.optimize-abtest-variant-a {
+    display: none;
+  }
+
+  a.optimize-abtest-variant-b {
+    display: none;
+  }
+}
+
+.optimize-abtest.show-a {
+  a.optimize-abtest-control {
+    display: none;
+  }
+
+  a.optimize-abtest-variant-a {
+    display: inherit;
+  }
+
+  a.optimize-abtest-variant-b {
+    display: none;
+  }
+}
+
+.optimize-abtest.show-b {
+  a.optimize-abtest-control {
+    display: none;
+  }
+
+  a.optimize-abtest-variant-a {
+    display: none;
+  }
+
+  a.optimize-abtest-variant-b {
+    display: inherit;
+  }
+}
