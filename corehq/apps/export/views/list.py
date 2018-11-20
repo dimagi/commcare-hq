@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
+import json
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
@@ -12,9 +13,10 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, H
     HttpResponseServerError
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from corehq.util.download import get_download_response
+from corehq.apps.domain.models import Domain
 from corehq.apps.export.views.utils import ExportsPermissionsManager, user_can_view_deid_exports
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
@@ -79,7 +81,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_jquery_ui,
     use_ko_validation,
-    use_angular_js)
+)
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.permissions import (
     can_download_data_files,
@@ -94,6 +96,7 @@ from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 from six.moves import map
 
 
@@ -108,7 +111,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     ''')
 
     @use_select2
-    @use_angular_js
+    @use_ko_validation
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
@@ -177,7 +180,7 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     def _get_daily_saved_export_metadata(self, export):
         """
         Return a dictionary containing details about an emailed export.
-        This will eventually be passed to an Angular controller.
+        This will eventually be passed to javascript.
         """
 
         has_file = export.has_file()
@@ -208,7 +211,8 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             ),
             'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
             'locationRestrictions': location_restrictions,
-            'taskStatus': self._get_task_status_json(export._id),
+            'taskStatus': _get_task_status_json(export._id),
+            'updatingData': False,
         }
 
     def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
@@ -254,84 +258,60 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         """Returns a django form that gets the information necessary to create
         an export tag, which is the first step in creating a new export.
 
-        This form is what will interact with the DrilldownToFormController in
-        hq.app_data_drilldown.ng.js
+        This form is what will interact with the createExportModel in export/js/export_list.js
         """
         if self.permissions.has_case_export_permissions or self.permissions.has_form_export_permissions:
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        """Called by the ANGULAR.JS controller DrilldownToFormController in
-        hq.app_data_drilldown.ng.js  Use ApplicationDataRMIHelper to help
-        format the response.
-        """
-        raise NotImplementedError("Must implement get_intial_form_data")
 
-    def get_create_export_url(self, form_data):
-        """Returns url to the custom export creation form with the export
-        tag appended.
-        """
-        raise NotImplementedError("Must implement generate_create_form_url")
+def _get_task_status_json(export_instance_id):
+    status = get_saved_export_task_status(export_instance_id)
+    return {
+        'percentComplete': status.progress.percent or 0,
+        'inProgress': status.started(),
+        'success': status.success(),
+        'justFinished': False,
+    }
 
-    @allow_remote_invocation
-    def toggle_saved_export_enabled_state(self, in_data):
-        export_instance_id = in_data['export']['id']
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        export_instance.auto_rebuild_enabled = not in_data['export']['isAutoRebuildEnabled']
-        export_instance.save()
-        return format_angular_success({
-            'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
-        })
 
-    @allow_remote_invocation
-    def update_emailed_export_data(self, in_data):
-        export_instance_id = in_data['export']['id']
-        rebuild_saved_export(export_instance_id, manual=True)
-        return format_angular_success({})
+@login_and_domain_required
+@require_GET
+def get_saved_export_progress(request, domain):
+    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
 
-    @allow_remote_invocation
-    def submit_app_data_drilldown_form(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            form_data = in_data['formData']
-        except KeyError:
-            return format_angular_error(
-                _("The form's data was not correctly formatted."),
-                log_error=False,
-            )
-        try:
-            create_url = self.get_create_export_url(form_data)
-        except ExportFormValidationException:
-            return format_angular_error(
-                _("The form did not validate."),
-                log_error=False,
-            )
-        except Exception as e:
-            return format_angular_error(
-                _("Problem getting link to custom export form: {}").format(e),
-                log_error=False,
-            )
-        return format_angular_success({
-            'url': create_url,
-        })
+    export_instance_id = request.GET.get('export_instance_id')
+    return json_response({
+        'taskStatus': _get_task_status_json(export_instance_id),
+    })
 
-    @staticmethod
-    def _get_task_status_json(export_instance_id):
-        status = get_saved_export_task_status(export_instance_id)
-        return {
-            'percentComplete': status.progress.percent or 0,
-            'inProgress': status.started(),
-            'success': status.success(),
-        }
 
-    @allow_remote_invocation
-    def get_saved_export_progress(self, in_data):
-        return format_angular_success({
-            'taskStatus': self._get_task_status_json(in_data['export_instance_id']),
-        })
+@login_and_domain_required
+@require_POST
+def toggle_saved_export_enabled(request, domain):
+    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+
+    export_instance_id = request.POST.get('export_id')
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    export_instance.auto_rebuild_enabled = not json.loads(request.POST.get('is_auto_rebuild_enabled'))
+    export_instance.save()
+    return json_response({
+        'success': True,
+        'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
+    })
+
+
+@login_and_domain_required
+@require_POST
+def update_emailed_export_data(request, domain):
+    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+
+    export_instance_id = request.POST.get('export_id')
+    rebuild_saved_export(export_instance_id, manual=True)
+    return json_response({'success': True})
 
 
 @location_safe
@@ -348,13 +328,6 @@ class DailySavedExportListView(BaseExportListView):
 
     def _priv_check(self):
         return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
-
-    def _get_create_export_class(self, model):
-        from corehq.apps.export.views.new import CreateNewDailySavedFormExport, CreateNewDailySavedCaseExport
-        return {
-            "form": CreateNewDailySavedFormExport,
-            "case": CreateNewDailySavedCaseExport,
-        }[model]
 
     def _get_edit_export_class(self, model):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -428,8 +401,8 @@ class DailySavedExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'name': export.name,
             'description': export.description,
-            'last_build_duration': (str(timedelta(milliseconds=export.last_build_duration))
-                                    if export.last_build_duration else ''),
+            'lastBuildDuration': (str(timedelta(milliseconds=export.last_build_duration))
+                                  if export.last_build_duration else ''),
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': (
@@ -448,83 +421,46 @@ class DailySavedExportListView(BaseExportListView):
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_dual_model_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Daily Saved Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
 
-    def get_create_export_url(self, form_data):
-        create_form = CreateExportTagForm(
-            self.permissions.has_form_export_permissions,
-            self.permissions.has_case_export_permissions,
-            form_data
+@require_POST
+@login_and_domain_required
+def commit_filters(request, domain):
+    permissions = ExportsPermissionsManager(request.POST.get('model_type'), domain, request.couch_user)
+    if not permissions.has_edit_permissions:
+        raise Http404
+    export_id = request.POST.get('export_id')
+    form_data = json.loads(request.POST.get('form_data'))
+    export = get_properly_wrapped_export_instance(export_id)
+    if export.is_daily_saved_export and not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
+        raise Http404
+    if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
+        raise Http404
+    if not export.filters.is_location_safe_for_user(request):
+        return location_restricted_response(request)
+    domain_object = Domain.get_by_name(domain)
+    filter_form = DashboardFeedFilterForm(domain_object, form_data)
+    if filter_form.is_valid():
+        old_can_access_all_locations = export.filters.can_access_all_locations
+        old_accessible_location_ids = export.filters.accessible_location_ids
+        filters = filter_form.to_export_instance_filters(
+            # using existing location restrictions prevents a less restricted user from modifying
+            # restrictions on an export that a more restricted user created (which would mean the more
+            # restricted user would lose access to the export)
+            old_can_access_all_locations,
+            old_accessible_location_ids
         )
-        if not create_form.is_valid():
-            raise ExportFormValidationException()
-
-        if create_form.cleaned_data['model_type'] == "case":
-            export_tag = create_form.cleaned_data['case_type']
-            cls = self._get_create_export_class('case')
-        else:
-            export_tag = create_form.cleaned_data['form']
-            cls = self._get_create_export_class('form')
-        app_id = create_form.cleaned_data['application']
-        app_id_param = '&app_id={}'.format(app_id) if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE else ""
-
-        return reverse(
-            cls.urlname,
-            args=[self.domain],
-        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
-            app_id_param=app_id_param,
-            export_tag=export_tag,
-        ))
-
-    @allow_remote_invocation
-    def commit_filters(self, in_data):
-        if not self.permissions.has_edit_permissions:
-            raise Http404
-
-        export_id = in_data['export']['id']
-        form_data = in_data['form_data']
-        try:
-            export = get_properly_wrapped_export_instance(export_id)
-
-            if not export.filters.is_location_safe_for_user(self.request):
-                return location_restricted_response(self.request)
-
-            filter_form = DashboardFeedFilterForm(self.domain_object, form_data)
-            if filter_form.is_valid():
-                old_can_access_all_locations = export.filters.can_access_all_locations
-                old_accessible_location_ids = export.filters.accessible_location_ids
-
-                filters = filter_form.to_export_instance_filters(
-                    # using existing location restrictions prevents a less restricted user from modifying
-                    # restrictions on an export that a more restricted user created (which would mean the more
-                    # restricted user would lose access to the export)
-                    old_can_access_all_locations,
-                    old_accessible_location_ids
-                )
-                if export.filters != filters:
-                    export.filters = filters
-                    export.save()
-                    rebuild_saved_export(export_id, manual=True)
-                return format_angular_success()
-            else:
-                return format_angular_error(
-                    _("Problem saving dashboard feed filters: Invalid form"),
-                    log_error=True)
-        except Exception:
-            return format_angular_error(_("Problem saving dashboard feed filters"),
-                                        log_error=True)
+        if export.filters != filters:
+            export.filters = filters
+            export.save()
+            rebuild_saved_export(export_id, manual=True)
+        return json_response({
+            'success': True,
+        })
+    else:
+        return json_response({
+            'success': False,
+            'error': _("Problem saving dashboard feed filters: Invalid form"),
+        })
 
 
 @location_safe
@@ -572,6 +508,7 @@ class FormExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'name': export.name,
             'description': export.description,
+            'lastBuildDuration': '',
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': owner_username,
@@ -589,41 +526,6 @@ class FormExportListView(BaseExportListView):
     def _get_download_url(self, export_id):
         from corehq.apps.export.views.download import DownloadNewFormExportView
         return reverse(DownloadNewFormExportView.urlname, args=(self.domain, export_id))
-
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        if self.is_deid:
-            raise Http404()
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_form_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
-
-    def get_create_export_url(self, form_data):
-        from corehq.apps.export.views.new import CreateNewCustomFormExportView
-        create_form = CreateExportTagForm(
-            self.permissions.has_form_export_permissions,
-            self.permissions.has_case_export_permissions,
-            form_data
-        )
-        if not create_form.is_valid():
-            raise ExportFormValidationException()
-
-        app_id = create_form.cleaned_data['application']
-        form_xmlns = create_form.cleaned_data['form']
-        return reverse(
-            CreateNewCustomFormExportView.urlname,
-            args=[self.domain],
-        ) + ('?export_tag="{export_tag}"{app_id}'.format(
-            app_id=('&app_id={}'.format(app_id)
-                    if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE else ""),
-            export_tag=form_xmlns,
-        ))
 
 
 @location_safe
@@ -673,6 +575,7 @@ class CaseExportListView(BaseExportListView):
             'name': export.name,
             'case_type': export.case_type,
             'description': export.description,
+            'lastBuildDuration': '',
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': owner_username,
@@ -688,42 +591,6 @@ class CaseExportListView(BaseExportListView):
     def _get_download_url(self, export_id):
         from corehq.apps.export.views.download import DownloadNewCaseExportView
         return reverse(DownloadNewCaseExportView.urlname, args=(self.domain, export_id))
-
-    @allow_remote_invocation
-    def get_app_data_drilldown_values(self, in_data):
-        try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
-            response = rmi_helper.get_case_rmi_response()
-        except Exception:
-            return format_angular_error(
-                _("Problem getting Create Export Form"),
-                log_error=True,
-            )
-        return format_angular_success(response)
-
-    def get_create_export_url(self, form_data):
-        from corehq.apps.export.views.new import CreateNewCustomCaseExportView
-        create_form = CreateExportTagForm(
-            self.permissions.has_form_export_permissions,
-            self.permissions.has_case_export_permissions,
-            form_data
-        )
-        if not create_form.is_valid():
-            raise ExportFormValidationException()
-        case_type = create_form.cleaned_data['case_type']
-        app_id = create_form.cleaned_data['application']
-        if app_id == ApplicationDataRMIHelper.UNKNOWN_SOURCE:
-            app_id_param = ''
-        else:
-            app_id_param = '&app_id={}'.format(app_id)
-
-        return reverse(
-            CreateNewCustomCaseExportView.urlname,
-            args=[self.domain],
-        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
-            export_tag=case_type,
-            app_id_param=app_id_param,
-        ))
 
 
 @location_safe
@@ -741,13 +608,6 @@ class DashboardFeedListView(DailySavedExportListView):
     def _priv_check(self):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
-    def _get_create_export_class(self, model):
-        from corehq.apps.export.views.new import CreateNewFormFeedView, CreateNewCaseFeedView
-        return {
-            "form": CreateNewFormFeedView,
-            "case": CreateNewCaseFeedView,
-        }[model]
-
     def _get_edit_export_class(self, model):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
         return {
@@ -759,6 +619,7 @@ class DashboardFeedListView(DailySavedExportListView):
     def page_context(self):
         context = super(DashboardFeedListView, self).page_context
         context.update({
+            "is_dashboard_feed": True,
             "export_type_caps": _("Dashboard Feed"),
             "export_type": _("dashboard feed"),
             "export_type_caps_plural": _("Dashboard Feeds"),
@@ -897,3 +758,83 @@ def download_daily_saved_export(req, domain, export_instance_id):
     payload = export_instance.get_payload(stream=True)
     format = Format.from_format(export_instance.export_format)
     return get_download_response(payload, export_instance.file_size, format, export_instance.filename, req)
+
+
+@require_GET
+@login_and_domain_required
+def get_app_data_drilldown_values(request, domain):
+    if json.loads(request.GET.get('is_deid')):
+        raise Http404()
+
+    model_type = request.GET.get('model_type')
+    permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=False)
+
+    rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
+    if model_type == 'form':
+        response = rmi_helper.get_form_rmi_response()
+    elif model_type == 'case':
+        response = rmi_helper.get_case_rmi_response()
+    else:
+        response = rmi_helper.get_dual_model_rmi_response()
+
+    return json_response(response)
+
+
+@require_POST
+@login_and_domain_required
+def submit_app_data_drilldown_form(request, domain):
+    if json.loads(request.POST.get('is_deid')):
+        raise Http404()
+
+    model_type = request.POST.get('model_type')
+    permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=False)
+
+    form_data = json.loads(request.POST.get('form_data'))
+    is_daily_saved_export = json.loads(request.POST.get('is_daily_saved_export'))
+    is_feed = json.loads(request.POST.get('is_feed'))
+
+    create_form = CreateExportTagForm(
+        permissions.has_form_export_permissions,
+        permissions.has_case_export_permissions,
+        form_data
+    )
+    if not create_form.is_valid():
+        return json_response({
+            'success': False,
+            'error': _("The form did not validate."),
+        })
+
+    from corehq.apps.export.views.new import (
+        CreateNewCaseFeedView,
+        CreateNewCustomCaseExportView,
+        CreateNewCustomFormExportView,
+        CreateNewDailySavedCaseExport,
+        CreateNewDailySavedFormExport,
+        CreateNewFormFeedView,
+    )
+
+    if is_daily_saved_export:
+        if create_form.cleaned_data['model_type'] == "case":
+            export_tag = create_form.cleaned_data['case_type']
+            cls = CreateNewCaseFeedView if is_feed else CreateNewDailySavedCaseExport
+        else:
+            export_tag = create_form.cleaned_data['form']
+            cls = CreateNewFormFeedView if is_feed else CreateNewDailySavedFormExport
+    elif model_type == 'form':
+        export_tag = create_form.cleaned_data['form']
+        cls = CreateNewCustomFormExportView
+    elif model_type == 'case':
+        export_tag = create_form.cleaned_data['case_type']
+        cls = CreateNewCustomCaseExportView
+
+    url_params = '?export_tag="{}"'.format(export_tag)
+    app_id = create_form.cleaned_data['application']
+    if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE:
+        url_params += '&app_id={}'.format(app_id)
+
+    return json_response({
+        'success': True,
+        'url': reverse(cls.urlname, args=[domain]) + url_params,
+    })
