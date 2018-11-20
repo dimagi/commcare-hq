@@ -52,11 +52,17 @@ class FunctionalityChecklistMeta(QueryMeta):
     def append_column(self, column):
         self.columns.append(column.sql_column)
 
+    def get_asha_table_name(self):
+        config = StaticDataSourceConfiguration.by_id(
+            StaticDataSourceConfiguration.get_doc_id(DOMAIN, TABLE_ID)
+        )
+        return get_table_name(config.domain, config.table_id)
+
     def execute(self, connection, filter_values):
         max_date_query = sqlalchemy.select([
             sqlalchemy.func.max(sqlalchemy.column('completed_on')).label('completed_on'),
             sqlalchemy.column('case_id').label('case_id')
-        ])
+        ]).select_from(sqlalchemy.table(self.table_name))
 
         if self.filters:
             for filter in self.filters:
@@ -68,15 +74,16 @@ class FunctionalityChecklistMeta(QueryMeta):
 
         max_date_subquery = sqlalchemy.alias(max_date_query, 'max_date')
 
-        checklist_query = sqlalchemy.select(from_obj=sqlalchemy.table(self.table_name))
+        asha_table = self.get_asha_table_name()
+        checklist_query = sqlalchemy.select()
         for column in self.columns:
             checklist_query.append_column(column.build_column())
 
         checklist_query = checklist_query.where(
-            sqlalchemy.column('case_id') == max_date_subquery.c.case_id
+            sqlalchemy.literal_column('"{}".case_id'.format(asha_table)) == max_date_subquery.c.case_id
         ).where(
-            sqlalchemy.column('completed_on') == max_date_subquery.c.completed_on
-        )
+            sqlalchemy.literal_column('"{}".completed_on'.format(asha_table)) == max_date_subquery.c.completed_on
+        ).select_from(sqlalchemy.table(asha_table))
 
         return connection.execute(checklist_query, **filter_values).fetchall()
 
