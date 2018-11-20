@@ -537,7 +537,7 @@ class UnfinishedSubmissionStub(models.Model):
 
 class UnfinishedArchiveStub(models.Model):
     xform_id = models.CharField(max_length=200)
-    user_id = models.CharField(max_length=200)
+    user_id = models.CharField(max_length=200, default=None, blank=True, null=True)
     timestamp = models.DateTimeField(db_index=True)
     archive = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
