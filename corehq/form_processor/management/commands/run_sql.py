@@ -25,13 +25,13 @@ class Command(BaseCommand):
         sql = STATEMENTS[name]
         dbnames = get_db_aliases_for_partitioned_query()
         if dbname or len(dbnames) == 1:
-            run_sql(dbname or dbnames[0], sql)
+            run_sql(sql, dbname or dbnames[0])
         elif not confirm(MULTI_DB % len(dbnames)):
             sys.exit('abort')
         else:
             greenlets = []
             for dbname in dbnames:
-                g = gevent.spawn(run_sql, dbname, sql)
+                g = gevent.spawn(run_sql, sql, dbname)
                 greenlets.append(g)
 
             gevent.joinall(greenlets)
@@ -46,7 +46,7 @@ def confirm(msg):
     return input(msg + "\n(y/N) ").lower() == 'y'
 
 
-def run_sql(dbname, sql):
+def run_sql(sql, dbname):
     print("running on %s database" % dbname)
     with connections[dbname].cursor() as cursor:
         cursor.execute(sql)
