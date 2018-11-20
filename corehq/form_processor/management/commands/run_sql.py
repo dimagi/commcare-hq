@@ -19,19 +19,19 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('name', choices=list(STATEMENTS), help="SQL statement name.")
-        parser.add_argument('-d', '--db_name', help='Django DB alias to run on')
+        parser.add_argument('-d', '--dbname', help='Django DB alias to run on')
 
-    def handle(self, name, db_name, **options):
+    def handle(self, name, dbname, **options):
         sql = STATEMENTS[name]
-        db_names = get_db_aliases_for_partitioned_query()
-        if db_name or len(db_names) == 1:
-            run_sql(db_name or db_names[0], sql)
-        elif not confirm(MULTI_DB % len(db_names)):
+        dbnames = get_db_aliases_for_partitioned_query()
+        if dbname or len(dbnames) == 1:
+            run_sql(dbname or dbnames[0], sql)
+        elif not confirm(MULTI_DB % len(dbnames)):
             sys.exit('abort')
         else:
             greenlets = []
-            for db_name in db_names:
-                g = gevent.spawn(run_sql, db_name, sql)
+            for dbname in dbnames:
+                g = gevent.spawn(run_sql, dbname, sql)
                 greenlets.append(g)
 
             gevent.joinall(greenlets)
@@ -46,9 +46,9 @@ def confirm(msg):
     return input(msg + "\n(y/N) ").lower() == 'y'
 
 
-def run_sql(db_name, sql):
-    print("running on %s database" % db_name)
-    with connections[db_name].cursor() as cursor:
+def run_sql(dbname, sql):
+    print("running on %s database" % dbname)
+    with connections[dbname].cursor() as cursor:
         cursor.execute(sql)
 
 
