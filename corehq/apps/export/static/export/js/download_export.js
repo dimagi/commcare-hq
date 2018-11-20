@@ -29,7 +29,10 @@ hqDefine('export/js/download_export', function () {
 
         // Form data
         self.dateRange = ko.observable(self.defaultDateRange);
-        self.emw = ko.observable();     // "expanded mobile worker" => the users (for forms) or case owners (for cases)
+        self.getEMW = function () {
+            // "expanded mobile worker" => the users (for forms) or case owners (for cases)
+            return hqImport('reports/js/reports.util').urlSerialize($('form[name="exportFiltersForm"]'));
+        };
 
         // UI flags
         self.preparingExport = ko.observable(false);
@@ -84,7 +87,6 @@ hqDefine('export/js/download_export', function () {
         };
 
         self.prepareExport = function () {
-            self.emw(hqImport('reports/js/reports.util').urlSerialize($('form[name="exportFiltersForm"]')));
             self.prepareExportError('');
             self.preparingExport(true);
 
@@ -117,7 +119,7 @@ hqDefine('export/js/download_export', function () {
                     max_column_size: self.maxColumnSize,
                     form_data: JSON.stringify({
                         date_range: self.dateRange(),
-                        emw: self.emw(),
+                        emw: self.getEMW(),
                     }),
                 },
                 success: function (data) {
@@ -146,7 +148,7 @@ hqDefine('export/js/download_export', function () {
                     exports: JSON.stringify(self.exportList),
                     form_data: JSON.stringify({
                         date_range: self.dateRange(),
-                        emw: self.emw(),
+                        emw: self.getEMW(),
                     }),
                 },
                 success: function (data) {
