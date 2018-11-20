@@ -146,7 +146,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
 
     @classmethod
     def get_subpages(cls):
-        def _form_name(request=None, **context):
+        def _get_form_name(request=None, **context):
             if 'instance' in context:
                 try:
                     return mark_safe(context['instance'].form_data['@name'])
@@ -157,7 +157,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
         from corehq.apps.reports.views import FormDataView
         return [
             {
-                'title': _form_name,
+                'title': _get_form_name,
                 'urlname': FormDataView.urlname,
             },
         ]
