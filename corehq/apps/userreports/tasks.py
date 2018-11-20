@@ -46,6 +46,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
+from corehq.motech.repeaters.tasks import check_repeaters
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -240,6 +241,8 @@ def delete_data_source_task(domain, config_id):
 
 @periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def reprocess_archive_stubs():
+    # Exit this task after 1 minute so that the same stub isn't ever processed in multiple queues.
+    check_repeaters()
     # Check for archive stubs
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
     from couchforms.models import UnfinishedArchiveStub
