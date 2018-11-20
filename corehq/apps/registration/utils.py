@@ -14,6 +14,7 @@ from corehq.apps.accounting.models import (
     DEFAULT_ACCOUNT_FORMAT,
 )
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
+from corehq.apps.app_manager.tasks import load_appcues_template_apps
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
@@ -153,16 +154,6 @@ def request_new_domain(request, form, is_new_user=True):
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
-
-
-APPCUES_TEMPLATE_SLUGS = ['health', 'aggriculture', 'wash']
-
-
-@task(serializer='pickle', queue='background_queue')
-def load_appcues_template_apps(domain, username):
-    from corehq.apps.app_manager.views.apps import load_app_from_slug
-    for app_slug in APPCUES_TEMPLATE_SLUGS:
-        load_app_from_slug(domain, username, app_slug)
 
 
 WIKI_LINK = 'http://help.commcarehq.org'
