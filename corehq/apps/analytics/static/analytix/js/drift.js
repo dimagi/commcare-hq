@@ -52,7 +52,7 @@ hqDefine('analytix/js/drift', [
             });
 
             $('a[href="#demo-request"]').click(function () {
-              _drift.api.startInteraction({ interactionId: 43079 });
+                _drift.api.startInteraction({ interactionId: 43079 });
             });
 
         });
