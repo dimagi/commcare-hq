@@ -155,7 +155,7 @@ def request_new_domain(request, form, is_new_user=True):
     return new_domain.name
 
 
-APPCUES_TEMPLATE_SLUGS = ['appcues']  # TODO: Add agg and wash
+APPCUES_TEMPLATE_SLUGS = ['health', 'aggriculture', 'wash']
 
 
 @task(serializer='pickle', queue='background_queue')
