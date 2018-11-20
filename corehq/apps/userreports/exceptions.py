@@ -76,6 +76,6 @@ def translate_programming_error(exception):
             error_code = getattr(orig, 'pgcode')
             # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
             if error_code == '42P01':
-                return TableNotFoundWarning
+                return TableNotFoundWarning(str(exception))
             elif error_code == '42703':
-                return MissingColumnWarning
+                return MissingColumnWarning(str(exception))
