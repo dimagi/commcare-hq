@@ -11,7 +11,7 @@ from six.moves import input
 
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
-MULTI_DB = 'Execute on ALL (%s) databases in parallel. Continue?'
+MULTI_DB = 'Executing on ALL (%s) databases in parallel. Continue?'
 
 
 class Command(BaseCommand):
