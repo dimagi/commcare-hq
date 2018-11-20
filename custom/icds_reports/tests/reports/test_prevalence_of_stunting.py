@@ -102,7 +102,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], "63.71")
+        self.assertEqual(data['rightLegend']['average'], "59.38")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_stunting_data_map(
@@ -204,7 +204,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='block',
         )
-        self.assertEqual(data['rightLegend']['average'], "75.00")
+        self.assertEqual(data['rightLegend']['average'], "71.43")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_stunting_data_chart(
