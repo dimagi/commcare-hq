@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
+import six
 
 from architect import install
 from django.utils.translation import ugettext as _
@@ -53,7 +54,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         properties['__tablename__'] = table.name
         properties['__table_args__'] = ({'extend_existing': True},)
 
-        type_ = type(b"TemporaryTableDef", (Base,), properties)
+        type_ = type("TemporaryTableDef" if six.PY3 else b"TemporaryTableDef", (Base,), properties)
         return type_
 
     def _install_partition(self):
@@ -214,7 +215,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 def get_indicator_table(indicator_config, custom_metadata=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
     table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
-    columns_by_col_id = {col.database_column_name for col in indicator_config.get_columns()}
+    columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
     for index in indicator_config.sql_column_indexes:
         if set(index.column_ids).issubset(columns_by_col_id):

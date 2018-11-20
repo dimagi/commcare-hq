@@ -305,6 +305,24 @@ def toggle_js_url(domain, username):
     )
 
 
+@register.simple_tag
+def css_label_class():
+    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS
+    return CSS_LABEL_CLASS
+
+
+@register.simple_tag
+def css_field_class():
+    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS
+    return CSS_FIELD_CLASS
+
+
+@register.simple_tag
+def css_action_class():
+    from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+    return CSS_ACTION_CLASS
+
+
 @quickcache(['domain'], timeout=30 * 24 * 60 * 60)
 def toggle_js_domain_cachebuster(domain):
     # to get fresh cachebusters on the next deploy

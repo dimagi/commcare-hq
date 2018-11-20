@@ -76,6 +76,7 @@ from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
+    track_domain_request
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
@@ -451,7 +452,9 @@ def app_from_template(request, domain, slug):
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_async_build(app, request.user.username, release=True, comment=comment)
+    build = make_async_build(app, request.user.username, allow_prune=False, comment=comment)
+    build.is_released = True
+    build.save(increment_version=False)
     cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
@@ -688,6 +691,7 @@ def get_app_ui_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr

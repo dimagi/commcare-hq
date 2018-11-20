@@ -19,7 +19,7 @@
         </div>
     {% endif %}
     {% crispy criteria_form criteria_form.case_type_helper %}
-    <div data-bind="template: {name: get_ko_template_id, foreach: criteria, afterRender:disableCriteriaField}"></div>
+    <div data-bind="template: {name: getKoTemplateId, foreach: criteria, afterRender:disableCriteriaField}"></div>
     <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
         <div class="col-xs-5 col-xs-offset-3">
             <div class="btn-group">
@@ -32,20 +32,20 @@
                 </button>
                 <ul class="dropdown-menu">
                     {% if form.allow_case_modified_filter %}
-                    <li data-bind="click: function() { add_filter('case-modified-filter'); }"><a>{% trans "Case not modified since" %}</a></li>
+                    <li data-bind="click: function() { addFilter('case-modified-filter'); }"><a>{% trans "Case not modified since" %}</a></li>
                     {% endif %}
                     {% if form.allow_case_property_filter %}
-                    <li data-bind="click: function() { add_filter('case-property-filter'); }"><a>{% trans "Case property" %}</a></li>
+                    <li data-bind="click: function() { addFilter('case-property-filter'); }"><a>{% trans "Case property" %}</a></li>
                     {% endif %}
                     {% if form.allow_date_case_property_filter %}
-                    <li data-bind="click: function() { add_filter('date-case-property-filter'); }"><a>{% trans "Date case property" %}</a></li>
-                    <li data-bind="click: function() { add_filter('advanced-date-case-property-filter'); }"><a>{% trans "Date case property (advanced)" %}</a></li>
+                    <li data-bind="click: function() { addFilter('date-case-property-filter'); }"><a>{% trans "Date case property" %}</a></li>
+                    <li data-bind="click: function() { addFilter('advanced-date-case-property-filter'); }"><a>{% trans "Date case property (advanced)" %}</a></li>
                     {% endif %}
                     {% if form.allow_parent_case_references %}
-                    <li data-bind="click: function() { add_filter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
+                    <li data-bind="click: function() { addFilter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
                     {% endif %}
                     {% if form.is_system_admin %}
-                    <li data-bind="click: function() { add_filter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
+                    <li data-bind="click: function() { addFilter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -59,7 +59,7 @@
     <div class="col-xs-1">
         <div class="row">
             <div class="col-xs-6 text-center">
-                <button type="button" class="btn btn-danger" data-bind="click: $parent.remove_filter"><i class="fa fa-close"></i></button>
+                <button type="button" class="btn btn-danger" data-bind="click: $parent.removeFilter"><i class="fa fa-close"></i></button>
             </div>
             <div class="col-xs-6 text-center">
                 <label class="control-label">{% trans "AND" %}</label>
@@ -105,8 +105,8 @@
                 {% endif %}
             </select>
         </div>
-        <div class="controls col-xs-2" data-bind="visible: show_property_value_input()">
-            <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': show_property_value_input()}" />
+        <div class="controls col-xs-2" data-bind="visible: showPropertyValueInput()">
+            <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': showPropertyValueInput()}" />
         </div>
     </div>
 </script>

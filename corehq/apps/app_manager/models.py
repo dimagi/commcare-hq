@@ -19,6 +19,7 @@ from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
+from django.utils.safestring import SafeBytes
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urljoin
 
@@ -1228,12 +1229,14 @@ class FormBase(DocumentSchema):
         The returned function requires two arguments
         `(case_property_name, data_path)` and returns a string.
         """
-        try:
-            valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[])}
-        except XFormException as e:
-            # punt on invalid xml (sorry, no rich attachments)
-            valid_paths = {}
+        valid_paths = {}
+        if toggles.MM_CASE_PROPERTIES.enabled(self.get_app().domain):
+            try:
+                valid_paths = {question['value']: question['tag']
+                               for question in self.get_questions(langs=[])}
+            except XFormException as e:
+                # punt on invalid xml (sorry, no rich attachments)
+                valid_paths = {}
 
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
@@ -5226,16 +5229,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return settings
 
     def create_build_files(self, build_profile_id=None):
-        built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
-        self.date_created = built_on
-        self.built_on = built_on
-        self.built_with = BuildRecord(
-            version=self.build_spec.version,
-            build_number=self.version,
-            datetime=built_on,
-        )
-
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
@@ -5254,7 +5248,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     for filename in self.blobs if filename.startswith('files/')
                 }
                 all_files = {
-                    name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
+                    name: (contents if isinstance(contents, (bytes, SafeBytes)) else contents.encode('utf-8'))
                     for name, contents in all_files.items()
                 }
                 release_date = self.built_with.datetime or datetime.datetime.utcnow()
@@ -5422,6 +5416,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # which makes tests error
         assert copy._id
 
+        built_on = datetime.datetime.utcnow()
+        copy.date_created = built_on
+        copy.built_on = built_on
+        copy.built_with = BuildRecord(
+            version=copy.build_spec.version,
+            build_number=copy.version,
+            datetime=built_on,
+        )
         copy.build_comment = comment
         copy.comment_from = user_id
         copy.is_released = False
