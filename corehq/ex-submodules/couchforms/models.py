@@ -348,6 +348,9 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     def archive(self, user_id=None, retry_archive=False):
         if not retry_archive:
+            # If any unfinished archive stubs exist for this entry, delete them
+            from couchforms.models import UnfinishedArchiveStub
+            UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
             if self.is_archived:
                 return
             self.doc_type = "XFormArchived"
@@ -361,6 +364,9 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None, retry_archive=False):
+        # If any unfinished archive stubs exist for this entry, delete them
+        from couchforms.models import UnfinishedArchiveStub
+        UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
         if not retry_archive:
             if not self.is_archived:
                 return

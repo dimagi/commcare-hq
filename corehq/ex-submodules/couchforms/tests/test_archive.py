@@ -123,7 +123,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('archive', archival.operation)
         self.assertEqual('librarian', archival.user)
 
-
         # The case and stub should both be deleted now
         case = self.casedb.get_case(case_id)
         self.assertTrue(case.is_deleted)
@@ -189,6 +188,98 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertFalse(case.is_deleted)
         unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
+
+    def testUnarchivingWithArchiveStub(self):
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
+        xml_data = self.get_xml('basic')
+        result = submit_form_locally(
+            xml_data,
+            'test-domain',
+        )
+        xform = result.xform
+        self.assertTrue(xform.is_normal)
+        self.assertEqual(0, len(xform.history))
+
+        # Mock the archive function throwing an error
+        with mock.patch('couchforms.signals.xform_archived.send') as mock_send:
+            try:
+                mock_send.side_effect = Exception
+                xform.archive(user_id='librarian')
+            except Exception:
+                pass
+
+        # There should be a stub for the unfinished archive
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
+        self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
+        self.assertEqual(unfinished_archive_stubs[0].archive, True)
+
+        # Call an unarchive
+        xform.unarchive(user_id='librarian')
+
+        # The unfinished archive stub should be deleted
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 0)
+
+        # The case should exist because the case close was unarchived
+        case = self.casedb.get_case(case_id)
+        self.assertFalse(case.is_deleted)
+
+        # Manually call the periodic celery task that reruns archiving/unarchiving actions
+        reprocess_archive_stubs()
+
+        # Make sure the case still exists (to double check that the archive stub was deleted)
+        case = self.casedb.get_case(case_id)
+        self.assertFalse(case.is_deleted)
+
+    def testArchivingWithUnarchiveStub(self):
+
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
+        xml_data = self.get_xml('basic')
+        result = submit_form_locally(
+            xml_data,
+            'test-domain',
+        )
+        xform = result.xform
+        self.assertTrue(xform.is_normal)
+        self.assertEqual(0, len(xform.history))
+
+        # Archive the form successfully
+        xform.archive(user_id='librarian')
+
+        # Mock the unarchive function throwing an error
+        with mock.patch('couchforms.signals.xform_unarchived.send') as mock_send:
+            try:
+                mock_send.side_effect = Exception
+                xform.unarchive(user_id='librarian')
+            except Exception:
+                pass
+
+        # There should be a stub for the unfinished unarchive
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
+        self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
+        self.assertEqual(unfinished_archive_stubs[0].archive, False)
+
+        # Call an archive
+        xform.archive(user_id='librarian')
+
+        # The unfinished archive stub should be deleted
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 0)
+
+        # The case should not exist because the case close was archived
+        case = self.casedb.get_case(case_id)
+        self.assertTrue(case.is_deleted)
+
+        # Manually call the periodic celery task that reruns archiving/unarchiving actions
+        reprocess_archive_stubs()
+
+        # Make sure the case still does not exist (to double check that the unarchive stub was deleted)
+        case = self.casedb.get_case(case_id)
+        self.assertTrue(case.is_deleted)
 
     def testSignal(self):
         global archive_counter, restore_counter
