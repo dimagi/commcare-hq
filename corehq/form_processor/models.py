@@ -384,8 +384,12 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         return self.get_attachment_meta('form.xml').md5
 
     def archive(self, user_id=None, retry_archive=False):
-        if self.is_archived and not retry_archive:
-            return
+        if not retry_archive:
+            # If any unfinished archive stubs exist for this entry, delete them
+            from couchforms.models import UnfinishedArchiveStub
+            UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
+            if self.is_archived:
+                return
         archive = True
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
@@ -395,8 +399,12 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             FormAccessorSQL.update_history(self, user_id=user_id, archive=archive)
 
     def unarchive(self, user_id=None, retry_archive=False):
-        if not self.is_archived and not retry_archive:
-            return
+        if not retry_archive:
+            # If any unfinished archive stubs exist for this entry, delete them
+            from couchforms.models import UnfinishedArchiveStub
+            UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
+            if not self.is_archived:
+                return
         archive = False
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
