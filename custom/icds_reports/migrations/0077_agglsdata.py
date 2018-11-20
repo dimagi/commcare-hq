@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0075_drop_agg_funcs'),
+        ('icds_reports', '0076_awc_locations_test_columns'),
     ]
 
     operations = [
