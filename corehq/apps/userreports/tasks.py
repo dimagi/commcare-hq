@@ -244,6 +244,7 @@ def reprocess_archive_stubs():
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
     from couchforms.models import UnfinishedArchiveStub
     stubs = UnfinishedArchiveStub.objects.filter()
+    datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
     for stub in stubs:
         xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
         # Delete the original stub and run the archive/unarchive function again. (A new stub will be created if
@@ -253,6 +254,7 @@ def reprocess_archive_stubs():
             xform.archive(user_id=stub.user_id, retry_archive=True)
         else:
             xform.unarchive(user_id=stub.user_id, retry_archive=True)
+        datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
 
 
 @periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)

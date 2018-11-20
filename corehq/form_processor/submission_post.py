@@ -36,6 +36,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.util.global_request import get_request
+from corehq.util.datadog.gauges import datadog_gauge
 from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub, UnfinishedArchiveStub
