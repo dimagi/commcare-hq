@@ -50,6 +50,5 @@ def unfinished_archive(instance, user_id, archive):
             archive=archive,
             domain=instance.domain,
         )
-    tracker = SubmissionProcessTracker(unfinished_archive_stub)
-    yield tracker
-    tracker.submission_fully_processed()
+    yield
+    unfinished_archive_stub.delete()
