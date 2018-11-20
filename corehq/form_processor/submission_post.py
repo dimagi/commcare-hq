@@ -2,8 +2,6 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-import contextlib
-import datetime
 import logging
 from collections import namedtuple
 
@@ -35,11 +33,11 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
+from corehq.form_processor.submission_process_tracker import unfinished_submission
 from corehq.util.global_request import get_request
-from corehq.util.datadog.gauges import datadog_gauge
 from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
-from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub, UnfinishedArchiveStub
+from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
 from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
@@ -526,36 +524,3 @@ class SubmissionProcessTracker(object):
     def submission_fully_processed(self):
         if self.stub:
             self.stub.delete()
-
-
-@contextlib.contextmanager
-def unfinished_submission(instance):
-    unfinished_submission_stub = None
-    if not getattr(instance, 'deprecated_form_id', None):
-        # don't create stubs for form edits since we don't want to auto-reprocess them
-        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-            xform_id=instance.form_id,
-            timestamp=datetime.datetime.utcnow(),
-            saved=False,
-            domain=instance.domain,
-        )
-    tracker = SubmissionProcessTracker(unfinished_submission_stub)
-    yield tracker
-    tracker.submission_fully_processed()
-
-
-@contextlib.contextmanager
-def unfinished_archive(instance, user_id, archive):
-    unfinished_archive_stub = None
-    if not getattr(instance, 'deprecated_form_id', None):
-        unfinished_archive_stub = UnfinishedArchiveStub.objects.create(
-            user_id=user_id,
-            xform_id=instance.form_id,
-            timestamp=datetime.datetime.utcnow(),
-            # if archive is False, this is an unarchive stub.
-            archive=archive,
-            domain=instance.domain,
-        )
-    tracker = SubmissionProcessTracker(unfinished_archive_stub)
-    yield tracker
-    tracker.submission_fully_processed()
