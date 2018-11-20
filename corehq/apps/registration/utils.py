@@ -6,6 +6,7 @@ from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
 from django.template.loader import render_to_string
+from celery.task import task
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
