@@ -157,6 +157,7 @@ def request_new_domain(request, form, is_new_user=True):
 
 APPCUES_TEMPLATE_SLUGS = ['appcues']  # TODO: Add agg and wash
 
+
 @task(serializer='pickle', queue='background_queue')
 def load_appcues_template_apps(domain, username):
     from corehq.apps.app_manager.views.apps import load_app_from_slug
