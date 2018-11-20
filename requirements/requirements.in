@@ -51,7 +51,7 @@ numpy==1.7.1
 six==1.11.0
 socketpool==0.5.3
 markdown==2.2.1
-#sqlagg==0.11.1
+sqlagg==0.12.0
 django-redis==4.9.0
 redis==2.10.6
 redis-py-cluster==1.3.5
@@ -112,5 +112,3 @@ werkzeug==0.11.15
 # but once they're in requirements.txt we will strip the -e
 
 -e git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
-
--e git+git://github.com/dimagi/sql-agg@sk/reflect#egg=sqlagg==0.12.0.alpha
