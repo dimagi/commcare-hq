@@ -388,7 +388,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             return
         archive = True
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        from corehq.form_processor.submission_post import unfinished_archive
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
         with unfinished_archive(instance=self, user_id=user_id, archive=archive):
             FormAccessorSQL.archive_form(self)
             xform_archived.send(sender="form_processor", xform=self)
@@ -399,7 +399,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             return
         archive = False
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        from corehq.form_processor.submission_post import unfinished_archive
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
         with unfinished_archive(instance=self, user_id=user_id, archive=archive):
             FormAccessorSQL.unarchive_form(self)
             xform_unarchived.send(sender="form_processor", xform=self)
