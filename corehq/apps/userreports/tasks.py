@@ -254,7 +254,6 @@ def reprocess_archive_stubs():
             xform.archive(user_id=stub.user_id, retry_archive=True)
         else:
             xform.unarchive(user_id=stub.user_id, retry_archive=True)
-        datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
 
 
 @periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
