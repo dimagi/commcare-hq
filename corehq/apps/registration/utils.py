@@ -6,6 +6,7 @@ from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
 from django.template.loader import render_to_string
+from celery.task import task
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -131,15 +132,36 @@ def request_new_domain(request, form, is_new_user=True):
 
     if is_new_user:
         dom_req.save()
-        send_domain_registration_email(request.user.email,
-                                       dom_req.domain,
-                                       dom_req.activation_guid,
-                                       request.user.get_full_name(),
-                                       request.user.first_name)
+        if settings.IS_SAAS_ENVIRONMENT:
+            load_appcues_template_apps.apply_async(
+                (new_domain.name, current_user.username),
+                link=send_domain_registration_email(
+                    request.user.email,
+                    dom_req.domain,
+                    dom_req.activation_guid,
+                    request.user.get_full_name(),
+                    request.user.first_name
+                )
+            )
+        else:
+            send_domain_registration_email(request.user.email,
+                                           dom_req.domain,
+                                           dom_req.activation_guid,
+                                           request.user.get_full_name(),
+                                           request.user.first_name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
+
+
+APPCUES_TEMPLATE_SLUGS = ['appcues']  # TODO: Add agg and wash
+
+@task(serializer='pickle', queue='background_queue')
+def load_appcues_template_apps(domain, username):
+    from corehq.apps.app_manager.views.apps import load_app_from_slug
+    for app_slug in APPCUES_TEMPLATE_SLUGS:
+        load_app_from_slug(domain, username, app_slug)
 
 
 WIKI_LINK = 'http://help.commcarehq.org'
