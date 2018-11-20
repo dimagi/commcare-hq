@@ -11,23 +11,23 @@ from django.db import connections
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            'input_month'
-        )
+        parser.add_argument('-m', '--months', type=str, help='Comma separated month list')
 
-    def handle(self, input_month, *args, **options):
+    def handle(self, *args, **options):
         indicator_list = self.get_indicator_list()
         indicator_ratio = []
+        input_months = options['months'].split(",")
+        for month in input_months:
+            print("------------ {} -------------".format(month))
+            for indicator in indicator_list:
+                month = dateutil.parser.parse(month).date().replace(day=1).__str__()
+                query = self.prepare_query(indicator, month)
+                ratio_check = self.execute_query(query)
+                ratio_check = [(indicator["indicators"][i]['indicator'], res) for i, res in enumerate(ratio_check)]
+                indicator_ratio.extend(ratio_check)
 
-        for indicator in indicator_list:
-            input_month = dateutil.parser.parse(input_month).date().replace(day=1).__str__()
-            query = self.prepare_query(indicator, input_month)
-            ratio_check = self.execute_query(query)
-            ratio_check = [(indicator["indicators"][i]['indicator'], res) for i, res in enumerate(ratio_check)]
-            indicator_ratio.extend(ratio_check)
-
-        for indicator in indicator_ratio:
-            print("{0}: {1}".format(*indicator))
+            for indicator in indicator_ratio:
+                print("{0}: {1}".format(*indicator))
 
     def execute_query(self, query):
         db_alias = get_icds_ucr_db_alias()
