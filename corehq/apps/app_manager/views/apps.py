@@ -422,6 +422,8 @@ def app_from_template(request, domain, slug):
     clear_app_cache(request, domain)
 
     build = load_app_from_slug(domain, request.user.username, slug)
+    build.is_released = True
+    build.save(increment_version=False)
     cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
@@ -458,8 +460,6 @@ def load_app_from_slug(domain, username, slug):
 
     comment = _("A sample application you can try out in Web Apps")
     build = make_async_build(app, username, allow_prune=False, comment=comment)
-    build.is_released = True
-    build.save(increment_version=False)
     return build
 
 
