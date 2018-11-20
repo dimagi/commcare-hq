@@ -199,14 +199,32 @@
 
                     {% if not request.user.is_authenticated %}
                       <nav class="navbar-menus navbar-signin" role="navigation">
+
                         <div class="nav-settings-bar pull-right">
                           <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
                           {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
-                            <a href="#cta-form-get-demo"
-                               target="_blank"
-                               data-toggle="modal"
-                               id="cta-form-get-demo-button"
-                               class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
+
+                            <span class="optimize-abtest">
+
+                              <a href="#cta-form-get-demo"
+                                 target="_blank"
+                                 data-toggle="modal"
+                                 id="cta-form-get-demo-button"
+                                 class="optimize-abtest-control btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
+
+                              {# hubspot #}
+                              <a href="#cta-form-get-demo-new"
+                                 data-toggle="modal"
+                                 id="cta-form-get-demo-button-new"
+                                 class="optimize-abtest-variant-a btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+
+                              {# drift #}
+                              <a href="#demo-request"
+                                 id="cta-form-get-demo-button-drift"
+                                 class="optimize-abtest-variant-b btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+
+                            </span>
+
                           {% endif %}
                         </div>
                       </nav>
