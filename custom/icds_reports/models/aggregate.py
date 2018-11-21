@@ -620,6 +620,7 @@ class AggChildHealth(models.Model):
     def aggregate(cls, month):
         helper = AggChildHealthAggregationHelper(month)
         agg_query, agg_params = helper.aggregation_query()
+        update_queries = helper.update_queries()
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
         index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
         index_queries = [query for index_list in index_queries for query in index_list]
@@ -628,6 +629,8 @@ class AggChildHealth(models.Model):
             with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
+                for query, params in update_queries:
+                    cursor.execute(query, params)
                 for query in rollup_queries:
                     cursor.execute(query)
                 for query in index_queries:
