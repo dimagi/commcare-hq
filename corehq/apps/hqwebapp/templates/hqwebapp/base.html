@@ -506,7 +506,7 @@
           <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
         {% endif %}
 
-        {% if not request.user.is_authenticated and is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+        {% if is_demo_visible %}
 
           <div class="modal fade" id="cta-form-get-demo">
             <div class="modal-dialog">
