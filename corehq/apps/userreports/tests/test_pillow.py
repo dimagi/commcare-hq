@@ -781,7 +781,7 @@ class RebuildTableTest(TestCase):
 
         # assert new date isn't in the config
         insp = reflection.Inspector.from_engine(self.engine)
-        table_name = get_table_name(self.config.domain, self.config.table_id).decode('utf-8')
+        table_name = get_table_name(self.config.domain, self.config.table_id)
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
         )
@@ -825,7 +825,7 @@ class RebuildTableTest(TestCase):
 
         # assert new date isn't in the config
         insp = reflection.Inspector.from_engine(self.engine)
-        table_name = get_table_name(self.config.domain, self.config.table_id).decode('utf-8')
+        table_name = get_table_name(self.config.domain, self.config.table_id)
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
         )
