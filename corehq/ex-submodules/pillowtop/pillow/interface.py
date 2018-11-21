@@ -407,6 +407,10 @@ class ConstructedPillow(PillowBase):
         self._change_processed_event_handler = change_processed_event_handler
 
     @property
+    def topics(self):
+        return self._change_feed.topics
+
+    @property
     def pillow_id(self):
         return self._name
 

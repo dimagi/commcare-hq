@@ -49,7 +49,7 @@ def pillow_to_checkpoint_id_mapping():
         for pillow_name in old_pillows:
             old_pillow = get_pillow_by_name(pillow_name)
             checkpoints.append(old_pillow.checkpoint.checkpoint_id)
-        checkpoint_mapping[new_pillow.checkpoint.checkpoint_id] = checkpoints
+        checkpoint_mapping[new_pillow.checkpoint.checkpoint_id] = checkpoints, list(new_pillow.topics)
 
     return checkpoint_mapping
 
@@ -111,9 +111,9 @@ class Command(BaseCommand):
         if options['cleanup']:
             new_checkpoints.delete()
 
-        for new_checkpoint_id, old_checkpoint_ids in six.iteritems(checkpoint_id_mapping):
+        for new_checkpoint_id, (old_checkpoint_ids, new_topics) in six.iteritems(checkpoint_id_mapping):
             print("\nCalculating checkpoints for {}\n".format(new_checkpoint_id))
-            old_checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id__in=old_checkpoint_ids)
+            old_checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id__in=old_checkpoint_ids, topic__in=new_topics)
             topic_partitions = old_checkpoints.values('topic', 'partition').distinct()
             print("\t### Current checkpoints ###")
             print("\tcheckpoint, topic, partition, offset")
