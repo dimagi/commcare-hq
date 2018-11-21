@@ -178,6 +178,14 @@ hqDefine('analytix/js/kissmetrix', [
         _ready.always(callback);
     };
 
+    /**
+    * Global events present on base.html
+    */
+    _ready.done(function() {
+        trackOutboundLink("#cta-trial-days-remaining", "clicked on Days Remaining CTA in trial banner", {});
+        internalClick('#cta-trial-tour-button', 'clicked Get Tour CTA in trial banner', {});
+    });
+
     return {
         identify: identify,
         identifyTraits: identifyTraits,
