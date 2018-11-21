@@ -619,7 +619,7 @@ class DashboardFeedListView(DailySavedExportListView):
     def page_context(self):
         context = super(DashboardFeedListView, self).page_context
         context.update({
-            "is_dashboard_feed": True,
+            "is_feed": True,
             "export_type_caps": _("Dashboard Feed"),
             "export_type": _("dashboard feed"),
             "export_type_caps_plural": _("Dashboard Feeds"),
