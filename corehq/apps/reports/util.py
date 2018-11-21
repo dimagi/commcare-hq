@@ -411,7 +411,7 @@ def friendly_timedelta(td):
 
 
 # Copied from http://djangosnippets.org/snippets/1170/
-def batch_qs(qs, batch_size=1000):
+def batch_qs(qs, num_batches=10):
     """
     Returns a (start, end, total, queryset) tuple for each batch in the given
     queryset.
@@ -425,15 +425,10 @@ def batch_qs(qs, batch_size=1000):
                 print article.body
     """
     total = qs.count()
+    batch_size = total / num_batches or 1
     for start in range(0, total, batch_size):
         end = min(start + batch_size, total)
         yield (start, end, total, qs[start:end])
-
-
-def stream_qs(qs, batch_size=1000):
-    for _, _, _, qs in batch_qs(qs, batch_size):
-        for item in qs:
-            yield item
 
 
 def numcell(text, value=None, convert='int', raw=None):

@@ -68,11 +68,6 @@ class DishaDump(object):
         #       'columns': [<List of disha columns>],
         #       'rows': List of lists of rows, in the same order as columns
         #   }
-        #
-        # The below chunk_size should not be too low, otherwise there will be too many
-        #   queries to for each chunk, it should not be too high otherwise
-        #   there would be memory errors while writing json formatted data to file
-        chunk_size = 4000000
         columns = self._get_columns()
         indicators = self._get_rows()
         metadata_line = '{{'\
@@ -86,13 +81,14 @@ class DishaDump(object):
         with open(temp_path, 'w', encoding='utf-8') as f:
             f.write(metadata_line)
             written_count = 0
-            for _, end, total, chunk in batch_qs(indicators, chunk_size):
+            for _, end, total, chunk in batch_qs(indicators, num_batches=10):
                 chunk_string = json.dumps(list(chunk), ensure_ascii=False)
                 # chunk is list of lists, so skip enclosing brackets
                 f.write(chunk_string[1:-1])
                 written_count += len(chunk)
                 if written_count != total:
                     f.write(",")
+                logger.info("Processed {end}/{total} records".format(end=end, total=total))
             f.write("]}")
 
     def build_export_json(self):
