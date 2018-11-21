@@ -566,6 +566,7 @@ class RestoreConfig(object):
         tags = [
             'domain:{}'.format(self.domain),
             'is_initial:{}'.format(not bool(self.sync_log)),
+            'is_async:{}'.format(bool(self.async)),
         ]
         if cached_response:
             datadog_counter('commcare.restores.cache_hits.count', tags=tags)
