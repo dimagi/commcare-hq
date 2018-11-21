@@ -92,14 +92,15 @@ class DishaDump(object):
         with open(temp_path, 'w', encoding='utf-8') as f:
             f.write(metadata_line)
             written_count = 0
-            for _, end, total, chunk in batch_qs(indicators, num_batches=10):
+            num_batches = 10
+            for count, (_, end, total, chunk) in enumerate(batch_qs(indicators, num_batches=num_batches)):
                 chunk_string = json.dumps(list(chunk), ensure_ascii=False)
                 # chunk is list of lists, so skip enclosing brackets
                 f.write(chunk_string[1:-1])
                 written_count += len(chunk)
                 if written_count != total:
                     f.write(",")
-                logger.info("Processed {end}/{total} records".format(end=end, total=total))
+                logger.info("Processed {count}/{total} batches".format(count=count, total=num_batches))
             f.write("]}")
 
     def build_export_json(self):
