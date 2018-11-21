@@ -128,38 +128,29 @@ def _get_export_instance(cls, key):
     return [cls.wrap(result['doc']) for result in results]
 
 
-def get_daily_saved_export_ids_for_auto_rebuild(accessed_after=None):
+def get_daily_saved_export_ids_for_auto_rebuild(accessed_after):
     """
-    get all saved exports or accessed after the timestamp
+    get all saved exports accessed after the timestamp
     :param accessed_after: datetime to get reports that have been accessed after this timestamp
     """
     from .models import ExportInstance
-    if not accessed_after:
-        # just return all saved export ids
-        results = ExportInstance.get_db().view(
-            "export_instances_by_is_daily_saved/view",
-            include_docs=False,
-            reduce=False,
-        ).all()
-        export_ids = [result['id'] for result in results]
-    else:
-        # get exports that have not been accessed yet
-        new_exports = ExportInstance.get_db().view(
-            "export_instances_by_is_daily_saved/view",
-            include_docs=False,
-            key=[None],
-            reduce=False,
-        ).all()
-        export_ids = [export['id'] for export in new_exports]
+    # get exports that have not been accessed yet
+    new_exports = ExportInstance.get_db().view(
+        "export_instances_by_is_daily_saved/view",
+        include_docs=False,
+        key=[None],
+        reduce=False,
+    ).all()
+    export_ids = [export['id'] for export in new_exports]
 
-        # get exports that have accessed_after set after the cutoff requested
-        accessed_reports = ExportInstance.get_db().view(
-            "export_instances_by_is_daily_saved/view",
-            include_docs=False,
-            startkey=[json_format_datetime(accessed_after)],
-            reduce=False,
-        ).all()
-        export_ids.extend([result['id'] for result in accessed_reports])
+    # get exports that have last_accessed set after the cutoff requested
+    accessed_reports = ExportInstance.get_db().view(
+        "export_instances_by_is_daily_saved/view",
+        include_docs=False,
+        startkey=[json_format_datetime(accessed_after)],
+        reduce=False,
+    ).all()
+    export_ids.extend([result['id'] for result in accessed_reports])
     return export_ids
 
 

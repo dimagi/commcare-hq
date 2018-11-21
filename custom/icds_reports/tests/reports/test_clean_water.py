@@ -26,7 +26,7 @@ class TestCleanWater(TestCase):
             {
                 "rightLegend": {
                     "info": awcs_reported_clean_drinking_water_help_text(),
-                    "average": 96.15384615384616,
+                    "average": 96.66666666666667,
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a source of clean drinking water:',

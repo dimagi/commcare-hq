@@ -5231,16 +5231,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return settings
 
     def create_build_files(self, build_profile_id=None):
-        built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
-        self.date_created = built_on
-        self.built_on = built_on
-        self.built_with = BuildRecord(
-            version=self.build_spec.version,
-            build_number=self.version,
-            datetime=built_on,
-        )
-
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
@@ -5427,6 +5418,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # which makes tests error
         assert copy._id
 
+        built_on = datetime.datetime.utcnow()
+        copy.date_created = built_on
+        copy.built_on = built_on
+        copy.built_with = BuildRecord(
+            version=copy.build_spec.version,
+            build_number=copy.version,
+            datetime=built_on,
+        )
         copy.build_comment = comment
         copy.comment_from = user_id
         copy.is_released = False

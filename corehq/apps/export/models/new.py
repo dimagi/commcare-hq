@@ -11,7 +11,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
-from couchdbkit.ext.django.schema import IntegerProperty
+from dimagi.ext.couchdbkit import IntegerProperty
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
@@ -1475,7 +1475,7 @@ class ExportDataSchema(Document):
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
-            if doc_type not in ('Application', 'LinkedApplication'):
+            if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
                 continue
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
