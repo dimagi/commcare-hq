@@ -390,13 +390,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
             if self.is_archived:
                 return
-        archive = True
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            FormAccessorSQL.archive_form(self)
+        with unfinished_archive(instance=self, user_id=user_id, archive=True):
+            FormAccessorSQL.archive_form(self, retry_archive, user_id)
             xform_archived.send(sender="form_processor", xform=self)
-            FormAccessorSQL.update_history(self, user_id=user_id, archive=archive)
 
     def unarchive(self, user_id=None, retry_archive=False):
         if not retry_archive:
@@ -405,13 +403,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
             if not self.is_archived:
                 return
-        archive = False
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            FormAccessorSQL.unarchive_form(self)
+        with unfinished_archive(instance=self, user_id=user_id, archive=False):
+            FormAccessorSQL.unarchive_form(self, retry_archive, user_id)
             xform_unarchived.send(sender="form_processor", xform=self)
-            FormAccessorSQL.update_history(self, user_id=user_id, archive=archive)
 
     def __unicode__(self):
         return (

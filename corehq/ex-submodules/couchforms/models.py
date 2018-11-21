@@ -353,17 +353,16 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             # If this archive was initiated by a user, delete all other stubs for this action
             from couchforms.models import UnfinishedArchiveStub
             UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
-        self.doc_type = "XFormArchived"
-        self.save()
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=True):
-            xform_archived.send(sender="couchforms", xform=self)
+            # Only update the history once, when this call is initiated by the user
             self.doc_type = "XFormArchived"
             self.history.append(XFormOperation(
                 user=user_id,
                 operation='archive',
             ))
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=True):
             self.save()
+            xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None, retry_archive=False):
         if not not retry_archive:
@@ -372,17 +371,15 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             # If this unarchive was initiated by a user, delete all other stubs for this action
             from couchforms.models import UnfinishedArchiveStub
             UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
-        self.doc_type = "XFormInstance"
-        XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=False):
-            xform_unarchived.send(sender="couchforms", xform=self)
             self.doc_type = "XFormInstance"
             self.history.append(XFormOperation(
                 user=user_id,
                 operation='unarchive',
             ))
-            self.save()
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=False):
+            XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
+            xform_unarchived.send(sender="couchforms", xform=self)
 
 
 class XFormError(XFormInstance):

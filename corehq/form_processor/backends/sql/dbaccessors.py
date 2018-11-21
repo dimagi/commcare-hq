@@ -546,16 +546,16 @@ class FormAccessorSQL(AbstractFormAccessor):
         return attachments
 
     @staticmethod
-    def archive_form(form):
+    def archive_form(form, retry_archive, user_id=None):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, True)
+        FormAccessorSQL._archive_unarchive_form(form, retry_archive, user_id, True)
         form.state = XFormInstanceSQL.ARCHIVED
         publish_form_saved(form)
 
     @staticmethod
-    def unarchive_form(form):
+    def unarchive_form(form, retry_archive, user_id=None):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, False)
+        FormAccessorSQL._archive_unarchive_form(form, retry_archive, user_id, False)
         form.state = XFormInstanceSQL.NORMAL
         publish_form_saved(form)
 
@@ -611,20 +611,16 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @transaction.atomic
-    def _archive_unarchive_form(form, archive):
+    def _archive_unarchive_form(form, retry_archive, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
         from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
         form_id = form.form_id
         case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
         with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
-
-    @staticmethod
-    @transaction.atomic
-    def update_history(form, user_id, archive):
-        form_id = form.form_id
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
+            if not retry_archive:
+                cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
+            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
+                           [case_ids, form_id, archive])
 
     @staticmethod
     @transaction.atomic
