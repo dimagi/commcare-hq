@@ -10,7 +10,7 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
-    - TEST=python-sharded-and-javascript JS_SETUP=yes
+    - TEST=python-sharded-and-javascript JS_SETUP=yes TEST_MAKE_REQUIREMENTS=yes
   global:
     # TRAVIS_HQ_USERNAME
     - secure: "LuT0vvsY6RjlEX8Gje74Xl0jcuEfaiN/fOOXpfZd1tf8zC3Xd9E8mNn5vlup/3PBBBv1yIAUmw9LTc03ifWBGzaazqIVAgTfgBoW7XAd8G/lx0/eeZFqheSdpP8wSZwn72Z/XrIhQczFCreZRJHlZA9GopRv7Lfs1SfNEbnMoac="
