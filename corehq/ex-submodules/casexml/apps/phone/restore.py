@@ -565,7 +565,6 @@ class RestoreConfig(object):
         cached_response = self.get_cached_response()
         tags = [
             'domain:{}'.format(self.domain),
-            'is_initial:{}'.format(not bool(self.sync_log)),
             'is_async:{}'.format(bool(self.async)),
         ]
         if cached_response:
@@ -676,7 +675,7 @@ class RestoreConfig(object):
         # on initial sync, only cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
 
-        if async or self.force_cache or is_long_restore or self.sync_log:
+        if async or self.force_cache or is_long_restore:
             response = CachedResponse.save_for_later(
                 fileobj,
                 self.cache_timeout,
