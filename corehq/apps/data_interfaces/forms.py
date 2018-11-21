@@ -86,11 +86,11 @@ def validate_case_property_name(value, allow_parent_case_references=True):
     return value
 
 
-def hidden_bound_field(field_name):
+def hidden_bound_field(field_name, data_value):
     return Field(
         field_name,
         type='hidden',
-        data_bind='value: %s' % field_name,
+        data_bind='value: %s' % data_value,
     )
 
 
@@ -369,11 +369,11 @@ class CaseRuleCriteriaForm(forms.Form):
                 HTML(
                     '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
                 ),
-                hidden_bound_field('filter_on_server_modified'),
-                hidden_bound_field('server_modified_boundary'),
-                hidden_bound_field('custom_match_definitions'),
-                hidden_bound_field('property_match_definitions'),
-                hidden_bound_field('filter_on_closed_parent'),
+                hidden_bound_field('filter_on_server_modified', 'filterOnServerModified'),
+                hidden_bound_field('server_modified_boundary', 'serverModifiedBoundary'),
+                hidden_bound_field('custom_match_definitions', 'customMatchDefinitions'),
+                hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
+                hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
                 Div(data_bind="template: {name: 'case-filters'}"),
                 css_id="rule-criteria",
             ),
