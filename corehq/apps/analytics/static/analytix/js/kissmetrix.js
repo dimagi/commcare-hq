@@ -181,7 +181,7 @@ hqDefine('analytix/js/kissmetrix', [
     /**
     * Global events present on base.html
     */
-    _ready.done(function() {
+    _ready.done(function () {
         trackOutboundLink("#cta-trial-days-remaining", "clicked on Days Remaining CTA in trial banner", {});
         internalClick('#cta-trial-tour-button', 'clicked Get Tour CTA in trial banner', {});
     });
