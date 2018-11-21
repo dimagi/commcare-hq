@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from io import BytesIO
+from io import BytesIO, StringIO
 from contextlib import contextmanager, closing
 
 from django.http.response import HttpResponseServerError
@@ -523,7 +523,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def email_response(self):
-        with closing(BytesIO()) as temp:
+        with closing(StringIO()) as temp:
             try:
                 self.report_export.create_export(temp, Format.HTML)
             except UserReportsError as e:
