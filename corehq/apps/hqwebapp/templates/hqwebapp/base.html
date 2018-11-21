@@ -1,7 +1,11 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 {% requirejs_main %}
-<html lang="{{ LANGUAGE_CODE }}">
+<!DOCTYPE html>
+<!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
+<!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!--><html lang="{{ LANGUAGE_CODE }}"><!--<![endif]-->
     <head>
         {% if ANALYTICS_IDS.GTM_ID %}
             {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
