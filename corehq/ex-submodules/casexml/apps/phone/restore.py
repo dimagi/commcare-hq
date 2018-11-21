@@ -672,10 +672,21 @@ class RestoreConfig(object):
             return content.get_fileobj()
 
     def set_cached_payload_if_necessary(self, fileobj, duration, async):
-        # on initial sync, only cache if the duration was longer than the threshold
+        # only cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
-
         if async or self.force_cache or is_long_restore:
+            type_ = 'unknown'
+            if self.async:
+                type_ = 'async'
+            elif self.force_cache:
+                type_ = 'force'
+            elif is_long_restore:
+                type_ = 'long'
+
+            tags = {
+                'type:{}'.format(type_),
+            }
+            datadog_counter('commcare.restores.cache_writes', tags=tags)
             response = CachedResponse.save_for_later(
                 fileobj,
                 self.cache_timeout,
