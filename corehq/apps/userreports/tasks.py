@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
+import time
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
@@ -46,7 +47,6 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
-from corehq.motech.repeaters.tasks import check_repeaters
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -241,14 +241,17 @@ def delete_data_source_task(domain, config_id):
 
 @periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def reprocess_archive_stubs():
-    # Exit this task after 1 minute so that the same stub isn't ever processed in multiple queues.
-    check_repeaters()
     # Check for archive stubs
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
     from couchforms.models import UnfinishedArchiveStub
     stubs = UnfinishedArchiveStub.objects.filter()
     datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
+    start = time.time()
+    cutoff = start + timedelta(minutes=4).total_seconds()
     for stub in stubs:
+        if time.time() - start > cutoff:
+            return
+        # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
         xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
         # Delete the original stub and run the archive/unarchive function again. (A new stub will be created if
         # it doesn't go through again)
