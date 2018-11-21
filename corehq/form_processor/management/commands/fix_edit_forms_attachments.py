@@ -11,8 +11,6 @@ from io import open
 import csv342 as csv
 
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from couchforms.models import XFormDeprecated
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
@@ -105,48 +103,11 @@ class Command(BaseCommand):
         then look for the new form and compare attachments between them
         :return:
         """
-        # ToDo: this needs to be relooked to address multiple edits if needed
-        add_forms_with_attachments = defaultdict(list)
-        deprecated_form_ids = [
-            f['id'] for f in XFormDeprecated.view(
-                'all_docs/by_doc_type', startkey=['XFormDeprecated'], endkey=['XFormDeprecated', {}],
-                include_docs=False, reduce=False).all()]
-        for deprecated_form_id in deprecated_form_ids:
-            deprecated_form = XFormDeprecated.get(deprecated_form_id)
-            form_accessor = FormAccessors(deprecated_form.domain)
-            if deprecated_form.orig_id:
-                try:
-                    new_form = form_accessor.get_form(deprecated_form.orig_id)
-                except XFormNotFound:
-                    # fall back to other DB couch/sql to look for the form
-                    if form_accessor.db_accessor == FormAccessorSQL:
-                        new_form = FormAccessorCouch.get_form(deprecated_form.orig_id)
-                    else:
-                        new_form = FormAccessorSQL.get_form(deprecated_form_id)
-                except ValueError as e:
-                    # always is illegal doc id error
-                    # https://github.com/dimagi/commcare-hq/blob/652089eb7b63e3967d674580cab55522b5327a22/corehq/blobs/mixin.py#L614
-                    print('Value Error: Should be illegal doc id error. Form %s ' % deprecated_form_id)
-                    print(e)
-                    continue
-                except Exception as e:
-                    print('Unexpection failure for form %s' % deprecated_form_id)
-                    print(e)
-                    continue
-                original_attachments = deprecated_form.attachments
-                new_attachments = new_form.attachments
-                new_attachment_names = new_attachments.keys()
-                for attachment_name in original_attachments:
-                    if attachment_name not in new_attachment_names:
-                        attachment = original_attachments[attachment_name]
-                        assert attachment.form_id == deprecated_form_id
-                        self.forms[new_form.form_id] = new_form
-                        add_forms_with_attachments[deprecated_form.orig_id].append(attachment)
-        return add_forms_with_attachments
+        raise NotImplementedError
 
     @staticmethod
     def _add_attachment_to_couch_form(attachment_id, form_id):
-        pass
+        raise NotImplementedError
 
     @staticmethod
     def _add_attachment_to_sql_form(form_id, attachment):
