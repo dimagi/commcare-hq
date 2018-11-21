@@ -53,7 +53,8 @@ def get_sql_previous_versions(form_id, form_accessor, index=0, orig_form_id=None
 
 
 class Command(BaseCommand):
-    def __init__(self):
+    def __init__(self, args, kwargs):
+        super(Command, self).__init__(args, kwargs)
         self.forms = {}
         self.search_after_feature_release = False
 
