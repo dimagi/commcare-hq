@@ -95,7 +95,7 @@ class DishaDump(object):
         with TransientTempfile() as temp_path:
             self._write_data_in_chunks(temp_path)
             with open(temp_path, 'r', encoding='utf-8') as f:
-                blob_ref, _ = IcdsFile.objects.get_or_create(blob_id='sd', data_type='disha_dumps')
+                blob_ref, _ = IcdsFile.objects.get_or_create(blob_id=self._blob_id(), data_type='disha_dumps')
                 blob_ref.store_file_in_blobdb(f, expired=1)
                 blob_ref.save()
 
