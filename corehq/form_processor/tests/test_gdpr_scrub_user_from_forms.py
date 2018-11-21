@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
-from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
