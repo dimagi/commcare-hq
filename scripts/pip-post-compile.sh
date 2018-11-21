@@ -6,7 +6,7 @@ bash scripts/_vendor/pip-post-compile.sh "$@"
 function clean_file {
     FILE_PATH=$1
     TEMP_FILE=${FILE_PATH}.tmp
-    grep -v '^appnope==' ${FILE_PATH} > ${TEMP_FILE}
+    grep -v -e '^appnope==' -e '^futures==' ${FILE_PATH} > ${TEMP_FILE}
     mv ${TEMP_FILE} ${FILE_PATH}
 }
 
