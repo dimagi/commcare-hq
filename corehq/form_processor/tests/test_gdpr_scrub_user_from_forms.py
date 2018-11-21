@@ -65,25 +65,21 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         super(GDPRScrubUserFromFormsCouchTests, self).tearDown()
 
     def test_modify_attachment_xml_and_metadata_couch(self):
-        try:
-            form = get_simple_wrapped_form(uuid.uuid4().hex,
-                                           metadata=TestFormMetadata(domain=DOMAIN),
-                                           simple_form=GDPR_SIMPLE_FORM)
-            new_form_xml = Command().update_form_data(form, NEW_USERNAME)
-            FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, NEW_USERNAME)
+        form = get_simple_wrapped_form(uuid.uuid4().hex,
+                                       metadata=TestFormMetadata(domain=DOMAIN),
+                                       simple_form=GDPR_SIMPLE_FORM)
+        new_form_xml = Command().update_form_data(form, NEW_USERNAME)
+        FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, NEW_USERNAME)
 
-            # Test that the metadata changed in the database
-            actual_form_xml = form.get_attachment("form.xml")
-            self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
+        # Test that the metadata changed in the database
+        actual_form_xml = form.get_attachment("form.xml")
+        self.assertXMLEqual(EXPECTED_FORM_XML.encode('utf-8'), actual_form_xml)
 
-            # Test that the operations history is updated in this form
-            refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
-            self.assertEqual(len(refetched_form.history), 1)
-            self.assertEqual(refetched_form.history[0].operation, "gdpr_scrub")
-            self.assertEqual(refetched_form.metadata.username, NEW_USERNAME)
-        except XMLSyntaxError as e:
-            print(e)
-            raise Exception(str(e))
+        # Test that the operations history is updated in this form
+        refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
+        self.assertEqual(len(refetched_form.history), 1)
+        self.assertEqual(refetched_form.history[0].operation, "gdpr_scrub")
+        self.assertEqual(refetched_form.metadata.username, NEW_USERNAME)
 
 
 @use_sql_backend
