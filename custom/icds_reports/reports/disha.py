@@ -44,16 +44,16 @@ class DishaDump(object):
     def get_export_as_http_response(self, stream=False):
         file_ref = self._get_file_ref()
         if file_ref:
-            file = file_ref.get_file_from_blobdb()
+            _file = file_ref.get_file_from_blobdb()
             if stream:
                 response = StreamingHttpResponse(
-                    FileWrapper(file),
+                    FileWrapper(_file),
                     content_type='application/json'
                 )
                 response['Content-Length'] = file_ref.get_file_size()
                 return response
             else:
-                return HttpResponse(file.read(), content_type='application/json')
+                return HttpResponse(_file.read(), content_type='application/json')
         else:
             return JsonResponse({"message": "Data is not updated for this month"})
 
