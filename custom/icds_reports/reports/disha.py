@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
 from io import open
+from wsgiref.util import FileWrapper
 
 import json
 import logging
@@ -39,12 +41,21 @@ class DishaDump(object):
         else:
             return False
 
-    def get_json_export(self):
+    def get_export_as_http_response(self, stream=False):
         file_ref = self._get_file_ref()
         if file_ref:
-            return file_ref.get_file_from_blobdb().read()
+            file = file_ref.get_file_from_blobdb()
+            if stream:
+                response = StreamingHttpResponse(
+                    FileWrapper(file),
+                    content_type='application/json'
+                )
+                response['Content-Length'] = file_ref.get_file_size()
+                return response
+            else:
+                return HttpResponse(file.read(), content_type='application/json')
         else:
-            return ""
+            return JsonResponse({"message": "Data is not updated for this month"})
 
     def _get_columns(self):
         columns = [field.name for field in DishaIndicatorView._meta.fields]
