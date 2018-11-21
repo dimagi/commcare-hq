@@ -113,7 +113,7 @@ class FormVersioningTest(TestCase):
         from lxml import etree
 
         suite = suite_models.Suite(
-            etree.fromstring(build.fetch_attachment('files/suite.xml').encode('utf-8'))
+            etree.fromstring(build.fetch_attachment('files/suite.xml', return_bytes=True))
         )
         return [r.version for r in suite.xform_resources]
 
