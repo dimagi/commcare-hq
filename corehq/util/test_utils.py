@@ -110,7 +110,7 @@ class TestFileMixin(object):
 
     @classmethod
     def get_xml(cls, name, override_path=None):
-        return cls.get_file(name, '.xml', override_path)
+        return cls.get_file(name, '.xml', override_path).encode('utf-8')
 
 
 def flag_enabled(toggle_class_string):
