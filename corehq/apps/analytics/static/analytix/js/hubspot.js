@@ -86,6 +86,9 @@ hqDefine('analytix/js/hubspot', [
                     "dimagi-contact-url " + document.title, document.title, newUrl
                 );
 
+                // Causes the Schedule Once form to populate the element
+                // #SOIDIV_commcaredemoform as soon as it loads. Once it's
+                // loaded this does not leave the page.
                 $.getScript('//cdn.scheduleonce.com/mergedjs/so.js');
 
             },
