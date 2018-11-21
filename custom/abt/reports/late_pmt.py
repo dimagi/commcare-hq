@@ -36,7 +36,6 @@ class LatePMTUsers(SqlData):
     def filters(self):
         filters = []
         filter_fields = [
-            'user_id',
             'country',
             'level_1',
             'level_2',
@@ -46,6 +45,8 @@ class LatePMTUsers(SqlData):
         for filter_field in filter_fields:
             if filter_field in self.config and self.config[filter_field]:
                 filters.append(EQ(filter_field, filter_field))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(EQ('doc_id', 'user_id'))
         return filters
 
     @property
@@ -116,7 +117,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def enddate(self):
-        return self.request.datespan.enddate
+        return self.request.datespan.end_of_end_day
 
     @property
     def headers(self):
