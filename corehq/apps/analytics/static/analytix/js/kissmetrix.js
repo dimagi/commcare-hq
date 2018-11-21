@@ -141,7 +141,7 @@ hqDefine('analytix/js/kissmetrix', [
     var internalClick = function (selector, name, properties) {
         var originalArgs = arguments;
         _ready.done(function () {
-            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], originalArgs), 'Track Internal Click');
+            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], originalArgs), 'Setup Track Internal Click - only runs after click occurs');
             _kmqPushCommand('trackClick', properties, undefined, name);
         });
     };
@@ -155,7 +155,7 @@ hqDefine('analytix/js/kissmetrix', [
     var trackOutboundLink = function (selector, name, properties) {
         var originalArgs = arguments;
         _ready.done(function () {
-            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], originalArgs), 'Track Click on Outbound Link');
+            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], originalArgs), 'Setup Track Click on Outbound Link - only runs after click occurs');
             _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
         });
     };
