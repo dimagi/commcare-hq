@@ -128,9 +128,8 @@ class ReportConfigurationTest(SimpleTestCase):
 
 class ReportConfigurationDbTest(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(ReportConfigurationDbTest, cls).setUpClass()
+    def setUp(self):
+        super(ReportConfigurationDbTest, self).setUp()
         domain_foo = Domain(name='foo')
         domain_foo.save()
         domain_bar = Domain(name='bar')
@@ -143,14 +142,13 @@ class ReportConfigurationDbTest(TestCase):
         ReportConfiguration(domain=domain_foo.name, config_id='foo2').save()
         ReportConfiguration(domain=domain_bar.name, config_id='bar1').save()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         for config in DataSourceConfiguration.all():
             config.delete()
         delete_all_report_configs()
         for domain in Domain.get_all():
             domain.delete()
-        super(ReportConfigurationDbTest, cls).tearDownClass()
+        super(ReportConfigurationDbTest, self).tearDown()
 
     def test_get_by_domain(self):
         results = ReportConfiguration.by_domain('foo')
