@@ -9,9 +9,9 @@ from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
 
 
-class AggLsDataHelper(BaseICDSAggregationHelper):
+class AggLsHelper(BaseICDSAggregationHelper):
 
-    base_tablename = 'agg_ls_report'
+    base_tablename = 'agg_ls'
     awc_location_ucr = 'static-awc_location'
     ls_vhnd_ucr = 'static-ls_vhnd_form'
     ls_home_visit_ucr = 'static-ls_home_visit_forms_filled'
@@ -91,7 +91,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
             3) number of beneficiary form visited
         """
         yield """
-            UPDATE "{tablename}" agg_ls_report
+            UPDATE "{tablename}" agg_ls
             SET vhnd_observed = ut.vhnd_observed
             FROM (
                 SELECT count(*) as vhnd_observed,
@@ -100,7 +100,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 WHERE vhnd_date > %(start_date)s AND vhnd_date < %(end_date)s
                 GROUP BY location_id
             ) ut
-            WHERE agg_ls_report.supervisor_id = ut.supervisor_id
+            WHERE agg_ls.supervisor_id = ut.supervisor_id
         """.format(
             tablename=self.tablename,
             ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
@@ -110,7 +110,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         }
 
         yield """
-            UPDATE "{tablename}" agg_ls_report
+            UPDATE "{tablename}" agg_ls
             SET unique_awc_vists = ut.unique_awc_vists
             FROM (
                 SELECT count(distinct awc_id) as unique_awc_vists,
@@ -120,7 +120,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 AND location_entered is not null and location_entered <> ''
                 GROUP BY location_id
             ) ut
-            WHERE agg_ls_report.supervisor_id = ut.supervisor_id
+            WHERE agg_ls.supervisor_id = ut.supervisor_id
         """.format(
             tablename=self.tablename,
             ls_awc_mgt_ucr=self._ucr_tablename(ucr_id=self.ls_awc_mgt_ucr)
@@ -130,7 +130,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
         }
 
         yield """
-            UPDATE "{tablename}" agg_ls_report
+            UPDATE "{tablename}" agg_ls
             SET beneficiary_vists = ut.beneficiary_vists
             FROM (
                 SELECT
@@ -141,7 +141,7 @@ class AggLsDataHelper(BaseICDSAggregationHelper):
                 AND visit_type_entered is not null AND visit_type_entered <> ''
                 GROUP BY location_id
             ) ut
-            WHERE agg_ls_report.supervisor_id = ut.supervisor_id
+            WHERE agg_ls.supervisor_id = ut.supervisor_id
         """.format(
             tablename=self.tablename,
             ls_home_visit_ucr=self._ucr_tablename(ucr_id=self.ls_home_visit_ucr)

@@ -204,14 +204,9 @@ class AggLsMonthy(models.Model):
     """
     Contains rows for LS data.
     This view is the join between tables:
-        1) agg_ls_report
+        1) agg_ls
         2) agg_awc
         3) awc_location_months
-    Following data is provided through this view:
-        1) location informations
-        2) LS data about beneficiary form, vhnd forms,
-           awc visits
-        3) number of awc launched
     """
     supervisor_id = models.TextField(blank=True, null=True)
     supervisor_name = models.TextField(blank=True, null=True)
@@ -233,9 +228,9 @@ class AggLsMonthy(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
-    unique_awc_vists = models.IntegerField()
-    vhnd_observed = models.IntegerField()
-    beneficiary_vists = models.IntegerField()
+    unique_awc_vists = models.IntegerField(help_text='Unique AWC visits by LS in the month')
+    vhnd_observed = models.IntegerField(help_text='Vhnd forms submitted by LS where vhnd date in the month')
+    beneficiary_vists = models.IntegerField(help_text='beneficiary visits made by LS in the month')
     num_launched_awcs = models.IntegerField(
         blank=True, null=True,
         help_text="number of AWCs that have at least one Household registration form"
@@ -244,7 +239,7 @@ class AggLsMonthy(models.Model):
     class Meta(object):
         app_label = 'icds_model'
         managed = False
-        db_table = 'agg_ls_report_monthly'
+        db_table = 'agg_ls_monthly'
 
 
 class AggAwcMonthly(models.Model):

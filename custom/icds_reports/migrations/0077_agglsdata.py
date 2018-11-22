@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='AggLsData',
+            name='AggLs',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('unique_awc_vists', models.IntegerField()),
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ('aggregation_level', models.SmallIntegerField()),
             ],
             options={
-                'db_table': 'agg_ls_report',
+                'db_table': 'agg_ls',
             },
         ),
     ]

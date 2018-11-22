@@ -4,7 +4,7 @@ from custom.icds_reports.models.aggregate import (
     AwcLocation,
     ChildHealthMonthly,
     AggAwc,
-    AggLsData,
+    AggLs,
     AggCcsRecord,
     AggChildHealth,
     AggAwcDaily,

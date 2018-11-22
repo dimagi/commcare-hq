@@ -60,7 +60,7 @@ from custom.icds_reports.models import (
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport,
-    AggLsData,
+    AggLs,
     AggAwc,
     AwcLocation
 )
@@ -506,8 +506,8 @@ def _agg_awc_table(day):
 
 @track_time
 def _agg_ls_table(day):
-    with transaction.atomic():
-        AggLsData.aggregate(force_to_date(day))
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggLs.aggregate(force_to_date(day))
 
 
 @track_time

@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS agg_ls_report_monthly CASCADE;
-CREATE VIEW agg_ls_report_monthly AS
+DROP VIEW IF EXISTS agg_ls_monthly CASCADE;
+CREATE VIEW agg_ls_monthly AS
 SELECT
 "awc_location_months"."supervisor_id" AS "supervisor_id",
 "awc_location_months"."supervisor_name" AS "supervisor_name",
@@ -16,25 +16,25 @@ SELECT
 "awc_location_months"."block_map_location_name" AS "block_map_location_name",
 "awc_location_months"."district_map_location_name" AS "district_map_location_name",
 "awc_location_months"."state_map_location_name" AS "state_map_location_name",
-agg_ls_report.unique_awc_vists as unique_awc_vists,
-agg_ls_report.vhnd_observed as vhnd_observed,
-agg_ls_report.beneficiary_vists as beneficiary_vists,
-agg_ls_report.month as month,
+agg_ls.unique_awc_vists as unique_awc_vists,
+agg_ls.vhnd_observed as vhnd_observed,
+agg_ls.beneficiary_vists as beneficiary_vists,
+agg_ls.month as month,
 agg_awc.num_launched_awcs as num_launched_awcs
-FROM agg_ls_report
+FROM agg_ls
 inner join agg_awc on (
-        ("agg_awc"."month" = "agg_ls_report"."month") AND
-        ("agg_awc"."state_id" = "agg_ls_report"."state_id") AND
-        ("agg_awc"."district_id" = "agg_ls_report"."district_id") AND
-        ("agg_awc"."block_id" = "agg_ls_report"."block_id") AND
-        ("agg_awc"."supervisor_id" = "agg_ls_report"."supervisor_id") AND
-        ("agg_awc"."aggregation_level" = "agg_ls_report"."aggregation_level")
+        ("agg_awc"."month" = "agg_ls"."month") AND
+        ("agg_awc"."state_id" = "agg_ls"."state_id") AND
+        ("agg_awc"."district_id" = "agg_ls"."district_id") AND
+        ("agg_awc"."block_id" = "agg_ls"."block_id") AND
+        ("agg_awc"."supervisor_id" = "agg_ls"."supervisor_id") AND
+        ("agg_awc"."aggregation_level" = "agg_ls"."aggregation_level")
 )
 inner join "public"."awc_location_months" "awc_location_months"  on (
-        ("awc_location_months"."month" = "agg_ls_report"."month") AND
-        ("awc_location_months"."state_id" = "agg_ls_report"."state_id") AND
-        ("awc_location_months"."district_id" = "agg_ls_report"."district_id") AND
-        ("awc_location_months"."block_id" = "agg_ls_report"."block_id") AND
-        ("awc_location_months"."supervisor_id" = "agg_ls_report"."supervisor_id") AND
-        ("awc_location_months"."aggregation_level" = "agg_ls_report"."aggregation_level")
+        ("awc_location_months"."month" = "agg_ls"."month") AND
+        ("awc_location_months"."state_id" = "agg_ls"."state_id") AND
+        ("awc_location_months"."district_id" = "agg_ls"."district_id") AND
+        ("awc_location_months"."block_id" = "agg_ls"."block_id") AND
+        ("awc_location_months"."supervisor_id" = "agg_ls"."supervisor_id") AND
+        ("awc_location_months"."aggregation_level" = "agg_ls"."aggregation_level")
 )

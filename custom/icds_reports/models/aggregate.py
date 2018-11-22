@@ -18,7 +18,7 @@ from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsR
 from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.aww_incentive import AwwIncentiveAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_ls_data import AggLsDataHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_ls_data import AggLsHelper
 from custom.icds_reports.utils.aggregation_helpers.birth_preparedness_forms import \
     BirthPreparednessFormsAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.ccs_record_monthly import CcsRecordMonthlyAggregationHelper
@@ -462,19 +462,18 @@ class AggAwc(models.Model):
                 cursor.execute(query)
 
 
-class AggLsData(models.Model):
+class AggLs(models.Model):
     """
-    Model refers to the agg_ls_report table in database.
+    Model refers to the agg_ls table in database.
     Table contains the aggregated data from LS ucrs.
     it currently contains the following data:
         1) unique awc visits made by LS
         2) beneficiary visits done by LS
         3) vhnd forms submitted by LS
-        4) and LS location and month
     """
-    unique_awc_vists = models.IntegerField()
-    vhnd_observed = models.IntegerField()
-    beneficiary_vists = models.IntegerField()
+    unique_awc_vists = models.IntegerField(help_text='unique awc visits made by LS')
+    vhnd_observed = models.IntegerField(help_text='VHND forms submitted by LS')
+    beneficiary_vists = models.IntegerField(help_text='Beneficiary visits done by LS')
     month = models.DateField()
     state_id = models.TextField()
     district_id = models.TextField()
@@ -483,7 +482,7 @@ class AggLsData(models.Model):
     aggregation_level = models.SmallIntegerField()
 
     class Meta(object):
-        db_table = 'agg_ls_report'
+        db_table = 'agg_ls'
 
     @classmethod
     def aggregate(cls, month):
@@ -492,7 +491,7 @@ class AggLsData(models.Model):
         to state level
         :return:
         """
-        helper = AggLsDataHelper(month)
+        helper = AggLsHelper(month)
 
         drop_table_queries = [helper.drop_table_if_exists(i) for i in range(4, 0, -1)]
         create_table_queries = [helper.create_child_table(i) for i in range(4, 0, -1)]
