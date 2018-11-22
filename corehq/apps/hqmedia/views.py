@@ -192,7 +192,8 @@ class BaseProcessUploadedView(BaseMultimediaView):
         response.update({
             'errors': self.errors,
         })
-        return HttpResponse(json.dumps(response))
+        response_class = HttpResponseBadRequest if self.errors else HttpResponse
+        return response_class(json.dumps(response))
 
     def validate_file(self, replace_diff_ext=False):
         raise NotImplementedError("You must validate your uploaded file!")
