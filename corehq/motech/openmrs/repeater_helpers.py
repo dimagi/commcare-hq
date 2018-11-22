@@ -6,6 +6,7 @@ import re
 
 from requests import RequestException
 from six.moves import zip
+from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
@@ -382,7 +383,7 @@ def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
             return get_patient_by_uuid(requests, patient_identifier)
         else:
             return get_patient_by_identifier(requests, patient_identifier_type, patient_identifier)
-    except RequestException as err:
+    except (RequestException, HTTPError) as err:
         # This message needs to be useful to an administrator because
         # it will be shown in the Repeat Records report.
         http_error_msg = (
