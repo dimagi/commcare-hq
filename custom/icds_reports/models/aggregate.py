@@ -466,10 +466,6 @@ class AggLs(models.Model):
     """
     Model refers to the agg_ls table in database.
     Table contains the aggregated data from LS ucrs.
-    it currently contains the following data:
-        1) unique awc visits made by LS
-        2) beneficiary visits done by LS
-        3) vhnd forms submitted by LS
     """
     unique_awc_vists = models.IntegerField(help_text='unique awc visits made by LS')
     vhnd_observed = models.IntegerField(help_text='VHND forms submitted by LS')
