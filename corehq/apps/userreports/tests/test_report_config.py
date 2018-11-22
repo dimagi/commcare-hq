@@ -185,6 +185,7 @@ class ReportTranslationTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(ReportTranslationTest, cls).setUpClass()
+        delete_all_report_configs()
         data_source = DataSourceConfiguration(
             domain=cls.DOMAIN,
             table_id="foo",
