@@ -10,9 +10,12 @@ from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.exceptions import XFormQuestionValueNotFound, KafkaPublishingError, PostSaveError
-from corehq.form_processor.models import Attachment
-from couchforms.const import ATTACHMENT_NAME
+from corehq.form_processor.exceptions import (
+    KafkaPublishingError,
+    PostSaveError,
+    XFormLockError,
+    XFormQuestionValueNotFound,
+)
 from memoized import memoized
 from ..utils import should_use_sql_backend
 import six
@@ -97,7 +100,8 @@ class FormProcessorInterface(object):
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=15 * 60)
         try:
-            lock.acquire()
+            if not lock.acquire(blocking=False):
+                raise XFormLockError(xform_id)
         except RedisError:
             lock = None
         return lock

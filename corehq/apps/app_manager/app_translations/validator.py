@@ -70,7 +70,7 @@ class UploadedTranslationsValidator(object):
                 if expected_value != uploaded_value:
 
                     msgs.append("For {}:{}  uploaded '{}' but expected '{}'.".format(
-                        i + 2, column_name, uploaded_value, expected_value
+                        i, column_name, uploaded_value, expected_value
                     ))
         return msgs
 

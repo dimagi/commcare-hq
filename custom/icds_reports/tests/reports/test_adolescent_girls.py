@@ -25,8 +25,7 @@ class TestAdolescentGirls(TestCase):
                 "rightLegend": {
                     "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
                             "enrolled for Anganwadi Services",
-                    "average": 17.0,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': (
@@ -87,8 +86,7 @@ class TestAdolescentGirls(TestCase):
                 "rightLegend": {
                     "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
                             "enrolled for Anganwadi Services",
-                    "average": 8.5,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': (

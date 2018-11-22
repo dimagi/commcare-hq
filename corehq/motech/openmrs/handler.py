@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import timedelta
+
+from corehq.motech.const import DIRECTION_EXPORT
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
@@ -17,6 +21,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_ancestor_location_openmrs_uuid,
     get_patient,
 )
+from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import CaseTriggerInfo
@@ -109,6 +114,8 @@ class SyncPersonAttributesTask(WorkflowTask):
             for attribute in self.attributes
         }
         for person_attribute_type, value_source in self.openmrs_config.case_config.person_attributes.items():
+            if not value_source.check_direction(DIRECTION_EXPORT):
+                continue
             value = value_source.get_value(self.info)
             if person_attribute_type in existing_person_attributes:
                 attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
@@ -144,6 +151,8 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             for identifier in self.patient['identifiers']
         }
         for patient_identifier_type, value_source in self.openmrs_config.case_config.patient_identifiers.items():
+            if not value_source.check_direction(DIRECTION_EXPORT):
+                continue
             if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
                 # Don't try to sync the OpenMRS person UUID; It's not a
                 # user-defined identifier and it can't be changed.
@@ -178,6 +187,39 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         self.openmrs_config = openmrs_config
         self.person_uuid = person_uuid
 
+    def _get_start_stop_datetime(self, form_config):
+        """
+        Returns a start datetime for the Visit and the Encounter, and a
+        stop_datetime for the Visit
+        """
+        if form_config.openmrs_start_datetime:
+            cc_start_datetime_str = form_config.openmrs_start_datetime._get_commcare_value(self.info)
+            if cc_start_datetime_str is None:
+                raise ConfigurationError(
+                    'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
+                    'the visit but no value was found in the form.'.format(form_config.xmlns)
+                )
+            try:
+                cc_start_datetime = string_to_utc_datetime(cc_start_datetime_str)
+            except ValueError:
+                raise ConfigurationError(
+                    'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
+                    'the visit but an invalid value was found in the form.'.format(form_config.xmlns)
+                )
+            cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
+            # We need to use openmrs_start_datetime.serialize()
+            # for both values because they could be either
+            # OpenMRS datetimes or OpenMRS dates, and their data
+            # types must match.
+            start_datetime = form_config.openmrs_start_datetime.serialize(cc_start_datetime)
+            stop_datetime = form_config.openmrs_start_datetime.serialize(cc_stop_datetime)
+        else:
+            cc_start_datetime = string_to_utc_datetime(self.form_json['form']['meta']['timeEnd'])
+            cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
+            start_datetime = to_omrs_datetime(cc_start_datetime)
+            stop_datetime = to_omrs_datetime(cc_stop_datetime)
+        return start_datetime, stop_datetime
+
     def run(self):
         """
         Returns WorkflowTasks for creating visits, encounters and observations
@@ -188,12 +230,14 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         self.info.form_question_values.update(self.form_question_values)
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:
+                start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)
                 subtasks.append(
                     CreateVisitTask(
                         self.requests,
                         person_uuid=self.person_uuid,
                         provider_uuid=provider_uuid,
-                        visit_datetime=string_to_utc_datetime(self.form_json['form']['meta']['timeEnd']),
+                        start_datetime=start_datetime,
+                        stop_datetime=stop_datetime,
                         values_for_concept={obs.concept: [obs.value.get_value(self.info)]
                                             for obs in form_config.openmrs_observations
                                             if obs.value.get_value(self.info)},

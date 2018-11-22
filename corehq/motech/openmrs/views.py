@@ -78,11 +78,6 @@ class OpenmrsModelListViewHelper(object):
         assert repeater.domain == self.domain
         return repeater
 
-    @property
-    @memoized
-    def requests(self):
-        return Requests(self.domain, self.repeater.url, self.repeater.username, self.repeater.password)
-
 
 def _filter_out_links(json):
     if isinstance(json, dict):
@@ -96,14 +91,14 @@ def _filter_out_links(json):
 @login_and_domain_required
 def openmrs_patient_identifier_types(request, domain, repeater_id):
     helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
-    raw_json = get_patient_identifier_types(helper.requests)
+    raw_json = get_patient_identifier_types(helper.repeater.requests)
     return JsonResponse(_filter_out_links(raw_json))
 
 
 @login_and_domain_required
 def openmrs_person_attribute_types(request, domain, repeater_id):
     helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
-    raw_json = get_person_attribute_types(helper.requests)
+    raw_json = get_person_attribute_types(helper.repeater.requests)
     return JsonResponse(_filter_out_links(raw_json))
 
 
@@ -113,8 +108,7 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     no_links = get_params.pop('links', None) is None
     repeater = OpenmrsRepeater.get(repeater_id)
     assert repeater.domain == domain
-    requests = Requests(repeater.domain, repeater.url, repeater.username, repeater.password)
-    raw_json = requests.get('/ws/rest/v1' + rest_uri, get_params).json()
+    raw_json = repeater.requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
         return JsonResponse(_filter_out_links(raw_json))
     return JsonResponse(raw_json)

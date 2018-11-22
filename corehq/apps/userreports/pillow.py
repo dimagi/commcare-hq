@@ -137,7 +137,7 @@ class ConfigurableReportTableManagerMixin(object):
 
         for config in configs:
             self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, can_handle_laboratory=True, raise_errors=True)
+                get_indicator_adapter(config, raise_errors=True)
             )
 
         self.rebuild_tables_if_necessary()

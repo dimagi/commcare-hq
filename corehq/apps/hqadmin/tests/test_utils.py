@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import json
+
 from django.test import TestCase, override_settings, SimpleTestCase
 
 from corehq.apps.hqadmin.utils import check_for_rewind
@@ -117,7 +120,8 @@ class TestHistoricalPillowCheckpoint(CallCenterDomainMockTest):
             latest = HistoricalPillowCheckpoint.get_latest(checkpoint.checkpoint_id)
             checkpoint.reset()
             checkpoint.update_to(latest.seq)
-            self.assertEqual(checkpoint.get_current_sequence_id(), current_seq)
+            if checkpoint.get_current_sequence_id() != current_seq:
+                self.assertDictEqual(json.loads(checkpoint.get_current_sequence_id()), json.loads(current_seq))
 
 
 class TestParseCeleryWorkerPings(SimpleTestCase):

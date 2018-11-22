@@ -145,9 +145,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         if (this.options.rightLegend['average'] !== void(0)) {
                             html.push('<div class="row no-margin">');
                             if (this.options.rightLegend['average_format'] === 'number') {
-                                html.push('<strong>' + loc_name + ' average (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
+                                html.push('<strong>' + loc_name + ' aggregate (in Month):</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']));
                             } else {
-                                html.push('<strong>' + loc_name + ' average (in Month):</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%');
+                                html.push('<strong>' + loc_name + ' aggregate (in Month):</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%');
                             }
                             html.push('</div>',
                                 '</br>',

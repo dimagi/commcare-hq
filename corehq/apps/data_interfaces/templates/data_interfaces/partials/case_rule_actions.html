@@ -15,7 +15,7 @@
             {% endfor %}
         </div>
     {% endif %}
-    <div data-bind="template: {name: get_ko_template_id, foreach: actions}"></div>
+    <div data-bind="template: {name: getKoTemplateId, foreach: actions}"></div>
     <div class="form-group">
         <div class="col-xs-5 col-xs-offset-3">
             <div class="btn-group">
@@ -27,10 +27,10 @@
                     <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu">
-                    <li data-bind="click: function() { add_action('close-case-action'); }"><a>{% trans "Close the case" %}</a></li>
-                    <li data-bind="click: function() { add_action('update-case-property-action'); }"><a>{% trans "Update case property" %}</a></li>
+                    <li data-bind="click: function() { addAction('close-case-action'); }"><a>{% trans "Close the case" %}</a></li>
+                    <li data-bind="click: function() { addAction('update-case-property-action'); }"><a>{% trans "Update case property" %}</a></li>
                     {% if form.is_system_admin %}
-                    <li data-bind="click: function() { add_action('custom-action'); }"><a>{% trans "Custom action" %}</a></li>
+                    <li data-bind="click: function() { addAction('custom-action'); }"><a>{% trans "Custom action" %}</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -43,7 +43,7 @@
 
 <script type="text/html" id="remove-action">
     <div class="col-xs-1">
-        <button type="button" class="btn btn-danger" data-bind="click: $parent.remove_action"><i class="fa fa-close"></i></button>
+        <button type="button" class="btn btn-danger" data-bind="click: $parent.removeAction"><i class="fa fa-close"></i></button>
     </div>
 </script>
 
