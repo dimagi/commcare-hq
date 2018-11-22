@@ -2,9 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from django.test import TestCase, override_settings
+from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.models import Application
+from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
@@ -23,6 +25,12 @@ class FormPillowTest(TestCase):
     def setUp(self):
         super(FormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
+        try:
+            build_config = CommCareBuildConfig.get(CommCareBuildConfig._ID)
+        except ResourceNotFound:
+            pass
+        else:
+            build_config.delete()
         self.pillow = get_form_submission_metadata_tracker_pillow()
 
         factory = AppFactory(domain=self.domain)
