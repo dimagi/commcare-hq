@@ -25,12 +25,8 @@ class FormPillowTest(TestCase):
     def setUp(self):
         super(FormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
-        try:
-            build_config = CommCareBuildConfig.get(CommCareBuildConfig._ID)
-        except ResourceNotFound:
-            pass
-        else:
-            build_config.delete()
+        CommCareBuildConfig.fetch()
+
         self.pillow = get_form_submission_metadata_tracker_pillow()
 
         factory = AppFactory(domain=self.domain)
