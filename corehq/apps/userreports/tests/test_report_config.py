@@ -137,8 +137,7 @@ class ReportConfigurationDbTest(TestCase):
         domain_bar.save()
 
         # TODO - handle cleanup appropriately so this isn't needed
-        for report_config in get_all_report_configs():
-            report_config.delete()
+        delete_all_report_configs()
 
         ReportConfiguration(domain=domain_foo.name, config_id='foo1').save()
         ReportConfiguration(domain=domain_foo.name, config_id='foo2').save()
