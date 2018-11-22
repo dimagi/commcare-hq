@@ -276,12 +276,6 @@ class CreateEncounterTask(WorkflowTask):
             encounter['visit'] = self.visit_uuid
         if self.location_uuid:
             encounter['location'] = self.location_uuid
-        else:
-            # If we don't set a location, OpenMRS sets it to NULL,
-            # which breaks Bahmni. Fortunately OpenMRS comes standard
-            # with an "Unknown Location". Use that.
-            location = get_unknown_location(self.requests)
-            encounter['location'] = location['uuid']
         if self.provider_uuid:
             encounter_role = get_unknown_encounter_role(self.requests)
             encounter['encounterProviders'] = [{
@@ -743,18 +737,16 @@ def get_unknown_encounter_role(requests):
     )
 
 
-def get_unknown_location(requests):
+def get_unknown_location_uuid(requests):
     """
-    Return "Unknown Location"
+    Returns the UUID of Bahmni's "Unknown Location" or None if it
+    doesn't exist.
     """
     response_json = requests.get('/ws/rest/v1/location').json()
     for location in response_json['results']:
         if location['display'] == 'Unknown Location':
-            return location
-    raise OpenmrsConfigurationError(
-        'The standard "Unknown Location" was not found on the OpenMRS server at "{}". Please notify the '
-        'administrator of that server.'.format(requests.base_url)
-    )
+            return location['uuid']
+    return None
 
 
 def get_patient_identifier_types(requests):
