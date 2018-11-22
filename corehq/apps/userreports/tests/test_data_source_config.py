@@ -248,6 +248,11 @@ class DataSourceConfigurationDbTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(DataSourceConfigurationDbTest, cls).setUpClass()
+
+        # TODO - handle cleanup appropriately so this isn't needed
+        for data_source_config in DataSourceConfiguration.all():
+            data_source_config.delete()
+
         DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='XFormInstance').save()
         DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='XFormInstance').save()
         DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='XFormInstance').save()
