@@ -247,13 +247,17 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         # in the future these may need to include more columns, but historically
         # caste, resident, minority and disabled have been skipped
-        group_by = ["state_id", "month", "ccs_status"]
+        group_by = ["state_id"]
+        child_location = 'district_is_test'
         if aggregation_level > 1:
             group_by.append("district_id")
+            child_location = 'block_is_test'
         if aggregation_level > 2:
             group_by.append("block_id")
+            child_location = 'supervisor_is_test'
         if aggregation_level > 3:
             group_by.append("supervisor_id")
+            child_location = 'awc_is_test'
 
         return """
         INSERT INTO "{to_tablename}" (
@@ -261,6 +265,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         ) (
             SELECT {calculations}
             FROM "{from_tablename}"
+            WHERE {child_is_test} = 0
             GROUP BY {group_by}
             ORDER BY {group_by}
         )
@@ -270,6 +275,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by),
+            child_is_test=child_location
         )
 
     def indexes(self, aggregation_level):
