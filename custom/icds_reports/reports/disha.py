@@ -7,6 +7,7 @@ from wsgiref.util import FileWrapper
 
 import json
 import logging
+import re
 from corehq.apps.reports.util import batch_qs
 from corehq.util.files import TransientTempfile
 
@@ -29,7 +30,9 @@ class DishaDump(object):
         self.month = month
 
     def _blob_id(self):
-        return 'disha_dump-{}-{}.json'.format(self.state_name.encode('ascii', 'ignore').replace(" ", ""), self.month.strftime('%Y-%m-%d'))
+        # strip all non-alphanumeric chars
+        safe_state_name = re.sub('[^0-9a-zA-Z]+', '', self.state_name)
+        return 'disha_dump-{}-{}.json'.format(safe_state_name, self.month.strftime('%Y-%m-%d'))
 
     @memoized
     def _get_file_ref(self):
@@ -99,7 +102,8 @@ class DishaDump(object):
             written_count += len(chunk)
             if written_count != total:
                 file_obj.write(",")
-            logger.info("Processed {count}/{total} batches".format(count=count, total=num_batches))
+            logger.info("Processed {count}/{batches} batches. Total records:{total}".format(
+                count=count, total=total, btaches=num_batches))
         file_obj.write("]}")
 
     def build_export_json(self):
