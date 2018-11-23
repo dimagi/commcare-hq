@@ -108,7 +108,7 @@ hqDefine("icds_reports/js/manage_app_translations", [
                 return false;
             }
         }
-        if (action == "delete") {
+        if (action === "delete") {
             if (confirm(formManager.createDeleteConfirmationMessage()) === false) {
                 return false;
             }
