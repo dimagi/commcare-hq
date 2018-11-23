@@ -285,13 +285,16 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         self.assertEqual(0, len(xform.history))
 
-        # Mock the archive function throwing an error
-        with mock.patch('couchforms.models.XFormOperation') as mock_append:
-            try:
-                mock_append.side_effect = Exception
-                xform.archive(user_id='librarian')
-            except Exception:
-                pass
+        # Mock the couch and sql archive function throwing an error (so that this test works for both)
+        with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL._archive_unarchive_form') \
+                as mock_operation_sql:
+            with mock.patch('couchforms.models.XFormOperation') as mock_operation_couch:
+                try:
+                    mock_operation_sql.side_effect = Exception
+                    mock_operation_couch.side_effect = Exception
+                    xform.archive(user_id='librarian')
+                except Exception:
+                    pass
 
         # Get the form with the updated history, make sure it has not been archived yet
         xform = self.formdb.get_form(xform.form_id)
@@ -343,13 +346,16 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # Archive the form successfully
         xform.archive(user_id='librarian')
 
-        # Mock the unarchive function throwing an error
-        with mock.patch('couchforms.models.XFormOperation') as mock_append:
-            try:
-                mock_append.side_effect = Exception
-                xform.unarchive(user_id='librarian')
-            except Exception:
-                pass
+        # Mock the couch and sql archive function throwing an error (so that this test works for both)
+        with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL._archive_unarchive_form') \
+                as mock_operation_sql:
+            with mock.patch('couchforms.models.XFormOperation') as mock_operation_couch:
+                try:
+                    mock_operation_sql.side_effect = Exception
+                    mock_operation_couch.side_effect = Exception
+                    xform.unarchive(user_id='librarian')
+                except Exception:
+                    pass
 
         # Get the form with the updated history, make sure it only has one entry (the archive)
         xform = self.formdb.get_form(xform.form_id)
