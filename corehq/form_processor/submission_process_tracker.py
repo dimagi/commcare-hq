@@ -22,6 +22,19 @@ class SubmissionProcessTracker(object):
             self.stub.delete()
 
 
+class ArchiveProcessTracker(object):
+    def __init__(self, stub=None):
+        self.stub = stub
+
+    def delete_me_get_history(self):
+        return self.stub.history_updated
+
+    def archive_history_updated(self):
+        if self.stub:
+            self.stub.history_updated = True
+            self.stub.save()
+
+
 @contextlib.contextmanager
 def unfinished_submission(instance):
     unfinished_submission_stub = None
@@ -46,9 +59,11 @@ def unfinished_archive(instance, user_id, archive):
             user_id=user_id,
             xform_id=instance.form_id,
             timestamp=datetime.datetime.utcnow(),
+            history_updated=False,
             # if archive is False, this is an unarchive stub.
             archive=archive,
             domain=instance.domain,
         )
-    yield
+    tracker = ArchiveProcessTracker(unfinished_archive_stub)
+    yield tracker
     unfinished_archive_stub.delete()

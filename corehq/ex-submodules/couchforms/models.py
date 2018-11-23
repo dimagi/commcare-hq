@@ -537,6 +537,7 @@ class UnfinishedArchiveStub(models.Model):
     user_id = models.CharField(max_length=200, default=None, blank=True, null=True)
     timestamp = models.DateTimeField(db_index=True)
     archive = models.BooleanField(default=False)
+    history_updated = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
     date_queued = models.DateTimeField(null=True, db_index=True)
     attempts = models.IntegerField(default=0)
@@ -547,7 +548,8 @@ class UnfinishedArchiveStub(models.Model):
             "xform_id={s.xform_id},"
             "user_id={s.user_id},"
             "timestamp={s.timestamp},"
-            "archive={s.saved},"
+            "archive={s.archive},"
+            "history_updated={s.history_updated},"
             "domain={s.domain})"
         ).format(s=self)
 

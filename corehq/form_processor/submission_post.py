@@ -510,17 +510,3 @@ def notify_submission_error(instance, exception, message):
         notify_exception(request, message, details=details)
     else:
         logging.error(message, exc_info=sys.exc_info(), extra={'details': details})
-
-
-class SubmissionProcessTracker(object):
-    def __init__(self, stub=None):
-        self.stub = stub
-
-    def submission_saved(self):
-        if self.stub:
-            self.stub.saved = True
-            self.stub.save()
-
-    def submission_fully_processed(self):
-        if self.stub:
-            self.stub.delete()
