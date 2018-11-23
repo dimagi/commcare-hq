@@ -436,7 +436,7 @@ class ApplicationDataRMIHelper(object):
 
             app_langs.append(form['app']['langs'][0] if 'langs' in form['app'] else 'en')
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
-            module = form.get('module')
+            module = form['module'] if 'module' in form and 'id' in form['module'] else None
             module_id = (module['id'] if has_app and module is not None
                          else self.UNKNOWN_SOURCE)
             module_name = self._get_item_name(
