@@ -103,7 +103,7 @@ class DishaDump(object):
             if written_count != total:
                 file_obj.write(",")
             logger.info("Processed {count}/{batches} batches. Total records:{total}".format(
-                count=count, total=total, btaches=num_batches))
+                count=count, total=total, batches=num_batches))
         file_obj.write("]}")
 
     def build_export_json(self):
