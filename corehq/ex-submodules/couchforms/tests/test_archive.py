@@ -75,6 +75,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('mr. researcher', restoration.user)
 
     def testUnfinishedArchiveStub(self):
+        # Test running the celery task reprocess_archive_stubs on an existing archive stub
         case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
         xml_data = self.get_xml('basic')
         result = submit_form_locally(
@@ -91,12 +92,15 @@ class TestFormArchiving(TestCase, TestFileMixin):
                 mock_send.side_effect = Exception
                 xform.archive(user_id='librarian')
             except Exception:
-                # Return the exception so that nothing after the exception is run
-                return
+                pass
 
-        # Get the form with the updated history, make sure it has not been archived yet
+        # Get the form with the updated history, it should be archived
         xform = self.formdb.get_form(xform.form_id)
-        self.assertEqual(0, len(xform.history))
+        self.assertEqual(1, len(xform.history))
+        self.assertTrue(xform.is_archived)
+        [archival] = xform.history
+        self.assertEqual('archive', archival.operation)
+        self.assertEqual('librarian', archival.user)
 
         # The case associated with the form should still exist, it was not rebuilt because of the exception
         case = self.casedb.get_case(case_id)
@@ -105,20 +109,13 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # There should be a stub for the unfinished archive
         unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].history_updated, True)
         self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
         self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
         self.assertEqual(unfinished_archive_stubs[0].archive, True)
 
         # Manually call the periodic celery task that reruns archiving/unarchiving actions
         reprocess_archive_stubs()
-
-        # Make sure the history shows only one archive
-        xform = self.formdb.get_form(xform.form_id)
-        self.assertEqual(1, len(xform.history))
-        self.assertTrue(xform.is_archived)
-        [archival] = xform.history
-        self.assertEqual('archive', archival.operation)
-        self.assertEqual('librarian', archival.user)
 
         # The case and stub should both be deleted now
         case = self.casedb.get_case(case_id)
@@ -127,6 +124,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
 
     def testUnfinishedUnarchiveStub(self):
+        # Test running the celery task reprocess_archive_stubs on an existing unarchive stub
         case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
         xml_data = self.get_xml('basic')
         result = submit_form_locally(
@@ -146,29 +144,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
                 mock_send.side_effect = Exception
                 xform.unarchive(user_id='librarian')
             except Exception:
-                # Return the exception so that nothing after the exception is run
-                return
-
-        # Get the form with the updated history, make sure it has not been unarchived yet
-        xform = self.formdb.get_form(xform.form_id)
-        self.assertEqual(1, len(xform.history))
-        self.assertTrue(xform.is_archived)
-        self.assertEqual('archive', xform.history[0].operation)
-        self.assertEqual('librarian', xform.history[0].user)
-
-        # The case should not exist because the unarchived form was not rebuilt
-        case = self.casedb.get_case(case_id)
-        self.assertTrue(case.is_deleted)
-
-        # There should be a stub for the unfinished unarchive
-        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
-        self.assertEqual(len(unfinished_archive_stubs), 1)
-        self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
-        self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
-        self.assertEqual(unfinished_archive_stubs[0].archive, False)
-
-        # Manually call the periodic celery task that reruns archiving/unarchiving actions
-        reprocess_archive_stubs()
+                pass
 
         # Make sure the history only has an archive and an unarchive
         xform = self.formdb.get_form(xform.form_id)
@@ -179,6 +155,21 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('unarchive', xform.history[1].operation)
         self.assertEqual('librarian', xform.history[1].user)
 
+        # The case should not exist because the unarchived form was not rebuilt
+        case = self.casedb.get_case(case_id)
+        self.assertTrue(case.is_deleted)
+
+        # There should be a stub for the unfinished unarchive
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].history_updated, True)
+        self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
+        self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
+        self.assertEqual(unfinished_archive_stubs[0].archive, False)
+
+        # Manually call the periodic celery task that reruns archiving/unarchiving actions
+        reprocess_archive_stubs()
+
         # The case should be back, and the stub should be deleted now
         case = self.casedb.get_case(case_id)
         self.assertFalse(case.is_deleted)
@@ -186,6 +177,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
 
     def testUnarchivingWithArchiveStub(self):
+        # Test a user-initiated unarchive with an existing archive stub
         case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
         xml_data = self.get_xml('basic')
         result = submit_form_locally(
@@ -195,7 +187,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform = result.xform
         self.assertTrue(xform.is_normal)
         self.assertEqual(0, len(xform.history))
-
         # Mock the archive function throwing an error
         with mock.patch('couchforms.signals.xform_archived.send') as mock_send:
             try:
@@ -207,6 +198,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # There should be a stub for the unfinished archive
         unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].history_updated, True)
         self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
         self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
         self.assertEqual(unfinished_archive_stubs[0].archive, True)
@@ -230,7 +222,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertFalse(case.is_deleted)
 
     def testArchivingWithUnarchiveStub(self):
-
+        # Test a user-initiated archive with an existing unarchive stub
         case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
         xml_data = self.get_xml('basic')
         result = submit_form_locally(
@@ -255,6 +247,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # There should be a stub for the unfinished unarchive
         unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
         self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].history_updated, True)
         self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
         self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
         self.assertEqual(unfinished_archive_stubs[0].archive, False)
@@ -273,9 +266,128 @@ class TestFormArchiving(TestCase, TestFileMixin):
         # Manually call the periodic celery task that reruns archiving/unarchiving actions
         reprocess_archive_stubs()
 
+        # The history should not have been added to, make sure that it still only has one entry
+
         # Make sure the case still does not exist (to double check that the unarchive stub was deleted)
         case = self.casedb.get_case(case_id)
         self.assertTrue(case.is_deleted)
+
+    def testUnfinishedArchiveStubErrorAddingHistory(self):
+        # Test running the celery task reprocess_archive_stubs on an existing archive stub where the archive
+        # initially failed on updating the history
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
+        xml_data = self.get_xml('basic')
+        result = submit_form_locally(
+            xml_data,
+            'test-domain',
+        )
+        xform = result.xform
+        self.assertTrue(xform.is_normal)
+        self.assertEqual(0, len(xform.history))
+
+        # Mock the archive function throwing an error
+        with mock.patch('couchforms.models.XFormOperation') as mock_append:
+            try:
+                mock_append.side_effect = Exception
+                xform.archive(user_id='librarian')
+            except Exception:
+                pass
+
+        # Get the form with the updated history, make sure it has not been archived yet
+        xform = self.formdb.get_form(xform.form_id)
+        self.assertEqual(0, len(xform.history))
+        self.assertFalse(xform.is_archived)
+
+        # The case associated with the form should still exist, it was not rebuilt because of the exception
+        case = self.casedb.get_case(case_id)
+        self.assertFalse(case.is_deleted)
+
+        # There should be a stub for the unfinished archive, and the history should not be updated yet
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].history_updated, False)
+        self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
+        self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
+        self.assertEqual(unfinished_archive_stubs[0].archive, True)
+
+        # Manually call the periodic celery task that reruns archiving/unarchiving actions
+        reprocess_archive_stubs()
+
+        # Make sure the history shows an archive now
+        xform = self.formdb.get_form(xform.form_id)
+        self.assertEqual(1, len(xform.history))
+        self.assertTrue(xform.is_archived)
+        [archival] = xform.history
+        self.assertEqual('archive', archival.operation)
+        self.assertEqual('librarian', archival.user)
+
+        # The case and stub should both be deleted now
+        case = self.casedb.get_case(case_id)
+        self.assertTrue(case.is_deleted)
+        unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
+
+    def testUnfinishedUnarchiveStubErrorAddingHistory(self):
+        # Test running the celery task reprocess_archive_stubs on an existing archive stub where the archive
+        # initially failed on updating the history
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
+        xml_data = self.get_xml('basic')
+        result = submit_form_locally(
+            xml_data,
+            'test-domain',
+        )
+        xform = result.xform
+        self.assertTrue(xform.is_normal)
+        self.assertEqual(0, len(xform.history))
+
+        # Archive the form successfully
+        xform.archive(user_id='librarian')
+
+        # Mock the unarchive function throwing an error
+        with mock.patch('couchforms.models.XFormOperation') as mock_append:
+            try:
+                mock_append.side_effect = Exception
+                xform.unarchive(user_id='librarian')
+            except Exception:
+                pass
+
+        # Get the form with the updated history, make sure it only has one entry (the archive)
+        xform = self.formdb.get_form(xform.form_id)
+        self.assertEqual(1, len(xform.history))
+        self.assertTrue(xform.is_archived)
+        [archival] = xform.history
+        self.assertEqual('archive', archival.operation)
+        self.assertEqual('librarian', archival.user)
+
+        # The case associated with the form should not exist, it was not rebuilt because of the exception
+        case = self.casedb.get_case(case_id)
+        self.assertTrue(case.is_deleted)
+
+        # There should be a stub for the unfinished archive, and the history should not be updated yet
+        unfinished_archive_stubs = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs), 1)
+        self.assertEqual(unfinished_archive_stubs[0].history_updated, False)
+        self.assertEqual(unfinished_archive_stubs[0].user_id, 'librarian')
+        self.assertEqual(unfinished_archive_stubs[0].domain, 'test-domain')
+        self.assertEqual(unfinished_archive_stubs[0].archive, False)
+
+        # Manually call the periodic celery task that reruns archiving/unarchiving actions
+        reprocess_archive_stubs()
+
+        # Make sure the history shows an archive and an unarchive now
+        xform = self.formdb.get_form(xform.form_id)
+        self.assertEqual(2, len(xform.history))
+        self.assertFalse(xform.is_archived)
+        self.assertEqual('archive', xform.history[0].operation)
+        self.assertEqual('librarian', xform.history[0].user)
+        self.assertEqual('unarchive', xform.history[1].operation)
+        self.assertEqual('librarian', xform.history[1].user)
+
+        # The case should be back, and the stub should be deleted now
+        case = self.casedb.get_case(case_id)
+        self.assertFalse(case.is_deleted)
+        unfinished_archive_stubs_after_reprocessing = UnfinishedArchiveStub.objects.filter()
+        self.assertEqual(len(unfinished_archive_stubs_after_reprocessing), 0)
 
     def testSignal(self):
         global archive_counter, restore_counter
