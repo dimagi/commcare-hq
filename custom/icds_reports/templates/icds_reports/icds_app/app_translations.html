@@ -3,7 +3,9 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "hqwebapp/js/widgets_v4" %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'icds_reports/js/manage_app_translations.js' %}"></script>
+{% endblock %}
 
 {% block page_content %}
     {% if not transifex_details_available %}
@@ -13,9 +15,20 @@
             </span>
         </p>
     {% else %}
-        <form class="form form-horizontal" name="product" method="post">
-            <legend>{% trans "ICDS App Translations" %}</legend>
-            {% crispy translations_form %}
-        </form>
+        <ul class="nav nav-tabs">
+          <li class="active"><a data-toggle="tab" href="#app-trans-form" id="create-tab"><b>Create</b></a></li>
+          <li><a data-toggle="tab" href="#app-trans-form" id="update-tab"><b>Update</b></a></li>
+          <li><a data-toggle="tab" href="#app-trans-form" id="pull-tab"><b>Pull</b></a></li>
+          <li><a data-toggle="tab" href="#app-trans-form" id="advanced-tab"><b>Advanced</b></a></li>
+        </ul>
+        <br/>
+        <div class="tab-content">
+            <div id="app-trans-form">
+                <form class="form form-horizontal" name="app-translations" id="app-translations" method="post">
+                    {% crispy translations_form %}
+                </form>
+
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
