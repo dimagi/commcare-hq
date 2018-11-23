@@ -24,7 +24,7 @@ class AppTranslationsForm(forms.Form):
         ],
         widget=forms.CheckboxSelectMultiple(),
         required=False,
-        initial='yes',
+        initial='no',
     )
     update_resource = forms.MultipleChoiceField(
         choices=[
