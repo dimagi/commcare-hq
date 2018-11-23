@@ -392,8 +392,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
                 return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=True):
-            FormAccessorSQL.archive_form(self, retry_archive, user_id)
+        with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
+            FormAccessorSQL.archive_form(self, user_id, archive_stub)
+            archive_stub.archive_history_updated()
             xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user_id=None, retry_archive=False):
@@ -405,9 +406,26 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
                 return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=False):
-            FormAccessorSQL.unarchive_form(self, retry_archive, user_id)
+        with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
+            FormAccessorSQL.unarchive_form(self, user_id, archive_stub)
+            archive_stub.archive_history_updated()
             xform_unarchived.send(sender="form_processor", xform=self)
+
+    def _send_archive_to_kafka(self, user_id):
+        # Don't update the history, just send to kafka
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=True):
+            FormAccessorSQL().send_to_kafka(self, archive=True)
+            xform_archived.send(sender="form_processor", xform=self)
+
+    def _send_unarchive_to_kafka(self, user_id):
+        # Don't update the history, just send to kafka
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=False):
+            FormAccessorSQL().send_to_kafka(self, archive=False)
+            xform_archived.send(sender="form_processor", xform=self)
 
     def __unicode__(self):
         return (
