@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import sys
 import os
 import mimetypes
-from collections import namedtuple
+from collections import Counter, namedtuple
 
 import django
 
@@ -102,6 +102,18 @@ def patch_jsonfield():
     JSONField.to_python = to_python
 
 
+def patch_assertItemsEqual():
+    """
+    For Python 2/3 compatibility
+    """
+    from django.test import SimpleTestCase
+
+    def _assertItemsEqual(self, actual, expected):
+        self.assertEqual(Counter(actual), Counter(expected))
+
+    SimpleTestCase.assertItemsEqual = _assertItemsEqual
+
+
 if __name__ == "__main__":
     init_hq_python_path()
 
@@ -131,6 +143,8 @@ if __name__ == "__main__":
     # workaround for https://github.com/smore-inc/tinys3/issues/33
     mimetypes.init()
     patch_jsonfield()
+
+    patch_assertItemsEqual()
 
     set_default_settings_path(sys.argv)
     from django.core.management import execute_from_command_line
