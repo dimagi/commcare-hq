@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
@@ -12,6 +11,7 @@ from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_he
     percent_children_enrolled_help_text, percent_pregnant_women_enrolled_help_text, \
     percent_lactating_women_enrolled_help_text, percent_adolescent_girls_enrolled_help_text
 from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
+from custom.icds_reports.reports.utils import get_color_with_green_positive
 from custom.icds_reports.utils import (
     percent_increase, percent_diff, get_value, apply_exclude,
     person_has_aadhaar_column, person_is_beneficiary_column
@@ -68,11 +68,6 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
         prev_data = get_data_for(AggAwcMonthly, config)
         frequency = 'month'
 
-    def _get_color(val):
-        if isinstance(val, six.text_type):
-            return 'green'
-        return 'green' if val > 0 else 'red'
-
     percent_household = percent_increase('household', data, prev_data)
     percent_person_aadhaar = percent_diff('person_aadhaar', data, prev_data, 'all_persons')
     percent_child_health = percent_diff('child_health', data, prev_data, 'child_health_all')
@@ -87,7 +82,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Registered Households'),
                     'help_text': _('Total number of households registered'),
                     'percent': percent_household,
-                    'color': _get_color(percent_household),
+                    'color': get_color_with_green_positive(percent_household),
                     'value': get_value(data, 'household'),
                     'all': None,
                     'format': 'number',
@@ -98,7 +93,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Percent Aadhaar-seeded Beneficiaries'),
                     'help_text': percent_aadhaar_seeded_beneficiaries_help_text(),
                     'percent': percent_person_aadhaar,
-                    'color': _get_color(percent_person_aadhaar),
+                    'color': get_color_with_green_positive(percent_person_aadhaar),
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
@@ -111,7 +106,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
                     'help_text': percent_children_enrolled_help_text(),
                     'percent': percent_child_health,
-                    'color': _get_color(percent_child_health),
+                    'color': get_color_with_green_positive(percent_child_health),
                     'value': get_value(data, 'child_health'),
                     'all': get_value(data, 'child_health_all'),
                     'format': 'percent_and_div',
@@ -122,7 +117,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Percent pregnant women enrolled for Anganwadi Services'),
                     'help_text': percent_pregnant_women_enrolled_help_text(),
                     'percent': percent_ccs_pregnant,
-                    'color': _get_color(percent_ccs_pregnant),
+                    'color': get_color_with_green_positive(percent_ccs_pregnant),
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': get_value(data, 'ccs_pregnant_all'),
                     'format': 'percent_and_div',
@@ -136,7 +131,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Percent lactating women enrolled for Anganwadi Services'),
                     'help_text': percent_lactating_women_enrolled_help_text(),
                     'percent': percent_css_lactating,
-                    'color': _get_color(percent_css_lactating),
+                    'color': get_color_with_green_positive(percent_css_lactating),
                     'value': get_value(data, 'css_lactating'),
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
@@ -147,7 +142,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
                     'help_text': percent_adolescent_girls_enrolled_help_text(),
                     'percent': percent_person_adolescent,
-                    'color': _get_color(percent_person_adolescent),
+                    'color': get_color_with_green_positive(percent_person_adolescent),
                     'value': get_value(data, 'person_adolescent'),
                     'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',

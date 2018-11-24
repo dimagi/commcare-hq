@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
