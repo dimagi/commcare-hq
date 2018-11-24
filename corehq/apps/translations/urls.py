@@ -5,6 +5,7 @@ from django.conf.urls import url
 from .views import (
     ConvertTranslations,
     PullResource,
+    AppTranslations,
 )
 
 urlpatterns = [
@@ -12,4 +13,6 @@ urlpatterns = [
         name=ConvertTranslations.urlname),
     url(r'^pull_resource/$', PullResource.as_view(),
         name=PullResource.urlname),
+    url(r'^translations/apps/', AppTranslations.as_view(),
+        name='app_translations'),
 ]

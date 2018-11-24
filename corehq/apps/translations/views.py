@@ -8,16 +8,24 @@ from memoized import memoized
 from openpyxl import Workbook
 
 from django.http import HttpResponse
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import (
+    ugettext as _,
+    ugettext_noop,
+    ugettext_lazy,
+)
 from django.contrib import messages
 from django.utils.decorators import method_decorator
+from django.shortcuts import redirect
+from django.urls import reverse
 
 from corehq import toggles
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.translations.forms import (
     ConvertTranslationsForm,
     PullResourceForm,
+    AppTranslationsForm,
 )
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.app_manager.app_translations.generators import Translation, PoFileGenerator
 from corehq.util.files import safe_filename_header
 from corehq.apps.domain.views.base import BaseDomainView
@@ -25,6 +33,11 @@ from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds.translations.integrations.utils import get_file_content_from_workbook, \
     transifex_details_available_for_domain
+from corehq.apps.translations.tasks import (
+    push_translation_files_to_transifex,
+    pull_translation_files_from_transifex,
+    delete_resources_on_transifex,
+)
 
 
 class BaseTranslationsView(BaseDomainView):
@@ -224,4 +237,120 @@ class PullResource(BaseTranslationsView):
                     return self._pull_resource(request)
                 except ResourceMissing:
                     messages.add_message(request, messages.ERROR, 'Resource not found')
+        return self.get(request, *args, **kwargs)
+
+
+@location_safe
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+class AppTranslations(BaseTranslationsView):
+    page_title = ugettext_lazy('App Translations')
+    urlname = 'app_translations'
+    template_name = 'app_translations.html'
+    section_name = ugettext_lazy("Translations")
+
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(AppTranslations, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def translations_form(self):
+        if self.request.POST:
+            return AppTranslationsForm(self.domain, self.request.POST)
+        else:
+            return AppTranslationsForm(self.domain)
+
+    @property
+    def page_context(self):
+        context = super(AppTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['translations_form'] = self.translations_form
+        return context
+
+    def section_url(self):
+        return reverse(ConvertTranslations.urlname, args=self.args, kwargs=self.kwargs)
+
+    def transifex(self, domain, form_data):
+        transifex_project_slug = form_data.get('transifex_project_slug')
+        source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
+        return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
+                         form_data['version'],
+                         use_version_postfix='yes' in form_data['use_version_postfix'],
+                         update_resource='yes' in form_data['update_resource'])
+
+    def perform_push_request(self, request, form_data):
+        if form_data['target_lang']:
+            if not self.ensure_resources_present(request):
+                return False
+        push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to submit files for translations'))
+        return True
+
+    def resources_translated(self, request):
+        resource_pending_translations = (self._transifex.
+                                         resources_pending_translations(break_if_true=True))
+        if resource_pending_translations:
+            messages.error(
+                request,
+                _("Resources yet to be completely translated, for ex: {}".format(
+                    resource_pending_translations)))
+            return False
+        return True
+
+    def ensure_resources_present(self, request):
+        if not self._transifex.resource_slugs:
+            messages.error(request, _('Resources not found for this project and version.'))
+            return False
+        return True
+
+    def perform_pull_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
+            return False
+        if form_data['perform_translated_check']:
+            if not self.resources_translated(request):
+                return False
+        if form_data['lock_translations']:
+            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+                messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                          'Hence, the request for locking resources can not be performed.'))
+                return False
+        pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to pull for translations. '
+                                    'You should receive an email shortly'))
+        return True
+
+    def perform_delete_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
+            return False
+        if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+            messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                      'Hence, the request for deleting resources can not be performed.'))
+            return False
+        delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to delete resources.'))
+        return True
+
+    def perform_request(self, request, form_data):
+        self._transifex = self.transifex(request.domain, form_data)
+        if not self._transifex.source_lang_is(form_data.get('source_lang')):
+            messages.error(request, _('Source lang selected not available for the project'))
+            return False
+        else:
+            if form_data['action'] == 'push':
+                return self.perform_push_request(request, form_data)
+            elif form_data['action'] == 'pull':
+                return self.perform_pull_request(request, form_data)
+            elif form_data['action'] == 'delete':
+                return self.perform_delete_request(request, form_data)
+
+    def post(self, request, *args, **kwargs):
+        if self.transifex_integration_enabled(request):
+            form = self.translations_form
+            if form.is_valid():
+                form_data = form.cleaned_data
+                try:
+                    if self.perform_request(request, form_data):
+                        return redirect(self.urlname, domain=self.domain)
+                except ResourceMissing as e:
+                    messages.error(request, e)
         return self.get(request, *args, **kwargs)
