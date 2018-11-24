@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
+from custom.icds_reports.reports.utils import get_color_with_green_positive
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 
 
@@ -59,11 +60,6 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
 
     current_month_selected = (current_month.year == now_date.year and current_month.month == now_date.month)
 
-    def _get_color(val):
-        if isinstance(val, six.text_type):
-            return 'green'
-        return 'green' if val > 0 else 'red'
-
     if current_month_selected:
         date = now_date.date()
         daily_yesterday = None
@@ -80,7 +76,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'label': _('Number of AWCs Open yesterday'),
             'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
                             "by the AWW or the AWW helper")),
-            'color': _get_color(daily_attendance_percent),
+            'color': get_color_with_green_positive(daily_attendance_percent),
             'percent': daily_attendance_percent,
             'value': get_value(daily_yesterday, 'daily_attendance'),
             'all': get_value(daily_yesterday, 'awcs'),
@@ -93,7 +89,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
         number_of_awc_open_yesterday = {
             'help_text': _("Total Number of AWCs open for at least one day in month"),
             'label': _('Number of AWCs open for at least one day in month'),
-            'color': _get_color(monthly_attendance_percent),
+            'color': get_color_with_green_positive(monthly_attendance_percent),
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
             'all': get_value(awc_this_month_data, 'all_awcs'),
@@ -110,7 +106,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
                     'label': _('AWCs Launched'),
                     'help_text': awcs_launched_help_text(),
                     'percent': percent_awcs,
-                    'color': _get_color(percent_awcs),
+                    'color': get_color_with_green_positive(percent_awcs),
                     'value': get_value(awc_this_month_data, 'awcs'),
                     'all': get_value(awc_this_month_data, 'all_awcs'),
                     'format': 'div',
