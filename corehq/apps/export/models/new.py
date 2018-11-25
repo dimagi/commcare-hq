@@ -898,6 +898,8 @@ class ExportInstance(BlobMixin, Document):
                 column.update_domain(column_initialization_data.get('domain'))
 
             if not existing_column:
+                if static_column.label in ['case_link', 'form_link'] and self.get_id:
+                    static_column.selected = False
                 insert_fn(static_column)
 
     @classmethod
