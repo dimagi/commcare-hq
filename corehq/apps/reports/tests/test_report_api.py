@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import json
+
 from django import test as unittest
 from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import EQFilter
@@ -79,20 +82,23 @@ class ReportAPITest(unittest.TestCase):
     def test_basic(self):
         ds = UserDataSource({}, keys=[["user1"], ["user2"]], group_by=['user'])
         data = ds.get_data()
-        self.assertItemsEqual(data, [
-            {
-                'user': 'Bob',
-                'indicator_a': 1,
-                'indicator_b': 1,
-                'cd': 50
-            },
-            {
-                'user': 'Joe',
-                'indicator_a': 1,
-                'indicator_b': 1,
-                'cd': 100
-            }
-        ])
+        self.assertItemsEqual(
+            [json.dumps(d, sort_keys=True) for d in data],
+            [
+                json.dumps({
+                    'user': 'Bob',
+                    'indicator_a': 1,
+                    'indicator_b': 1,
+                    'cd': 50
+                }, sort_keys=True),
+                json.dumps({
+                    'user': 'Joe',
+                    'indicator_a': 1,
+                    'indicator_b': 1,
+                    'cd': 100
+                }, sort_keys=True)
+            ]
+        )
 
     def test_filter(self):
         ds = UserDataSource(
