@@ -8,7 +8,7 @@ from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_rows,
     get_unicode_dicts,
 )
-from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from django.utils.translation import ugettext_lazy as _
 from six.moves import zip
 

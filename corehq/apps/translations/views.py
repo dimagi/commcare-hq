@@ -1,43 +1,43 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import openpyxl
-import polib
 
 from io import open
-from memoized import memoized
-from openpyxl import Workbook
 
+import openpyxl
+import polib
+from corehq.apps.translations.integrations.transifex.transifex import Transifex
+from corehq.apps.translations.integrations.transifex.utils import get_file_content_from_workbook, \
+    transifex_details_available_for_domain
+from django.contrib import messages
 from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import (
     ugettext as _,
     ugettext_noop,
     ugettext_lazy,
 )
-from django.contrib import messages
-from django.utils.decorators import method_decorator
-from django.shortcuts import redirect
-from django.urls import reverse
+from memoized import memoized
+from openpyxl import Workbook
 
 from corehq import toggles
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_select2_v4
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.translations.forms import (
     ConvertTranslationsForm,
     PullResourceForm,
     AppTranslationsForm,
 )
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.app_manager.app_translations.generators import Translation, PoFileGenerator
-from corehq.util.files import safe_filename_header
-from corehq.apps.domain.views.base import BaseDomainView
-from custom.icds.translations.integrations.exceptions import ResourceMissing
-from custom.icds.translations.integrations.transifex import Transifex
-from custom.icds.translations.integrations.utils import get_file_content_from_workbook, \
-    transifex_details_available_for_domain
+from corehq.apps.translations.generators import Translation, PoFileGenerator
+from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
 from corehq.apps.translations.tasks import (
     push_translation_files_to_transifex,
     pull_translation_files_from_transifex,
     delete_resources_on_transifex,
 )
+from corehq.util.files import safe_filename_header
 
 
 class BaseTranslationsView(BaseDomainView):

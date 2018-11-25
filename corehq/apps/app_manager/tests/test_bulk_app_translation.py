@@ -9,7 +9,7 @@ from io import BytesIO
 
 from mock import patch
 
-from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw

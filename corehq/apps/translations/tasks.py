@@ -2,12 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os
+from io import open
 
 from celery.task import task
 from django.conf import settings
 from django.core.mail.message import EmailMessage
-from custom.icds.translations.integrations.transifex import Transifex
-from io import open
+
+from corehq.apps.translations.integrations.transifex.transifex import Transifex
 
 
 @task(serializer='pickle')

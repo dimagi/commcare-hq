@@ -11,7 +11,7 @@ from django.utils.functional import cached_property
 from memoized import memoized
 
 from collections import namedtuple, OrderedDict, defaultdict
-from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.util import get_form_data
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
