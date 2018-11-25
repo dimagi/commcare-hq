@@ -522,6 +522,15 @@
         "column_id": "open_person_count"
       },
       {
+        "column_id": "pregnant",
+        "display_name": null,
+        "filter": {
+          "name": "pregnant",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
         "filter": {
           "type": "and",
           "filters": [

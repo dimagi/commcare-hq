@@ -47,18 +47,29 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
     def aggregation_query(self):
-
+        start_month_string = self.month.strftime("'%Y-%m-%d'::date")
+        end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
+        age_in_days = "({} - case_list.dob)::integer".format(end_month_string)
+        age_in_months_end = "({} / 30.4 )".format(age_in_days)
+        age_in_months = "(({} - case_list.dob) / 30.4 )".format(start_month_string)
+        open_in_month = ("(({} - case_list.opened_on::date)::integer >= 0) AND (case_list.closed = 0 OR (case_list.closed_on::date - {})::integer > 0)").format(end_month_string, start_month_string)
+        alive_in_month = "(case_list.date_death IS NULL OR case_list.date_death - {} >= 0)".format(
+            start_month_string)
+        seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
+        valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(open_in_month, alive_in_month, seeking_services,
+                                                                  age_in_months)
+        thr_eligible = "({} AND {} > 6 AND {} <= 36)".format(valid_in_month, age_in_months_end, age_in_months)
         columns = (
-            ('awc_id', 'ucr.awc_id'),
-            ('case_id', 'ucr.case_id'),
-            ('month', 'ucr.month'),
-            ('age_in_months', 'ucr.age_in_months'),
+            ('awc_id', 'case_list.awc_id'),
+            ('case_id', 'case_list.case_id'),
+            ('month', self.month.strftime("'%Y-%m-%d'")),
+            ('age_in_months', 'trunc({})'.format(age_in_months_end)),
             ('ccs_status', 'ucr.ccs_status'),
-            ('open_in_month', 'ucr.open_in_month'),
-            ('alive_in_month', 'ucr.alive_in_month'),
+            ('open_in_month', "CASE WHEN {} THEN 1 ELSE 0 END".format(open_in_month)),
+            ('alive_in_month', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(alive_in_month)),
             ('trimester', 'ucr.trimester'),
             ('num_rations_distributed', 'COALESCE(agg_thr.days_ration_given_mother, 0)'),
-            ('thr_eligible', 'ucr.thr_eligible'),
+            ('thr_eligible', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(thr_eligible)),
             ('tetanus_complete', 'ucr.tetanus_complete'),
             ('delivered_in_month', 'ucr.delivered_in_month'),
             ('anc1_received_at_delivery', 'ucr.anc1_received_at_delivery'),
@@ -91,17 +102,17 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('postnatal', 'ucr.postnatal'),
             ('has_aadhar_id', 'ucr.has_aadhar_id'),
             ('counsel_fp_methods', 'NULL'),
-            ('pregnant', 'ucr.pregnant'),
+            ('pregnant', 'case_list.pregnant'),
             ('pregnant_all', 'ucr.pregnant_all'),
             ('lactating', 'ucr.lactating'),
             ('lactating_all', 'ucr.lactating_all'),
             ('institutional_delivery_in_month', 'ucr.institutional_delivery_in_month'),
-            ('add', 'ucr.add'),
-            ('caste', 'ucr.caste'),
-            ('disabled', 'ucr.disabled'),
-            ('minority', 'ucr.minority'),
-            ('resident', 'ucr.resident'),
-            ('valid_in_month', 'ucr.valid_in_month'),
+            ('add', 'case_list.add'),
+            ('caste', 'case_list.caste'),
+            ('disabled', 'case_list.disabled'),
+            ('minority', 'case_list.minority'),
+            ('resident', 'case_list.resident'),
+            ('valid_in_month', "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ('anc_in_month',
              '( '
                 '(CASE WHEN ut.due_list_date_anc_1 BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) + '
