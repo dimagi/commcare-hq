@@ -160,6 +160,6 @@ class TestZapierCustomFields(TestCase):
         actual_fields = [field.get_content() for field in ZapierCustomFieldCaseResource().obj_get_list(bundle)]
 
         def _serialize(objs):
-            return [json.dumps(obj) for obj in objs]
+            return [json.dumps(obj, sort_keys=True) for obj in objs]
 
         self.assertItemsEqual(_serialize(expected_fields), _serialize(actual_fields))
