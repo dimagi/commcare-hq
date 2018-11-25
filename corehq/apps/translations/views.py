@@ -6,8 +6,9 @@ from io import open
 import openpyxl
 import polib
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
-from corehq.apps.translations.integrations.transifex.utils import get_file_content_from_workbook, \
-    transifex_details_available_for_domain
+from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
+from corehq.apps.translations.utils import get_file_content_from_workbook
+
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import redirect
