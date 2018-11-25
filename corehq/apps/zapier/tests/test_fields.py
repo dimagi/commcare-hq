@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import json
+
 from django.test.testcases import TestCase, SimpleTestCase
 from django.test.client import Client
 from tastypie.resources import Resource
@@ -155,4 +158,8 @@ class TestZapierCustomFields(TestCase):
         bundle = Resource().build_bundle(data={}, request=request)
 
         actual_fields = [field.get_content() for field in ZapierCustomFieldCaseResource().obj_get_list(bundle)]
-        self.assertItemsEqual(expected_fields, actual_fields)
+
+        def _serialize(objs):
+            return [json.dumps(obj) for obj in objs]
+
+        self.assertItemsEqual(_serialize(expected_fields), _serialize(actual_fields))
