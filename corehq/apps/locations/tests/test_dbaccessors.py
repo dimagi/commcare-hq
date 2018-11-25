@@ -60,8 +60,10 @@ class TestUsersByLocation(TestCase):
 
     def test_get_user_docs_by_location(self):
         users = get_user_docs_by_location(self.domain, self.meereen._id)
-        self.assertItemsEqual([u['doc'] for u in users],
-                              [self.tyrion.to_json(), self.daenerys.to_json()])
+        self.assertEqual(
+            [u['doc'] for u in sorted(users, key=lambda user_doc: user_doc['doc']['username'])],
+            [self.daenerys.to_json(), self.tyrion.to_json()]
+        )
 
     def test_get_all_users_by_location(self):
         users = get_all_users_by_location(self.domain, self.meereen._id)
