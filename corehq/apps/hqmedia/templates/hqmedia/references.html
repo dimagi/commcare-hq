@@ -1,4 +1,4 @@
-{% extends "hqmedia/uploader_base.html" %}
+{% extends "hqwebapp/base_page.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -29,11 +29,8 @@
     </style>
 {% endblock %}
 
-{% block js %} {{ block.super }}
-    <!-- todo add the media player back in -->
-    {% requirejs_main 'hqmedia/js/temper' %}
+{% requirejs_main 'hqmedia/js/references_main' %}
 
-{% endblock %}
 
 {% block page_name %}
     {% trans 'Multimedia Reference Checker' %}

@@ -1,9 +1,9 @@
-/* globals MultimediaReferenceController */
 hqDefine("hqmedia/js/references_main",[
     'hqwebapp/js/initial_page_data',
     'hqmedia/js/hqmedia.reference_controller',
     'jquery',
-    'bootstrap',
+    'bootstrap', // used for the tooltip
+    'app_manager/js/download_async_modal',
 ], function (intialPageData, mediareferenceController, $) {
     $(function () {
         var initialPageData = intialPageData.get,
