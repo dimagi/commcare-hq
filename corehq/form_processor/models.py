@@ -385,7 +385,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     def archive(self, user_id=None, retry_archive=False):
         if not retry_archive:
-            # If any unfinished archive stubs exist for this entry, delete them
+            # If this archive was initiated by a user, delete all other stubs for this action so that this action
+            # isn't overridden
             from couchforms.models import UnfinishedArchiveStub
             UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
             if self.is_archived:
@@ -399,7 +400,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     def unarchive(self, user_id=None, retry_archive=False):
         if not retry_archive:
-            # If any unfinished archive stubs exist for this entry, delete them
+            # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
+            # isn't overridden
             from couchforms.models import UnfinishedArchiveStub
             UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
             if not self.is_archived:
@@ -411,7 +413,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             archive_stub.archive_history_updated()
             xform_unarchived.send(sender="form_processor", xform=self)
 
-    def _send_archive_to_kafka(self, user_id):
+    def send_archive_to_kafka(self, user_id):
         # Don't update the history, just send to kafka
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
@@ -419,7 +421,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             FormAccessorSQL().send_to_kafka(self, archive=True)
             xform_archived.send(sender="form_processor", xform=self)
 
-    def _send_unarchive_to_kafka(self, user_id):
+    def send_unarchive_to_kafka(self, user_id):
         # Don't update the history, just send to kafka
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive

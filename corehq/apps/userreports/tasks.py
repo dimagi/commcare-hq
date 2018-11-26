@@ -249,24 +249,24 @@ def reprocess_archive_stubs():
     start = time.time()
     cutoff = start + timedelta(minutes=4).total_seconds()
     for stub in stubs:
+        # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
         if time.time() - start > cutoff:
             return
-        # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
         xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=stub.xform_id).all().delete()
-        # If the archive action wasn't successful, run the whole thing again.
+        # If the history wasn't updated the first time around, run the whole thing again.
         if not stub.history_updated:
             if stub.archive:
                 xform.archive(user_id=stub.user_id, retry_archive=True)
             else:
                 xform.unarchive(user_id=stub.user_id, retry_archive=True)
-        # If the archive action was successful, don't update history, continue the function on the existing stub
+        # If the history was updated the first time around, just send the update to kafka
         else:
             if stub.archive:
-                xform._send_archive_to_kafka(user_id=stub.user_id)
+                xform.send_archive_to_kafka(user_id=stub.user_id)
             else:
-                xform._send_unarchive_to_kafka(user_id=stub.user_id)
+                xform.send_unarchive_to_kafka(user_id=stub.user_id)
 
 
 @periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
