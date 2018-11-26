@@ -24,7 +24,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstanceFilters,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
-from corehq.apps.reports.filters.users import SubmitHistoryFilter, SubmitHistoryUtils
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, EmwfUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -304,7 +304,7 @@ class DashboardFeedFilterForm(forms.Form):
             reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
         )
         self.fields['emwf_form_filter'].widget.set_url(
-            reverse(SubmitHistoryFilter.options_url, args=(self.domain_object.name,))
+            reverse(ExpandedMobileWorkerFilter.options_url, args=(self.domain_object.name,))
         )
 
         # This form appears inside a modal, so it's differently proportioned than most forms
@@ -430,10 +430,10 @@ class DashboardFeedFilterForm(forms.Form):
                 begin=self.cleaned_data['start_date'],
                 end=self.cleaned_data['end_date'],
             ),
-            users=SubmitHistoryFilter.selected_user_ids(emwf_selections),
-            reporting_groups=SubmitHistoryFilter.selected_reporting_group_ids(emwf_selections),
-            locations=SubmitHistoryFilter.selected_location_ids(emwf_selections),
-            user_types=SubmitHistoryFilter.selected_user_types(emwf_selections),
+            users=ExpandedMobileWorkerFilter.selected_user_ids(emwf_selections),
+            reporting_groups=ExpandedMobileWorkerFilter.selected_reporting_group_ids(emwf_selections),
+            locations=ExpandedMobileWorkerFilter.selected_location_ids(emwf_selections),
+            user_types=ExpandedMobileWorkerFilter.selected_user_types(emwf_selections),
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
         )
@@ -462,7 +462,7 @@ class DashboardFeedFilterForm(forms.Form):
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
-                SubmitHistoryUtils
+                EmwfUtils
             emwf_data = []
             for item in selected_items:
                 choice_tuple = emwf_utils_class(domain).id_to_choice_tuple(str(item))
@@ -534,7 +534,7 @@ class EmwfFilterExportMixin(object):
     export_user_filter = FormSubmittedByFilter
 
     # filter class for including dynamic fields in the context of the view as dynamic_filters
-    dynamic_filter_class = SubmitHistoryFilter
+    dynamic_filter_class = ExpandedMobileWorkerFilter
 
     def _get_user_ids(self, mobile_user_and_group_slugs):
         """
@@ -865,11 +865,11 @@ class SmsExportFilterBuilder(AbstractExportFilterBuilder):
 
 class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
     """
-    Generic Filter form including dynamic filters using SubmitHistoryFilters
+    Generic Filter form including dynamic filters using ExpandedMobileWorkerFilters
     overrides few methods from GenericFilterFormExportDownloadForm for dynamic fields over form fields
     """
     export_user_filter = FormSubmittedByFilter
-    dynamic_filter_class = SubmitHistoryFilter
+    dynamic_filter_class = ExpandedMobileWorkerFilter
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
