@@ -20,7 +20,7 @@ from corehq.elastic import ESError
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.reports.filters.users import EmwfUtils, EmwfUtils, UsersUtils
+from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
 from corehq.apps.es import UserES, GroupES, groups
 from corehq.apps.locations.models import SQLLocation
 
