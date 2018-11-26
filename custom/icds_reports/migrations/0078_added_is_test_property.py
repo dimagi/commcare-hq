@@ -14,8 +14,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0076_awc_locations_test_columns'),
-        # ('icds_reports', '0077_drop_agg_funcs'),
+        ('icds_reports', '0077_drop_agg_funcs'),
     ]
 
     operations = [
