@@ -247,7 +247,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         # in the future these may need to include more columns, but historically
         # caste, resident, minority and disabled have been skipped
-        group_by = ["state_id"]
+        group_by = ["state_id", "month", "ccs_status"]
         child_location = 'district_is_test'
         if aggregation_level > 1:
             group_by.append("district_id")

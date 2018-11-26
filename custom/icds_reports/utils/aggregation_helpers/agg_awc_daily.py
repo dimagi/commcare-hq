@@ -211,7 +211,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
         ) (
             SELECT {calculations}
             FROM "{tablename}"
-            WHERE aggregation_level = {aggregation_level} AND {child_is_test} == 0
+            WHERE aggregation_level = {aggregation_level} AND {child_is_test} = 0
             GROUP BY {group_by}
         )
         """.format(

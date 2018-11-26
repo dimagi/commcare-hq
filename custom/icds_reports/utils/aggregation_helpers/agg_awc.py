@@ -560,7 +560,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ) (
                 SELECT {calculations}
                 FROM "{from_tablename}"
-                WHERE {child_is_test} == 0
+                WHERE {child_is_test} = 0
                 GROUP BY {group_by}
             )
         """.format(
