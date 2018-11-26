@@ -84,7 +84,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         if caseblocks:
             try:
                 form, cases = submit_case_blocks(
-                    [cb.case.as_string() for cb in caseblocks],
+                    [cb.case.as_string().decode('utf-8') for cb in caseblocks],
                     domain,
                     username,
                     user_id,
