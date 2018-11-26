@@ -73,6 +73,7 @@ django-formtools==2.1
 django-otp==0.3.13
 django-two-factor-auth==1.6.2
 datadog==0.15.0
+ddtrace==0.14.1
 django-websocket-redis==0.5.2
 django-redis-sessions==0.6.1
 SQLAlchemy==1.2.12

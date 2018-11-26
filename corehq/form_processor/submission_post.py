@@ -7,6 +7,7 @@ import datetime
 import logging
 from collections import namedtuple
 
+from ddtrace import tracer
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -245,29 +246,30 @@ class SubmissionPost(object):
                 instance = xforms[0]
 
                 if instance.is_duplicate:
-                    submission_type = 'duplicate'
-                    existing_form = xforms[1]
-                    stub = UnfinishedSubmissionStub.objects.filter(
-                        domain=instance.domain,
-                        xform_id=existing_form.form_id
-                    ).first()
+                    with tracer.trace('submission.process_duplicate'):
+                        submission_type = 'duplicate'
+                        existing_form = xforms[1]
+                        stub = UnfinishedSubmissionStub.objects.filter(
+                            domain=instance.domain,
+                            xform_id=existing_form.form_id
+                        ).first()
 
-                    result = None
-                    if stub:
-                        from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
-                        result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
-                    elif existing_form.is_error:
-                        from corehq.form_processor.reprocess import reprocess_form
-                        result = reprocess_form(existing_form, lock_form=False)
-                    if result and result.error:
-                        submission_type = 'error'
-                        openrosa_kwargs['error_message'] = result.error
-                        if existing_form.is_error:
-                            openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+                        result = None
+                        if stub:
+                            from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
+                            result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
+                        elif existing_form.is_error:
+                            from corehq.form_processor.reprocess import reprocess_form
+                            result = reprocess_form(existing_form, lock_form=False)
+                        if result and result.error:
+                            submission_type = 'error'
+                            openrosa_kwargs['error_message'] = result.error
+                            if existing_form.is_error:
+                                openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+                            else:
+                                openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         else:
-                            openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
-                    else:
-                        self.interface.save_processed_models([instance])
+                            self.interface.save_processed_models([instance])
                 elif not instance.is_error:
                     submission_type = 'normal'
                     try:
@@ -335,6 +337,7 @@ class SubmissionPost(object):
             revoke_celery_task(task_id)
             async_restore_task_id_cache.invalidate()
 
+    @tracer.wrap(name='submission.save_models')
     def save_processed_models(self, case_db, xforms, case_stock_result):
         instance = xforms[0]
         try:
@@ -358,6 +361,7 @@ class SubmissionPost(object):
             return "Error performing post save operations"
 
     @staticmethod
+    @tracer.wrap(name='submission.post_save_actions')
     def do_post_save_actions(case_db, xforms, case_stock_result):
         instance = xforms[0]
         try:
@@ -380,6 +384,7 @@ class SubmissionPost(object):
             raise PostSaveError
 
     @staticmethod
+    @tracer.wrap(name='submission.process_cases_and_stock')
     def process_xforms_for_cases(xforms, case_db):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
@@ -469,6 +474,7 @@ class SubmissionPost(object):
             status=500,
         ).response()
 
+    @tracer.wrap(name='submission.process_device_log')
     def process_device_log(self, device_log_form):
         self._conditionally_send_device_logs_to_sumologic(device_log_form)
         ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
