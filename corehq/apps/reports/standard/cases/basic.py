@@ -274,7 +274,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     @classmethod
     def get_subpages(cls):
-        def _case_name(request=None, **context):
+        def _get_case_name(request=None, **context):
             if 'case' in context:
                 return mark_safe(context['case'].name)
             else:
@@ -283,7 +283,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         from corehq.apps.reports.views import CaseDataView
         return [
             {
-                'title': _case_name,
+                'title': _get_case_name,
                 'urlname': CaseDataView.urlname,
             },
         ]
