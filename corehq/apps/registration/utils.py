@@ -136,7 +136,7 @@ def request_new_domain(request, form, is_new_user=True):
         if settings.IS_SAAS_ENVIRONMENT:
             load_appcues_template_apps.apply_async(
                 (new_domain.name, current_user.username),
-                link=send_domain_registration_email(
+                link=send_domain_registration_email.si(
                     request.user.email,
                     dom_req.domain,
                     dom_req.activation_guid,

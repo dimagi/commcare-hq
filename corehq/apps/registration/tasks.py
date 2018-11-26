@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -58,6 +58,7 @@ FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
+@task(serializer='pickle', queue="email_queue")
 def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
