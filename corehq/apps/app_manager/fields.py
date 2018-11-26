@@ -16,9 +16,13 @@ from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYP
     DATA_SOURCE_TYPE_FORM
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
+from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_exports_by_form
 from memoized import memoized
 from six.moves import map
+
+
+_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
 ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
@@ -437,7 +441,14 @@ class ApplicationDataRMIHelper(object):
             app_langs.append(form['app']['langs'][0] if 'langs' in form['app'] else 'en')
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
             # Set module to None if it doesn't have an ID (FB 285678)
-            module = form['module'] if 'module' in form and 'id' in form['module'] else None
+            module = None
+            if 'module' in form:
+                if _assert(
+                        'id' in form['module'],
+                        "form['module'] has an unexpected value",
+                        form['module']
+                ):
+                    module = form['module']
             module_id = (module['id'] if has_app and module is not None
                          else self.UNKNOWN_SOURCE)
             module_name = self._get_item_name(
