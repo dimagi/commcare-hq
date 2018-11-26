@@ -81,7 +81,7 @@ class DishaDump(object):
         #   }
         columns = self._get_columns()
         indicators = self._get_rows()
-        metadata_line = u'{{'\
+        metadata_line = '{{'\
             '"month":"{month}", '\
             '"state_name": "{state_name}", '\
             '"column_names": {columns}, '\
