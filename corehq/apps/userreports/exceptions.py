@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from sqlalchemy.exc import ProgrammingError
+
+
 class UserReportsError(Exception):
     pass
 
@@ -64,3 +69,15 @@ class InvalidQueryColumn(UserReportsError):
 
 class InvalidDataSourceType(UserQueryError):
     pass
+
+
+def translate_programming_error(exception):
+    if isinstance(exception, ProgrammingError):
+        orig = getattr(exception, 'orig')
+        if orig:
+            error_code = getattr(orig, 'pgcode')
+            # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
+            if error_code == '42P01':
+                return TableNotFoundWarning(str(exception))
+            elif error_code == '42703':
+                return MissingColumnWarning(str(exception))
