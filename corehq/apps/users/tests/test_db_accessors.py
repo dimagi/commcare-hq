@@ -152,7 +152,7 @@ class AllCommCareUsersTest(TestCase):
     def test_get_user_docs_by_username(self):
         users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]
         usernames = [u.username for u in users] + ['nonexistant@username.com']
-        self.assertItemsEqual(
+        self.assertEqual(
             get_user_docs_by_username(usernames),
             [u.to_json() for u in users]
         )
