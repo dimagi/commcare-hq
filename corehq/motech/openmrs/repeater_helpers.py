@@ -27,6 +27,7 @@ from corehq.motech.openmrs.exceptions import OpenmrsConfigurationError
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.value_source import CaseTriggerInfo
+from corehq.util.quickcache import quickcache
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
@@ -723,6 +724,7 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
     return result
 
 
+@quickcache(['requests.base_url'])
 def get_unknown_encounter_role(requests):
     """
     Return "Unknown" encounter role for legacy providers with no
@@ -736,6 +738,19 @@ def get_unknown_encounter_role(requests):
         'The standard "Unknown" EncounterRole was not found on the OpenMRS server at "{}". Please notify the '
         'administrator of that server.'.format(requests.base_url)
     )
+
+
+@quickcache(['requests.base_url'])
+def get_unknown_location_uuid(requests):
+    """
+    Returns the UUID of Bahmni's "Unknown Location" or None if it
+    doesn't exist.
+    """
+    response_json = requests.get('/ws/rest/v1/location').json()
+    for location in response_json['results']:
+        if location['display'] == 'Unknown Location':
+            return location['uuid']
+    return None
 
 
 def get_patient_identifier_types(requests):
