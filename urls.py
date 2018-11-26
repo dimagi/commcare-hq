@@ -43,8 +43,6 @@ domain_specific = [
     url(r'^logo.png', logo, name='logo'),
     url(r'^apps/', include('corehq.apps.app_manager.urls')),
     url(r'^api/', include('corehq.apps.api.urls')),
-    # the receiver needs to accept posts at an endpoint that might
-    # not have a slash, so don't include it at the root urlconf
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
     url(r'^enterprise/', include(accounting_domain_specific)),
@@ -112,6 +110,7 @@ urlpatterns = [
     url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     url(r'^push/', include('corehq.messaging.smsbackends.push.urls')),
+    url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
     url(r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
     url(r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),

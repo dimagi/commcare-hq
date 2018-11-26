@@ -24,11 +24,7 @@
                 vertical-align: middle;
             }
 
-            .table-no-border {
-                border: none;
-            }
-
-            table {
+            table.table {
                 border: 1px solid black;
             }
             .row:after {
@@ -75,7 +71,9 @@
                         <h2>2. Infrastructure</h2>
                     </div>
                     <div class="row">
-                        <table class="table-no-border">
+                        <table>
+                            <thead>
+                            </thead>
                             <tbody>
                                 <tr>
                                     <td>Type of AWC building Pucca / Others: {{ report.agg_awc_monthly_data.infra_type_of_building|icds_type_of_awc_building }}</td>
@@ -83,11 +81,11 @@
                                 </tr>
                                 <tr>
                                     <td>Whether drinking water available at AWC? (Y/N): {{ report.agg_awc_monthly_data.infra_clean_water|icds_yesno }}</td>
-                                    <td></td>
+                                    <td> </td>
                                 </tr>
                                 <tr>
                                     <td>Whether Kitchen available at AWC? (Y/N): {{ report.infrastructure_data.kitchen|icds_yesno }}</td>
-                                    <td></td>
+                                    <td> </td>
                                 </tr>
                                 <tr>
                                     <td>Whether toilet available at AWC? (Y/N): {{ report.infrastructure_data.toilet_facility|icds_yesno }}</td>
@@ -102,7 +100,7 @@
                         <h2>3. Total Population as per Anganwadi Survey Register</h2>
                     </div>
                     <div class="row">
-                        <table>
+                        <table class="table">
                             <thead>
                                 <tr>
                                     <th>Infants (0-6 Months)</th>
@@ -129,7 +127,7 @@
                         <h2>4. AWC Functioning & services delivered</h2>
                     </div>
                     <div class="row">
-                        <table class="table-no-border">
+                        <table>
                             <tbody>
                                 <tr>
                                     <td>Number of days AWC functioned: {{ report.agg_awc_monthly_data|icds_format:"awc_days_open" }}</td>
@@ -142,7 +140,7 @@
                         <p>ECCE material available at AWC(Y/N): {{ report.infrastructure_data|icds_material_available }}</p>
                     </div>
                     <div class="row">
-                        <table>
+                        <table class="table">
                             <thead>
                                 <tr>
                                     <th colspan="1" rowspan="2">Infants (0-6 Months)</th>
@@ -188,7 +186,7 @@
                         <h2>5. Services</h2>
                     </div>
                     <div class="row">
-                        <table>
+                        <table class="table">
                             <thead>
                                 <tr>
                                     <th colspan="1"></th>
@@ -300,7 +298,7 @@
                         <h2>6. Classification of Nutritional Status of Children as per the WHO Growth Standards</h2>
                     </div>
                     <div class="row">
-                        <table>
+                        <table class="table">
                             <thead>
                                 <tr>
                                     <th colspan="1" rowspan="2">Children</th>
@@ -359,7 +357,7 @@
                         <h2>7. Village Health Sanitation and Nutrition Day (VHSND) activity summary and other details </h2>
                     </div>
                     <div class="row">
-                        <table>
+                        <table class="table">
                             <tbody>
                                 <tr>
                                     <td>Date of VHSND conducted </td>
@@ -383,7 +381,7 @@
                                 </tr>
                                 <tr>
                                     <td>* No of children given de-worming tablets (Children 1-2 yrs-half tablet and above 1 tablet)</td>
-                                    <td></td>
+                                    <td> </td>
                                 </tr>
                                 <tr>
                                     <td>No of Referrals made for the Month</td>
@@ -402,7 +400,7 @@
                         <h2>8. *THR Distribution </h2>
                     </div>
                     <div class="row">
-                        <table>
+                        <table class="table">
                             <thead>
                                 <tr>
                                     <th>Quantity of THR</th>
@@ -414,27 +412,27 @@
                             <tbody>
                                 <tr>
                                     <td>Opening Balance</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td> </td>
+                                    <td> </td>
+                                    <td> </td>
                                 </tr>
                                 <tr>
                                     <td>Received</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td> </td>
+                                    <td> </td>
+                                    <td> </td>
                                 </tr>
                                 <tr>
                                     <td>Distributed</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td> </td>
+                                    <td> </td>
+                                    <td> </td>
                                 </tr>
                                 <tr>
                                     <td>Closing balance</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td> </td>
+                                    <td> </td>
+                                    <td> </td>
                                 </tr>
                             </tbody>
                         </table>

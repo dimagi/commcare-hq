@@ -24,8 +24,14 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
-from corehq.motech.openmrs.atom_feed import get_updated_patients, update_patient
+from corehq.motech.openmrs.atom_feed import (
+    get_feed_updates,
+    import_encounter,
+    update_patient,
+)
 from corehq.motech.openmrs.const import (
+    ATOM_FEED_NAME_ENCOUNTER,
+    ATOM_FEED_NAME_PATIENT,
     IMPORT_FREQUENCY_WEEKLY,
     IMPORT_FREQUENCY_MONTHLY,
     OPENMRS_ATOM_FEED_POLL_INTERVAL,
@@ -258,9 +264,12 @@ def import_patients():
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
         if repeater.atom_feed_enabled and not repeater.paused:
-            updated_patients = get_updated_patients(repeater)
-            for patient_uuid, updated_at in updated_patients:
-                update_patient(repeater, patient_uuid, updated_at)
+            patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
+            encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
+            for patient_uuid in patient_uuids:
+                update_patient(repeater, patient_uuid)
+            for encounter_uuid in encounter_uuids:
+                import_encounter(repeater, encounter_uuid)
 
 
 @periodic_task(

@@ -6,6 +6,7 @@
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -3129,7 +3130,6 @@
     },
     "asynchronous": true,
     "engine_id": "icds-ucr",
-    "icds_rebuild_related_docs": true,
     "sql_column_indexes": [
       {
         "column_ids": [

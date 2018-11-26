@@ -38,6 +38,15 @@ from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_he
 from custom.icds_reports.utils.aggregation_helpers.thr_forms_child_health import \
     THRFormsChildHealthAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
+from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.awc_location import LocationAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.daily_attendance import DailyAttendanceAggregationHelper
+
+
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
 
 
 class CcsRecordMonthly(models.Model):
@@ -141,7 +150,7 @@ class CcsRecordMonthly(models.Model):
         index_queries = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in index_queries:
@@ -170,11 +179,31 @@ class AwcLocation(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
+    state_is_test = models.SmallIntegerField(blank=True, null=True)
+    district_is_test = models.SmallIntegerField(blank=True, null=True)
+    block_is_test = models.SmallIntegerField(blank=True, null=True)
+    supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
+    awc_is_test = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
+
+    @classmethod
+    def aggregate(cls):
+        helper = LocationAggregationHelper()
+        drop_table_query = helper.drop_table_query()
+        agg_query = helper.aggregate_query()
+        aww_query = helper.aww_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(drop_table_query)
+            cursor.execute(agg_query)
+            cursor.execute(aww_query)
+            for rollup_query in rollup_queries:
+                cursor.execute(rollup_query)
 
 
 class ChildHealthMonthly(models.Model):
@@ -403,10 +432,33 @@ class AggAwc(models.Model):
     cases_person_adolescent_girls_11_14_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_15_18_all = models.IntegerField(null=True)
     infra_infant_weighing_scale = models.IntegerField(null=True)
+    state_is_test = models.SmallIntegerField(blank=True, null=True)
+    district_is_test = models.SmallIntegerField(blank=True, null=True)
+    block_is_test = models.SmallIntegerField(blank=True, null=True)
+    supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
+    awc_is_test = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'agg_awc'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggAwcHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        update_queries = helper.updates()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(agg_query, agg_params)
+            for query, params in update_queries:
+                cursor.execute(query, params)
+            for query in rollup_queries:
+                cursor.execute(query)
+            for query in index_queries:
+                cursor.execute(query)
 
 
 class AggCcsRecord(models.Model):
@@ -477,7 +529,7 @@ class AggCcsRecord(models.Model):
         index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in rollup_queries:
@@ -570,7 +622,7 @@ class AggChildHealth(models.Model):
         index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
-            with transaction.atomic():
+            with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
                 for query in rollup_queries:
@@ -616,6 +668,25 @@ class AggAwcDaily(models.Model):
         managed = False
         db_table = 'agg_awc_daily'
 
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggAwcDailyAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        update_query, update_params = helper.update_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = helper.indexes()
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic(using=db_for_read_write(cls)):
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(*helper.create_table_query())
+                cursor.execute(agg_query, agg_params)
+                cursor.execute(update_query, update_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
+
 
 class DailyAttendance(models.Model):
     doc_id = models.TextField(primary_key=True)
@@ -636,10 +707,18 @@ class DailyAttendance(models.Model):
         managed = False
         db_table = 'daily_attendance'
 
+    @classmethod
+    def aggregate(cls, month):
+        helper = DailyAttendanceAggregationHelper(month=month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregate_query()
+        indexes_query = helper.indexes()
 
-def get_cursor(model):
-    db = db_for_read_write(model)
-    return connections[db].cursor()
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+            cursor.execute(indexes_query)
 
 
 class AggregateComplementaryFeedingForms(models.Model):
@@ -724,7 +803,7 @@ class AggregateComplementaryFeedingForms(models.Model):
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
 
-        
+
 class AggregateCcsRecordComplementaryFeedingForms(models.Model):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
     Complementary Feeding form.
@@ -1398,7 +1477,7 @@ class AWWIncentiveReport(models.Model):
     wer_eligible = models.SmallIntegerField(null=True)
     awc_num_open = models.SmallIntegerField(null=True)
     valid_visits = models.SmallIntegerField(null=True)
-    expected_visits = models.SmallIntegerField(null=True)
+    expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
 
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE

@@ -6,6 +6,7 @@
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -176,6 +177,20 @@
         "is_nullable": true,
         "column_id": "awc_location",
         "type": "expression"
+      },
+      {
+        "display_name": "Location Entered",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": ["form", "location_form_filled"]
+        },
+        "column_id": "location_entered"
       },
       {
         "display_name": null,

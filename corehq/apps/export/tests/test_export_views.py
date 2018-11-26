@@ -20,15 +20,19 @@ from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
 )
-from corehq.apps.export.views import (
-    CreateNewCustomCaseExportView,
-    CreateNewCustomFormExportView,
-    CreateNewDailySavedCaseExport,
-    DailySavedExportListView,
-    DataFileDownloadDetail,
+from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )
+from corehq.apps.export.views.list import (
+    DailySavedExportListView,
+)
+from corehq.apps.export.views.new import (
+    CreateNewCustomCaseExportView,
+    CreateNewCustomFormExportView,
+    CreateNewDailySavedCaseExport,
+)
+from corehq.apps.export.views.utils import DataFileDownloadDetail
 from corehq.util.test_utils import flag_enabled, generate_cases
 from io import open
 
@@ -242,7 +246,10 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-    @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.export.views.list.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.export.views.new.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.export.views.utils.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.accounting.utils.domain_has_privilege', lambda x, y: True)
     @patch("corehq.apps.export.tasks.rebuild_export")
     def test_edit_daily_saved_export_filters(self, _):
         # Create an export
@@ -288,14 +295,12 @@ class ExportViewTest(ViewTestCase):
         }
 
         resp = self.client.post(
-            reverse(DailySavedExportListView.urlname, args=[self.domain.name]),
-            json.dumps({
-                "export": {"id": export._id},
-                "form_data": filter_form_data
-            }),
-            content_type="application/json",
-            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
-            HTTP_DJNG_REMOTE_METHOD='commit_filters',
+            reverse('commit_filters', args=[self.domain.name]),
+            {
+                "export_id": export._id,
+                "model_type": "case",
+                "form_data": json.dumps(filter_form_data),
+            },
         )
         self.assertEqual(resp.status_code, 200)
         response_content = json.loads(resp.content)

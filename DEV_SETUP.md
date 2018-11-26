@@ -117,7 +117,7 @@ you'll need to install `bower` and run `bower install`. Follow these steps to in
     For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
     repository. Run the following commands:
 
-        $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+        $ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
 
     For macOS: Install with Homebrew:
@@ -246,6 +246,10 @@ re-fetching it using the same command above. Feel free to add it to your
 ```bash
 $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 ```
+
+#### Browser Settings
+
+We recommend disabling the cache. In Chrome, go to Dev Tools > Settings > Preferences > Network and check "Disable cache (while DevTools is open)"
 
 
 Running CommCare HQ

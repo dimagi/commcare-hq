@@ -4,7 +4,8 @@
     "reach-sandbox",
     "reach-test",
     "icds-test",
-    "icds-cas"
+    "icds-cas",
+    "cas-lab"
   ],
   "server_environment": [
     "softlayer",

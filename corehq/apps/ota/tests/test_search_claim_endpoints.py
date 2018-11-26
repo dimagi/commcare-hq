@@ -337,7 +337,7 @@ class CaseClaimEndpointTests(TestCase):
         # Dup claim
         response = client.post(url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.content, 'You have already claimed that case')
+        self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
     @run_with_all_backends
     def test_duplicate_user_claim(self):
@@ -355,7 +355,7 @@ class CaseClaimEndpointTests(TestCase):
         client2.login(username=USERNAME, password=PASSWORD)
         response = client2.post(url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.content, 'You have already claimed that case')
+        self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
     @run_with_all_backends
     def test_claim_restore_as(self):
@@ -448,7 +448,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(
             score_regex.sub(r'\1xxx\3',
                             re.sub(DATE_PATTERN, FIXED_DATESTAMP,
-                                   re.sub(PATTERN, TIMESTAMP, response.content))),
+                                   re.sub(PATTERN, TIMESTAMP, response.content.decode('utf-8')))),
             known_result)
 
     @patch('corehq.apps.es.es_query.run_query')

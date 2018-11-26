@@ -1,7 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from custom.icds_reports.const import AWW_INCENTIVE_TABLE
+from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.util import get_table_name
+
+from custom.icds_reports.const import (
+    AWW_INCENTIVE_TABLE,
+    AGG_CCS_RECORD_CF_TABLE
+)
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
 
 
@@ -9,6 +15,12 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AWW_INCENTIVE_TABLE
     aggregate_child_table_prefix = 'icds_db_aww_incentive_'
 
+    @property
+    def ccs_record_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+    
     def aggregation_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
@@ -36,9 +48,9 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
             awcm.awc_name,
             awcm.aww_name,
             awcm.contact_phone_number,
-            sum(awcm.wer_weighed),
-            sum(awcm.wer_eligible),
-            sum(awcm.awc_num_open),
+            awcm.wer_weighed,
+            awcm.wer_eligible,
+            awcm.awc_days_open,
             sum(ccsm.valid_visits),
             sum(ccsm.expected_visits)
           FROM agg_awc_monthly as awcm
@@ -47,8 +59,26 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
           WHERE awcm.month = %(month)s AND awcm.state_id = %(state_id)s and awcm.aggregation_level=5
           GROUP BY awcm.awc_id, awcm.block_id, awcm.state_name, awcm.district_name,
                    awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
-                   awcm.contact_phone_number
-        )
+                   awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
+                   awcm.awc_days_open
+        );
+        /* update visits for cf cases (not in agg_ccs_record) */
+        UPDATE "{tablename}" perf
+        SET expected_visits = expected_visits + cf_data.expected,
+            valid_visits = valid_visits + cf_data.valid
+        FROM (
+             SELECT
+             SUM(0.39) AS expected,
+             SUM(COALESCE(agg_cf.valid_visits, 0)) as valid,
+             ucr.awc_id
+             FROM "{ccs_record_case_ucr}" ucr
+             LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND agg_cf.month = %(month)s
+             WHERE %(month)s - add > 183 AND (closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s) AND date_trunc('month', opened_on) <= %(month)s
+             GROUP BY ucr.awc_id
+             ) cf_data
+        WHERE cf_data.awc_id = perf.awc_id
         """.format(
-            tablename=tablename
+            tablename=tablename,
+            ccs_record_case_ucr=self.ccs_record_case_ucr_tablename,
+            agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), query_params

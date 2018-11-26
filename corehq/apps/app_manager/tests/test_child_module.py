@@ -393,7 +393,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
             suite_xml,
             './entry[3]/session'
         )
-        form_xml = lab_update_form.render_xform()
+        form_xml = lab_update_form.render_xform().decode('utf-8')
         self.assertTrue(
             '<bind calculate="instance(\'commcaresession\')/session/data/case_id_new_lab_test_0" nodeset="/data/case_load_episode_0/case/@case_id"/>' not in form_xml
         )

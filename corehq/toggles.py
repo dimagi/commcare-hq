@@ -821,6 +821,15 @@ MOBILE_UCR = StaticToggle(
     always_enabled={'icds-cas'}
 )
 
+MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
+    'mobile_ucr_linked_domain',
+    ('Mobile UCR: Configure viewing user configurable reports on the mobile when using linked domains. '
+     'NOTE: This won\'t work without developer intervention'),
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas', 'fmoh-echis-staging'}
+)
+
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
     "(Deprecated) Allow project to restrict web user permissions by location",

@@ -61,3 +61,10 @@ class PostSaveError(Exception):
 
 class KafkaPublishingError(Exception):
     pass
+
+
+class XFormLockError(Exception):
+    """Exception raised when a form lock cannot be acquired
+
+    The error message should identify the locked form.
+    """

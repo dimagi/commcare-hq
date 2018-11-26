@@ -10,6 +10,7 @@ hqDefine('export/js/customize_export_new', function () {
                 hasDailySavedAccess: initialPageData.get('has_daily_saved_export_access'),
                 formatOptions: initialPageData.get('format_options'),
                 sharingOptions: initialPageData.get('sharing_options'),
+                hasOtherOwner: initialPageData.get('has_other_owner'),
                 numberOfAppsToProcess: initialPageData.get('number_of_apps_to_process'),
             }
         );

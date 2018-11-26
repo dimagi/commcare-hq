@@ -5,7 +5,8 @@
     "reach-test",
     "icds-test",
     "icds-sql",
-    "icds-cas"
+    "icds-cas",
+    "cas-lab"
   ],
   "server_environment": [
     "softlayer",

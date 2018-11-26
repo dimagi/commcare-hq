@@ -32,9 +32,15 @@ class Command(BaseCommand):
         supervisor_ids = (
             SQLLocation.objects
             .filter(domain='icds-cas', location_type__name='supervisor')
-            .values('location_id')
+            .values_list('location_id', flat=True)
         )
+        count = 0
+        num_ids = len(supervisor_ids)
 
         for sup_id in supervisor_ids:
             with get_cursor(ChildHealthMonthly) as cursor:
                 cursor.execute(UPDATE_QUERY, {"sup_id": sup_id})
+            count += 1
+
+            if count % 100 == 0:
+                print("{} / {}".format(count, num_ids))
