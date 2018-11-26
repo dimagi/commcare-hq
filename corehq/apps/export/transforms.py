@@ -29,12 +29,12 @@ def case_id_to_case_name(case_id, doc):
 
 def case_id_to_link(case_id, doc):
     from corehq.apps.reports.views import CaseDataView
-    return reverse(CaseDataView.urlname, args=[doc['domain'], case_id])
+    return reverse(CaseDataView.urlname, args=[doc['domain'], case_id], absolute=True)
 
 
 def form_id_to_link(form_id, doc):
     from corehq.apps.reports.views import FormDataView
-    return reverse(FormDataView.urlname, args=[doc['domain'], form_id])
+    return reverse(FormDataView.urlname, args=[doc['domain'], form_id], absolute=True)
 
 
 def case_or_user_id_to_name(id, doc):
