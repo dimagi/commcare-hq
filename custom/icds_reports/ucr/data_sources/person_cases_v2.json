@@ -2395,16 +2395,6 @@
             "constant": null
           }
         }
-      },
-      {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "string",
-        "is_primary_key": false,
-        "column_id": "contact_phone_number",
-        "is_nullable": true,
-        "type": "raw",
-        "property_name": "contact_phone_number"
       }
     ],
     "named_expressions": {},
