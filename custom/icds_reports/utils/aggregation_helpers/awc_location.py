@@ -5,6 +5,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper
+from six.moves import map
 
 
 class LocationAggregationHelper(BaseICDSAggregationHelper):
