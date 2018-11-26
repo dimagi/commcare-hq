@@ -210,7 +210,7 @@ class FixtureDataTest(TestCase):
                 {}
                 {}
             </fixtures>
-            """.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
+            """.format(*[ElementTree.tostring(fixture).decode('utf-8') for fixture in fixtures])
         )
 
     def test_empty_data_types(self):
@@ -251,7 +251,7 @@ class FixtureDataTest(TestCase):
             </fixture>
             </f>
             """.format(self.user.user_id),
-            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
+            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture).decode('utf-8') for fixture in fixtures])
         )
 
     def test_user_data_type_with_item(self):
