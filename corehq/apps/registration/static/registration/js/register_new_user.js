@@ -76,6 +76,13 @@ $(function () {
     $number.intlTelInput({
         separateDialCode: true,
         utilsScript: initial_page_data('number_utils_script'),
+        initialCountry: "auto",
+        geoIpLookup: function (success, failure) {
+            $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
+                var countryCode = (resp && resp.country) ? resp.country : "";
+                success(countryCode);
+            });
+        },
     });
     $number.keydown(function (e) {
         // prevents non-numeric numbers from being entered.
