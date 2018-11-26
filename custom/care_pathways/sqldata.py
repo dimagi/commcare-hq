@@ -2,9 +2,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import sqlalchemy
-from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
+from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import *
+from sqlagg.filters import EQ, NOTEQ, AND, IN, RawFilter, ANDFilter
 from sqlalchemy.sql.expression import join, alias, cast
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.sqltypes import Integer, VARCHAR
@@ -14,7 +14,6 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColu
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains, TableCardDataIndividualFormatter, TableCardDataGroupsFormatter, \
     get_domains_with_next, TableCardDataGroupsIndividualFormatter
-from sqlalchemy import select
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import re
 from django.utils import html
@@ -43,15 +42,10 @@ class CareQueryMeta(QueryMeta):
         self.key = key
         super(CareQueryMeta, self).__init__(table_name, filters, group_by, order_by)
 
-    def execute(self, metadata, connection, filter_values):
-        try:
-            table = metadata.tables[self.table_name]
-        except KeyError:
-            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
+    def execute(self, connection, filter_values):
+        return connection.execute(self._build_query(filter_values)).fetchall()
 
-        return connection.execute(self._build_query(table, filter_values)).fetchall()
-
-    def _build_query(self, table, filter_values):
+    def _build_query(self, filter_values):
         having = []
         filter_cols = []
         external_cols = _get_grouping(filter_values)
@@ -84,30 +78,43 @@ class CareQueryMeta(QueryMeta):
         table_card_group = []
         if 'group_name' in self.group_by:
             table_card_group.append('group_name')
-        s1 = alias(select([table.c.doc_id, table.c.group_case_id, table.c.group_name, table.c.group_id,
-                           (sqlalchemy.func.max(table.c.prop_value) +
-                            sqlalchemy.func.min(table.c.prop_value)).label('maxmin')] + filter_cols +
-                          external_cols, from_obj=table,
-                          group_by=([table.c.doc_id, table.c.group_case_id, table.c.group_name, table.c.group_id] +
-                                    filter_cols + external_cols)), name='x')
+        s1 = alias(
+            sqlalchemy.select(
+                [
+                    sqlalchemy.column('doc_id'),
+                    sqlalchemy.column('group_case_id'),
+                    sqlalchemy.column('group_name'),
+                    sqlalchemy.column('group_id'),
+                    (sqlalchemy.func.max(sqlalchemy.column('prop_value')) + sqlalchemy.func.min(sqlalchemy.column('prop_value'))).label('maxmin')
+                ] + filter_cols + external_cols,
+                group_by=(
+                    [
+                        sqlalchemy.column('doc_id'), sqlalchemy.column('group_case_id'),
+                        sqlalchemy.column('group_name'), sqlalchemy.column('group_id')
+                    ] + filter_cols + external_cols)
+            ).select_from(sqlalchemy.table(self.table_name)),
+            name='x'
+        )
         s2 = alias(
-            select(
-                [table.c.group_case_id,
-                 sqlalchemy.cast(
-                     cast(func.max(table.c.gender), Integer) + cast(func.min(table.c.gender), Integer), VARCHAR
-                 ).label('gender')] + table_card_group,
-                from_obj=table,
-                group_by=[table.c.group_case_id] + table_card_group + having_group_by, having=group_having
-            ), name='y'
+            sqlalchemy.select(
+                [
+                    sqlalchemy.column('group_case_id'),
+                    sqlalchemy.cast(
+                        cast(func.max(sqlalchemy.column('gender')), Integer) + cast(func.min(sqlalchemy.column('gender')), Integer), VARCHAR
+                    ).label('gender')
+                ] + table_card_group,
+                group_by=[sqlalchemy.column('group_case_id')] + table_card_group + having_group_by, having=group_having
+            ).select_from(sqlalchemy.table(self.table_name)),
+            name='y'
         )
         group_by = list(self.group_by)
         if 'group_case_id' in group_by:
             group_by[group_by.index('group_case_id')] = s1.c.group_case_id
             group_by[group_by.index('group_name')] = s1.c.group_name
-        return select(
+        return sqlalchemy.select(
             [sqlalchemy.func.count(s1.c.doc_id).label(self.key)] + group_by,
             group_by=[s1.c.maxmin] + filter_cols + group_by,
-            having=AND(having).build_expression(s1),
+            having=AND(having).build_expression(),
             from_obj=join(s1, s2, s1.c.group_case_id == s2.c.group_case_id)
         ).params(filter_values)
 
@@ -149,9 +156,9 @@ class GeographySqlData(SqlData):
 
 
 class IEQ(EQ):
-    def build_expression(self, table):
+    def build_expression(self):
         return self.operator(
-            func.lower(get_column(table, self.column_name)), func.lower(bindparam(self.parameter))
+            func.lower(sqlalchemy.column(self.column_name)), func.lower(sqlalchemy.bindparam(self.parameter))
         )
 
 

@@ -89,7 +89,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     email_requests.delete()
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True, acks_late=True)
 def _start_export_task(export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     rebuild_export(export_instance, progress_tracker=_start_export_task)
@@ -147,7 +147,7 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
     _cached_add_inferred_export_properties(sender, domain, case_type, properties)
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True, acks_late=True)
 def export_for_group_async(group_config_id):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
