@@ -177,7 +177,79 @@ WITH deleted AS (
 """)
 
 
+# move all rows in one go.
+# requires table lock, so may not be feasible without some downtime.
+# this may be necessary if MOVE_FORM_ATTACHMENTS is too slow.
+BLOBMETA_FORMS_SQL = """
+BEGIN;
+LOCK TABLE blobs_blobmeta_tbl IN SHARE MODE;
+
+-- drop indexes/constaints
+ALTER TABLE blobs_blobmeta_tbl DROP CONSTRAINT blobs_blobmeta_pkey;
+ALTER TABLE blobs_blobmeta_tbl DROP CONSTRAINT blobs_blobmeta_key_a9ed5760_uniq;
+DROP INDEX blobs_blobm_expires_64b92d_partial;
+DROP INDEX blobs_blobmeta_parent_id_type_code_name_9a2a0a9e_idx;
+ALTER TABLE blobs_blobmeta_tbl DROP CONSTRAINT IF EXISTS blobs_blobmeta_type_code_check;
+ALTER TABLE blobs_blobmeta_tbl DROP CONSTRAINT IF EXISTS blobs_blobmeta_content_length_check;
+
+-- copy rows as quickly as possible
+INSERT INTO blobs_blobmeta_tbl (
+    "domain",
+    parent_id,
+    "name",
+    "key",
+    type_code,
+    content_type,
+    properties,
+    created_on,
+    content_length
+) SELECT
+    COALESCE(xform."domain", '<unknown>'),
+    att.form_id AS parent_id,
+    att."name",
+    (CASE
+        WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+        ELSE COALESCE(att.blob_bucket, 'form/' || att.attachment_id) || '/'
+    END || att.blob_id)::VARCHAR(255) AS "key",
+    CASE
+        WHEN att."name" = 'form.xml' THEN 1 -- corehq.blobs.CODES.form_xml
+        ELSE 2 -- corehq.blobs.CODES.form_attachment
+    END::SMALLINT AS type_code,
+    att.content_type,
+    CASE
+        WHEN att.properties = '{{}}' THEN NULL
+        ELSE att.properties
+    END AS properties,
+    COALESCE(xform.received_on, CURRENT_TIMESTAMP) AS created_on,
+    att.content_length
+FROM form_processor_xformattachmentsql att
+-- outer join so we move rows with no corresponding xform instance
+-- should not happen, but just in case (without this they would be lost)
+LEFT OUTER JOIN form_processor_xforminstancesql xform
+    ON xform.form_id = att.form_id;
+
+DELETE FROM form_processor_xformattachmentsql;
+
+-- re-add indexes/constraints
+ALTER TABLE blobs_blobmeta_tbl ADD CONSTRAINT blobs_blobmeta_pkey
+    PRIMARY KEY (id);
+ALTER TABLE blobs_blobmeta_tbl ADD CONSTRAINT blobs_blobmeta_key_a9ed5760_uniq
+    UNIQUE (key);
+CREATE INDEX blobs_blobm_expires_64b92d_partial
+    ON public.blobs_blobmeta_tbl USING btree (expires_on) WHERE (expires_on IS NOT NULL);
+CREATE INDEX blobs_blobmeta_parent_id_type_code_name_9a2a0a9e_idx
+    ON public.blobs_blobmeta_tbl USING btree (parent_id, type_code, name);
+ALTER TABLE blobs_blobmeta_tbl ADD CONSTRAINT blobs_blobmeta_type_code_check
+    CHECK (type_code >= 0);
+ALTER TABLE blobs_blobmeta_tbl ADD CONSTRAINT blobs_blobmeta_content_length_check
+    CHECK (content_length >= 0);
+
+COMMIT;
+"""
+
+
 TEMPLATES = {
     "blobmeta_key": BLOBMETA_KEY_SQL,
+    "blobmeta_forms": BLOBMETA_FORMS_SQL,
     "move_form_attachments_to_blobmeta": MOVE_FORM_ATTACHMENTS,
 }
