@@ -113,11 +113,28 @@
             <div class="form-bubble form-bubble-purple text-center">
                 {% blocktrans %}
                     Want to learn more before signing up?
-                    &nbsp;&nbsp;&nbsp;
-                    <a href="#cta-form-get-demo" id="test-cta-form-get-demo-button" target="_blank" data-toggle="modal" class="btn btn-purple">
-                        Get a Demo
-                    </a>
                 {% endblocktrans %}
+                  &nbsp;&nbsp;&nbsp;
+                  <span class="optimize-abtest">
+                    <a href="#cta-form-get-demo"
+                       id="test-cta-form-get-demo-button"
+                       data-toggle="modal"
+                       class="optimize-abtest-control btn btn-purple">
+                        {% trans "Get a Demo" %}
+                    </a>
+
+                    {# hubspot #}
+                    <a href="#cta-form-get-demo-new"
+                       data-toggle="modal"
+                       id="cta-form-get-demo-button-new-body"
+                       class="optimize-abtest-variant-a btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+
+                    {# drift #}
+                    <a href="#demo-request"
+                       id="cta-form-get-demo-button-drift-body"
+                       class="optimize-abtest-variant-b btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+
+                  </span>
             </div>
         {% endif %}
       </div>
