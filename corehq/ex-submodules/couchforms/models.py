@@ -555,8 +555,6 @@ class UnfinishedArchiveStub(models.Model):
     archive = models.BooleanField(default=False)
     history_updated = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
-    date_queued = models.DateTimeField(null=True, db_index=True)
-    attempts = models.IntegerField(default=0)
 
     def __unicode__(self):
         return six.text_type(

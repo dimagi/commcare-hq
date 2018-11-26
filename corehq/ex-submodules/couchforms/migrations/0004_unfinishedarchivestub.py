@@ -23,8 +23,6 @@ class Migration(migrations.Migration):
                 ('archive', models.BooleanField(default=False)),
                 ('history_updated', models.BooleanField(default=False)),
                 ('domain', models.CharField(max_length=256)),
-                ('date_queued', models.DateTimeField(db_index=True, null=True)),
-                ('attempts', models.IntegerField(default=0)),
             ],
         ),
     ]
