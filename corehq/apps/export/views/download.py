@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_succ
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
 from django.utils.decorators import method_decorator
 import json
@@ -383,7 +383,7 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
 class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
-    export_filter_class = SubmitHistoryFilter
+    export_filter_class = ExpandedMobileWorkerFilter
     show_date_range = True
     page_title = ugettext_noop("Download Form Data Export")
     check_for_multimedia = True

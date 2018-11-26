@@ -24,7 +24,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstanceFilters,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
-from corehq.apps.reports.filters.users import SubmitHistoryFilter, SubmitHistoryUtils
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, EmwfUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -304,7 +304,7 @@ class DashboardFeedFilterForm(forms.Form):
             reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
         )
         self.fields['emwf_form_filter'].widget.set_url(
-            reverse(SubmitHistoryFilter.options_url, args=(self.domain_object.name,))
+            reverse(ExpandedMobileWorkerFilter.options_url, args=(self.domain_object.name,))
         )
 
         # This form appears inside a modal, so it's differently proportioned than most forms
@@ -430,10 +430,10 @@ class DashboardFeedFilterForm(forms.Form):
                 begin=self.cleaned_data['start_date'],
                 end=self.cleaned_data['end_date'],
             ),
-            users=SubmitHistoryFilter.selected_user_ids(emwf_selections),
-            reporting_groups=SubmitHistoryFilter.selected_reporting_group_ids(emwf_selections),
-            locations=SubmitHistoryFilter.selected_location_ids(emwf_selections),
-            user_types=SubmitHistoryFilter.selected_user_types(emwf_selections),
+            users=ExpandedMobileWorkerFilter.selected_user_ids(emwf_selections),
+            reporting_groups=ExpandedMobileWorkerFilter.selected_reporting_group_ids(emwf_selections),
+            locations=ExpandedMobileWorkerFilter.selected_location_ids(emwf_selections),
+            user_types=ExpandedMobileWorkerFilter.selected_user_types(emwf_selections),
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
         )
@@ -462,7 +462,7 @@ class DashboardFeedFilterForm(forms.Form):
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
-                SubmitHistoryUtils
+                EmwfUtils
             emwf_data = []
             for item in selected_items:
                 choice_tuple = emwf_utils_class(domain).id_to_choice_tuple(str(item))
@@ -534,7 +534,7 @@ class EmwfFilterExportMixin(object):
     export_user_filter = FormSubmittedByFilter
 
     # filter class for including dynamic fields in the context of the view as dynamic_filters
-    dynamic_filter_class = SubmitHistoryFilter
+    dynamic_filter_class = ExpandedMobileWorkerFilter
 
     def _get_user_ids(self, mobile_user_and_group_slugs):
         """
@@ -733,7 +733,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
     date_filter_class = ModifiedOnRangeFilter
 
     def get_filters(self, can_access_all_locations, accessible_location_ids, show_all_data, show_project_data,
-                   selected_user_types, datespan, group_ids, location_ids, user_ids):
+                    show_deactivated_data, selected_user_types, datespan, group_ids, location_ids, user_ids):
         """
         Return a list of `ExportFilter`s for the given ids.
         This list of filters will eventually be ANDed to filter the documents that appear in the export.
@@ -745,12 +745,12 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             user is restricted to seeing data from
         :return: list of filters
         """
+        user_types = selected_user_types
         if can_access_all_locations and show_all_data:
             # if all data then just filter by date
             case_filter = []
         elif can_access_all_locations and show_project_data:
             # show projects data except user_ids for user types excluded
-            user_types = selected_user_types
             ids_to_exclude = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
@@ -758,6 +758,18 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
                 demo=HQUserType.DEMO_USER not in user_types,
                 # this should be true since we are excluding
                 commtrack=True,
+            )
+            case_filter = [NOT(OwnerFilter(ids_to_exclude))]
+        elif can_access_all_locations and show_deactivated_data:
+            # show projects data except user_ids for user types excluded
+            ids_to_exclude = self.get_user_ids_for_user_types(
+                admin=True,
+                unknown=True,
+                web=True,
+                demo=True,
+                commtrack=True,
+                active=True,
+                deactivated=False
             )
             case_filter = [NOT(OwnerFilter(ids_to_exclude))]
         else:
@@ -853,11 +865,11 @@ class SmsExportFilterBuilder(AbstractExportFilterBuilder):
 
 class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
     """
-    Generic Filter form including dynamic filters using SubmitHistoryFilters
+    Generic Filter form including dynamic filters using ExpandedMobileWorkerFilters
     overrides few methods from GenericFilterFormExportDownloadForm for dynamic fields over form fields
     """
     export_user_filter = FormSubmittedByFilter
-    dynamic_filter_class = SubmitHistoryFilter
+    dynamic_filter_class = ExpandedMobileWorkerFilter
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
@@ -999,6 +1011,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
             accessible_location_ids,
             self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs),
+            self.dynamic_filter_class.show_deactivated_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs),
             self.cleaned_data['date_range'],
             self._get_group_ids(mobile_user_and_group_slugs),
