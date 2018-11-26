@@ -7,8 +7,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import sys
-import time
 import traceback
+from datetime import datetime, timedelta
+from functools import wraps
 
 import attr
 import gevent
@@ -57,12 +58,24 @@ def confirm(msg):
     return input(msg + "\n(y/N) ").lower() == 'y'
 
 
+def timed(func):
+    @wraps(func)
+    def timed(sql, dbname):
+        print("running on %s database" % dbname)
+        start = datetime.now()
+        try:
+            return func(sql, dbname)
+        finally:
+            print("{} elapsed: {}".format(dbname, datetime.now() - start))
+    return timed
+
+
+@timed
 def run_once(sql, dbname):
     """Run sql statement once on database
 
     This is the default run mode for statements
     """
-    print("running on %s database" % dbname)
     with connections[dbname].cursor() as cursor:
         cursor.execute(sql)
 
@@ -80,8 +93,9 @@ class RunUntilZero(object):
         return self.sql.format(**kw)
 
     @staticmethod
+    @timed
     def run(sql, dbname):
-        next_update = 0
+        next_update = datetime.now()
         total = 0
         with connections[dbname].cursor() as cursor:
             while True:
@@ -93,10 +107,10 @@ class RunUntilZero(object):
                 if not moved:
                     break
                 total += moved
-                now = time.time()
+                now = datetime.now()
                 if now > next_update:
                     print("{}: processed {} items".format(dbname, total))
-                    next_update = now + 5
+                    next_update = now + timedelta(seconds=5)
         print("{} final: processed {} items".format(dbname, total))
 
 
