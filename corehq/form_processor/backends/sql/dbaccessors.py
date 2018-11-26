@@ -616,7 +616,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         form_id = form.form_id
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
-            archive_stub.history_updated = True
+            archive_stub.archive_history_updated()
 
     @transaction.atomic
     def send_to_kafka(self, form, archive):
