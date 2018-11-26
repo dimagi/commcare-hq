@@ -548,7 +548,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def archive_form(form, user_id, archive_stub):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL()._archive_unarchive_form(form, user_id, True, archive_stub)
+        FormAccessorSQL()._update_archive_unarchive_form_history(form, user_id, True, archive_stub)
         FormAccessorSQL().send_to_kafka(form, archive=True)
         form.state = XFormInstanceSQL.ARCHIVED
         publish_form_saved(form)
@@ -556,7 +556,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def unarchive_form(form, user_id, archive_stub):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL()._archive_unarchive_form(form, user_id, False, archive_stub)
+        FormAccessorSQL()._update_archive_unarchive_form_history(form, user_id, False, archive_stub)
         FormAccessorSQL().send_to_kafka(form, archive=False)
         form.state = XFormInstanceSQL.NORMAL
         publish_form_saved(form)
@@ -612,7 +612,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         return affected_count
 
     @transaction.atomic
-    def _archive_unarchive_form(self, form, user_id, archive, archive_stub):
+    def _update_archive_unarchive_form_history(self, form, user_id, archive, archive_stub):
         form_id = form.form_id
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
