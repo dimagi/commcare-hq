@@ -192,7 +192,8 @@ class BaseProcessUploadedView(BaseMultimediaView):
         response.update({
             'errors': self.errors,
         })
-        return HttpResponse(json.dumps(response))
+        response_class = HttpResponseBadRequest if self.errors else HttpResponse
+        return response_class(json.dumps(response))
 
     def validate_file(self, replace_diff_ext=False):
         raise NotImplementedError("You must validate your uploaded file!")
@@ -211,15 +212,16 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             self.uploaded_file.file.seek(0)
             return zipfile.ZipFile(self.uploaded_file)
         except Exception as e:
-            raise BadMediaFileException("There was an issue processing the zip file you provided. Error: %s" % e)
+            msg = _("There was an issue processing the zip file you provided. Error: %s")
+            raise BadMediaFileException(msg % e)
 
     def validate_file(self, replace_diff_ext=False):
         if not self.mime_type in self.valid_mime_types():
-            raise BadMediaFileException("Your zip file doesn't have a valid mimetype.")
+            raise BadMediaFileException(_("Uploaded file is not a ZIP file."))
         if not self.uploaded_zip:
-            raise BadMediaFileException("There is no ZIP file.")
+            raise BadMediaFileException(_("There is no ZIP file."))
         if self.uploaded_zip.testzip():
-            raise BadMediaFileException("The ZIP file provided was bad.")
+            raise BadMediaFileException(_("Unable to extract the ZIP file."))
 
     def process_upload(self):
         if hasattr(self.uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:

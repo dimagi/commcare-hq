@@ -13,6 +13,7 @@ from corehq import toggles
 from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.util.view_utils import absolute_reverse, json_error
+from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import api_auth
 
@@ -99,7 +100,10 @@ def direct_ccz(request, domain):
 
     lang, langs = get_langs(request, app)
 
-    return get_direct_ccz(domain, app, lang, langs, version, include_multimedia, visit_scheduler_enabled)
+    timer = datadog_bucket_timer('commcare.app_build.live_preview', tags=[],
+                                 timing_buckets=(1, 10, 30, 60, 120, 240))
+    with timer:
+        return get_direct_ccz(domain, app, lang, langs, version, include_multimedia, visit_scheduler_enabled)
 
 
 def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=False, visit_scheduler_enabled=False):

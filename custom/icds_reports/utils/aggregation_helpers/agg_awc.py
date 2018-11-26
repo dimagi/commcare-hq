@@ -382,6 +382,45 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             'month_start_6m': self.month_start_6m
         }
 
+        yield """
+            UPDATE "{tablename}" agg_awc SET
+              state_is_test = ut.state_is_test,
+              district_is_test = ut.district_is_test,
+              block_is_test = ut.block_is_test,
+              supervisor_is_test = ut.supervisor_is_test,
+              awc_is_test = ut.awc_is_test
+            FROM (
+              SELECT
+                doc_id as awc_id,
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
+              FROM "{awc_location_tablename}"
+              GROUP BY awc_id
+            ) ut
+            WHERE ut.awc_id = agg_awc.awc_id AND (
+                (
+                  agg_awc.state_is_test IS NULL OR
+                  agg_awc.district_is_test IS NULL OR
+                  agg_awc.block_is_test IS NULL OR
+                  agg_awc.supervisor_is_test IS NULL OR
+                  agg_awc.awc_is_test IS NULL
+                ) OR (
+                  ut.state_is_test != agg_awc.state_is_test OR
+                  ut.district_is_test != agg_awc.district_is_test OR
+                  ut.block_is_test != agg_awc.block_is_test OR
+                  ut.supervisor_is_test != agg_awc.supervisor_is_test OR
+                  ut.awc_is_test != agg_awc.awc_is_test
+                )
+            )
+        """.format(
+            tablename=self.tablename,
+            awc_location_tablename='awc_location',
+        ), {
+        }
+
     def rollup_query(self, aggregation_level):
 
         launched_cols = [
@@ -469,6 +508,23 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),
             ('num_anc_visits', 'COALESCE(sum(num_anc_visits), 0)'),
             ('num_children_immunized', 'COALESCE(sum(num_children_immunized), 0)'),
+            ('state_is_test', 'MAX(state_is_test)'),
+            (
+                'district_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 1 else "0"
+            ),
+            (
+                'block_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 2 else "0"
+            ),
+            (
+                'supervisor_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 3 else "0"
+            ),
+            (
+                'awc_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 4 else "0"
+            )
         ]
 
         def _transform_column(column_tuple):
@@ -480,7 +536,6 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                     return column_tuple
                 elif callable(agg_col):
                     return (column, agg_col(column))
-
             return column, 'SUM({})'.format(column)
 
         columns = list(map(_transform_column, columns))
@@ -496,13 +551,13 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         group_by.append("month")
 
         return """
-        INSERT INTO "{to_tablename}" (
-            {columns}
-        ) (
-            SELECT {calculations}
-            FROM "{from_tablename}"
-            GROUP BY {group_by}
-        )
+            INSERT INTO "{to_tablename}" (
+                {columns}
+            ) (
+                SELECT {calculations}
+                FROM "{from_tablename}"
+                GROUP BY {group_by}
+            )
         """.format(
             from_tablename=self._tablename_func(aggregation_level + 1),
             to_tablename=self._tablename_func(aggregation_level),

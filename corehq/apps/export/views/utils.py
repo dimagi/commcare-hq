@@ -125,7 +125,7 @@ class ExportsPermissionsManager(object):
 
     def __init__(self, form_or_case, domain, couch_user):
         super(ExportsPermissionsManager, self).__init__()
-        if form_or_case not in [None, 'form', 'case']:
+        if form_or_case and form_or_case not in ['form', 'case']:
             raise ValueError("Unrecognized value for form_or_case")
         self.form_or_case = form_or_case
         self.domain = domain

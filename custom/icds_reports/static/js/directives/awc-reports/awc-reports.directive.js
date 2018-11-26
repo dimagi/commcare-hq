@@ -1736,6 +1736,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
             DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
             DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
+            DTColumnBuilder.newColumn('aww_phone_number').withTitle('AWW Phone Number').renderWith(renderPseDaysAttended).withClass('medium-col'),
+            DTColumnBuilder.newColumn('mother_phone_number').withTitle('Mother Phone Number').renderWith(renderPseDaysAttended).withClass('medium-col'),
         ];
     } else if (vm.step === 'pregnant') {
         vm.dtColumns = [

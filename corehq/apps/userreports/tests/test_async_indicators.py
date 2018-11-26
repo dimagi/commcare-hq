@@ -229,7 +229,7 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
         return AsyncIndicator.objects.all()
 
     def _assert_rows_in_ucr_table(self, config, rows):
-        results = list(load_data_from_db(get_table_name(self.domain.name, config.table_id).decode('utf-8')))
+        results = list(load_data_from_db(get_table_name(self.domain.name, config.table_id)))
         if not rows:
             self.assertEqual(results, [])
             return
