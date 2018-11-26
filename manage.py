@@ -108,8 +108,8 @@ def patch_assertItemsEqual():
     """
     from django.test import SimpleTestCase
 
-    def _assertItemsEqual(self, actual, expected):
-        self.assertEqual(Counter(actual), Counter(expected))
+    def _assertItemsEqual(self, actual, expected, msg=None):
+        self.assertEqual(Counter(actual), Counter(expected), msg=msg)
 
     SimpleTestCase.assertItemsEqual = _assertItemsEqual
 
