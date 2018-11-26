@@ -26,9 +26,6 @@ class ArchiveProcessTracker(object):
     def __init__(self, stub=None):
         self.stub = stub
 
-    def delete_me_get_history(self):
-        return self.stub.history_updated
-
     def archive_history_updated(self):
         if self.stub:
             self.stub.history_updated = True
