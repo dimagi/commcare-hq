@@ -39,15 +39,7 @@ class CCHQPRBACMiddleware(MiddlewareMixin):
             Subscription.get_active_subscription_by_domain(request.domain)
             if hasattr(request, 'domain') else None
         )
-        if subscription:
-            plan_version = subscription.plan_version
-            request.role = plan_version.role
-            request.plan = plan_version
-            request.subscription = subscription
-        else:
-            plan_version = DefaultProductPlan.get_default_plan_version()
-            request.role = plan_version.role
-            request.plan = plan_version
+        request.subscription = subscription
 
 
 class DomainHistoryMiddleware(MiddlewareMixin):
