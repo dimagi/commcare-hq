@@ -47,7 +47,7 @@ SELECT
 	ON app_dim.id = app_status.app_dim_id and user_dim.id = app_status.user_dim_id
 	WHERE form_staging.user_id <> '' and user_dim.doc_type='CommCareUser'
         WINDOW wnd AS (
-            PARTITION BY form_staging.user_id, form_staging.app_id ORDER BY received_on AT TIME ZONE 'UTC' DESC
+            PARTITION BY user_dim.id, COALESCE(app_dim.id, '-1') ORDER BY received_on AT TIME ZONE 'UTC' DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
 	)
 ) as form_data where row_number=1;

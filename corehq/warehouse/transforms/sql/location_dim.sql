@@ -120,6 +120,7 @@ SET
     ) - 1
 
 FROM {{ location_dim }} AS l0
+INNER JOIN {{ location_staging }} ls on ls.location_id = l0.location_id
 LEFT JOIN {{ location_dim }} l1 ON l0.location_level_1 = l1.location_level_0
 LEFT JOIN {{ location_dim }} l2 ON l1.location_level_1 = l2.location_level_0
 LEFT JOIN {{ location_dim }} l3 ON l2.location_level_1 = l3.location_level_0
