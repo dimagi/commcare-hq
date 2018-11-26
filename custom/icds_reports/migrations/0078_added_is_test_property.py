@@ -14,9 +14,9 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0077_drop_agg_funcs'),
+        ('icds_reports', '0078_add_phone_number_to_child_health_monthly'),
     ]
 
     operations = [
-        migrator.get_migration('update_tables32.sql'),
+        migrator.get_migration('update_tables33.sql'),
     ]
