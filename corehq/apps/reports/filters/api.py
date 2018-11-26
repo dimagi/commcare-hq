@@ -20,7 +20,7 @@ from corehq.elastic import ESError
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.reports.filters.users import EmwfUtils, SubmitHistoryUtils, UsersUtils
+from corehq.apps.reports.filters.users import EmwfUtils, EmwfUtils, UsersUtils
 from corehq.apps.es import UserES, GroupES, groups
 from corehq.apps.locations.models import SQLLocation
 
@@ -240,7 +240,7 @@ class SubmitHistoryOptionsView(EmwfOptionsView):
     @property
     @memoized
     def utils(self):
-        return SubmitHistoryUtils(self.domain)
+        return EmwfUtils(self.domain)
 
 
 class MobileWorkersOptionsView(EmwfOptionsView):
