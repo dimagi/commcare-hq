@@ -4,12 +4,13 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from django.db import migrations, models
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0076_awc_locations_test_columns'),
+        ('icds_reports', '0078_add_phone_number_to_child_health_monthly'),
     ]
 
     operations = [
@@ -32,3 +33,4 @@ class Migration(migrations.Migration):
             },
         ),
     ]
+    operations.extend(get_view_migrations())
