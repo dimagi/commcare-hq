@@ -35,11 +35,14 @@ SELECT
     att."name",
     (CASE
         WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(att.blob_bucket, 'form/' || att.attachment_id) || '/'
+        ELSE COALESCE(
+            att.blob_bucket,
+            'form/' || REPLACE(att.attachment_id::text, '-', '')
+        ) || '/'
     END || att.blob_id)::VARCHAR(255) AS "key",
     CASE
-        WHEN att."name" = 'form.xml' THEN 1 -- corehq.blobs.CODES.form_xml
-        ELSE 2 -- corehq.blobs.CODES.form_attachment
+        WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+        ELSE 3 -- corehq.blobs.CODES.form_attachment
     END::SMALLINT AS type_code,
     att.content_type,
     att.properties,
@@ -144,6 +147,6 @@ CREATE INDEX IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
 ON public.form_processor_xformattachmentsql (((
     CASE
         WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(blob_bucket, 'form/' || attachment_id) || '/'
+        ELSE COALESCE(blob_bucket, 'form/' || REPLACE(attachment_id::text, '-', '')) || '/'
     END || blob_id
 )::varchar(255)));

@@ -120,9 +120,53 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobme
 ON public.form_processor_xformattachmentsql (((
     CASE
         WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(blob_bucket, 'form/' || attachment_id) || '/'
+        ELSE COALESCE(blob_bucket, 'form/' || REPLACE(attachment_id::text, '-', '')) || '/'
     END || blob_id
 )::varchar(255)))
+"""
+DROP_BLOBMETA_KEY = "DROP INDEX form_processor_xformattachmentsql_blobmeta_key"
+BLOBMETA_VIEW = """
+CREATE OR REPLACE VIEW blobs_blobmeta AS
+SELECT
+    "id",
+    "domain",
+    "parent_id",
+    "name",
+    "key",
+    "type_code",
+    "content_type",
+    "properties",
+    "created_on",
+    "expires_on",
+    "content_length"
+FROM blobs_blobmeta_tbl
+
+UNION ALL
+
+SELECT
+    -att."id" AS "id",
+    xform."domain",
+    att.form_id AS parent_id,
+    att."name",
+    (CASE
+        WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+        ELSE COALESCE(
+            att.blob_bucket,
+            'form/' || REPLACE(att.attachment_id::text, '-', '')
+        ) || '/'
+    END || att.blob_id)::VARCHAR(255) AS "key",
+    CASE
+        WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+        ELSE 3 -- corehq.blobs.CODES.form_attachment
+    END::SMALLINT AS type_code,
+    att.content_type,
+    att.properties,
+    xform.received_on AS created_on,
+    NULL AS expires_on,
+    att.content_length
+FROM form_processor_xformattachmentsql att
+    INNER JOIN form_processor_xforminstancesql xform
+        ON xform.form_id = att.form_id;
 """
 
 
@@ -154,11 +198,14 @@ WITH deleted AS (
         att."name",
         (CASE
             WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-            ELSE COALESCE(att.blob_bucket, 'form/' || att.attachment_id) || '/'
+            ELSE COALESCE(
+                att.blob_bucket,
+                'form/' || REPLACE(att.attachment_id::text, '-', '')
+            ) || '/'
         END || att.blob_id)::VARCHAR(255) AS "key",
         CASE
-            WHEN att."name" = 'form.xml' THEN 1 -- corehq.blobs.CODES.form_xml
-            ELSE 2 -- corehq.blobs.CODES.form_attachment
+            WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+            ELSE 3 -- corehq.blobs.CODES.form_attachment
         END::SMALLINT AS type_code,
         att.content_type,
         CASE
@@ -209,11 +256,14 @@ INSERT INTO blobs_blobmeta_tbl (
     att."name",
     (CASE
         WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(att.blob_bucket, 'form/' || att.attachment_id) || '/'
+        ELSE COALESCE(
+            att.blob_bucket,
+            'form/' || REPLACE(att.attachment_id::text, '-', '')
+        ) || '/'
     END || att.blob_id)::VARCHAR(255) AS "key",
     CASE
-        WHEN att."name" = 'form.xml' THEN 1 -- corehq.blobs.CODES.form_xml
-        ELSE 2 -- corehq.blobs.CODES.form_attachment
+        WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+        ELSE 3 -- corehq.blobs.CODES.form_attachment
     END::SMALLINT AS type_code,
     att.content_type,
     CASE
@@ -252,4 +302,8 @@ TEMPLATES = {
     "blobmeta_key": BLOBMETA_KEY_SQL,
     "blobmeta_forms": BLOBMETA_FORMS_SQL,
     "move_form_attachments_to_blobmeta": MOVE_FORM_ATTACHMENTS,
+
+    # these will be used to fix staging, should not be necessary anywhere else
+    "drop_blobmeta_key": DROP_BLOBMETA_KEY,
+    "blobmeta_view": BLOBMETA_VIEW,
 }
