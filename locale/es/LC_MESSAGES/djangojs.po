@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-11-20 21:26+0000\n"
+"POT-Creation-Date: 2018-11-27 21:00+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2018\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -907,16 +907,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
-#, fuzzy
-#| msgid ""
-#| "{nodeID} is not a legal Question ID. It must start with a letter and "
-#| "contain only letters, numbers, and '-' or '_' characters."
 msgid ""
 "{nodeID} is not a valid Question ID. It must start with a letter and contain "
 "only letters, numbers, and '-' or '_' characters."
 msgstr ""
-"{nodeID} no es una Pregunta de ID legal. Debe comenzar con una letra y "
-"contener solo letras, números, y  caracteres '-' o '_' ."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid ""
@@ -2769,26 +2763,17 @@ msgid "<%= count %> form submissions available."
 msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js:95
-#, fuzzy
-#| msgid "Insert Questions"
 msgid "User Registration"
-msgstr "Inserte Preguntas"
+msgstr "Registro de Usuario"
 
 #: corehq/apps/export/static/export/js/create_export.js:266
-#, fuzzy
-#| msgid "Please check your Internet connection!"
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
-msgstr "¡Por favor revise su conexión de Internet!"
+msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js:301
-#, fuzzy
-#| msgid ""
-#| "There was an issue communicating with the server. Please try back later."
 msgid "There is an issue communicating with the server at this time."
-msgstr ""
-"Ocurrió un problema al comunicarnos con el servidor. Por favor inténtelo más "
-"tarde."
+msgstr "Hay un problema de comunicación con el servidor en este momento."
 
 #: corehq/apps/export/static/export/js/download_data_files.js:26
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
@@ -2808,14 +2793,12 @@ msgstr "Descarga Solicitada"
 
 #: corehq/apps/export/static/export/js/export_list.js:207
 #: corehq/apps/export/static/export/js/export_list.js:213
-#, fuzzy
-#| msgid "Unsupported paste format"
 msgid "Invalid date format"
-msgstr "Formato de pegado sin soporte"
+msgstr "Formato de fecha inválido"
 
 #: corehq/apps/export/static/export/js/export_list.js:320
 msgid "Problem saving dashboard feed filters"
-msgstr ""
+msgstr "Ocurrió un problema al guardar filtros de alimentación del tablero"
 
 #: corehq/apps/export/static/export/js/models.js:27
 #: corehq/apps/export/static/export/js/models.js:148

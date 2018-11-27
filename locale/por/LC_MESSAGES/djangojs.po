@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-11-20 21:26+0000\n"
+"POT-Creation-Date: 2018-11-27 21:00+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Claire O'Grady <cogrady@dimagi.com>, 2018\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -2624,7 +2624,7 @@ msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js:95
 msgid "User Registration"
-msgstr ""
+msgstr "Registro de Usuário"
 
 #: corehq/apps/export/static/export/js/create_export.js:266
 msgid ""
