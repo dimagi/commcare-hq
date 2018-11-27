@@ -21,8 +21,8 @@ from corehq.sql_db.config import partition_config
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, iterator) for iterator in [
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormInstanceSQL', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.XFormAttachmentSQL', SimpleFilter('form__domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperationSQL', SimpleFilter('form__domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseSQL', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndexSQL', SimpleFilter('domain')),
