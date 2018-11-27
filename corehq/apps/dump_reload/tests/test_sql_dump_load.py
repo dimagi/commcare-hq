@@ -23,10 +23,11 @@ from corehq.apps.dump_reload.sql import SqlDataLoader, SqlDataDumper
 from corehq.apps.dump_reload.sql.dump import get_objects_to_dump, get_model_iterator_builders_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
+    XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
     LedgerValue, LedgerTransaction)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
 from six.moves import zip
@@ -135,7 +136,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def test_dump_load_form(self):
         expected_object_counts = Counter({
             XFormInstanceSQL: 2,
-            XFormAttachmentSQL: 2
+            BlobMeta: 2
         })
 
         pre_forms = [
@@ -154,7 +155,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def test_sql_dump_load_case(self):
         expected_object_counts = Counter({
             XFormInstanceSQL: 2,
-            XFormAttachmentSQL: 2,
+            BlobMeta: 2,
             CommCareCaseSQL: 2,
             CaseTransaction: 3,
             CommCareCaseIndexSQL: 1
@@ -185,7 +186,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def test_ledgers(self):
         expected_object_counts = Counter({
             XFormInstanceSQL: 3,
-            XFormAttachmentSQL: 3,
+            BlobMeta: 3,
             CommCareCaseSQL: 1,
             CaseTransaction: 3,
             LedgerValue: 1,

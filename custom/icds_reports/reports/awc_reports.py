@@ -910,7 +910,9 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
                 'Normal weight for height',
                 data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
-            pse_days_attended=row_data.pse_days_attended
+            pse_days_attended=row_data.pse_days_attended,
+            mother_phone_number=row_data.mother_phone_number,
+            aww_phone_number=row_data.aww_phone_number
         )
 
     for row in data:

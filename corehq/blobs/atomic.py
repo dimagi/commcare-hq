@@ -21,6 +21,7 @@ class AtomicBlobs(object):
 
     def __init__(self, db):
         self.db = db
+        self.metadb = db.metadb
         self.puts = None
         self.deletes = None
         self.old_api_puts = None

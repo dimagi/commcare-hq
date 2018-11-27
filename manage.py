@@ -125,6 +125,7 @@ if __name__ == "__main__":
     GEVENT_COMMANDS = (
         GeventCommand('mvp_force_update', None),
         GeventCommand('run_gunicorn', None),
+        GeventCommand('run_sql', None),
         GeventCommand('preindex_everything', None),
         GeventCommand('migrate_multi', None),
         GeventCommand('prime_views', None),

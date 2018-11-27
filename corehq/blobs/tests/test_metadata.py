@@ -10,7 +10,10 @@ from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import get_meta, new_meta, TemporaryFilesystemBlobDB
 from corehq.form_processor.tests.utils import only_run_with_partitioned_database
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
+    new_id_in_same_dbalias,
+)
 
 
 class TestMetaDB(TestCase):
@@ -114,7 +117,82 @@ class TestMetaDB(TestCase):
         with self.assertRaises(BlobMeta.DoesNotExist):
             self.db.metadb.get(parent_id=xid, type_code=CODES.form_xml, name=xid)
 
+    def create_blobs(self):
+        def put(parent_id, code):
+            meta = new_meta(parent_id=parent_id, type_code=code)
+            return self.db.put(BytesIO(b"cx"), meta=meta)
+
+        class namespace(object):
+            p1 = uuid4().hex
+            p2 = uuid4().hex
+            p3 = uuid4().hex
+            m1 = put(p1, CODES.form_xml)
+            m2 = put(p2, CODES.multimedia)
+            m3 = put(p3, CODES.multimedia)
+
+        return namespace
+
+    def test_get_for_parent(self):
+        ns = self.create_blobs()
+        items = self.db.metadb.get_for_parent(ns.p1)
+        self.assertEqual([x.key for x in items], [ns.m1.key])
+
+    def test_get_for_parent_with_type_code(self):
+        m1 = self.db.put(BytesIO(b"fx"), meta=new_meta(type_code=CODES.form_xml))
+        m2 = self.db.put(BytesIO(b"cx"), meta=new_meta(type_code=CODES.multimedia))
+        self.assertEqual(m1.parent_id, m2.parent_id)
+        items = self.db.metadb.get_for_parent(m1.parent_id, CODES.form_xml)
+        self.assertEqual([x.key for x in items], [m1.key])
+
+    def test_get_for_parents(self):
+        ns = self.create_blobs()
+        items = self.db.metadb.get_for_parents([ns.p1, ns.p2])
+        self.assertEqual({x.key for x in items}, {ns.m1.key, ns.m2.key})
+
+    def test_get_for_parents_with_type_code(self):
+        ns = self.create_blobs()
+        items = self.db.metadb.get_for_parents(
+            [ns.p1, ns.p2, ns.p3],
+            CODES.multimedia,
+        )
+        self.assertEqual({x.key for x in items}, {ns.m2.key, ns.m3.key})
+
+    def test_reparent(self):
+        metadb = self.db.metadb
+        self.db.put(BytesIO(b"content"), meta=new_meta(parent_id="no-change"))
+        metas = []
+        for name in "abc":
+            meta = new_meta(parent_id="old", name=name)
+            metas.append(self.db.put(BytesIO(b"content"), meta=meta))
+        a, b, c = metas
+        new_parent = new_id_in_same_dbalias("old")
+        metadb.reparent("old", new_parent)
+        self.assertEqual(metadb.get_for_parent("old"), [])
+        self.assertEqual(
+            [m.id for m in metadb.get_for_parent(new_parent)],
+            [m.id for m in metas],
+        )
+        self.assertEqual(len(metadb.get_for_parent("no-change")), 1)
+
 
 @only_run_with_partitioned_database
 class TestPartitionedMetaDB(TestMetaDB):
-    pass
+    """MetaDB tests for partitioned database
+
+    Extra cleanup is necessary because partition db operations are not
+    done in a separate transaction per test.
+    """
+
+    def tearDown(self):
+        # new_meta always uses the same parent_id by default
+        metas = self.db.metadb.get_for_parent(new_meta().parent_id)
+        self.db.bulk_delete(metas=metas)
+        super(TestPartitionedMetaDB, self).tearDown()
+
+    def create_blobs(self):
+        def delete_blobs():
+            self.db.bulk_delete(metas=[namespace.m1, namespace.m2, namespace.m3])
+
+        namespace = super(TestPartitionedMetaDB, self).create_blobs()
+        self.addCleanup(delete_blobs)
+        return namespace

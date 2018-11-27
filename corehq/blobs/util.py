@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import hashlib
 import os
 import re
-from base64 import urlsafe_b64encode
+from base64 import urlsafe_b64encode, b64encode
 from datetime import datetime, timedelta
 
 from jsonfield import JSONField
@@ -142,3 +143,19 @@ def set_blob_expire_object(bucket, identifier, length, timeout):
 
 def _utcnow():
     return datetime.utcnow()
+
+
+def get_content_md5(fileobj):
+    """Get Content-MD5 value
+
+    All content will be read from the current position to the end of the
+    file. The file will be left open with its seek position at the end
+    of the file.
+
+    :param fileobj: A file-like object.
+    :returns: RFC-1864-compliant Content-MD5 header value.
+    """
+    md5 = hashlib.md5()
+    for chunk in iter(lambda: fileobj.read(1024 * 1024), b''):
+        md5.update(chunk)
+    return b64encode(md5.digest()).decode('ascii')
