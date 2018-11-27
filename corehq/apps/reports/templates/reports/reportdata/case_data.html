@@ -208,7 +208,7 @@
     {% if can_edit_data %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
-            {% if not usercase %}
+            {% if not is_usercase %}
                 <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
                     <i class="fa fa-cloud-download"></i>
                     {% trans 'Download Case History' %}
@@ -220,7 +220,7 @@
                     {% trans 'Clean Case Data' %}
                 </button>
             {% endif %}
-        {% if show_case_rebuild and not usercase %}
+        {% if show_case_rebuild and not is_usercase %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
                 <button type="submit" class="btn btn-default disable-on-submit" >
                     <i class="fa fa-save"></i>
