@@ -186,7 +186,9 @@ hqDefine('registration/js/new_user.ko', function () {
 
 
         // --- Optional for test ----
-        self.phoneNumber = ko.observable();
+        self.phoneNumber = ko.observable().extend({
+                phone_number_val: 2,
+            });
 
         // ---------------------------------------------------------------------
         // Step 2

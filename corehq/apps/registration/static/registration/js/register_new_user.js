@@ -38,19 +38,49 @@ $(function () {
         }
     });
 
-    // Handle phone number input
-    var $number = $('#id_phone_number');
-    $number.intlTelInput({
-        separateDialCode: true,
-        utilsScript: initial_page_data('number_utils_script'),
-        initialCountry: "auto",
-        geoIpLookup: function (success, failure) {
-            $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
-                var countryCode = (resp && resp.country) ? resp.country : "";
-                success(countryCode);
-            });
-        },
+// here, the index maps to the error code returned from getValidationError - see readme
+var errorMap = [ "Invalid number", "Invalid country code", "Too short", "Too long", "Invalid number"];
+
+// Handle phone number input
+var $number = $('#id_phone_number');
+var iti = $number.intlTelInput({
+    separateDialCode: true,
+    utilsScript: initial_page_data('number_utils_script'),
+    initialCountry: "auto",
+    geoIpLookup: function (success, failure) {
+        $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
+            var countryCode = (resp && resp.country) ? resp.country : "";
+            success(countryCode);
+        });
+    },
+});
+    
+var input = document.querySelector("#id_phone_number"),
+  errorMsg = document.querySelector("#id_phone_number"),
+  validMsg = document.querySelector("#id_phone_number");
+
+var reset = function() {
+  input.classList.remove("error");
+  errorMsg.innerHTML = "";
+  errorMsg.classList.add("hide");
+  validMsg.classList.add("hide");
+};
+
+    // on blur: validate
+        input.addEventListener('blur', function () {
+          reset();
+          if (input.value.trim()) {
+            if ($(this).intlTelInput("isValidNumber")) {
+              validMsg.classList.remove("hide");
+            } else {
+              input.classList.add("error");
+              var errorCode = $(this).intlTelInput("getValidationError");
+              errorMsg.innerHTML = errorMap[errorCode];
+              errorMsg.classList.remove("hide");
+            }
+          }
     });
+
     $number.keydown(function (e) {
         // prevents non-numeric numbers from being entered.
         // from http://stackoverflow.com/questions/995183/how-to-allow-only-numeric-0-9-in-html-inputbox-using-jquery
