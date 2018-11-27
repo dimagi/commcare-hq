@@ -3027,7 +3027,8 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
         }
 
     def get_data(self, invoice):
-        return self.fetch_attachment(self.get_filename(invoice), stream=True).read()
+        with self.fetch_attachment(self.get_filename(invoice), stream=True) as fh:
+            return fh.read()
 
 
 class LineItemManager(models.Manager):
