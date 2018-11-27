@@ -18,11 +18,11 @@
                                    event: {change: changeNewOwner}" />
                 </span>
                 <button type="submit"
-                        data-bind="hqbSubmitReady: is_submit_enabled, visible: is_submit_enabled"
+                        data-bind="hqbSubmitReady: isSubmitEnabled, visible: isSubmitEnabled"
                         class="btn btn-default disabled">{% trans 'Reassign' %}</button>
                 <button type="button"
                         disabled="disabled"
-                        data-bind="visible: !is_submit_enabled()"
+                        data-bind="visible: !isSubmitEnabled()"
                         class="btn btn-default">{% trans 'Reassign' %}</button>
             </form>
         </div>

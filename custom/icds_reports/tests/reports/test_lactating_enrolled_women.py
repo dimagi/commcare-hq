@@ -149,8 +149,7 @@ class TestLactatingEnrolledWomen(TestCase):
             {
                 "rightLegend": {
                     "info": percent_lactating_women_enrolled_help_text(),
-                    "average": 83.0,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': 'Number of lactating women who are enrolled for Anganwadi Services:',
@@ -203,8 +202,7 @@ class TestLactatingEnrolledWomen(TestCase):
             {
                 "rightLegend": {
                     "info": percent_lactating_women_enrolled_help_text(),
-                    "average": 43.5,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': 'Number of lactating women who are enrolled for Anganwadi Services:',

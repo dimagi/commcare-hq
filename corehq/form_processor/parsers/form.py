@@ -4,6 +4,7 @@ import datetime
 from contextlib import contextmanager
 
 from couchdbkit import ResourceNotFound
+from ddtrace import tracer
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -58,12 +59,14 @@ class FormProcessingResult(object):
         return locked_form(self.submitted_form, self.interface)
 
 
+@tracer.wrap(name='submission.process_form_xml')
 def process_xform_xml(domain, instance, attachments=None, auth_context=None):
     """
     Create a new xform to ready to be saved to a database in a thread-safe manner
 
     attachments is a dictionary of the request.FILES that are not the xform;
-    key is parameter name, value is django MemoryFile object stream
+    key is parameter name, value is
+    `django.core.files.uploadedfile.UploadedFile` object.
 
     :returns: FormProcessingResult containing the new XFormInstance(SQL)
     or raises an exception if anything goes wrong.

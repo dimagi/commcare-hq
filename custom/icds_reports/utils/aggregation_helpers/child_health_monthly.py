@@ -280,6 +280,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                       date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
                   THEN 1 ELSE NULL END
             """),
+            ("mother_phone_number", "child_health.mother_phone_number"),
         )
         return """
         INSERT INTO "{tablename}" (

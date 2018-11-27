@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.contrib import messages
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from elasticsearch import TransportError
@@ -54,6 +55,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                  .start(self.pagination.start))
         query.es_query['sort'] = self.get_sorting_block()
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
 
         if self.case_filter:
             query = query.filter(self.case_filter)
@@ -71,7 +73,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             pass
         elif self.request.can_access_all_locations and EMWF.show_project_data(mobile_user_and_group_slugs):
             # Show everything but stuff we know for sure to exclude
-            user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
             ids_to_exclude = self.get_special_owner_ids(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
@@ -80,6 +81,12 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 commtrack=False,
             )
             query = query.NOT(case_es.owner(ids_to_exclude))
+        elif self.request.can_access_all_locations and EMWF.show_deactivated_data(mobile_user_and_group_slugs):
+            owner_ids = (user_es.UserES()
+                         .show_only_inactive()
+                         .domain(self.domain)
+                         .get_ids())
+            query = query.OR(case_es.owner(owner_ids))
         else:  # Only show explicit matches
             query = query.owner(self.case_owners)
 
@@ -264,6 +271,22 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     name = ugettext_lazy('Case List')
     slug = 'case_list'
+
+    @classmethod
+    def get_subpages(cls):
+        def _get_case_name(request=None, **context):
+            if 'case' in context:
+                return mark_safe(context['case'].name)
+            else:
+                return _('View Case')
+
+        from corehq.apps.reports.views import CaseDataView
+        return [
+            {
+                'title': _get_case_name,
+                'urlname': CaseDataView.urlname,
+            },
+        ]
 
     @property
     def view_response(self):
