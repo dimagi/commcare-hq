@@ -21,6 +21,7 @@ from corehq.apps.reports.generic import (GenericTabularReport,
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.const import MISSING_APP_ID
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.toggles import SUPPORT
 from memoized import memoized
 
@@ -67,6 +68,9 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                                        mobile_user_and_group_slugs,
                                        self.request.couch_user)
                     .values_list('_id', flat=True))
+
+        if HQUserType.UNKNOWN in EMWF.selected_user_types(mobile_user_and_group_slugs):
+            user_ids.append(SYSTEM_USER_ID)
         # If no filters are selected, return all results
         return form_es.user_id(user_ids)
 
@@ -102,7 +106,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
             for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
                 query = query.NOT(form_es.xmlns(xmlns))
-
         return query
 
     @property
