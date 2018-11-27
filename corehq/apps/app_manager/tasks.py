@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
+from django.conf import settings
 
 from celery.task import task
 from celery.utils.log import get_task_logger
@@ -76,7 +77,7 @@ def update_linked_app_and_notify_task(domain, app_id, user_id, email):
     update_linked_app_and_notify(domain, app_id, user_id, email)
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(serializer='pickle', queue=settings.CELERY_MAIN_QUEUE)
 def load_appcues_template_apps(domain, username):
     from corehq.apps.app_manager.views.apps import load_app_from_slug
     for app_slug in APPCUES_TEMPLATE_SLUGS:
