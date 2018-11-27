@@ -1,3 +1,11 @@
+"""
+This script prints out the SQL forms that are missing from ES within a
+certain date range.
+
+For a full description and suggestions on usage see the original PR
+description here: https://github.com/dimagi/commcare-hq/pull/22477
+
+"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
