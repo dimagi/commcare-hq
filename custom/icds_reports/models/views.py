@@ -208,7 +208,7 @@ class AggLsMonthy(models.Model):
         2) agg_awc
         3) awc_location_months
     """
-    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(primary_key=True)
     supervisor_name = models.TextField(blank=True, null=True)
     supervisor_site_code = models.TextField(blank=True, null=True)
     block_id = models.TextField(blank=True, null=True)

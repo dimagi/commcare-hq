@@ -19,6 +19,7 @@ SELECT
 agg_ls.unique_awc_vists as unique_awc_vists,
 agg_ls.vhnd_observed as vhnd_observed,
 agg_ls.beneficiary_vists as beneficiary_vists,
+agg_ls.aggregation_level as aggregation_level,
 agg_ls.month as month,
 agg_awc.num_launched_awcs as num_launched_awcs
 FROM agg_ls
