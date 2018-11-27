@@ -74,7 +74,7 @@ class BaseICDSAggregationHelper(object):
     def ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ucr_data_source_id)
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     def generate_child_tablename(self, month=None):
         month = month or self.month

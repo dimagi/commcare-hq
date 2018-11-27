@@ -282,6 +282,7 @@ class ChildHealthMonthly(models.Model):
     zscore_grading_wfh_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
     muac_grading = models.SmallIntegerField(blank=True, null=True)
     muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
+    mother_phone_number = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False

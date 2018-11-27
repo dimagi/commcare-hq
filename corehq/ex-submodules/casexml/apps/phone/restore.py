@@ -333,7 +333,7 @@ class RestoreState(object):
     reasons.
     """
 
-    def __init__(self, project, restore_user, params, async=False,
+    def __init__(self, project, restore_user, params, is_async=False,
                  overwrite_cache=False, case_sync=None):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
@@ -348,7 +348,7 @@ class RestoreState(object):
         self.start_time = None
         self.duration = None
         self.current_sync_log = None
-        self.async = async
+        self.is_async = is_async
         self.overwrite_cache = overwrite_cache
         self._last_sync_log = Ellipsis
 
@@ -477,24 +477,24 @@ class RestoreConfig(object):
     :param restore_user:    The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
-    :param async:           Whether to get the restore response using a celery task
+    :param is_async:           Whether to get the restore response using a celery task
     :param case_sync:       Case sync algorithm (None -> default).
     """
 
     def __init__(self, project=None, restore_user=None, params=None,
-                 cache_settings=None, async=False, case_sync=None):
+                 cache_settings=None, is_async=False, case_sync=None):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
         self.domain = project.name if project else ''
         self.restore_user = restore_user
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
-        self.async = async
+        self.is_async = is_async
 
         self.restore_state = RestoreState(
             self.project,
             self.restore_user,
-            self.params, async,
+            self.params, is_async,
             self.cache_settings.overwrite_cache,
             case_sync=case_sync,
         )
@@ -538,7 +538,7 @@ class RestoreConfig(object):
         )
 
     def get_response(self):
-        async = self.async
+        is_async = self.is_async
         try:
             with self.timing_context:
                 payload = self.get_payload()
@@ -546,14 +546,14 @@ class RestoreConfig(object):
         except RestoreException as e:
             logging.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.restore_user.username, str(e)))
-            async = False
+            is_async = False
             response = get_simple_response_xml(
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
                                     status=412)  # precondition failed
-        if not async:
+        if not is_async:
             self._record_timing(response.status_code)
         return response
 
@@ -565,7 +565,7 @@ class RestoreConfig(object):
         cached_response = self.get_cached_response()
         tags = [
             'domain:{}'.format(self.domain),
-            'is_initial:{}'.format(not bool(self.sync_log)),
+            'is_async:{}'.format(bool(self.is_async)),
         ]
         if cached_response:
             datadog_counter('commcare.restores.cache_hits.count', tags=tags)
@@ -573,7 +573,7 @@ class RestoreConfig(object):
         datadog_counter('commcare.restores.cache_misses.count', tags=tags)
 
         # Start new sync
-        if self.async:
+        if self.is_async:
             response = self._get_asynchronous_payload()
         else:
             response = self.generate_payload()
@@ -671,11 +671,22 @@ class RestoreConfig(object):
 
             return content.get_fileobj()
 
-    def set_cached_payload_if_necessary(self, fileobj, duration, async):
-        # on initial sync, only cache if the duration was longer than the threshold
+    def set_cached_payload_if_necessary(self, fileobj, duration, is_async):
+        # only cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
+        if is_async or self.force_cache or is_long_restore:
+            type_ = 'unknown'
+            if is_async:
+                type_ = 'async'
+            elif self.force_cache:
+                type_ = 'force'
+            elif is_long_restore:
+                type_ = 'long'
 
-        if async or self.force_cache or is_long_restore or self.sync_log:
+            tags = {
+                'type:{}'.format(type_),
+            }
+            datadog_counter('commcare.restores.cache_writes', tags=tags)
             response = CachedResponse.save_for_later(
                 fileobj,
                 self.cache_timeout,
