@@ -198,6 +198,11 @@
                         openModal: 'revert-build-modal-template',
                         visible: version() !== $root.currentAppVersion(),
                         css: {hide: false}">{% trans "Revert to this Version" %}</button>
+            <a class="btn btn-default" target="_blank"
+               data-bind="attr: { href: hqImport('hqwebapp/js/initial_page_data').reverse('app_form_summary', $data.id()) }">
+                <i class="fa fa-list-alt"></i>
+                {% trans "App Summary" %}
+            </a>
             {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
             <button class="btn btn-default" data-toggle="modal" data-target="#app-diff-modal" data-bind="
                 click: function() { $parent.onViewChanges($data.id(), $parent.previousBuildId($index())) }
