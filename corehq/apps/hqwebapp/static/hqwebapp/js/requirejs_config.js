@@ -13,7 +13,6 @@ requirejs.config({
         "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
         "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
         'yui-base': 'hqmedia/MediaUploader/yui-base',
-        'yui-combo': 'hqmedia/MediaUploader/yui-combo',
         'yui-loader': 'hqmedia/MediaUploader/yui-loader',
         'yui-uploader': 'hqmedia/MediaUploader/yui-uploader',
         'file-uploader': 'hqmedia/MediaUploader/hqmedia.upload_controller'
