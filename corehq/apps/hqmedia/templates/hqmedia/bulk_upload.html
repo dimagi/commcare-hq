@@ -2,6 +2,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+
+{% requirejs_main 'hqmedia/js/bulk_upload_main' %}
+
 {% block title %}{% trans 'Bulk Upload of Multimedia' %}{% endblock title %}
 
 {% block stylesheets %}{{ block.super }}
