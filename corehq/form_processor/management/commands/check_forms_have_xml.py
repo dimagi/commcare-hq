@@ -33,12 +33,11 @@ class Command(BaseCommand):
                 for form in with_progress_bar(form_db.iter_forms(form_ids), len(form_ids)):
                     if isinstance(form, CouchForm):
                         meta = form.blobs.get(ATTACHMENT_NAME)
-                        if not meta or not blob_db.exists(
-                                meta.id, form._blobdb_bucket()):  # pylint: disable=protected-access
+                        if not meta or not blob_db.exists(key=meta.key):
                             self.write_row(csv_writer, domain, form.is_archived, form.received_on, form.form_id)
                     elif isinstance(form, XFormInstanceSQL):
                         meta = form.get_attachment_meta(ATTACHMENT_NAME)
-                        if not meta or not blob_db.exists(meta.blob_id, meta.blobdb_bucket()):
+                        if not meta or not blob_db.exists(key=meta.key):
                             self.write_row(csv_writer, domain, form.is_archived, form.received_on, form.form_id)
                     else:
                         raise Exception("not sure how we got here")

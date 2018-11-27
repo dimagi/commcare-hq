@@ -14,6 +14,8 @@ from unittest2 import skipIf, skipUnless
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.blobs import CODES
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
     iter_all_rows)
@@ -96,7 +98,13 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_sql_forms(cls, domain=None):
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         logger.debug("Deleting all SQL xforms for domain %s", domain)
+        params = {"type_code__in": [CODES.form_xml, CODES.form_attachment]}
+        if domain:
+            params["domain"] = domain
+        for db in get_db_aliases_for_partitioned_query():
+            BlobMeta.objects.using(db).filter(**params).delete()
         cls._delete_all_sql_sharded_models(XFormInstanceSQL, domain)
 
     @classmethod

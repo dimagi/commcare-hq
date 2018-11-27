@@ -9,18 +9,18 @@
 # esoergel, 2018
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2018
 # Sarah Sagan <ssagan@dimagi.com>, 2018
-# Aissetou Sawadogo <ais107@hotmail.com>, 2018
-# Tyler Wymer <twymer@dimagi.com>, 2018
 # Kelly Adediha <kadediha@dimagi.com>, 2018
+# Tyler Wymer <twymer@dimagi.com>, 2018
+# Aissetou Sawadogo <ais107@hotmail.com>, 2018
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-11-20 21:26+0000\n"
+"POT-Creation-Date: 2018-11-27 21:00+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Kelly Adediha <kadediha@dimagi.com>, 2018\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2018\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -916,15 +916,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
-#, fuzzy
-#| msgid ""
-#| "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgid ""
 "{nodeID} is not a valid Question ID. It must start with a letter and contain "
 "only letters, numbers, and '-' or '_' characters."
 msgstr ""
-"Doit commencer avec une lettre et contenir uniquement des lettres, nombres, "
-"'-', et '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid ""
@@ -2656,10 +2651,8 @@ msgid "<%= count %> form submissions available."
 msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js:95
-#, fuzzy
-#| msgid "Insert Questions"
 msgid "User Registration"
-msgstr "Insérer des questions"
+msgstr "Inscription de l'utilisateur"
 
 #: corehq/apps/export/static/export/js/create_export.js:266
 msgid ""
@@ -2667,10 +2660,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js:301
-#, fuzzy
-#| msgid "Issue communicating with server. Try again."
 msgid "There is an issue communicating with the server at this time."
-msgstr "Problème de communication avec le serveur. Veuillez réessayer. "
+msgstr "Problème de communication avec le serveur en ce moment."
 
 #: corehq/apps/export/static/export/js/download_data_files.js:26
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
@@ -2690,10 +2681,8 @@ msgstr ""
 
 #: corehq/apps/export/static/export/js/export_list.js:207
 #: corehq/apps/export/static/export/js/export_list.js:213
-#, fuzzy
-#| msgid "Invalid language code"
 msgid "Invalid date format"
-msgstr "Code langage invalide"
+msgstr "Format de date non valide"
 
 #: corehq/apps/export/static/export/js/export_list.js:320
 msgid "Problem saving dashboard feed filters"
