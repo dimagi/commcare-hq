@@ -10,7 +10,6 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];
     vm.currentMonth = moment().format("MMMM");
-    vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -18,6 +17,7 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+    vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
     vm.getData = function() {
         if (parseInt(vm.selectedLocationLevel) !== 3) {
