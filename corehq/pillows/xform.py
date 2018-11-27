@@ -10,12 +10,16 @@ from jsonobject.exceptions import BadValueError
 from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
-from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
+from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, UCR_PROCESSING_CHUNK_SIZE
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -23,9 +27,9 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from dimagi.utils.parsing import string_to_utc_datetime
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
@@ -135,8 +139,9 @@ def transform_xform_for_elasticsearch(doc_dict):
 
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
                                       process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, topics.FORM_TOPICS)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, FORM_TOPICS)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
@@ -144,7 +149,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         doc_filter_fn=xform_pillow_filter,
     )
     kafka_change_feed = KafkaChangeFeed(
-        topics=topics.FORM_TOPICS, client_id='forms-to-es', num_processes=num_processes, process_num=process_num
+        topics=FORM_TOPICS, client_id='forms-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -154,6 +159,63 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
+    )
+
+
+def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
+                         include_ucrs=None, exclude_ucrs=None,
+                         num_processes=1, process_num=0, configs=None, skip_ucr=False,
+                         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
+    if topics:
+        assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
+    topics = topics or FORM_TOPICS
+    change_feed = KafkaChangeFeed(
+        topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
+    )
+
+    ucr_processor = ConfigurableReportPillowProcessor(
+        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+    )
+    xform_to_es_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=XFORM_INDEX_INFO,
+        doc_prep_fn=transform_xform_for_elasticsearch,
+        doc_filter_fn=xform_pillow_filter,
+    )
+    # avoid circular dependency
+    from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
+    from corehq.pillows.mappings.user_mapping import USER_INDEX
+    xform_to_report_es_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=REPORT_XFORM_INDEX_INFO,
+        doc_prep_fn=transform_xform_for_report_forms_index,
+        doc_filter_fn=report_xform_filter
+    )
+    unknown_user_form_processor = UnknownUsersProcessor()
+    form_meta_processor = FormSubmissionMetadataTrackerProcessor()
+    checkpoint_id = "{}-{}-{}-{}".format(
+        pillow_id, XFORM_INDEX_INFO.index, REPORT_XFORM_INDEX_INFO.index, USER_INDEX)
+    checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
+    event_handler = KafkaCheckpointEventHandler(
+        checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+        checkpoint_callback=ucr_processor
+    )
+    if configs:
+        ucr_processor.bootstrap(configs)
+    processors = [xform_to_es_processor, xform_to_report_es_processor,
+        form_meta_processor, unknown_user_form_processor]
+    if not skip_ucr:
+        processors = [ucr_processor] + processors
+    return ConstructedPillow(
+        name=pillow_id,
+        change_feed=change_feed,
+        checkpoint=checkpoint,
+        change_processed_event_handler=event_handler,
+        processor=processors,
+        processor_chunk_size=processor_chunk_size
     )
 
 
@@ -182,7 +244,6 @@ class CouchFormReindexerFactory(ReindexerFactory):
             index_info=XFORM_INDEX_INFO,
             doc_filter=xform_pillow_filter,
             doc_transform=transform_xform_for_elasticsearch,
-            pillow=get_xform_to_elasticsearch_pillow(),
             **self.options
         )
 
