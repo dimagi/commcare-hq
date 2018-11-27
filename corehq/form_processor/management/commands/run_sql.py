@@ -84,7 +84,7 @@ def run_once(sql, dbname):
 class RunUntilZero(object):
     """SQL statement to be run repeatedly
 
-    ...until the first column of of the first returned row is zero.
+    ...until the first column of the first returned row is zero.
     """
 
     sql = attr.ib()
