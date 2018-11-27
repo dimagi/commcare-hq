@@ -142,8 +142,8 @@ class SubmissionTestSQL(SubmissionTest):
         acc = FormAccessors(self.domain.name)
         new_form = acc.get_form(response['X-CommCareHQ-FormID'])
         old_form = acc.get_form(new_form.deprecated_form_id)
-        self.assertIn("<bop>bang</bop>", old_form.get_xml())
-        self.assertIn("<bop>bong</bop>", new_form.get_xml())
+        self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
+        self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
         self.assertEqual(list_attachments(old_form),
             [("file", b"text file"), ("image", b"fake image")])
         self.assertEqual(list_attachments(new_form),
