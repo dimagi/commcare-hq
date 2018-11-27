@@ -9,7 +9,7 @@ var transformLocationTypeName = function(locationTypeName) {
     }
 };
 
-function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
+function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage) {
     var vm = this;
 
     var ALL_OPTION = {
@@ -25,6 +25,15 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     vm.hierarchy = hierarchy;
     vm.selectedLocations = selectedLocations;
     vm.showMessage = showMessage;
+    vm.showSectorMessage = showSectorMessage;
+
+    vm.errors = function() {
+        return vm.showMessage || vm.showSectorMessage;
+    };
+
+    vm.locationIsNull = function(location) {
+        return location === null || location === void(0) || location.location_id === 'all';
+    };
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
@@ -73,7 +82,10 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
         if ($location.path().indexOf('awc_reports') !== -1) {
-            vm.showMessage = vm.selectedLocations[4] === null;
+            vm.showMessage = vm.locationIsNull(vm.selectedLocations[4]);
+        }
+        if ($location.path().indexOf('lady_supervisor') !== -1) {
+            vm.showSectorMessage = vm.locationIsNull(vm.selectedLocations[3]) || selectedLocationIndex() !== 3;
         }
         if (level < 4 && $item) {
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
@@ -121,6 +133,9 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.isVisible = function(level) {
+        if ($location.path().indexOf('lady_supervisor') !== -1 && level === 4) {
+            return false;
+        }
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all' && vm.selectedLocations[level - 1].location_id !== 'all');
     };
 }
@@ -219,6 +234,9 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 },
                 showMessage: function () {
                     return vm.isOpenModal;
+                },
+                showSectorMessage: function () {
+                    return $location.path().indexOf('lady_supervisor') !== -1 && selectedLocationIndex() !== 3;
                 },
             },
         });
@@ -324,7 +342,8 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 }
 
 
-                if ($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) {
+                if (($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) ||
+                    ($location.path().indexOf('lady_supervisor') !== -1 && selectedLocationIndex() !== 3)) {
                     vm.open();
                 }
                 if ($location.path().indexOf('awc_reports') === -1 && selectedLocationIndex() === 4) {
@@ -348,7 +367,8 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 vm.locationsCache.root = [ ALL_OPTION ].concat(data.locations);
                 vm.selectedLocations[0] = ALL_OPTION;
 
-                if ($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) {
+                if (($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) ||
+                    ($location.path().indexOf('lady_supervisor') !== -1 && selectedLocationIndex() !== 3)) {
                     vm.open();
                 }
             });
@@ -433,7 +453,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 }
 
 LocationFilterController.$inject = ['$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
-LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
+LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

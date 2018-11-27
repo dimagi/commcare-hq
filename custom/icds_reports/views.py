@@ -95,6 +95,7 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
     get_institutional_deliveries_data_map, get_institutional_deliveries_sector_data
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
+from custom.icds_reports.reports.lady_supervisor import get_lady_supervisor_data
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
     get_medicine_kit_sector_data
@@ -316,6 +317,25 @@ class ProgramSummaryView(BaseReportView):
             )
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(domain, config, include_test)
+        return JsonResponse(data=data)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class LadySupervisorView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        config = {
+            'month': tuple(current_month.timetuple())[:3]
+        }
+
+        config.update(get_location_filter(location, domain))
+
+        data = get_lady_supervisor_data(
+            domain, config, include_test
+        )
         return JsonResponse(data=data)
 
 
