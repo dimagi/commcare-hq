@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
 from collections import namedtuple
 from datetime import datetime
+from io import BytesIO
 from itertools import groupby
 from uuid import UUID
 
@@ -25,7 +26,8 @@ from django.db.models.expressions import Value
 
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.blobs import get_blob_db
+from corehq.blobs import get_blob_db, CODES
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import (
     XFormNotFound,
     XFormSaveError,
@@ -47,7 +49,6 @@ from corehq.form_processor.models import (
     CaseAttachmentSQL,
     CaseTransaction,
     CommCareCaseSQL,
-    XFormAttachmentSQL,
     XFormOperationSQL,
     LedgerValue,
     LedgerTransaction,
@@ -380,7 +381,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_attachments(form_id):
-        return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
+        return get_blob_db().metadb.get_for_parent(form_id)
 
     @staticmethod
     def iter_forms_by_last_modified(start_datetime, end_datetime):
@@ -427,24 +428,26 @@ class FormAccessorSQL(AbstractFormAccessor):
         the memoize hash.
         """
         form = FormAccessorSQL.get_form(form_id)
-        attachments = FormAccessorSQL.get_attachments(form_id)
-        form.cached_attachments = attachments
+        form.attachments_list = FormAccessorSQL.get_attachments(form_id)
         return form
 
     @staticmethod
     def get_attachment_by_name(form_id, attachment_name):
+        code = (CODES.form_xml if attachment_name == "form.xml"
+                else CODES.form_attachment)
         try:
-            return XFormAttachmentSQL.objects.raw(
-                'select * from get_form_attachment_by_name(%s, %s)',
-                [form_id, attachment_name]
-            )[0]
-        except IndexError:
+            return get_blob_db().metadb.get(
+                parent_id=form_id,
+                type_code=code,
+                name=attachment_name,
+            )
+        except BlobMeta.DoesNotExist:
             raise AttachmentNotFound(attachment_name)
 
     @staticmethod
     def get_attachment_content(form_id, attachment_name, stream=False):
         meta = FormAccessorSQL.get_attachment_by_name(form_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
+        return AttachmentContent(meta.content_type, meta.open())
 
     @staticmethod
     def get_form_operations(form_id):
@@ -457,14 +460,12 @@ class FormAccessorSQL(AbstractFormAccessor):
             return []
         forms = list(FormAccessorSQL.get_forms(form_ids))
 
-        # attachments are already sorted by form_id in SQL
-        attachments = XFormAttachmentSQL.objects.raw(
-            'SELECT * from get_multiple_forms_attachments(%s)',
-            [form_ids]
+        attachments = sorted(
+            get_blob_db().metadb.get_for_parents(form_ids),
+            key=lambda meta: meta.parent_id
         )
-
         forms_by_id = {form.form_id: form for form in forms}
-        _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
+        _attach_prefetch_models(forms_by_id, attachments, 'parent_id', 'attachments_list')
 
         if ordered:
             _sort_with_id_list(forms, form_ids, 'form_id')
@@ -495,55 +496,28 @@ class FormAccessorSQL(AbstractFormAccessor):
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
 
-        if delete_attachments:
-            attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids))
-
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            # cascade should delete the attachments and operations
+            # cascade should delete the operations
             _, deleted_models = XFormInstanceSQL.objects.using(db_name).filter(
                 domain=domain, form_id__in=split_form_ids
             ).delete()
             deleted_count += deleted_models.get(XFormInstanceSQL._meta.label, 0)
 
-        if delete_attachments:
-            attachments_to_delete = attachments
+        if delete_attachments and deleted_count:
             if deleted_count != len(form_ids):
                 # in the unlikely event that we didn't delete all forms (because they weren't all
                 # in the specified domain), only delete attachments for forms that were deleted.
-                deleted_forms = set()
-                for form_id in form_ids:
-                    if not FormAccessorSQL.form_exists(form_id):
-                        deleted_forms.add(form_id)
-
-                attachments_to_delete = []
-                for attachment in attachments:
-                    if attachment.form_id in deleted_forms:
-                        attachments_to_delete.append(attachment)
-
-            db = get_blob_db()
-            paths = [
-                db.get_path(attachment.blob_id, attachment.blobdb_bucket())
-                for attachment in attachments_to_delete
-            ]
-            db.bulk_delete(paths)
+                deleted_forms = [
+                    form_id for form_id in form_ids
+                    if not FormAccessorSQL.form_exists(form_id)
+                ]
+            else:
+                deleted_forms = form_ids
+            metas = get_blob_db().metadb.get_for_parents(deleted_forms)
+            get_blob_db().bulk_delete(metas=metas)
 
         return deleted_count
-
-    @staticmethod
-    def get_attachments_for_forms(form_ids, ordered=False):
-        assert isinstance(form_ids, list)
-        if not form_ids:
-            return []
-        attachments = list(XFormAttachmentSQL.objects.raw(
-            'SELECT * from get_multiple_forms_attachments(%s)',
-            [form_ids]
-        ))
-
-        if ordered:
-            _sort_with_id_list(attachments, form_ids, 'form_id')
-
-        return attachments
 
     @staticmethod
     def archive_form(form, user_id=None):
@@ -584,8 +558,9 @@ class FormAccessorSQL(AbstractFormAccessor):
     def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, _):
         attachment_metadata = form_data.get_attachment_meta("form.xml")
         # Write the new xml to the database
-        attachment_metadata.write_content(form_attachment_new_xml)
-        attachment_metadata.save()
+        if isinstance(form_attachment_new_xml, bytes):
+            form_attachment_new_xml = BytesIO(form_attachment_new_xml)
+        get_blob_db().put(form_attachment_new_xml, meta=attachment_metadata)
         operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
                                       operation=XFormOperationSQL.GDPR_SCRUB)
         form_data.track_create(operation)
@@ -626,17 +601,8 @@ class FormAccessorSQL(AbstractFormAccessor):
         """
         Save a previously unsaved form
         """
-
         assert not form.is_saved(), 'form already saved'
         logging.debug('Saving new form: %s', form)
-        unsaved_attachments = getattr(form, 'unsaved_attachments', [])
-        if unsaved_attachments:
-            for unsaved_attachment in unsaved_attachments:
-                if unsaved_attachment.is_saved():
-                    raise XFormSaveError(
-                        'XFormAttachmentSQL {} has already been saved'.format(unsaved_attachment.id)
-                    )
-                unsaved_attachment.form_id = form.form_id
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
@@ -647,37 +613,27 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form_id = form.form_id
 
         try:
-            with transaction.atomic(using=form.db, savepoint=False):
+            with form.attachment_writer() as write_attachments, \
+                    transaction.atomic(using=form.db, savepoint=False):
                 form.save()
-                for attachment in unsaved_attachments:
-                    attachment.save()
-
+                write_attachments()
                 for operation in operations:
                     operation.save()
         except InternalError as e:
             raise XFormSaveError(e)
 
-        try:
-            del form.unsaved_attachments
-        except AttributeError:
-            pass
-
         form.clear_tracked_models()
-
-        # keep these around since we might need them still e.g publishing changes to kafka
-        form.cached_attachments = unsaved_attachments
-
 
     @staticmethod
     def update_form(form, publish_changes=True):
         from corehq.form_processor.change_publishers import publish_form_saved
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         assert form.is_saved(), "this method doesn't support creating unsaved forms"
-        assert getattr(form, 'unsaved_attachments', None) is None, \
+        assert not form.has_unsaved_attachments(), \
             'Adding attachments to saved form not supported'
         assert not form.has_tracked_models_to_delete(), 'Deleting other models not supported by this method'
         assert not form.has_tracked_models_to_update(), 'Updating other models not supported by this method'
-        assert not form.has_tracked_models_to_create(XFormAttachmentSQL), \
+        assert not form.has_tracked_models_to_create(BlobMeta), \
             'Adding new attachments not supported by this method'
 
         new_operations = form.get_tracked_models_to_create(XFormOperationSQL)
@@ -949,7 +905,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_attachment_content(case_id, attachment_name):
         meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
+        return AttachmentContent(meta.content_type, meta.open())
 
     @staticmethod
     def get_attachments(case_id):
