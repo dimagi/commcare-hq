@@ -128,8 +128,8 @@ class FormProcessorSQL(object):
                 processed_forms.submitted.domain, toggles.NAMESPACE_DOMAIN)
             if sort_submissions:
                 for case in cases:
-                    SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary()
-                    CaseAccessorSQL.save_case(case)
+                    if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
+                        CaseAccessorSQL.save_case(case)
 
         if publish_to_kafka:
             try:

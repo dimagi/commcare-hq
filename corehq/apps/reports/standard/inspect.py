@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
@@ -7,7 +8,7 @@ from corehq.apps.es import forms as form_es, filters as es_filters
 from corehq.apps.es.filters import match_all
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.filters.users import SubmitHistoryFilter as EMWF
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -49,7 +50,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
-        'corehq.apps.reports.filters.users.SubmitHistoryFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -142,6 +143,24 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
             return False
         else:
             return True
+
+    @classmethod
+    def get_subpages(cls):
+        def _get_form_name(request=None, **context):
+            if 'instance' in context:
+                try:
+                    return mark_safe(context['instance'].form_data['@name'])
+                except KeyError:
+                    pass
+            return _('View Form')
+
+        from corehq.apps.reports.views import FormDataView
+        return [
+            {
+                'title': _get_form_name,
+                'urlname': FormDataView.urlname,
+            },
+        ]
 
     @property
     def headers(self):

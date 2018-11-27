@@ -21,7 +21,7 @@ class TestUtils(SimpleTestCase):
             20,
             60
         )
-        self.assertEquals(average, 20.0)
+        self.assertEquals(average, 60.0)
 
     def test_calculate_average_if_one_location(self):
         data_mock = [{'all': 9, 'children': 9, 'state_name': 'State 1', 'state_map_location_name': 'test1'}]

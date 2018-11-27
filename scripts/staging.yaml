@@ -49,19 +49,9 @@
 trunk: master
 name: autostaging
 branches:
-  - pv/case-list-deac-label # Preethi Oct 26
   - test_rjs_multimedia_integration # Rohit Oct 31
-  
-  # These exports branches are all going through QA and are prone to conflicts.
-  # If there's a conflict you can't resolve and I'm not around to fix it,
-  # please let Ben know which one(s) you're removing. Much appreciated.
-  - jls/rebased-ko-export-download+jls/ko-exports-list  # Jenny Nov 2
   - jls/rebased-ko-export-download  # Jenny Nov 2
-  - jls/ko-exports-create  # Jenny Nov 2
-  - jls/ko-exports-list  # Jenny Nov 2
-
   - sr-mutliprocessors   # Sravan Nov 13
-  - mk-284183 # MK Mov 13
-  # mk-check-se # MK Nov 13
-  - vellum-staging  # Nick P Nov 13
+  - np-export-links  # Nick Nov 25
+  - dm/blobmeta-forms  # dmiller Nov 25 - CONTACT ME BEFORE REMOVING if not merged
 submodules: {}

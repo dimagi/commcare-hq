@@ -193,6 +193,8 @@ class ChildHealthMonthlyView(models.Model):
     current_month_wasting_v2 = models.TextField(blank=True, null=True)
     current_month_stunting_v2_sort = models.IntegerField(blank=True, null=True)
     current_month_wasting_v2_sort = models.IntegerField(blank=True, null=True)
+    aww_phone_number = models.TextField(blank=True, null=True)
+    mother_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -821,8 +823,6 @@ class DishaIndicatorView(models.Model):
     functional_toilet_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     # agg_ccs_record_monthly indicators
-    tetanus_complete_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
     resting_during_pregnancy_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     extra_meal_percent = models.DecimalField(

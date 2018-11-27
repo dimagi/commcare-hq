@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from collections import namedtuple
 
-from couchdbkit.ext.django.schema import DocumentSchema
+from dimagi.ext.couchdbkit import DocumentSchema
 
 from corehq.motech.serializers import serializers
 from corehq.motech.const import (

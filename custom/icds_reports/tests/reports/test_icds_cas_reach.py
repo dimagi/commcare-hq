@@ -22,7 +22,7 @@ class TestICDSCASReach(TestCase):
                 "records": [
                     [
                         {
-                            "redirect": "awcs_covered",
+                            "redirect": "icds_cas_reach/awcs_covered",
                             "all": 50,
                             "format": "div",
                             "color": "red",
@@ -104,7 +104,7 @@ class TestICDSCASReach(TestCase):
                 "records": [
                     [
                         {
-                            "redirect": "awcs_covered",
+                            "redirect": "icds_cas_reach/awcs_covered",
                             "color": "red",
                             "all": 50,
                             "frequency": "month",
@@ -115,7 +115,7 @@ class TestICDSCASReach(TestCase):
                             "label": "AWCs Launched"
                         },
                         {
-                            "redirect": "awc_daily_status",
+                            "redirect": "icds_cas_reach/awc_daily_status",
                             "color": "green",
                             "all": 50,
                             "frequency": "day",
@@ -186,7 +186,7 @@ class TestICDSCASReach(TestCase):
                 "records": [
                     [
                         {
-                            "redirect": "awcs_covered",
+                            "redirect": "icds_cas_reach/awcs_covered",
                             "color": "red",
                             "all": 50,
                             "frequency": "month",
@@ -197,7 +197,7 @@ class TestICDSCASReach(TestCase):
                             "label": "AWCs Launched"
                         },
                         {
-                            "redirect": "awc_daily_status",
+                            "redirect": "icds_cas_reach/awc_daily_status",
                             "color": "green",
                             "all": 50,
                             "frequency": "day",
