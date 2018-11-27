@@ -118,20 +118,6 @@ def require_can_edit_locations(view_fn):
     )
 
 
-def get_user_location(user, domain):
-    if user.is_commcare_user():
-        return user.location
-    else:
-        return user.get_location(domain)
-
-
-def get_user_sql_location(user, domain):
-    if user.is_commcare_user():
-        return user.sql_location
-    else:
-        return user.get_sql_location(domain)
-
-
 def user_can_edit_location_types(user, domain):
     return user.has_permission(domain, 'edit_apps')
 
