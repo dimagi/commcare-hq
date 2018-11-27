@@ -46,66 +46,96 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
+    @property
+    def person_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
+
     def aggregation_query(self):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
         age_in_days = "({} - case_list.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
         age_in_months = "(({} - case_list.dob) / 30.4 )".format(start_month_string)
-        open_in_month = ("(({} - case_list.opened_on::date)::integer >= 0) AND (case_list.closed = 0 OR (case_list.closed_on::date - {})::integer > 0)").format(end_month_string, start_month_string)
+        open_in_month = ("(({} - case_list.opened_on::date)::integer >= 0)"
+                         " AND (case_list.closed = 0"
+                         " OR (case_list.closed_on::date - {})::integer > 0)").format(end_month_string,
+                                                                                      start_month_string)
         alive_in_month = "(case_list.date_death IS NULL OR case_list.date_death - {} >= 0)".format(
             start_month_string)
-        seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
+        seeking_services = "(case_list.is_availing = 1 AND case_list.is_migrated = 0)"
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(open_in_month, alive_in_month, seeking_services,
                                                                   age_in_months)
+        add_in_month = "(case_list.add>= {} && case_list.add <= {})".format(start_month_string, end_month_string)
+        delivered_in_month = "({} AND {} AND {})".format(seeking_services, add_in_month)
         thr_eligible = "({} AND {} > 6 AND {} <= 36)".format(valid_in_month, age_in_months_end, age_in_months)
+        extra_meal = "(case_list.eating_extra_meal_last_visit AND case_list.pregnant)"
+        b1_complete = "(case_list.bp1_date <= {})".format(end_month_string)
+        b2_complete = "(case_list.bp2_date <= {})".format(end_month_string)
+        b3_complete = "(case_list.bp3_date <= {})".format(end_month_string)
+        pregnant_to_count = "(case_list.pregnant AND {} AND not case_list.is_migrated)".format(seeking_services)
+        pregnant_all = "(case_list.pregnant AND not case_list.is_migrated)"
+        trimester = "CASE WHEN case_list.pregnant THEN  CASE WHEN case_list.edd-end_month_string>=183" \
+                    "THEN 1 ELSE CASE WHEN case_list.edd-end_month_string<91 THEN 3 ELSE 2 End END ELSE null"
+        ccs_lactating = "({} AND {} AND case_list.add not in ('',null) AND {}-case_list.add>=0" \
+                        " AND {}-case_list.add<=183)".format(open_in_month, alive_in_month,
+                                                            end_month_string, start_month_string)
+        lactating = "({} AND {} AND not case_list.is_migrated)".format(ccs_lactating, seeking_services)
+        lactating_all = "({} AND not case_list.is_migrated)".format(ccs_lactating)
+        postnatal = "(case_list.add not in ('',null) AND {}-case_list.add>=0 AND {}-case_list.add<21" \
+                    " AND {} AND not case_list.is_migrated AND {} AND {})".format(end_month_string, start_month_string,
+                                                                                  seeking_services, alive_in_month,
+                                                                                  open_in_month)
         columns = (
             ('awc_id', 'case_list.awc_id'),
             ('case_id', 'case_list.case_id'),
             ('month', self.month.strftime("'%Y-%m-%d'")),
             ('age_in_months', 'trunc({})'.format(age_in_months_end)),
-            ('ccs_status', 'ucr.ccs_status'),
+            ('ccs_status', "CASE WHEN {} THEN 'pregnant' ELSE CASE WHEN {} THEN "
+                           "'lactating' ELSE 'other' END END".format(pregnant_to_count,
+                                                                     lactating)),
             ('open_in_month', "CASE WHEN {} THEN 1 ELSE 0 END".format(open_in_month)),
             ('alive_in_month', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(alive_in_month)),
-            ('trimester', 'ucr.trimester'),
+            ('trimester', trimester),
             ('num_rations_distributed', 'COALESCE(agg_thr.days_ration_given_mother, 0)'),
             ('thr_eligible', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(thr_eligible)),
             ('tetanus_complete', 'ucr.tetanus_complete'),
-            ('delivered_in_month', 'ucr.delivered_in_month'),
-            ('anc1_received_at_delivery', 'ucr.anc1_received_at_delivery'),
-            ('anc2_received_at_delivery', 'ucr.anc2_received_at_delivery'),
-            ('anc3_received_at_delivery', 'ucr.anc3_received_at_delivery'),
-            ('anc4_received_at_delivery', 'ucr.anc4_received_at_delivery'),
-            ('registration_trimester_at_delivery', 'ucr.registration_trimester_at_delivery'),
-            ('using_ifa', 'ucr.using_ifa'),
+            ('delivered_in_month', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(delivered_in_month)),
+            ('anc1_received_at_delivery', 'CASE WHEN {} AND case_list.anc1_received THEN 1 ELSE 0'.format(delivered_in_month)),
+            ('anc2_received_at_delivery', 'CASE WHEN {} AND case_list.anc2_received THEN 1 ELSE 0'.format(delivered_in_month)),
+            ('anc3_received_at_delivery', 'CASE WHEN {} AND case_list.anc3_received THEN 1 ELSE 0'.format(delivered_in_month)),
+            ('anc4_received_at_delivery', 'CASE WHEN {} AND case_list.anc4_received THEN 1 ELSE 0'.format(delivered_in_month)),
+            ('registration_trimester_at_delivery', 'CASE WHEN {} THEN {} ELSE null'.format(delivered_in_month, trimester)),
+            ('using_ifa', 'case_list.using_ifa_last_visit'),
             ('ifa_consumed_last_seven_days', 'ucr.ifa_consumed_last_seven_days'),
-            ('anemic_severe', 'ucr.anemic_severe'),
-            ('anemic_moderate', 'ucr.anemic_moderate'),
-            ('anemic_normal', 'ucr.anemic_normal'),
-            ('anemic_unknown', 'ucr.anemic_unknown'),
-            ('extra_meal', 'ucr.extra_meal'),
+            ('anemic_severe', "CASE WHEN case_list.anemia_status_last_visit='severe' THEN 1 WHERE 0"),
+            ('anemic_moderate', "CASE WHEN case_list.anemia_status_last_visit='moderate' THEN 1 WHERE 0"),
+            ('anemic_normal', "CASE WHEN case_list.anemia_status_last_visit='normal' THEN 1 WHERE 0"),
+            ('anemic_unknown', "CASE WHEN case_list.anemia_status_last_visit not in ('normal','severe','moderate') THEN 1 WHERE 0"),
+            ('extra_meal', 'CASE WHEN {} THEN 1 ELSE 0'.format(extra_meal)),
             ('resting_during_pregnancy', 'ucr.resting_during_pregnancy'),
             ('bp_visited_in_month', 'ucr.bp_visited_in_month'),
             ('pnc_visited_in_month', 'NULL'),
-            ('trimester_2', 'ucr.trimester_2'),
-            ('trimester_3', 'ucr.trimester_3'),
+            ('trimester_2', 'CASE WHEN {}=2 THEN 1 ELSE 0'.format(trimester)),
+            ('trimester_3', 'CASE WHEN {}=3 THEN 1 ELSE 0'.format(trimester)),
             ('counsel_immediate_bf', 'ucr.counsel_immediate_bf'),
             ('counsel_bp_vid', 'ucr.counsel_bp_vid'),
             ('counsel_preparation', 'ucr.counsel_preparation'),
             ('counsel_fp_vid', 'ucr.counsel_fp_vid'),
             ('counsel_immediate_conception', 'ucr.counsel_immediate_conception'),
             ('counsel_accessible_postpartum_fp', 'ucr.counsel_accessible_postpartum_fp'),
-            ('bp1_complete', 'ucr.bp1_complete'),
-            ('bp2_complete', 'ucr.bp2_complete'),
-            ('bp3_complete', 'ucr.bp3_complete'),
+            ('bp1_complete', 'CASE WHEN {} THEN 1 ELSE 0'.format(b1_complete)),
+            ('bp2_complete', 'CASE WHEN {} THEN 1 ELSE 0'.format(b2_complete)),
+            ('bp3_complete', 'CASE WHEN {} THEN 1 ELSE 0'.format(b3_complete)),
             ('pnc_complete', 'ucr.pnc_complete'),
-            ('postnatal', 'ucr.postnatal'),
-            ('has_aadhar_id', 'ucr.has_aadhar_id'),
+            ('postnatal', 'CASE WHEN {} THEN 1 ELSE 0'.format(postnatal)),
+            ('has_aadhar_id', "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ('counsel_fp_methods', 'NULL'),
-            ('pregnant', 'case_list.pregnant'),
-            ('pregnant_all', 'ucr.pregnant_all'),
-            ('lactating', 'ucr.lactating'),
-            ('lactating_all', 'ucr.lactating_all'),
+            ('pregnant', 'CASE WHEN {} THEN 1 ELSE 0'.format(pregnant_to_count)),
+            ('pregnant_all', 'CASE WHEN {} THEN 1 ELSE 0'.format(pregnant_all)),
+            ('lactating', 'CASE WHEN {} THEN 1 ELSE 0'.format(lactating)),
+            ('lactating_all', 'CASE WHEN {} THEN 1 ELSE 0'.format(lactating_all)),
             ('institutional_delivery_in_month', 'ucr.institutional_delivery_in_month'),
             ('add', 'case_list.add'),
             ('caste', 'case_list.caste'),
@@ -172,6 +202,9 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND ucr.month = agg_cf.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON ucr.doc_id = agg_delivery.case_id AND ucr.month = agg_delivery.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{ccs_record_case_ucr}" case_list ON ucr.doc_id = case_list.doc_id
+            LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
+                AND child_health.state_id = person_cases.state_id
+                AND lower(substring(person_cases.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON ucr.doc_id = ut.ccs_record_case_id
             WHERE ucr.month = %(start_date)s
             ORDER BY ucr.awc_id, ucr.case_id
@@ -188,6 +221,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_delivery_table=AGG_CCS_RECORD_DELIVERY_TABLE,
             pregnant_tasks_case_ucr=self.pregnant_tasks_cases_ucr_tablename,
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
+            person_cases_ucr=self.person_case_ucr_tablename,
         ), {
             "start_date": self.month,
             "end_date": self.end_date
