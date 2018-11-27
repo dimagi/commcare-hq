@@ -64,7 +64,8 @@ from custom.icds_reports.models import (
     AggAwc,
     AwcLocation
 )
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance, AggregateLsVhndForm,\
+    AggregateBeneficiaryForm, AggregateLsAWCVisitForm
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -243,6 +244,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res_child.get()
 
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                            icds_aggregation_task.si(date=calculation_date, func=_agg_ls_awc_mgt_form),
+                            icds_aggregation_task.si(date=calculation_date, func=_agg_ls_vhnd_form),
+                            icds_aggregation_task.si(date=calculation_date, func=_agg_beneficiary_form),
                             icds_aggregation_task.si(date=calculation_date, func=_agg_ls_table)
                             ).apply_async()
             res_awc.get()
@@ -502,6 +506,22 @@ def _agg_awc_table(day):
             "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"
         ], day)
         AggAwc.aggregate(force_to_date(day))
+
+
+@track_time
+def _agg_ls_vhnd_form(day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateLsVhndForm.aggregate(force_to_date(day))
+
+@track_time
+def _agg_beneficiary_form(day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateBeneficiaryForm.aggregate(force_to_date(day))
+
+@track_time
+def _agg_ls_awc_mgt_form(day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateLsAWCVisitForm.aggregate(force_to_date(day))
 
 
 @track_time

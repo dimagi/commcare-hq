@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
-
+from custom.icds_reports.const import AGG_LS_VHND_TABLE, AGG_LS_AWC_VISIT_TABLE, AGG_LS_BENEFICIARY_TABLE
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
@@ -56,99 +56,134 @@ class AggLsHelper(BaseICDSAggregationHelper):
         Returns the base aggregate query which is used to insert all the locations
         into the LS data table.
         """
-        return """
+        # return """
+        # INSERT INTO "{tablename}"
+        # (state_id, district_id, block_id, supervisor_id, month,
+        #  unique_awc_vists, vhnd_observed, beneficiary_vists, aggregation_level
+        # )
+        # (
+        # SELECT DISTINCT
+        # state_id,
+        # district_id,
+        # block_id,
+        # supervisor_id,
+        # %(start_date)s,
+        # 0,
+        # 0,
+        # 0,
+        # 4
+        # FROM "{awc_location_ucr}"
+        # )
+        # """.format(
+        #     tablename=self.tablename,
+        #     awc_location_ucr=self._ucr_tablename(ucr_id=self.awc_location_ucr)
+        # ), {
+        #     'start_date': self.month_start
+        # }
+        """
         INSERT INTO "{tablename}"
         (state_id, district_id, block_id, supervisor_id, month,
          unique_awc_vists, vhnd_observed, beneficiary_vists, aggregation_level
+        )(
+        SELECT
+        location.state_id, location.district_id, location.block_id, location.supervisor_id,
+        %(start_date)s as month,
+        sum(awc_table.unique_awc_vists),
+        sum(vhnd_table.vhnd_observed),
+        sum(beneficiary_table.beneficiary_vists),
+        5
+        from "{awc_location_ucr}" location
+        LEFT OUTER JOIN "{awc_table}" awc_table on location.supervisor_id=awc_table.supervisor_id 
+        FULL OUTER JOIN "{vhnd_table}" vhnd_table on (
+            awc_table.supervisor_id = vhnd_table.supervisor_id AND 
+            awc_table.month = vhnd_table.month
         )
-        (
-        SELECT DISTINCT
-        state_id,
-        district_id,
-        block_id,
-        supervisor_id,
-        %(start_date)s,
-        0,
-        0,
-        0,
-        4
-        FROM "{awc_location_ucr}"
+        FULL OUTER JOIN "{beneficiary_table}" beneficiary_table on (
+        vhnd_table.supervisor_id = beneficiary_table.supervisor_id AND 
+        vhnd_table.month = beneficiary_table.month
+        )
+        WHERE ucr.month = %(start_date)s
+        
+        group by location.state_id, location.district_id, location.block_id, location.supervisor_id
         )
         """.format(
             tablename=self.tablename,
-            awc_location_ucr=self._ucr_tablename(ucr_id=self.awc_location_ucr)
+            awc_location_ucr=self._ucr_tablename(ucr_id=self.awc_location_ucr),
+            awc_table=AGG_LS_VHND_TABLE,
+            vhnd_table=AGG_LS_VHND_TABLE,
+            beneficiary_table=AGG_LS_BENEFICIARY_TABLE
         ), {
             'start_date': self.month_start
         }
 
-    def updates(self):
-        """
-        Returns the update query.
-        This query updated the ls databased on the form submissions.
-        Following data is updated with the returned queries:
-            1) vhnd forms submitted
-            2) unique awcs visits made by LS
-            3) number of beneficiary form visited
-        """
-        yield """
-            UPDATE "{tablename}" agg_ls
-            SET vhnd_observed = ut.vhnd_observed
-            FROM (
-                SELECT count(*) as vhnd_observed,
-                location_id as supervisor_id
-                FROM "{ls_vhnd_ucr}"
-                WHERE vhnd_date > %(start_date)s AND vhnd_date < %(end_date)s
-                GROUP BY location_id
-            ) ut
-            WHERE agg_ls.supervisor_id = ut.supervisor_id
-        """.format(
-            tablename=self.tablename,
-            ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
-        ), {
-            "start_date": self.month_start,
-            "end_date": self.next_month_start
-        }
-
-        yield """
-            UPDATE "{tablename}" agg_ls
-            SET unique_awc_vists = ut.unique_awc_vists
-            FROM (
-                SELECT count(distinct awc_id) as unique_awc_vists,
-                location_id as supervisor_id
-                FROM "{ls_awc_mgt_ucr}"
-                WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
-                AND location_entered is not null and location_entered <> ''
-                GROUP BY location_id
-            ) ut
-            WHERE agg_ls.supervisor_id = ut.supervisor_id
-        """.format(
-            tablename=self.tablename,
-            ls_awc_mgt_ucr=self._ucr_tablename(ucr_id=self.ls_awc_mgt_ucr)
-        ), {
-            "start_date": self.month_start,
-            "end_date": self.next_month_start
-        }
-
-        yield """
-            UPDATE "{tablename}" agg_ls
-            SET beneficiary_vists = ut.beneficiary_vists
-            FROM (
-                SELECT
-                count(*) as beneficiary_vists,
-                location_id as supervisor_id
-                FROM "{ls_home_visit_ucr}"
-                WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
-                AND visit_type_entered is not null AND visit_type_entered <> ''
-                GROUP BY location_id
-            ) ut
-            WHERE agg_ls.supervisor_id = ut.supervisor_id
-        """.format(
-            tablename=self.tablename,
-            ls_home_visit_ucr=self._ucr_tablename(ucr_id=self.ls_home_visit_ucr)
-        ), {
-            "start_date": self.month_start,
-            "end_date": self.next_month_start
-        }
+    # def updates(self):
+    #     """
+    #     Returns the update query.
+    #     This query updated the ls databased on the form submissions.
+    #     Following data is updated with the returned queries:
+    #         1) vhnd forms submitted
+    #         2) unique awcs visits made by LS
+    #         3) number of beneficiary form visited
+    #     """
+    #     yield """
+    #         UPDATE "{tablename}" agg_ls
+    #         SET vhnd_observed = ut.vhnd_observed
+    #         FROM (
+    #             SELECT count(*) as vhnd_observed,
+    #             location_id as supervisor_id
+    #             FROM "{ls_vhnd_ucr}"
+    #             WHERE vhnd_date > %(start_date)s AND vhnd_date < %(end_date)s
+    #             GROUP BY location_id
+    #         ) ut
+    #         WHERE agg_ls.supervisor_id = ut.supervisor_id
+    #     """.format(
+    #         tablename=self.tablename,
+    #         ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
+    #     ), {
+    #         "start_date": self.month_start,
+    #         "end_date": self.next_month_start
+    #     }
+    #
+    #     yield """
+    #         UPDATE "{tablename}" agg_ls
+    #         SET unique_awc_vists = ut.unique_awc_vists
+    #         FROM (
+    #             SELECT count(distinct awc_id) as unique_awc_vists,
+    #             location_id as supervisor_id
+    #             FROM "{ls_awc_mgt_ucr}"
+    #             WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
+    #             AND location_entered is not null and location_entered <> ''
+    #             GROUP BY location_id
+    #         ) ut
+    #         WHERE agg_ls.supervisor_id = ut.supervisor_id
+    #     """.format(
+    #         tablename=self.tablename,
+    #         ls_awc_mgt_ucr=self._ucr_tablename(ucr_id=self.ls_awc_mgt_ucr)
+    #     ), {
+    #         "start_date": self.month_start,
+    #         "end_date": self.next_month_start
+    #     }
+    #
+    #     yield """
+    #         UPDATE "{tablename}" agg_ls
+    #         SET beneficiary_vists = ut.beneficiary_vists
+    #         FROM (
+    #             SELECT
+    #             count(*) as beneficiary_vists,
+    #             location_id as supervisor_id
+    #             FROM "{ls_home_visit_ucr}"
+    #             WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
+    #             AND visit_type_entered is not null AND visit_type_entered <> ''
+    #             GROUP BY location_id
+    #         ) ut
+    #         WHERE agg_ls.supervisor_id = ut.supervisor_id
+    #     """.format(
+    #         tablename=self.tablename,
+    #         ls_home_visit_ucr=self._ucr_tablename(ucr_id=self.ls_home_visit_ucr)
+    #     ), {
+    #         "start_date": self.month_start,
+    #         "end_date": self.next_month_start
+    #     }
 
     def indexes(self, aggregation_level):
         """
