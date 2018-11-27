@@ -27,11 +27,11 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     vm.showMessage = showMessage;
     vm.showSectorMessage = showSectorMessage;
 
-    vm.errors = function() {
+    vm.errors = function () {
         return vm.showMessage || vm.showSectorMessage;
     };
 
-    vm.locationIsNull = function(location) {
+    vm.locationIsNull = function (location) {
         return location === null || location === void(0) || location.location_id === 'all';
     };
 

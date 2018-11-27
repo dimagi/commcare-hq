@@ -19,14 +19,14 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     vm.filtersData = $location.search();
     vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
-    vm.getData = function() {
+    vm.getData = function () {
         if (parseInt(vm.selectedLocationLevel) !== 3) {
             return;
         }
-        var get_url = url('lady_supervisor');
+        var getUrl = url('lady_supervisor');
         vm.myPromise = $http({
             method: "GET",
-            url: get_url,
+            url: getUrl,
             params: $location.search(),
         }).then(
             function (response) {
@@ -50,7 +50,7 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
         return i;
     };
 
-    vm.moveToLocation = function(loc, index) {
+    vm.moveToLocation = function (loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
@@ -67,7 +67,7 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
 
 LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
-window.angular.module('icdsApp').directive('ladySupervisor', function() {
+window.angular.module('icdsApp').directive('ladySupervisor', function () {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'lady-supervisor.directive'),
