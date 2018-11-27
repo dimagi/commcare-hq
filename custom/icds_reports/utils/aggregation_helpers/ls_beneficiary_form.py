@@ -27,7 +27,7 @@ class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
 
         return """
         CREATE TABLE IF NOT EXISTS "{child_tablename}" (
-            CHECK (month = %(month_string)s,
+            CHECK (month = %(month_string)s)
             LIKE "{parent_tablename}" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
         ) INHERITS ("{parent_tablename}")
         """.format(
@@ -46,8 +46,6 @@ class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
     def aggregate_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
-        current_month_start = month_formatter(self.month)
-        next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         query_params = {
             "month": month_formatter(month),
@@ -61,7 +59,7 @@ class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
                 state_id,
                 location_id as supervisor_id,
                 %(month)s::DATE AS month,
-                count(*) as beneficiary_vists 
+                count(*) as beneficiary_vists
                 FROM "{ls_home_visit_ucr}"
                 WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
                 AND visit_type_entered is not null AND visit_type_entered <> ''
