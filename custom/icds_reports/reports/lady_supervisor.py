@@ -14,13 +14,12 @@ from custom.icds_reports.utils import get_value, apply_exclude
 
 @quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_lady_supervisor_data(domain, config, show_test=False):
-    print("get_lady_supervisor_data", config)
 
     def get_data(date, filters):
         queryset = AggLsMonthy.objects.filter(
             month=date, **filters
         ).values(
-            "supervisor_id"
+            "aggregation_level"
         ).annotate(
             number_of_unique_awc_vists=Sum("unique_awc_vists"),
             number_of_vhnds_observed=Sum("vhnd_observed"),
