@@ -50,7 +50,7 @@ trunk: master
 name: autostaging
 branches:
   - pv/case-list-deac-label # Preethi Oct 26
-#  - test_rjs_multimedia_integration # Rohit Oct 31
+  - test_rjs_multimedia_integration # Rohit Oct 31
   - jls/rebased-ko-export-download  # Jenny Nov 2
   - sr-mutliprocessors   # Sravan Nov 13
   - np-export-links  # Nick Nov 25
