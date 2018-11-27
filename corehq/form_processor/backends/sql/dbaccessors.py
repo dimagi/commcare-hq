@@ -403,7 +403,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         return paginate_query_across_partitioned_databases(
             XFormInstanceSQL,
-            Q(last_modified__gt=start_datetime),
+            Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
             annotate=annotate,
         )
 

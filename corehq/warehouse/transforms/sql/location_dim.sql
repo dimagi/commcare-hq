@@ -74,7 +74,6 @@ SET domain = EXCLUDED.domain,
     location_type_code = EXCLUDED.location_type_code,
     location_type_id = EXCLUDED.location_type_id,
     location_last_modified = EXCLUDED.location_last_modified,
-    location_created_on = EXCLUDED.location_created_on,
     dim_last_modified = EXCLUDED.dim_last_modified,
     deleted = EXCLUDED.deleted,
     batch_id = EXCLUDED.batch_id;
