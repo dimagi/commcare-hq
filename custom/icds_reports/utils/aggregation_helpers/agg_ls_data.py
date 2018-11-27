@@ -77,11 +77,11 @@ class AggLsHelper(BaseICDSAggregationHelper):
         {calculations}
         from "{awc_location_ucr}" location
         LEFT OUTER JOIN "{awc_table}" awc_table on location.supervisor_id=awc_table.supervisor_id
-        FULL OUTER JOIN "{vhnd_table}" vhnd_table on (
+        LEFT OUTER JOIN "{vhnd_table}" vhnd_table on (
             awc_table.supervisor_id = vhnd_table.supervisor_id AND
             awc_table.month = vhnd_table.month
         )
-        FULL OUTER JOIN "{beneficiary_table}" beneficiary_table on (
+        LEFT OUTER JOIN "{beneficiary_table}" beneficiary_table on (
         vhnd_table.supervisor_id = beneficiary_table.supervisor_id AND
         vhnd_table.month = beneficiary_table.month
         )
