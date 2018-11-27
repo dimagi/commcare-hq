@@ -55,6 +55,8 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
             'app_id': self.app.id,
             'app_name': self.app.name,
             'read_only': self.app.doc_type == 'LinkedApplication',
+            'app_version': self.app.version,
+            'latest_app_id': self.app.master_id,
         }
 
     @property
