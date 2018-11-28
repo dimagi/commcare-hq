@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
+from custom.icds_reports.reports.utils import get_color_with_green_positive
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 
 
@@ -74,7 +75,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'label': _('Number of AWCs Open yesterday'),
             'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
                             "by the AWW or the AWW helper")),
-            'color': 'green' if daily_attendance_percent > 0 else 'red',
+            'color': get_color_with_green_positive(daily_attendance_percent),
             'percent': daily_attendance_percent,
             'value': get_value(daily_yesterday, 'daily_attendance'),
             'all': get_value(daily_yesterday, 'awcs'),
@@ -87,7 +88,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
         number_of_awc_open_yesterday = {
             'help_text': _("Total Number of AWCs open for at least one day in month"),
             'label': _('Number of AWCs open for at least one day in month'),
-            'color': 'green' if monthly_attendance_percent > 0 else 'red',
+            'color': get_color_with_green_positive(monthly_attendance_percent),
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
             'all': get_value(awc_this_month_data, 'all_awcs'),
@@ -95,17 +96,16 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'frequency': 'month',
         }
 
+    percent_awcs = percent_increase('awcs', awc_this_month_data, awc_prev_month_data)
+
     return {
         'records': [
             [
                 {
                     'label': _('AWCs Launched'),
                     'help_text': awcs_launched_help_text(),
-                    'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
-                    'color': 'green' if percent_increase(
-                        'awcs',
-                        awc_this_month_data,
-                        awc_prev_month_data) > 0 else 'red',
+                    'percent': percent_awcs,
+                    'color': get_color_with_green_positive(percent_awcs),
                     'value': get_value(awc_this_month_data, 'awcs'),
                     'all': get_value(awc_this_month_data, 'all_awcs'),
                     'format': 'div',
