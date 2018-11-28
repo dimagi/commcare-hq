@@ -6,6 +6,7 @@ from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
 from django.template.loader import render_to_string
+from celery import chain
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -13,7 +14,7 @@ from corehq.apps.accounting.models import (
     DEFAULT_ACCOUNT_FORMAT,
 )
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
-from corehq.apps.app_manager.tasks import load_appcues_template_apps
+from corehq.apps.app_manager.tasks import load_appcues_template_app
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.tasks import send_domain_registration_email
 from dimagi.utils.couch import CriticalSection
@@ -29,6 +30,10 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID
 from corehq import toggles
 from corehq.util.view_utils import absolute_reverse
+
+HEALTH_APP = 'health'
+AGG_APP = 'agriculture'
+WASH_APP = 'wash'
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -134,16 +139,18 @@ def request_new_domain(request, form, is_new_user=True):
     if is_new_user:
         dom_req.save()
         if settings.IS_SAAS_ENVIRONMENT:
-            load_appcues_template_apps.apply_async(
-                (new_domain.name, current_user.username),
-                link=send_domain_registration_email.si(
+            chain(
+                load_appcues_template_app.si(new_domain.name, current_user.username, HEALTH_APP),
+                load_appcues_template_app.si(new_domain.name, current_user.username, AGG_APP),
+                load_appcues_template_app.si(new_domain.name, current_user.username, WASH_APP),
+                send_domain_registration_email.si(
                     request.user.email,
                     dom_req.domain,
                     dom_req.activation_guid,
                     request.user.get_full_name(),
                     request.user.first_name
                 )
-            )
+            ).apply_async()
         else:
             send_domain_registration_email(request.user.email,
                                            dom_req.domain,
