@@ -14,7 +14,7 @@ class LSVhndFormAggHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month = month
 
-    def drop_table_if_exists(self, agg_level):
+    def drop_table_if_exists(self):
         return """
         DROP TABLE IF EXISTS "{table_name}"
         """.format(table_name=self.self.generate_child_tablename(self.month))
