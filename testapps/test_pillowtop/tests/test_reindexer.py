@@ -7,6 +7,7 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 import mock
 
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
@@ -132,7 +133,7 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual(0, results.total)
 
 
-class CheckpointCreationTest(TestCase):
+class CheckpointCreationTest(CallCenterDomainMockTest):
     # this class is only here so you can run these explicitly
     pass
 
@@ -175,10 +176,16 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
 
 
 @generate_cases([
-    ('sql-case', 'CaseToElasticsearchPillow'),
-    ('sql-form', 'XFormToElasticsearchPillow'),
+    ('sql-case', 'kafka-case-ucr-es'),
+    ('sql-form', 'kafka-xform-ucr-es'),
     ('ledger-v2', 'LedgerToElasticsearchPillow'),
     ('groups-to-user', 'UserPillow'),
+    ('case', 'kafka-case-ucr-es'),
+    ('form', 'kafka-xform-ucr-es'),
+    ('report-case', 'kafka-case-ucr-es'),
+    ('report-xform', 'kafka-xform-ucr-es'),
+    ('user', 'user-to-es-ucr-pillow'),
+    ('group', 'GroupESPillow'),
 ], CheckpointCreationTest)
 def test_no_checkpoint_creation(self, reindex_id, pillow_name):
     # these pillows should not touch checkpoints since they are run with other
