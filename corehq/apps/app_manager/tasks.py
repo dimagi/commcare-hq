@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
+from django.conf import settings
 
 from celery.task import task
 from celery.utils.log import get_task_logger
@@ -12,6 +13,8 @@ from corehq.util.decorators import serial_task
 
 
 logger = get_task_logger(__name__)
+
+APPCUES_TEMPLATE_SLUGS = ['health', 'agriculture', 'wash']
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
@@ -72,3 +75,10 @@ def prune_auto_generated_builds(domain, app_id):
 def update_linked_app_and_notify_task(domain, app_id, user_id, email):
     from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
     update_linked_app_and_notify(domain, app_id, user_id, email)
+
+
+@task(queue=settings.CELERY_MAIN_QUEUE)
+def load_appcues_template_apps(domain, username):
+    from corehq.apps.app_manager.views.apps import load_app_from_slug
+    for app_slug in APPCUES_TEMPLATE_SLUGS:
+        load_app_from_slug(domain, username, app_slug)
