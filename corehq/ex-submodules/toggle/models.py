@@ -27,7 +27,7 @@ class Toggle(Document):
         self.bust_cache()
 
     @classmethod
-    @quickcache(['docid'], timeout=60 * 60 * 24)
+    @quickcache(['cls.__name__', 'docid'], timeout=60 * 60 * 24)
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
         if not docid.startswith(TOGGLE_ID_PREFIX):
             docid = generate_toggle_id(docid)
@@ -49,10 +49,8 @@ class Toggle(Document):
             self.enabled_users.remove(item)
             self.save()
 
-    @classmethod
-    def bust_cache(cls):
-        cls.get.clear(cls.slug)
-        cls.get(cls.slug)
+    def bust_cache(self):
+        self.get.clear(self.__class__, self.slug)
 
 
 def generate_toggle_id(slug):
