@@ -40,8 +40,10 @@ def force_update_cleanliness_flags():
 
 
 @task(serializer='pickle', queue=ASYNC_RESTORE_QUEUE)
-def get_async_restore_payload(restore_config, *args):
-    """Process an async restore
+def get_async_restore_payload(restore_config, domain=None, username=None):
+    """
+    Process an async restore
+    domain and username: added for displaying restore request details on flower
     """
     response = restore_config.generate_payload(async_task=current_task)
 
