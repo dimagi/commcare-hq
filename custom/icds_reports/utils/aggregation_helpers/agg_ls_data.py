@@ -61,9 +61,9 @@ class AggLsHelper(BaseICDSAggregationHelper):
             ('block_id', 'location.block_id'),
             ('supervisor_id', 'location.supervisor_id'),
             ('month', "'{}'".format(month_formatter(self.month_start))),
-            ('unique_awc_vists', 'sum(awc_table.unique_awc_vists)'),
-            ('vhnd_observed', 'sum(vhnd_table.vhnd_observed)'),
-            ('beneficiary_vists', 'sum(beneficiary_table.beneficiary_vists)'),
+            ('unique_awc_vists', 'COALESCE(sum(awc_table.unique_awc_vists), 0)'),
+            ('vhnd_observed', 'COALESCE(sum(vhnd_table.vhnd_observed), 0)'),
+            ('beneficiary_vists', 'COALESCE(sum(beneficiary_table.beneficiary_vists), 0)'),
             ('aggregation_level', '4')
         )
         return """
