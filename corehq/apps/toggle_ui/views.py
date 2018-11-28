@@ -148,11 +148,11 @@ class ToggleEditView(ToggleBaseView):
         """
         return find_static_toggle(self.toggle_slug)
 
-    def get_toggle(self):
+    def get_toggle(self, skip_cache=False):
         if not self.static_toggle:
             raise Http404()
         try:
-            return Toggle.get(self.toggle_slug)
+            return Toggle.get(self.toggle_slug, skip_cache=skip_cache)
         except ResourceNotFound:
             return Toggle(slug=self.toggle_slug)
 
@@ -186,7 +186,7 @@ class ToggleEditView(ToggleBaseView):
         return context
 
     def post(self, request, *args, **kwargs):
-        toggle = self.get_toggle()
+        toggle = self.get_toggle(skip_cache=True)
         item_list = request.POST.get('item_list', [])
         randomness = request.POST.get('randomness', None)
         randomness = decimal.Decimal(randomness) if randomness else None
