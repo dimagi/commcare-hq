@@ -5,8 +5,8 @@ from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_LS_VHND_TABLE, AGG_LS_AWC_VISIT_TABLE, AGG_LS_BENEFICIARY_TABLE
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, \
+month_formatter
 
 
 class AggLsHelper(BaseICDSAggregationHelper):
@@ -60,7 +60,7 @@ class AggLsHelper(BaseICDSAggregationHelper):
             ('district_id', 'location.district_id'),
             ('block_id', 'location.block_id'),
             ('supervisor_id', 'location.supervisor_id'),
-            ('month', self.month_start),
+            ('month', month_formatter(self.month_start)),
             ('unique_awc_vists', 'sum(awc_table.unique_awc_vists)'),
             ('vhnd_observed', 'sum(vhnd_table.vhnd_observed)'),
             ('beneficiary_vists', 'sum(beneficiary_table.beneficiary_vists)'),
