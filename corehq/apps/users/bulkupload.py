@@ -369,9 +369,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
     allowed_roles = UserRole.by_domain(domain)
     roles_by_name = {role.name: role for role in allowed_roles}
     can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-    # ToDo: We need more speccing on what/how locations can be assigned if location-restrictions is enabled
-    #       For now, don't support bulk assigning if location-restrictions are enabled
-    can_assign_locations = can_assign_locations and not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(domain)
     if can_assign_locations:
         location_cache = SiteCodeToLocationCache(domain)
     project = Domain.get_by_name(domain)

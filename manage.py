@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 import sys
 import os
 import mimetypes
-from collections import Counter, namedtuple
+from collections import namedtuple
+import six
 
 import django
 
@@ -103,15 +104,9 @@ def patch_jsonfield():
 
 
 def patch_assertItemsEqual():
-    """
-    For Python 2/3 compatibility
-    """
-    from django.test import SimpleTestCase
-
-    def _assertItemsEqual(self, actual, expected):
-        self.assertEqual(Counter(actual), Counter(expected))
-
-    SimpleTestCase.assertItemsEqual = _assertItemsEqual
+    import unittest
+    if six.PY3:
+        unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
 if __name__ == "__main__":

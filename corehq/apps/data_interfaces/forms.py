@@ -632,9 +632,9 @@ class CaseRuleActionsForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _("Actions"),
-                hidden_bound_field('close_case'),
-                hidden_bound_field('properties_to_update'),
-                hidden_bound_field('custom_action_definitions'),
+                hidden_bound_field('close_case', 'closeCase'),
+                hidden_bound_field('properties_to_update', 'propertiesToUpdate'),
+                hidden_bound_field('custom_action_definitions', 'customActionDefinitions'),
                 Div(data_bind="template: {name: 'case-actions'}"),
                 css_id="rule-actions",
             ),
