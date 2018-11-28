@@ -16,9 +16,7 @@ from corehq.toggles import (
     deterministic_random,
     DynamicallyPredictablyRandomToggle)
 from toggle.shortcuts import (
-    update_toggle_cache,
     namespaced_item,
-    clear_toggle_cache,
     find_users_with_toggle_enabled,
     find_domains_with_toggle_enabled,
 )
@@ -116,27 +114,6 @@ class ToggleTestCase(TestCase):
         self.assertTrue(toggle_enabled(self.slug, 'jon'))
         self.assertFalse(toggle_enabled(self.slug, 'benjen'))
         self.assertTrue(toggle_enabled(self.slug, 'aemon'))
-
-    def test_toggle_cache(self):
-        ns = 'ns'
-        toggle = Toggle(slug=self.slug, enabled_users=['mojer', namespaced_item('fizbod', ns)])
-        toggle.save()
-
-        self.assertTrue(toggle_enabled(self.slug, 'mojer'))
-        self.assertFalse(toggle_enabled(self.slug, 'fizbod'))
-        self.assertTrue(toggle_enabled(self.slug, 'fizbod', namespace=ns))
-
-        update_toggle_cache(self.slug, 'mojer', False)
-        update_toggle_cache(self.slug, 'fizbod', False, namespace=ns)
-
-        self.assertFalse(toggle_enabled(self.slug, 'mojer'))
-        self.assertFalse(toggle_enabled(self.slug, 'fizbod', namespace=ns))
-
-        clear_toggle_cache(self.slug, 'mojer')
-        clear_toggle_cache(self.slug, 'fizbod', namespace=ns)
-
-        self.assertTrue(toggle_enabled(self.slug, 'mojer'))
-        self.assertTrue(toggle_enabled(self.slug, 'fizbod', namespace=ns))
 
 
 @override_settings(DISABLE_RANDOM_TOGGLES=False)
