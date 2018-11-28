@@ -49,6 +49,10 @@ class Toggle(Document):
             self.enabled_users.remove(item)
             self.save()
 
+    def delete(self):
+        super(Toggle, self).delete()
+        self.bust_cache()
+
     def bust_cache(self):
         self.get.clear(self.__class__, self.slug)
 
