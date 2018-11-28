@@ -17,7 +17,7 @@ class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
     def drop_table_if_exists(self):
         return """
         DROP TABLE IF EXISTS "{table_name}"
-        """.format(table_name=self.self.generate_child_tablename(self.month))
+        """.format(table_name=self.generate_child_tablename(self.month))
 
     def create_table_query(self, month=None):
         month = month or self.month
