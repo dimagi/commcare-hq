@@ -60,11 +60,11 @@ class AggLsHelper(BaseICDSAggregationHelper):
             ('district_id', 'location.district_id'),
             ('block_id', 'location.block_id'),
             ('supervisor_id', 'location.supervisor_id'),
-            ('month', month_formatter(self.month_start)),
+            ('month', "'{}'".format(month_formatter(self.month_start))),
             ('unique_awc_vists', 'sum(awc_table.unique_awc_vists)'),
             ('vhnd_observed', 'sum(vhnd_table.vhnd_observed)'),
             ('beneficiary_vists', 'sum(beneficiary_table.beneficiary_vists)'),
-            ('aggregation_level', '5')
+            ('aggregation_level', '4')
         )
         return """
         INSERT INTO "{tablename}" (
