@@ -79,7 +79,7 @@ def _check_domain_access(domain, media):
 def _fetch_remote_media(local_domain, missing_media, remote_app_details):
     for filename, item in missing_media:
         media_class = CommCareMultimedia.get_doc_class(item['media_type'])
-        content = _fetch_remote_media_content(item, remote_app_details)
+        content = _fetch_remote_media_content(item, remote_app_details).encode('utf-8')
         media_item = media_class.get_by_data(content)
         media_item._id = item['multimedia_id']
         media_item.attach_data(content, original_filename=filename)
