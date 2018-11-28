@@ -75,7 +75,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             for desired_location in desired_locations
         }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
 
-        return self.get_xml(xml_name).format(
+        return self.get_xml(xml_name).decode('utf-8').format(
             user_id=self.user.user_id,
             **ids
         )
