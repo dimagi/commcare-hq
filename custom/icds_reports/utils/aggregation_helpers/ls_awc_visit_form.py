@@ -45,9 +45,11 @@ class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
     def aggregate_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
+        next_month_start = self.month + relativedelta(months=1)
 
         query_params = {
-            "month": month_formatter(month)
+            "start_date": month_formatter(month),
+            "end_date": month_formatter(next_month_start)
         }
 
         return """
@@ -57,12 +59,12 @@ class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
             SELECT
             state_id,
             location_id as supervisor_id,
-            %(month)s::DATE AS month,
+            %(start_date)s::DATE AS month,
             count(distinct awc_id) as unique_awc_vists
                 FROM "{ucr_tablename}"
                 WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
                 AND location_entered is not null and location_entered <> ''
-                GROUP BY location_id
+                GROUP BY state_id,location_id
         )
         """.format(
             ucr_tablename=self.ucr_tablename,

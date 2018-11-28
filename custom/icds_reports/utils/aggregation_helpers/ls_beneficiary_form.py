@@ -1,14 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from custom.icds_reports.const import AGG_LS_VHND_TABLE
+from dateutil.relativedelta import relativedelta
+from custom.icds_reports.const import AGG_LS_BENEFICIARY_TABLE
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
 import hashlib
 
 
 class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-ls_home_visit_forms_filled'
-    aggregate_parent_table = AGG_LS_VHND_TABLE
+    aggregate_parent_table = AGG_LS_BENEFICIARY_TABLE
     aggregate_child_table_prefix = 'icds_db_ls_beneficiary_form_'
 
     def __init__(self, month):
@@ -45,10 +46,13 @@ class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
     def aggregate_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
+        next_month_start = self.month + relativedelta(months=1)
 
         query_params = {
-            "month": month_formatter(month),
+            "start_date": month_formatter(month),
+            "end_date": month_formatter(next_month_start)
         }
+
 
         return """
         INSERT INTO "{tablename}" (
@@ -57,12 +61,12 @@ class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
              SELECT
                 state_id,
                 location_id as supervisor_id,
-                %(month)s::DATE AS month,
+                %(start_date)s::DATE AS month,
                 count(*) as beneficiary_vists
-                FROM "{ls_home_visit_ucr}"
+                FROM "{ucr_tablename}"
                 WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
                 AND visit_type_entered is not null AND visit_type_entered <> ''
-                GROUP BY location_id, month
+                GROUP BY state_id,location_id
         )
         """.format(
             ucr_tablename=self.ucr_tablename,

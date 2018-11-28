@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_LS_VHND_TABLE
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
 import hashlib
@@ -17,7 +18,7 @@ class LSVhndFormAggHelper(BaseICDSAggregationHelper):
     def drop_table_if_exists(self):
         return """
         DROP TABLE IF EXISTS "{table_name}"
-        """.format(table_name=self.self.generate_child_tablename(self.month))
+        """.format(table_name=self.generate_child_tablename(self.month))
 
     def create_table_query(self, month=None):
         month = month or self.month
@@ -45,9 +46,11 @@ class LSVhndFormAggHelper(BaseICDSAggregationHelper):
     def aggregate_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
+        next_month_start = self.month + relativedelta(months=1)
 
         query_params = {
-            "month": month_formatter(month),
+            "start_date": month_formatter(month),
+            "end_date": month_formatter(next_month_start)
         }
 
         return """
@@ -57,11 +60,11 @@ class LSVhndFormAggHelper(BaseICDSAggregationHelper):
              SELECT
                 state_id,
                 location_id as supervisor_id,
-                %(month)s::DATE AS month,
+                %(start_date)s::DATE AS month,
                 count(*) as vhnd_observed
                 FROM "{ucr_tablename}"
                 WHERE vhnd_date > %(start_date)s AND vhnd_date < %(end_date)s
-                GROUP BY location_id
+                GROUP BY state_id,location_id
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
