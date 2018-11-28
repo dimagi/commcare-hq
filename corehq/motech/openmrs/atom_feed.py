@@ -10,6 +10,7 @@ from dateutil import parser as dateutil_parser
 from dateutil.tz import tzutc
 from lxml import etree
 from requests import RequestException
+from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.case_importer import util as importer_util
@@ -158,7 +159,7 @@ def get_feed_updates(repeater, feed_name):
                     href = this_page[0].get('href')
                     page = href.split('/')[-1]
                 break
-    except RequestException:
+    except (RequestException, HTTPError):
         # Don't update repeater if OpenMRS is offline
         return
     else:

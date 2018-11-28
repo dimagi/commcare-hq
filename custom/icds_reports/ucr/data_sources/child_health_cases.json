@@ -1194,6 +1194,28 @@
         "type": "expression",
         "is_primary_key": false,
         "is_nullable": true,
+        "column_id": "mother_phone_number",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "contact_phone_number"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "mother_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
         "column_id": "bf_at_birth",
         "expression": {
           "datatype": null,

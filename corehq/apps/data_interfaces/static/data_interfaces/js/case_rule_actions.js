@@ -7,46 +7,46 @@ hqDefine("data_interfaces/js/case_rule_actions", [
     ko,
     initialPageData
 ) {
-    var CaseRuleActions = function (initial) {
+    var caseRuleActions = function (initial) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.actions = ko.observableArray();
 
-        self.get_ko_template_id = function (obj) {
-            if (obj instanceof CloseCaseDefinition) {
+        self.getKoTemplateId = function (obj) {
+            if (obj instanceof closeCaseDefinition) {
                 return 'close-case-action';
-            } else if (obj instanceof UpdatePropertyDefinition) {
+            } else if (obj instanceof updatePropertyDefinition) {
                 return 'update-case-property-action';
-            } else if (obj instanceof CustomActionDefinition) {
+            } else if (obj instanceof customActionDefinition) {
                 return 'custom-action';
             }
         };
 
-        self.get_js_class = function (templateId) {
+        self.getJsClass = function (templateId) {
             if (templateId === 'close-case-action') {
-                return CloseCaseDefinition;
+                return closeCaseDefinition;
             } else if (templateId === 'update-case-property-action') {
-                return UpdatePropertyDefinition;
+                return updatePropertyDefinition;
             } else if (templateId === 'custom-action') {
-                return CustomActionDefinition;
+                return customActionDefinition;
             }
         };
 
-        self.close_case = ko.computed(function () {
+        self.closeCase = ko.computed(function () {
             var result = 'false';
             $.each(self.actions(), function (index, value) {
-                if (value instanceof CloseCaseDefinition) {
+                if (value instanceof closeCaseDefinition) {
                     result = 'true';
                 }
             });
             return result;
         });
 
-        self.properties_to_update = ko.computed(function () {
+        self.propertiesToUpdate = ko.computed(function () {
             var result = [];
             $.each(self.actions(), function (index, value) {
-                if (value instanceof UpdatePropertyDefinition) {
+                if (value instanceof updatePropertyDefinition) {
                     result.push({
                         name: value.name() || '',
                         value_type: value.value_type() || '',
@@ -57,10 +57,10 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             return JSON.stringify(result);
         });
 
-        self.custom_action_definitions = ko.computed(function () {
+        self.customActionDefinitions = ko.computed(function () {
             var result = [];
             $.each(self.actions(), function (index, value) {
-                if (value instanceof CustomActionDefinition) {
+                if (value instanceof customActionDefinition) {
                     result.push({
                         name: value.name() || '',
                     });
@@ -69,9 +69,9 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             return JSON.stringify(result);
         });
 
-        self.action_already_added = function (js_class) {
+        self.actionAlreadyAdded = function (jsClass) {
             for (var i = 0; i < self.actions().length; i++) {
-                if (self.actions()[i] instanceof js_class) {
+                if (self.actions()[i] instanceof jsClass) {
                     return true;
                 }
             }
@@ -79,31 +79,31 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             return false;
         };
 
-        self.add_action = function (templateId) {
+        self.addAction = function (templateId) {
             if (templateId === 'select-one') {
                 return;
             }
-            var js_class = self.get_js_class(templateId);
+            var jsClass = self.getJsClass(templateId);
 
-            if (js_class === CloseCaseDefinition && self.action_already_added(CloseCaseDefinition)) {
+            if (jsClass === closeCaseDefinition && self.actionAlreadyAdded(closeCaseDefinition)) {
                 return;
             }
 
-            self.actions.push(new js_class());
+            self.actions.push(jsClass());
         };
 
-        self.remove_action = function () {
+        self.removeAction = function () {
             self.actions.remove(this);
         };
 
-        self.load_initial = function () {
+        self.loadInitial = function () {
             if (initial.close_case === 'true') {
-                var obj = new CloseCaseDefinition();
+                var obj = closeCaseDefinition();
                 self.actions.push(obj);
             }
 
             $.each(initial.properties_to_update, function (index, value) {
-                var obj = new UpdatePropertyDefinition();
+                var obj = updatePropertyDefinition();
                 obj.name(value.name);
                 obj.value_type(value.value_type);
                 obj.value(value.value);
@@ -111,48 +111,52 @@ hqDefine("data_interfaces/js/case_rule_actions", [
             });
 
             $.each(initial.custom_action_definitions, function (index, value) {
-                var obj = new CustomActionDefinition();
+                var obj = customActionDefinition();
                 obj.name(value.name);
                 self.actions.push(obj);
             });
         };
+        return self;
     };
 
-    var CloseCaseDefinition = function () {
+    var closeCaseDefinition = function () {
         'use strict';
-        var self = this;
+        var self = {};
 
         // This model matches up with the Django UpdateCaseDefinition.close_case model attribute
+        return self;
     };
 
-    var UpdatePropertyDefinition = function () {
+    var updatePropertyDefinition = function () {
         'use strict';
-        var self = this;
+        var self = {};
 
         // This model matches up with one instance in the Django UpdateCaseDefinition.properties_to_update model attribute
         self.name = ko.observable();
         self.value_type = ko.observable();
         self.value = ko.observable();
+        return self;
     };
 
-    var CustomActionDefinition = function () {
+    var customActionDefinition = function () {
         'use strict';
-        var self = this;
+        var self = {};
 
         // This model matches the Django model with the same name
         self.name = ko.observable();
+        return self;
     };
 
-    var actions_model = null;
+    var actionsModel = null;
 
     $(function () {
-        actions_model = new CaseRuleActions(initialPageData.get('actions_initial'));
-        $('#rule-actions').koApplyBindings(actions_model);
-        actions_model.load_initial();
+        actionsModel = caseRuleActions(initialPageData.get('actions_initial'));
+        $('#rule-actions').koApplyBindings(actionsModel);
+        actionsModel.loadInitial();
     });
 
     return {
-        get_actions_model: function () {return actions_model;},
+        get_actions_model: function () {return actionsModel;},
     };
 
 });

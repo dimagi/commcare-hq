@@ -25,8 +25,7 @@ class TestEnrolledWomen(TestCase):
             {
                 "rightLegend": {
                     "info": percent_pregnant_women_enrolled_help_text(),
-                    "average": 77.5,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
@@ -82,8 +81,7 @@ class TestEnrolledWomen(TestCase):
             {
                 "rightLegend": {
                     "info": percent_pregnant_women_enrolled_help_text(),
-                    "average": 35.0,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',

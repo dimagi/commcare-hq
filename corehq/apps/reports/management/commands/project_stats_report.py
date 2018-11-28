@@ -288,12 +288,12 @@ class Command(BaseCommand):
         with cursor:
             cursor.execute("""
                 SELECT
-                    form_processor_xformattachmentsql.content_type,
+                    meta.content_type,
                     width_bucket(content_length, 0, 2900000, 10) AS bucket,
                     min(content_length) as bucket_min, max(content_length) AS bucket_max,
                     count(content_length) AS freq
-                FROM form_processor_xformattachmentsql INNER JOIN form_processor_xforminstancesql
-                  ON form_processor_xformattachmentsql.form_id = form_processor_xforminstancesql.form_id
+                FROM blobs_blobmeta meta INNER JOIN form_processor_xforminstancesql
+                  ON meta.parent_id = form_processor_xforminstancesql.form_id
                 WHERE content_length IS NOT NULL AND form_processor_xforminstancesql.domain = %s
                 GROUP BY content_type, bucket
                 ORDER BY content_type, bucket
