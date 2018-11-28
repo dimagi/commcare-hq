@@ -49,7 +49,7 @@ def get_select_chain_meta(app, module):
 def validate_suite(suite):
     if isinstance(suite, six.text_type):
         suite = suite.encode('utf-8')
-    if isinstance(suite, str):
+    if isinstance(suite, bytes):
         suite = etree.fromstring(suite)
     if isinstance(suite, etree._Element):
         suite = Suite(suite)
