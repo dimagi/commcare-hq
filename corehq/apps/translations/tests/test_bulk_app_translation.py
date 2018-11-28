@@ -1,23 +1,20 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import tempfile
 
-from django.test import SimpleTestCase
 import io
+import tempfile
 from io import BytesIO
-
-from mock import patch
-
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
-from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
 from couchexport.models import Format
-from corehq.util.test_utils import flag_enabled
+from django.test import SimpleTestCase
+from mock import patch
+from six.moves import zip
+
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.app_translations import (
+from corehq.apps.translations.app_translations import (
     process_bulk_app_translation_upload,
     expected_bulk_app_sheet_rows,
     expected_bulk_app_sheet_headers,
@@ -25,7 +22,9 @@ from corehq.apps.app_manager.app_translations import (
     get_unicode_dicts,
     read_uploaded_app_translation_file,
 )
-from six.moves import zip
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.util.test_utils import flag_enabled
+from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
@@ -688,7 +687,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         missing_cols = set()
         sheet = self.form1_worksheet
         rows = get_unicode_dicts(sheet)
-        with patch('corehq.apps.app_manager.app_translations.app_translations.save_xform') as save_xform_patch:
+        with patch('corehq.apps.translations.app_translations.save_xform') as save_xform_patch:
             msgs = update_form_translations(sheet, rows, missing_cols, self.app)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')

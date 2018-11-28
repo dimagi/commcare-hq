@@ -1,18 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
-import polib
-import datetime
-import tempfile
-import re
 
+import datetime
+import os
+import re
+import tempfile
+from collections import namedtuple, OrderedDict, defaultdict
+
+import polib
 from django.conf import settings
 from django.utils.functional import cached_property
 from memoized import memoized
 
-from collections import namedtuple, OrderedDict, defaultdict
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.util import get_form_data
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
@@ -72,7 +73,7 @@ class AppTranslationsGenerator:
 
     def _translation_data(self, app):
         # get the translations data
-        from corehq.apps.app_manager.app_translations.app_translations import expected_bulk_app_sheet_rows
+        from corehq.apps.translations.app_translations import expected_bulk_app_sheet_rows
         # simply the rows of data per sheet name
         rows = expected_bulk_app_sheet_rows(
             app,
@@ -81,7 +82,7 @@ class AppTranslationsGenerator:
         )
 
         # get the translation data headers
-        from corehq.apps.app_manager.app_translations.app_translations import expected_bulk_app_sheet_headers
+        from corehq.apps.translations.app_translations import expected_bulk_app_sheet_headers
         headers = expected_bulk_app_sheet_headers(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,

@@ -1,20 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import io
 
+import six
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.decorators.view import get_file
+from dimagi.utils.logging import notify_exception
 from django.contrib import messages
-
-from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.app_translations import (
-    expected_bulk_app_sheet_headers,
-    expected_bulk_app_sheet_rows,
-    process_bulk_app_translation_upload,
-    validate_bulk_app_translation_upload,
-    read_uploaded_app_translation_file,
-)
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -22,13 +21,14 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
+from corehq.apps.translations.app_translations import (
+    expected_bulk_app_sheet_headers,
+    expected_bulk_app_sheet_rows,
+    process_bulk_app_translation_upload,
+    validate_bulk_app_translation_upload,
+    read_uploaded_app_translation_file,
+)
 from corehq.util.workbook_json.excel import InvalidExcelFileException
-from couchexport.export import export_raw
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-from dimagi.utils.decorators.view import get_file
-from dimagi.utils.logging import notify_exception
-import six
 
 
 @no_conflict_require_POST
