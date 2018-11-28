@@ -7,13 +7,18 @@ from django.test import TestCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.test_utils import trap_extra_setup
+from corehq.util.elastic import ensure_index_deleted
+
 
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.pillow import get_location_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestLocationDataSource(TestCase):
@@ -21,13 +26,8 @@ class TestLocationDataSource(TestCase):
 
     def setUp(self):
         self.domain_obj = create_domain(self.domain)
-        # creating the user somehow sets up users ES index which is needed for this test
-        CommCareUser.create(
-            domain=self.domain,
-            username='cc1',
-            password='***',
-            last_login=datetime.now()
-        )
+        es = get_es_new()
+        initialize_index_and_mapping(es, USER_INDEX_INFO)
         self.region = LocationType.objects.create(domain=self.domain, name="region")
         self.town = LocationType.objects.create(domain=self.domain, name="town", parent_type=self.region)
 
@@ -55,6 +55,7 @@ class TestLocationDataSource(TestCase):
         self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
+        ensure_index_deleted(USER_INDEX_INFO.index)
         self.domain_obj.delete()
         self.data_source_config.delete()
 
