@@ -104,9 +104,9 @@ class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
             } for r in rows
         ]
         # Check those rows against the expected result
-        self.assertEqual(
-            set(retrieved_logs),
-            set(logs),
+        self.assertItemsEqual(
+            retrieved_logs,
+            logs,
             "The repeat data saved in the data source table did not match the expected data!"
         )
 
