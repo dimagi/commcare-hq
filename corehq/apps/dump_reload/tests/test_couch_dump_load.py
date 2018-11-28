@@ -152,13 +152,13 @@ class CouchDumpLoadTest(TestCase):
         image.add_domain(self.domain_name)
         self.assertEqual(image_data, image.get_display_file(False))
 
-        audio_data = 'fake audio data'
+        audio_data = b'fake audio data'
         audio = CommCareAudio.get_by_data(audio_data)
         audio.attach_data(audio_data, original_filename='tr-la-la.mp3')
         audio.add_domain(self.domain_name)
         self.assertEqual(audio_data, audio.get_display_file(False))
 
-        video_data = 'fake video data'
+        video_data = b'fake video data'
         video = CommCareVideo.get_by_data(video_data)
         video.attach_data(video_data, 'kittens.mp4')
         video.add_domain(self.domain_name)
