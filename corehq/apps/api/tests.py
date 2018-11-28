@@ -1984,7 +1984,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         query_dict.update({"some_filter": "bar"})
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
             self.domain.name, "123", 100, 50, 3450, query_dict)
-        self.assertEqual(next.decode('utf-8'), self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
+        self.assertEqual(next, self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
 
         # It's the last page
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
