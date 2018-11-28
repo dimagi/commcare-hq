@@ -13,9 +13,7 @@ class AggLsHelper(BaseICDSAggregationHelper):
 
     base_tablename = 'agg_ls'
     awc_location_ucr = 'static-awc_location'
-    ls_vhnd_ucr = 'static-ls_vhnd_form'
-    ls_home_visit_ucr = 'static-ls_home_visit_forms_filled'
-    ls_awc_mgt_ucr = 'static-awc_mgt_forms'
+
 
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
@@ -61,7 +59,7 @@ class AggLsHelper(BaseICDSAggregationHelper):
             ('state_id', 'location.state_id'),
             ('district_id', 'location.district_id'),
             ('block_id', 'location.block_id'),
-            ('supervisor_id', 'location.supervisor_id')
+            ('supervisor_id', 'location.supervisor_id'),
             ('month', self.month_start),
             ('unique_awc_vists', 'sum(awc_table.unique_awc_vists)'),
             ('vhnd_observed', 'sum(vhnd_table.vhnd_observed)'),
@@ -85,7 +83,7 @@ class AggLsHelper(BaseICDSAggregationHelper):
         vhnd_table.supervisor_id = beneficiary_table.supervisor_id AND
         vhnd_table.month = beneficiary_table.month
         )
-        WHERE ucr.month = %(start_date)s
+        WHERE awc_table.month = %(start_date)s
         GROUP BY location.state_id, location.district_id, location.block_id, location.supervisor_id
         )
         """.format(

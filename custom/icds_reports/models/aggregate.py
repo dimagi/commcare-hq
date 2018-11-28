@@ -469,9 +469,6 @@ class AggAwc(models.Model):
 
 
 class AggregateLsAWCVisitForm(models.Model):
-    """
-
-    """
     unique_awc_vists = models.IntegerField(help_text='unique awc visits made by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -482,11 +479,6 @@ class AggregateLsAWCVisitForm(models.Model):
 
     @classmethod
     def aggregate(cls, month):
-        """
-
-        :param month:
-        :return:
-        """
         helper = LSAwcMgtFormAggHelper(month)
         drop_query = helper.drop_table_if_exists()
         curr_month_query, curr_month_params = helper.create_table_query()
@@ -498,9 +490,6 @@ class AggregateLsAWCVisitForm(models.Model):
 
 
 class AggregateLsVhndForm(models.Model):
-    """
-
-    """
     vhnd_observed = models.IntegerField(help_text='VHND forms submitted by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -511,11 +500,6 @@ class AggregateLsVhndForm(models.Model):
 
     @classmethod
     def aggregate(cls, month):
-        """
-
-        :param month:
-        :return:
-        """
         helper = LSVhndFormAggHelper(month)
         drop_query = helper.drop_table_if_exists()
         curr_month_query, curr_month_params = helper.create_table_query()
@@ -527,9 +511,6 @@ class AggregateLsVhndForm(models.Model):
 
 
 class AggregateBeneficiaryForm(models.Model):
-    """
-
-    """
     beneficiary_vists = models.IntegerField(help_text='Beneficiary visits done by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -540,11 +521,6 @@ class AggregateBeneficiaryForm(models.Model):
 
     @classmethod
     def aggregate(cls, month):
-        """
-
-        :param month:
-        :return:
-        """
         helper = LSBeneficiaryFormAggHelper(month)
         drop_query = helper.drop_table_if_exists()
         curr_month_query, curr_month_params = helper.create_table_query()
@@ -586,7 +562,6 @@ class AggLs(models.Model):
         create_table_queries = [helper.create_child_table(i) for i in range(4, 0, -1)]
 
         agg_query, agg_params = helper.aggregate_query()
-        # update_queries = helper.updates()
         rollup_queries = [helper.rollup_query(i) for i in range(3, 0, -1)]
         index_queries = [helper.indexes(i) for i in range(4, 0, -1)]
         index_queries = [query for index_list in index_queries for query in index_list]
@@ -598,9 +573,6 @@ class AggLs(models.Model):
                 cursor.execute(create_table_query, create_params)
 
             cursor.execute(agg_query, agg_params)
-
-            # for update_query, query_params in update_queries:
-            #     cursor.execute(update_query, query_params)
 
             for rollup_query in rollup_queries:
                 cursor.execute(rollup_query)
