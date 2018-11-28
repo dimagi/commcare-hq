@@ -26,7 +26,7 @@ class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
 
         return """
         CREATE TABLE IF NOT EXISTS "{child_tablename}" (
-            CHECK (month = %(month_string)s)
+            CHECK (month = %(month_string)s),
             LIKE "{parent_tablename}" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
         ) INHERITS ("{parent_tablename}")
         """.format(
