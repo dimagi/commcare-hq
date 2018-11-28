@@ -24,7 +24,7 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 
 - Additional requirements:
   - [Homebrew](https://brew.sh)
-  - [libmagic](macappstore.org/libmagic)
+  - [libmagic](https://macappstore.org/libmagic)
 
 #### Setup virtualenv
 

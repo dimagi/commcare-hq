@@ -1093,18 +1093,6 @@ def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
 
-@domain_admin_required
-@require_POST
-def location_restriction_for_users(request, domain):
-    if not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(request.domain):
-        raise Http403()
-    project = Domain.get_by_name(domain)
-    if "restrict_users" in request.POST:
-        project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
-    project.save()
-    return HttpResponse()
-
-
 @csrf_exempt
 @require_POST
 @require_superuser
