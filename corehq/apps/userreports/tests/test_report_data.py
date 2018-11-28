@@ -152,7 +152,7 @@ class ReportDataTest(TestCase):
         return rows
 
     def _add_rows(self, rows):
-        pillow = get_case_pillow(configs=[self.data_source])
+        pillow = get_case_pillow(ucr_configs=[self.data_source])
 
         def _get_case(row):
             return {

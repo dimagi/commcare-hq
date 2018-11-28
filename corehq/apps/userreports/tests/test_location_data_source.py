@@ -51,7 +51,7 @@ class TestLocationDataSource(TestCase):
         self.data_source_config.validate()
         self.data_source_config.save()
 
-        self.pillow = get_location_pillow(configs=[self.data_source_config])
+        self.pillow = get_location_pillow(ucr_configs=[self.data_source_config])
         self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):

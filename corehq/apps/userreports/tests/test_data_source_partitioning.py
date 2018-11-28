@@ -41,7 +41,7 @@ class DataSourceConfigurationPartitionTest(TestCase):
         super(DataSourceConfigurationPartitionTest, self).tearDown()
 
     def _process_docs(self, docs):
-        pillow = get_case_pillow(configs=[self.data_source])
+        pillow = get_case_pillow(ucr_configs=[self.data_source])
 
         for doc in docs:
             pillow.process_change(doc_to_change(doc))

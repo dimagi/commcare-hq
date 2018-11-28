@@ -164,7 +164,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
 
 def get_xform_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
-                         num_processes=1, process_num=0, configs=None, skip_ucr=False,
+                         num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
                          processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
     if topics:
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
@@ -203,8 +203,8 @@ def get_xform_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    if configs:
-        ucr_processor.bootstrap(configs)
+    if ucr_configs:
+        ucr_processor.bootstrap(ucr_configs)
     processors = [xform_to_es_processor, xform_to_report_es_processor,
         form_meta_processor, unknown_user_form_processor]
     if not skip_ucr:

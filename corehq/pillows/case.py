@@ -68,7 +68,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
 def get_case_pillow(
         pillow_id='kafka-case-ucr-es', ucr_division=None,
         include_ucrs=None, exclude_ucrs=None,
-        num_processes=1, process_num=0, configs=None, skip_ucr=False,
+        num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
     """
     Return a pillow that processes cases. The processors include, UCR and elastic processors
@@ -87,8 +87,8 @@ def get_case_pillow(
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
     )
-    if configs:
-        ucr_processor.bootstrap(configs)
+    if ucr_configs:
+        ucr_processor.bootstrap(ucr_configs)
     case_to_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
