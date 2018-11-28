@@ -208,12 +208,10 @@
     {% if can_edit_data %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
-            {% if not is_usercase %}
-                <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
-                    <i class="fa fa-cloud-download"></i>
-                    {% trans 'Download Case History' %}
-                </a>
-            {% endif %}
+            <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
+                <i class="fa fa-cloud-download"></i>
+                {% trans 'Download Case History' %}
+            </a>
             {% if show_properties_edit %}
                 <button type="button" class="btn btn-default pull-left data-corrections-trigger">
                     <i class="fa fa-shower"></i>
