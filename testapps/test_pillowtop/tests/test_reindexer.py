@@ -140,9 +140,15 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
 
 @generate_cases([
     ('app', 'ApplicationToElasticsearchPillow'),
+    ('case', 'CaseToElasticsearchPillow'),
+    ('form', 'XFormToElasticsearchPillow'),
     ('domain', 'KafkaDomainPillow'),
+    ('user', 'UserPillow'),
+    ('group', 'GroupPillow'),
     ('ledger-v1', 'LedgerToElasticsearchPillow'),
     ('sms', 'SqlSMSPillow'),
+    ('report-case', 'ReportCaseToElasticsearchPillow'),
+    ('report-xform', 'ReportXFormToElasticsearchPillow'),
 ], CheckpointCreationTest)
 def test_checkpoint_creation(self, reindex_id, pillow_name):
     # checks that checkpoipnts are set to the latest checkpoints after reindexing

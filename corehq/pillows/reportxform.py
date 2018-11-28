@@ -61,6 +61,7 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
         ),
     )
 
+
 class ReportFormReindexerFactory(ReindexerFactory):
     slug = 'report-xform'
     arg_contributors = [
@@ -73,12 +74,7 @@ class ReportFormReindexerFactory(ReindexerFactory):
         domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_form_change_provider(domains=domains)
         return ElasticPillowReindexer(
-            pillow_or_processor=ElasticProcessor(
-                elasticsearch=get_es_new(),
-                index_info=REPORT_XFORM_INDEX_INFO,
-                doc_prep_fn=transform_xform_for_report_forms_index,
-                doc_filter_fn=report_xform_filter
-            ),
+            pillow_or_processor=get_report_xform_to_elasticsearch_pillow(),
             change_provider=change_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,

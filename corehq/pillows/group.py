@@ -53,7 +53,7 @@ class GroupReindexerFactory(ReindexerFactory):
 
     def build(self):
         return ElasticPillowReindexer(
-            pillow_or_processor=get_group_to_elasticsearch_processor(),
+            pillow_or_processor=get_group_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Group.get_db(),
                 view_name='all_docs/by_doc_type',

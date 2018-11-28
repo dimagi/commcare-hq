@@ -177,7 +177,7 @@ class UserReindexerFactory(ReindexerFactory):
 
     def build(self):
         return ElasticPillowReindexer(
-            pillow_or_processor=get_user_es_processor(),
+            pillow_or_processor=get_user_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=CommCareUser.get_db(),
                 view_name='users/by_username',
