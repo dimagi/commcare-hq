@@ -162,7 +162,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     )
 
 
-def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
+def get_xform_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
                          num_processes=1, process_num=0, configs=None, skip_ucr=False,
                          processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):

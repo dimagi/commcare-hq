@@ -12,7 +12,7 @@ from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.tests.utils import doc_to_change
-from corehq.pillows.xform import get_ucr_es_form_pillow
+from corehq.pillows.xform import get_xform_pillow
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata, get_simple_form_xml
 
@@ -23,7 +23,7 @@ class FormPillowTest(TestCase):
     def setUp(self):
         super(FormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
-        self.pillow = get_ucr_es_form_pillow(skip_ucr=True)
+        self.pillow = get_xform_pillow(skip_ucr=True)
 
         factory = AppFactory(domain=self.domain)
         self.app = factory.app

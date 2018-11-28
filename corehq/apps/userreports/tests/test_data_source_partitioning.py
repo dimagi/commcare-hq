@@ -11,7 +11,7 @@ from corehq.apps.userreports.tests.utils import (
     get_sample_doc_and_indicators,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.pillows.case import get_ucr_es_case_pillow
+from corehq.pillows.case import get_case_pillow
 
 
 EXPECTED_UCR_CHILD_TABLE_PREFIX = 'tbl_80f005a0bdc2f0d0ff6f8293daee8f33_'
@@ -41,7 +41,7 @@ class DataSourceConfigurationPartitionTest(TestCase):
         super(DataSourceConfigurationPartitionTest, self).tearDown()
 
     def _process_docs(self, docs):
-        pillow = get_ucr_es_case_pillow(configs=[self.data_source])
+        pillow = get_case_pillow(configs=[self.data_source])
 
         for doc in docs:
             pillow.process_change(doc_to_change(doc))

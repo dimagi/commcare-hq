@@ -20,7 +20,7 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.case import get_ucr_es_case_pillow
+from corehq.pillows.case import get_case_pillow
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
@@ -43,7 +43,7 @@ class CaseSearchPillowTest(TestCase):
         super(CaseSearchPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
-        self.pillow = get_ucr_es_case_pillow(skip_ucr=True)
+        self.pillow = get_case_pillow(skip_ucr=True)
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
         # Bootstrap ES
