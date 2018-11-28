@@ -1668,3 +1668,12 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+
+RESTRICT_APP_RELEASE = StaticToggle(
+    'restrict_app_release',
+    'ICDS: Restrict App Release management to only specific users for a domain',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
+)
