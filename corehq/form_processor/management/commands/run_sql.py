@@ -6,6 +6,7 @@ will be replaced with the value of the --chunk-size=N command argument.
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+import pprint
 import sys
 import traceback
 from datetime import datetime, timedelta
@@ -13,6 +14,7 @@ from functools import wraps
 
 import attr
 import gevent
+import six
 from django.core.management.base import BaseCommand
 from django.db import connections
 from six.moves import input
@@ -30,20 +32,24 @@ class Command(BaseCommand):
         parser.add_argument('-d', '--dbname', help='Django DB alias to run on')
         parser.add_argument('--chunk-size', type=int, default=1000,
             help="Maximum number of records to move at once.")
+        parser.add_argument('--ignore-rows',
+            action="store_false", dest="print_rows", default=True,
+            help="Do not print returned rows. Has no effect on RunUntilZero "
+                 "statements since results are not printed for those.")
 
-    def handle(self, name, dbname, chunk_size, **options):
+    def handle(self, name, dbname, chunk_size, print_rows, **options):
         template = TEMPLATES[name]
         sql = template.format(chunk_size=chunk_size)
         run = getattr(template, "run", run_once)
         dbnames = get_db_aliases_for_partitioned_query()
         if dbname or len(dbnames) == 1:
-            run(sql, dbname or dbnames[0])
+            run(sql, dbname or dbnames[0], print_rows)
         elif not confirm(MULTI_DB % len(dbnames)):
             sys.exit('abort')
         else:
             greenlets = []
             for dbname in dbnames:
-                g = gevent.spawn(run, sql, dbname)
+                g = gevent.spawn(run, sql, dbname, print_rows)
                 greenlets.append(g)
 
             gevent.joinall(greenlets)
@@ -60,24 +66,42 @@ def confirm(msg):
 
 def timed(func):
     @wraps(func)
-    def timed(sql, dbname):
+    def timed(sql, dbname, *args, **kw):
         print("running on %s database" % dbname)
         start = datetime.now()
         try:
-            return func(sql, dbname)
+            return func(sql, dbname, *args, **kw)
         finally:
             print("{} elapsed: {}".format(dbname, datetime.now() - start))
     return timed
 
 
+def fetch_dicts(cursor):
+    try:
+        rows = cursor.fetchall()
+    except Exception as err:
+        if six.text_type(err) != "no results to fetch":
+            raise
+        rows = []
+    if not rows:
+        return []
+    cols = [col[0] for col in cursor.description]
+    return [{c: v for c, v in zip(cols, row)} for row in rows]
+
+
 @timed
-def run_once(sql, dbname):
+def run_once(sql, dbname, print_rows):
     """Run sql statement once on database
 
     This is the default run mode for statements
     """
     with connections[dbname].cursor() as cursor:
         cursor.execute(sql)
+        if print_rows:
+            rows = fetch_dicts(cursor)
+            for row in rows:
+                pprint.pprint(row)
+            print("({} rows from {})".format(len(rows), dbname))
 
 
 @attr.s
@@ -94,7 +118,7 @@ class RunUntilZero(object):
 
     @staticmethod
     @timed
-    def run(sql, dbname):
+    def run(sql, dbname, print_rows):
         next_update = datetime.now()
         total = 0
         with connections[dbname].cursor() as cursor:
