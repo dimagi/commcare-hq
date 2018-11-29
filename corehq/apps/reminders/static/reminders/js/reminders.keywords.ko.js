@@ -9,6 +9,8 @@ hqDefine("reminders/js/reminders.keywords.ko", [
     initialPageData,
     namedArgsTemplate,
 ) {
+    ko.components.register('named-args', { template: _.template(namedArgsTemplate)(), });
+
     var keywordActionsViewModel = function (initialValues) {
         'use strict';
         var self = {};
@@ -76,11 +78,6 @@ hqDefine("reminders/js/reminders.keywords.ko", [
             }
             self.updateExampleStructuredSMS();
         };
-
-        ko.components.register('named-args', {
-            viewModel: { instance: self },
-            template: _.template(namedArgsTemplate)(),
-        });
 
         self.updateExampleStructuredSMS = function () {
             var namedArgsSeparator = "";
