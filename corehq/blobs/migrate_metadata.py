@@ -115,7 +115,7 @@ def make_migrators(mod):
                         # blobmeta already saved
                         continue
                     cursor.execute("""
-                        INSERT INTO blobs_blobmeta (
+                        INSERT INTO blobs_blobmeta_tbl (
                             domain,
                             type_code,
                             parent_id,

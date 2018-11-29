@@ -20,14 +20,15 @@ class DishaFileBuildTest(SimpleTestCase):
             def count(self, *args, **kwargs):
                 return len(self)
 
-        data = [['a'], ['b'], ['b\u0105z']]
+        data = [['a'], ['b'], ["d\xc3\xa9f"]]
         disha_get_rows_mock.return_value = CountableList(data)
 
         month = date(2018, 8, 1)
         state = 'Andhra pradesh'
         with TransientTempfile() as temp_path:
             dump = DishaDump(state, month)
-            dump._write_data_in_chunks(temp_path)
+            with open(temp_path, 'w+b') as f:
+                dump._write_data_in_chunks(f)
             with open(temp_path, 'r', encoding='utf-8') as f:
                 expected_json = {
                     'month': str(month),

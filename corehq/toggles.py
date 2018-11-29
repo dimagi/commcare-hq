@@ -830,14 +830,6 @@ MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
     always_enabled={'icds-cas', 'fmoh-echis-staging'}
 )
 
-RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
-    'restrict_web_users_by_location',
-    "(Deprecated) Allow project to restrict web user permissions by location",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
-)
-
 API_THROTTLE_WHITELIST = StaticToggle(
     'api_throttle_whitelist',
     ('API throttle whitelist'),
@@ -1024,14 +1016,6 @@ MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='This flag allows multiple choice fields in custom user data, location data and product data',
-)
-
-RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
-    'restrict_form_edit_by_location',
-    "(Deprecated) Restrict ability to edit/archive forms by the web user's location",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
 )
 
 SUPPORT = StaticToggle(
@@ -1667,4 +1651,13 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'Sort out of order form submissions in the SQL update strategy',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+RESTRICT_APP_RELEASE = StaticToggle(
+    'restrict_app_release',
+    'ICDS: Restrict App Release management to only specific users for a domain',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
 )

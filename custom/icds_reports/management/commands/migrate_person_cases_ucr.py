@@ -13,6 +13,7 @@ from custom.icds_reports.models import ChildHealthMonthly
 
 FROM_TABLENAME = "config_report_icds-cas_static-person_cases_v2_b4b5d57a"
 TO_TABLENAME = "config_report_icds-cas_static-person_cases_v3_2ae0879a"
+TO_TABLENAME_PREFIX = "tbl_8700431e9d81e782b2499d5e5704a271_"
 
 
 def get_cursor(model):
@@ -24,6 +25,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         columns = (
             # person_v3, calculation from person_v2
+            ("doc_id", ),
+            ("inserted_at", ),
             ("awc_id", ),
             ("supervisor_id", ),
             ("block_id", ),
@@ -43,11 +46,11 @@ class Command(BaseCommand):
             ("last_referral_date", ),
             ("referral_reached_date", ),
             ("hh_caste",
-                "CASE WHEN F_sc_count = 1 OR M_sc_count = 1 THEN 'sc'"
-                "     WHEN F_st_count = 1 OR M_st_count = 1 THEN 'st'"
+                "CASE WHEN \"F_sc_count\" = 1 OR \"M_sc_count\" = 1 THEN 'sc'"
+                "     WHEN \"F_st_count\" = 1 OR \"M_st_count\" = 1 THEN 'st'"
                 "     ELSE NULL END"),
-            ("hh_minority", "CASE WHEN F_minority_count = 1 OR M_minority_count = 1 THEN 1 ELSE NULL END"),
-            ("disabled", "CASE WHEN F_disabled_count = 1 OR M_disabled_count = 1 THEN 1 ELSE NULL END"),
+            ("hh_minority", "CASE WHEN \"F_minority_count\" = 1 OR \"M_minority_count\" = 1 THEN 1 ELSE NULL END"),
+            ("disabled", "CASE WHEN \"F_disabled_count\" = 1 OR \"M_disabled_count\" = 1 THEN 1 ELSE NULL END"),
             ("disability_type", "CONCAT_WS(' ', "
                 "CASE WHEN disability_type_1 = 1 THEN 1 ELSE NULL END, "
                 "CASE WHEN disability_type_2 = 1 THEN 2 ELSE NULL END, "
@@ -66,8 +69,7 @@ class Command(BaseCommand):
             ("is_pregnant",
                 "CASE WHEN pregnant_resident_count = 1 OR pregnant_migrant_count = 1 THEN 1 ELSE NULL END"),
             ("marital_status", ),
-            # may need to remove if https://github.com/dimagi/commcare-hq/pull/22247 hasn't been merged
-            ("phone_number", ),
+            ("phone_number", "NULL"),
         )
         query_columns = [
             "{} AS {}".format(col[0] if len(col) == 1 else col[1], col[0])
@@ -83,13 +85,15 @@ class Command(BaseCommand):
             with get_cursor(ChildHealthMonthly) as cursor:
                 query_args = {'state_id': state_id, 'block_id': block_id, 'state_id_last_3': state_id[-3:]}
                 cursor.execute(
-                    "INSERT INTO \"{to_tablename}\" "
+                    "INSERT INTO \"{to_tablename_prefix}{state_id_last_3}\" "
                     "SELECT {columns} "
                     "FROM \"{from_tablename}\" "
                     "WHERE state_id = %(state_id)s "
                     "AND lower(substring(state_id, '.{{3}}$'::text)) = %(state_id_last_3)s "
-                    "AND block_id = %(block_id)s".format(
-                        to_tablename=TO_TABLENAME,
+                    "AND block_id = %(block_id)s"
+                    "ON CONFLICT DO NOTHING".format(
+                        to_tablename_prefix=TO_TABLENAME_PREFIX,
+                        state_id_last_3=state_id[-3:],
                         from_tablename=FROM_TABLENAME,
                         columns=", \n".join(query_columns)
                     ), query_args)

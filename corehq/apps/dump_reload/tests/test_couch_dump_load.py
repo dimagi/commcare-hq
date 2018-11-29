@@ -218,7 +218,7 @@ class TestDumpLoadToggles(SimpleTestCase):
         output_stream.seek(0)
         dumped = [json.loads(line.strip()) for line in output_stream.readlines()]
         for dump in dumped:
-            self.assertEqual(set(expected_items[dump['slug']]), set(dump['enabled_users']))
+            self.assertItemsEqual(expected_items[dump['slug']], dump['enabled_users'])
 
     def _get_mocked_toggles(self):
         from toggle.models import generate_toggle_id
@@ -265,7 +265,7 @@ class TestDumpLoadToggles(SimpleTestCase):
 
             for mocked_toggle in mocked_toggles.values():
                 loaded_toggle = Toggle.get(mocked_toggle.slug)
-                self.assertEqual(set(mocked_toggle.enabled_users), set(loaded_toggle.enabled_users))
+                self.assertItemsEqual(mocked_toggle.enabled_users, loaded_toggle.enabled_users)
 
 
 def _get_doc_counts_from_db(domain):

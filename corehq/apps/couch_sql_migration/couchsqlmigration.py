@@ -23,12 +23,14 @@ from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL, CommCareCaseSQL,
+    XFormInstanceSQL, XFormOperationSQL, CommCareCaseSQL,
     CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL, CaseAttachmentSQL
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
@@ -560,18 +562,29 @@ def _copy_form_properties(domain, sql_form, couch_form):
 def _migrate_form_attachments(sql_form, couch_form):
     """Copy over attachment meta - includes form.xml"""
     attachments = []
+    metadb = get_blob_db().metadb
     for name, blob in six.iteritems(couch_form.blobs):
-        attachments.append(XFormAttachmentSQL(
-            name=name,
-            form=sql_form,
-            attachment_id=uuid.uuid4().hex,
-            content_type=blob.content_type,
-            content_length=blob.content_length,
-            blob_id=blob.key,
-            blob_bucket="",  # temporary/special value -> new blob db API
-            md5=blob.info.md5_hash or "unknown-md5",
-        ))
-    sql_form.unsaved_attachments = attachments
+        type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
+        try:
+            meta = metadb.get(
+                parent_id=sql_form.form_id,
+                type_code=type_code,
+                name=name
+            )
+            assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
+        except BlobMeta.DoesNotExist:
+            meta = metadb.new(
+                domain=couch_form.domain,
+                name=name,
+                parent_id=sql_form.form_id,
+                type_code=type_code,
+                content_type=blob.content_type,
+                content_length=blob.content_length,
+                key=blob.key,
+            )
+            meta.save()
+        attachments.append(meta)
+    sql_form.attachments_list = attachments
 
 
 def _migrate_form_operations(sql_form, couch_form):

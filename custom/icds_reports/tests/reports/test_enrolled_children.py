@@ -25,8 +25,7 @@ class TestEnrolledChildren(TestCase):
             {
                 "rightLegend": {
                     "info": percent_children_enrolled_help_text(age_label="0 - 6 years"),
-                    "average": 643.5,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '
@@ -84,8 +83,7 @@ class TestEnrolledChildren(TestCase):
             {
                 "rightLegend": {
                     "info": percent_children_enrolled_help_text(age_label="0 - 6 years"),
-                    "average": 309.0,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '

@@ -36,7 +36,6 @@ class LatePMTUsers(SqlData):
     def filters(self):
         filters = []
         filter_fields = [
-            'user_id',
             'country',
             'level_1',
             'level_2',
@@ -46,6 +45,8 @@ class LatePMTUsers(SqlData):
         for filter_field in filter_fields:
             if filter_field in self.config and self.config[filter_field]:
                 filters.append(EQ(filter_field, filter_field))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(EQ('doc_id', 'user_id'))
         return filters
 
     @property
@@ -116,7 +117,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def enddate(self):
-        return self.request.datespan.enddate
+        return self.request.datespan.end_of_end_day
 
     @property
     def headers(self):
@@ -133,7 +134,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         )
 
     @cached_property
-    def query_for_group_a(self):
+    def get_users_in_group_a(self):
         data = SMS.objects.filter(
             domain=self.domain,
             couch_recipient_doc_type='CommCareUser',
@@ -187,6 +188,9 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 group
             ]
 
+        def is_not_in_group(key, group):
+            return key not in group
+
         users = self.get_users
         dates = rrule(
             DAILY,
@@ -197,17 +201,19 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         rows = []
         users_in_group_a = []
         users_in_group_b = []
+        submission_status = self.report_config['submission_status']
         if users:
-            if self.report_config['submission_status'] in ['group_a', '']:
-                users_in_group_a = self.query_for_group_a
-            elif self.report_config['submission_status'] in ['group_b', '']:
+            if submission_status in ['group_a', '']:
+                users_in_group_a = self.get_users_in_group_a
+            if submission_status in ['group_b', '']:
                 users_in_group_b = self.get_users_in_group_b
 
             for date in dates:
                 for user in users:
-                    if (date.date(), user['user_id']) not in users_in_group_a:
+                    key = (date.date(), user['user_id'])
+                    if is_not_in_group(key, users_in_group_a) and submission_status != 'group_b':
                         group = 'No PMT data Submitted'
-                    elif (date.date(), user['user_id']) not in users_in_group_b:
+                    elif is_not_in_group(key, users_in_group_b) and submission_status != 'group_a':
                         group = 'Incorrect PMT data Submitted'
                     else:
                         continue

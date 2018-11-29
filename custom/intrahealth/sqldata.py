@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import sqlalchemy
-from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
+from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
     MonthColumn
 from collections import defaultdict
@@ -24,7 +24,7 @@ from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
-from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, OR
+from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, OR
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
@@ -762,27 +762,24 @@ class IntraHealthQueryMeta(QueryMeta):
         assert len(filters) > 0
         self.filter = AND(self.filters) if len(self.filters) > 1 else self.filters[0]
 
-    def execute(self, metadata, connection, filter_values):
-        try:
-            table = metadata.tables[self.table_name]
-        except KeyError:
-            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
-        return connection.execute(self._build_query(table, filter_values)).fetchall()
+    def execute(self, connection, filter_values):
+        return connection.execute(self._build_query(filter_values)).fetchall()
 
-    def _build_query(self, table, filter_values):
+    def _build_query(self, filter_values):
         raise NotImplementedError()
 
 
 class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, table, filter_values):
-        key_column = table.c[self.key]
+    def _build_query(self, filter_values):
+        key_column = sqlalchemy.column(self.key)
         sum_query = sqlalchemy.alias(
             sqlalchemy.select(
-                self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [table.c.month],
-                group_by=self.group_by + [table.c.month],
-                whereclause=self.filter.build_expression(table),
-            ), name='s')
+                self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [sqlalchemy.column('month')],
+                group_by=self.group_by + [sqlalchemy.column('month')],
+                whereclause=self.filter.build_expression(),
+            ).select_from(self.table_name),
+            name='s')
 
         return select(
             self.group_by + [sqlalchemy.func.avg(sum_query.c.sum_col).label(self.key)],
@@ -793,14 +790,14 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
 class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, table, filter_values):
-        key_column = table.c[self.key]
+    def _build_query(self, filter_values):
+        key_column = sqlalchemy.column(self.key)
         subquery = sqlalchemy.alias(
             sqlalchemy.select(
                 self.group_by + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
-                group_by=self.group_by + [table.c.month],
-                whereclause=self.filter.build_expression(table),
-            ),
+                group_by=self.group_by + [sqlalchemy.column('month')],
+                whereclause=self.filter.build_expression(),
+            ).select_from(sqlalchemy.table(self.table_name)),
             name='cq')
 
         return sqlalchemy.select(
@@ -2197,9 +2194,8 @@ class ContainsFilter(SqlFilter):
         self.column_name = column_name
         self.contains = contains
 
-    def build_expression(self, table):
-        column = get_column(table, self.column_name)
-        return column.like("%{0}%".format(self.contains))
+    def build_expression(self):
+        return sqlalchemy.column(self.column_name).like("%{0}%".format(self.contains))
 
 
 class CustomEQFilter(SqlFilter):
@@ -2211,9 +2207,8 @@ class CustomEQFilter(SqlFilter):
         self.column_name = column_name
         self.parameter = parameter
 
-    def build_expression(self, table):
-        column = get_column(table, self.column_name)
-        return column.match(self.parameter)
+    def build_expression(self):
+        return sqlalchemy.column(self.column_name).match(self.parameter)
 
 
 class YeksiSqlData(SqlData):
