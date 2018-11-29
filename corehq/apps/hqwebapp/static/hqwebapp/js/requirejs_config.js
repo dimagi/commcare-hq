@@ -2,6 +2,7 @@
 requirejs.config({
     baseUrl: '/static/',
     paths: {
+        "text" : "requirejs/bower_components/text/text",
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
