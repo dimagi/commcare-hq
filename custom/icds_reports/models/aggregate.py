@@ -478,9 +478,9 @@ class AggregateLsAWCVisitForm(models.Model):
         db_table = AGG_LS_AWC_VISIT_TABLE
 
     @classmethod
-    def aggregate(cls, month):
-        helper = LSAwcMgtFormAggHelper(month)
-        drop_query = helper.drop_table_if_exists()
+    def aggregate(cls, state_id, month):
+        helper = LSAwcMgtFormAggHelper(state_id, month)
+        drop_query = helper.drop_table_query()
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_param = helper.aggregate_query()
         with get_cursor(cls) as cursor:
@@ -499,9 +499,9 @@ class AggregateLsVhndForm(models.Model):
         db_table = AGG_LS_VHND_TABLE
 
     @classmethod
-    def aggregate(cls, month):
-        helper = LSVhndFormAggHelper(month)
-        drop_query = helper.drop_table_if_exists()
+    def aggregate(cls, state_id, month):
+        helper = LSVhndFormAggHelper(state_id, month)
+        drop_query = helper.drop_table_query()
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_param = helper.aggregate_query()
         with get_cursor(cls) as cursor:
@@ -520,9 +520,9 @@ class AggregateBeneficiaryForm(models.Model):
         db_table = AGG_LS_BENEFICIARY_TABLE
 
     @classmethod
-    def aggregate(cls, month):
-        helper = LSBeneficiaryFormAggHelper(month)
-        drop_query = helper.drop_table_if_exists()
+    def aggregate(cls, state_id, month):
+        helper = LSBeneficiaryFormAggHelper(state_id, month)
+        drop_query = helper.drop_table_query()
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_param = helper.aggregate_query()
         with get_cursor(cls) as cursor:

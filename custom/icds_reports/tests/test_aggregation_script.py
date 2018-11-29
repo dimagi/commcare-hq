@@ -132,10 +132,6 @@ class AggregationScriptTestBase(TestCase):
     def _load_and_compare_data(self, table_name, path, sort_key=None):
         # To speed up tests, we use a sort_key wherever possible
         #   to presort before comparing data
-        print(">>>>>>>>>>>>>")
-        print([ x for x in self._load_data_from_db(table_name, sort_key)])
-        print("<<<<<<<<")
-        print(self._load_csv(path))
         if sort_key:
             self._fasterAssertListEqual(
                 list(self._load_data_from_db(table_name, sort_key)),
