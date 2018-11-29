@@ -2,10 +2,12 @@ hqDefine("reminders/js/reminders.keywords.ko", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
+    "text!reminders/html/named_args.html",
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
+    namedArgsTemplate,
 ) {
     var keywordActionsViewModel = function (initialValues) {
         'use strict';
@@ -77,7 +79,7 @@ hqDefine("reminders/js/reminders.keywords.ko", [
 
         ko.components.register('named-args', {
             viewModel: { instance: self },
-            template: { require: 'text!reminders/html/named_args.html' },
+            template: _.template(namedArgsTemplate)(),
         });
 
         self.updateExampleStructuredSMS = function () {
