@@ -6,6 +6,7 @@ will be replaced with the value of the --chunk-size=N command argument.
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+import pprint
 import sys
 import traceback
 from datetime import datetime, timedelta
@@ -13,6 +14,7 @@ from functools import wraps
 
 import attr
 import gevent
+import six
 from django.core.management.base import BaseCommand
 from django.db import connections
 from six.moves import input
@@ -30,20 +32,24 @@ class Command(BaseCommand):
         parser.add_argument('-d', '--dbname', help='Django DB alias to run on')
         parser.add_argument('--chunk-size', type=int, default=1000,
             help="Maximum number of records to move at once.")
+        parser.add_argument('--ignore-rows',
+            action="store_false", dest="print_rows", default=True,
+            help="Do not print returned rows. Has no effect on RunUntilZero "
+                 "statements since results are not printed for those.")
 
-    def handle(self, name, dbname, chunk_size, **options):
+    def handle(self, name, dbname, chunk_size, print_rows, **options):
         template = TEMPLATES[name]
         sql = template.format(chunk_size=chunk_size)
         run = getattr(template, "run", run_once)
         dbnames = get_db_aliases_for_partitioned_query()
         if dbname or len(dbnames) == 1:
-            run(sql, dbname or dbnames[0])
+            run(sql, dbname or dbnames[0], print_rows)
         elif not confirm(MULTI_DB % len(dbnames)):
             sys.exit('abort')
         else:
             greenlets = []
             for dbname in dbnames:
-                g = gevent.spawn(run, sql, dbname)
+                g = gevent.spawn(run, sql, dbname, print_rows)
                 greenlets.append(g)
 
             gevent.joinall(greenlets)
@@ -60,24 +66,42 @@ def confirm(msg):
 
 def timed(func):
     @wraps(func)
-    def timed(sql, dbname):
+    def timed(sql, dbname, *args, **kw):
         print("running on %s database" % dbname)
         start = datetime.now()
         try:
-            return func(sql, dbname)
+            return func(sql, dbname, *args, **kw)
         finally:
             print("{} elapsed: {}".format(dbname, datetime.now() - start))
     return timed
 
 
+def fetch_dicts(cursor):
+    try:
+        rows = cursor.fetchall()
+    except Exception as err:
+        if six.text_type(err) != "no results to fetch":
+            raise
+        rows = []
+    if not rows:
+        return []
+    cols = [col[0] for col in cursor.description]
+    return [{c: v for c, v in zip(cols, row)} for row in rows]
+
+
 @timed
-def run_once(sql, dbname):
+def run_once(sql, dbname, print_rows):
     """Run sql statement once on database
 
     This is the default run mode for statements
     """
     with connections[dbname].cursor() as cursor:
         cursor.execute(sql)
+        if print_rows:
+            rows = fetch_dicts(cursor)
+            for row in rows:
+                pprint.pprint(row)
+            print("({} rows from {})".format(len(rows), dbname))
 
 
 @attr.s
@@ -94,7 +118,7 @@ class RunUntilZero(object):
 
     @staticmethod
     @timed
-    def run(sql, dbname):
+    def run(sql, dbname, print_rows):
         next_update = datetime.now()
         total = 0
         with connections[dbname].cursor() as cursor:
@@ -114,8 +138,23 @@ class RunUntilZero(object):
         print("{} final: processed {} items".format(dbname, total))
 
 
+# Run after creating an index concurrently to verify successful index
+# creation. Each printed row represents an invalid index.
+# source https://stackoverflow.com/a/29260046/10840
+show_invalid_indexes = """
+SELECT n.nspname, c.relname
+FROM   pg_catalog.pg_class c, pg_catalog.pg_namespace n,
+       pg_catalog.pg_index i
+WHERE  (i.indisvalid = false OR i.indisready = false) AND
+       i.indexrelid = c.oid AND c.relnamespace = n.oid AND
+       n.nspname != 'pg_catalog' AND
+       n.nspname != 'information_schema' AND
+       n.nspname != 'pg_toast'
+"""
+
+
 # see https://github.com/dimagi/commcare-hq/pull/21631
-BLOBMETA_KEY_SQL = """
+blobmeta_key = """
 CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
 ON public.form_processor_xformattachmentsql (((
     CASE
@@ -124,56 +163,12 @@ ON public.form_processor_xformattachmentsql (((
     END || blob_id
 )::varchar(255)))
 """
-DROP_BLOBMETA_KEY = "DROP INDEX form_processor_xformattachmentsql_blobmeta_key"
-BLOBMETA_VIEW = """
-CREATE OR REPLACE VIEW blobs_blobmeta AS
-SELECT
-    "id",
-    "domain",
-    "parent_id",
-    "name",
-    "key",
-    "type_code",
-    "content_type",
-    "properties",
-    "created_on",
-    "expires_on",
-    "content_length"
-FROM blobs_blobmeta_tbl
-
-UNION ALL
-
-SELECT
-    -att."id" AS "id",
-    xform."domain",
-    att.form_id AS parent_id,
-    att."name",
-    (CASE
-        WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(
-            att.blob_bucket,
-            'form/' || REPLACE(att.attachment_id::text, '-', '')
-        ) || '/'
-    END || att.blob_id)::VARCHAR(255) AS "key",
-    CASE
-        WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
-        ELSE 3 -- corehq.blobs.CODES.form_attachment
-    END::SMALLINT AS type_code,
-    att.content_type,
-    att.properties,
-    xform.received_on AS created_on,
-    NULL AS expires_on,
-    att.content_length
-FROM form_processor_xformattachmentsql att
-    INNER JOIN form_processor_xforminstancesql xform
-        ON xform.form_id = att.form_id;
-"""
 
 
 # Move rows incrementally.
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
-MOVE_FORM_ATTACHMENTS = RunUntilZero("""
+move_form_attachments_to_blobmeta = RunUntilZero("""
 WITH deleted AS (
     DELETE FROM form_processor_xformattachmentsql
     WHERE id IN (
@@ -227,7 +222,7 @@ WITH deleted AS (
 # move all rows in one go.
 # requires table lock, so may not be feasible without some downtime.
 # this may be necessary if MOVE_FORM_ATTACHMENTS is too slow.
-BLOBMETA_FORMS_SQL = """
+blobmeta_forms = """
 BEGIN;
 LOCK TABLE blobs_blobmeta_tbl IN SHARE MODE;
 
@@ -298,12 +293,46 @@ COMMIT;
 """
 
 
-TEMPLATES = {
-    "blobmeta_key": BLOBMETA_KEY_SQL,
-    "blobmeta_forms": BLOBMETA_FORMS_SQL,
-    "move_form_attachments_to_blobmeta": MOVE_FORM_ATTACHMENTS,
+# Expected output is all rows having DELETED status (no rows with KEPT status).
+fix_bad_blobmeta_copies = """
+EXPLAIN WITH blobs AS (
+    -- get rows with negative id (should be very few of these)
+    -- use CTE to work around bad query plan in comp query
+    SELECT * FROM blobs_blobmeta_tbl WHERE id < 0
+),
 
-    # these will be used to fix staging, should not be necessary anywhere else
-    "drop_blobmeta_key": DROP_BLOBMETA_KEY,
-    "blobmeta_view": BLOBMETA_VIEW,
+deleted AS (
+    -- delete where duplicate attachment from old form is associated with new form
+    DELETE FROM blobs_blobmeta_tbl
+    USING blobs
+    INNER JOIN form_processor_xforminstancesql new_form
+        ON new_form.form_id = blobs.parent_id AND new_form.domain = blobs.domain
+    INNER JOIN form_processor_xformattachmentsql att ON att.id = -blobs.id
+    INNER JOIN form_processor_xforminstancesql old_form
+        ON old_form.form_id = att.form_id AND old_form.domain = blobs.domain
+    WHERE blobs_blobmeta_tbl.id = blobs.id
+        AND blobs.parent_id != att.form_id
+        AND old_form.orig_id = blobs.parent_id
+        AND new_form.deprecated_form_id = att.form_id
+        AND blobs.name = att.name
+        AND blobs.key = att.blob_id
+        AND blobs.type_code = 2
+        AND blobs.content_type = att.content_type
+        AND blobs.content_length = att.content_length
+    RETURNING blobs_blobmeta_tbl.*
+)
+
+SELECT 'DELETED' AS "status", * FROM deleted
+UNION
+SELECT 'KEPT' AS "status", * FROM blobs_blobmeta_tbl
+WHERE id < 0 AND id NOT IN (SELECT id FROM deleted)
+"""
+
+
+TEMPLATES = {
+    "blobmeta_key": blobmeta_key,
+    "blobmeta_forms": blobmeta_forms,
+    "fix_bad_blobmeta_copies": fix_bad_blobmeta_copies,
+    "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
+    "show_invalid_indexes": show_invalid_indexes,
 }
