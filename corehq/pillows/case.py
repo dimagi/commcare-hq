@@ -135,6 +135,7 @@ class CouchCaseReindexerFactory(ReindexerFactory):
             elasticsearch=get_es_new(),
             index_info=CASE_INDEX_INFO,
             doc_transform=transform_case_for_elasticsearch,
+            pillow=get_case_to_elasticsearch_pillow(),
             **self.options
         )
 
