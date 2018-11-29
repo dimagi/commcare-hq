@@ -286,7 +286,8 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(0, len(xform.history))
 
         # Mock the couch and sql archive function throwing an error (so that this test works for both)
-        with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL._archive_unarchive_form') \
+        with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.'
+                        '_update_archive_unarchive_form_history') \
                 as mock_operation_sql:
             with mock.patch('couchforms.models.XFormOperation') as mock_operation_couch:
                 try:
@@ -347,7 +348,8 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.archive(user_id='librarian')
 
         # Mock the couch and sql archive function throwing an error (so that this test works for both)
-        with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL._archive_unarchive_form') \
+        with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.'
+                        '_update_archive_unarchive_form_history') \
                 as mock_operation_sql:
             with mock.patch('couchforms.models.XFormOperation') as mock_operation_couch:
                 try:
