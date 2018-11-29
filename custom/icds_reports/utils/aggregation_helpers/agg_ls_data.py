@@ -61,9 +61,9 @@ class AggLsHelper(BaseICDSAggregationHelper):
             ('block_id', 'location.block_id'),
             ('supervisor_id', 'location.supervisor_id'),
             ('month', "'{}'".format(month_formatter(self.month_start))),
-            ('unique_awc_vists', 'COALESCE(sum(awc_table.unique_awc_vists), 0)'),
-            ('vhnd_observed', 'COALESCE(sum(vhnd_table.vhnd_observed), 0)'),
-            ('beneficiary_vists', 'COALESCE(sum(beneficiary_table.beneficiary_vists), 0)'),
+            ('unique_awc_vists', 'COALESCE(awc_table.unique_awc_vists, 0)'),
+            ('vhnd_observed', 'COALESCE(vhnd_table.vhnd_observed, 0)'),
+            ('beneficiary_vists', 'COALESCE(beneficiary_table.beneficiary_vists, 0)'),
             ('aggregation_level', '4')
         )
         return """
@@ -73,18 +73,19 @@ class AggLsHelper(BaseICDSAggregationHelper):
         (
         SELECT
         {calculations}
-        from "{awc_location_ucr}" location
-        LEFT OUTER JOIN "{awc_table}" awc_table on location.supervisor_id=awc_table.supervisor_id
+        from (select distinct state_id, district_id, block_id, supervisor_id from "{awc_location_ucr}") location
+        LEFT OUTER JOIN "{awc_table}" awc_table on (
+            location.supervisor_id=awc_table.supervisor_id AND
+            awc_table.month = %(start_date)s
+        )
         LEFT OUTER JOIN "{vhnd_table}" vhnd_table on (
-            awc_table.supervisor_id = vhnd_table.supervisor_id AND
-            awc_table.month = vhnd_table.month
+            location.supervisor_id = vhnd_table.supervisor_id AND
+            vhnd_table.month = %(start_date)s
         )
         LEFT OUTER JOIN "{beneficiary_table}" beneficiary_table on (
-        vhnd_table.supervisor_id = beneficiary_table.supervisor_id AND
-        vhnd_table.month = beneficiary_table.month
+            location.supervisor_id = beneficiary_table.supervisor_id AND
+            beneficiary_table.month = %(start_date)s
         )
-        WHERE awc_table.month = %(start_date)s
-        GROUP BY location.state_id, location.district_id, location.block_id, location.supervisor_id
         )
         """.format(
             tablename=self.tablename,
