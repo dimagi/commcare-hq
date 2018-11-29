@@ -45,7 +45,10 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
     'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
     'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
-    'agg_awc': 'agg_awc'
+    'ls_awc_mgt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
+    'ls_home_vists': 'config_report_icds-cas_static-ls_home_visit_forms_fill_53a43d79',
+    'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
+    'agg_awc': 'agg_awc',
 }
 
 
