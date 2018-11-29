@@ -1,8 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
-from dimagi.ext.couchdbkit import (Document, DictProperty,
-    StringProperty, ListProperty)
+
+from django.db import models
+
+from dimagi.ext.couchdbkit import (
+    Document,
+    DictProperty,
+    ListProperty,
+    StringProperty,
+)
 from dimagi.utils.couch import CouchDocLockableMixIn
 
 
@@ -92,3 +99,18 @@ class Translation(object):
                 return dict([(key, val[0]) for key, val in translations.items()])
             else:
                 return translations
+
+
+class TransifexBlacklist(models.Model):
+    domain = models.CharField(max_length=255)
+    app_id = models.CharField(max_length=32)
+    module_id = models.CharField(max_length=32)
+    field_type = models.CharField(
+        max_length=100,
+        choices=(
+            ('detail', 'Case Detail'),
+            ('list', 'Case List'),
+        )
+    )
+    field_name = models.CharField(max_length=255)
+    display_text = models.CharField(max_length=255)
