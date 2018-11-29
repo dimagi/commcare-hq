@@ -520,21 +520,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         return deleted_count
 
     @staticmethod
-    def get_attachments_for_forms(form_ids, ordered=False):
-        assert isinstance(form_ids, list)
-        if not form_ids:
-            return []
-        attachments = list(XFormAttachmentSQL.objects.raw(
-            'SELECT * from get_multiple_forms_attachments(%s)',
-            [form_ids]
-        ))
-
-        if ordered:
-            _sort_with_id_list(attachments, form_ids, 'form_id')
-
-        return attachments
-
-    @staticmethod
     def archive_form(form, user_id, archive_stub):
         from corehq.form_processor.change_publishers import publish_form_saved
         FormAccessorSQL()._update_archive_unarchive_form_history(form, user_id, True, archive_stub)
