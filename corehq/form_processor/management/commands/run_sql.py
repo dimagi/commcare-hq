@@ -138,6 +138,21 @@ class RunUntilZero(object):
         print("{} final: processed {} items".format(dbname, total))
 
 
+# Run after creating an index concurrently to verify successful index
+# creation. Each printed row represents an invalid index.
+# source https://stackoverflow.com/a/29260046/10840
+show_invalid_indexes = """
+SELECT n.nspname, c.relname
+FROM   pg_catalog.pg_class c, pg_catalog.pg_namespace n,
+       pg_catalog.pg_index i
+WHERE  (i.indisvalid = false OR i.indisready = false) AND
+       i.indexrelid = c.oid AND c.relnamespace = n.oid AND
+       n.nspname != 'pg_catalog' AND
+       n.nspname != 'information_schema' AND
+       n.nspname != 'pg_toast'
+"""
+
+
 # see https://github.com/dimagi/commcare-hq/pull/21631
 blobmeta_key = """
 CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
@@ -282,4 +297,5 @@ TEMPLATES = {
     "blobmeta_key": blobmeta_key,
     "blobmeta_forms": blobmeta_forms,
     "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
+    "show_invalid_indexes": show_invalid_indexes,
 }
