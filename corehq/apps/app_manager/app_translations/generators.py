@@ -13,6 +13,7 @@ from memoized import memoized
 from collections import namedtuple, OrderedDict, defaultdict
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.util import get_form_data
+from corehq.apps.translations.models import TransifexBlacklist
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
@@ -185,6 +186,29 @@ class AppTranslationsGenerator:
                 valid_rows.append(row)
         return valid_rows
 
+    @cached_property
+    def _blacklisted_translations(self):
+        return TransifexBlacklist.objects.filter(domain=self.domain, app_id=self.app_id).all()
+
+    def _filter_invalid_rows_for_module(self, rows, module_id, case_property_index, list_or_detail_index):
+
+        valid_rows = []
+        for i, row in enumerate(rows):
+            list_or_detail = row[list_or_detail_index]
+            case_property = row[case_property_index]
+            in_blacklist = any(
+                True
+                for trans in self._blacklisted_translations
+                if (
+                    trans.module_id == module_id
+                    and trans.field_type == list_or_detail
+                    and trans.field_name == case_property
+                )
+            )
+            if not in_blacklist:
+                valid_rows.append(row)
+        return valid_rows
+
     def _get_translation_for_sheet(self, app, sheet_name, rows):
         occurrence = None
         # a dict mapping of a context to a Translation object with
@@ -206,6 +230,7 @@ class AppTranslationsGenerator:
             if type_and_id.type == "Module":
                 case_property_index = self._get_header_index(sheet_name, 'case_property')
                 list_or_detail_index = self._get_header_index(sheet_name, 'list_or_detail')
+                rows = self._filter_invalid_rows_for_module(rows, type_and_id.id, case_property_index, list_or_detail_index)
 
                 def occurrence(_row):
                     case_property = _row[case_property_index]
