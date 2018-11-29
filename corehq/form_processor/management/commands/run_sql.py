@@ -293,9 +293,46 @@ COMMIT;
 """
 
 
+# Expected output is all rows having DELETED status (no rows with KEPT status).
+fix_bad_blobmeta_copies = """
+EXPLAIN WITH blobs AS (
+    -- get rows with negative id (should be very few of these)
+    -- use CTE to work around bad query plan in comp query
+    SELECT * FROM blobs_blobmeta_tbl WHERE id < 0
+),
+
+deleted AS (
+    -- delete where duplicate attachment from old form is associated with new form
+    DELETE FROM blobs_blobmeta_tbl
+    USING blobs
+    INNER JOIN form_processor_xforminstancesql new_form
+        ON new_form.form_id = blobs.parent_id AND new_form.domain = blobs.domain
+    INNER JOIN form_processor_xformattachmentsql att ON att.id = -blobs.id
+    INNER JOIN form_processor_xforminstancesql old_form
+        ON old_form.form_id = att.form_id AND old_form.domain = blobs.domain
+    WHERE blobs_blobmeta_tbl.id = blobs.id
+        AND blobs.parent_id != att.form_id
+        AND old_form.orig_id = blobs.parent_id
+        AND new_form.deprecated_form_id = att.form_id
+        AND blobs.name = att.name
+        AND blobs.key = att.blob_id
+        AND blobs.type_code = 2
+        AND blobs.content_type = att.content_type
+        AND blobs.content_length = att.content_length
+    RETURNING blobs_blobmeta_tbl.*
+)
+
+SELECT 'DELETED' AS "status", * FROM deleted
+UNION
+SELECT 'KEPT' AS "status", * FROM blobs_blobmeta_tbl
+WHERE id < 0 AND id NOT IN (SELECT id FROM deleted)
+"""
+
+
 TEMPLATES = {
     "blobmeta_key": blobmeta_key,
     "blobmeta_forms": blobmeta_forms,
+    "fix_bad_blobmeta_copies": fix_bad_blobmeta_copies,
     "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
     "show_invalid_indexes": show_invalid_indexes,
 }
