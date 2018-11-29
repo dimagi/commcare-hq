@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 
+from django.contrib import admin
 from django.db import models
 
 from dimagi.ext.couchdbkit import (
@@ -114,3 +115,6 @@ class TransifexBlacklist(models.Model):
     )
     field_name = models.CharField(max_length=255)
     display_text = models.CharField(max_length=255)
+
+
+admin.site.register(TransifexBlacklist)
