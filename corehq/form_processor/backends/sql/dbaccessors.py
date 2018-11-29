@@ -644,11 +644,11 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         with transaction.atomic(using=db_name):
             if form.form_id_updated():
-                attachments = form.original_attachments
                 operations = form.original_operations + new_operations
                 with transaction.atomic(db_name):
                     form.save()
-                    for model in itertools.chain(attachments, operations):
+                    get_blob_db().metadb.reparent(form.original_form_id, form.form_id)
+                    for model in operations:
                         model.form = form
                         model.save()
             else:
