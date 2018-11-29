@@ -115,7 +115,7 @@ class RunUntilZero(object):
 
 
 # see https://github.com/dimagi/commcare-hq/pull/21631
-BLOBMETA_KEY_SQL = """
+blobmeta_key = """
 CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
 ON public.form_processor_xformattachmentsql (((
     CASE
@@ -124,56 +124,12 @@ ON public.form_processor_xformattachmentsql (((
     END || blob_id
 )::varchar(255)))
 """
-DROP_BLOBMETA_KEY = "DROP INDEX form_processor_xformattachmentsql_blobmeta_key"
-BLOBMETA_VIEW = """
-CREATE OR REPLACE VIEW blobs_blobmeta AS
-SELECT
-    "id",
-    "domain",
-    "parent_id",
-    "name",
-    "key",
-    "type_code",
-    "content_type",
-    "properties",
-    "created_on",
-    "expires_on",
-    "content_length"
-FROM blobs_blobmeta_tbl
-
-UNION ALL
-
-SELECT
-    -att."id" AS "id",
-    xform."domain",
-    att.form_id AS parent_id,
-    att."name",
-    (CASE
-        WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(
-            att.blob_bucket,
-            'form/' || REPLACE(att.attachment_id::text, '-', '')
-        ) || '/'
-    END || att.blob_id)::VARCHAR(255) AS "key",
-    CASE
-        WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
-        ELSE 3 -- corehq.blobs.CODES.form_attachment
-    END::SMALLINT AS type_code,
-    att.content_type,
-    att.properties,
-    xform.received_on AS created_on,
-    NULL AS expires_on,
-    att.content_length
-FROM form_processor_xformattachmentsql att
-    INNER JOIN form_processor_xforminstancesql xform
-        ON xform.form_id = att.form_id;
-"""
 
 
 # Move rows incrementally.
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
-MOVE_FORM_ATTACHMENTS = RunUntilZero("""
+move_form_attachments_to_blobmeta = RunUntilZero("""
 WITH deleted AS (
     DELETE FROM form_processor_xformattachmentsql
     WHERE id IN (
@@ -227,7 +183,7 @@ WITH deleted AS (
 # move all rows in one go.
 # requires table lock, so may not be feasible without some downtime.
 # this may be necessary if MOVE_FORM_ATTACHMENTS is too slow.
-BLOBMETA_FORMS_SQL = """
+blobmeta_forms = """
 BEGIN;
 LOCK TABLE blobs_blobmeta_tbl IN SHARE MODE;
 
@@ -299,11 +255,7 @@ COMMIT;
 
 
 TEMPLATES = {
-    "blobmeta_key": BLOBMETA_KEY_SQL,
-    "blobmeta_forms": BLOBMETA_FORMS_SQL,
-    "move_form_attachments_to_blobmeta": MOVE_FORM_ATTACHMENTS,
-
-    # these will be used to fix staging, should not be necessary anywhere else
-    "drop_blobmeta_key": DROP_BLOBMETA_KEY,
-    "blobmeta_view": BLOBMETA_VIEW,
+    "blobmeta_key": blobmeta_key,
+    "blobmeta_forms": blobmeta_forms,
+    "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
 }
