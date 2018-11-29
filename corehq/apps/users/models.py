@@ -121,6 +121,8 @@ class Permissions(DocumentSchema):
     view_web_apps_list = StringListProperty(default=[])
 
     view_file_dropzone = BooleanProperty(default=False)
+    manage_releases = BooleanProperty(default=True)
+    manage_releases_list = StringListProperty(default=[])
 
     @classmethod
     def wrap(cls, data):

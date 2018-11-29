@@ -68,3 +68,9 @@ def has_permission_to_view_report(couch_user, domain, report_to_check):
             data=report_to_check
         )
     )
+
+
+def can_manage_releases(couch_user, domain, app_id):
+    role = couch_user.get_role(domain)
+    return (role.permissions.manage_releases or
+            app_id in role.permissions.manage_releases_list)
