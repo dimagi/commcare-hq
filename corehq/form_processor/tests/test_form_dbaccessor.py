@@ -431,10 +431,10 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         self.assertEqual('fruit', form.form_data['breakfast'])
         self.assertEqual('sandwich', form.form_data['lunch'])
         self.assertIn("image", form.attachments)
-        self.assertEqual(form.get_attachment("image"), "fake")
+        self.assertEqual(form.get_attachment("image"), b"fake")
         self.assertXmlEqual(
             form.get_attachment("form.xml"),
-            formxml.replace("toast", "fruit"),
+            formxml.replace(b"toast", b"fruit"),
         )
 
     def test_update_responses_error(self):
