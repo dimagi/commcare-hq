@@ -17,4 +17,5 @@ SOURCE_LANGUAGE_MAPPING = {
     'khm': 'km',  # khmer
     'lug': 'lg',  # ganda
     'tel': 'te',  # telugu
+    'urd': 'ur',  # urdu
 }
