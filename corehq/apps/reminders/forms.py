@@ -301,10 +301,7 @@ class KeywordForm(Form):
 
                         hqcrispy.ErrorsOnlyField('named_args'),
                         crispy.Div(
-                            data_bind="template: {"
-                                      " name: 'ko-template-named-args', "
-                                      " data: $data"
-                                      "}, "
+                            data_bind="component: 'named-args', "
                                       "visible: useNamedArgs",
                         ),
                     ),

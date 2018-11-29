@@ -75,6 +75,10 @@ hqDefine("reminders/js/reminders.keywords.ko", [
             self.updateExampleStructuredSMS();
         };
 
+        ko.components.register('named-args', {
+            viewModel: { instance: self },
+            template: { require: 'text!reminders/html/named_args.html' },
+        });
 
         self.updateExampleStructuredSMS = function () {
             var namedArgsSeparator = "";
