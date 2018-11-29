@@ -22,7 +22,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
     root = os.path.dirname(__file__)
 
     def _submit_form(self, id_=None):
-        xform_source = self.get_xml('xform_template').format(xmlns="foo", name="bar", id=id_ or uuid.uuid4().hex)
+        xform_source = self.get_xml('xform_template').decode('utf-8').format(xmlns="foo", name="bar", id=id_ or uuid.uuid4().hex)
         result = submit_form_locally(xform_source, DOMAIN)
         return result.xform
 
