@@ -7,10 +7,11 @@ import os
 import mimetypes
 from collections import namedtuple
 import six
+import requests
 
 import django
 
-GeventCommand = namedtuple('GeventCommand', 'command contains')
+GeventCommand = namedtuple('GeventCommand', 'command contains http_adapter_pool_size')
 
 
 def _set_source_root_parent(source_root_parent):
@@ -69,6 +70,8 @@ def _should_patch_gevent(args, gevent_commands):
         if gevent_command.contains:
             should_patch = should_patch and gevent_command.contains in ' '.join(args)
         if should_patch:
+            if gevent_command.http_adapter_pool_size:
+                requests.adapters.DEFAULT_POOLSIZE = gevent_command.http_adapter_pool_size
             break
     return should_patch
 
@@ -118,19 +121,19 @@ if __name__ == "__main__":
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
-        GeventCommand('mvp_force_update', None),
-        GeventCommand('run_gunicorn', None),
-        GeventCommand('run_sql', None),
-        GeventCommand('preindex_everything', None),
-        GeventCommand('migrate_multi', None),
-        GeventCommand('prime_views', None),
-        GeventCommand('ptop_preindex', None),
-        GeventCommand('sync_prepare_couchdb_multi', None),
-        GeventCommand('sync_couch_views', None),
-        GeventCommand('celery', '-P gevent'),
-        GeventCommand('populate_form_date_modified', None),
-        GeventCommand('migrate_domain_from_couch_to_sql', None),
-        GeventCommand('migrate_multiple_domains_from_couch_to_sql', None),
+        GeventCommand('mvp_force_update', None, 0),
+        GeventCommand('run_gunicorn', None, 0),
+        GeventCommand('run_sql', None, 0),
+        GeventCommand('preindex_everything', None, 0),
+        GeventCommand('migrate_multi', None, 0),
+        GeventCommand('prime_views', None, 0),
+        GeventCommand('ptop_preindex', None, 0),
+        GeventCommand('sync_prepare_couchdb_multi', None, 0),
+        GeventCommand('sync_couch_views', None, 0),
+        GeventCommand('celery', '-P gevent', 0),
+        GeventCommand('populate_form_date_modified', None, 0),
+        GeventCommand('migrate_domain_from_couch_to_sql', None, 32),
+        GeventCommand('migrate_multiple_domains_from_couch_to_sql', None, 32),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
         from gevent.monkey import patch_all; patch_all(subprocess=True)
