@@ -5,13 +5,18 @@ from __future__ import unicode_literals
 import sys
 import os
 import mimetypes
-from collections import namedtuple
 import six
 import requests
+import attr
 
 import django
 
-GeventCommand = namedtuple('GeventCommand', 'command contains http_adapter_pool_size')
+
+@attr.s
+class GeventCommand(object):
+    command = attr.ib()
+    contains = attr.ib(default=None)
+    http_adapter_pool_size = attr.ib(default=0)
 
 
 def _set_source_root_parent(source_root_parent):
@@ -121,19 +126,19 @@ if __name__ == "__main__":
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
-        GeventCommand('mvp_force_update', None, 0),
-        GeventCommand('run_gunicorn', None, 0),
-        GeventCommand('run_sql', None, 0),
-        GeventCommand('preindex_everything', None, 0),
-        GeventCommand('migrate_multi', None, 0),
-        GeventCommand('prime_views', None, 0),
-        GeventCommand('ptop_preindex', None, 0),
-        GeventCommand('sync_prepare_couchdb_multi', None, 0),
-        GeventCommand('sync_couch_views', None, 0),
-        GeventCommand('celery', '-P gevent', 0),
-        GeventCommand('populate_form_date_modified', None, 0),
-        GeventCommand('migrate_domain_from_couch_to_sql', None, 32),
-        GeventCommand('migrate_multiple_domains_from_couch_to_sql', None, 32),
+        GeventCommand('mvp_force_update'),
+        GeventCommand('run_gunicorn'),
+        GeventCommand('run_sql'),
+        GeventCommand('preindex_everything'),
+        GeventCommand('migrate_multi'),
+        GeventCommand('prime_views'),
+        GeventCommand('ptop_preindex'),
+        GeventCommand('sync_prepare_couchdb_multi'),
+        GeventCommand('sync_couch_views'),
+        GeventCommand('celery', contains='-P gevent'),
+        GeventCommand('populate_form_date_modified'),
+        GeventCommand('migrate_domain_from_couch_to_sql', http_adapter_pool_size=32),
+        GeventCommand('migrate_multiple_domains_from_couch_to_sql', http_adapter_pool_size=32),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
         from gevent.monkey import patch_all; patch_all(subprocess=True)
