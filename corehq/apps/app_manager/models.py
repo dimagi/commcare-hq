@@ -718,8 +718,8 @@ class FormSource(object):
             source = ''
         else:
             source = app.lazy_fetch_attachment(filename)
-            if isinstance(source, bytes):
-                source = source.decode('utf-8')
+            assert isinstance(source, bytes)
+            source = source.decode('utf-8')
 
         return source
 
@@ -727,7 +727,8 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
-        app.lazy_put_attachment(value, filename)
+        assert isinstance(value, six.text_type)
+        app.lazy_put_attachment(value.encode('utf-8'), filename)
         form.clear_validation_cache()
         try:
             form.xmlns = form.wrapped_xform().data_node.tag_xmlns
