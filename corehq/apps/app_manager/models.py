@@ -1263,8 +1263,7 @@ class FormBase(DocumentSchema):
         source = XForm(self.source)
         if source.exists():
             source.rename_language(old_code, new_code)
-            source = source.render()
-            self.source = source
+            self.source = source.render().decode('utf-8')
 
     def default_name(self):
         app = self.get_app()
