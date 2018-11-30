@@ -717,7 +717,9 @@ class FormSource(object):
         if not app.has_attachment(filename):
             source = ''
         else:
-            source = app.lazy_fetch_attachment(filename).decode('utf-8')
+            source = app.lazy_fetch_attachment(filename)
+            if isinstance(source, bytes):
+                source = source.decode('utf-8')
 
         return source
 
