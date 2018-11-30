@@ -214,7 +214,7 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
             'show_date_range': self.show_date_range,
             'check_for_multimedia': self.check_for_multimedia,
             'sms_export': self.sms_export,
-            'user_types': HQUserType.human_readable
+            'user_types': HQUserType.HqUser_all_friendly_names()
         }
         if (
             self.default_datespan.startdate is not None
