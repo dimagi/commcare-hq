@@ -11,8 +11,7 @@
   border: 1px solid @cc-neutral-hi;
 }
 
-.alert-maintenance,
-.alert-trial {
+.alert-maintenance {
   z-index: @zindex-navbar;
   position: relative;
   text-align: center;
@@ -21,29 +20,4 @@
 
 .alert-ui-notify.helpbubble {
   padding-bottom: 20px;
-}
-
-.alert-trial {
-  background-color: @color-purple-dark;
-  color: @color-purple-dark-inverse;
-  border: none;
-  border-radius: 0;
-  font-size: 1.1em;
-  font-weight: bold;
-
-  a, a:link, a:visited {
-    color: white;
-  }
-
-  .btn-purple,
-  .btn-purple:focus {
-    background-color: @color-purple-dark;
-    color: @component-active-color;
-    border: 1px solid @color-purple-dark-inverse;
-
-    &:hover {
-      border: 1px solid @color-purple-dark-inverse;
-      background-color: lighten(@color-purple-dark, 5);
-    }
-  }
 }

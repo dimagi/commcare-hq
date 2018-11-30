@@ -141,7 +141,7 @@ hqDefine('analytix/js/kissmetrix', [
     var internalClick = function (selector, name, properties) {
         var originalArgs = arguments;
         _ready.done(function () {
-            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], originalArgs), 'Setup Track Internal Click - only runs after click occurs');
+            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], originalArgs), 'Track Internal Click');
             _kmqPushCommand('trackClick', properties, undefined, name);
         });
     };
@@ -155,7 +155,7 @@ hqDefine('analytix/js/kissmetrix', [
     var trackOutboundLink = function (selector, name, properties) {
         var originalArgs = arguments;
         _ready.done(function () {
-            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], originalArgs), 'Setup Track Click on Outbound Link - only runs after click occurs');
+            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], originalArgs), 'Track Click on Outbound Link');
             _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
         });
     };
@@ -177,14 +177,6 @@ hqDefine('analytix/js/kissmetrix', [
     var whenReadyAlways = function (callback) {
         _ready.always(callback);
     };
-
-    /**
-    * Global events present on base.html
-    */
-    _ready.done(function () {
-        trackOutboundLink("#cta-trial-days-remaining", "clicked on Days Remaining CTA in trial banner", {});
-        internalClick('#cta-trial-tour-button', 'clicked Get Tour CTA in trial banner', {});
-    });
 
     return {
         identify: identify,
