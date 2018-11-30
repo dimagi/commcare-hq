@@ -1621,7 +1621,7 @@ class XForm(WrappedNode):
                 if subcase.close_condition.is_active():
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
-                if case_block is not None and subcase.case_type != form.get_case_type():
+                if case_block is not None:
                     reference_id = subcase.reference_id or 'parent'
 
                     subcase_block.add_index_ref(
