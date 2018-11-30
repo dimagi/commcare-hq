@@ -16,7 +16,7 @@ import django
 class GeventCommand(object):
     command = attr.ib()
     contains = attr.ib(default=None)
-    http_adapter_pool_size = attr.ib(default=0)
+    http_adapter_pool_size = attr.ib(default=None)
 
 
 def _set_source_root_parent(source_root_parent):
