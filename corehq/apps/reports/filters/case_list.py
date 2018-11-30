@@ -5,6 +5,8 @@ from django.utils.translation import ugettext as _
 from memoized import memoized
 
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.domain.models import Domain
+from corehq.apps.reports.models import HQUserType
 from .users import ExpandedMobileWorkerFilter, EmwfUtils
 
 
@@ -16,13 +18,22 @@ class CaseListFilterUtils(EmwfUtils):
     @property
     @memoized
     def static_options(self):
-        options = super(CaseListFilterUtils, self).static_options
-        # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
-        assert options[0][0] == "t__0"
-        return [
+        # Options to show in the filters are defined here
+        hq_user_type_options = [HQUserType.DEACTIVATED, HQUserType.DEMO_USER,
+                   HQUserType.ADMIN, HQUserType.WEB, HQUserType.UNKNOWN]
+        if Domain.get_by_name(self.domain).commtrack_enabled:
+            hq_user_type_options.append(HQUserType.COMMTRACK)
+
+        # The static options themselves are created here. The options that are specific to the case list are added
+        # first
+        filters_to_display = [
             ("all_data", _("[All Data]")),
             ('project_data', _("[Project Data]"))
-        ] + options[1:]
+        ]
+        for option in hq_user_type_options:
+            filters_to_display.append(super(CaseListFilterUtils, self).create_static_option(option))
+
+        return filters_to_display
 
     def _group_to_choice_tuple(self, group):
         if group.case_sharing:
