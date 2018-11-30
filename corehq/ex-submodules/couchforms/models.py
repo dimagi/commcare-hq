@@ -362,8 +362,8 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                 user=user_id,
                 operation='archive',
             ))
-            archive_stub.archive_history_updated()
             self.save()
+            archive_stub.archive_history_updated()
             xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None, retry_archive=False):
@@ -381,8 +381,8 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                 user=user_id,
                 operation='unarchive',
             ))
-            archive_stub.archive_history_updated()
             XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
+            archive_stub.archive_history_updated()
             xform_unarchived.send(sender="couchforms", xform=self)
 
     def send_archive_to_kafka(self, user_id):
