@@ -30,7 +30,7 @@ hqDefine("data_interfaces/js/case_rule_actions", [
         self.closeCase = ko.computed(function () {
             var result = 'false';
             $.each(self.actions(), function (index, value) {
-                if (value.template_id == 'close-case-action') {
+                if (value.template_id === 'close-case-action') {
                     result = 'true';
                 }
             });
