@@ -44,7 +44,7 @@ requirejs.config({
             exports: 'YUI',
         },
         'yui-uploader': {
-            deps: ['yui-base', 'yui-loader','css!yui-combo'],
+            deps: ['yui-base', 'yui-loader'],
             exports: 'YUI',
         },
         'file-uploader': {
