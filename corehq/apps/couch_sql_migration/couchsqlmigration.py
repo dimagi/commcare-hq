@@ -563,19 +563,20 @@ def _migrate_form_attachments(sql_form, couch_form):
     """Copy over attachment meta - includes form.xml"""
     attachments = []
     metadb = get_blob_db().metadb
-    for name, blob in six.iteritems(couch_form.blobs):
-        def try_to_get_blob_meta(parent_id, type_code, name):
-            try:
-                meta = metadb.get(
-                    parent_id=parent_id,
-                    type_code=type_code,
-                    name=name
-                )
-                assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
-                return meta
-            except BlobMeta.DoesNotExist:
-                return None
 
+    def try_to_get_blob_meta(parent_id, type_code, name):
+        try:
+            meta = metadb.get(
+                parent_id=parent_id,
+                type_code=type_code,
+                name=name
+            )
+            assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
+            return meta
+        except BlobMeta.DoesNotExist:
+            return None
+
+    for name, blob in six.iteritems(couch_form.blobs):
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(sql_form.form_id, type_code, name)
 
