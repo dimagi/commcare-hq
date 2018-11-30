@@ -990,9 +990,6 @@ class XForm(WrappedNode):
             return []
 
         questions = []
-        repeat_contexts = set()
-        group_contexts = set()
-        excluded_paths = set()  # prevent adding the same question twice
 
         # control_nodes will contain all nodes in question tree (the <h:body> of an xform)
         # The question tree doesn't contain every question - notably, it's missing hidden values - so
@@ -1004,15 +1001,6 @@ class XForm(WrappedNode):
         for cnode in control_nodes:
             node = cnode.node
             path = cnode.path
-            excluded_paths.add(path)
-
-            repeat = cnode.repeat
-            if repeat is not None:
-                repeat_contexts.add(repeat)
-
-            group = cnode.group
-            if group is not None:
-                group_contexts.add(group)
 
             if not cnode.is_leaf and not include_groups:
                 continue
@@ -1029,7 +1017,7 @@ class XForm(WrappedNode):
                 "label_ref": self._get_label_ref(node),
                 "tag": node.tag_name,
                 "value": path,
-                "repeat": repeat,
+                "repeat": cnode.repeat,
                 "group": cnode.group,
                 "type": cnode.data_type,
                 "relevant": cnode.relevant,
@@ -1047,6 +1035,15 @@ class XForm(WrappedNode):
 
             questions.append(question)
 
+        repeat_contexts = set()
+        group_contexts = set()
+        excluded_paths = set()  # prevent adding the same question twice
+        for cnode in control_nodes:
+            excluded_paths.add(cnode.path)
+            if cnode.repeat is not None:
+                repeat_contexts.add(cnode.repeat)
+            if cnode.group is not None:
+                group_contexts.add(cnode.group)
         repeat_contexts = sorted(repeat_contexts, reverse=True)
         group_contexts = sorted(group_contexts, reverse=True)
 
