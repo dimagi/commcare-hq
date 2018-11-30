@@ -1,10 +1,22 @@
-hqDefine("export/js/export_list_main", function () {
+hqDefine("export/js/export_list_main", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/kissmetrix',
+    'export/js/create_export',
+    'export/js/export_list',
+    'hqwebapp/js/select_2_ajax_widget_v3',
+], function (
+    $,
+    initialPageData,
+    kissmetricsAnalytics,
+    createExport,
+    exportList
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            $createExport = $("#create-export");
+        var $createExport = $("#create-export");
 
         if ($createExport.length) {
-            $createExport.koApplyBindings(hqImport("export/js/create_export").createExportModel({
+            $createExport.koApplyBindings(createExport.createExportModel({
                 model_type: initialPageData.get("model_type", true),
                 drilldown_fetch_url: initialPageData.reverse('get_app_data_drilldown_values'),
                 drilldown_submit_url: initialPageData.reverse('submit_app_data_drilldown_form'),
@@ -16,12 +28,12 @@ hqDefine("export/js/export_list_main", function () {
                 },
             }));
             $('#createExportOptionsModal').on('show.bs.modal', function () {
-                hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
+                kissmetricsAnalytics.track.event("Clicked New Export");
             });
         }
 
         var modelType = initialPageData.get("model_type");
-        $("#export-list").koApplyBindings(hqImport("export/js/export_list").exportListModel({
+        $("#export-list").koApplyBindings(exportList.exportListModel({
             exports: initialPageData.get("exports"),
             modelType: modelType,
             isDeid: initialPageData.get('is_deid'),
@@ -34,9 +46,9 @@ hqDefine("export/js/export_list_main", function () {
         }));
 
         if (modelType === 'form') {
-            hqImport('analytix/js/kissmetrix').track.event('Visited Export Forms Page');
+            kissmetricsAnalytics.track.event('Visited Export Forms Page');
         } else if (modelType === 'case') {
-            hqImport('analytix/js/kissmetrix').track.event('Visited Export Cases Page');
+            kissmetricsAnalytics.track.event('Visited Export Cases Page');
         }
     });
 });

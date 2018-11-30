@@ -1,20 +1,19 @@
-if (!String.prototype.endsWith) {
-    String.prototype.endsWith = function (searchString, position) {
-        var subjectString = this.toString();
-        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
-            position = subjectString.length;
-        }
-        position -= searchString.length;
-        var lastIndex = subjectString.indexOf(searchString, position);
-        return lastIndex !== -1 && lastIndex === position;
-    };
-}
-
-hqDefine('export/js/utils', function () {
+hqDefine('export/js/utils', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'export/js/const',
+    'export/js/models',
+], function (
+    $,
+    ko,
+    _,
+    exportConstants,
+    exportModels
+) {
     var getTagCSSClass = function (tag) {
-        var constants = hqImport('export/js/const');
         var cls = 'label';
-        if (tag === constants.TAG_DELETED) {
+        if (tag === exportConstants.TAG_DELETED) {
             return cls + ' label-warning';
         } else {
             return cls + ' label-default';
@@ -62,14 +61,13 @@ hqDefine('export/js/utils', function () {
      * @returns {Array} Returns an array of PathNodes.
      */
     var customPathToNodes = function (customPathString) {
-        var models = hqImport('export/js/models');
         var parts = customPathString.split('.');
         return _.map(parts, function (part) {
-            var isRepeat = part.endsWith('[]');
+            var isRepeat = !!part.match(/\[]$/);
             if (isRepeat) {
                 part = part.slice(0, part.length - 2);  // Remove the [] from the end of the path
             }
-            return new models.PathNode({
+            return new exportModels.PathNode({
                 name: part,
                 is_repeat: isRepeat,
                 doc_type: 'PathNode',

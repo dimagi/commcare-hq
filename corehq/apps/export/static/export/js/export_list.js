@@ -1,14 +1,31 @@
-/* globals Clipboard */
-hqDefine("export/js/export_list", function () {
+hqDefine("export/js/export_list", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/assert_properties',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'clipboard/dist/clipboard',
+    'export/js/utils',
+], function (
+    $,
+    ko,
+    _,
+    assertProperties,
+    googleAnalytics,
+    kissmetricsAnalytics,
+    Clipboard,
+    exportUtils
+) {
     var exportModel = function (options, pageOptions) {
-        hqImport("hqwebapp/js/assert_properties").assert(pageOptions, ['is_deid', 'model_type', 'urls']);
+        assertProperties.assert(pageOptions, ['is_deid', 'model_type', 'urls']);
 
         _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'showLink'], function (key) {
             options[key] = options[key] || false;
         });
         options.formname = options.formname || '';
 
-        hqImport("hqwebapp/js/assert_properties").assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
+        assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
         var self = ko.mapping.fromJS(options);
         self.hasEmailedExport = !!options.emailedExport;
@@ -94,8 +111,8 @@ hqDefine("export/js/export_list", function () {
                 },
                 success: function (data) {
                     if (data.success) {
-                        var exportType = hqImport('export/js/utils').capitalize(model.exportType());
-                        hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
+                        var exportType = exportUtils.capitalize(model.exportType());
+                        googleAnalytics.track.event(exportType + " Exports", "Update Saved Export", "Saved");
                         model.pollProgressBar();
                     }
                 },
@@ -116,9 +133,9 @@ hqDefine("export/js/export_list", function () {
                 },
                 success: function (data) {
                     if (data.success) {
-                        var exportType = hqImport('export/js/utils').capitalize(model.exportType());
+                        var exportType = exportUtils.capitalize(model.exportType());
                         var event = (model.isAutoRebuildEnabled() ? "Disable" : "Enable") + " Saved Export";
-                        hqImport('analytix/js/google').track.event(exportType + " Exports", event, "Saved");
+                        googleAnalytics.track.event(exportType + " Exports", event, "Saved");
                         model.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
                     }
                     $button.enableButton();
@@ -131,14 +148,14 @@ hqDefine("export/js/export_list", function () {
     };
 
     var exportListModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['exports', 'isDeid', 'modelType', 'urls']);
+        assertProperties.assert(options, ['exports', 'isDeid', 'modelType', 'urls']);
 
         var self = {};
 
         self.modelType = options.modelType;
         self.isDeid = options.isDeid;
 
-        hqImport("hqwebapp/js/assert_properties").assert(options.urls, ['commitFilters', 'poll', 'toggleEnabled', 'update']);
+        assertProperties.assert(options.urls, ['commitFilters', 'poll', 'toggleEnabled', 'update']);
         self.urls = options.urls;
 
         self.exports = _.map(options.exports, function (e) {
@@ -152,7 +169,7 @@ hqDefine("export/js/export_list", function () {
         self.notMyExports = _.filter(self.exports, function (e) { return !e.my_export; });
 
         self.sendExportAnalytics = function () {
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
+            kissmetricsAnalytics.track.event("Clicked Export button");
             return true;
         };
 
