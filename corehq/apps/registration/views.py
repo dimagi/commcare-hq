@@ -45,6 +45,7 @@ from corehq.apps.registration.utils import (
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
+from corehq.apps.users.landing_pages import get_cloudcare_urlname
 from corehq import toggles
 from django.contrib.auth.models import User
 
@@ -429,6 +430,10 @@ def confirm_domain(request, guid=''):
         track_workflow(requesting_user.email, "Confirmed new project")
         track_confirmed_account_on_hubspot_v2.delay(requesting_user)
         request.session['CONFIRM'] = True
+
+        if settings.IS_SAAS_ENVIRONMENT:
+            # For AppCues v3, land new user in Web Apps
+            view_name = get_cloudcare_urlname(requested_domain.name)
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
