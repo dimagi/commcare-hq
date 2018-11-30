@@ -174,7 +174,7 @@ class HQUserType(object):
 
     @classmethod
     def all_but_users(cls):
-        no_users = [True] * cls.count
+        no_users = [True] * len(cls.HqUserTypesList)
         no_users[cls.ACTIVE] = False
         return cls._get_manual_filterset(cls.HqUser_all_included_defaults(), no_users)
 
@@ -195,11 +195,11 @@ class HQUserType(object):
         arrays of booleans mapping to values in human_readable and whether they should be
         included and defaulted, respectively.
         """
-        return [HQUserToggle(i, defaults[i]) for i in range(cls.count) if included[i]]
+        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.HqUserTypesList)) if included[i]]
 
     @classmethod
     def use_filter(cls, ufilter):
-        return [HQUserToggle(i, six.text_type(i) in ufilter) for i in range(cls.count)]
+        return [HQUserToggle(i, six.text_type(i) in ufilter) for i in range(len(cls.HqUserTypesList))]
 
 
 class HQToggle(object):
