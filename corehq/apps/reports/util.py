@@ -158,7 +158,7 @@ def get_username_from_forms(domain, user_id):
         if possible_username:
             return possible_username
     else:
-        return HQUserType.human_readable[HQUserType.ADMIN]
+        return HQUserType.HqUser_friendly_name_helper(HQUserType.ADMIN)
 
 
 def namedtupledict(name, fields):
