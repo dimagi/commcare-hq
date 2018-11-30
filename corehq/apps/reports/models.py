@@ -170,13 +170,13 @@ class HQUserType(object):
 
     @classmethod
     def use_defaults(cls):
-        return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
+        return cls._get_manual_filterset(cls.HqUser_all_included_defaults(), cls.HqUser_all_toggle_defaults())
 
     @classmethod
     def all_but_users(cls):
         no_users = [True] * cls.count
         no_users[cls.ACTIVE] = False
-        return cls._get_manual_filterset(cls.included_defaults, no_users)
+        return cls._get_manual_filterset(cls.HqUser_all_included_defaults(), no_users)
 
     @classmethod
     def commtrack_defaults(cls):
@@ -185,8 +185,8 @@ class HQUserType(object):
 
     @classmethod
     def all(cls):
-        defaults = (True,) * cls.count
-        return cls._get_manual_filterset(defaults, cls.toggle_defaults)
+        defaults = (True,) * len(cls.HqUserTypesList)
+        return cls._get_manual_filterset(defaults, cls.HqUser_all_toggle_defaults())
 
     @classmethod
     def _get_manual_filterset(cls, included, defaults):
