@@ -1,18 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import requests
-import os
-import json
-import tempfile
-import polib
 
-from custom.icds.translations.integrations.const import (
+import json
+import os
+import tempfile
+from io import open
+
+import polib
+import requests
+from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
+from memoized import memoized
+
+from corehq.apps.translations.integrations.transifex.const import (
     API_USER,
     SOURCE_LANGUAGE_MAPPING,
 )
-from custom.icds.translations.integrations.exceptions import ResourceMissing
-from memoized import memoized
-from io import open
 
 
 class TransifexApiClient(object):
