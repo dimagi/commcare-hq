@@ -67,7 +67,7 @@ class CouchDumpLoadTest(TestCase):
         self.assertEqual({}, objects_remaining, 'Not all data deleted: {}'.format(objects_remaining))
 
         dump_output = output_stream.getvalue()
-        dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
+        dump_lines = [line.strip() for line in dump_output.split(b'\n') if line.strip()]
 
         with mock_out_couch() as fake_db:
             total_object_count, loaded_object_count = CouchDataLoader().load_objects(dump_lines)
@@ -265,7 +265,7 @@ class TestDumpLoadToggles(SimpleTestCase):
 
             for mocked_toggle in mocked_toggles.values():
                 loaded_toggle = Toggle.get(mocked_toggle.slug)
-                self.assertEqual(set(mocked_toggle.enabled_users), set(loaded_toggle.enabled_users))
+                self.assertItemsEqual(mocked_toggle.enabled_users, loaded_toggle.enabled_users)
 
 
 def _get_doc_counts_from_db(domain):

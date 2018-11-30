@@ -2,8 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
-from couchdbkit.ext.django.schema import DocumentSchema, ListProperty, StringProperty, SchemaProperty, \
-    SchemaListProperty
+from dimagi.ext.couchdbkit import (
+    DocumentSchema,
+    ListProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringProperty,
+)
 
 from corehq.motech.dhis2.const import DHIS2_EVENT_STATUSES, DHIS2_EVENT_STATUS_COMPLETED
 from corehq.motech.value_source import ValueSource

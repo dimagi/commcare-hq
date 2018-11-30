@@ -1,11 +1,24 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
+from collections import defaultdict
 
-from couchdbkit.ext.django.schema import SchemaProperty, StringProperty, DateTimeProperty, BooleanProperty
+import six
+from itertools import chain
+
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DocumentSchema,
+    SchemaDictProperty,
+    SchemaProperty,
+    StringProperty,
+)
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
+from corehq.motech.const import DIRECTION_IMPORT
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator
@@ -13,7 +26,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAcce
 from corehq.toggles import OPENMRS_INTEGRATION
 from corehq.motech.repeaters.signals import create_repeat_records
 from couchforms.signals import successful_form_received
-from corehq.motech.openmrs.const import XMLNS_OPENMRS
+from corehq.motech.openmrs.const import XMLNS_OPENMRS, ATOM_FEED_NAME_PATIENT
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.handler import send_openmrs_data
 from corehq.motech.openmrs.repeater_helpers import (
@@ -23,6 +36,11 @@ from corehq.motech.openmrs.repeater_helpers import (
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import get_form_question_values
 from memoized import memoized
+
+
+class AtomFeedStatus(DocumentSchema):
+    last_polled_at = DateTimeProperty(default=None)
+    last_page = StringProperty(default=None)
 
 
 # it actually triggers on forms,
@@ -44,14 +62,46 @@ class OpenmrsRepeater(CaseRepeater):
     # owner is set to the first CommCareUser instance found at that
     # location.
     atom_feed_enabled = BooleanProperty(default=False)
-    atom_feed_last_polled_at = DateTimeProperty(default=None)
-    atom_feed_last_page = StringProperty(default=None)
+    atom_feed_status = SchemaDictProperty(AtomFeedStatus)
+
+    def __init__(self, *args, **kwargs):
+        super(OpenmrsRepeater, self).__init__(*args, **kwargs)
 
     def __eq__(self, other):
         return (
             isinstance(other, self.__class__) and
             self.get_id == other.get_id
         )
+
+    @classmethod
+    def wrap(cls, data):
+        if 'atom_feed_last_polled_at' in data:
+            data['atom_feed_status'] = {
+                ATOM_FEED_NAME_PATIENT: {
+                    'last_polled_at': data.pop('atom_feed_last_polled_at'),
+                    'last_page': data.pop('atom_feed_last_page', None),
+                }
+            }
+        return super(OpenmrsRepeater, cls).wrap(data)
+
+    @cached_property
+    def requests(self):
+        return Requests(
+            self.domain,
+            self.url,
+            self.username,
+            self.plaintext_password,
+            verify=self.verify
+        )
+
+    @cached_property
+    def observation_mappings(self):
+        obs_mappings = defaultdict(list)
+        for form_config in self.openmrs_config.form_configs:
+            for obs_mapping in form_config.openmrs_observations:
+                if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
+                    obs_mappings[obs_mapping.concept].append(obs_mapping)
+        return obs_mappings
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -111,14 +161,21 @@ class OpenmrsRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
+        value_sources = chain(
+            six.itervalues(self.openmrs_config.case_config.patient_identifiers),
+            six.itervalues(self.openmrs_config.case_config.person_properties),
+            six.itervalues(self.openmrs_config.case_config.person_preferred_name),
+            six.itervalues(self.openmrs_config.case_config.person_preferred_address),
+            six.itervalues(self.openmrs_config.case_config.person_attributes),
+        )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[identifier.case_property
-                          for identifier in self.openmrs_config.case_config.patient_identifiers.values()])
+            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')]
+        )
         form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(
-            Requests(self.domain, self.url, self.username, self.plaintext_password, verify=self.verify),
+            self.requests,
             self.domain,
             payload,
             self.openmrs_config,

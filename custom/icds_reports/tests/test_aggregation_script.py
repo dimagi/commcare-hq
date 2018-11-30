@@ -103,7 +103,8 @@ class AggregationScriptTestBase(TestCase):
 
             for key in dict1.keys():
                 if key != 'id':
-                    value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
+                    value1 = dict1[key] if isinstance(dict1[key], six.text_type) else dict1[key].decode('utf-8')
+                    value1 = value1.replace('\r\n', '\n')
                     value2 = dict2.get(key, '').replace('\r\n', '\n')
                     if value1 != value2:
                         differences.add(key)
@@ -330,6 +331,38 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
             'agg_child_health_2017-05-01_5',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5_sorted.csv'),
             sort_key=self.sort_key
+        )
+
+
+class AggLsAggregationTest(AggregationScriptTestBase):
+    always_include_columns = {'state_id', 'district_id', 'block_id', 'supervisor_id'}
+
+    def test_agg_ls_2017_05_01_4(self):
+        self._load_and_compare_data(
+            'agg_ls_2017-05-01_4',
+            os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_4_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
+        )
+
+    def test_agg_ls_2017_05_01_3(self):
+        self._load_and_compare_data(
+            'agg_ls_2017-05-01_3',
+            os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_3_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
+        )
+
+    def test_agg_ls_2017_05_01_2(self):
+        self._load_and_compare_data(
+            'agg_ls_2017-05-01_2',
+            os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_2_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
+        )
+
+    def test_agg_ls_2017_05_01_1(self):
+        self._load_and_compare_data(
+            'agg_ls_2017-05-01_1',
+            os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_1_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
         )
 
 

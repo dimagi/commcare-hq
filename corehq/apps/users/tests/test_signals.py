@@ -26,7 +26,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 class TestUserSignals(SimpleTestCase):
 
-    @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2')
+    @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2.delay')
     @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
@@ -39,7 +39,7 @@ class TestUserSignals(SimpleTestCase):
         self.assertTrue(sync_call_center.called)
         self.assertFalse(update_hubspot_properties_v2.called)
 
-    @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2')
+    @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2.delay')
     @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')

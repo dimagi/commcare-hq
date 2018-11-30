@@ -181,7 +181,7 @@ class AppManagerTest(TestCase):
 
     def _check_has_build_files(self, build, paths):
         for path in paths:
-            self.assertTrue(build.fetch_attachment(path))
+            self.assertTrue(build.fetch_attachment(path, return_bytes=True))
 
     def _check_legacy_odk_files(self, build):
         self.assertTrue(build.copy_of)
@@ -194,7 +194,7 @@ class AppManagerTest(TestCase):
         build.save()
         build = Application.get(build.get_id)
         self.assertEqual(build.version, build_version)
-        self.assertTrue(build.fetch_attachment(path))
+        self.assertTrue(build.fetch_attachment(path, return_bytes=True))
         self.assertEqual(build.odk_profile_created_after_build, True)
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)

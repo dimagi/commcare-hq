@@ -9,7 +9,6 @@
     {% registerurl "delete_request" domain %}
     {% registerurl "post_user_role" domain %}
     {% registerurl "delete_user_role" domain %}
-    {% registerurl "location_restriction_for_users" domain %}
     {% registerurl "paginate_web_users" domain %}
     {% registerurl "reinvite_web_user" domain %}
     {% initial_page_data "user_roles" user_roles %}
@@ -194,22 +193,6 @@
                                 maxPagesShown: 10,
                                 totalItems: totalItems"></pagination>
 
-            {% if uses_locations and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox"
-                               id="restrict_users"
-                               name="restrict_users"
-                               value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}/>
-                        {% trans "Restrict Web User access based on location" %}
-                    </label>
-                    <button type="button"
-                            class="btn btn-sm btn-default disabled"
-                            id="save_restrict_option">
-                        {% trans "Saved" %}
-                    </button>
-                </div>
-            {% endif %}
         </div><!-- end .panel-body -->
     </div><!-- end .panel -->
 
@@ -321,7 +304,7 @@
                               {% trans "Edit Shared Exports" %}
                               <span class="hq-help-template"
                                     data-title="{% trans "Edit Shared Exports" %}"
-                                    data-content="{% trans "Description." %}"></span>
+                                    data-content="{% trans "Access and edit the content and structure of shared exports." %}"></span>
                             </th>
                         {% endif %}
                         <th>

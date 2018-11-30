@@ -24,7 +24,7 @@ from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2_v4
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
@@ -45,13 +45,10 @@ from .dbaccessors import get_users_assigned_to_locations
 from .exceptions import LocationConsistencyError
 from .permissions import (
     locations_access_required,
-    is_locations_admin,
     can_edit_location,
     require_can_edit_locations,
     user_can_edit_location_types,
     can_edit_location_types,
-    user_can_edit_any_location,
-    can_edit_any_location,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm
@@ -70,7 +67,7 @@ logger = logging.getLogger(__name__)
 def default(request, domain):
     if request.couch_user.can_edit_locations():
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
-    elif user_can_edit_location_types(request.couch_user, request.project):
+    elif user_can_edit_location_types(request.couch_user, domain):
         return HttpResponseRedirect(reverse(LocationTypesView.urlname, args=[domain]))
     return no_permissions(request)
 
@@ -194,23 +191,13 @@ class LocationsListView(BaseLocationView):
         return json.loads(self.request.GET.get('show_inactive', 'false'))
 
     @property
-    def can_edit_root(self):
-        # once permissions are unified, this need only be can_access_all_locations
-        loc_restricted = self.request.project.location_restriction_for_users
-        return self.can_access_all_locations and (
-            not loc_restricted
-            or (loc_restricted and not self.request.couch_user.get_sql_location(self.domain))
-        )
-
-    @property
     def page_context(self):
         has_location_types = len(self.domain_object.location_types) > 0
         return {
             'locations': self.get_visible_locations(),
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
-            'can_edit_root': self.can_edit_root,
-            'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
+            'can_edit_root': self.can_access_all_locations,
         }
 
     def get_visible_locations(self):
@@ -248,7 +235,8 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     entity_string = ugettext_lazy("Location")
     template_name = "custom_data_fields/custom_data_fields.html"
 
-    @method_decorator(is_locations_admin)
+    @method_decorator(locations_access_required)
+    @method_decorator(domain_admin_required)
     @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
@@ -839,7 +827,7 @@ class LocationImportView(BaseLocationView):
     page_title = ugettext_noop('Upload Organization Structure From Excel')
     template_name = 'locations/manage/import.html'
 
-    @method_decorator(can_edit_any_location)
+    @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(LocationImportView, self).dispatch(request, *args, **kwargs)
@@ -1000,20 +988,13 @@ def child_locations_for_select2(request, domain):
     page = int(request.GET.get('page', 1))
     user = request.couch_user
 
-    base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
-
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.get_path_display()}
 
-    locs = []
-    user_loc = user.get_sql_location(domain)
-
-    if user_can_edit_any_location(user, request.project):
-        locs = base_queryset.filter(domain=domain, is_archived=False)
-    elif user_loc:
-        locs = user_loc.get_descendants(include_self=True)
-
-    if locs != [] and query:
+    locs = (SQLLocation.objects
+            .accessible_to_user(domain, user)
+            .filter(domain=domain, is_archived=False))
+    if query:
         locs = locs.filter(name__icontains=query)
 
     # 10 results per page

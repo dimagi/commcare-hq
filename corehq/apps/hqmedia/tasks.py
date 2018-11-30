@@ -147,11 +147,12 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                     z.writestr(path, data, file_compression)
 
-    common_kwargs = dict(
-        mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
-        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id, expiry=(1 * 60 * 60)
-    )
+    common_kwargs = {
+        'mimetype': 'application/zip' if compress_zip else 'application/x-zip-compressed',
+        'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
+        'download_id': download_id,
+        'expiry': (1 * 60 * 60),
+    }
     if use_transfer:
         expose_file_download(
             fpath,

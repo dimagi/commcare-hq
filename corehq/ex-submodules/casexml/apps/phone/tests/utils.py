@@ -81,7 +81,7 @@ def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=
         project or Domain(name=restore_user.domain),
         restore_user,
         params,
-        async=False,
+        is_async=False,
         overwrite_cache=False
     )
     if last_sync:

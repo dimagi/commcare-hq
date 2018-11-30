@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
-from collections import namedtuple
+import sqlalchemy
 
 from django.urls import reverse
 from memoized import memoized
@@ -17,12 +17,9 @@ from sqlagg.filters import (
     LTFilter,
     NOTEQFilter,
     NOTNULLFilter,
-    get_column,
     ANDFilter,
     ORFilter)
-from sqlalchemy import bindparam
 
-from corehq.apps.es import filters
 from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
@@ -106,10 +103,8 @@ class DateFilterValue(FilterValue):
 
     def _offset_enddate(self, enddate):
         # offset enddate for SQL query
-        # if it is datetime.date object it should not be offset
-        # if it is datetime.datetime object it should be offset to last microsecond of the day
-        if enddate and type(enddate) is datetime.datetime:
-            enddate = enddate + datetime.timedelta(days=1) - datetime.timedelta.resolution
+        if enddate:
+            enddate = datetime.datetime.combine(enddate, datetime.datetime.max.time())
         return enddate
 
 
@@ -138,8 +133,8 @@ class QuarterFilterValue(FilterValue):
 
 class IsDistinctFromFilter(BasicFilter):
 
-    def build_expression(self, table):
-        return get_column(table, self.column_name).is_distinct_from(bindparam(self.parameter))
+    def build_expression(self):
+        return sqlalchemy.column(self.column_name).is_distinct_from(sqlalchemy.bindparam(self.parameter))
 
 
 class NumericFilterValue(FilterValue):
@@ -184,10 +179,10 @@ class BasicBetweenFilter(BasicFilter):
     PreFilterValue.value['operator'] and instantiate either filter the
     same way.
     """
-    def build_expression(self, table):
+    def build_expression(self):
         assert len(self.parameter) == 2
-        return get_column(table, self.column_name).between(
-            bindparam(self.parameter[0]), bindparam(self.parameter[1])
+        return sqlalchemy.column(self.column_name).between(
+            sqlalchemy.bindparam(self.parameter[0]), sqlalchemy.bindparam(self.parameter[1])
         )
 
 

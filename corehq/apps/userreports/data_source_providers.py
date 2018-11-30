@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 import six
@@ -13,7 +14,8 @@ class DataSourceProvider(six.with_metaclass(ABCMeta, object)):
 class DynamicDataSourceProvider(DataSourceProvider):
 
     def get_data_sources(self):
-        return [config for config in DataSourceConfiguration.all() if not config.is_deactivated]
+        return DataSourceConfiguration.view(
+            'userreports/active_data_sources', reduce=False, include_docs=True).all()
 
 
 class StaticDataSourceProvider(DataSourceProvider):

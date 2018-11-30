@@ -16,8 +16,8 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption, \
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
-from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location, location_safe
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.locations.permissions import locations_access_required, location_safe
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
@@ -246,7 +246,7 @@ def non_administrative_locations_for_select2(request, domain):
 
     user_loc = user.get_sql_location(domain)
 
-    if user_can_edit_any_location(user, request.project):
+    if user.is_domain_admin(domain):
         locs = SQLLocation.objects.filter(domain=domain, location_type__administrative=False)
     elif user_loc:
         locs = user_loc.get_descendants(include_self=True, location_type__administrative=False)

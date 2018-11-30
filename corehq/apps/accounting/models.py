@@ -69,7 +69,6 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.analytics.tasks import track_workflow
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 import six
 
@@ -487,7 +486,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def _send_autopay_card_removed_email(self, new_user, domain):
         """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
-        from corehq.apps.domain.views import EditExistingBillingAccountView
+        from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
         old_user = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
@@ -514,7 +513,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def _send_autopay_card_added_email(self, domain):
         """Sends an email to the new autopayer for this account telling them they are now the autopayer"""
-        from corehq.apps.domain.views import EditExistingBillingAccountView
+        from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
         subject = _("Your card is being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
         web_user = WebUser.get_by_username(self.auto_pay_user)
@@ -1288,6 +1287,7 @@ class Subscription(models.Model):
         creates a NEW SUBSCRIPTION where the old plan left off.
         This is not the same thing as simply updating the subscription.
         """
+        from corehq.apps.analytics.tasks import track_workflow
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -1528,7 +1528,7 @@ class Subscription(models.Model):
 
     @property
     def ending_reminder_context(self):
-        from corehq.apps.domain.views import DomainSubscriptionView
+        from corehq.apps.domain.views.accounting import DomainSubscriptionView
 
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days
@@ -1852,11 +1852,12 @@ class Subscription(models.Model):
             return False
 
     def user_can_change_subscription(self, user):
-        if self.account.is_customer_billing_account:
-            return False
         if user.is_superuser:
             return True
-        return self.account.has_enterprise_admin(user.email)
+        elif self.account.is_customer_billing_account:
+            return self.account.has_enterprise_admin(user.email)
+        else:
+            return True
 
 
 class InvoiceBaseManager(models.Manager):
@@ -2299,9 +2300,8 @@ class BillingRecordBase(models.Model):
             })
 
     def email_context(self):
-        from corehq.apps.domain.views import (
-            DomainBillingStatementsView, DefaultProjectSettingsView,
-        )
+        from corehq.apps.domain.views.accounting import DomainBillingStatementsView
+        from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.get_domain()
@@ -3027,7 +3027,8 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
         }
 
     def get_data(self, invoice):
-        return self.fetch_attachment(self.get_filename(invoice), True).read()
+        with self.fetch_attachment(self.get_filename(invoice), stream=True) as fh:
+            return fh.read()
 
 
 class LineItemManager(models.Manager):
@@ -3103,7 +3104,7 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
-class CreditLine(ValidateModelMixin, models.Model):
+class CreditLine(models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
     a specific subscription, or specific rates in that subscription.
@@ -3169,8 +3170,9 @@ class CreditLine(ValidateModelMixin, models.Model):
             web_user=web_user,
         )
         credit_adjustment.save()
-        self.balance += amount
+        self.balance = F('balance') + amount
         self.save()
+        self.refresh_from_db()
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
@@ -3254,15 +3256,14 @@ class CreditLine(ValidateModelMixin, models.Model):
 
     @classmethod
     def get_credits_for_subscriptions(cls, subscriptions, feature_type=None, is_product=False):
-        credit_list = []
+        credit_list = cls.objects.none()
         for subscription in subscriptions.all():
-            credit_list.append(cls.get_credits_by_subscription_and_features(subscription,
-                                                                            feature_type=feature_type,
-                                                                            is_product=is_product))
-        credits = credit_list.pop()
-        for credit_line in credit_list:
-            credits.union(credit_line)
-        return credits
+            credit_list = credit_list.union(cls.get_credits_by_subscription_and_features(
+                subscription,
+                feature_type=feature_type,
+                is_product=is_product
+            ))
+        return credit_list
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, is_product=False):
@@ -3362,7 +3363,6 @@ class CreditLine(ValidateModelMixin, models.Model):
             if adjustment_amount > Decimal('0.0000'):
                 credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
-        return balance
 
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):

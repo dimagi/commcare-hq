@@ -25,19 +25,19 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def ccs_record_monthly_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def ccs_record_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def pregnant_tasks_cases_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-pregnant-tasks_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, config.table_id).decode('utf-8')
 
     @property
     def tablename(self):
@@ -140,7 +140,12 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
             ('last_date_thr', 'case_list.last_date_thr'),
             ('num_anc_complete', 'case_list.num_anc_complete'),
-            ('valid_visits', 'agg_cf.valid_visits + agg_bp.valid_visits + agg_pnc.valid_visits'),
+            ('valid_visits', '('
+                'COALESCE(agg_cf.valid_visits, 0) + '
+                'COALESCE(agg_bp.valid_visits, 0) + '
+                'COALESCE(agg_pnc.valid_visits, 0) + '
+                'COALESCE(agg_delivery.valid_visits, 0)'
+             ')'),
             ('opened_on', 'case_list.opened_on'),
             ('dob', 'case_list.dob')
         )

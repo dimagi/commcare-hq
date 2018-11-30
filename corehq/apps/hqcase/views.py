@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from corehq.apps.domain.decorators import require_superuser_or_contractor
-from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.es.case_search import CasePropertyAggregation, CaseSearchES
 from corehq.apps.hqcase.tasks import delete_exploded_case_task, explode_case_task
 from corehq.apps.hqwebapp.decorators import use_select2_v4

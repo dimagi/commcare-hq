@@ -43,7 +43,7 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
@@ -1091,18 +1091,6 @@ def change_password(request, domain, login_id, template="users/partials/reset_pa
 @login_and_domain_required
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
-
-
-@domain_admin_required
-@require_POST
-def location_restriction_for_users(request, domain):
-    if not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(request.domain):
-        raise Http403()
-    project = Domain.get_by_name(domain)
-    if "restrict_users" in request.POST:
-        project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
-    project.save()
-    return HttpResponse()
 
 
 @csrf_exempt

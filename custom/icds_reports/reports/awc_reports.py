@@ -1026,7 +1026,9 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
                 'Normal weight for height',
                 data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
-            pse_days_attended=row_data.pse_days_attended
+            pse_days_attended=row_data.pse_days_attended,
+            mother_phone_number=row_data.mother_phone_number,
+            aww_phone_number=row_data.aww_phone_number
         )
 
     for row in data:
@@ -1096,7 +1098,8 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         month__gte=ten_months_ago,
-    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'pregnant').filter(pregnant=1)
+    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'pregnant', 'open_in_month').filter(
+        pregnant=1).exclude(open_in_month=False)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         month__gte=ten_months_ago,
@@ -1204,7 +1207,8 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         month__gte=one_month_ago,
-    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'lactating').filter(lactating=1)
+    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'lactating', 'open_in_month').filter(
+        lactating=1).exclude(open_in_month=False)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         month__gte=one_month_ago,

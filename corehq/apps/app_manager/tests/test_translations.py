@@ -32,7 +32,7 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
 
         ]
         for input, expected_output in test_cases:
-            self.assertEqual(expected_output, etree.tostring(escape_output_value(input)))
+            self.assertEqual(expected_output, etree.tostring(escape_output_value(input)).decode('utf-8'))
 
     def test_language_names(self):
         app_json = self.get_json('app')

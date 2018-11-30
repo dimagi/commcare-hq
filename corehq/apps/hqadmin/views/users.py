@@ -7,16 +7,17 @@ import uuid
 from collections import Counter
 from datetime import datetime, timedelta
 
+from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
 from django.http import (
-    HttpResponseRedirect,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
+    HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
 )
@@ -30,21 +31,20 @@ from django.views.generic import FormView, TemplateView, View
 from lxml import etree
 from lxml.builder import E
 
-from couchdbkit.exceptions import ResourceNotFound
-from couchforms.openrosa_response import RESPONSE_XMLNS
-from dimagi.utils.django.email import send_HTML_email
-
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
-    require_superuser, login_or_basic, domain_admin_required, check_lockout)
-from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+    check_lockout, domain_admin_required, login_or_basic, require_superuser)
+from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.ota.views import get_restore_params, get_restore_response
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.util import reverse
 from corehq.util.timer import TimingContext
+from couchforms.openrosa_response import RESPONSE_XMLNS
+from dimagi.utils.django.email import send_HTML_email
 
 from corehq.apps.hqadmin.forms import (
     AuthenticateAsForm, SuperuserManagementForm, DisableTwoFactorForm, DisableUserForm)
@@ -260,11 +260,12 @@ class AdminRestoreView(TemplateView):
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
                 xml_payload = etree.fromstring(response.content)
             else:
-                message = _('Unexpected restore response {}: {}. '
-                            'If you believe this is a bug please report an issue.').format(response.status_code,
-                                                                                           response.content)
+                message = _(
+                    'Unexpected restore response {}: {}. '
+                    'If you believe this is a bug please report an issue.'
+                ).format(response.status_code, response.content.decode('utf-8'))
                 xml_payload = E.error(message)
-        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True).decode('utf-8')
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
@@ -520,13 +521,12 @@ class AppBuildTimingsView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(AppBuildTimingsView, self).get_context_data(**kwargs)
         app_id = self.request.GET.get('app_id')
-        request_user_id = self.request.couch_user._id
         if app_id:
             try:
                 app = Application.get(app_id)
             except ResourceNotFound:
                 raise Http404()
-            timing_context = self.get_timing_context(app, request_user_id)
+            timing_context = self.get_timing_context(app)
             context.update({
                 'app': app,
                 'timing_data': timing_context.to_list(),
@@ -534,13 +534,19 @@ class AppBuildTimingsView(TemplateView):
         return context
 
     @staticmethod
-    def get_timing_context(app, request_user_id):
+    def get_timing_context(app):
         with app.timing_context:
             errors = app.validate_app()
             assert not errors, errors
-            app.make_build(
-                comment="Generated automatically during profiling",
-                user_id=request_user_id,
-                previous_version=app.get_latest_app(released_only=False),
-            )
+
+            with app.timing_context("build_zip"):
+                build_application_zip(
+                    include_multimedia_files=True,
+                    include_index_files=True,
+                    app=app,
+                    download_id=None,
+                    compress_zip=True,
+                    filename='app-profile-test.ccz',
+                )
+
         return app.timing_context

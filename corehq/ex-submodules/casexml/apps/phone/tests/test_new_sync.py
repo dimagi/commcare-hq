@@ -209,7 +209,7 @@ class TestNewSyncSpecifics(TestCase):
                 )],
             )
         ])
-        restore_payload = restore_config.get_payload().as_string()
+        restore_payload = restore_config.get_payload().as_string().decode('utf-8')
         self.assertTrue(child_id in restore_payload)
         self.assertTrue(parent_id in restore_payload)
         sync_log = deprecated_synclog_from_restore_payload(restore_payload)

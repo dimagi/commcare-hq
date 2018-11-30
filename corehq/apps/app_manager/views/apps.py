@@ -26,7 +26,11 @@ from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
 
 from corehq import toggles, privileges
-from corehq.apps.analytics.tasks import HUBSPOT_APP_TEMPLATE_FORM_ID, send_hubspot_form
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_APP_TEMPLATE_FORM_ID,
+    send_hubspot_form,
+    track_workflow,
+)
 from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.const import (
@@ -53,14 +57,17 @@ from corehq.apps.app_manager.models import (
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.tasks import make_async_build
+from corehq.apps.app_manager.tasks import (
+    make_async_build,
+    update_linked_app_and_notify_task
+)
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, update_linked_app, clear_xmlns_app_id_cache, update_linked_app_and_notify
+    validate_langs, update_linked_app, clear_xmlns_app_id_cache
 from corehq.apps.app_manager.xform import (
     XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -69,13 +76,15 @@ from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    api_key_auth)
+    track_domain_request
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
+from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
@@ -320,6 +329,11 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
 
+        disable_report_modules = (
+            is_master_linked_domain(domain)
+            and not toggles.MOBILE_UCR_LINKED_DOMAIN.enabled(domain)
+        )
+
         # ideally this should be loaded on demand
         practice_users = []
         if app.enable_practice_users:
@@ -331,6 +345,7 @@ def get_apps_base_context(request, domain, app):
         context.update({
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
+            'disable_report_modules': disable_report_modules,
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
@@ -437,7 +452,9 @@ def app_from_template(request, domain, slug):
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_async_build(app, request.user.username, release=True, comment=comment)
+    build = make_async_build(app, request.user.username, allow_prune=False, comment=comment)
+    build.is_released = True
+    build.save(increment_version=False)
     cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
@@ -674,6 +691,7 @@ def get_app_ui_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
@@ -882,7 +900,7 @@ def drop_user_case(request, domain, app_id):
 def pull_master_app(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
     if async_update:
-        update_linked_app_and_notify.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
+        update_linked_app_and_notify_task.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:
@@ -893,6 +911,7 @@ def pull_master_app(request, domain, app_id):
             messages.error(request, six.text_type(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
+    track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
 

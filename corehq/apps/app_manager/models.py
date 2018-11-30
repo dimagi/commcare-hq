@@ -19,6 +19,7 @@ from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
+from django.utils.safestring import SafeBytes
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urljoin
 
@@ -70,7 +71,6 @@ from couchdbkit import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.util.quickcache import quickcache
@@ -1083,6 +1083,10 @@ class FormBase(DocumentSchema):
     def is_a_disabled_release_form(self):
         return self.is_release_notes_form and not self.enable_release_notes
 
+    @property
+    def timing_context(self):
+        return self.get_app().timing_context
+
     def validate_for_build(self, validate_module=True):
         errors = []
 
@@ -1152,7 +1156,8 @@ class FormBase(DocumentSchema):
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self, 'form_filter') and self.form_filter:
-            is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
+            with self.timing_context("validate_xpath"):
+                is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
             if not is_valid:
                 error = {
                     'type': 'form filter has xpath error',
@@ -1203,6 +1208,7 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
+    @time_method()
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
@@ -1223,12 +1229,14 @@ class FormBase(DocumentSchema):
         The returned function requires two arguments
         `(case_property_name, data_path)` and returns a string.
         """
-        try:
-            valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[])}
-        except XFormException as e:
-            # punt on invalid xml (sorry, no rich attachments)
-            valid_paths = {}
+        valid_paths = {}
+        if toggles.MM_CASE_PROPERTIES.enabled(self.get_app().domain):
+            try:
+                valid_paths = {question['value']: question['tag']
+                               for question in self.get_questions(langs=[])}
+            except XFormException as e:
+                # punt on invalid xml (sorry, no rich attachments)
+                valid_paths = {}
 
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
@@ -1865,6 +1873,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return actions_use_usercase(self.active_actions())
 
+    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
         if xml_valid:
@@ -2586,7 +2595,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 domain = self.get_app().domain
                 project = Domain.get_by_name(domain)
                 try:
-                    if not should_sync_hierarchical_fixture(project):
+                    if not should_sync_hierarchical_fixture(project, self.get_app()):
                         # discontinued feature on moving to flat fixture format
                         raise LocationXpathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
@@ -3218,6 +3227,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
+    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
         if xml_valid:
@@ -3423,6 +3433,7 @@ class ShadowForm(AdvancedForm):
             open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
         )
 
+    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
         if not self.shadow_parent_form_id:
@@ -4591,7 +4602,7 @@ class LazyBlobDoc(BlobMixin):
 
             if content is None:
                 try:
-                    content = self.fetch_attachment(name)
+                    content = self.fetch_attachment(name, return_bytes=True)
                 except ResourceNotFound as e:
                     # django cache will pickle this exception for you
                     # but e.response isn't picklable
@@ -5218,16 +5229,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return settings
 
     def create_build_files(self, build_profile_id=None):
-        built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
-        self.date_created = built_on
-        self.built_on = built_on
-        self.built_with = BuildRecord(
-            version=self.build_spec.version,
-            build_number=self.version,
-            datetime=built_on,
-        )
-
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
@@ -5246,7 +5248,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     for filename in self.blobs if filename.startswith('files/')
                 }
                 all_files = {
-                    name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
+                    name: (contents if isinstance(contents, (bytes, SafeBytes)) else contents.encode('utf-8'))
                     for name, contents in all_files.items()
                 }
                 release_date = self.built_with.datetime or datetime.datetime.utcnow()
@@ -5268,7 +5270,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def timing_context(self):
         return TimingContext(self.name)
 
-    @time_method()
     def validate_app(self):
         errors = []
 
@@ -5415,6 +5416,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # which makes tests error
         assert copy._id
 
+        built_on = datetime.datetime.utcnow()
+        copy.date_created = built_on
+        copy.built_on = built_on
+        copy.built_with = BuildRecord(
+            version=copy.build_spec.version,
+            build_number=copy.version,
+            datetime=built_on,
+        )
         copy.build_comment = comment
         copy.comment_from = user_id
         copy.is_released = False
@@ -5438,6 +5447,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
+        from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
@@ -5687,7 +5697,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         previous_form = previous_version.get_form(form.unique_id)
                         # take the previous version's compiled form as-is
                         # (generation code may have changed since last build)
-                        previous_source = previous_version.fetch_attachment(filename)
+                        previous_source = previous_version.fetch_attachment(filename, return_bytes=True)
                     except (ResourceNotFound, FormNotFoundException):
                         form.version = None
                     else:
@@ -6282,14 +6292,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             })
         return errors
 
-    def validate_app(self):
-        xmlns_count = defaultdict(int)
+    @time_method()
+    def _check_modules(self):
         errors = []
-
-        for lang in self.langs:
-            if not lang:
-                errors.append({'type': 'empty lang'})
-
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
@@ -6300,7 +6305,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     "type": "missing module",
                     "message": six.text_type(ex)
                 })
+        return errors
 
+    @time_method()
+    def _check_forms(self):
+        errors = []
+        xmlns_count = defaultdict(int)
         for form in self.get_forms():
             errors.extend(form.validate_for_build(validate_module=False))
 
@@ -6310,6 +6320,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
+        return errors
+
+    @time_method()
+    def validate_app(self):
+        errors = []
+
+        for lang in self.langs:
+            if not lang:
+                errors.append({'type': 'empty lang'})
+
+        errors.extend(self._check_modules())
+        errors.extend(self._check_forms())
 
         if any(not module.unique_id for module in self.get_modules()):
             raise ModuleIdMissingException
@@ -6565,7 +6587,7 @@ class RemoteApp(ApplicationBase):
 
             def fetch(location):
                 filepath = self.strip_location(location)
-                return self.fetch_attachment('files/%s' % filepath)
+                return self.fetch_attachment('files/%s' % filepath, return_bytes=True)
 
             profile_xml = _parse_xml(fetch('profile.xml'))
             suite_location = profile_xml.find(self.SUITE_XPATH).text
@@ -6573,7 +6595,7 @@ class RemoteApp(ApplicationBase):
 
             for tag, location in self.get_locations(suite_xml):
                 if tag == 'xform':
-                    xform = XForm(fetch(location))
+                    xform = XForm(fetch(location).decode('utf-8'))
                     xmlns = xform.data_node.tag_xmlns
                     questions = xform.get_questions(langs_for_build)
                     xmlns_map[xmlns] = questions

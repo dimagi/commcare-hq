@@ -27,7 +27,7 @@ from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_laz
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required, two_factor_exempt)
 from django.urls import reverse
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.util.quickcache import quickcache
 from memoized import memoized

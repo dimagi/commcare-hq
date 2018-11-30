@@ -29,16 +29,23 @@
     {% initial_page_data 'items' toggle.enabled_users %}
     {% initial_page_data 'namespaces' namespaces %}
     {% initial_page_data 'last_used' last_used %}
+    {% initial_page_data 'service_type' service_type %}
     {% initial_page_data 'is_random_editable' is_random_editable %}
     {% initial_page_data 'randomness' toggle_meta.randomness %}
     <div class="row" style="margin-bottom: 50px;">
         <div class="col-sm-12">
+            <span class="pull-right">
             {% if not usage_info %}
-                <a href="{{ page_url }}?usage_info=true" class="pull-right">
+                <a href="{{ page_url }}?usage_info=true">
                     <i class="icon-white icon-info-sign"></i>
                     {% trans "Show usage" %}
-                </a>
+                </a> |
             {% endif %}
+            <a href="{{ page_url }}?show_service_type=true">
+                <i class="icon-white icon-info-sign"></i>
+                {% trans "Show account service type" %}
+            </a>
+            </span>
             {% if toggle_meta.description %}
                 <p>{{ toggle_meta.description|safe }}</p>
             {% endif %}
@@ -98,6 +105,7 @@
                                   data-bind="html: $parent.getNamespaceHtml(namespace(), value())"
                                   style="font-family:monospace;"></span>
                             <span data-bind="text: last_used, visible: last_used" class="input-group-addon"></span>
+                            <span data-bind="text: service_type" class="input-group-addon"></span>
                         </div>
                     </div>
                 </div>

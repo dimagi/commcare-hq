@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1736,6 +1736,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
             DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
             DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
+            DTColumnBuilder.newColumn('aww_phone_number').withTitle('AWW Phone Number').renderWith(renderPseDaysAttended).withClass('medium-col'),
+            DTColumnBuilder.newColumn('mother_phone_number').withTitle('Mother Phone Number').renderWith(renderPseDaysAttended).withClass('medium-col'),
         ];
     } else if (vm.step === 'pregnant') {
         vm.dtColumns = [
@@ -2577,9 +2579,12 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         demographics: {route: "/awc_reports/demographics", label: "Demographics"},
         awc_infrastructure: {route: "/awc_reports/awc_infrastructure", label: "AWC Infrastructure"},
         beneficiary: {route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
-        pregnant: {route: "/awc_reports/pregnant", label: "Pregnant Women"},
-        lactating: {route: "/awc_reports/lactating", label: "Lactating Women"},
     };
+
+    if (haveAccessToFeatures) {
+        vm.steps.pregnant = {route: "/awc_reports/pregnant", label: "Pregnant Women"};
+        vm.steps.lactating = {route: "/awc_reports/lactating", label: "Lactating Women"};
+    }
 
     if (vm.step === 'beneficiary_details') {
         vm.steps.beneficiary = {
@@ -2640,7 +2645,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('awcReports', function () {
     return {
