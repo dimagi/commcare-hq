@@ -73,6 +73,61 @@ from six.moves import map
 
 
 class HQUserType(object):
+    ACTIVE = "ACTIVE"
+    DEMO_USER = "DEMO_USER"
+    ADMIN = "ADMIN"
+    UNKNOWN = "UNKNOWN"
+    COMMTRACK = "COMMTRACK"
+    DEACTIVATED = "DEACTIVATED"
+    WEB = "WEB"
+
+    HqUserTypesList = [
+        {
+            "user": ACTIVE,
+            "friendly_name": settings.COMMCARE_USER_TERM,
+            "toggle_defaults": True,
+            "included_defaults": True,
+        },
+        {
+            "user": DEMO_USER,
+            "friendly_name": ugettext_noop("demo_user"),
+            "toggle_defaults": False,
+            "included_defaults": True,
+        },
+        {
+            "user": ADMIN,
+            "friendly_name": ugettext_noop("admin"),
+            "toggle_defaults": False,
+            "included_defaults": True,
+        },
+        {
+            "user": UNKNOWN,
+            "friendly_name": ugettext_noop("Unknown Users"),
+            "toggle_defaults": False,
+            "included_defaults": True,
+        },
+        {
+            "user": COMMTRACK,
+            "friendly_name": ugettext_noop("CommCare Supply"),
+            "toggle_defaults": False,
+            "included_defaults": False,
+        },
+        {
+            "user": DEACTIVATED,
+            "friendly_name": ugettext_noop("Deactivated Mobile Workers"),
+            "toggle_defaults": True,
+            "included_defaults": True,
+        },
+        {
+            "user": WEB,
+            "friendly_name": ugettext_noop("Web Users"),
+            "toggle_defaults": True,
+            "included_defaults": True,
+        },
+    ]
+
+    user_types = [entry["friendly_name"] for entry in HqUserTypesList]
+
     ACTIVE = 0
     DEMO_USER = 1
     ADMIN = 2
@@ -88,7 +143,7 @@ class HQUserType(object):
                       ugettext_noop("Deactivated Mobile Workers"),
                       ugettext_noop("Web Users"), ]
     toggle_defaults = (True, False, False, False, False, True, True)
-    count = len(human_readable)
+    count = len(HqUserTypesList)
     included_defaults = (True, True, True, True, False, True, True)
 
     @classmethod
