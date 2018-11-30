@@ -170,7 +170,7 @@ def get_demo(request):
     num_trial_days_remaining = 0
     if (settings.IS_SAAS_ENVIRONMENT
             and settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')):
-        if hasattr(request, 'user') and not request.user.is_authenticated:
+        if getattr(request, 'user', None) and not request.user.is_authenticated:
             is_demo_visible = True
         elif hasattr(request, 'subscription') and request.subscription.is_trial:
             delta = request.subscription.date_end - datetime.date.today()
