@@ -146,6 +146,28 @@ class HQUserType(object):
     count = len(HqUserTypesList)
     included_defaults = (True, True, True, True, False, True, True)
 
+    # Helper function to avoid having to call a bunch of list comprehensions
+    @classmethod
+    def HqUser_friendly_name_helper(cls, key, index=False):
+        if index:
+            return cls.HqUserTypesList[index]["friendly_name"]
+        else:
+            for entry in cls.HqUserTypesList:
+                if entry["user"] == key:
+                    return entry["friendly_name"]
+
+    @classmethod
+    def HqUser_all_friendly_names(cls):
+        return [entry["friendly_name"] for entry in cls.HqUserTypesList]
+
+    @classmethod
+    def HqUser_all_toggle_defaults(cls):
+        return [entry["toggle_defaults"] for entry in cls.HqUserTypesList]
+
+    @classmethod
+    def HqUser_all_included_defaults(cls):
+        return [entry["included_defaults"] for entry in cls.HqUserTypesList]
+
     @classmethod
     def use_defaults(cls):
         return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
