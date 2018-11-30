@@ -34,7 +34,7 @@ class ProjectReport(GenericReportView):
 
     @property
     def template_context(self):
-        return {'user_types': HQUserType.human_readable}
+        return {'user_types': HQUserType.HqUser_all_friendly_names()}
 
 
 class CustomProjectReport(ProjectReport):
