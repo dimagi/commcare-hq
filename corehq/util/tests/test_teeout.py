@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 import re
 import sys
 from contextlib import contextmanager
-from six import StringIO
+from io import StringIO
+import six
 
 from corehq.util.teeout import tee_output
 from testil import assert_raises, replattr, eq
@@ -22,8 +23,9 @@ def test_tee_output():
         "testing...\n"
         "fail.\n"
         "Traceback (most recent call last):\n"
-        "  ...\n"
-        "Error: stop\n")
+        "  ...\n" +
+        ("corehq.util.tests.test_teeout.Error" if six.PY3 else "Error") +
+        ": stop\n")
 
 
 def test_tee_output_with_KeyboardInterrupt():

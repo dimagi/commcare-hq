@@ -13,6 +13,7 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, H
 
 from corehq.apps.export.views.utils import DailySavedExportMixin, DailySavedExportMixin, DashboardFeedMixin
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.users.models import WebUser
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
@@ -33,8 +34,6 @@ from corehq.apps.export.tasks import (
 from corehq.apps.export.exceptions import (
     ExportAppException,
     BadExportConfiguration,
-    ExportFormValidationException,
-    ExportAsyncException,
 )
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
@@ -133,6 +132,7 @@ class BaseNewExportView(BaseProjectDataView):
 
     @property
     def page_context(self):
+        owner_id = self.export_instance.owner_id
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -140,6 +140,8 @@ class BaseNewExportView(BaseProjectDataView):
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
+            'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
+            'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
         }
 
     @property

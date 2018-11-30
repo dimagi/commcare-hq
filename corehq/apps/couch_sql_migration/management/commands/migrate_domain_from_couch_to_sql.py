@@ -45,12 +45,29 @@ class Command(BaseCommand):
         parser.add_argument('--show-diffs', action='store_true', default=False)
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
+        parser.add_argument('--dry-run', action='store_true', default=False)
+        parser.add_argument(
+            '--run-timestamp',
+            type=int,
+            default=None,
+            help='use this option to continue a previous run that was started at this timestamp'
+        )
 
     @staticmethod
     def require_only_option(sole_option, options):
-        this_command_opts = {'MIGRATE', 'COMMIT', 'blow_away', 'stats', 'show_diffs', 'no_input', 'debug'}
-        assert all(not value for key, value in options.items()
-                   if key in this_command_opts and key != sole_option)
+        this_command_opts = {
+            'MIGRATE',
+            'COMMIT',
+            'blow_away',
+            'stats',
+            'show_diffs',
+            'no_input',
+            'debug',
+            'dry_run',
+        }
+        for key, value in options.items():
+            if value and key in this_command_opts and key != sole_option:
+                raise CommandError("%s must be the sole option used" % key)
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):
@@ -58,16 +75,30 @@ class Command(BaseCommand):
 
         self.no_input = options.pop('no_input', False)
         self.debug = options.pop('debug', False)
+        self.dry_run = options.pop('dry_run', False)
+
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('no-input only allowed for unit testing')
 
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
-            set_couch_sql_migration_started(domain)
-            do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
+
+            if options.get('run_timestamp'):
+                if not couch_sql_migration_in_progress(domain):
+                    raise CommandError("Migration must be in progress if run_timestamp is passed in")
+            else:
+                set_couch_sql_migration_started(domain, self.dry_run)
+
+            do_couch_to_sql_migration(
+                domain,
+                with_progress=not self.no_input,
+                debug=self.debug,
+                run_timestamp=options.get('run_timestamp'))
+
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
             if has_diffs:
                 print("\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n")
+
         if options['blow_away']:
             self.require_only_option('blow_away', options)
             if not self.no_input:
@@ -77,13 +108,16 @@ class Command(BaseCommand):
                 )
             set_couch_sql_migration_not_started(domain)
             _blow_away_migration(domain)
+
         if options['stats_short'] or options['stats_long']:
             self.print_stats(domain, short=options['stats_short'])
         if options['show_diffs']:
             self.show_diffs(domain)
+
         if options['COMMIT']:
             self.require_only_option('COMMIT', options)
-            assert couch_sql_migration_in_progress(domain)
+            if not couch_sql_migration_in_progress(domain, include_dry_runs=False):
+                raise CommandError("cannot commit a migration that is not in state in_progress")
             if not self.no_input:
                 _confirm(
                     "This will allow convert the domain to use the SQL backend and"

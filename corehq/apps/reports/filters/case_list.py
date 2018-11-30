@@ -23,7 +23,7 @@ class CaseListFilterUtils(EmwfUtils):
         return [
             ("all_data", _("[All Data]")),
             ('project_data', _("[Project Data]"))
-        ] + options[2:6]
+        ] + options[1:6]
 
     def _group_to_choice_tuple(self, group):
         if group.case_sharing:
@@ -53,6 +53,11 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     @staticmethod
     def show_project_data(mobile_user_and_group_slugs):
         return 'project_data' in mobile_user_and_group_slugs
+
+    @staticmethod
+    def show_deactivated_data(mobile_user_and_group_slugs):
+        from corehq.apps.reports.models import HQUserType
+        return "t__{}".format(HQUserType.DEACTIVATED) in mobile_user_and_group_slugs
 
     @staticmethod
     def selected_sharing_group_ids(mobile_user_and_group_slugs):

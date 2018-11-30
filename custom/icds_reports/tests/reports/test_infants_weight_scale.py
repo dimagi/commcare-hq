@@ -55,18 +55,13 @@ class TestInfantsWeightScale(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 13,
-                    "original_name": ["st1"],
-                    "all": 17,
-                    "fillKey": "75%-100%"
-                },
-                "st2": {
-                    "in_month": 11,
-                    "original_name": ["st2"],
-                    "all": 13,
-                    "fillKey": "75%-100%"
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'},
+                'st1': {'in_month': 13, 'original_name': ['st1'], 'all': 17, 'fillKey': '75%-100%'},
+                'st2': {'in_month': 11, 'original_name': ['st2'], 'all': 13, 'fillKey': '75%-100%'},
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
 
@@ -91,7 +86,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 80.54298642533936)
+        self.assertEquals(data['rightLegend']['average'], 80.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_infants_weight_scale_data_map(
@@ -188,7 +183,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 77.08333333333334)
+        self.assertEquals(data['rightLegend']['average'], 76.47058823529412)
 
     def test_chart_data(self):
         data = get_infants_weight_scale_data_chart(
@@ -261,14 +256,11 @@ class TestInfantsWeightScale(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 76.47058823529412
-                }
+                {"loc_name": "st2", "percent": 84.61538461538461},
+                {"loc_name": "st1", "percent": 76.47058823529412},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0}
             ]
         )
 
@@ -284,14 +276,11 @@ class TestInfantsWeightScale(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 76.47058823529412
-                }
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -318,14 +307,13 @@ class TestInfantsWeightScale(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 76.47058823529412
-                }
+                {"loc_name": "st2", "percent": 84.61538461538461},
+                {"loc_name": "st1", "percent": 76.47058823529412},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 

@@ -21,7 +21,7 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
     KeywordsListView,
@@ -1186,7 +1186,7 @@ class ProjectUsersTab(UITab):
         items = []
 
         if self.couch_user.can_edit_commcare_users():
-            def commcare_username(request=None, couch_user=None, **context):
+            def _get_commcare_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                         couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
@@ -1209,7 +1209,7 @@ class ProjectUsersTab(UITab):
                     'description': _(
                         "Create and manage users for CommCare and CloudCare."),
                     'subpages': [
-                        {'title': commcare_username,
+                        {'title': _get_commcare_username,
                          'urlname': EditCommCareUserView.urlname},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
@@ -1246,7 +1246,7 @@ class ProjectUsersTab(UITab):
             items.append((_('Application Users'), mobile_users_menu))
 
         if self.couch_user.can_edit_web_users():
-            def web_username(request=None, couch_user=None, **context):
+            def _get_web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                         not couch_user.is_commcare_user()):
                     username = couch_user.human_friendly_name
@@ -1271,7 +1271,7 @@ class ProjectUsersTab(UITab):
                             'urlname': 'invite_web_user'
                         },
                         {
-                            'title': web_username,
+                            'title': _get_web_username,
                             'urlname': EditWebUserView.urlname
                         }
                     ],
@@ -1320,7 +1320,7 @@ class ProjectUsersTab(UITab):
                 })
 
             from corehq.apps.locations.permissions import user_can_edit_location_types
-            if user_can_edit_location_types(self.couch_user, self.project):
+            if user_can_edit_location_types(self.couch_user, self.domain):
                 from corehq.apps.locations.views import LocationTypesView
                 locations_config.append({
                     'title': _(LocationTypesView.page_title),
@@ -1548,7 +1548,7 @@ def _get_administration_section(domain):
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
-    if not settings.ENTERPRISE_MODE and not get_domain_master_link(domain):
+    if not settings.ENTERPRISE_MODE and not is_linked_domain(domain):
         administration.extend([
             {
                 'title': _('CommCare Exchange'),
@@ -1585,7 +1585,7 @@ def _get_administration_section(domain):
 
 def _get_integration_section(domain):
 
-    def forward_name(repeater_type=None, **context):
+    def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
             return _("Forward Forms")
         elif repeater_type == 'ShortFormRepeater':
@@ -1599,11 +1599,11 @@ def _get_integration_section(domain):
             'url': reverse('domain_forwarding', args=[domain]),
             'subpages': [
                 {
-                    'title': forward_name,
+                    'title': _get_forward_name,
                     'urlname': 'add_repeater',
                 },
                 {
-                    'title': forward_name,
+                    'title': _get_forward_name,
                     'urlname': 'add_form_repeater',
                 },
             ]

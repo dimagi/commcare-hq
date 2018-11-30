@@ -894,7 +894,7 @@ class ConfigureNewReportBase(forms.Form):
         self.existing_report.validate()
         self.existing_report.save()
 
-        DomainAuditRecordEntry.update_calculations(self.domain, 'ReportConfiguration', 'update')
+        DomainAuditRecordEntry.update_calculations(self.domain, 'cp_n_reports_edited')
 
         return self.existing_report
 
@@ -947,7 +947,7 @@ class ConfigureNewReportBase(forms.Form):
         )
         report.validate()
 
-        DomainAuditRecordEntry.update_calculations(self.domain, 'ReportConfiguration', 'create')
+        DomainAuditRecordEntry.update_calculations(self.domain, 'cp_n_reports_created')
 
         report.save()
         return report

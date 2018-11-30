@@ -1587,8 +1587,8 @@ class DownloadExportReport(View):
         uuid = self.request.GET.get('uuid', None)
         file_format = self.request.GET.get('file_format', 'xlsx')
         content_type = Format.from_format(file_format)
-        data_type = self.request.GET.get('data_type', 'beneficiary_list')
-        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type=data_type)
+        data_type = self.request.GET.get('data_type')
+        icds_file = IcdsFile.objects.get(blob_id=uuid)
         response = HttpResponse(
             icds_file.get_file_from_blobdb().read(),
             content_type=content_type.mimetype
@@ -1797,6 +1797,7 @@ class DishaAPIView(View):
         try:
             month = int(request.GET.get('month'))
             year = int(request.GET.get('year'))
+            stream = True if request.GET.get('stream') == 'true' else False
         except (ValueError, TypeError):
             return JsonResponse(self.message('missing_date'), status=400)
 
@@ -1812,10 +1813,8 @@ class DishaAPIView(View):
         if state_name not in self.valid_state_names:
             return JsonResponse(self.message('invalid_state'), status=400)
 
-        data = DishaDump(state_name, query_month).get_data()
-        if not data:
-            return JsonResponse({"message": "Data is not updated for this month"})
-        return HttpResponse(data, content_type='application/json')
+        dump = DishaDump(state_name, query_month)
+        return dump.get_export_as_http_response(stream)
 
     @property
     @quickcache([])

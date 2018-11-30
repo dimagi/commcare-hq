@@ -143,7 +143,7 @@ class S3BlobDB(AbstractBlobDB):
             key = kw["key"]
             check_safe_key(key)
             success = False
-            with maybe_not_found():
+            with maybe_not_found(), self.report_timing('delete', key):
                 success = True
                 obj = s3_bucket.Object(key)
                 # may raise a not found error -> return False
@@ -156,7 +156,7 @@ class S3BlobDB(AbstractBlobDB):
         identifier, bucket = self.get_args_for_delete(*args, **kw)
         key = self.get_path(identifier, bucket)
         check_safe_key(key)
-        with maybe_not_found():
+        with maybe_not_found(), self.report_timing('delete', key):
             success = True
             if identifier is None:
                 summaries = s3_bucket.objects.filter(Prefix=key + "/")
@@ -215,12 +215,14 @@ class S3BlobDB(AbstractBlobDB):
     def _s3_bucket(self, create=False):
         if create and not self._s3_bucket_exists:
             try:
-                self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
+                with self.report_timing('head_bucket', self.s3_bucket_name):
+                    self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
             except ClientError as err:
                 if not is_not_found(err):
                     datadog_counter('commcare.blobdb.notfound')
                     raise
-                self.db.create_bucket(Bucket=self.s3_bucket_name)
+                with self.report_timing('create_bucket', self.s3_bucket_name):
+                    self.db.create_bucket(Bucket=self.s3_bucket_name)
             self._s3_bucket_exists = True
         return self.db.Bucket(self.s3_bucket_name)
 

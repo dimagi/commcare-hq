@@ -6,6 +6,7 @@ import sys
 import os
 import mimetypes
 from collections import namedtuple
+import six
 
 import django
 
@@ -102,6 +103,12 @@ def patch_jsonfield():
     JSONField.to_python = to_python
 
 
+def patch_assertItemsEqual():
+    import unittest
+    if six.PY3:
+        unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
+
+
 if __name__ == "__main__":
     init_hq_python_path()
 
@@ -113,6 +120,7 @@ if __name__ == "__main__":
     GEVENT_COMMANDS = (
         GeventCommand('mvp_force_update', None),
         GeventCommand('run_gunicorn', None),
+        GeventCommand('run_sql', None),
         GeventCommand('preindex_everything', None),
         GeventCommand('migrate_multi', None),
         GeventCommand('prime_views', None),
@@ -131,6 +139,8 @@ if __name__ == "__main__":
     # workaround for https://github.com/smore-inc/tinys3/issues/33
     mimetypes.init()
     patch_jsonfield()
+
+    patch_assertItemsEqual()
 
     set_default_settings_path(sys.argv)
     from django.core.management import execute_from_command_line

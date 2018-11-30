@@ -53,18 +53,13 @@ class TestAdhaar(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 192,
-                    "all": 775,
-                    'original_name': ["st1"],
-                    "fillKey": "0%-25%"
-                },
-                "st2": {
-                    "in_month": 154,
-                    "all": 833,
-                    'original_name': ["st2"],
-                    "fillKey": "0%-25%"
-                }
+                 'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+                 'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+                 'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+                 'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 2, 'fillKey': '0%-25%'},
+                 'st1': {'in_month': 192, 'original_name': ['st1'], 'all': 775, 'fillKey': '0%-25%'},
+                 'st2': {'in_month': 154, 'original_name': ['st2'], 'all': 833, 'fillKey': '0%-25%'},
+                 'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
 
@@ -89,7 +84,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], 21.630794253185144)
+        self.assertEqual(data['rightLegend']['average'], 21.490683229813666)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_adhaar_data_map(
@@ -109,7 +104,7 @@ class TestAdhaar(TestCase):
                 },
                 {
                     'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
-                    'value': '21.52%'
+                    'value': '21.49%'
                 }
             ]
         )
@@ -189,7 +184,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='block',
         )
-        self.assertEqual(data['rightLegend']['average'], 24.561257284595996)
+        self.assertEqual(data['rightLegend']['average'], 24.774193548387096)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -204,24 +199,18 @@ class TestAdhaar(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 24.774193548387096
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 18.48739495798319
-                    }
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0},
+                    {'loc_name': u'st7', 'percent': 0.0},
+                    {'loc_name': u'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 24.774193548387096
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 18.48739495798319
-                    }
+                    {'loc_name': u'st1', 'percent': 24.774193548387096},
+                    {'loc_name': u'st2', 'percent': 18.48739495798319},
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -240,28 +229,27 @@ class TestAdhaar(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.19540983606557377,
+                                "y": 0.19528178243774574,
                                 "x": 1491004800000,
-                                "all": 1525
+                                "all": 1526
                             },
                             {
-                                "y": 0.21517412935323382,
+                                "y": 0.21490683229813665,
                                 "x": 1493596800000,
-                                "all": 1608
+                                "all": 1610
                             }
                         ],
                         "key": "Percentage of beneficiaries with Aadhaar numbers"
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 24.774193548387096
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 18.48739495798319
-                    }
+                    {'loc_name': u'st1', 'percent': 24.774193548387096},
+                    {'loc_name': u'st2', 'percent': 18.48739495798319},
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0},
+                    {'loc_name': u'st7', 'percent': 0.0},
+                    {'loc_name': u'st3', 'percent': 0.0}
                 ]
             }
         )

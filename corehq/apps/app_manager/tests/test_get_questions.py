@@ -8,6 +8,7 @@ from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.app_manager.models import Application, Module
+from six.moves import filter
 
 QUESTIONS = [
     {
@@ -235,16 +236,16 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             include_groups=True,
         )
 
-        repeat_name_count = filter(
+        repeat_name_count = list(filter(
             lambda question: question['value'] == '/data/repeat_name_count',
             questions,
-        )[0]
+        ))[0]
         self.assertIsNone(repeat_name_count['repeat'])
 
-        repeat_question = filter(
+        repeat_question = list(filter(
             lambda question: question['value'] == '/data/repeat_name/question5',
             questions,
-        )[0]
+        ))[0]
         self.assertEqual(repeat_question['repeat'], '/data/repeat_name')
 
     def test_blank_form(self):

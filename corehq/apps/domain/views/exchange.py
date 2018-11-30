@@ -15,7 +15,7 @@ from django.contrib import messages
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.domain.decorators import domain_admin_required
@@ -96,7 +96,7 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if get_domain_master_link(request.domain):
+        if is_linked_domain(request.domain):
             raise Http404()
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 

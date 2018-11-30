@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.test import TestCase
 from django.test import override_settings
+from django.core.management.base import CommandError
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
@@ -35,7 +36,6 @@ from corehq.util.test_utils import (
     softer_assert)
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import patch_datadog
-from mock import patch, MagicMock
 from io import open
 
 
@@ -565,6 +565,40 @@ class MigrationTestCase(BaseMigrationTestCase):
         ]
         for t_stat in tracked_stats:
             self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))
+
+    def test_dry_run(self):
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+        call_command(
+            'migrate_domain_from_couch_to_sql',
+            self.domain_name,
+            MIGRATE=True,
+            no_input=True,
+            dry_run=True
+        )
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with self.assertRaises(CommandError):
+            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+        self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
+
+        xml = """<?xml version="1.0" ?>
+        <n0:registration xmlns:n0="http://openrosa.org/user/registration">
+            <username>W4</username>
+            <password>2</password>
+            <uuid>P8DU7OLHVLZXU21JR10H3W8J2</uuid>
+            <date>2013-11-19</date>
+            <registering_phone_id>8H1N48EFPF6PA4UOO8YGZ2KFZ</registering_phone_id>
+            <user_data>
+                <data key="user_type">standard</data>
+             </user_data>
+        </n0:registration>
+        """
+        submit_form_locally(xml, self.domain_name)
+        couch_form_ids = self._get_form_ids()
+        self.assertEqual(1, len(couch_form_ids))
+
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, blow_away=True, no_input=True)
+        self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):

@@ -18,6 +18,7 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text
+from six.moves import filter
 
 
 class FirstDayOfAugust(datetime.datetime):
@@ -49,9 +50,9 @@ class TestAWCReport(TestCase):
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3141')
         self.assertEqual(data['mother_name'], 'शियामु बाई')
-        self.assertEqual(filter(lambda r: r['x'] == 53, data['weight'])[0]['y'], 12.6)
-        self.assertEqual(filter(lambda r: r['x'] == 53, data['height'])[0]['y'], 96.0)
-        self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
+        self.assertEqual(next(filter(lambda r: r['x'] == 53, data['weight']))['y'], 12.6)
+        self.assertEqual(next(filter(lambda r: r['x'] == 53, data['height']))['y'], 96.0)
+        self.assertEqual(next(filter(lambda r: r['x'] == 96.0, data['wfl']))['y'], 12.6)
 
     def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
         data = get_beneficiary_details(
@@ -2216,7 +2217,9 @@ class TestAWCReport(TestCase):
                     'case_id': '645fd452-3732-44fb-a2d3-46162304807e',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 1237'
+                    'person_name': 'Name 1237',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2240,6 +2243,8 @@ class TestAWCReport(TestCase):
                     'recorded_height': 0,
                     'fully_immunized': 'No',
                     'person_name': 'Name 1303',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2262,7 +2267,9 @@ class TestAWCReport(TestCase):
                     'case_id': '7673a69c-29af-478c-85c6-9c3b22f6b2e4',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 1305'
+                    'person_name': 'Name 1305',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2285,7 +2292,9 @@ class TestAWCReport(TestCase):
                     'case_id': 'd5d3fbeb-8b6a-486b-a853-30be35589200',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 1341'
+                    'person_name': 'Name 1341',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2308,7 +2317,9 @@ class TestAWCReport(TestCase):
                     'case_id': 'b954eb28-75de-43c8-9ec0-d38b7d246ead',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 2617'
+                    'person_name': 'Name 2617',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2331,7 +2342,9 @@ class TestAWCReport(TestCase):
                     'case_id': '6faecfe6-cc88-4ff0-9b3d-d8ca069dd06f',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 2917'
+                    'person_name': 'Name 2917',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2354,7 +2367,9 @@ class TestAWCReport(TestCase):
                     'case_id': '3b242a3b-693e-44dd-ad4a-b713efdb0fdb',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 4398'},
+                    'person_name': 'Name 4398',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None},
                 cls=DjangoJSONEncoder
             )
         )
@@ -2376,7 +2391,9 @@ class TestAWCReport(TestCase):
                     'case_id': '4cd07ebf-abce-4345-a930-f6db7ede8996',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 4399'
+                    'person_name': 'Name 4399',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2399,7 +2416,9 @@ class TestAWCReport(TestCase):
                     'case_id': '0198ec4a-f5ed-4452-863c-a400f43d238a',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 4400'
+                    'person_name': 'Name 4400',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2422,7 +2441,9 @@ class TestAWCReport(TestCase):
                     'case_id': 'a9dc5cac-6820-45cf-b8c9-16f2cfb0ae02',
                     'recorded_height': 0,
                     'fully_immunized': 'No',
-                    'person_name': 'Name 1191'
+                    'person_name': 'Name 1191',
+                    'aww_phone_number': None,
+                    'mother_phone_number': None
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2473,6 +2494,10 @@ class TestAWCReport(TestCase):
                 awc_id='a15'
             )
             self.assertEqual(
+                len(data['data']),
+                1
+            )
+            self.assertEqual(
                 data['data'][0],
                 {
                     'age': 23,
@@ -2486,32 +2511,6 @@ class TestAWCReport(TestCase):
                     'opened_on': None,
                     'person_name': None,
                     'trimester': 2,
-                }
-            )
-
-    def test_awc_report_pregnant_second_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
-            data = get_awc_report_pregnant(
-                start=0,
-                length=10,
-                order='age',
-                reversed_order=False,
-                awc_id='a15'
-            )
-            self.assertEqual(
-                data['data'][1],
-                {
-                    'age': 28,
-                    'anemic': 'Unknown',
-                    'beneficiary': 'Yes',
-                    'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
-                    'edd': None,
-                    'last_date_thr': None,
-                    'num_anc_complete': None,
-                    'number_of_thrs_given': 21,
-                    'opened_on': None,
-                    'person_name': None,
-                    'trimester': 3,
                 }
             )
 

@@ -59,9 +59,13 @@ from custom.icds_reports.models import (
     CcsRecordMonthly,
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
-    AWWIncentiveReport
+    AWWIncentiveReport,
+    AggLs,
+    AggAwc,
+    AwcLocation
 )
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance,\
+    AggregateLsVhndForm, AggregateBeneficiaryForm, AggregateLsAWCVisitForm
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -86,23 +90,21 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney']
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney',
+                          'rnegi', 'rjain']
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
-CHILD_HEALTH_MONTHLY_UCR = 'static-child_cases_monthly_tableau_v2'
 if settings.SERVER_ENVIRONMENT == 'softlayer':
     # Currently QA needs more monthly data, so these are different than on ICDS
     # If this exists after July 1, ask Emord why these UCRs still exist
     CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
-    CHILD_HEALTH_MONTHLY_UCR = 'extended_child_health_monthly_tableau'
 
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
     {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
-    {'type': 'child_health_monthly', 'name': CHILD_HEALTH_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
@@ -116,22 +118,21 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'thr_form', 'is_ucr': False, 'name': 'icds_dashboard_child_health_thr_forms'},
     {'type': 'child_list', 'name': 'static-child_health_cases'},
     {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
+    {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
+    {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
+    {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'}
 ]
 
 SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
 ]
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23),
+               acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
@@ -166,7 +167,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
-            _update_aggregate_locations_tables(cursor)
+
+        _update_aggregate_locations_tables()
 
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -241,7 +243,25 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res_ccs.get()
             res_child.get()
 
-            res_awc = icds_aggregation_task.delay(date=calculation_date, func=_agg_awc_table)
+            res_ls_tasks = list()
+            res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                                                func=_agg_ls_awc_mgt_form)
+                                 for state_id in state_ids
+                                 ])
+            res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                                                func=_agg_ls_vhnd_form)
+                                 for state_id in state_ids
+                                 ])
+            res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                                                func=_agg_beneficiary_form)
+                                 for state_id in state_ids
+                                 ])
+            res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_agg_ls_table))
+
+            res_awc = chain(icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                            *res_ls_tasks
+                            ).apply_async()
+
             res_awc.get()
 
         chain(
@@ -267,13 +287,11 @@ def _create_aggregate_functions(cursor):
         raise
 
 
-def _update_aggregate_locations_tables(cursor):
+def _update_aggregate_locations_tables():
     try:
-        path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
         celery_task_logger.info("Starting icds reports update_location_tables")
-        with open(path, "r", encoding='utf-8') as sql_file:
-            sql_to_execute = sql_file.read()
-            cursor.execute(sql_to_execute)
+        with transaction.atomic(using=db_for_read_write(AwcLocation)):
+            AwcLocation.aggregate()
         celery_task_logger.info("Ended icds reports update_location_tables_sql")
     except IntegrityError:
         # This has occurred when there's a location upload, but not all locations were updated.
@@ -296,7 +314,6 @@ def icds_aggregation_task(self, date, func):
         return
 
     celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
-
     try:
         func(date)
     except Error as exc:
@@ -401,19 +418,21 @@ def _aggregate_bp_forms(state_id, day):
     AggregateBirthPreparednesForms.aggregate(state_id, day)
 
 
-@transaction.atomic
 def _run_custom_sql_script(commands, day=None):
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return
 
-    with connections[db_alias].cursor() as cursor:
-        for command in commands:
-            cursor.execute(command, [day])
+    with transaction.atomic(using=db_alias):
+        with connections[db_alias].cursor() as cursor:
+            for command in commands:
+                cursor.execute(command, [day])
 
 
+@track_time
 def aggregate_awc_daily(day):
-    _run_custom_sql_script(["SELECT aggregate_awc_daily(%s)"], day)
+    with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
+        AggAwcDaily.aggregate(force_to_date(day))
 
 
 @track_time
@@ -442,7 +461,7 @@ def _child_health_monthly_table(state_ids, day):
     sub_aggregations.get()
 
     celery_task_logger.info("Inserting into child_health_monthly_table")
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('child_health_monthly', %s)",
         ], day)
@@ -463,7 +482,7 @@ def _child_health_helper(query, params):
 
 @track_time
 def _ccs_record_monthly_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(CcsRecordMonthly)):
         _run_custom_sql_script([
             "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
         ], day)
@@ -472,15 +491,12 @@ def _ccs_record_monthly_table(day):
 
 @track_time
 def _daily_attendance_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_table_for_month('daily_attendance', %s)",
-        "SELECT insert_into_daily_attendance(%s)"
-    ], day)
+    DailyAttendance.aggregate(force_to_date(day))
 
 
 @track_time
 def _agg_child_health_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(AggChildHealth)):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
         ], day)
@@ -489,7 +505,7 @@ def _agg_child_health_table(day):
 
 @track_time
 def _agg_ccs_record_table(day):
-    with transaction.atomic():
+    with transaction.atomic(using=db_for_read_write(AggCcsRecord)):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
         ], day)
@@ -498,10 +514,35 @@ def _agg_ccs_record_table(day):
 
 @track_time
 def _agg_awc_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
-        "SELECT aggregate_awc_data(%s)"
-    ], day)
+    with transaction.atomic(using=db_for_read_write(AggAwc)):
+        _run_custom_sql_script([
+            "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"
+        ], day)
+        AggAwc.aggregate(force_to_date(day))
+
+
+@track_time
+def _agg_ls_vhnd_form(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateLsVhndForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_beneficiary_form(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateBeneficiaryForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_ls_awc_mgt_form(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateLsAWCVisitForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_ls_table(day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggLs.aggregate(force_to_date(day))
 
 
 @track_time
@@ -530,7 +571,6 @@ def recalculate_stagnant_cases():
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
         'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
         'static-icds-cas-static-child_cases_monthly_v2',
-        'static-icds-cas-static-child_cases_monthly_tableau_v2',
     ]
 
     stagnant_cases = set()
@@ -568,6 +608,7 @@ def _find_stagnant_cases(adapter):
         table.columns.inserted_at <= stagnant_date
     ).distinct()
     return query.all()
+
 
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')

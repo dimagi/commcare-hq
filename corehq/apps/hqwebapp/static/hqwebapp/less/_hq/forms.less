@@ -27,6 +27,10 @@
   }
 }
 
+.form-horizontal .control-label {
+  text-align: left;     // override bootstrap
+}
+
 legend .subtext {
   font-size: .8em;
   color: lighten(@cc-text, 40%);
@@ -34,8 +38,11 @@ legend .subtext {
 }
 
 .daterangepickerwidget {
-  width: auto;
   display: inline-block;
+
+  // Don't allow this input to get too wide, regardless of its container
+  width: auto;
+  max-width: 180px;
 }
 
 .daterangepicker {
@@ -573,20 +580,16 @@ table .ko-inline-edit .read-only:hover {
 }
 
 .form-bubble-purple {
-  // temporary colors while palette changes are worked out
-  @purple: #43467F;
-  @off-white: #E3D0FF;
-
-  background-color: @purple;
-  color: @off-white;
+  background-color: @color-purple-dark;
+  color: @color-purple-dark-inverse;
 
   a.btn-purple {
-    background-color: @purple;
+    background-color: @color-purple-dark;
     color: @component-active-color;
-    border: 1px solid @off-white;
+    border: 1px solid @color-purple-dark-inverse;
 
     &:hover {
-      background-color: lighten(@purple, 5);
+      background-color: lighten(@color-purple-dark, 5);
     }
   }
 }

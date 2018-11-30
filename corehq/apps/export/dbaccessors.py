@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only
+from dimagi.utils.parsing import json_format_datetime
 
 
 def get_latest_case_export_schema(domain, case_type):
@@ -127,16 +128,30 @@ def _get_export_instance(cls, key):
     return [cls.wrap(result['doc']) for result in results]
 
 
-def get_all_daily_saved_export_instance_ids():
+def get_daily_saved_export_ids_for_auto_rebuild(accessed_after):
+    """
+    get all saved exports accessed after the timestamp
+    :param accessed_after: datetime to get reports that have been accessed after this timestamp
+    """
     from .models import ExportInstance
-    results = ExportInstance.get_db().view(
+    # get exports that have not been accessed yet
+    new_exports = ExportInstance.get_db().view(
         "export_instances_by_is_daily_saved/view",
-        startkey=[True],
-        endkey=[True, {}],
         include_docs=False,
+        key=[None],
         reduce=False,
     ).all()
-    return [result['id'] for result in results]
+    export_ids = [export['id'] for export in new_exports]
+
+    # get exports that have last_accessed set after the cutoff requested
+    accessed_reports = ExportInstance.get_db().view(
+        "export_instances_by_is_daily_saved/view",
+        include_docs=False,
+        startkey=[json_format_datetime(accessed_after)],
+        reduce=False,
+    ).all()
+    export_ids.extend([result['id'] for result in accessed_reports])
+    return export_ids
 
 
 def get_properly_wrapped_export_instance(doc_id):

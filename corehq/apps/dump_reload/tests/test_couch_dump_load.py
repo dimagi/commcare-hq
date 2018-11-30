@@ -67,7 +67,7 @@ class CouchDumpLoadTest(TestCase):
         self.assertEqual({}, objects_remaining, 'Not all data deleted: {}'.format(objects_remaining))
 
         dump_output = output_stream.getvalue()
-        dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
+        dump_lines = [line.strip() for line in dump_output.split(b'\n') if line.strip()]
 
         with mock_out_couch() as fake_db:
             total_object_count, loaded_object_count = CouchDataLoader().load_objects(dump_lines)
@@ -203,22 +203,28 @@ class TestDumpLoadToggles(SimpleTestCase):
         super(TestDumpLoadToggles, cls).setUpClass()
         cls.domain_name = uuid.uuid4().hex
 
-    def test_dump_toggles(self):
-        mocked_toggles, expected_items = self._get_mocked_toggles()
+    def setUp(self):
+        super(TestDumpLoadToggles, self).setUp()
+        self.mocked_toggles, self.expected_items = self._get_mocked_toggles()
 
+    def tearDown(self):
+        for toggle in self.mocked_toggles.values():
+            toggle.bust_cache()
+        super(TestDumpLoadToggles, self).tearDown()
+
+    def test_dump_toggles(self):
         dumper = ToggleDumper(self.domain_name, [])
         dumper._user_ids_in_domain = Mock(return_value={'user1', 'user2', 'user3'})
 
         output_stream = BytesIO()
 
-        with mock_out_couch(docs=[doc.to_json() for doc in mocked_toggles.values()]):
+        with mock_out_couch(docs=[doc.to_json() for doc in self.mocked_toggles.values()]):
             dump_counter = dumper.dump(output_stream)
-
         self.assertEqual(3, dump_counter['Toggle'])
         output_stream.seek(0)
         dumped = [json.loads(line.strip()) for line in output_stream.readlines()]
         for dump in dumped:
-            self.assertItemsEqual(expected_items[dump['slug']], dump['enabled_users'])
+            self.assertItemsEqual(self.expected_items[dump['slug']], dump['enabled_users'])
 
     def _get_mocked_toggles(self):
         from toggle.models import generate_toggle_id
@@ -245,17 +251,16 @@ class TestDumpLoadToggles(SimpleTestCase):
 
     def test_load_toggles(self):
         from toggle.models import Toggle
-        mocked_toggles, expected_items = self._get_mocked_toggles()
 
         dumped_data = [
             json.dumps(Toggle(slug=slug, enabled_users=items).to_json())
-            for slug, items in expected_items.items()
+            for slug, items in self.expected_items.items()
         ]
 
         existing_toggle_docs = []
-        for toggle in mocked_toggles.values():
+        for toggle in self.mocked_toggles.values():
             doc_dict = toggle.to_json()
-            expected = expected_items[toggle.slug]
+            expected = self.expected_items[toggle.slug]
             # leave only items that aren't in the dump
             doc_dict['enabled_users'] = [item for item in doc_dict['enabled_users'] if item not in expected]
             existing_toggle_docs.append(doc_dict)
@@ -263,9 +268,9 @@ class TestDumpLoadToggles(SimpleTestCase):
         with mock_out_couch(docs=existing_toggle_docs):
             ToggleLoader().load_objects(dumped_data)
 
-            for mocked_toggle in mocked_toggles.values():
+            for mocked_toggle in self.mocked_toggles.values():
                 loaded_toggle = Toggle.get(mocked_toggle.slug)
-                self.assertEqual(set(mocked_toggle.enabled_users), set(loaded_toggle.enabled_users))
+                self.assertItemsEqual(mocked_toggle.enabled_users, loaded_toggle.enabled_users)
 
 
 def _get_doc_counts_from_db(domain):

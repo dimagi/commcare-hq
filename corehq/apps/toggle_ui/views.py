@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
     toggle_js_user_cachebuster
 from couchforms.analytics import get_last_form_submission_received
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.utils import find_static_toggle
@@ -31,7 +32,7 @@ from corehq.toggles import (
 )
 from corehq.util.soft_assert import soft_assert
 from toggle.models import Toggle
-from toggle.shortcuts import clear_toggle_cache, parse_toggle
+from toggle.shortcuts import parse_toggle
 import six
 
 NOT_FOUND = "Not Found"
@@ -125,6 +126,10 @@ class ToggleEditView(ToggleBaseView):
         return self.request.GET.get('usage_info') == 'true'
 
     @property
+    def show_service_type(self):
+        return self.request.GET.get('show_service_type') == 'true'
+
+    @property
     def toggle_slug(self):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
@@ -143,11 +148,11 @@ class ToggleEditView(ToggleBaseView):
         """
         return find_static_toggle(self.toggle_slug)
 
-    def get_toggle(self):
+    def get_toggle(self, skip_cache=False):
         if not self.static_toggle:
             raise Http404()
         try:
-            return Toggle.get(self.toggle_slug)
+            return Toggle.get(self.toggle_slug, skip_cache=skip_cache)
         except ResourceNotFound:
             return Toggle(slug=self.toggle_slug)
 
@@ -174,10 +179,14 @@ class ToggleEditView(ToggleBaseView):
         }
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
+
+        if self.show_service_type:
+            context['service_type'] = _get_service_type(toggle)
+
         return context
 
     def post(self, request, *args, **kwargs):
-        toggle = self.get_toggle()
+        toggle = self.get_toggle(skip_cache=True)
         item_list = request.POST.get('item_list', [])
         randomness = request.POST.get('randomness', None)
         randomness = decimal.Decimal(randomness) if randomness else None
@@ -212,6 +221,8 @@ class ToggleEditView(ToggleBaseView):
         }
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
+        if self.show_service_type:
+            data['service_type'] = _get_service_type(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
 
     def _notify_on_change(self, added_entries):
@@ -271,8 +282,6 @@ def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enable
             username = entry
             toggle_js_user_cachebuster.clear(username)
 
-        clear_toggle_cache(toggle_slug, entry, namespace=namespace)
-
 
 def _clear_caches_for_dynamic_toggle(toggle_meta):
     # note: this is rather coupled with python property internals
@@ -302,6 +311,19 @@ def _get_usage_info(toggle):
     last_used["_latest"] = _get_most_recently_used(last_used)
     last_used["_active_domains"] = active_domains
     return last_used
+
+
+def _get_service_type(toggle):
+    """Returns subscription service type for each toggle
+    """
+    service_type = {}
+    for enabled in toggle.enabled_users:
+        name = _enabled_item_name(enabled)
+        if _namespace_domain(enabled):
+            subscription = Subscription.get_active_subscription_by_domain(name)
+            if subscription:
+                service_type[name] = subscription.service_type
+    return service_type
 
 
 def _namespace_domain(enabled_item):
