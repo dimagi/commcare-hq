@@ -184,7 +184,7 @@ class S3BlobDB(AbstractBlobDB):
     def bulk_delete(self, paths=None, metas=None):
         success = True
         s3_bucket = self._s3_bucket()
-        for chunk in chunked((paths if metas is None else metas), 1000):
+        for chunk in chunked((paths if metas is None else metas), 100):
             if paths is None:
                 objects = [{"Key": meta.key} for meta in chunk]
             else:
