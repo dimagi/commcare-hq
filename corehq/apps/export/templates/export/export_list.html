@@ -3,7 +3,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
-{% load djangular_tags %}
 
 {% block js %}
 <script src="{% static 'clipboard/dist/clipboard.min.js' %}"></script>
@@ -16,7 +15,6 @@
 
 {% block page_content %}
     {% initial_page_data 'bulk_download_url' bulk_download_url %}
-    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
     {% initial_page_data 'exports' exports %}
     {% initial_page_data 'is_daily_saved_export' is_daily_saved_export|default:False %}
     {% initial_page_data 'is_deid' is_deid %}
