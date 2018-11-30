@@ -137,7 +137,7 @@ class EmwfUtils(object):
     def user_type_tuple(self, t):
         return (
             "t__%s" % t,
-            "[%s]" % HQUserType.human_readable[t]
+            "[%s]" % HQUserType.HqUser_friendly_name_helper(t, index=True)
         )
 
     def location_tuple(self, location):

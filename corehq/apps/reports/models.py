@@ -229,18 +229,18 @@ class HQToggle(object):
 
 class HQUserToggle(HQToggle):
 
-    def __init__(self, type, show):
-        name = _(HQUserType.human_readable[type])
-        super(HQUserToggle, self).__init__(type, show, name)
+    def __init__(self, index, show):
+        name = _(HQUserType.HqUser_friendly_name_helper(index, index=True))
+        super(HQUserToggle, self).__init__(index, show, name)
 
 
 class TempCommCareUser(CommCareUser):
     filter_flag = IntegerProperty()
 
     def __init__(self, domain, username, uuid):
-        if username == HQUserType.human_readable[HQUserType.DEMO_USER]:
+        if username == HQUserType.HqUser_friendly_name_helper(HQUserType.DEMO_USER):
             filter_flag = HQUserType.DEMO_USER
-        elif username == HQUserType.human_readable[HQUserType.ADMIN]:
+        elif username == HQUserType.HqUser_friendly_name_helper(HQUserType.ADMIN):
             filter_flag = HQUserType.ADMIN
         else:
             filter_flag = HQUserType.UNKNOWN
