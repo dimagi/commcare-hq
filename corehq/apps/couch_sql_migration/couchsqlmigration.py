@@ -587,6 +587,7 @@ def _migrate_form_attachments(sql_form, couch_form):
             meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, name)
             if meta:
                 meta.type_code = CODES.form_attachment
+                meta.save()
 
         if not meta:
             meta = metadb.new(
