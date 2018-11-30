@@ -24,7 +24,7 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
     having submissions (has_submissions = True).
     """
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         if change.deleted or change.metadata is None:
             return
 
