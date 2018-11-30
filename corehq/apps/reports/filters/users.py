@@ -144,6 +144,11 @@ class EmwfUtils(object):
         return ("l__%s" % location.location_id,
                 '%s [location]' % location.get_path_display())
 
+    @memoized
+    def create_static_option(self, key):
+        user_type = HQUserType.HqUser_get_index(key)
+        return self.user_type_tuple(user_type)
+
     @property
     @memoized
     def static_options(self):
@@ -153,8 +158,7 @@ class EmwfUtils(object):
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
-            user_type = getattr(HQUserType, t)
-            static_options.append(self.user_type_tuple(user_type))
+            static_options.append(self.create_static_option(t))
 
         return static_options
 

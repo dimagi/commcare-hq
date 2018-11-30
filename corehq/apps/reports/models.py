@@ -128,8 +128,9 @@ class HQUserType(object):
 
     @classmethod
     def HqUser_friendly_name_helper(cls, key, index=False):
+        # If index is True, then the input argument is the index
         if index:
-            return cls.HqUserTypesList[index]["friendly_name"]
+            return cls.HqUserTypesList[key]["friendly_name"]
         else:
             for entry in cls.HqUserTypesList:
                 if entry["user"] == key:
@@ -138,6 +139,12 @@ class HQUserType(object):
     @classmethod
     def HqUser_all_friendly_names(cls):
         return [entry["friendly_name"] for entry in cls.HqUserTypesList]
+
+    @classmethod
+    def HqUser_get_index(cls, key):
+        for index, value in enumerate(cls.HqUserTypesList):
+            if value["user"] == key:
+                return index
 
     @classmethod
     def HqUser_all_toggle_defaults(cls):
