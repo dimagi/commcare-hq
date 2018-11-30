@@ -107,7 +107,7 @@ class Command(BaseCommand):
             print("Please make sure that pillows are defined in current release")
             return
 
-        new_checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id__in=checkpoint_id_mapping.keys())
+        new_checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id__in=checkpoint_id_mapping)
         if options['cleanup']:
             new_checkpoints.delete()
 
