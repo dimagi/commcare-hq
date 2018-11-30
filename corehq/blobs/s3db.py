@@ -25,6 +25,7 @@ from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
 
 DEFAULT_S3_BUCKET = "blobdb"
+DEFAULT_BULK_DELETE_CHUNKSIZE = 1000
 
 
 class S3BlobDB(AbstractBlobDB):
@@ -41,6 +42,7 @@ class S3BlobDB(AbstractBlobDB):
             aws_secret_access_key=config.get("secret_key", ""),
             **kwargs
         )
+        self.bulk_delete_chunksize = config.get("bulk_delete_chunksize", DEFAULT_BULK_DELETE_CHUNKSIZE)
         self.s3_bucket_name = config.get("s3_bucket", DEFAULT_S3_BUCKET)
         self._s3_bucket_exists = False
         # https://github.com/boto/boto3/issues/259
@@ -184,7 +186,7 @@ class S3BlobDB(AbstractBlobDB):
     def bulk_delete(self, paths=None, metas=None):
         success = True
         s3_bucket = self._s3_bucket()
-        for chunk in chunked((paths if metas is None else metas), 100):
+        for chunk in chunked((paths if metas is None else metas), self.bulk_delete_chunksize):
             if paths is None:
                 objects = [{"Key": meta.key} for meta in chunk]
             else:
