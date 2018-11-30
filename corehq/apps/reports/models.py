@@ -126,26 +126,6 @@ class HQUserType(object):
         },
     ]
 
-    user_types = [entry["friendly_name"] for entry in HqUserTypesList]
-
-    ACTIVE = 0
-    DEMO_USER = 1
-    ADMIN = 2
-    UNKNOWN = 3
-    COMMTRACK = 4
-    DEACTIVATED = 5
-    WEB = 6
-    human_readable = [settings.COMMCARE_USER_TERM,
-                      ugettext_noop("demo_user"),
-                      ugettext_noop("admin"),
-                      ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommCare Supply"),
-                      ugettext_noop("Deactivated Mobile Workers"),
-                      ugettext_noop("Web Users"), ]
-    toggle_defaults = (True, False, False, False, False, True, True)
-    count = len(HqUserTypesList)
-    included_defaults = (True, True, True, True, False, True, True)
-
     @classmethod
     def HqUser_friendly_name_helper(cls, key, index=False):
         # If index is True, then the input argument is the index
