@@ -15,7 +15,8 @@ requirejs.config({
         'yui-base': 'hqmedia/MediaUploader/yui-base',
         'yui-loader': 'hqmedia/MediaUploader/yui-loader',
         'yui-uploader': 'hqmedia/MediaUploader/yui-uploader',
-        'file-uploader': 'hqmedia/MediaUploader/hqmedia.upload_controller'
+        'yui-combo': 'hqmedia/MediaUploader/yui-combo',
+        'file-uploader': 'hqmedia/MediaUploader/hqmedia.upload_controller',
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -40,15 +41,15 @@ requirejs.config({
         },
         'yui-loader': {
             deps: ['yui-base'],
-            exports: 'YUI'
+            exports: 'YUI',
         },
         'yui-uploader': {
-            deps: ['yui-base', 'yui-loader'],
-            exports: 'YUI'
+            deps: ['yui-base', 'yui-loader','css!yui-combo'],
+            exports: 'YUI',
         },
         'file-uploader': {
             deps: ['yui-uploader', 'underscore', 'jquery'],
-            exports: 'HQMediaUploaderTypes'
+            exports: 'HQMediaUploaderTypes',
         },
 
     },
