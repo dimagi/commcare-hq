@@ -711,7 +711,7 @@ class FormSource(object):
         except AttributeError:
             pass
         else:
-            app.lazy_put_attachment(old_contents, filename)
+            app.lazy_put_attachment(old_contents.encode('utf-8'), filename)
             del form['contents']
 
         if not app.has_attachment(filename):

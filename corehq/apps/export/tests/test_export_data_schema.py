@@ -560,7 +560,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
 
         factory = AppFactory(build_version='2.36.0')
         m0, f0 = factory.new_advanced_module('mod0', 'advanced')
-        f0.source = cls.get_xml('repeat_group_form')
+        f0.source = cls.get_xml('repeat_group_form').decode('utf-8')
         f0.xmlns = 'repeat-xmlns'
 
         factory.form_requires_case(f0, 'case0')
@@ -732,7 +732,7 @@ class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
         super(TestAppCasePropertyReferences, cls).setUpClass()
         factory = AppFactory(domain=cls.domain)
         m0 = factory.new_basic_module('save_to_case', cls.case_type, with_form=False)
-        m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form'))
+        m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form').decode('utf-8'))
         m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
@@ -829,7 +829,7 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         cls.current_app._id = '1234'
         cls.current_app.version = 10
         module = cls.current_app.add_module(Module.new_module('Untitled Module', None))
-        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form'))
+        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form').decode('utf-8'))
         form.xmlns = cls.xmlns
 
         cls.build = Application.new_app(cls.domain, "Untitled Application")
@@ -838,7 +838,7 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         cls.build.version = 5
         cls.build.has_submissions = True
         module = cls.build.add_module(Module.new_module('Untitled Module', None))
-        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form_version2'))
+        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form_version2').decode('utf-8'))
         form.xmlns = cls.xmlns
 
         cls.apps = [
