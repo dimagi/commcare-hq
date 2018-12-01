@@ -4,8 +4,8 @@ import uuid
 from datetime import datetime
 from io import BytesIO
 
-from contextlib2 import ExitStack
 from django.core.files.uploadedfile import UploadedFile
+from django.db import connections
 from django.test import TestCase
 
 import settings
@@ -462,6 +462,15 @@ class FormAccessorsTestsSQL(FormAccessorsTests):
             form_properties={'breakfast': 'toast', 'lunch': 'sandwich'}
         ).as_xml_string()
         xform = submit_form_locally(formxml, DOMAIN).xform
+
+        # temporarily disable insert restriction
+        # (until this test's transaction is rolled back)
+        db = get_db_alias_for_partitioned_doc(xform.form_id)
+        with connections[db].cursor() as cursor:
+            cursor.execute("""
+            DROP TRIGGER IF EXISTS legacy_xform_attachment_insert_not_allowed
+                ON form_processor_xformattachmentsql;
+            """)
 
         # move blob metadata into old xformattachmentsql table
         acc = FormAccessors(DOMAIN)
