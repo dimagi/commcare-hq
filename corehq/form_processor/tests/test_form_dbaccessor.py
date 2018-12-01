@@ -448,6 +448,42 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
         self.assertEqual(['eight'], errors)
 
+    def test_update_responses_form_xml(self):
+        # This test can be removed when blobs_blobmeta view goes away
+        from ..models import DeprecatedXFormAttachmentSQL
+
+        formxml = FormSubmissionBuilder(
+            form_id='123',
+            form_properties={'breakfast': 'toast', 'lunch': 'sandwich'}
+        ).as_xml_string()
+        xform = submit_form_locally(formxml, DOMAIN).xform
+
+        # move blob metadata into old xformattachmentsql table
+        acc = FormAccessors(DOMAIN)
+        meta = xform.get_attachments()[0]
+        get_blob_db().metadb.bulk_delete([meta])
+        DeprecatedXFormAttachmentSQL(
+            form_id=meta.parent_id,
+            attachment_id=uuid.uuid4().hex,
+            blob_id=meta.key,
+            blob_bucket="",
+            name=meta.name,
+            content_length=meta.content_length,
+            md5='wrong',
+        ).save()
+        xform = acc.get_form(xform.form_id)
+        self.assertLess(xform.get_attachments()[0].id, 0)
+        self.assertEqual(xform.get_xml(), formxml)
+
+        updates = {'breakfast': 'fruit'}
+        FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
+        new_form = acc.get_form(xform.form_id)
+        new_xml = new_form.get_xml()
+        old_xml = acc.get_form(new_form.deprecated_form_id).get_xml()
+        self.assertNotEqual(old_xml, new_xml)
+        self.assertNotIn("fruit", old_xml)
+        self.assertIn("fruit", new_xml)
+
 
 @use_sql_backend
 class FormAccessorsTestsSQL(FormAccessorsTests):
