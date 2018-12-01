@@ -484,7 +484,7 @@ class FormAccessorsTestsSQL(FormAccessorsTests):
             name=meta.name,
             content_length=meta.content_length,
             md5='wrong',
-        ).save()
+        ).save(using=db)
         xform = acc.get_form(xform.form_id)
         self.assertLess(xform.get_attachments()[0].id, 0)
         self.assertEqual(xform.get_xml(), formxml)
