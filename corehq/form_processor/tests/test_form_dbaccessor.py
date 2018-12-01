@@ -448,8 +448,13 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
         self.assertEqual(['eight'], errors)
 
-    def test_update_responses_form_xml(self):
-        # This test can be removed when blobs_blobmeta view goes away
+
+@use_sql_backend
+class FormAccessorsTestsSQL(FormAccessorsTests):
+
+    def test_update_responses_with_legacy_blobmeta(self):
+        # This test can be removed when blobs_blobmeta view
+        # and form_processor_xformattachmentsql goes away
         from ..models import DeprecatedXFormAttachmentSQL
 
         formxml = FormSubmissionBuilder(
@@ -483,11 +488,6 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         self.assertNotEqual(old_xml, new_xml)
         self.assertNotIn("fruit", old_xml)
         self.assertIn("fruit", new_xml)
-
-
-@use_sql_backend
-class FormAccessorsTestsSQL(FormAccessorsTests):
-    pass
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
