@@ -127,7 +127,7 @@ class HQUserType(object):
     ]
 
     @classmethod
-    def HqUser_friendly_name_helper(cls, key, index=False):
+    def get_friendly_name(cls, key, index=False):
         # If index is True, then the input argument is the index
         if index:
             return cls.HqUserTypesList[key]["friendly_name"]
@@ -137,32 +137,32 @@ class HQUserType(object):
                     return entry["friendly_name"]
 
     @classmethod
-    def HqUser_all_friendly_names(cls):
+    def get_all_friendly_names(cls):
         return [entry["friendly_name"] for entry in cls.HqUserTypesList]
 
     @classmethod
-    def HqUser_get_index(cls, key):
+    def get_index(cls, key):
         for index, value in enumerate(cls.HqUserTypesList):
             if value["user"] == key:
                 return index
 
     @classmethod
-    def HqUser_all_toggle_defaults(cls):
+    def get_all_toggle_defaults(cls):
         return [entry["toggle_defaults"] for entry in cls.HqUserTypesList]
 
     @classmethod
-    def HqUser_all_included_defaults(cls):
+    def get_all_included_defaults(cls):
         return [entry["included_defaults"] for entry in cls.HqUserTypesList]
 
     @classmethod
     def use_defaults(cls):
-        return cls._get_manual_filterset(cls.HqUser_all_included_defaults(), cls.HqUser_all_toggle_defaults())
+        return cls._get_manual_filterset(cls.get_all_included_defaults(), cls.get_all_toggle_defaults())
 
     @classmethod
     def all_but_users(cls):
         no_users = [True] * len(cls.HqUserTypesList)
         no_users[cls.ACTIVE] = False
-        return cls._get_manual_filterset(cls.HqUser_all_included_defaults(), no_users)
+        return cls._get_manual_filterset(cls.get_all_included_defaults(), no_users)
 
     @classmethod
     def commtrack_defaults(cls):
@@ -172,7 +172,7 @@ class HQUserType(object):
     @classmethod
     def all(cls):
         defaults = (True,) * len(cls.HqUserTypesList)
-        return cls._get_manual_filterset(defaults, cls.HqUser_all_toggle_defaults())
+        return cls._get_manual_filterset(defaults, cls.get_all_toggle_defaults())
 
     @classmethod
     def _get_manual_filterset(cls, included, defaults):
@@ -210,7 +210,7 @@ class HQToggle(object):
 class HQUserToggle(HQToggle):
 
     def __init__(self, index, show):
-        name = _(HQUserType.HqUser_friendly_name_helper(index, index=True))
+        name = _(HQUserType.get_friendly_name(index, index=True))
         super(HQUserToggle, self).__init__(index, show, name)
 
 
@@ -218,9 +218,9 @@ class TempCommCareUser(CommCareUser):
     filter_flag = IntegerProperty()
 
     def __init__(self, domain, username, uuid):
-        if username == HQUserType.HqUser_friendly_name_helper(HQUserType.DEMO_USER):
+        if username == HQUserType.get_friendly_name(HQUserType.DEMO_USER):
             filter_flag = HQUserType.DEMO_USER
-        elif username == HQUserType.HqUser_friendly_name_helper(HQUserType.ADMIN):
+        elif username == HQUserType.get_friendly_name(HQUserType.ADMIN):
             filter_flag = HQUserType.ADMIN
         else:
             filter_flag = HQUserType.UNKNOWN

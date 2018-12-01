@@ -137,7 +137,8 @@ class EmwfUtils(object):
     def user_type_tuple(self, t):
         return (
             "t__%s" % t,
-            "[%s]" % HQUserType.HqUser_friendly_name_helper(t, index=True)
+            "[%s]" % HQUserType.get_friendly_name(t, index=True)
+
         )
 
     def location_tuple(self, location):
@@ -146,7 +147,7 @@ class EmwfUtils(object):
 
     @memoized
     def create_static_option(self, key):
-        user_type = HQUserType.HqUser_get_index(key)
+        user_type = HQUserType.get_index(key)
         return self.user_type_tuple(user_type)
 
     @property
