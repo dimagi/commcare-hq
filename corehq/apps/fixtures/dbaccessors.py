@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
+from dimagi.utils.logging import notify_exception
 
 
 def get_number_of_fixture_data_types_in_domain(domain):
@@ -19,14 +20,28 @@ def get_number_of_fixture_data_types_in_domain(domain):
 @quickcache(['domain'], timeout=30 * 60)
 def get_fixture_data_types_in_domain(domain):
     from corehq.apps.fixtures.models import FixtureDataType
-    return list(FixtureDataType.view(
-        'by_domain_doc_type_date/view',
-        endkey=[domain, 'FixtureDataType'],
-        startkey=[domain, 'FixtureDataType', {}],
-        reduce=False,
-        include_docs=True,
-        descending=True,
-    ))
+
+    def get_results():
+        return list(FixtureDataType.view(
+            'by_domain_doc_type_date/view',
+            endkey=[domain, 'FixtureDataType'],
+            startkey=[domain, 'FixtureDataType', {}],
+            reduce=False,
+            include_docs=True,
+            descending=True,
+        ))
+
+    # band-aid workaround for a weird couch issue
+    #   where a deleted doc pops up in results as a dict
+    #   https://sentry.io/dimagi/commcarehq/issues/702737433/events/38122183220/
+    results = get_results()
+    for doc in results:
+        if type(doc) == dict:
+            # hopefully retry fixes it
+            sentry_link = 'https://sentry.io/dimagi/commcarehq/issues/702737433/'
+            notify_exception(None, 'Deleted fixture in couch results. {}'.format(sentry_link))
+            return get_results()
+    return results
 
 
 @quickcache(['domain', 'data_type_ids'], timeout=60 * 60, memoize_timeout=60, skip_arg='bypass_cache')
