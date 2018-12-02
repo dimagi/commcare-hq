@@ -295,7 +295,7 @@ COMMIT;
 
 # Expected output is all rows having DELETED status (no rows with KEPT status).
 fix_bad_blobmeta_copies = """
-EXPLAIN WITH blobs AS (
+WITH blobs AS (
     -- get rows with negative id (should be very few of these)
     -- use CTE to work around bad query plan in comp query
     SELECT * FROM blobs_blobmeta_tbl WHERE id < 0

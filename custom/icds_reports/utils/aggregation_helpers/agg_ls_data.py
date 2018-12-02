@@ -73,7 +73,12 @@ class AggLsHelper(BaseICDSAggregationHelper):
         (
         SELECT
         {calculations}
-        from (select distinct state_id, district_id, block_id, supervisor_id from "{awc_location_ucr}") location
+        from (select distinct state_id, district_id, block_id, supervisor_id from "{awc_location_ucr}" where (
+        state_is_test=0 AND
+        district_is_test=0 AND
+        block_is_test=0 AND
+        supervisor_is_test=0
+        )) location
         LEFT  JOIN "{awc_table}" awc_table on (
             location.supervisor_id=awc_table.supervisor_id AND
             awc_table.month = %(start_date)s

@@ -4,6 +4,7 @@ from datetime import datetime
 from dimagi.ext.couchdbkit import (
     Document, DateTimeProperty, ListProperty, StringProperty
 )
+from corehq.util.quickcache import quickcache
 
 
 TOGGLE_ID_PREFIX = 'hqFeatureToggle'
@@ -23,9 +24,11 @@ class Toggle(Document):
             self._doc['_id'] = generate_toggle_id(self.slug)
         self.last_modified = datetime.utcnow()
         super(Toggle, self).save(**params)
+        self.bust_cache()
 
     @classmethod
-    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
+    @quickcache(['cls.__name__', 'docid'], timeout=60 * 60 * 24, skip_arg="skip_cache")
+    def get(cls, docid, rev=None, db=None, dynamic_properties=True, skip_cache=False):
         if not docid.startswith(TOGGLE_ID_PREFIX):
             docid = generate_toggle_id(docid)
         return super(Toggle, cls).get(docid, rev=None, db=None, dynamic_properties=True)
@@ -45,6 +48,13 @@ class Toggle(Document):
         if item in self.enabled_users:
             self.enabled_users.remove(item)
             self.save()
+
+    def delete(self):
+        super(Toggle, self).delete()
+        self.bust_cache()
+
+    def bust_cache(self):
+        self.get.clear(self.__class__, self.slug)
 
 
 def generate_toggle_id(slug):

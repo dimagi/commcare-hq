@@ -13,6 +13,16 @@ from django.test import TestCase
 class TestEnrolledChildren(TestCase):
 
     def test_map_data(self):
+        print(
+            get_enrolled_children_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
+                },
+                loc_level='state'
+            )
+        )
         self.assertDictEqual(
             get_enrolled_children_data_map(
                 'icds-cas',
@@ -30,11 +40,11 @@ class TestEnrolledChildren(TestCase):
                         {
                             'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '
                                          'Services:',
-                            'value': "1,287"
+                            'value': "1,288"
                         },
                         {
                             'indicator': 'Total number of children (0 - 6 years) who are registered: ',
-                            'value': "1,287"
+                            'value': "1,288"
                         },
                         {
                             'indicator': (
@@ -50,18 +60,13 @@ class TestEnrolledChildren(TestCase):
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
-                    "st1": {
-                        "valid": 618,
-                        "all": 618,
-                        'original_name': ["st1"],
-                        "fillKey": "Children"
-                    },
-                    "st2": {
-                        "valid": 669,
-                        "all": 669,
-                        'original_name': ["st2"],
-                        "fillKey": "Children"
-                    }
+                    'st4': {'all': 0, 'valid': 0, 'original_name': ['st4'], 'fillKey': 'Children'},
+                    'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'], 'fillKey': 'Children'},
+                    'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Children'},
+                    'st7': {'all': 1, 'valid': 1, 'original_name': ['st7'], 'fillKey': 'Children'},
+                    'st1': {'all': 618, 'valid': 618, 'original_name': ['st1'], 'fillKey': 'Children'},
+                    'st2': {'all': 669, 'valid': 669, 'original_name': ['st2'], 'fillKey': 'Children'},
+                    'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Children'}
                 },
                 "slug": "enrolled_children",
                 "label": ""
@@ -140,27 +145,27 @@ class TestEnrolledChildren(TestCase):
                             {
                                 "y": 5,
                                 "x": "0-1 month",
-                                "all": 1287
+                                "all": 1288
                             },
                             {
                                 "y": 45,
                                 "x": "1-6 months",
-                                "all": 1287
+                                "all": 1288
                             },
                             {
                                 "y": 51,
                                 "x": "6-12 months",
-                                "all": 1287
+                                "all": 1288
                             },
                             {
                                 "y": 213,
                                 "x": "1-3 years",
-                                "all": 1287
+                                "all": 1288
                             },
                             {
-                                "y": 973,
+                                "y": 974,
                                 "x": "3-6 years",
-                                "all": 1287
+                                "all": 1288
                             }
                         ],
                         "key": "Children (0-6 years) who are enrolled"
