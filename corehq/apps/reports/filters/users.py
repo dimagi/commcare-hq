@@ -239,7 +239,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         """
         usage: ``HQUserType.DEMO_USER in selected_user_types``
         """
-        return [int(t[3:]) for t in mobile_user_and_group_slugs
+        return [HQUserType.HqUserTypesList[int(t[3:])]['user'] for t in mobile_user_and_group_slugs
                 if t.startswith("t__") and t[3:].isdigit()]
 
     @classmethod
@@ -272,7 +272,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         defaults = [('t__0', _("[Active Mobile Workers]")), ('t__5', _("[Deactivated Mobile Workers]"))]
         if self.request.project.commtrack_enabled:
-            defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
+            defaults.append(self.utils.user_type_tuple(HQUserType.get_index(HQUserType.COMMTRACK)))
         return defaults
 
     @property

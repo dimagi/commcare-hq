@@ -67,7 +67,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     @staticmethod
     def show_deactivated_data(mobile_user_and_group_slugs):
         from corehq.apps.reports.models import HQUserType
-        return "t__{}".format(HQUserType.DEACTIVATED) in mobile_user_and_group_slugs
+        return "t__{}".format(HQUserType.get_index(HQUserType.DEACTIVATED)) in mobile_user_and_group_slugs
 
     @staticmethod
     def selected_sharing_group_ids(mobile_user_and_group_slugs):
