@@ -7,7 +7,7 @@ from openpyxl import Workbook
 from tempfile import NamedTemporaryFile
 from memoized import memoized
 
-from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 
 
