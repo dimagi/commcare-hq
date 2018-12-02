@@ -718,6 +718,8 @@ class FormSource(object):
             source = ''
         else:
             source = app.lazy_fetch_attachment(filename)
+            if isinstance(source, bytes):
+                source = source.decode('utf-8')
 
         return source
 
