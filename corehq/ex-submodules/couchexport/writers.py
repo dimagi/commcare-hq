@@ -398,7 +398,7 @@ class Excel2007ExportWriter(ExportWriter):
             if isinstance(value, six.integer_types + (float,)):
                 return value
             if isinstance(value, bytes):
-                value = six.text_type(value, encoding="utf-8")
+                value = value.decode('utf-8')
             elif value is not None:
                 value = six.text_type(value)
             else:
