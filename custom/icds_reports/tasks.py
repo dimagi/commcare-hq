@@ -60,8 +60,12 @@ from custom.icds_reports.models import (
     UcrTableNameMapping,
     AggregateCcsRecordComplementaryFeedingForms,
     AWWIncentiveReport,
-    AggAwc, AwcLocation)
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance
+    AggLs,
+    AggAwc,
+    AwcLocation
+)
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance,\
+    AggregateLsVhndForm, AggregateBeneficiaryForm, AggregateLsAWCVisitForm
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -114,6 +118,9 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'thr_form', 'is_ucr': False, 'name': 'icds_dashboard_child_health_thr_forms'},
     {'type': 'child_list', 'name': 'static-child_health_cases'},
     {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
+    {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
+    {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
+    {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'}
 ]
 
 SQL_FUNCTION_PATHS = [
@@ -236,7 +243,25 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             res_ccs.get()
             res_child.get()
 
-            res_awc = icds_aggregation_task.delay(date=calculation_date, func=_agg_awc_table)
+            res_ls_tasks = list()
+            res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                                                func=_agg_ls_awc_mgt_form)
+                                 for state_id in state_ids
+                                 ])
+            res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                                                func=_agg_ls_vhnd_form)
+                                 for state_id in state_ids
+                                 ])
+            res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                                                func=_agg_beneficiary_form)
+                                 for state_id in state_ids
+                                 ])
+            res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_agg_ls_table))
+
+            res_awc = chain(icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                            *res_ls_tasks
+                            ).apply_async()
+
             res_awc.get()
 
         chain(
@@ -497,6 +522,30 @@ def _agg_awc_table(day):
 
 
 @track_time
+def _agg_ls_vhnd_form(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateLsVhndForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_beneficiary_form(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateBeneficiaryForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_ls_awc_mgt_form(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggregateLsAWCVisitForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_ls_table(day):
+    with transaction.atomic(using=db_for_read_write(AggLs)):
+        AggLs.aggregate(force_to_date(day))
+
+
+@track_time
 def _agg_awc_table_weekly(day):
     _run_custom_sql_script([
         "SELECT update_aggregate_awc_data(%s)"
@@ -559,6 +608,7 @@ def _find_stagnant_cases(adapter):
         table.columns.inserted_at <= stagnant_date
     ).distinct()
     return query.all()
+
 
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')

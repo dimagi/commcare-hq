@@ -1574,8 +1574,8 @@ class DownloadExportReport(View):
         uuid = self.request.GET.get('uuid', None)
         file_format = self.request.GET.get('file_format', 'xlsx')
         content_type = Format.from_format(file_format)
-        data_type = self.request.GET.get('data_type', 'beneficiary_list')
-        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type=data_type)
+        data_type = self.request.GET.get('data_type')
+        icds_file = IcdsFile.objects.get(blob_id=uuid)
         response = HttpResponse(
             icds_file.get_file_from_blobdb().read(),
             content_type=content_type.mimetype

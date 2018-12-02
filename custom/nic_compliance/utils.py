@@ -73,9 +73,9 @@ def verify_password(password, encoded_password):
 
 
 def obfuscated_password_redis_key_for_user(username, obfuscated_password):
-    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + hashlib.md5("%s%s" % (
-        username, obfuscated_password
-    )).hexdigest()
+    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + hashlib.md5(
+        ("%s%s" % (username, obfuscated_password)).encode('utf-8')
+    ).hexdigest()
 
 
 def get_raw_password(obfuscated_password, username=None):

@@ -2,13 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.conf import settings
-from django.core.cache import cache
 
-from corehq.util.quickcache import quickcache
 from .models import Toggle
 
 
-@quickcache(['slug', 'item', 'namespace'])
 def toggle_enabled(slug, item, namespace=None):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
@@ -43,17 +40,6 @@ def set_toggle(slug, item, enabled, namespace=None):
             static_toggle = static_toggles_by_slug[slug]
             if static_toggle.save_fn:
                 static_toggle.save_fn(item, enabled)
-        update_toggle_cache(slug, item, enabled, namespace)
-
-
-def clear_toggle_cache(slug, item, namespace=None):
-    toggle_enabled.clear(slug, item, namespace=namespace)
-
-
-def update_toggle_cache(slug, item, state, namespace=None):
-    clear_toggle_cache(slug, item, namespace)
-    cache_key = toggle_enabled.get_cache_key(slug, item, namespace=namespace)
-    cache.set(cache_key, state)
 
 
 def namespaced_item(item, namespace):

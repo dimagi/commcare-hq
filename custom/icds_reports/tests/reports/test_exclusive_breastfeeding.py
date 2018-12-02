@@ -54,18 +54,13 @@ class TestExclusiveBreastfeeding(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "all": 26,
-                    "children": 17,
-                    'original_name': ["st1"],
-                    "fillKey": "60%-100%"
-                },
-                "st2": {
-                    "all": 24,
-                    "children": 11,
-                    'original_name': ["st2"],
-                    "fillKey": "20%-60%"
-                }
+                'st4': {'all': 0, 'original_name': ['st4'], 'children': 0, 'fillKey': '0%-20%'},
+                'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
+                'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
+                'st7': {'all': 0, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
+                'st1': {'all': 26, 'original_name': ['st1'], 'children': 17, 'fillKey': '60%-100%'},
+                'st2': {'all': 24, 'original_name': ['st2'], 'children': 11, 'fillKey': '20%-60%'},
+                'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -211,24 +206,18 @@ class TestExclusiveBreastfeeding(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 65.38461538461539
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 45.833333333333336
-                    }
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0},
+                    {'loc_name': u'st7', 'percent': 0.0},
+                    {'loc_name': u'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 65.38461538461539
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 45.833333333333336
-                    }
+                    {'loc_name': u'st1', 'percent': 65.38461538461539},
+                    {'loc_name': u'st2', 'percent': 45.833333333333336},
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -265,14 +254,13 @@ class TestExclusiveBreastfeeding(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 65.38461538461539
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 45.833333333333336
-                    }
+                    {'loc_name': u'st1', 'percent': 65.38461538461539},
+                    {'loc_name': u'st2', 'percent': 45.833333333333336},
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0},
+                    {'loc_name': u'st7', 'percent': 0.0},
+                    {'loc_name': u'st3', 'percent': 0.0}
                 ]
             }
         )

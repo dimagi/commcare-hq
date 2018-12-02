@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import datetime
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404
@@ -160,4 +162,21 @@ def mobile_experience(request):
     return {
         'show_mobile_ux_warning': show_mobile_ux_warning,
         'mobile_ux_cookie_name': mobile_ux_cookie_name,
+    }
+
+
+def get_demo(request):
+    is_demo_visible = False
+    num_trial_days_remaining = 0
+    if (settings.IS_SAAS_ENVIRONMENT
+            and settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')):
+        if getattr(request, 'user', None) and not request.user.is_authenticated:
+            is_demo_visible = True
+        elif hasattr(request, 'subscription') and request.subscription.is_trial:
+            delta = request.subscription.date_end - datetime.date.today()
+            num_trial_days_remaining = max(0, delta.days)
+            is_demo_visible = True
+    return {
+        'is_demo_visible': is_demo_visible,
+        'num_trial_days_remaining': num_trial_days_remaining,
     }

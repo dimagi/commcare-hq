@@ -15,5 +15,7 @@ SOURCE_LANGUAGE_MAPPING = {
     'snd': 'sd',  # sindhi for test
     'mri': 'mi',  # maori
     'khm': 'km',  # khmer
-    'lug': 'lg'   # ganda
+    'lug': 'lg',  # ganda
+    'tel': 'te',  # telugu
+    'urd': 'ur',  # urdu
 }

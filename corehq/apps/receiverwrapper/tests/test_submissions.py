@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
+from io import BytesIO
 
 from django.conf import settings
 from django.test import TestCase
@@ -26,7 +27,6 @@ class SubmissionTest(TestCase):
         super(SubmissionTest, self).setUp()
         self.domain = create_domain("submit")
         self.couch_user = CommCareUser.create(self.domain.name, "test", "foobar")
-        self.couch_user.save()
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
@@ -42,11 +42,13 @@ class SubmissionTest(TestCase):
 
     def _submit(self, formname, **extra):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
+        attachments = extra.pop("attachments", None)
         url = extra.pop('url', self.url)
         with open(file_path, "rb") as f:
-            return self.client.post(url, {
-                "xml_submission_file": f
-            }, **extra)
+            data = {"xml_submission_file": f}
+            if attachments:
+                data.update(attachments)
+            return self.client.post(url, data, **extra)
 
     def _get_expected_json(self, form_id, xmlns):
         filename = 'expected_form_{}.json'.format(
@@ -118,7 +120,34 @@ class SubmissionTest(TestCase):
 
 @use_sql_backend
 class SubmissionTestSQL(SubmissionTest):
-    pass
+
+    @softer_assert()
+    def test_submit_deprecated_form_with_attachments(self):
+        def list_attachments(form):
+            return sorted(
+                (att.name, att.open().read())
+                for att in form.get_attachments()
+                if att.name != "form.xml"
+            )
+
+        self._submit('simple_form.xml', attachments={
+            "image": BytesIO(b"fake image"),
+            "file": BytesIO(b"text file"),
+        })
+        response = self._submit(
+            'simple_form_edited.xml',
+            attachments={"image": BytesIO(b"other fake image")},
+            url=reverse("receiver_secure_post", args=[self.domain]),
+        )
+        acc = FormAccessors(self.domain.name)
+        new_form = acc.get_form(response['X-CommCareHQ-FormID'])
+        old_form = acc.get_form(new_form.deprecated_form_id)
+        self.assertIn("<bop>bang</bop>", old_form.get_xml())
+        self.assertIn("<bop>bong</bop>", new_form.get_xml())
+        self.assertEqual(list_attachments(old_form),
+            [("file", b"text file"), ("image", b"fake image")])
+        self.assertEqual(list_attachments(new_form),
+            [("file", b"text file"), ("image", b"other fake image")])
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

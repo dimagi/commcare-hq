@@ -529,7 +529,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             except UserReportsError as e:
                 return self.render_json_response({'error': six.text_type(e)})
             return HttpResponse(json.dumps({
-                'report': temp.getvalue(),
+                'report': temp.getvalue().decode('utf-8'),
             }), content_type='application/json')
 
     @property
