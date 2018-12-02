@@ -214,7 +214,7 @@ class ExportWriter(object):
                 headers = [g.next_unique(header) for header in headers]
 
         self._init_table(table_index, table_title_truncated)
-        self.write_row(table_index, headers)
+        self.write_row(table_index, headers, [])
 
     def write(self, document_table, hyperlink_column_indices, skip_first=False):
         """
