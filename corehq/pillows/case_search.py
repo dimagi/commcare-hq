@@ -93,7 +93,7 @@ def _get_case_properties(doc_dict):
 
 class CaseSearchPillowProcessor(ElasticProcessor):
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         assert isinstance(change, Change)
         if change.metadata is not None:
             # Comes from KafkaChangeFeed (i.e. running pillowtop)
@@ -103,29 +103,14 @@ class CaseSearchPillowProcessor(ElasticProcessor):
             domain = change.get_document()['domain']
 
         if domain and domain_needs_search_index(domain):
-            super(CaseSearchPillowProcessor, self).process_change(pillow_instance, change)
+            super(CaseSearchPillowProcessor, self).process_change(change)
 
 
-def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', num_processes=1,
-                                            process_num=0, **kwargs):
-    assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
-    case_processor = CaseSearchPillowProcessor(
+def get_case_search_processor():
+    return CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
-    )
-    change_feed = KafkaChangeFeed(
-        topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
-    )
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=change_feed,
-        processor=case_processor,
-        change_processed_event_handler=KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
-        ),
     )
 
 
@@ -182,9 +167,33 @@ class CaseSearchReindexerFactory(ReindexerFactory):
             return _fail_gracefully_and_tell_admins()
         else:
             return PillowChangeProviderReindexer(
-                get_case_search_to_elasticsearch_pillow(),
+                get_case_search_processor(),
                 change_provider=change_provider,
             )
+
+
+def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', num_processes=1,
+                                            process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
+    assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
+    case_processor = CaseSearchPillowProcessor(
+        elasticsearch=get_es_new(),
+        index_info=CASE_SEARCH_INDEX_INFO,
+        doc_prep_fn=transform_case_for_elasticsearch
+    )
+    change_feed = KafkaChangeFeed(
+        topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=case_processor,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
+        ),
+    )
 
 
 class ResumableCaseSearchReindexerFactory(ReindexerFactory):
