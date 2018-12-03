@@ -13,14 +13,7 @@ from django.test import TestCase
 class TestEnrolledWomen(TestCase):
 
     def test_map_data(self):
-        print(get_enrolled_women_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            ))
+
         self.assertDictEqual(
             get_enrolled_women_data_map(
                 'icds-cas',
@@ -120,16 +113,6 @@ class TestEnrolledWomen(TestCase):
         )
 
     def test_chart_data(self):
-        print(
-            get_enrolled_women_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            )
-        )
         self.assertDictEqual(
             get_enrolled_women_data_chart(
                 'icds-cas',

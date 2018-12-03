@@ -1017,11 +1017,6 @@ class TestExportData(TestCase):
         )
 
     def test_demographics_export(self):
-        print(DemographicsExport(
-                config={
-                    'domain': 'icds-cas'
-                },
-            ).get_excel_data('st1'))
         self.assertListEqual(
             DemographicsExport(
                 config={
