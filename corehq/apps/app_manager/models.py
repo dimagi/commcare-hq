@@ -727,7 +727,7 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
-        assert isinstance(value, six.text_type)
+        assert isinstance(value, six.text_type), type(value)
         app.lazy_put_attachment(value.encode('utf-8'), filename)
         form.clear_validation_cache()
         try:
