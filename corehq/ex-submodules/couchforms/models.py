@@ -383,15 +383,10 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             archive_stub.archive_history_updated()
             xform_unarchived.send(sender="couchforms", xform=self)
 
-    def send_archive_to_kafka(self, user_id):
+    def publish_archive_to_kafka(self, user_id, archive):
         from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=True):
+        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
             xform_archived.send(sender="couchforms", xform=self)
-
-    def send_unarchive_to_kafka(self, user_id):
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=False):
-            xform_unarchived.send(sender="couchforms", xform=self)
 
 
 class XFormError(XFormInstance):
