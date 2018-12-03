@@ -27,7 +27,6 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
-from corehq.form_processor.submission_process_tracker import unfinished_archive
 from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
@@ -145,10 +144,8 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual([], operations)
 
         # don't call form.archive to avoid sending the signals
-        with unfinished_archive(instance=form, user_id='user1', archive=True) as archive_stub:
-            FormAccessorSQL.archive_form(form, user_id='user1', archive_stub=archive_stub)
-        with unfinished_archive(instance=form, user_id='user2', archive=True) as archive_stub:
-            FormAccessorSQL.unarchive_form(form, user_id='user2', archive_stub=archive_stub)
+        FormAccessorSQL.archive_form(form, user_id='user1')
+        FormAccessorSQL.unarchive_form(form, user_id='user2')
 
         operations = FormAccessorSQL.get_form_operations(form.form_id)
         self.assertEqual(2, len(operations))
@@ -203,8 +200,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual({form1.form_id, form2.form_id}, set(form_ids))
 
         # change state of form1
-        with unfinished_archive(instance=form1, user_id='user1', archive=True) as archive_stub:
-            FormAccessorSQL.archive_form(form1, 'user1', archive_stub)
+        FormAccessorSQL.archive_form(form1, 'user1')
 
         # check filtering by state
         form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(DOMAIN, 'XFormArchived')
@@ -235,8 +231,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(form1.form_id, forms[0].form_id)
 
         # change state of form1
-        with unfinished_archive(instance=form1, user_id='user1', archive=True) as archive_stub:
-            FormAccessorSQL.archive_form(form1, 'user1', archive_stub)
+        FormAccessorSQL.archive_form(form1, 'user1')
 
         # check filtering by state
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormArchived', 2)
@@ -279,8 +274,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertFalse(transactions[0].revoked)
 
-        with unfinished_archive(instance=form, user_id='user1', archive=True) as archive_stub:
-            FormAccessorSQL.archive_form(form, 'user1', archive_stub)
+        FormAccessorSQL.archive_form(form, 'user1')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
         operations = form.history
@@ -292,8 +286,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertTrue(transactions[0].revoked)
 
-        with unfinished_archive(instance=form, user_id='user2', archive=True) as archive_stub:
-            FormAccessorSQL.unarchive_form(form, 'user2', archive_stub)
+        FormAccessorSQL.unarchive_form(form, 'user2')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
         operations = form.history

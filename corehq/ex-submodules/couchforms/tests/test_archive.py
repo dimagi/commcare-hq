@@ -287,7 +287,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         # Mock the couch and sql archive function throwing an error (so that this test works for both)
         with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.'
-                        '_update_archive_unarchive_form_history') \
+                        'archive_form') \
                 as mock_operation_sql:
             with mock.patch('couchforms.models.XFormOperation') as mock_operation_couch:
                 try:
@@ -349,7 +349,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         # Mock the couch and sql archive function throwing an error (so that this test works for both)
         with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.'
-                        '_update_archive_unarchive_form_history') \
+                        'unarchive_form') \
                 as mock_operation_sql:
             with mock.patch('couchforms.models.XFormOperation') as mock_operation_couch:
                 try:
