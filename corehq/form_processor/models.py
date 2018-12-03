@@ -551,14 +551,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').content_md5()
 
-    def archive(self, user_id=None, retry_archive=False):
-        if not retry_archive:
-            # If this archive was initiated by a user, delete all other stubs for this action so that this action
-            # isn't overridden
-            from couchforms.models import UnfinishedArchiveStub
-            UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-            if self.is_archived:
-                return
+    def archive(self, user_id=None):
+        # If this archive was initiated by a user, delete all other stubs for this action so that this action
+        # isn't overridden
+        from couchforms.models import UnfinishedArchiveStub
+        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
+        if self.is_archived:
+            return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
@@ -566,14 +565,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             archive_stub.archive_history_updated()
             xform_archived.send(sender="form_processor", xform=self)
 
-    def unarchive(self, user_id=None, retry_archive=False):
-        if not retry_archive:
-            # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
-            # isn't overridden
-            from couchforms.models import UnfinishedArchiveStub
-            UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
-            if not self.is_archived:
-                return
+    def unarchive(self, user_id=None):
+        # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
+        # isn't overridden
+        from couchforms.models import UnfinishedArchiveStub
+        UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
+        if not self.is_archived:
+            return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
