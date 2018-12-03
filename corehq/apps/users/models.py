@@ -121,6 +121,8 @@ class Permissions(DocumentSchema):
     view_web_apps_list = StringListProperty(default=[])
 
     view_file_dropzone = BooleanProperty(default=False)
+    manage_releases = BooleanProperty(default=True)
+    manage_releases_list = StringListProperty(default=[])
 
     @classmethod
     def wrap(cls, data):
@@ -616,7 +618,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.delete_domain_membership(domain, create_record=create_record)
 
     @memoized
-    def is_domain_admin(self, domain=None):
+    def is_domain_admin(self, domain=None, restrict_global_admin=False):
         if not domain:
             # hack for template
             if hasattr(self, 'current_domain'):
@@ -624,7 +626,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+        if (not restrict_global_admin and self.is_global_admin() and
+                (domain is None or not domain_restricts_superusers(domain))):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -640,11 +643,12 @@ class _AuthorizableMixin(IsMemberOfMixin):
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
     @memoized
-    def has_permission(self, domain, permission, data=None):
+    def has_permission(self, domain, permission, data=None, restrict_global_admin=False):
         # is_admin is the same as having all the permissions set
-        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
+        if (not restrict_global_admin and self.is_global_admin() and
+                (domain is None or not domain_restricts_superusers(domain))):
             return True
-        elif self.is_domain_admin(domain):
+        elif self.is_domain_admin(domain, restrict_global_admin):
             return True
 
         dm = self.get_domain_membership(domain)
@@ -1664,7 +1668,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    def is_domain_admin(self, domain=None):
+    def is_domain_admin(self, domain=None, restrict_global_admin=False):
         # cloudcare workaround
         return False
 

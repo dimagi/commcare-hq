@@ -14,8 +14,7 @@ from corehq.apps.app_manager.views import (
     DownloadAppSummaryView,
     PromptSettingsUpdateView,
     view_app,
-    download_bulk_ui_translations, download_bulk_app_translations, upload_bulk_ui_translations,
-    upload_bulk_app_translations, multimedia_ajax, current_app_version, paginate_releases,
+    multimedia_ajax, current_app_version, paginate_releases,
     release_build, view_module, view_module_legacy, view_form, view_form_legacy,
     get_form_datums, form_source, form_source_legacy, update_build_comment, export_gzip,
     get_xform_source, form_casexml, app_source, import_app, app_from_template, copy_app,
@@ -29,6 +28,10 @@ from corehq.apps.app_manager.views import (
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
     update_linked_whitelist, overwrite_module_case_list, app_settings
+)
+from corehq.apps.translations.views import (
+    download_bulk_ui_translations, download_bulk_app_translations, upload_bulk_ui_translations,
+    upload_bulk_app_translations
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls

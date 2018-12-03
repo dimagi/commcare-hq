@@ -109,6 +109,7 @@ hqDefine("users/js/web_users",[
             deleteUrl: url("delete_user_role"),
             reportOptions: initialPageData.get("report_list"),
             webAppsList: initialPageData.get("web_apps_list"),
+            appsList: initialPageData.get("apps_list"),
             allowEdit: initialPageData.get("can_edit_roles"),
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
