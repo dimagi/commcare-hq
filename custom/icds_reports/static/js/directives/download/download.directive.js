@@ -333,10 +333,17 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.onSelectYear = function (item) {
         if (item.id === new Date().getFullYear()) {
-            vm.months = _.filter(vm.monthsCopy, function(month) {
-                return month.id <= new Date().getMonth() + 1;
-            });
-            vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
+            if (vm.isIncentiveReportSelected() && new Date().getDate() < 15) {
+                vm.months = _.filter(vm.monthsCopy, function(month) {
+                    return month.id <= new Date().getMonth();
+                });
+                vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() ? vm.selectedMonth : new Date().getMonth();
+            } else {
+                vm.months = _.filter(vm.monthsCopy, function(month) {
+                    return month.id <= new Date().getMonth() + 1;
+                });
+                vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
+            }
         } else if (item.id === 2017) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id >= 3;
@@ -364,6 +371,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
+            vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
         }
     };
