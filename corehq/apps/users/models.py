@@ -1668,7 +1668,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    def is_domain_admin(self, domain=None):
+    def is_domain_admin(self, domain=None, restrict_global_admin=False):
         # cloudcare workaround
         return False
 
