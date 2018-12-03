@@ -202,16 +202,6 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEquals(data['rightLegend']['average'], 69.23076923076923)
 
     def test_chart_data(self):
-        print(
-            get_institutional_deliveries_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            )
-        )
         self.assertDictEqual(
             get_institutional_deliveries_data_chart(
                 'icds-cas',
