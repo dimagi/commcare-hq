@@ -3,8 +3,8 @@ hqDefine("hqmedia/js/hqmediauploaders",[
     "hqwebapp/js/initial_page_data",
     "underscore",
     'file-uploader',
-    'yui-base',
-], function (intialPageData,_, HQMediaUploaderTypes,YUI) {
+    'hqmedia/js/yui_config',
+], function (intialPageData,_, HQMediaUploaderTypes) {
     var HQMediaUploaders = {};  // This will be referenced by the media references
     _.each(intialPageData.get("uploaders"), function (uploader) {
         HQMediaUploaders[uploader.slug] = new HQMediaUploaderTypes[uploader.uploader_type](
@@ -15,11 +15,7 @@ hqDefine("hqmedia/js/hqmediauploaders",[
                 swfURL: intialPageData.get("swfURL"),
             }, uploader.options));
 
-        YUI.applyConfig({
-            combine: false,
-            fetchCSS: false,
-            base: ['//',window.location.host,'/'].join(""),
-        });
+
         HQMediaUploaders[uploader.slug].init();
     });
 
