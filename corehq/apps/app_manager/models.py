@@ -711,7 +711,7 @@ class FormSource(object):
         except AttributeError:
             pass
         else:
-            app.lazy_put_attachment(old_contents, filename)
+            app.lazy_put_attachment(old_contents.encode('utf-8'), filename)
             del form['contents']
 
         if not app.has_attachment(filename):
@@ -1263,8 +1263,7 @@ class FormBase(DocumentSchema):
         source = XForm(self.source)
         if source.exists():
             source.rename_language(old_code, new_code)
-            source = source.render()
-            self.source = source
+            self.source = source.render().decode('utf-8')
 
     def default_name(self):
         app = self.get_app()
@@ -4551,6 +4550,8 @@ class LazyBlobDoc(BlobMixin):
         if attachments:
             for name, attachment in attachments.items():
                 if isinstance(attachment, six.string_types):
+                    if isinstance(attachment, six.text_type):
+                        attachment = attachment.encode('utf-8')
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"

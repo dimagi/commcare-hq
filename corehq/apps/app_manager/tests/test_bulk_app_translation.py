@@ -676,7 +676,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         self.app.langs = ['en', 'afr', 'fra']
         module1 = self.app.add_module(Module.new_module('module', None))
         form1 = self.app.new_form(module1.id, "Untitled Form", None)
-        form1.source = self.get_xml('initial_xform')
+        form1.source = self.get_xml('initial_xform').decode('utf-8')
 
         self.form1_worksheet = self.get_worksheet('module1_form1')
 

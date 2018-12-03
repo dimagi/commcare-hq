@@ -777,7 +777,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                                              text_node.find("./{f}value[@form='%s']" % trans_type),
                                              {'form': trans_type})
 
-    save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
+    save_xform(app, form, etree.tostring(xform.xml))
     return msgs
 
 
