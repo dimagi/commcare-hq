@@ -1133,7 +1133,7 @@ class FormBase(DocumentSchema):
                 raise
 
         try:
-            questions = self.get_questions(self.get_app().langs, include_triggers=True)
+            questions = self.get_questions([], include_triggers=True)
         except XFormException as e:
             error = {'type': 'validation error', 'validation_message': six.text_type(e)}
             error.update(meta)
