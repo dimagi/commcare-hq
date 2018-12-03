@@ -71,10 +71,10 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_overwrite_app_maintain_ids(self):
         module = self.plain_master_app.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
+        module.new_form('f1', None, self.get_xml('very_simple_form'))
 
         module = self.linked_app.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
+        module.new_form('f1', None, self.get_xml('very_simple_form'))
 
         id_map_before = _get_form_id_map(self.linked_app)
 
@@ -247,7 +247,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
     def test_remote_app(self):
         module = self.master_app_with_report_modules.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
+        module.new_form('f1', None, self.get_xml('very_simple_form'))
 
         linked_app = _mock_pull_remote_master(
             self.master_app_with_report_modules, self.linked_app, {'master_report_id': 'mapped_id'}

@@ -441,8 +441,7 @@ class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     def _add_module_and_form(self, ModuleClass):
         self.module = self.app.add_module(ModuleClass.new_module('New Module', lang='en'))
         self.module.case_type = 'test_case_type'
-        self.form = self.module.new_form("Untitled Form", "en",
-                                         self.get_xml('original_form', override_path=('data',)).decode('utf-8'))
+        self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
 
     def test_case_list_form_basic(self):
         self._add_module_and_form(Module)

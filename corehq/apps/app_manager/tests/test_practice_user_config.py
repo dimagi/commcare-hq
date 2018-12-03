@@ -32,7 +32,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
     def setUp(self):
         self.factory = AppFactory(build_version='2.30.0', domain=self.domain)
         module, form = self.factory.new_basic_module('register', 'case')
-        form.source = self.get_xml('very_simple_form').decode('utf-8')
+        form.source = self.get_xml('very_simple_form')
         self.factory.app.save()
 
     def tearDown(self):

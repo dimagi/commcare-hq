@@ -25,7 +25,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         m = app.add_module(Module.new_module('Module{}'.format(module_id), lang='en'))
         m.case_type = case_type
         mf = app.new_form(module_id, 'form {}'.format(case_type), lang='en',
-                          attachment=self.get_xml('standard_questions').decode('utf-8'))
+                          attachment=self.get_xml('standard_questions'))
         mf.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         mf.actions.open_case.condition.type = 'always'
         return m
@@ -87,7 +87,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app._id = uuid.uuid4().hex
         app.version = 1
         m0 = self._make_module(app, 0, 'normal_module')
-        m0f1 = m0.new_form('update case', 'en', attachment=self.get_xml('standard_questions').decode('utf-8'))
+        m0f1 = m0.new_form('update case', 'en', attachment=self.get_xml('standard_questions'))
         self._assert_properties(app.get_case_metadata(), {'name'})
 
         m0f1.actions.update_case.condition.type = 'always'
@@ -103,7 +103,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app._id = uuid.uuid4().hex
         app.version = 1
         m0 = self._make_module(app, 0, 'household')
-        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions').decode('utf-8'))
+        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
         m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
@@ -123,7 +123,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app.version = 1
         m0 = app.add_module(AdvancedModule.new_module('Module3', lang='en'))
         m0.case_type = 'household_advanced'
-        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions').decode('utf-8'))
+        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
         m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
@@ -142,7 +142,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app._id = uuid.uuid4().hex
         app.version = 1
         m0 = self._make_module(app, 0, 'household')
-        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions').decode('utf-8'))
+        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
         m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
