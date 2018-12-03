@@ -12,6 +12,10 @@ requirejs.config({
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
         "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
+        'yui-base': 'hqmedia/MediaUploader/yui-base',
+        'yui-loader': 'hqmedia/MediaUploader/yui-loader',
+        'yui-uploader': 'hqmedia/MediaUploader/yui-uploader',
+        'file-uploader': 'hqmedia/MediaUploader/hqmedia.upload_controller',
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
@@ -30,6 +34,21 @@ requirejs.config({
         "nvd3/nv.d3.min": {
             deps: ['d3/d3.min'],
             exports: 'nv',
+        },
+        'yui-base': {
+            exports: 'YUI',
+        },
+        'yui-loader': {
+            deps: ['yui-base'],
+            exports: 'YUI',
+        },
+        'yui-uploader': {
+            deps: ['yui-base', 'yui-loader'],
+            exports: 'YUI',
+        },
+        'file-uploader': {
+            deps: ['yui-uploader', 'underscore', 'jquery'],
+            exports: 'HQMediaUploaderTypes',
         },
     },
     map: {
