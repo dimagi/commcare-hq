@@ -49,7 +49,7 @@
 trunk: master
 name: autostaging
 branches:
-  - sr-mutliprocessors   # Sravan Nov 13
+  - sr-multip2   # Sravan Nov 13
   - np-export-links  # Nick Nov 25
   - appcues-v3  # Gabriella Nov 27
   - mk-populate-translation-app  # MK Nov 28
