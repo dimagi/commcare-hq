@@ -1,4 +1,10 @@
-hqDefine('hqwebapp/js/toggles', function () {
+hqDefine('hqwebapp/js/toggles', [
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function (
+    _,
+    initialPageData
+) {
     var genericToggleEnabled = function (allToggles, toggleName) {
         var value = allToggles[toggleName];
         if (typeof value === 'undefined') {
@@ -11,10 +17,10 @@ hqDefine('hqwebapp/js/toggles', function () {
     };
     return {
         toggleEnabled: function (toggleName) {
-            return genericToggleEnabled(hqImport('hqwebapp/js/initial_page_data').get('toggles_dict'), toggleName);
+            return genericToggleEnabled(initialPageData.get('toggles_dict'), toggleName);
         },
         previewEnabled: function (toggleName) {
-            return genericToggleEnabled(hqImport('hqwebapp/js/initial_page_data').get('previews_dict'), toggleName);
+            return genericToggleEnabled(initialPageData.get('previews_dict'), toggleName);
         },
     };
 });
