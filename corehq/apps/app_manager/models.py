@@ -4602,12 +4602,17 @@ class LazyBlobDoc(BlobMixin):
         # it has been put/lazy-put already during this request
         if name in self._LAZY_ATTACHMENTS:
             content = self._LAZY_ATTACHMENTS[name]['content']
+            print '1'
+            print type(content)
         else:
             content = self.__get_cached_attachment(name)
-
+            print '2'
+            print type(content)
             if content is None:
                 try:
                     content = self.fetch_attachment(name, return_bytes=True)
+                    print '3'
+                    print type(content)
                 except ResourceNotFound as e:
                     # django cache will pickle this exception for you
                     # but e.response isn't picklable
@@ -4621,6 +4626,9 @@ class LazyBlobDoc(BlobMixin):
 
         if isinstance(content, ResourceNotFound):
             raise content
+
+        print '4'
+        print type(content)
 
         return content
 
