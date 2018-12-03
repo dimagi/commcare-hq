@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from datetime import timedelta
-
 from celery.task.base import periodic_task
 
 from corehq.preindex.accessors import index_design_doc, get_preindex_designs
@@ -11,9 +9,7 @@ from corehq.util.decorators import serial_task
 from django.conf import settings
 
 
-# Run every 10 minutes, or as specified in settings.COUCH_REINDEX_SCHEDULE
-couch_reindex_schedule = deserialize_run_every_setting(
-    getattr(settings, 'COUCH_REINDEX_SCHEDULE', timedelta(minutes=10)))
+couch_reindex_schedule = deserialize_run_every_setting(settings.COUCH_REINDEX_SCHEDULE)
 
 
 @periodic_task(serializer='pickle', run_every=couch_reindex_schedule, queue=settings.CELERY_PERIODIC_QUEUE)
