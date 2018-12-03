@@ -7,6 +7,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, \
     transform_day_to_month, month_formatter
+from six.moves import range
 
 
 class AggLsHelper(BaseICDSAggregationHelper):
