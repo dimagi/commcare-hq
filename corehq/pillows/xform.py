@@ -5,6 +5,7 @@ import copy
 import datetime
 
 from dateutil import parser
+from django.conf import settings
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.exceptions import PhoneDateValueError
@@ -185,15 +186,6 @@ def get_xform_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
     )
-    # avoid circular dependency
-    from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
-    from corehq.pillows.mappings.user_mapping import USER_INDEX
-    xform_to_report_es_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=REPORT_XFORM_INDEX_INFO,
-        doc_prep_fn=transform_xform_for_report_forms_index,
-        doc_filter_fn=report_xform_filter
-    )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
     checkpoint_id = "{}-{}-{}-{}".format(
@@ -205,8 +197,19 @@ def get_xform_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
-    processors = [xform_to_es_processor, xform_to_report_es_processor,
+    processors = [xform_to_es_processor,
         form_meta_processor, unknown_user_form_processor]
+    if not settings.ENTERPRISE_MODE:
+        # avoid circular dependency
+        from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
+        from corehq.pillows.mappings.user_mapping import USER_INDEX
+        xform_to_report_es_processor = ElasticProcessor(
+            elasticsearch=get_es_new(),
+            index_info=REPORT_XFORM_INDEX_INFO,
+            doc_prep_fn=transform_xform_for_report_forms_index,
+            doc_filter_fn=report_xform_filter
+        )
+        processors = [xform_to_report_es_processor] + processors
     if not skip_ucr:
         processors = [ucr_processor] + processors
     return ConstructedPillow(
