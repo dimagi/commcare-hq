@@ -129,7 +129,7 @@ def get_simple_xform():
         'MN': 'MN',
         'VT': 'VT',
     })
-    return xform.tostring()
+    return xform.tostring().decode('utf-8')
 
 
 def load_data_from_db(table_name):

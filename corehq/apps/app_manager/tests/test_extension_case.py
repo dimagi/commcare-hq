@@ -33,12 +33,12 @@ class ExtCasePropertiesTests(SimpleTestCase, TestXmlMixin):
         self.fish_module = self.app.add_module(Module.new_module('Fish Module', lang='en'))
         self.fish_module.case_type = 'fish'
         self.fish_form = self.app.new_form(0, 'New Form', lang='en')
-        self.fish_form.source = self.get_xml('original')
+        self.fish_form.source = self.get_xml('original').decode('utf-8')
 
         self.freshwater_module = self.app.add_module(Module.new_module('Freshwater Module', lang='en'))
         self.freshwater_module.case_type = 'freshwater'
         self.freshwater_form = self.app.new_form(0, 'New Form', lang='en')
-        self.freshwater_form.source = self.get_xml('original')
+        self.freshwater_form.source = self.get_xml('original').decode('utf-8')
 
         self.aquarium_module = self.app.add_module(Module.new_module('Aquarium Module', lang='en'))
         self.aquarium_module.case_type = 'aquarium'
@@ -91,7 +91,7 @@ class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestXmlMixin):
         self.app.version = 3
         self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
         self.module.case_type = 'test_case_type'
-        self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original'))
+        self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original').decode('utf-8'))
 
         self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
