@@ -25,7 +25,6 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.users.models import CouchUser
@@ -503,7 +502,6 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
-            toggle_js_domain_cachebuster.clear(self.domain)
             feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
