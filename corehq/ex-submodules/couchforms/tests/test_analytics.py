@@ -135,7 +135,7 @@ class CouchformsESAnalyticsTest(TestCase):
         @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
         @patch('corehq.elastic.ES_META', TEST_ES_META)
         def create_form_and_sync_to_es(received_on):
-            with process_pillow_changes('XFormToElasticsearchPillow'):
+            with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
                 with process_pillow_changes('DefaultChangeFeedPillow'):
                     metadata = TestFormMetadata(domain=cls.domain, app_id=cls.app_id,
                                                 xmlns=cls.xmlns, received_on=received_on)
