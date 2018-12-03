@@ -2,13 +2,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
-from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import lady_supervisor_number_of_vhnds_observed_help_text, \
     lady_supervisor_number_of_beneficiaries_visited_help_text, lady_supervisor_number_of_awcs_visited_help_text
-from custom.icds_reports.models.views import AggLsMonthy
+from custom.icds_reports.models.views import AggLsMonthly
 from custom.icds_reports.utils import get_value, apply_exclude
 
 
@@ -16,15 +15,14 @@ from custom.icds_reports.utils import get_value, apply_exclude
 def get_lady_supervisor_data(domain, config, show_test=False):
 
     def get_data(date, filters):
-        queryset = AggLsMonthy.objects.filter(
+        queryset = AggLsMonthly.objects.filter(
             month=date, **filters
         ).values(
-            "aggregation_level"
-        ).annotate(
-            number_of_unique_awc_vists=Sum("unique_awc_vists"),
-            number_of_vhnds_observed=Sum("vhnd_observed"),
-            number_of_beneficiary_vists=Sum("beneficiary_vists"),
-            number_of_launched_awcs=Sum("num_launched_awcs")
+            "aggregation_level",
+            "unique_awc_vists",
+            "vhnd_observed",
+            "beneficiary_vists",
+            "num_launched_awcs",
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -42,8 +40,8 @@ def get_lady_supervisor_data(domain, config, show_test=False):
                     'label': _('Number of AWCs visited/ Number of AWCs launched'),
                     'help_text': lady_supervisor_number_of_awcs_visited_help_text(),
                     'percent': None,
-                    'value': get_value(data, 'number_of_unique_awc_vists'),
-                    'all': get_value(data, 'number_of_launched_awcs'),
+                    'value': get_value(data, 'unique_awc_vists'),
+                    'all': get_value(data, 'num_launched_awcs'),
                     'format': 'div',
                     'frequency': 'month',
                 },
@@ -51,7 +49,7 @@ def get_lady_supervisor_data(domain, config, show_test=False):
                     'label': _('Number of Beneficiaries Visited'),
                     'help_text': lady_supervisor_number_of_beneficiaries_visited_help_text(),
                     'percent': None,
-                    'value': get_value(data, 'number_of_beneficiary_vists'),
+                    'value': get_value(data, 'beneficiary_vists'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
@@ -62,7 +60,7 @@ def get_lady_supervisor_data(domain, config, show_test=False):
                     'label': _('Number of VHNDs observed'),
                     'help_text': lady_supervisor_number_of_vhnds_observed_help_text(),
                     'percent': None,
-                    'value': get_value(data, 'number_of_vhnds_observed'),
+                    'value': get_value(data, 'vhnd_observed'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',

@@ -202,7 +202,7 @@ class ChildHealthMonthlyView(models.Model):
         db_table = 'child_health_monthly_view'
 
 
-class AggLsMonthy(models.Model):
+class AggLsMonthly(models.Model):
     """
     Contains rows for LS data.
     This view is the join between tables:
