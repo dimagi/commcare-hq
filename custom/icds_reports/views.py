@@ -6,7 +6,6 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
-from pytz import timezone
 
 from datetime import datetime, date
 from memoized import memoized
