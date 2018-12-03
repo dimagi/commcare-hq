@@ -88,6 +88,10 @@ AGG_DAILY_FEEDING_TABLE = 'icds_dashboard_daily_feeding_forms'
 AGG_GROWTH_MONITORING_TABLE = 'icds_dashboard_growth_monitoring_forms'
 AGG_INFRASTRUCTURE_TABLE = 'icds_dashboard_infrastructure_forms'
 AWW_INCENTIVE_TABLE = 'icds_dashboard_aww_incentive'
+AGG_LS_AWC_VISIT_TABLE = 'icds_dashboard_ls_awc_visits_forms'
+AGG_LS_VHND_TABLE = 'icds_dashboard_ls_vhnd_forms'
+AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
+
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'

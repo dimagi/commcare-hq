@@ -6,6 +6,7 @@ from functools import wraps
 
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
+from django.views.decorators.debug import sensitive_variables
 from tastypie.authentication import ApiKeyAuthentication
 
 from corehq.apps.users.models import CouchUser
@@ -68,6 +69,7 @@ def is_probably_j2me(user_agent):
     return user_agent and re.search(j2me_pattern, user_agent)
 
 
+@sensitive_variables('auth', 'password')
 def get_username_and_password_from_request(request):
     """Returns tuple of (username, password). Tuple values
     may be null."""
@@ -76,6 +78,7 @@ def get_username_and_password_from_request(request):
     if 'HTTP_AUTHORIZATION' not in request.META:
         return None, None
 
+    @sensitive_variables()
     def _decode(string):
         try:
             return string.decode('utf-8')
@@ -92,10 +95,9 @@ def get_username_and_password_from_request(request):
         except UnicodeDecodeError:
             pass
     elif auth[0].lower() == BASIC:
-        username, password = base64.b64decode(auth[1]).split(b':', 1)
+        username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
         # decode password submitted from mobile app login
         password = decode_password(password, username)
-        username, password = _decode(username), _decode(password)
     return username, password
 
 

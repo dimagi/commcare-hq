@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 
 from toggle.models import Toggle
-from toggle.shortcuts import update_toggle_cache, parse_toggle
+from toggle.shortcuts import parse_toggle
 
 
 def move_toggles(from_toggle_id, to_toggle_id):
@@ -24,7 +24,6 @@ def move_toggles(from_toggle_id, to_toggle_id):
         if item not in to_toggle.enabled_users:
             to_toggle.enabled_users.append(item)
             namespace, item = parse_toggle(item)
-            update_toggle_cache(to_toggle_id, item, True, namespace=namespace)
 
     to_toggle.save()
     from_toggle.delete()

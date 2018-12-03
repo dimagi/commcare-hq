@@ -54,4 +54,5 @@ branches:
   - np-export-links  # Nick Nov 25
   - appcues-v3  # Gabriella Nov 27
   - mk-populate-translation-app  # MK Nov 28
+  - jls/update-palette  # Jenny 11/30
 submodules: {}
