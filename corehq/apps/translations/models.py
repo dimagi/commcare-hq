@@ -102,7 +102,29 @@ class Translation(object):
                 return translations
 
 
+FIELD_NAME_HELP = """
+Usually the string in either case list or detail under 'property'.
+This could be an xpath or case property name.
+If it is an ID Mapping then the property should be '<property> (ID Mapping Text)'.
+For the values each value should be '<id mapping value> (ID Mapping Value)'.
+Example: case detail for tasks_type would have entries:
+    tasks_type (ID Mapping Text)
+    child (ID Mapping Value)
+    pregnancy (ID Mapping Value)
+"""
+
+
 class TransifexBlacklist(models.Model):
+    """Used for removing case list and case detail translations before an
+    upload to Transifex.
+
+    This assumes that a default source translation is English exists.
+
+    Note that field_name is not sufficient to exclude properties as you can
+    have two details in the same module that display the same information in a
+    different way e.g. date of birth and age in years. display_text is used to
+    determine which trnaslations to hold back from Transifex
+    """
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=32)
     module_id = models.CharField(max_length=32)
@@ -113,8 +135,9 @@ class TransifexBlacklist(models.Model):
             ('list', 'Case List'),
         )
     )
-    field_name = models.TextField()
-    display_text = models.TextField()
+    field_name = models.TextField(help_text=FIELD_NAME_HELP)
+    display_text = models.TextField(
+        help_text="The default English translation for this detail/list")
 
 
 admin.site.register(TransifexBlacklist)
