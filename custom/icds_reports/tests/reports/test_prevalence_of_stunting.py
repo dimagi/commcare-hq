@@ -54,23 +54,68 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "severe": 2,
-                    "moderate": 3,
-                    "normal": 2,
-                    "total_measured": 7,
-                    "total": 454,
-                    'original_name': ["st1"],
-                    "fillKey": "38%-100%"
+                'st4': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st4'],
+                    'severe': 0,
+                    'total': 0,
+                    'fillKey': '0%-25%'
                 },
-                "st2": {
-                    "severe": 9,
-                    "moderate": 5,
-                    "normal": 11,
-                    "total_measured": 25,
-                    "total": 497,
-                    'original_name': ["st2"],
-                    "fillKey": "38%-100%"
+                'st5': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st5'],
+                    'severe': 0,
+                    'total': 0,
+                    'fillKey': '0%-25%'
+                },
+                'st6': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st6'],
+                    'severe': 0,
+                    'total': 0,
+                    'fillKey': '0%-25%'
+                },
+                'st7': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st7'],
+                    'severe': 0,
+                    'total': 1,
+                    'fillKey': '0%-25%'
+                },
+                'st1': {
+                    'moderate': 3,
+                    'normal': 2,
+                    'total_measured': 7,
+                    'original_name': ['st1'],
+                    'severe': 2,
+                    'total': 454,
+                    'fillKey': '38%-100%'
+                },
+                'st2': {
+                    'moderate': 5,
+                    'normal': 11,
+                    'total_measured': 25,
+                    'original_name': ['st2'],
+                    'severe': 9,
+                    'total': 497,
+                    'fillKey': '38%-100%'
+                },
+                'st3': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st3'],
+                    'severe': 0,
+                    'total': 0,
+                    'fillKey': '0%-25%'
                 }
             }
         )
@@ -116,10 +161,10 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '951'},
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '952'},
                 {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '32'},
-                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '919'},
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '920'},
                 {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '34.38%'},
                 {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '25.00%'},
                 {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '40.62%'}
@@ -240,14 +285,11 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 56.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 71.42857142857143
-                },
+                {'loc_name': u'st5', 'percent': 0.0},
+                {'loc_name': u'st6', 'percent': 0.0},
+                {'loc_name': u'st7', 'percent': 0.0},
+                {'loc_name': u'st2', 'percent': 56.0},
+                {'loc_name': u'st1', 'percent': 71.42857142857143}
             ]
         )
 
@@ -263,14 +305,11 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 56.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 71.42857142857143
-                },
+                {'loc_name': u'st3', 'percent': 0.0},
+                {'loc_name': u'st4', 'percent': 0.0},
+                {'loc_name': u'st5', 'percent': 0.0},
+                {'loc_name': u'st6', 'percent': 0.0},
+                {'loc_name': u'st7', 'percent': 0.0}
             ]
         )
 
@@ -322,7 +361,7 @@ class TestPrevalenceOfStunting(TestCase):
                     {
                         "y": 0.40625,
                         "x": 1493596800000,
-                        "all": 951,
+                        "all": 952,
                         "measured": 32
                     }
                 ],
@@ -367,7 +406,7 @@ class TestPrevalenceOfStunting(TestCase):
                     {
                         "y": 0.25,
                         "x": 1493596800000,
-                        "all": 951,
+                        "all": 952,
                         "measured": 32
                     }
                 ],
@@ -412,7 +451,7 @@ class TestPrevalenceOfStunting(TestCase):
                     {
                         "y": 0.34375,
                         "x": 1493596800000,
-                        "all": 951,
+                        "all": 952,
                         "measured": 32
                     }
                 ],
@@ -432,14 +471,13 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 56.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 71.42857142857143
-                },
+                {'loc_name': u'st3', 'percent': 0.0},
+                {'loc_name': u'st4', 'percent': 0.0},
+                {'loc_name': u'st5', 'percent': 0.0},
+                {'loc_name': u'st6', 'percent': 0.0},
+                {'loc_name': u'st7', 'percent': 0.0},
+                {'loc_name': u'st2', 'percent': 56.0},
+                {'loc_name': u'st1', 'percent': 71.42857142857143}
             ]
         )
 

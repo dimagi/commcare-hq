@@ -266,18 +266,7 @@ class AttachmentMixin(SaveStateMixin):
             unsaved = self.attachments_list
             assert all(isinstance(a, Attachment) for a in unsaved), unsaved
             with AtomicBlobs(get_blob_db()) as blob_db:
-                if self.deprecated_form_id:
-                    # reassign existing attachments to deprecated form
-                    blob_db.metadb.reparent(self.form_id, self.deprecated_form_id)
-                try:
-                    yield lambda: write_attachments(blob_db)
-                except:
-                    exc = sys.exc_info()
-                    if self.deprecated_form_id:
-                        # undo reassignment
-                        blob_db.metadb.reparent(self.deprecated_form_id, self.form_id)
-                    self._attachments_list = unsaved
-                    six.reraise(*exc)
+                yield lambda: write_attachments(blob_db)
 
         return atomic_attachments()
 
@@ -404,16 +393,6 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def original_form_id(self):
         """Form ID before it was updated"""
         return self.__original_form_id
-
-    @property
-    @memoized
-    def original_attachments(self):
-        """
-        Returns attachments based on self.__original_form_id, useful
-            to lookup correct attachments while modifying self.form_id
-        """
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachments(self.__original_form_id)
 
     @property
     @memoized

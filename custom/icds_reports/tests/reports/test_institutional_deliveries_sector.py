@@ -53,18 +53,13 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "all": 13,
-                    "children": 9,
-                    'original_name': ["st1"],
-                    "fillKey": "60%-100%"
-                },
-                "st2": {
-                    "all": 13,
-                    "children": 11,
-                    'original_name': ["st2"],
-                    "fillKey": "60%-100%"
-                }
+                'st4': {'all': 0, 'original_name': ['st4'], 'children': 0, 'fillKey': '0%-20%'},
+                'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
+                'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
+                'st7': {'all': 0, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
+                'st1': {'all': 13, 'original_name': ['st1'], 'children': 9, 'fillKey': '60%-100%'},
+                'st2': {'all': 13, 'original_name': ['st2'], 'children': 11, 'fillKey': '60%-100%'},
+                'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -219,24 +214,18 @@ class TestInstitutionalDeliveriesSector(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 84.61538461538461
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 69.23076923076923
-                    }
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0},
+                    {'loc_name': u'st7', 'percent': 0.0},
+                    {'loc_name': u'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 84.61538461538461
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 69.23076923076923
-                    }
+                    {'loc_name': u'st2', 'percent': 84.61538461538461},
+                    {'loc_name': u'st1', 'percent': 69.23076923076923},
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -273,14 +262,13 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 84.61538461538461
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 69.23076923076923
-                    }
+                    {'loc_name': u'st2', 'percent': 84.61538461538461},
+                    {'loc_name': u'st1', 'percent': 69.23076923076923},
+                    {'loc_name': u'st4', 'percent': 0.0},
+                    {'loc_name': u'st5', 'percent': 0.0},
+                    {'loc_name': u'st6', 'percent': 0.0},
+                    {'loc_name': u'st7', 'percent': 0.0},
+                    {'loc_name': u'st3', 'percent': 0.0}
                 ]
             }
         )

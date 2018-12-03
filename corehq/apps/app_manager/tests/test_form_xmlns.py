@@ -25,7 +25,7 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
     def get_source(self, xmlns=DEFAULT_XMLNS):
         default_xmlns = DEFAULT_XMLNS
         xmlns_tag = ' xmlns="%s"' % default_xmlns
-        source = self.get_xml('original_form')
+        source = self.get_xml('original_form').decode('utf-8')
         assert xmlns_tag in source, source
         if xmlns is None:
             source = source.replace(xmlns_tag, '')

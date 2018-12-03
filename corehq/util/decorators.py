@@ -4,13 +4,11 @@ from celery.task import task
 from functools import wraps
 import logging
 import requests
-from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.global_request import get_request
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from six.moves import zip
 
 

@@ -711,13 +711,15 @@ class FormSource(object):
         except AttributeError:
             pass
         else:
-            app.lazy_put_attachment(old_contents, filename)
+            app.lazy_put_attachment(old_contents.encode('utf-8'), filename)
             del form['contents']
 
         if not app.has_attachment(filename):
             source = ''
         else:
             source = app.lazy_fetch_attachment(filename)
+            assert isinstance(source, bytes), type(source)
+            source = source.decode('utf-8')
 
         return source
 
@@ -725,7 +727,8 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
-        app.lazy_put_attachment(value, filename)
+        assert isinstance(value, six.text_type), type(value)
+        app.lazy_put_attachment(value.encode('utf-8'), filename)
         form.clear_validation_cache()
         try:
             form.xmlns = form.wrapped_xform().data_node.tag_xmlns
@@ -1260,8 +1263,7 @@ class FormBase(DocumentSchema):
         source = XForm(self.source)
         if source.exists():
             source.rename_language(old_code, new_code)
-            source = source.render()
-            self.source = source
+            self.source = source.render().decode('utf-8')
 
     def default_name(self):
         app = self.get_app()
@@ -4547,9 +4549,9 @@ class LazyBlobDoc(BlobMixin):
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
-                if isinstance(attachment, bytes):
-                    attachment = attachment.decode('utf-8')
-                if isinstance(attachment, six.text_type):
+                if isinstance(attachment, six.string_types):
+                    if isinstance(attachment, six.text_type):
+                        attachment = attachment.encode('utf-8')
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"
@@ -4604,7 +4606,7 @@ class LazyBlobDoc(BlobMixin):
 
             if content is None:
                 try:
-                    content = self.fetch_attachment(name)
+                    content = self.fetch_attachment(name, return_bytes=True)
                 except ResourceNotFound as e:
                     # django cache will pickle this exception for you
                     # but e.response isn't picklable
@@ -5699,7 +5701,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         previous_form = previous_version.get_form(form.unique_id)
                         # take the previous version's compiled form as-is
                         # (generation code may have changed since last build)
-                        previous_source = previous_version.fetch_attachment(filename)
+                        previous_source = previous_version.fetch_attachment(filename, return_bytes=True)
                     except (ResourceNotFound, FormNotFoundException):
                         form.version = None
                     else:
@@ -6589,7 +6591,7 @@ class RemoteApp(ApplicationBase):
 
             def fetch(location):
                 filepath = self.strip_location(location)
-                return self.fetch_attachment('files/%s' % filepath)
+                return self.fetch_attachment('files/%s' % filepath, return_bytes=True)
 
             profile_xml = _parse_xml(fetch('profile.xml'))
             suite_location = profile_xml.find(self.SUITE_XPATH).text
@@ -6597,7 +6599,7 @@ class RemoteApp(ApplicationBase):
 
             for tag, location in self.get_locations(suite_xml):
                 if tag == 'xform':
-                    xform = XForm(fetch(location))
+                    xform = XForm(fetch(location).decode('utf-8'))
                     xmlns = xform.data_node.tag_xmlns
                     questions = xform.get_questions(langs_for_build)
                     xmlns_map[xmlns] = questions

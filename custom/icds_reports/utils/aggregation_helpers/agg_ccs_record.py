@@ -117,6 +117,46 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             "start_date": self.month
         }
 
+    def update_queries(self):
+        yield """
+            UPDATE "{tablename}" agg SET
+              state_is_test = ut.state_is_test,
+              district_is_test = ut.district_is_test,
+              block_is_test = ut.block_is_test,
+              supervisor_is_test = ut.supervisor_is_test,
+              awc_is_test = ut.awc_is_test
+            FROM (
+              SELECT
+                doc_id as awc_id,
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
+              FROM "{awc_location_tablename}"
+              GROUP BY awc_id
+            ) ut
+            WHERE ut.awc_id = agg.awc_id AND (
+                (
+                  agg.state_is_test IS NULL OR
+                  agg.district_is_test IS NULL OR
+                  agg.block_is_test IS NULL OR
+                  agg.supervisor_is_test IS NULL OR
+                  agg.awc_is_test IS NULL
+                ) OR (
+                  ut.state_is_test != agg.state_is_test OR
+                  ut.district_is_test != agg.district_is_test OR
+                  ut.block_is_test != agg.block_is_test OR
+                  ut.supervisor_is_test != agg.supervisor_is_test OR
+                  ut.awc_is_test != agg.awc_is_test
+                )
+            )
+        """.format(
+            tablename=self.tablename,
+            awc_location_tablename='awc_location',
+        ), {
+        }
+
     def rollup_query(self, aggregation_level):
         columns = (
             ('state_id', 'state_id'),
@@ -172,6 +212,23 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('pregnant_all', ),
             ('valid_visits', ),
             ('expected_visits', ),
+            ('state_is_test', 'MAX(state_is_test)'),
+            (
+                'district_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 1 else "0"
+            ),
+            (
+                'block_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 2 else "0"
+            ),
+            (
+                'supervisor_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 3 else "0"
+            ),
+            (
+                'awc_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 4 else "0"
+            )
         )
 
         def _transform_column(column_tuple):
@@ -191,12 +248,16 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         # in the future these may need to include more columns, but historically
         # caste, resident, minority and disabled have been skipped
         group_by = ["state_id", "month", "ccs_status"]
+        child_location = 'district_is_test'
         if aggregation_level > 1:
             group_by.append("district_id")
+            child_location = 'block_is_test'
         if aggregation_level > 2:
             group_by.append("block_id")
+            child_location = 'supervisor_is_test'
         if aggregation_level > 3:
             group_by.append("supervisor_id")
+            child_location = 'awc_is_test'
 
         return """
         INSERT INTO "{to_tablename}" (
@@ -204,6 +265,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         ) (
             SELECT {calculations}
             FROM "{from_tablename}"
+            WHERE {child_is_test} = 0
             GROUP BY {group_by}
             ORDER BY {group_by}
         )
@@ -213,6 +275,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by),
+            child_is_test=child_location
         )
 
     def indexes(self, aggregation_level):

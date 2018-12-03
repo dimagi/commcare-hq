@@ -70,7 +70,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
         app = Application.new_app(DOMAIN, 'Normal App')
         module = app.add_module(Module.new_module('New Module', lang='en'))
-        form_source = self.get_xml('form_template').format(xmlns=xmlns, name=form_name)
+        form_source = self.get_xml('form_template').decode('utf-8').format(xmlns=xmlns, name=form_name)
         form = module.new_form(form_name, "en", form_source)
         app.save()
         build = app.make_build()
@@ -93,7 +93,8 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         module = app.add_module(Module.new_module('New Module', lang='en'))
         good_form_source = self.get_xml('form_template').decode('utf-8').format(xmlns=xmlns, name=good_form_name)
         good_form = module.new_form(good_form_name, "en", good_form_source)
-        bad_form_source = self.get_xml('form_template').decode('utf-8').format(xmlns="undefined", name=bad_form_name)
+        bad_form_source = self.get_xml('form_template').decode('utf-8').format(
+            xmlns="undefined", name=bad_form_name)
         bad_form = module.new_form(bad_form_name, "en", bad_form_source)
         app.save()
         build = app.make_build()
@@ -121,7 +122,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
         app = Application.new_app(DOMAIN, 'Normal App')
         module = app.add_module(Module.new_module('New Module', lang='en'))
-        form_source = self.get_xml('form_template').format(
+        form_source = self.get_xml('form_template').decode('utf-8').format(
             xmlns="undefined", name=form_name
         )
         form = module.new_form(form_name, "en", form_source)
@@ -133,7 +134,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
         xmlns = generate_random_xmlns()
         form = app.get_form(form.unique_id)
-        form.source = self.get_xml('form_template').format(
+        form.source = self.get_xml('form_template').decode('utf-8').format(
             xmlns=xmlns, name=form_name
         )
         form.xmlns = xmlns
@@ -153,7 +154,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
         app = Application.new_app(DOMAIN, 'Normal App')
         module = app.add_module(Module.new_module('New Module', lang='en'))
-        form_source = self.get_xml('form_template').format(
+        form_source = self.get_xml('form_template').decode('utf-8').format(
             xmlns="undefined", name=form_name
         )
         form = module.new_form(form_name, "en", form_source)

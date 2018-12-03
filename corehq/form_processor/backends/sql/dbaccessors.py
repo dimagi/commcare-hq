@@ -644,11 +644,16 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         with transaction.atomic(using=db_name):
             if form.form_id_updated():
-                attachments = form.original_attachments
                 operations = form.original_operations + new_operations
                 with transaction.atomic(db_name):
+                    # Reparent must happen before form.save() changes the
+                    # form id; otherwise the form's attachments will disappear
+                    # from the blobs_blobmeta view because of the INNER JOIN
+                    # with the old form attachments table in the view.
+                    # This can be removed when with the blobs_blobmeta view.
+                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
                     form.save()
-                    for model in itertools.chain(attachments, operations):
+                    for model in operations:
                         model.form = form
                         model.save()
             else:

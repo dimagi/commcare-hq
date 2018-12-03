@@ -24,7 +24,6 @@ from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec
     GraphDisplayColumn
 from corehq.apps.userreports.tests.utils import mock_datasource_config
 from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 import six
 
 
@@ -118,7 +117,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             domain=cls.domain,
             username='ralph',
         )
-        update_toggle_cache(MOBILE_UCR.slug, cls.domain, True, NAMESPACE_DOMAIN)
+        MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
 
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
         cls.report_configs_by_id = {
@@ -164,11 +163,6 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                     with mock_datasource_config():
                         fixture, = call_fixture_generator(report_fixture_generator, cls.user)
         cls.fixture = ElementTree.tostring(fixture)
-
-    @classmethod
-    def tearDownClass(cls):
-        clear_toggle_cache(MOBILE_UCR.slug, cls.domain, NAMESPACE_DOMAIN)
-        super(ReportFiltersSuiteTest, cls).tearDownClass()
 
     def test_filter_entry(self):
         self.assertXmlPartialEqual("""
