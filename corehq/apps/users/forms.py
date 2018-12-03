@@ -32,6 +32,7 @@ from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
+from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils import decode_password
 # Bootstrap 3 Crispy Forms
 from crispy_forms import layout as cb3_layout
@@ -583,10 +584,8 @@ class NewMobileWorkerForm(forms.Form):
                 ng_model='mobileWorker.location_id',
             )
 
-        self.helper = FormHelper()
+        self.helper = HQModalFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-4'
-        self.helper.field_class = 'col-sm-8'
         self.helper.layout = Layout(
             Fieldset(
                 _('Basic Information'),
