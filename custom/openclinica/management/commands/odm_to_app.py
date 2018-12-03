@@ -138,7 +138,7 @@ class Study(StudyObject):
         xform.new_question(CC_DOB, 'Date of Birth', data_type='date')
         xform.new_question(CC_SEX, 'Sex', data_type='select1', choices={1: 'Male', 2: 'Female'})
         xform.new_question(CC_ENROLLMENT_DATE, 'Enrollment Date', data_type='date')
-        return xform.tostring(pretty_print=True).decode('utf-8')
+        return xform.tostring(pretty_print=True)
 
     def new_reg_subject_module(self, app):
 
@@ -254,7 +254,7 @@ class StudyEvent(StudyObject):
                 study_form.add_item_groups_to_xform(xform)
             xform.new_question('end_date', 'End Date', data_type='date')
             xform.new_question('end_time', 'End Time', data_type='time')
-            return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True).decode('utf-8')
+            return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
 
         def get_preload_action():
             return PreloadAction(
@@ -381,7 +381,7 @@ class StudyForm(StudyObject):
         self.add_item_groups_to_xform(xform)
         xform.new_question('end_date', 'End Date', data_type='date')
         xform.new_question('end_time', 'End Time', data_type='time')
-        return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True).decode('utf-8')
+        return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 
 class ItemGroup(StudyObject):

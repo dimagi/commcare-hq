@@ -159,7 +159,7 @@ def save_xform(app, form, xml):
                 # or form is being updated with source copied from other form
                 xml = change_xmlns(xform, tag_xmlns, new_xmlns)
 
-    form.source = xml.decode('utf-8')
+    form.source = xml
 
     if form.is_registration_form():
         # For registration forms, assume that the first question is the

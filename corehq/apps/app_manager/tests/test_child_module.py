@@ -122,7 +122,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_requires_case(m0f0)
 
         m1f0 = self.module_1.get_form(0)
-        m1f0.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
+        m1f0.source = self.get_xml('original_form', override_path=('data',))
         self.factory.form_requires_case(m1f0, 'gold-fish', update={'question1': '/data/question1'})
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
@@ -237,7 +237,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
 
         m1f0 = self.module_1.get_form(0)
-        m1f0.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
+        m1f0.source = self.get_xml('original_form', override_path=('data',))
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish', update={
             'question1': '/data/question1',
             'parent/question1': '/data/question1',
@@ -348,7 +348,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
             'guppy',
             parent_module=upd_goldfish_mod,
         )
-        upd_guppy_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
+        upd_guppy_form.source = self.get_xml('original_form', override_path=('data',))
         factory.form_requires_case(upd_guppy_form, 'gold-fish', update={'question1': '/data/question1'})
         factory.form_requires_case(
             upd_guppy_form,
@@ -376,7 +376,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
         lab_update_module, lab_update_form = factory.new_advanced_module('lab_update', 'lab_test', parent_module=lab_test_module)
         factory.form_requires_case(lab_update_form, 'episode', update={'episode_type': '/data/question1'})
         factory.form_requires_case(lab_update_form, 'lab_test', parent_case_type='episode')
-        lab_update_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
+        lab_update_form.source = self.get_xml('original_form', override_path=('data',))
 
         expected_suite_entry = """
         <partial>
@@ -418,7 +418,7 @@ class BasicSubModuleTests(SimpleTestCase, TestXmlMixin):
             'guppy',
             parent_module=upd_goldfish_mod,
         )
-        guppy_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
+        guppy_form.source = self.get_xml('original_form', override_path=('data',))
         factory.form_requires_case(
             guppy_form,
             'guppy',

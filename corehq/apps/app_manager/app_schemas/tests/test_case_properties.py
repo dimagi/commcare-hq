@@ -137,7 +137,7 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
     def _add_scheduler_to_form(self, form, module, form_abreviation):
         # (this mimics the behavior in app_manager.views.schedules.edit_visit_schedule()
         # A Form.source is required to retreive scheduler properties
-        form.source = self.get_xml('very_simple_form').decode('utf-8')
+        form.source = self.get_xml('very_simple_form')
         phase, _ = module.get_or_create_schedule_phase(anchor='date-opened')
         form.schedule_form_id = form_abreviation
         form.schedule = FormSchedule(
