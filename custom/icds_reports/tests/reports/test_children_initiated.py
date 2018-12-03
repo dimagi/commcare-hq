@@ -195,16 +195,6 @@ class TestChildrenInitiated(TestCase):
         self.assertEquals(data['rightLegend']['average'], 82.3529411764706)
 
     def test_chart_data(self):
-        print(
-            get_children_initiated_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            )
-        )
         self.assertDictEqual(
             get_children_initiated_data_chart(
                 'icds-cas',
