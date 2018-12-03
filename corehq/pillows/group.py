@@ -23,7 +23,7 @@ def get_group_to_elasticsearch_processor():
     )
 
 
-def get_group_pillow(pillow_id='GroupPillow', num_processes=1, process_num=0, **kwargs):
+def get_group_pillow_old(pillow_id='GroupPillow', num_processes=1, process_num=0, **kwargs):
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
@@ -53,7 +53,7 @@ class GroupReindexerFactory(ReindexerFactory):
 
     def build(self):
         return ElasticPillowReindexer(
-            pillow_or_processor=get_group_pillow(),
+            pillow_or_processor=get_group_pillow_old(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Group.get_db(),
                 view_name='all_docs/by_doc_type',

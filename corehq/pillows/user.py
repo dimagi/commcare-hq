@@ -103,7 +103,7 @@ def get_user_es_processor():
     )
 
 
-def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kwargs):
+def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, **kwargs):
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
@@ -126,7 +126,7 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kw
     )
 
 
-def get_user_es_ucr_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
+def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
         skip_ucr=False, **kwargs):
     # Pillow that sends users to ES and UCR
     assert pillow_id == 'user-pillow', 'Pillow ID is not allowed to change'
@@ -177,7 +177,7 @@ class UserReindexerFactory(ReindexerFactory):
 
     def build(self):
         return ElasticPillowReindexer(
-            pillow_or_processor=get_user_pillow(),
+            pillow_or_processor=get_user_pillow_old(),
             change_provider=CouchViewChangeProvider(
                 couch_db=CommCareUser.get_db(),
                 view_name='users/by_username',

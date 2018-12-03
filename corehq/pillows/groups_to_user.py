@@ -45,7 +45,7 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, pro
         ),
     )
 
-def get_group_es_pillow(pillow_id='group-pillow', num_processes=1, process_num=0, **kwargs):
+def get_group_pillow(pillow_id='group-pillow', num_processes=1, process_num=0, **kwargs):
     assert pillow_id == 'group-pillow', 'Pillow ID is not allowed to change'
     to_user_es_processor = GroupsToUsersProcessor()
     to_group_es_processor = get_group_to_elasticsearch_processor()

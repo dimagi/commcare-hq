@@ -10,7 +10,7 @@ from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.elastic import get_es_new
-from corehq.pillows.groups_to_user import get_group_es_pillow
+from corehq.pillows.groups_to_user import get_group_pillow
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -48,7 +48,7 @@ class GroupPillowTest(TestCase):
         producer.send_change(topics.GROUP, change_meta)
 
         # send to elasticsearch
-        pillow = get_group_es_pillow()
+        pillow = get_group_pillow()
         pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(GROUP_INDEX_INFO.index)
 

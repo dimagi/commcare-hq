@@ -18,7 +18,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.user import get_user_pillow
+from corehq.pillows.user import get_user_pillow_old
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from couchforms.models import XFormInstance
@@ -65,7 +65,7 @@ class UserPillowTest(UserPillowTestBase):
         producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
-        pillow = get_user_pillow(skip_ucr=True)
+        pillow = get_user_pillow_old(skip_ucr=True)
         pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self.assertEqual(0, UserES().run().total)
@@ -79,7 +79,7 @@ class UserPillowTest(UserPillowTestBase):
         producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
-        pillow = get_user_pillow()
+        pillow = get_user_pillow_old()
         pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self._verify_user_in_es(username)

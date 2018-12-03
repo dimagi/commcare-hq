@@ -1688,12 +1688,12 @@ PILLOWTOPS = {
         {
             'name': 'UserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.user.get_user_pillow',
+            'instance': 'corehq.pillows.user.get_user_pillow_old',
         },
         {
             'name': 'user-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.user.get_user_es_ucr_pillow',
+            'instance': 'corehq.pillows.user.get_user_pillow',
         },
         {
             'name': 'ApplicationToElasticsearchPillow',
@@ -1703,7 +1703,7 @@ PILLOWTOPS = {
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.group.get_group_pillow',
+            'instance': 'corehq.pillows.group.get_group_pillow_old',
         },
         {
             'name': 'GroupToUserPillow',
@@ -1713,7 +1713,7 @@ PILLOWTOPS = {
         {
             'name': 'group-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.groups_to_user.get_group_es_pillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_pillow',
         },
         {
             'name': 'SqlSMSPillow',
