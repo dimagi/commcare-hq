@@ -1,4 +1,3 @@
-/* globals HQMediaUploaderTypes */
 hqDefine("hqmedia/js/hqmediauploaders",[
     "hqwebapp/js/initial_page_data",
     "underscore",

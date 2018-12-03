@@ -46,8 +46,11 @@ requirejs.config({
             deps: ['yui-base', 'yui-loader'],
             exports: 'YUI',
         },
+        'hqmedia/js/yui_config': {
+            deps: ['yui-base'],
+        },
         'file-uploader': {
-            deps: ['yui-uploader', 'underscore', 'jquery'],
+            deps: ['yui-uploader','hqmedia/js/yui_config', 'underscore', 'jquery'],
             exports: 'HQMediaUploaderTypes',
         },
     },
