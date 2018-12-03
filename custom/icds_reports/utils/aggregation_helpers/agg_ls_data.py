@@ -2,20 +2,18 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
-
+from custom.icds_reports.const import AGG_LS_VHND_TABLE, AGG_LS_AWC_VISIT_TABLE, AGG_LS_BENEFICIARY_TABLE
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, \
+    transform_day_to_month, month_formatter
 
 
 class AggLsHelper(BaseICDSAggregationHelper):
 
     base_tablename = 'agg_ls'
     awc_location_ucr = 'static-awc_location'
-    ls_vhnd_ucr = 'static-ls_vhnd_form'
-    ls_home_visit_ucr = 'static-ls_home_visit_forms_filled'
-    ls_awc_mgt_ucr = 'static-awc_mgt_forms'
+
 
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
@@ -56,98 +54,54 @@ class AggLsHelper(BaseICDSAggregationHelper):
         Returns the base aggregate query which is used to insert all the locations
         into the LS data table.
         """
+
+        columns = (
+            ('state_id', 'location.state_id'),
+            ('district_id', 'location.district_id'),
+            ('block_id', 'location.block_id'),
+            ('supervisor_id', 'location.supervisor_id'),
+            ('month', "'{}'".format(month_formatter(self.month_start))),
+            ('unique_awc_vists', 'COALESCE(awc_table.unique_awc_vists, 0)'),
+            ('vhnd_observed', 'COALESCE(vhnd_table.vhnd_observed, 0)'),
+            ('beneficiary_vists', 'COALESCE(beneficiary_table.beneficiary_vists, 0)'),
+            ('aggregation_level', '4')
+        )
         return """
-        INSERT INTO "{tablename}"
-        (state_id, district_id, block_id, supervisor_id, month,
-         unique_awc_vists, vhnd_observed, beneficiary_vists, aggregation_level
+        INSERT INTO "{tablename}" (
+            {columns}
         )
         (
-        SELECT DISTINCT
-        state_id,
-        district_id,
-        block_id,
-        supervisor_id,
-        %(start_date)s,
-        0,
-        0,
-        0,
-        4
-        FROM "{awc_location_ucr}"
+        SELECT
+        {calculations}
+        from (select distinct state_id, district_id, block_id, supervisor_id from "{awc_location_ucr}" where (
+        state_is_test=0 AND
+        district_is_test=0 AND
+        block_is_test=0 AND
+        supervisor_is_test=0
+        )) location
+        LEFT  JOIN "{awc_table}" awc_table on (
+            location.supervisor_id=awc_table.supervisor_id AND
+            awc_table.month = %(start_date)s
+        )
+        LEFT  JOIN "{vhnd_table}" vhnd_table on (
+            location.supervisor_id = vhnd_table.supervisor_id AND
+            vhnd_table.month = %(start_date)s
+        )
+        LEFT  JOIN "{beneficiary_table}" beneficiary_table on (
+            location.supervisor_id = beneficiary_table.supervisor_id AND
+            beneficiary_table.month = %(start_date)s
+        )
         )
         """.format(
             tablename=self.tablename,
-            awc_location_ucr=self._ucr_tablename(ucr_id=self.awc_location_ucr)
+            columns=", ".join([col[0] for col in columns]),
+            calculations=", ".join([col[1] for col in columns]),
+            awc_location_ucr=self._ucr_tablename(ucr_id=self.awc_location_ucr),
+            awc_table=AGG_LS_AWC_VISIT_TABLE,
+            vhnd_table=AGG_LS_VHND_TABLE,
+            beneficiary_table=AGG_LS_BENEFICIARY_TABLE
         ), {
             'start_date': self.month_start
-        }
-
-    def updates(self):
-        """
-        Returns the update query.
-        This query updated the ls databased on the form submissions.
-        Following data is updated with the returned queries:
-            1) vhnd forms submitted
-            2) unique awcs visits made by LS
-            3) number of beneficiary form visited
-        """
-        yield """
-            UPDATE "{tablename}" agg_ls
-            SET vhnd_observed = ut.vhnd_observed
-            FROM (
-                SELECT count(*) as vhnd_observed,
-                location_id as supervisor_id
-                FROM "{ls_vhnd_ucr}"
-                WHERE vhnd_date > %(start_date)s AND vhnd_date < %(end_date)s
-                GROUP BY location_id
-            ) ut
-            WHERE agg_ls.supervisor_id = ut.supervisor_id
-        """.format(
-            tablename=self.tablename,
-            ls_vhnd_ucr=self._ucr_tablename(ucr_id=self.ls_vhnd_ucr)
-        ), {
-            "start_date": self.month_start,
-            "end_date": self.next_month_start
-        }
-
-        yield """
-            UPDATE "{tablename}" agg_ls
-            SET unique_awc_vists = ut.unique_awc_vists
-            FROM (
-                SELECT count(distinct awc_id) as unique_awc_vists,
-                location_id as supervisor_id
-                FROM "{ls_awc_mgt_ucr}"
-                WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
-                AND location_entered is not null and location_entered <> ''
-                GROUP BY location_id
-            ) ut
-            WHERE agg_ls.supervisor_id = ut.supervisor_id
-        """.format(
-            tablename=self.tablename,
-            ls_awc_mgt_ucr=self._ucr_tablename(ucr_id=self.ls_awc_mgt_ucr)
-        ), {
-            "start_date": self.month_start,
-            "end_date": self.next_month_start
-        }
-
-        yield """
-            UPDATE "{tablename}" agg_ls
-            SET beneficiary_vists = ut.beneficiary_vists
-            FROM (
-                SELECT
-                count(*) as beneficiary_vists,
-                location_id as supervisor_id
-                FROM "{ls_home_visit_ucr}"
-                WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
-                AND visit_type_entered is not null AND visit_type_entered <> ''
-                GROUP BY location_id
-            ) ut
-            WHERE agg_ls.supervisor_id = ut.supervisor_id
-        """.format(
-            tablename=self.tablename,
-            ls_home_visit_ucr=self._ucr_tablename(ucr_id=self.ls_home_visit_ucr)
-        ), {
-            "start_date": self.month_start,
-            "end_date": self.next_month_start
         }
 
     def indexes(self, aggregation_level):

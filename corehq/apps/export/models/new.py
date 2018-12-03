@@ -636,6 +636,7 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
     sharing_groups = ListProperty(StringProperty)
     show_all_data = BooleanProperty(default=True)
     show_project_data = BooleanProperty()
+    show_deactivated_data = BooleanProperty()
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):

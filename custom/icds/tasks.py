@@ -8,8 +8,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from celery.task import task
 from django.conf import settings
-from corehq.blobs import get_blob_db
-from corehq.form_processor.models import XFormAttachmentSQL
+from corehq.blobs import get_blob_db, CODES
+from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
 from django.core.mail.message import EmailMessage
@@ -24,28 +24,23 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         db = get_blob_db()
 
         def _get_query(db_name, max_age=max_age):
-            return XFormAttachmentSQL.objects.using(db_name).filter(
+            return BlobMeta.objects.using(db_name).filter(
                 content_type='image/jpeg',
-                form__domain='icds-cas',
-                form__received_on__lt=max_age
+                type_code=CODES.form_attachment,
+                domain='icds-cas',
+                created_on__lt=max_age
             )
 
         run_again = False
         for db_name in get_db_aliases_for_partitioned_query():
-            paths = []
-            deleted_attachments = []
             bytes_deleted = 0
-            attachments = _get_query(db_name)
-            for attachment in attachments[:1000]:
-                paths.append(db.get_path(attachment.blob_id, attachment.blobdb_bucket()))
-                deleted_attachments.append(attachment.pk)
-                bytes_deleted += attachment.content_length if attachment.content_length else 0
-
-            if paths:
-                db.bulk_delete(paths)
-                XFormAttachmentSQL.objects.using(db_name).filter(pk__in=deleted_attachments).delete()
+            metas = list(_get_query(db_name)[:1000])
+            if metas:
+                for meta in metas:
+                    bytes_deleted += meta.content_length or 0
+                db.bulk_delete(metas=metas)
                 datadog_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
-                datadog_counter('commcare.icds_images.count_deleted', value=len(paths))
+                datadog_counter('commcare.icds_images.count_deleted', value=len(metas))
                 run_again = True
 
         if run_again:

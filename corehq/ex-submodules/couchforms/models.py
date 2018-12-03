@@ -288,7 +288,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                 return None
 
     def get_attachment(self, attachment_name):
-        return self.fetch_attachment(attachment_name)
+        return self.fetch_attachment(attachment_name, return_bytes=True)
 
     def get_xml_element(self):
         xml_string = self.get_xml()
