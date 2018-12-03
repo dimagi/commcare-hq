@@ -55,4 +55,5 @@ branches:
   - mk-populate-translation-app  # MK Nov 28
   - jls/update-palette  # Jenny 11/30
   - rn_migrate_multimedia # Rohit 3 Dec
+  - jls/requirejs-custom-data-fields  # Jenny Dec 3
 submodules: {}
