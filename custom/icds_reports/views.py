@@ -53,7 +53,7 @@ from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
 from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AwcLocationMonths
@@ -743,7 +743,7 @@ class ExportIndicatorView(View):
         if indicator == AWW_INCENTIVE_REPORT:
             if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
                 return HttpResponseBadRequest()
-            today = datetime.now(timezone('Asia/Kolkata'))
+            today = datetime.now(INDIA_TIMEZONE)
             if today.day < 15 and month == today.month and year == today.year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
