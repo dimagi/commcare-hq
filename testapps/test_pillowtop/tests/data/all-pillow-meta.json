@@ -202,32 +202,32 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UpdateUserSyncHistoryPillow"
     },
-    "kafka-case-ucr-es": {
+    "case-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "kafka-case-ucr-es-test_hqcases_2016-03-04-test_case_search_2018-05-29",
-        "name": "kafka-case-ucr-es",
-        "advertised_name": "kafka-case-ucr-es",
+        "checkpoint_id": "case-pillow-test_hqcases_2016-03-04-test_case_search_2018-05-29",
+        "name": "case-pillow",
+        "advertised_name": "case-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
     },
-    "kafka-xform-ucr-es": {
+    "xform-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "kafka-xform-ucr-es-test_xforms_2016-07-07-test_report_xforms_20160824_1708-test_hqusers_2017-09-07",
-        "name": "kafka-xform-ucr-es",
-        "advertised_name": "kafka-xform-ucr-es",
+        "checkpoint_id": "xform-pillow-test_xforms_2016-07-07-test_report_xforms_20160824_1708-test_hqusers_2017-09-07",
+        "name": "xform-pillow",
+        "advertised_name": "xform-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
     },
-    "user-to-es-ucr-pillow": {
+    "user-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "user-to-es-ucr-pillow-test_hqusers_2017-09-07",
-        "name": "user-to-es-ucr-pillow",
-        "advertised_name": "user-to-es-ucr-pillow",
+        "checkpoint_id": "user-pillow-test_hqusers_2017-09-07",
+        "name": "user-pillow",
+        "advertised_name": "user-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
     },
-    "GroupESPillow": {
+    "group-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupESPillow-test_hqusers_2017-09-07-test_hqgroups_2017-05-29",
-        "name": "GroupESPillow",
-        "advertised_name": "GroupESPillow",
+        "checkpoint_id": "group-pillow-test_hqusers_2017-09-07-test_hqgroups_2017-05-29",
+        "name": "group-pillow",
+        "advertised_name": "group-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
     },
     "location-ucr-pillow": {
