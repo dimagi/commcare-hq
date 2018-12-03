@@ -195,6 +195,8 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
+_soft_assert = soft_assert(to="{}@{}.com".format('npellegrino', 'dimagi'), exponential_backoff=True)
+
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
@@ -718,8 +720,10 @@ class FormSource(object):
             source = ''
         else:
             source = app.lazy_fetch_attachment(filename)
-            assert isinstance(source, bytes), type(source)
-            source = source.decode('utf-8')
+            if isinstance(source, bytes):
+                source = source.decode('utf-8')
+            else:
+                _soft_assert(False, type(source))
 
         return source
 
@@ -727,8 +731,11 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
-        assert isinstance(value, six.text_type), type(value)
-        app.lazy_put_attachment(value.encode('utf-8'), filename)
+        if isinstance(value, six.text_type):
+            value = value.encode('utf-8')
+        else:
+            _soft_assert(False, type(value))
+        app.lazy_put_attachment(value, filename)
         form.clear_validation_cache()
         try:
             form.xmlns = form.wrapped_xform().data_node.tag_xmlns
