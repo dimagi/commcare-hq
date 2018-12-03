@@ -6,6 +6,7 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
+from pytz import timezone
 
 from datetime import datetime, date
 from memoized import memoized
@@ -741,6 +742,9 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
         if indicator == AWW_INCENTIVE_REPORT:
             if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
+                return HttpResponseBadRequest()
+            today = datetime.now(timezone('Asia/Kolkata'))
+            if today.day < 15 and month == today.month and year == today.year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT):
