@@ -1,10 +1,5 @@
 from __future__ import absolute_import
-from corehq.apps.app_manager.views.translations import (
-    upload_bulk_ui_translations,
-    download_bulk_ui_translations,
-    download_bulk_app_translations,
-    upload_bulk_app_translations,
-)
+
 from corehq.apps.app_manager.views.app_summary import (
     AppCaseSummaryView,
     AppDataView,
@@ -58,6 +53,11 @@ from corehq.apps.app_manager.views.download import (
     download_xform,
     DownloadCCZ,
     validate_form_for_build,
+)
+from corehq.apps.app_manager.views.formdesigner import (
+    form_source,
+    form_source_legacy,
+    get_form_data_schema,
 )
 from corehq.apps.app_manager.views.forms import (
     copy_form,
@@ -117,9 +117,4 @@ from corehq.apps.app_manager.views.settings import (
     edit_commcare_profile,
     edit_commcare_settings,
     PromptSettingsUpdateView,
-)
-from corehq.apps.app_manager.views.formdesigner import (
-    form_source,
-    form_source_legacy,
-    get_form_data_schema,
 )
