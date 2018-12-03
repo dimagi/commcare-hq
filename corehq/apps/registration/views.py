@@ -126,7 +126,11 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            self._create_new_account(reg_form)
+            ab_test = ab_tests.ABTest(ab_tests.APPCUES_V3_APP, self.request)
+            appcues_ab_test = ab_test.context['version']
+            self._create_new_account(reg_form, additional_hubspot_data={
+                "appcues_test": appcues_ab_test,
+            })
             try:
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
@@ -146,6 +150,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
             return {
                 'success': True,
+                'appcues_ab_test': appcues_ab_test
             }
         logging.error(
             "There was an error processing a new user registration form."
