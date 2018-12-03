@@ -59,7 +59,7 @@ class ReportCasePillowTest(TestCase):
     def _create_case_and_sync_to_es(self, domain):
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        with process_pillow_changes('kafka-case-ucr-es'):
+        with process_pillow_changes('case-pillow'):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(domain, case_id, case_name)
         self.elasticsearch.indices.refresh(REPORT_CASE_INDEX_INFO.index)

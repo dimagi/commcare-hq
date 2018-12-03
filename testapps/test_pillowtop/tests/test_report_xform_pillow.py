@@ -57,7 +57,7 @@ class ReportXformPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self, domain):
-        with process_pillow_changes('kafka-xform-ucr-es', {'skip_ucr': True}):
+        with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 metadata = TestFormMetadata(domain=domain)
                 form = get_form_ready_to_save(metadata)

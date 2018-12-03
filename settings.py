@@ -1670,7 +1670,7 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
-            'name': 'kafka-case-ucr-es',
+            'name': 'case-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_case_pillow',
             'params': {
@@ -1678,7 +1678,7 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'kafka-xform-ucr-es',
+            'name': 'xform-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_xform_pillow',
             'params': {
@@ -1691,7 +1691,7 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
         {
-            'name': 'user-to-es-ucr-pillow',
+            'name': 'user-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_es_ucr_pillow',
         },
@@ -1711,7 +1711,7 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
         },
         {
-            'name': 'GroupESPillow',
+            'name': 'group-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_es_pillow',
         },

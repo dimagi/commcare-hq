@@ -66,7 +66,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
 
 
 def get_case_pillow(
-        pillow_id='kafka-case-ucr-es', ucr_division=None,
+        pillow_id='case-pillow', ucr_division=None,
         include_ucrs=None, exclude_ucrs=None,
         num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):

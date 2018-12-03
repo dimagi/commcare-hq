@@ -13,13 +13,13 @@ from pillowtop.utils import get_pillow_by_name
 
 
 PILLOW_REORG_MAPPING = {
-    'kafka-case-ucr-es': [
+    'case-pillow': [
         'kafka-ucr-main',
         'kafka-ucr-static',
         'ReportCaseToElasticsearchPillow',
         'CaseToElasticsearchPillow'
     ],
-    'kafka-xform-ucr-es': [
+    'xform-pillow': [
         'kafka-ucr-main',
         'kafka-ucr-static',
         'ReportXFormToElasticsearchPillow',
@@ -27,11 +27,11 @@ PILLOW_REORG_MAPPING = {
         'FormSubmissionMetadataTrackerPillow',
         'UnknownUsersPillow'
     ],
-    'GroupESPillow': [
+    'group-pillow': [
         'GroupPillow',
         'GroupToUserPillow'
     ],
-    'user-to-es-ucr-pillow': [
+    'user-pillow': [
         'kafka-ucr-main',
         'kafka-ucr-static',
         'UserPillow'
