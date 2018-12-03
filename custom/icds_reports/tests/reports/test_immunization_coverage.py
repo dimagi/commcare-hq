@@ -216,18 +216,18 @@ class TestImmunizationCoverage(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {'loc_name': u'st4', 'percent': 0.0},
-                    {'loc_name': u'st5', 'percent': 0.0},
-                    {'loc_name': u'st6', 'percent': 0.0},
-                    {'loc_name': u'st7', 'percent': 0.0},
-                    {'loc_name': u'st3', 'percent': 0.0}
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {'loc_name': u'st1', 'percent': 14.56140350877193},
-                    {'loc_name': u'st2', 'percent': 7.258064516129032},
-                    {'loc_name': u'st4', 'percent': 0.0},
-                    {'loc_name': u'st5', 'percent': 0.0},
-                    {'loc_name': u'st6', 'percent': 0.0}
+                    {'loc_name': 'st1', 'percent': 14.56140350877193},
+                    {'loc_name': 'st2', 'percent': 7.258064516129032},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -264,13 +264,13 @@ class TestImmunizationCoverage(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {'loc_name': u'st1', 'percent': 14.56140350877193},
-                    {'loc_name': u'st2', 'percent': 7.258064516129032},
-                    {'loc_name': u'st4', 'percent': 0.0},
-                    {'loc_name': u'st5', 'percent': 0.0},
-                    {'loc_name': u'st6', 'percent': 0.0},
-                    {'loc_name': u'st7', 'percent': 0.0},
-                    {'loc_name': u'st3', 'percent': 0.0}
+                    {'loc_name': 'st1', 'percent': 14.56140350877193},
+                    {'loc_name': 'st2', 'percent': 7.258064516129032},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )

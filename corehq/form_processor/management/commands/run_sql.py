@@ -20,6 +20,7 @@ from django.db import connections
 from six.moves import input
 
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from six.moves import zip
 
 MULTI_DB = 'Executing on ALL (%s) databases in parallel. Continue?'
 
