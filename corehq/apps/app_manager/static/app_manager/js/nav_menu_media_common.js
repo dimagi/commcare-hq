@@ -1,10 +1,9 @@
-/* globals HQMediaFileUploadController */
+/* globals HQMediaUploaderTypes */
 hqDefine("app_manager/js/nav_menu_media_common", function () {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
         uploaders = {};
-
     _.each(initial_page_data("multimedia_upload_managers"), function (uploader, type) {
-        uploaders[type] = new HQMediaFileUploadController(
+        uploaders[type] = new HQMediaUploaderTypes['file'](
             uploader.slug,
             uploader.media_type,
             _.extend({}, uploader.options, {
