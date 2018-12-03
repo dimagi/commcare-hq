@@ -4568,11 +4568,16 @@ class LazyBlobDoc(BlobMixin):
         self._LAZY_ATTACHMENTS_CACHE[name] = content
 
     def __get_cached_attachment(self, name):
+        print '__get_cached_attachment'
         try:
             # it has been fetched already during this request
             content = self._LAZY_ATTACHMENTS_CACHE[name]
+            print 'A'
+            print type(content)
         except KeyError:
             content = cache.get(self.__attachment_cache_key(name))
+            print 'B'
+            print type(content)
             if content is not None:
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
