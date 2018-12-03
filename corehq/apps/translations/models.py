@@ -113,8 +113,8 @@ class TransifexBlacklist(models.Model):
             ('list', 'Case List'),
         )
     )
-    field_name = models.CharField(max_length=255)
-    display_text = models.CharField(max_length=255)
+    field_name = models.TextField()
+    display_text = models.TextField()
 
 
 admin.site.register(TransifexBlacklist)
