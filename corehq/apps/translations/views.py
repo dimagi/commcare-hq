@@ -55,8 +55,8 @@ def upload_bulk_ui_translations(request, domain, app_id):
         else:
             # update translations only if there were no errors
             if isinstance(app, LinkedApplication):
-                app.linked_app_translations = dict(trans_dict)
-            app.translations = dict(trans_dict)
+                app.linked_app_translations.update(dict(trans_dict))
+            app.translations.update(dict(trans_dict))
             app.save()
             success = True
             if warnings:
