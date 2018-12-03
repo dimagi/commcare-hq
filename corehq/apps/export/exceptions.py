@@ -9,10 +9,6 @@ class BadExportConfiguration(ExportAppException):
     pass
 
 
-class ExportNotFound(ExportAppException):
-    pass
-
-
 class ExportFormValidationException(Exception):
     pass
 

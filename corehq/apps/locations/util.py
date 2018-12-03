@@ -39,25 +39,14 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     only_administrative - if False get all locations
                           if True get only administrative locations
     """
-    from .permissions import (user_can_edit_location, user_can_view_location,
-        user_can_access_location_id)
-
-    def loc_to_json(loc, project):
-        ret = {
+    def loc_to_json(loc):
+        return {
             'name': loc.name,
             'location_type': loc.location_type.name,  # todo: remove when types aren't optional
             'uuid': loc.location_id,
             'is_archived': loc.is_archived,
             'can_edit': True
         }
-        if user:
-            if user.has_permission(domain, 'access_all_locations'):
-                ret['can_edit'] = user_can_edit_location(user, loc, project)
-            else:
-                ret['can_edit'] = user_can_access_location_id(domain, user, loc.location_id)
-        return ret
-
-    project = Domain.get_by_name(domain)
 
     locations = SQLLocation.root_locations(
         domain, include_archive_ancestors=include_archived
@@ -66,10 +55,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     if only_administrative:
         locations = locations.filter(location_type__administrative=True)
 
-    loc_json = [
-        loc_to_json(loc, project) for loc in locations
-        if user is None or user_can_view_location(user, loc, project)
-    ]
+    loc_json = [loc_to_json(loc) for loc in locations]
 
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
@@ -95,10 +81,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
                 # there are some instances in viewing archived locations where we don't actually
                 # support drilling all the way down.
                 break
-            this_loc['children'] = [
-                loc_to_json(loc, project) for loc in children
-                if user is None or user_can_view_location(user, loc, project)
-            ]
+            this_loc['children'] = [loc_to_json(loc) for loc in children]
             parent = this_loc
 
     return loc_json

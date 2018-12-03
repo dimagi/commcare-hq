@@ -34,8 +34,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-11-20 21:26+0000\n"
-"PO-Revision-Date: 2018-11-13 18:08+0000\n"
+"POT-Creation-Date: 2018-11-27 20:59+0000\n"
+"PO-Revision-Date: 2018-11-20 21:27+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -115,7 +115,7 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/keyword.html:18
 #: corehq/apps/reminders/templates/reminders/keyword.html:27
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html:7
-#: corehq/apps/reports/standard/cases/basic.py:352
+#: corehq/apps/reports/standard/cases/basic.py:358
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:17
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:6
 #: corehq/apps/reports/templates/reports/project_health/user_details.html:3
@@ -200,7 +200,7 @@ msgstr "Utilisateurs mobiles"
 #: corehq/messaging/smsbackends/unicel/forms.py:11
 #: corehq/motech/dhis2/forms.py:31 corehq/motech/openmrs/forms.py:72
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_info.html:8
-#: custom/abt/reports/filters.py:89 custom/abt/reports/late_pmt.py:125
+#: custom/abt/reports/filters.py:89 custom/abt/reports/late_pmt.py:126
 #: custom/openclinica/forms.py:20
 msgid "Username"
 msgstr "Nom d'utilisateur"
@@ -394,7 +394,7 @@ msgid "Is Hidden"
 msgstr "Est caché"
 
 #: corehq/apps/accounting/filters.py:192
-#: corehq/apps/reports/standard/cases/basic.py:355
+#: corehq/apps/reports/standard/cases/basic.py:361
 msgid "Created By"
 msgstr "Créé par"
 
@@ -838,7 +838,7 @@ msgstr ""
 #: corehq/apps/sms/views.py:2054
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py:30
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html:99
-#: custom/abt/reports/late_pmt.py:126
+#: custom/abt/reports/late_pmt.py:127
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:115
 msgid "Phone Number"
 msgstr "Numéro de téléphone"
@@ -865,7 +865,7 @@ msgid "Postal Code"
 msgstr "Code Postale"
 
 #: corehq/apps/accounting/models.py:585 custom/abt/reports/filters.py:100
-#: custom/abt/reports/late_pmt.py:127
+#: custom/abt/reports/late_pmt.py:128
 msgid "Country"
 msgstr "Pays"
 
@@ -1864,7 +1864,7 @@ msgstr "État Numero"
 #: corehq/apps/data_interfaces/views.py:713
 #: corehq/apps/domain/templates/domain/partials/project_version_display.html:38
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html:18
-#: corehq/apps/reports/standard/cases/basic.py:357
+#: corehq/apps/reports/standard/cases/basic.py:363
 #: corehq/apps/reports/standard/ivr.py:198
 #: corehq/apps/reports/standard/sms.py:746
 #: corehq/apps/reports/standard/sms.py:943
@@ -3378,8 +3378,8 @@ msgstr "Supprimer"
 #: corehq/apps/users/templates/users/web_users.html:229
 #: custom/ilsgateway/tanzania/reports/facility_details.py:124
 #: custom/ilsgateway/tanzania/reports/supervision.py:128
-#: custom/intrahealth/sqldata.py:433 custom/intrahealth/sqldata.py:1586
-#: custom/up_nrhm/sql_data.py:282
+#: custom/intrahealth/sqldata.py:433 custom/intrahealth/sqldata.py:1583
+#: custom/up_nrhm/sql_data.py:276
 msgid "Date"
 msgstr "Date"
 
@@ -3828,6 +3828,7 @@ msgstr "Ajouter les utilisateurs:"
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:38
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html:34
 #: custom/icds_reports/forms.py:51
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:14
 msgid "Action"
 msgstr "Action"
 
@@ -4216,14 +4217,14 @@ msgstr ""
 msgid "We found more rows than expected. Validating what was uploaded."
 msgstr ""
 
-#: corehq/apps/app_manager/fields.py:74 corehq/apps/hqwebapp/doc_info.py:192
+#: corehq/apps/app_manager/fields.py:78 corehq/apps/hqwebapp/doc_info.py:192
 #: corehq/apps/sms/models.py:950 corehq/apps/sms/models.py:1464
 #: corehq/apps/sms/views.py:776
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html:20
 msgid "Case"
 msgstr "Dossier"
 
-#: corehq/apps/app_manager/fields.py:76 corehq/apps/app_manager/fields.py:187
+#: corehq/apps/app_manager/fields.py:80 corehq/apps/app_manager/fields.py:191
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html:90
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:188
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html:10
@@ -4243,12 +4244,12 @@ msgstr "Dossier"
 msgid "Form"
 msgstr "Formulaire"
 
-#: corehq/apps/app_manager/fields.py:78 corehq/apps/app_manager/fields.py:90
+#: corehq/apps/app_manager/fields.py:82 corehq/apps/app_manager/fields.py:94
 #: corehq/apps/userreports/templates/userreports/data_source_debugger.html:12
 msgid "Data Source"
 msgstr "Source de données"
 
-#: corehq/apps/app_manager/fields.py:80 corehq/apps/app_manager/fields.py:185
+#: corehq/apps/app_manager/fields.py:84 corehq/apps/app_manager/fields.py:189
 #: corehq/apps/cloudcare/templates/cloudcare/config.html:45
 #: corehq/apps/domain/templates/domain/create_snapshot.html:41
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:24
@@ -4263,39 +4264,39 @@ msgstr "Source de données"
 msgid "Application"
 msgstr "Application"
 
-#: corehq/apps/app_manager/fields.py:82
+#: corehq/apps/app_manager/fields.py:86
 msgid "Type of Data"
 msgstr "Type de données"
 
-#: corehq/apps/app_manager/fields.py:186
+#: corehq/apps/app_manager/fields.py:190
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html:19
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html:45
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:194
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:231
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:249
 #: corehq/apps/reports/filters/forms.py:574
 msgid "Menu"
 msgstr "Menu"
 
-#: corehq/apps/app_manager/fields.py:190 corehq/apps/app_manager/fields.py:195
+#: corehq/apps/app_manager/fields.py:194 corehq/apps/app_manager/fields.py:199
 #: corehq/apps/export/forms.py:129
 msgid "Select Application"
 msgstr "Choisir l'application"
 
-#: corehq/apps/app_manager/fields.py:191
+#: corehq/apps/app_manager/fields.py:195
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html:87
 #: corehq/apps/export/forms.py:135
 msgid "Select Menu"
 msgstr "Sélectionnez le menu"
 
-#: corehq/apps/app_manager/fields.py:192 corehq/apps/export/forms.py:140
+#: corehq/apps/app_manager/fields.py:196 corehq/apps/export/forms.py:140
 msgid "Select Form"
 msgstr "Choisir le formulaire"
 
-#: corehq/apps/app_manager/fields.py:196 corehq/apps/export/forms.py:151
+#: corehq/apps/app_manager/fields.py:200 corehq/apps/export/forms.py:151
 msgid "Select Case Type"
 msgstr "Choisir type de dossier"
 
-#: corehq/apps/app_manager/fields.py:359 corehq/apps/app_manager/fields.py:368
+#: corehq/apps/app_manager/fields.py:363 corehq/apps/app_manager/fields.py:372
 #: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html:13
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html:13
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:18
@@ -4305,9 +4306,9 @@ msgstr "Choisir type de dossier"
 msgid "Applications"
 msgstr "Applications"
 
-#: corehq/apps/app_manager/fields.py:361 corehq/apps/app_manager/fields.py:370
+#: corehq/apps/app_manager/fields.py:365 corehq/apps/app_manager/fields.py:374
 #: corehq/apps/app_manager/views/app_summary.py:163
-#: corehq/apps/export/models/new.py:1177 corehq/apps/export/models/new.py:1193
+#: corehq/apps/export/models/new.py:1179 corehq/apps/export/models/new.py:1195
 #: corehq/apps/export/templates/export/partials/table.html:398
 #: corehq/apps/reports/standard/deployments.py:216
 #: corehq/apps/reports/standard/sms.py:191
@@ -4320,11 +4321,11 @@ msgstr "Applications"
 msgid "Unknown"
 msgstr "Inconnu"
 
-#: corehq/apps/app_manager/fields.py:393 corehq/apps/app_manager/fields.py:545
+#: corehq/apps/app_manager/fields.py:397 corehq/apps/app_manager/fields.py:557
 msgid "Unknown Application"
 msgstr "Application inconnue"
 
-#: corehq/apps/app_manager/fields.py:443
+#: corehq/apps/app_manager/fields.py:455
 msgid "Unknown Module"
 msgstr "Utilisateur inconnu"
 
@@ -6361,7 +6362,7 @@ msgstr "Recueillir des données une fois."
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html:221
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html:395
 #: corehq/apps/app_manager/views/modules.py:340
-#: corehq/apps/reports/standard/cases/basic.py:266
+#: corehq/apps/reports/standard/cases/basic.py:272
 msgid "Case List"
 msgstr "Liste de dossiers"
 
@@ -6510,7 +6511,8 @@ msgstr "Installer CommCare"
 #: corehq/apps/export/templates/export/partials/table.html:254
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html:25
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html:35
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:494
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:512
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:530
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_30_day_trial.html:7
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_30_day_trial.html:52
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html:18
@@ -7024,7 +7026,7 @@ msgid "Close this case when the form is complete"
 msgstr "Fermer ce dossier une fois le formulaire complété"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html:81
-#: corehq/apps/export/models/new.py:1171
+#: corehq/apps/export/models/new.py:1173
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html:25
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:75
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:30
@@ -7184,7 +7186,7 @@ msgstr "Étiquette de dossier"
 #: corehq/apps/export/templates/export/customize_export_new.html:50
 #: corehq/apps/export/templates/export/partials/table.html:18
 #: corehq/apps/reports/filters/select.py:70
-#: corehq/apps/reports/standard/cases/basic.py:351
+#: corehq/apps/reports/standard/cases/basic.py:357
 #: corehq/ex-submodules/casexml/apps/case/views.py:62
 #: corehq/ex-submodules/casexml/apps/case/views.py:103
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:36
@@ -7710,7 +7712,7 @@ msgid "Allow unscheduled visits"
 msgstr "Permettre les visites non planifiées"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html:154
-#: corehq/apps/export/models/new.py:1157
+#: corehq/apps/export/models/new.py:1159
 #: corehq/messaging/scheduling/forms.py:1653
 msgid "Repeat"
 msgstr "Répéter "
@@ -10744,6 +10746,8 @@ msgstr "Numéro de construction"
 
 #: corehq/apps/builds/templates/builds/all.html:9
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:7
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:12
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:17
 msgid "Time"
 msgstr "Heure"
 
@@ -11051,6 +11055,7 @@ msgstr "Créer de nouveaux dossiers s'il n'y a aucun dossier correspondant"
 #: corehq/apps/export/templates/export/customize_export_new.html:265
 #: corehq/apps/settings/forms.py:126 corehq/apps/settings/forms.py:163
 #: corehq/apps/settings/forms.py:195 corehq/apps/settings/forms.py:239
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:5
 msgid "Back"
 msgstr "Retour"
 
@@ -11145,6 +11150,7 @@ msgstr "Détails"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:11
 #: corehq/apps/export/templates/export/download_data_files.html:96
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:47
 msgid "File"
 msgstr "Fichier"
 
@@ -11966,7 +11972,7 @@ msgid "Settings updated!"
 msgstr "Paramètres mis à jour !"
 
 #: corehq/apps/commtrack/views.py:163 custom/intrahealth/sqldata.py:532
-#: custom/intrahealth/sqldata.py:1769
+#: custom/intrahealth/sqldata.py:1766
 msgid "Consumption"
 msgstr "Consommation"
 
@@ -12583,7 +12589,7 @@ msgid "Case Name"
 msgstr "Nom de dossier"
 
 #: corehq/apps/data_interfaces/interfaces.py:74
-#: corehq/apps/reports/standard/cases/basic.py:353
+#: corehq/apps/reports/standard/cases/basic.py:359
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html:11
 #: corehq/ex-submodules/casexml/apps/case/views.py:72
 #: corehq/ex-submodules/casexml/apps/case/views.py:107
@@ -16263,7 +16269,7 @@ msgstr "Votre mot de passe a été modifié avec succès."
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html:11
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html:15
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html:9
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:203
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:204
 msgid "Sign In"
 msgstr "Connexion"
 
@@ -17223,12 +17229,12 @@ msgstr "CommCare Supply"
 msgid "Case Owner(s)"
 msgstr ""
 
-#: corehq/apps/export/forms.py:264 corehq/apps/reports/filters/users.py:223
+#: corehq/apps/export/forms.py:264 corehq/apps/reports/filters/users.py:209
 msgid "User(s)"
 msgstr ""
 
 #: corehq/apps/export/forms.py:269 corehq/apps/export/forms.py:490
-#: corehq/apps/export/forms.py:966 corehq/apps/export/forms.py:1022
+#: corehq/apps/export/forms.py:978 corehq/apps/export/forms.py:1035
 #: corehq/apps/reports/daterange.py:23 corehq/apps/reports/filters/dates.py:19
 #: corehq/apps/reports/filters/dates.py:62
 #: corehq/apps/reports/templates/reports/reports_home.html:53
@@ -17320,11 +17326,11 @@ msgid ""
 "Filters forms by date received. The timezone for this export is %(timezone)s."
 msgstr ""
 
-#: corehq/apps/export/forms.py:968
+#: corehq/apps/export/forms.py:980
 msgid "Export cases modified in this date range"
 msgstr ""
 
-#: corehq/apps/export/forms.py:1024
+#: corehq/apps/export/forms.py:1037
 msgid "Export messages sent in this date range"
 msgstr "Exporter les messages envoyés pendant cette période/plage de date"
 
@@ -17332,7 +17338,7 @@ msgstr "Exporter les messages envoyés pendant cette période/plage de date"
 msgid "The ID of the associated {} case type"
 msgstr "L’identifiant du type de dossier associé {}  "
 
-#: corehq/apps/export/models/new.py:994
+#: corehq/apps/export/models/new.py:995
 msgid ""
 "XLS format does not support more than 255 columns. Please select a different "
 "file type"
@@ -17340,12 +17346,12 @@ msgstr ""
 "Le format XLS ne prend pas en charge plus de 255 colonnes. Sélectionnez un "
 "type de fichier différent"
 
-#: corehq/apps/export/models/new.py:1146 corehq/apps/export/models/new.py:1181
+#: corehq/apps/export/models/new.py:1148 corehq/apps/export/models/new.py:1183
 #, python-brace-format
 msgid "{name} (created {date})"
 msgstr ""
 
-#: corehq/apps/export/models/new.py:1154
+#: corehq/apps/export/models/new.py:1156
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html:24
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:67
 #: corehq/apps/userreports/app_manager/data_source_meta.py:16
@@ -17353,42 +17359,42 @@ msgstr ""
 msgid "Forms"
 msgstr "Formulaires"
 
-#: corehq/apps/export/models/new.py:1163
+#: corehq/apps/export/models/new.py:1165
 msgid "Repeat: {}"
 msgstr "Répéter : {}"
 
-#: corehq/apps/export/models/new.py:1173
+#: corehq/apps/export/models/new.py:1175
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html:48
 msgid "Case History"
 msgstr "Historique de dossier"
 
-#: corehq/apps/export/models/new.py:1175
+#: corehq/apps/export/models/new.py:1177
 msgid "Parent Cases"
 msgstr "Dossiers parents"
 
-#: corehq/apps/export/models/new.py:1191 corehq/tabs/tabclasses.py:1117
+#: corehq/apps/export/models/new.py:1193 corehq/tabs/tabclasses.py:1117
 #: corehq/tabs/tabclasses.py:1152
 msgid "Messages"
 msgstr "Messages"
 
-#: corehq/apps/export/models/new.py:1197
+#: corehq/apps/export/models/new.py:1199
 #, python-brace-format
 msgid "Messages (created {date})"
 msgstr ""
 
-#: corehq/apps/export/models/new.py:2331
+#: corehq/apps/export/models/new.py:2333
 msgid "{}: latitude (degrees)"
 msgstr "{}: latitude (degrés)"
 
-#: corehq/apps/export/models/new.py:2332
+#: corehq/apps/export/models/new.py:2334
 msgid "{}: longitude (degrees)"
 msgstr "{}: longitude (degrès)"
 
-#: corehq/apps/export/models/new.py:2333
+#: corehq/apps/export/models/new.py:2335
 msgid "{}: altitude (meters)"
 msgstr "{}: altitude (mètres)"
 
-#: corehq/apps/export/models/new.py:2334
+#: corehq/apps/export/models/new.py:2336
 msgid "{}: accuracy (meters)"
 msgstr "{}: exactitude (mètres)"
 
@@ -17987,15 +17993,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/export_list_controller.html:16
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "            These %(export_type_plural)s are <strong>De-Identified</"
-#| "strong>, meaning that\n"
-#| "            the administrator of this domain has removed all personally-"
-#| "identifying\n"
-#| "            properties from the exported data.\n"
-#| "        "
+#, python-format
 msgid ""
 "\n"
 "        These %(export_type_plural)s are <strong>De-Identified</strong>, "
@@ -18005,25 +18003,14 @@ msgid ""
 "        properties from the exported data.\n"
 "    "
 msgstr ""
-"\n"
-"Ces %(export_type_plural)s sont  <strong>anonymisés</strong>, ce qui "
-"signifie que\n"
-"l'administrateur de ce domaine a enlevé toutes les propriétés pouvant\n"
-"identifier un individu à partir des données exportées. "
 
 #: corehq/apps/export/templates/export/partials/export_list_controller.html:28
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                Create New %(export_type_caps)s\n"
-#| "            "
+#, python-format
 msgid ""
 "\n"
 "                    Create New %(export_type_caps)s\n"
 "                "
 msgstr ""
-"\n"
-"Créer un nouveau %(export_type_caps)s"
 
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html:16
 msgid "Loading Form"
@@ -18103,14 +18090,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html:89
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                        It seems as though you haven't submitted any data "
-#| "to CommCare HQ.\n"
-#| "                        Please deploy an Application and submit data "
-#| "before creating any %(export_type_plural)s.\n"
-#| "                    "
+#, python-format
 msgid ""
 "\n"
 "                        It seems as though you haven't submitted any data to "
@@ -18119,10 +18099,6 @@ msgid ""
 "creating any %(export_type_plural)s.\n"
 "                    "
 msgstr ""
-"\n"
-"Il semble que vous n'avez pas soumis de données à ComCare HQ. \n"
-"Veuillez déployer une application et soumettre des données avant de créer "
-"des %(export_type_plural)s."
 
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html:97
 msgid "How to Create and Deploy a CommCare Application."
@@ -18147,10 +18123,8 @@ msgid "This export is limited to the following locations:"
 msgstr "Ce téléchargement est limité aux sites suivants:"
 
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html:27
-#, fuzzy
-#| msgid "There was an unknown saving the filters"
 msgid "There was an unknown error saving the filters"
-msgstr "Il y avait une inconnue en eregistrant les filtres"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html:36
 msgid "Save filters"
@@ -18329,29 +18303,15 @@ msgid "Form:"
 msgstr "Formulaire: "
 
 #: corehq/apps/export/templates/export/partials/table.html:85
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                        Pay a portion of the balance:\n"
-#| "                        "
 msgid ""
 "\n"
 "                        This export is filtered to data you don't have "
 "access to.\n"
 "                    "
 msgstr ""
-"\n"
-"Payer une partie du solde:"
 
 #: corehq/apps/export/templates/export/partials/table.html:93
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            To create a new saved report, navigate to a "
-#| "report,\n"
-#| "                            select the filters you want to save, and "
-#| "click \"Save\".\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                            Automatic updates for this saved %(export_type)s "
@@ -18359,10 +18319,6 @@ msgid ""
 "                            to re-enable automatic updates.\n"
 "                        "
 msgstr ""
-"\n"
-"Pour créer un nouveau rapport sauvegardé, naviguer vers un rapport,\n"
-"sélectionnez les filtres que vous voulez enregistrés et appuyez sur "
-"\"Enregistrer\"."
 
 #: corehq/apps/export/templates/export/partials/table.html:103
 msgid "Size:"
@@ -18381,10 +18337,8 @@ msgid "Last Downloaded:"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/table.html:118
-#, fuzzy
-#| msgid "Last updated on"
 msgid "Last Build Duration:"
-msgstr "Dernière mise à jour"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partials/table.html:133
 #: corehq/apps/export/templates/export/partials/table.html:243
@@ -18400,15 +18354,7 @@ msgid "Copy Dashboard Feed Link"
 msgstr "Copier le lien du fil du tableau de bord"
 
 #: corehq/apps/export/templates/export/partials/table.html:185
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data. You can remove this group from "
-#| "reports by\n"
-#| "                                    editing this group's settings.\n"
-#| "                                    "
+#, python-format
 msgid ""
 "\n"
 "                                    This saved %(export_type)s has expired "
@@ -18418,10 +18364,6 @@ msgid ""
 "                                    button and download the file.\n"
 "                                "
 msgstr ""
-"\n"
-"Les groupes de signalement sont utilisés dans les rapports pour filtrer et "
-"afficher les données. Vous pouvez enlever ce groupe des rapports en "
-"modifiant les paramètres du groupe."
 
 #: corehq/apps/export/templates/export/partials/table.html:193
 msgid "Data update started."
@@ -18434,14 +18376,6 @@ msgstr ""
 "de la page requise)"
 
 #: corehq/apps/export/templates/export/partials/table.html:200
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Visit schedule will be ignored as not "
-#| "all\n"
-#| "                                    forms in the case list update or "
-#| "close a case.\n"
-#| "                                "
 msgid ""
 "\n"
 "                                    <strong>No data is available yet.</"
@@ -18450,26 +18384,12 @@ msgid ""
 "automatic scheduler hasn't picked up the changes in a while.\n"
 "                                "
 msgstr ""
-"\n"
-"Le calendrier des visites sera ignoré comme pas tous \n"
-"les formulaires dans le module autorisent la mise à jour ou la fermeture "
-"d'un dossier."
 
 #: corehq/apps/export/templates/export/partials/table.html:213
-#, fuzzy
-#| msgid "Confirm data updates."
 msgid "Confirm data updates"
-msgstr "Confirmez les mises à jour des données."
+msgstr ""
 
 #: corehq/apps/export/templates/export/partials/table.html:216
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                  The field label that "
-#| "users will see when adding or editing\n"
-#| "                                                  a %(entity_string)s in "
-#| "CommCareHQ.\n"
-#| "                                              "
 msgid ""
 "\n"
 "                                                To renew daily updates, "
@@ -18478,17 +18398,8 @@ msgid ""
 "finished processing.\n"
 "                                            "
 msgstr ""
-"\n"
-"L'étiquette de champs que l'utilisateur va voir en ajoutant ou modifiant\n"
-"un  %(entity_string)s dans CommCareHQ."
 
 #: corehq/apps/export/templates/export/partials/table.html:223
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                        Add Configuration "
-#| "&rarr; Value Mapping\n"
-#| "                                                    "
 msgid ""
 "\n"
 "                                                    <strong>Once the data is "
@@ -18496,60 +18407,34 @@ msgid ""
 "strong>\n"
 "                                                "
 msgstr ""
-"\n"
-"Ajouter une configuration &rarr; Mappage des valeurs"
 
 #: corehq/apps/export/templates/export/partials/table.html:228
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                      %(entity_string)s "
-#| "Property\n"
-#| "                                                  "
 msgid ""
 "\n"
 "                                                    To download data now, "
 "please click the Export button instead.\n"
 "                                                "
 msgstr ""
-"\n"
-"%(entity_string)s Propriété"
 
 #: corehq/apps/export/templates/export/partials/table.html:256
 msgid "Confirm data updates."
 msgstr "Confirmez les mises à jour des données."
 
 #: corehq/apps/export/templates/export/partials/table.html:260
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                      %(entity_string)s "
-#| "Property\n"
-#| "                                                  "
 msgid ""
 "\n"
 "                                                    This will enable the "
 "daily automatic updates of this export.\n"
 "                                                "
 msgstr ""
-"\n"
-"%(entity_string)s Propriété"
 
 #: corehq/apps/export/templates/export/partials/table.html:265
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                      %(entity_string)s "
-#| "Property\n"
-#| "                                                  "
 msgid ""
 "\n"
 "                                                    This will disable the "
 "daily automatic updates of this export.\n"
 "                                                "
 msgstr ""
-"\n"
-"%(entity_string)s Propriété"
 
 #: corehq/apps/export/templates/export/partials/table.html:274
 msgid "Disable auto update"
@@ -21016,21 +20901,41 @@ msgstr "<%%= num %%> Correspondances trouvées"
 msgid "No Matches Found"
 msgstr "Aucune correspondance trouvée"
 
-#: corehq/apps/hqmedia/views.py:292
+#: corehq/apps/hqmedia/views.py:215
+#, fuzzy, python-format
+#| msgid "There was an error processing your request"
+msgid "There was an issue processing the zip file you provided. Error: %s"
+msgstr "Il y a une erreur dans le processus de votre requête"
+
+#: corehq/apps/hqmedia/views.py:220
+msgid "Uploaded file is not a ZIP file."
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py:222
+#, fuzzy
+#| msgid "There was an error."
+msgid "There is no ZIP file."
+msgstr "Une erreur est survenue."
+
+#: corehq/apps/hqmedia/views.py:224
+msgid "Unable to extract the ZIP file."
+msgstr ""
+
+#: corehq/apps/hqmedia/views.py:294
 msgid "Did not process a mime type!"
 msgstr "N'a pas traité un type mime!"
 
-#: corehq/apps/hqmedia/views.py:296
+#: corehq/apps/hqmedia/views.py:298
 #, python-format
 msgid "Not a valid %s file."
 msgstr "N'est pas un %s fichier valide."
 
-#: corehq/apps/hqmedia/views.py:301
+#: corehq/apps/hqmedia/views.py:303
 #, python-brace-format
 msgid "File {name} has an incorrect file type {ext}."
 msgstr "Le fichier {name} contient un type incorrect de fichiers {ext}."
 
-#: corehq/apps/hqmedia/views.py:308
+#: corehq/apps/hqmedia/views.py:310
 #, python-brace-format
 msgid ""
 "The file type of {name} of '{ext}' does not match the file type of the "
@@ -21041,7 +20946,7 @@ msgstr ""
 "média original '{orig_ext}'. Pour changer les types de fichiers, veuillez "
 "les charger directement par l’éditeur de formulaires."
 
-#: corehq/apps/hqmedia/views.py:609
+#: corehq/apps/hqmedia/views.py:611
 msgid ""
 "There was an issue retrieving the status from the cache. We are looking into "
 "it. Please try uploading again."
@@ -21344,19 +21249,28 @@ msgstr ""
 "Si vous pensez que c'est une erreur, veuillez contacter commcarehq-"
 "support@dimagi.com"
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:209
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:213
 msgid "Get Demo"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:251
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:219
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:224
+#: corehq/apps/registration/templates/registration/register_new_user.html:130
+#: corehq/apps/registration/templates/registration/register_new_user.html:135
+#, fuzzy
+#| msgid "Schedule Name"
+msgid "Schedule a Demo"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:269
 msgid "This is a snapshot of "
 msgstr "Voici un instantané de "
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:257
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:275
 msgid "CommCare HQ does not work well with Internet Explorer."
 msgstr "CommCare HQ ne marche pas bien avec Internet Explorer."
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:259
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:277
 msgid ""
 "\n"
 "                        We recommend\n"
@@ -21370,9 +21284,34 @@ msgstr ""
 "<a href=\"https://www.google.com/chrome\">Chrome</a>\n"
 "ou <a href=\"http://www.mozilla.org/\">Firefox</a>."
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:495
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:513
 msgid "Get a Demo of CommCare"
 msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:531
+#, fuzzy
+#| msgid "Request free Demo"
+msgid "Request a CommCare Demo"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:542
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            Mobile Workers can log into applications in "
+#| "this project space\n"
+#| "                            and submit data.\n"
+#| "                        "
+msgid ""
+"\n"
+"                        Select a time to see CommCare in action and review\n"
+"                        questions with our team.\n"
+"                      "
+msgstr ""
+"\n"
+"Les utilisateurs mobiles peuvent se connecter aux applications dans cet "
+"espace projet\n"
+"et soumettre des données. "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:48
 msgid "CommCare HQ Mobile is Copyright"
@@ -24173,16 +24112,21 @@ msgid "Loading...just a second!"
 msgstr "Chargement...juste un instant!"
 
 #: corehq/apps/registration/templates/registration/register_new_user.html:114
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    You are downloading the following exports:\n"
+#| "                "
 msgid ""
 "\n"
 "                    Want to learn more before signing up?\n"
-"                    &nbsp;&nbsp;&nbsp;\n"
-"                    <a href=\"#cta-form-get-demo\" id=\"test-cta-form-get-"
-"demo-button\" target=\"_blank\" data-toggle=\"modal\" class=\"btn btn-purple"
-"\">\n"
-"                        Get a Demo\n"
-"                    </a>\n"
 "                "
+msgstr ""
+"\n"
+"Vous êtes en train de télécharger les exportation suivantes:"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html:123
+msgid "Get a Demo"
 msgstr ""
 
 #: corehq/apps/registration/utils.py:166
@@ -25076,17 +25020,16 @@ msgid "All Case Owners"
 msgstr "Tous les propriétaires de dossier"
 
 #: corehq/apps/reports/filters/users.py:151
-#: corehq/apps/reports/filters/users.py:194
-#: corehq/apps/reports/filters/users.py:283
-#: corehq/apps/reports/filters/users.py:431
+#: corehq/apps/reports/filters/users.py:269
+#: corehq/apps/reports/filters/users.py:417
 msgid "[Active Mobile Workers]"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:225
+#: corehq/apps/reports/filters/users.py:211
 msgid "Add users and groups to filter this report."
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:283
+#: corehq/apps/reports/filters/users.py:269
 msgid "[Deactivated Mobile Workers]"
 msgstr ""
 
@@ -25245,18 +25188,18 @@ msgstr "Le format de configuration n'est pas valide"
 msgid "Project Reports"
 msgstr "Rapports de projets"
 
-#: corehq/apps/reports/standard/cases/basic.py:275
+#: corehq/apps/reports/standard/cases/basic.py:281
 #: corehq/apps/reports/standard/cases/case_list_explorer.py:125
 #: corehq/apps/reports/standard/cases/data_sources.py:267
 #: corehq/apps/reports/v2/formatters/cases.py:114
 msgid "View Case"
 msgstr ""
 
-#: corehq/apps/reports/standard/cases/basic.py:354
+#: corehq/apps/reports/standard/cases/basic.py:360
 msgid "Created Date"
 msgstr "Date de création"
 
-#: corehq/apps/reports/standard/cases/basic.py:356
+#: corehq/apps/reports/standard/cases/basic.py:362
 msgid "Modified Date"
 msgstr "Date modifié"
 
@@ -26328,7 +26271,7 @@ msgstr ""
 msgid "If the problem persists please report an issue."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/filters/location_async.html:12
+#: corehq/apps/reports/templates/reports/filters/location_async.html:13
 #: custom/ilsgateway/templates/ilsgateway/location_async.html:6
 msgid "Location Filter"
 msgstr "Filtre de site"
@@ -27245,7 +27188,7 @@ msgstr "Erreur dans le retraitement du formulaire "
 msgid "Please apply filters to view:"
 msgstr "Veuillez appliquer des filtre pour voir:"
 
-#: corehq/apps/reports/util.py:476
+#: corehq/apps/reports/util.py:472
 msgid "Form cannot be edited because it will create a new case"
 msgstr ""
 
@@ -27389,7 +27332,7 @@ msgstr "nom de dossier"
 msgid "section"
 msgstr "section"
 
-#: corehq/apps/reports/views.py:1675 custom/intrahealth/sqldata.py:1006
+#: corehq/apps/reports/views.py:1675 custom/intrahealth/sqldata.py:1003
 msgid "date"
 msgstr "date"
 
@@ -33294,40 +33237,40 @@ msgstr ""
 "Les identifiants de produits doivent être définis pour toutes les mises à "
 "jour de registres!"
 
-#: corehq/form_processor/submission_post.py:160
-#: corehq/form_processor/submission_post.py:182
+#: corehq/form_processor/submission_post.py:161
+#: corehq/form_processor/submission_post.py:183
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/form_processor/submission_post.py:188
+#: corehq/form_processor/submission_post.py:189
 msgid "You submitted [this form]({}), which affected [this case]({})."
 msgstr ""
 
-#: corehq/form_processor/submission_post.py:192
+#: corehq/form_processor/submission_post.py:193
 msgid "You submitted [this form]({}), which affected these cases: {}."
 msgstr ""
 
-#: corehq/form_processor/submission_post.py:195
+#: corehq/form_processor/submission_post.py:196
 msgid "You submitted [this form]({})."
 msgstr ""
 
-#: corehq/form_processor/submission_post.py:198
+#: corehq/form_processor/submission_post.py:199
 msgid "Your form affected [this case]({})."
 msgstr ""
 
-#: corehq/form_processor/submission_post.py:200
+#: corehq/form_processor/submission_post.py:201
 msgid "Your form affected these cases: {}."
 msgstr ""
 
-#: corehq/form_processor/submission_post.py:205
+#: corehq/form_processor/submission_post.py:206
 msgid "Click to export your [case]({}) or [form]({}) data."
 msgstr ""
 
-#: corehq/form_processor/submission_post.py:208
+#: corehq/form_processor/submission_post.py:209
 msgid "Click to export your [form data]({})."
 msgstr ""
 
-#: corehq/form_processor/submission_post.py:210
+#: corehq/form_processor/submission_post.py:211
 msgid "Click to export your [case data]({})."
 msgstr ""
 
@@ -35997,27 +35940,27 @@ msgstr "Plan de soins"
 msgid "DOT Adherence"
 msgstr "Adhésion DOT"
 
-#: custom/abt/reports/filters.py:105 custom/abt/reports/late_pmt.py:128
+#: custom/abt/reports/filters.py:105 custom/abt/reports/late_pmt.py:129
 msgid "Level 1"
 msgstr ""
 
-#: custom/abt/reports/filters.py:110 custom/abt/reports/late_pmt.py:129
+#: custom/abt/reports/filters.py:110 custom/abt/reports/late_pmt.py:130
 msgid "Level 2"
 msgstr ""
 
-#: custom/abt/reports/filters.py:115 custom/abt/reports/late_pmt.py:130
+#: custom/abt/reports/filters.py:115 custom/abt/reports/late_pmt.py:131
 msgid "Level 3"
 msgstr ""
 
-#: custom/abt/reports/filters.py:120 custom/abt/reports/late_pmt.py:131
+#: custom/abt/reports/filters.py:120 custom/abt/reports/late_pmt.py:132
 msgid "Level 4"
 msgstr ""
 
-#: custom/abt/reports/filters.py:125 custom/abt/reports/late_pmt.py:132
+#: custom/abt/reports/filters.py:125 custom/abt/reports/late_pmt.py:133
 msgid "Submission Status"
 msgstr ""
 
-#: custom/abt/reports/late_pmt.py:124
+#: custom/abt/reports/late_pmt.py:125
 msgid "Date Submitted"
 msgstr ""
 
@@ -39537,10 +39480,10 @@ msgstr "Mois"
 #: custom/intrahealth/sqldata.py:528 custom/intrahealth/sqldata.py:568
 #: custom/intrahealth/sqldata.py:640 custom/intrahealth/sqldata.py:685
 #: custom/intrahealth/sqldata.py:707 custom/intrahealth/sqldata.py:742
-#: custom/intrahealth/sqldata.py:901 custom/intrahealth/sqldata.py:1005
-#: custom/intrahealth/sqldata.py:1111 custom/intrahealth/sqldata.py:1234
-#: custom/intrahealth/sqldata.py:1364 custom/intrahealth/sqldata.py:1485
-#: custom/intrahealth/sqldata.py:1765 custom/intrahealth/sqldata.py:1867
+#: custom/intrahealth/sqldata.py:898 custom/intrahealth/sqldata.py:1002
+#: custom/intrahealth/sqldata.py:1108 custom/intrahealth/sqldata.py:1231
+#: custom/intrahealth/sqldata.py:1361 custom/intrahealth/sqldata.py:1482
+#: custom/intrahealth/sqldata.py:1762 custom/intrahealth/sqldata.py:1864
 #: custom/reports/mc/reports/fields.py:8
 msgid "District"
 msgstr "District :"
@@ -39548,14 +39491,14 @@ msgstr "District :"
 #: custom/intrahealth/sqldata.py:289 custom/intrahealth/sqldata.py:392
 #: custom/intrahealth/sqldata.py:530 custom/intrahealth/sqldata.py:570
 #: custom/intrahealth/sqldata.py:642 custom/intrahealth/sqldata.py:687
-#: custom/intrahealth/sqldata.py:1113 custom/intrahealth/sqldata.py:1236
-#: custom/intrahealth/sqldata.py:1366 custom/intrahealth/sqldata.py:1487
-#: custom/intrahealth/sqldata.py:1767 custom/intrahealth/sqldata.py:1869
+#: custom/intrahealth/sqldata.py:1110 custom/intrahealth/sqldata.py:1233
+#: custom/intrahealth/sqldata.py:1363 custom/intrahealth/sqldata.py:1484
+#: custom/intrahealth/sqldata.py:1764 custom/intrahealth/sqldata.py:1866
 msgid "PPS"
 msgstr "PPS"
 
 #: custom/intrahealth/sqldata.py:292 custom/intrahealth/sqldata.py:689
-#: custom/intrahealth/sqldata.py:1490
+#: custom/intrahealth/sqldata.py:1487
 msgid "Stock total"
 msgstr "Stock Total"
 
@@ -39579,32 +39522,32 @@ msgstr "Consommation Non Facturable"
 msgid "PPS Avec Données Soumises"
 msgstr "PPS Avec Données Soumises"
 
-#: custom/intrahealth/sqldata.py:477 custom/intrahealth/sqldata.py:1628
+#: custom/intrahealth/sqldata.py:477 custom/intrahealth/sqldata.py:1625
 msgid "Designations"
 msgstr "Désignations "
 
 #: custom/intrahealth/sqldata.py:479 custom/intrahealth/sqldata.py:575
-#: custom/intrahealth/sqldata.py:1361 custom/intrahealth/sqldata.py:1629
+#: custom/intrahealth/sqldata.py:1358 custom/intrahealth/sqldata.py:1626
 msgid "Stock apres derniere livraison"
 msgstr "Stock après dernière livraison "
 
-#: custom/intrahealth/sqldata.py:480 custom/intrahealth/sqldata.py:1630
+#: custom/intrahealth/sqldata.py:480 custom/intrahealth/sqldata.py:1627
 msgid "Stock disponible et utilisable a la livraison"
 msgstr "Stock disponible et utilisable à la livraison"
 
-#: custom/intrahealth/sqldata.py:481 custom/intrahealth/sqldata.py:1639
+#: custom/intrahealth/sqldata.py:481 custom/intrahealth/sqldata.py:1636
 msgid "Livraison"
 msgstr "Livraison"
 
-#: custom/intrahealth/sqldata.py:482 custom/intrahealth/sqldata.py:1631
+#: custom/intrahealth/sqldata.py:482 custom/intrahealth/sqldata.py:1628
 msgid "Stock Total"
 msgstr "Stock Total"
 
-#: custom/intrahealth/sqldata.py:483 custom/intrahealth/sqldata.py:1632
+#: custom/intrahealth/sqldata.py:483 custom/intrahealth/sqldata.py:1629
 msgid "Precedent"
 msgstr "Précédent "
 
-#: custom/intrahealth/sqldata.py:484 custom/intrahealth/sqldata.py:1633
+#: custom/intrahealth/sqldata.py:484 custom/intrahealth/sqldata.py:1630
 msgid "Recu hors entrepots mobiles"
 msgstr "Reçu hors entrepôts mobiles "
 
@@ -39612,15 +39555,15 @@ msgstr "Reçu hors entrepôts mobiles "
 msgid "Non Facturable"
 msgstr "Non Facturable"
 
-#: custom/intrahealth/sqldata.py:487 custom/intrahealth/sqldata.py:1634
+#: custom/intrahealth/sqldata.py:487 custom/intrahealth/sqldata.py:1631
 msgid "Facturable"
 msgstr "Facturable"
 
-#: custom/intrahealth/sqldata.py:488 custom/intrahealth/sqldata.py:1635
+#: custom/intrahealth/sqldata.py:488 custom/intrahealth/sqldata.py:1632
 msgid "Reelle"
 msgstr "Réelle "
 
-#: custom/intrahealth/sqldata.py:572 custom/intrahealth/sqldata.py:1360
+#: custom/intrahealth/sqldata.py:572 custom/intrahealth/sqldata.py:1357
 msgid "Consommation reelle"
 msgstr "Consommation réelle"
 
@@ -39640,88 +39583,88 @@ msgstr "CMM"
 msgid "Nombre mois stock disponible et utilisable"
 msgstr "Nombre de mois de stock disponible et utilisable"
 
-#: custom/intrahealth/sqldata.py:708 custom/intrahealth/sqldata.py:1007
+#: custom/intrahealth/sqldata.py:708 custom/intrahealth/sqldata.py:1004
 msgid "Retards de livraison (jours)"
 msgstr "Retards de livraison (jours)"
 
-#: custom/intrahealth/sqldata.py:743 custom/intrahealth/sqldata.py:902
+#: custom/intrahealth/sqldata.py:743 custom/intrahealth/sqldata.py:899
 msgid "Montant dû"
 msgstr "Montant dû"
 
-#: custom/intrahealth/sqldata.py:744 custom/intrahealth/sqldata.py:903
+#: custom/intrahealth/sqldata.py:744 custom/intrahealth/sqldata.py:900
 msgid "Montant payé"
 msgstr "Montant payé"
 
-#: custom/intrahealth/sqldata.py:745 custom/intrahealth/sqldata.py:904
+#: custom/intrahealth/sqldata.py:745 custom/intrahealth/sqldata.py:901
 msgid "Payé dans le 30 jours"
 msgstr "Payé dans le 30 jours"
 
-#: custom/intrahealth/sqldata.py:746 custom/intrahealth/sqldata.py:905
+#: custom/intrahealth/sqldata.py:746 custom/intrahealth/sqldata.py:902
 msgid "Payé dans le 3 mois"
 msgstr "Payé dans le 3 mois"
 
-#: custom/intrahealth/sqldata.py:747 custom/intrahealth/sqldata.py:906
+#: custom/intrahealth/sqldata.py:747 custom/intrahealth/sqldata.py:903
 msgid "Payé dans l`annèe"
 msgstr "Payé dans l`année"
 
-#: custom/intrahealth/sqldata.py:1098
+#: custom/intrahealth/sqldata.py:1095
 msgid "collier"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1099
+#: custom/intrahealth/sqldata.py:1096
 msgid "depoprovera"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1100
+#: custom/intrahealth/sqldata.py:1097
 msgid "diu"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1101
+#: custom/intrahealth/sqldata.py:1098
 msgid "jadelle"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1102
+#: custom/intrahealth/sqldata.py:1099
 msgid "microgynon"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1103
+#: custom/intrahealth/sqldata.py:1100
 msgid "microlut"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1104
+#: custom/intrahealth/sqldata.py:1101
 msgid "cu"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1105
+#: custom/intrahealth/sqldata.py:1102
 msgid "preservatif_feminin"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1106
+#: custom/intrahealth/sqldata.py:1103
 msgid "preservatif_masculin"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1107
+#: custom/intrahealth/sqldata.py:1104
 msgid "sayana_press"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1108
+#: custom/intrahealth/sqldata.py:1105
 msgid "implanon"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1229 custom/intrahealth/sqldata.py:1359
-#: custom/intrahealth/sqldata.py:1482 custom/intrahealth/sqldata.py:1762
+#: custom/intrahealth/sqldata.py:1226 custom/intrahealth/sqldata.py:1356
+#: custom/intrahealth/sqldata.py:1479 custom/intrahealth/sqldata.py:1759
 msgid "Product Name"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1230
+#: custom/intrahealth/sqldata.py:1227
 msgid "Display Total Stock"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1231
+#: custom/intrahealth/sqldata.py:1228
 msgid "Default Consumption"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:1865
+#: custom/intrahealth/sqldata.py:1862
 msgid "PPS ID"
 msgstr ""
 
@@ -41721,14 +41664,14 @@ msgid "Date when cheklist was filled"
 msgstr "Date à laquelle la liste de contrôle à été remplie "
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:55
-#: custom/up_nrhm/sql_data.py:168 custom/up_nrhm/sql_data.py:283
+#: custom/up_nrhm/sql_data.py:162 custom/up_nrhm/sql_data.py:277
 msgid "Newborn visits within first day of birth in case of home deliveries"
 msgstr ""
 "Visites des nouveau-nés dans le premier jour de naissance en cas de "
 "livraisons à domicile"
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:56
-#: custom/up_nrhm/sql_data.py:285
+#: custom/up_nrhm/sql_data.py:279
 msgid ""
 "Set of home visits for newborn care as specified in the HBNC guidelines (six "
 "visits in case of Institutional delivery and seven in case of a home "
@@ -41739,45 +41682,45 @@ msgstr ""
 "cas d'accouchement à domicile)"
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:58
-#: custom/up_nrhm/sql_data.py:177 custom/up_nrhm/sql_data.py:288
+#: custom/up_nrhm/sql_data.py:171 custom/up_nrhm/sql_data.py:282
 msgid "Attending VHNDs/Promoting immunization"
 msgstr "Participation aux VHNDs/Promotion de la vaccination"
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:59
-#: custom/up_nrhm/sql_data.py:181 custom/up_nrhm/sql_data.py:290
+#: custom/up_nrhm/sql_data.py:175 custom/up_nrhm/sql_data.py:284
 msgid "Supporting institutional delivery"
 msgstr "Accompagnement des accouchements médicalisés"
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:60
-#: custom/up_nrhm/sql_data.py:185 custom/up_nrhm/sql_data.py:292
+#: custom/up_nrhm/sql_data.py:179 custom/up_nrhm/sql_data.py:286
 msgid "Management of childhood illness - especially diarrhea and pneumonia"
 msgstr ""
 "Gestion des maladies de l’enfance – notamment la diarrhée et pneumonie."
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:61
-#: custom/up_nrhm/sql_data.py:189 custom/up_nrhm/sql_data.py:294
+#: custom/up_nrhm/sql_data.py:183 custom/up_nrhm/sql_data.py:288
 msgid "Household visits with nutrition counseling"
 msgstr "Visites à domicile avec des conseils en nutrition."
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:62
-#: custom/up_nrhm/sql_data.py:193 custom/up_nrhm/sql_data.py:296
+#: custom/up_nrhm/sql_data.py:187 custom/up_nrhm/sql_data.py:290
 msgid "Fever cases seen/malaria slides made in malaria endemic area"
 msgstr ""
 "Cas de fièvre observés / diapositives sur le paludisme dans les zone "
 "endémique du paludisme"
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:63
-#: custom/up_nrhm/sql_data.py:197 custom/up_nrhm/sql_data.py:298
+#: custom/up_nrhm/sql_data.py:191 custom/up_nrhm/sql_data.py:292
 msgid "Acting as DOTS provider"
 msgstr "Agissant en tant que fournisseur DOTS"
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:64
-#: custom/up_nrhm/sql_data.py:201 custom/up_nrhm/sql_data.py:300
+#: custom/up_nrhm/sql_data.py:195 custom/up_nrhm/sql_data.py:294
 msgid "Holding or attending village/VHSNC meeting"
 msgstr "Tenue ou participation d'une réunion du village ou VHSNC"
 
 #: custom/up_nrhm/reports/asha_functionality_checklist_report.py:65
-#: custom/up_nrhm/sql_data.py:205 custom/up_nrhm/sql_data.py:302
+#: custom/up_nrhm/sql_data.py:199 custom/up_nrhm/sql_data.py:296
 msgid ""
 "Successful referral of the IUD, female sterilization or male sterilization "
 "cases and/or providing OCPs/Condoms"
@@ -41887,23 +41830,23 @@ msgstr "%s d'ASHAs"
 msgid "Grade of Block"
 msgstr "Grade du bloc"
 
-#: custom/up_nrhm/sql_data.py:144 custom/up_nrhm/sql_data.py:247
+#: custom/up_nrhm/sql_data.py:138 custom/up_nrhm/sql_data.py:241
 msgid "Total number of ASHAs under the Facilitator"
 msgstr "Nombre total d’ASHAs sur le facilitateur.   "
 
-#: custom/up_nrhm/sql_data.py:156
+#: custom/up_nrhm/sql_data.py:150
 msgid "Total number of ASHAs for whom functionality checklist was filled"
 msgstr ""
 "Nombre total d’ASHAs pour qui le checklist de fonctionnalité a été rempli."
 
-#: custom/up_nrhm/sql_data.py:172
+#: custom/up_nrhm/sql_data.py:166
 msgid ""
 "Set of home visits for newborn care as specified in the HBNC guidelines<br/"
 ">(six visits in case of Institutional delivery and seven in case of a home "
 "delivery)"
 msgstr "Rejeté "
 
-#: custom/up_nrhm/sql_data.py:210
+#: custom/up_nrhm/sql_data.py:204
 #, python-format
 msgid ""
 "<b>Total number of ASHAs who are functional on at least %s of the tasks</b>"
@@ -41911,15 +41854,15 @@ msgstr ""
 "<b>Nombre total de ASHAs que sont fonctionnelles sur au moins %s de les "
 "tâches </b>"
 
-#: custom/up_nrhm/sql_data.py:248
+#: custom/up_nrhm/sql_data.py:242
 msgid "ASHA name"
 msgstr "nom d'ASHA"
 
-#: custom/up_nrhm/sql_data.py:249
+#: custom/up_nrhm/sql_data.py:243
 msgid "Date of last for submission"
 msgstr "Date de la dernière soumission."
 
-#: custom/up_nrhm/sql_data.py:305
+#: custom/up_nrhm/sql_data.py:299
 msgid "Functionality Score"
 msgstr "Le Score à la Fonctionnalité"
 
@@ -41959,66 +41902,78 @@ msgstr "Délivré"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
+#: src/couchdbkit-debugpanel/couchdebugpanel/couchpanel.py:89
+#: src/couchdbkit-debugpanel/couchdebugpanel/couchpanel.py:92
+msgid "CouchDB"
+msgstr ""
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:13
+msgid "Rows"
+msgstr ""
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:15
+#, fuzzy
+#| msgid "Stack Trace:"
+msgid "Stacktrace"
+msgstr "Trace d'appels:"
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:16
+#, fuzzy
+#| msgid "Village Name"
+msgid "View Name"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:17
+#, fuzzy
+#| msgid "Request params"
+msgid "Request Params"
+msgstr "Pramètres de requête"
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:45
+msgid "Line"
+msgstr ""
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:46
+msgid "Method"
+msgstr ""
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:6
+msgid "CouchDB View"
+msgstr ""
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:11
+msgid "Executed View"
+msgstr "Manejo de Casos"
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:13
+#, fuzzy
+#| msgid "Add Parameter"
+msgid "Parameters"
+msgstr "Ajouter un paramètre"
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:15
+#, fuzzy
+#| msgid "Total Cases"
+msgid "Total Rows"
+msgstr "Total de dossiers"
+
+#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:40
+#, fuzzy
+#| msgid "Empty Case"
+msgid "Empty set"
+msgstr "Dossier vide"
+
 #~ msgid "Invalid date format"
-#~ msgstr "Format de date non valide"
-
-#~ msgid ""
-#~ "\n"
-#~ "            It seems you haven't created any %(export_type_plural)s yet!\n"
-#~ "        "
-#~ msgstr ""
-#~ "\n"
-#~ "Il semble que vous n'avez pas encore créé des %(export_type_plural)s!"
-
-#~ msgid ""
-#~ "\n"
-#~ "                                There was an issue fetching the "
-#~ "%(export_type)s data.\n"
-#~ "                                Please check your internet connection.\n"
-#~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Il y a eu un problème pour récupérer les %(export_type)s données.\n"
-#~ "Veuillez vérifier votre connexion internet."
-
-#~ msgid ""
-#~ "form submission<span ng-show=\"selectedFormData.submissions != 1\">s</"
-#~ "span> available."
-#~ msgstr ""
-#~ "soumission de formulaires<span ng-show=\"selectedFormData.submissions != "
-#~ "1\">s</span> disponible."
-
-#~ msgid "User Registration"
-#~ msgstr "Inscription de l'utilisateur"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "is a deleted Application."
-#~ msgstr "est une application supprimée."
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Restore App"
-#~ msgstr "Restaurer l'application:"
+#~ msgstr "Manejo de Casos"
 
-#~ msgid "There is an issue communicating with the server at this time."
-#~ msgstr "Problème de communication avec le serveur en ce moment."
-
-#~ msgid ""
-#~ "\n"
-#~ "                            We apologize for the inconvenience, and thank "
-#~ "you for your patience. Someone\n"
-#~ "                            on our development team is quickly working to "
-#~ "resolve this issue.\n"
-#~ "                        "
-#~ msgstr ""
-#~ "\n"
-#~ "Nous nous excusons pour cette inconvénient, et nous vous remercions pour "
-#~ "votre patience. Quelqu'un de notre équipe travaillera promptement pour "
-#~ "résoudre le problème. "
-
-#~ msgid "The form's data was not correctly formatted."
-#~ msgstr "Les données de ce formulaire n'ont pas été formatées correctement."
-
-#~ msgid "Problem getting link to custom export form: {}"
-#~ msgstr ""
-#~ "Problème pour récupérer le lien vers l'exportation personnalisée: {}"
+#~ msgid "Problem getting Create Export Form"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "User Types"
 #~ msgstr "Manejo de Casos"
@@ -42171,9 +42126,6 @@ msgstr "Saisir un JSON valide"
 
 #~ msgid "Export SMS"
 #~ msgstr "Manejo de Casos"
-
-#~ msgid "Schedule Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Dashboard (beta)"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
@@ -42713,9 +42665,6 @@ msgstr "Saisir un JSON valide"
 #~ msgid "Solutions"
 #~ msgstr "Casos IRA Tratados"
 
-#~ msgid "Request free Demo"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
 #~ msgid "Who uses CommCare?"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -42944,9 +42893,6 @@ msgstr "Saisir un JSON valide"
 #~ msgid "Bank Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#~ msgid "Village Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
 #~ msgid "Payment last month"
 #~ msgstr "Casos IRA Tratados"
 
@@ -43157,9 +43103,6 @@ msgstr "Saisir un JSON valide"
 
 #~ msgid "CommCareHQ Registration"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Executed View"
-#~ msgstr "Manejo de Casos"
 
 #~ msgid "name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
