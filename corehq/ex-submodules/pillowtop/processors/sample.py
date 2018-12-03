@@ -9,7 +9,7 @@ class NoopProcessor(PillowProcessor):
     Processor that does absolutely nothing.
     """
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         pass
 
 
@@ -21,7 +21,7 @@ class LoggingProcessor(PillowProcessor):
     def __init__(self, logger=None):
         self.logger = logger or pillow_logging
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         self.logger.info(change)
 
 
@@ -33,7 +33,7 @@ class CountingProcessor(PillowProcessor):
     def __init__(self):
         self.count = 0
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         self.count += 1
 
 
@@ -45,7 +45,7 @@ class TestProcessor(PillowProcessor):
     def __init__(self):
         self.changes_seen = []
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         self.changes_seen.append(change)
 
 
@@ -54,9 +54,9 @@ class ChunkedCountProcessor(BulkPillowProcessor):
     def __init__(self):
         self.count = 0
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         self.count += 1
 
-    def process_changes_chunk(self, pillow_instance, changes_chunk):
+    def process_changes_chunk(self, changes_chunk):
         self.count += len(changes_chunk)
         return [], []
