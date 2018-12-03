@@ -556,7 +556,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             # If this archive was initiated by a user, delete all other stubs for this action so that this action
             # isn't overridden
             from couchforms.models import UnfinishedArchiveStub
-            UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
+            UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
             if self.is_archived:
                 return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
@@ -586,7 +586,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         with unfinished_archive(instance=self, user_id=user_id, archive=True):
-            FormAccessorSQL().send_to_kafka(self, archive=True)
+            FormAccessorSQL().send_to_kafka(self, user_id=user_id, archive=True)
             xform_archived.send(sender="form_processor", xform=self)
 
     def send_unarchive_to_kafka(self, user_id):
@@ -594,7 +594,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         with unfinished_archive(instance=self, user_id=user_id, archive=False):
-            FormAccessorSQL().send_to_kafka(self, archive=False)
+            FormAccessorSQL().send_to_kafka(self, user_id=user_id, archive=False)
             xform_archived.send(sender="form_processor", xform=self)
 
     def __unicode__(self):
