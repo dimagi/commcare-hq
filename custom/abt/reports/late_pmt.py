@@ -188,7 +188,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 group
             ]
 
-        def is_not_in_group(key, group):
+        def not_in_group(key, group):
             return key not in group
 
         users = self.get_users
@@ -199,21 +199,17 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             byweekday=(MO, TU, WE, TH, FR, SA)
         )
         rows = []
-        users_in_group_a = []
-        users_in_group_b = []
-        submission_status = self.report_config['submission_status']
+        sub_status = self.report_config['submission_status']
         if users:
-            if submission_status in ['group_a', '']:
-                users_in_group_a = self.get_users_in_group_a
-            if submission_status in ['group_b', '']:
-                users_in_group_b = self.get_users_in_group_b
+            group_a = self.get_users_in_group_a
+            group_b = self.get_users_in_group_b
 
             for date in dates:
                 for user in users:
                     key = (date.date(), user['user_id'])
-                    if is_not_in_group(key, users_in_group_a) and submission_status != 'group_b':
+                    if not_in_group(key, group_a) and sub_status != 'group_b':
                         group = 'No PMT data Submitted'
-                    elif is_not_in_group(key, users_in_group_b) and submission_status != 'group_a':
+                    elif not_in_group(key, group_b) and not not_in_group(key, group_a) and sub_status != 'group_a':
                         group = 'Incorrect PMT data Submitted'
                     else:
                         continue

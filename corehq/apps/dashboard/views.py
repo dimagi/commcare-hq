@@ -130,7 +130,7 @@ def _get_default_tiles(request):
             return False
         user = request.couch_user
         return not can_edit_users(request) and (
-            user.can_edit_locations() or user_can_edit_location_types(user, request.project)
+            user.can_edit_locations() or user_can_edit_location_types(user, request.domain)
         )
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)

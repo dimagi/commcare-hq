@@ -14,7 +14,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 
@@ -347,7 +346,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.admin_users())
         if HQUserType.UNKNOWN in user_types:
             user_type_filters.append(user_es.unknown_users())
-            user_type_filters.append(user_es.username(SYSTEM_USER_ID))
         if HQUserType.WEB in user_types:
             user_type_filters.append(user_es.web_users())
         if HQUserType.DEMO_USER in user_types:
