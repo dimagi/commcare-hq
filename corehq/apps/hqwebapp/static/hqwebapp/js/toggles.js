@@ -11,10 +11,10 @@ hqDefine('hqwebapp/js/toggles', function () {
     };
     return {
         toggleEnabled: function (toggleName) {
-            return genericToggleEnabled(hqImport('hqwebapp/js/toggles_template').toggles, toggleName);
+            return genericToggleEnabled(hqImport('hqwebapp/js/initial_page_data').get('toggles_dict'), toggleName);
         },
         previewEnabled: function (toggleName) {
-            return genericToggleEnabled(hqImport('hqwebapp/js/toggles_template').previews, toggleName);
+            return genericToggleEnabled(hqImport('hqwebapp/js/initial_page_data').get('previews_dict'), toggleName);
         },
     };
 });
