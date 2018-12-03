@@ -125,18 +125,18 @@ class TestEnrolledWomen(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {'loc_name': u'st4', 'value': 0.0},
-                    {'loc_name': u'st5', 'value': 0.0},
-                    {'loc_name': u'st6', 'value': 0.0},
-                    {'loc_name': u'st7', 'value': 0.0},
-                    {'loc_name': u'st3', 'value': 0.0}
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ],
                 "top_five": [
-                    {'loc_name': u'st2', 'value': 85.0},
-                    {'loc_name': u'st1', 'value': 70.0},
-                    {'loc_name': u'st4', 'value': 0.0},
-                    {'loc_name': u'st5', 'value': 0.0},
-                    {'loc_name': u'st6', 'value': 0.0}
+                    {'loc_name': 'st2', 'value': 85.0},
+                    {'loc_name': 'st1', 'value': 70.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -169,13 +169,13 @@ class TestEnrolledWomen(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {'loc_name': u'st2', 'value': 85.0},
-                    {'loc_name': u'st1', 'value': 70.0},
-                    {'loc_name': u'st4', 'value': 0.0},
-                    {'loc_name': u'st5', 'value': 0.0},
-                    {'loc_name': u'st6', 'value': 0.0},
-                    {'loc_name': u'st7', 'value': 0.0},
-                    {'loc_name': u'st3', 'value': 0.0}
+                    {'loc_name': 'st2', 'value': 85.0},
+                    {'loc_name': 'st1', 'value': 70.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ]
             }
         )

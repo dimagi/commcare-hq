@@ -477,19 +477,19 @@ class TestAWCDailyStatus(TestCase):
                     }
                 ],
                 "top_five": [
-                    {'loc_name': u'st7', 'percent': 0.0},
-                    {'loc_name': u'st1', 'percent': 0.0},
-                    {'loc_name': u'st2', 'percent': 0.0}
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st1', 'percent': 0.0},
+                    {'loc_name': 'st2', 'percent': 0.0}
                 ],
                 "all_locations": [
-                    {'loc_name': u'st7', 'percent': 0.0},
-                    {'loc_name': u'st1', 'percent': 0.0},
-                    {'loc_name': u'st2', 'percent': 0.0}
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st1', 'percent': 0.0},
+                    {'loc_name': 'st2', 'percent': 0.0}
                 ],
                 "bottom_five": [
-                    {'loc_name': u'st7', 'percent': 0.0},
-                    {'loc_name': u'st1', 'percent': 0.0},
-                    {'loc_name': u'st2', 'percent': 0.0}
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st1', 'percent': 0.0},
+                    {'loc_name': 'st2', 'percent': 0.0}
                 ]
             }
         )
