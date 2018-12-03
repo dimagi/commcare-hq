@@ -1,19 +1,23 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import copy
+import itertools
+import re
 from collections import defaultdict, OrderedDict
 
-import itertools
+import six
+from django.contrib import messages
 from django.template.defaultfilters import linebreaksbr
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
 from lxml import etree
-import copy
-import re
 from lxml.etree import XMLSyntaxError, Element
+from six.moves import zip
 
 from corehq import toggles
-from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -22,14 +26,10 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import ReportModule, ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
-
-from django.contrib import messages
-from django.utils.translation import ugettext as _
-import six
-from six.moves import zip
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 def get_unicode_dicts(iterable):
@@ -191,7 +191,7 @@ def process_bulk_app_translation_upload(app, workbook):
 
 
 def validate_bulk_app_translation_upload(app, workbook, email):
-    from corehq.apps.app_manager.app_translations.validator import UploadedTranslationsValidator
+    from corehq.apps.translations.validator import UploadedTranslationsValidator
     msgs = UploadedTranslationsValidator(app, workbook).compare()
     if msgs:
         _email_app_translations_discrepancies(msgs, email, app.name)

@@ -39,6 +39,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.users.permissions import can_manage_releases
 from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id, \
@@ -169,8 +170,7 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-        'can_manage_releases': (not toggles.RESTRICT_APP_RELEASE.enabled(request.domain) or
-                                toggles.RESTRICT_APP_RELEASE.enabled(request.couch_user.username))
+        'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id)
     }
     if not app.is_remote_app():
         context.update({
