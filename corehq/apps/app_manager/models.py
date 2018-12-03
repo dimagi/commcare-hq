@@ -4581,6 +4581,9 @@ class LazyBlobDoc(BlobMixin):
         except KeyError:
             content = cache.get(self.__attachment_cache_key(name))
             if content is not None:
+                if isinstance(content, six.text_type):
+                    _soft_assert(False, 'cached attachment has type unicode')
+                    content = content.encode('utf-8')
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 
