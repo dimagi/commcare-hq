@@ -80,6 +80,6 @@ def can_manage_releases(couch_user, domain, app_id):
     return (
         couch_user.has_permission(
             domain, get_permission_name(Permissions.manage_releases),
-            restrict_global_admin=restricted_app_release
+            restrict_global_admin=True
         ) or
         app_id in role.permissions.manage_releases_list)
