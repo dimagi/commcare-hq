@@ -1,13 +1,8 @@
 {% load hq_shared_tags %}
-{# This is fine as an inline script; multimedia needs to be reworked to work with RequireJS so we can deal with this config at that time #}
-<script>
-    YUI_config = {
-        combine: false,
-        fetchCSS: false,
-        base: "//{{ request.get_host }}/",
-        loaderPath: "static/hqmedia/MediaUploader/yui-loader.js"
-    }
-</script>
+
 <script src="{% static 'hqmedia/MediaUploader/yui-base.js' %}"></script>
+{# This YUI configuration scrpit import can be remove along with other script tags once entire multimedia is migrated#}
+{# Once all multimedia pages are migrated this entire file can be deleted as It wont be needed then #}
+<script src="{% static 'hqmedia/js/yui_config.js' %}"></script>
 <script src="{% static 'hqmedia/MediaUploader/yui-uploader.js' %}"></script>
 <script src="{% static 'hqmedia/MediaUploader/hqmedia.upload_controller.js' %}"></script>
