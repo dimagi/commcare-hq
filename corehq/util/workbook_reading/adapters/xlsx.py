@@ -67,9 +67,9 @@ class _XLSXWorksheetAdaptor(object):
         # That means that if formatting is applied, that will be the xlsx row limit
         # Note that this is 1-indexed for consistency with openpyxl
         max_row = 1
-        for row in self._worksheet.iter_rows():
+        for i, row in enumerate(self._worksheet.iter_rows(), 1):
             if any(cell.value for cell in row):
-                max_row = row[0].row
+                max_row = i
         return max_row
 
     def iter_rows(self):

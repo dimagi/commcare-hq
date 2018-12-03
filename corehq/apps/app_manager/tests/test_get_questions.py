@@ -190,14 +190,14 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             module.id,
             name="Form",
             lang='en',
-            attachment=self.get_xml('case_in_form')
+            attachment=self.get_xml('case_in_form').decode('utf-8')
         )
 
         form_with_repeats = self.app.new_form(
             module.id,
             name="Form with repeats",
             lang='en',
-            attachment=self.get_xml('form_with_repeats')
+            attachment=self.get_xml('form_with_repeats').decode('utf-8')
         )
 
         self.form_unique_id = form.unique_id

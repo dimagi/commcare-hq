@@ -41,6 +41,7 @@ from corehq.apps.analytics.tasks import (
     HUBSPOT_INVITATION_SENT_FORM, HUBSPOT_NEW_USER_INVITE_FORM,
     HUBSPOT_EXISTING_USER_INVITE_FORM)
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
@@ -479,6 +480,7 @@ class ListWebUsersView(BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'web_apps_list': get_cloudcare_apps(self.domain),
+            'apps_list': get_brief_apps_in_domain(self.domain),
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),

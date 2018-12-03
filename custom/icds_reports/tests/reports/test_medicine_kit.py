@@ -55,18 +55,13 @@ class TestMedicineKit(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 9,
-                    "original_name": ["st1"],
-                    "all": 17,
-                    "fillKey": "25%-75%"
-                },
-                "st2": {
-                    "in_month": 11,
-                    "original_name": ["st2"],
-                    "all": 13,
-                    "fillKey": "75%-100%"
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'},
+                'st1': {'in_month': 9, 'original_name': ['st1'], 'all': 17, 'fillKey': '25%-75%'},
+                'st2': {'in_month': 11, 'original_name': ['st2'], 'all': 13, 'fillKey': '75%-100%'},
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
 
@@ -261,14 +256,11 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 52.94117647058823
-                }
+                {'loc_name': u'st2', 'percent': 84.61538461538461},
+                {'loc_name': u'st1', 'percent': 52.94117647058823},
+                {'loc_name': u'st4', 'percent': 0.0},
+                {'loc_name': u'st5', 'percent': 0.0},
+                {'loc_name': u'st6', 'percent': 0.0}
             ]
         )
 
@@ -284,14 +276,11 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 52.94117647058823
-                }
+                {'loc_name': u'st4', 'percent': 0.0},
+                {'loc_name': u'st5', 'percent': 0.0},
+                {'loc_name': u'st6', 'percent': 0.0},
+                {'loc_name': u'st7', 'percent': 0.0},
+                {'loc_name': u'st3', 'percent': 0.0}
             ]
         )
 
@@ -318,14 +307,13 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 52.94117647058823
-                }
+                {'loc_name': u'st2', 'percent': 84.61538461538461},
+                {'loc_name': u'st1', 'percent': 52.94117647058823},
+                {'loc_name': u'st4', 'percent': 0.0},
+                {'loc_name': u'st5', 'percent': 0.0},
+                {'loc_name': u'st6', 'percent': 0.0},
+                {'loc_name': u'st7', 'percent': 0.0},
+                {'loc_name': u'st3', 'percent': 0.0}
             ]
         )
 

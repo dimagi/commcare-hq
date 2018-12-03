@@ -55,20 +55,13 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 3,
-                    "low_birth": 2,
-                    'original_name': ["st1"],
-                    "fillKey": "60%-100%",
-                    "all": 4
-                },
-                "st2": {
-                    "in_month": 1,
-                    "low_birth": 0,
-                    'original_name': ["st2"],
-                    "fillKey": "0%-20%",
-                    "all": 3
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
+                'st1': {'in_month': 3, 'original_name': ['st1'], 'low_birth': 2, 'all': 4, 'fillKey': '60%-100%'},
+                'st2': {'in_month': 1, 'original_name': ['st2'], 'low_birth': 0, 'all': 3, 'fillKey': '0%-20%'},
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -230,14 +223,11 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 66.66666666666667
-                }
+                {'loc_name': u'st6', 'percent': 0.0},
+                {'loc_name': u'st7', 'percent': 0.0},
+                {'loc_name': u'st2', 'percent': 0.0},
+                {'loc_name': u'st3', 'percent': 0.0},
+                {'loc_name': u'st1', 'percent': 66.66666666666667}
             ]
         )
 
@@ -253,14 +243,11 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 66.66666666666667
-                }
+                {'loc_name': u'st4', 'percent': 0.0},
+                {'loc_name': u'st5', 'percent': 0.0},
+                {'loc_name': u'st6', 'percent': 0.0},
+                {'loc_name': u'st7', 'percent': 0.0},
+                {'loc_name': u'st2', 'percent': 0.0}
             ]
         )
 
@@ -333,14 +320,13 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 66.66666666666667
-                }
+                {'loc_name': u'st4', 'percent': 0.0},
+                {'loc_name': u'st5', 'percent': 0.0},
+                {'loc_name': u'st6', 'percent': 0.0},
+                {'loc_name': u'st7', 'percent': 0.0},
+                {'loc_name': u'st2', 'percent': 0.0},
+                {'loc_name': u'st3', 'percent': 0.0},
+                {'loc_name': u'st1', 'percent': 66.66666666666667}
             ]
         )
     
