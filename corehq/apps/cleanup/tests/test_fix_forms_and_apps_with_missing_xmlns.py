@@ -282,10 +282,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         try:
             for app in apps:
                 for form in app.get_forms():
-                    self.assertNotIn(
-                        'xmlns="undefined"',
-                        form.source if isinstance(form.source, six.text_type) else form.source.decode('utf-8')
-                    )
+                    self.assertEqual(form.source.count('xmlns="undefined"'), 0)
                     self.assertNotEqual(form.xmlns, 'undefined')
         finally:
             if delete_apps:
