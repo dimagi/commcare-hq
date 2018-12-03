@@ -1002,10 +1002,12 @@ class XForm(WrappedNode):
             node = cnode.node
             path = cnode.path
 
-            if not cnode.is_leaf and not include_groups:
+            is_group = not cnode.is_leaf
+            if is_group and not include_groups:
                 continue
 
-            if node.tag_name == 'trigger' and not include_triggers:
+            is_trigger = node.tag_name == 'trigger'
+            if is_trigger and not include_triggers:
                 continue
 
             if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
@@ -1026,6 +1028,8 @@ class XForm(WrappedNode):
                 "comment": self._get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self._get_setvalue(path),
+                "is_group": is_group,
+                "is_trigger": is_trigger,
             }
             if include_translations:
                 question["translations"] = self._get_label_translations(node, langs)
