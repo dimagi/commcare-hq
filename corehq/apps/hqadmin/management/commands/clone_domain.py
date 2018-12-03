@@ -122,7 +122,6 @@ class Command(BaseCommand):
     def set_flags(self):
         from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
         from corehq.feature_previews import all_previews
-        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
         for toggle in all_toggles():
             if toggle.enabled(self.existing_domain, NAMESPACE_DOMAIN):
@@ -137,8 +136,6 @@ class Command(BaseCommand):
                     preview.set(self.new_domain, True, NAMESPACE_DOMAIN)
                     if preview.save_fn is not None:
                         preview.save_fn(self.new_domain, True)
-
-        toggle_js_domain_cachebuster.clear(self.new_domain)
 
     def copy_fixtures(self):
         from corehq.apps.fixtures.models import FixtureDataItem

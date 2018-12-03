@@ -59,7 +59,6 @@ from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
-from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt, \
     track_domain_request
@@ -1198,16 +1197,6 @@ class DataTablesAJAXPaginationMixin(object):
             'iTotalRecords': total_records,
             'iTotalDisplayRecords': filtered_records or total_records,
         }))
-
-
-@always_allow_browser_caching
-@login_and_domain_required
-@location_safe
-def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
-    return render(request, template, {
-        'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
-        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
-    })
 
 
 # Use instead of djangular's base JSONResponseMixin
