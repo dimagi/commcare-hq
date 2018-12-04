@@ -25,7 +25,7 @@ gunicorn
 lxml==3.4.4
 kafka-python==1.4.3
 mock==2.0.0
-openpyxl==2.5.8
+openpyxl==2.6.0a1
 Pillow==5.2.0
 phonenumberslite==8.8.9
 psycopg2==2.7.5
