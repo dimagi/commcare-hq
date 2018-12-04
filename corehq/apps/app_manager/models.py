@@ -5962,7 +5962,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @time_method()
     def _make_language_files(self, prefix, build_profile_id):
         return {
-            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id)
+            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id).encode('utf-8')
             for lang in ['default'] + self.get_build_langs(build_profile_id)
         }
 
