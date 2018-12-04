@@ -46,7 +46,7 @@ class Command(BaseCommand):
             sql_script = f.read()
             for bucket in buckets:
                 rows = session.execute(
-                        sql_script % {
+                    sql_script % {
                         'person_table_name': person_table_name,
                         'from_age': bucket[0],
                         'to_age': bucket[1]
@@ -56,10 +56,10 @@ class Command(BaseCommand):
                 with open(f_path, 'w', encoding='utf-8') as file_object:
                         writer = csv.writer(file_object)
                         writer.writerow([
-                        'State',
-                        'District',
-                        'AWC',
-                        'Month',
-                        'Deaths',
+                            'State',
+                            'District',
+                            'AWC',
+                            'Month',
+                            'Deaths',
                         ])
                         writer.writerows(rows)
