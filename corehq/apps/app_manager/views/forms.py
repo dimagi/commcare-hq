@@ -490,7 +490,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     current_xml = form.source
     dmp = diff_match_patch()
     xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    xml = save_xform(app, form, xml)
+    xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
