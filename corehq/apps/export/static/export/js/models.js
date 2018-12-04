@@ -4,11 +4,28 @@
  *
  */
 
-hqDefine('export/js/models', function () {
-    var constants = hqImport('export/js/const');
-    var utils = hqImport('export/js/utils');
-    var urls = hqImport('hqwebapp/js/initial_page_data');
-
+hqDefine('export/js/models', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'export/js/const',
+    'export/js/utils',
+    'hqwebapp/js/knockout_bindings.ko', // needed for multirow_sortable binding
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    toggles,
+    googleAnalytics,
+    kissmetricsAnalytics,
+    constants,
+    utils
+) {
     /**
      * ExportInstance
      * @class
@@ -81,7 +98,7 @@ hqDefine('export/js/models', function () {
         // Set column widths
         self.questionColumnClass = ko.computed(function () {
             var width = 6;
-            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+            if (self.type && self.type() === 'case' && toggles.previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
                 width--;
             }
             if (self.isDeidColumnVisible()) {
@@ -91,7 +108,7 @@ hqDefine('export/js/models', function () {
         });
         self.displayColumnClass = ko.computed(function () {
             var width = 5;
-            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+            if (self.type && self.type() === 'case' && toggles.previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
                 width--;
             }
             if (self.isDeidColumnVisible()) {
@@ -135,7 +152,7 @@ hqDefine('export/js/models', function () {
             $btn = $(e.currentTarget),
             errorHandler,
             successHandler,
-            buildSchemaUrl = urls.reverse('build_schema', this.domain()),
+            buildSchemaUrl = initialPageData.reverse('build_schema', this.domain()),
             identifier = ko.utils.unwrapObservable(this.case_type) || ko.utils.unwrapObservable(this.xmlns);
 
         // We've already built the schema and now the user is clicking the button to refresh the page
@@ -187,7 +204,7 @@ hqDefine('export/js/models', function () {
 
     ExportInstance.prototype.checkBuildSchemaProgress = function (downloadId, successHandler, errorHandler) {
         var self = this,
-            buildSchemaUrl = urls.reverse('build_schema', this.domain());
+            buildSchemaUrl = initialPageData.reverse('build_schema', this.domain());
 
         $.ajax({
             url: buildSchemaUrl,
@@ -317,19 +334,19 @@ hqDefine('export/js/models', function () {
             args,
             eventCategory;
 
-        hqImport('analytix/js/google').track.event("Create Export", analyticsExportType, analyticsAction);
+        googleAnalytics.track.event("Create Export", analyticsExportType, analyticsAction);
         if (this.export_format === constants.EXPORT_FORMATS.HTML) {
             args = ["Create Export", analyticsExportType, 'Excel Dashboard', '', {}];
             // If it's not new then we have to add the callback in to redirect
             if (!this.isNew()) {
                 args.push(callback);
             }
-            hqImport('analytix/js/google').track.event.apply(null, args);
+            googleAnalytics.track.event.apply(null, args);
         }
         if (this.isNew()) {
             eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
-            hqImport('analytix/js/google').track.event(eventCategory, 'Custom export creation', '');
-            hqImport('analytix/js/kissmetrix').track.event("Clicked 'Create' in export edit page", {}, callback);
+            googleAnalytics.track.event(eventCategory, 'Custom export creation', '');
+            kissmetricsAnalytics.track.event("Clicked 'Create' in export edit page", {}, callback);
         } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();
         }
