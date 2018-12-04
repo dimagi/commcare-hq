@@ -27,6 +27,14 @@ hqDefine('export/js/models', function () {
         self.schemaProgressText = ko.observable(gettext('Process'));
         self.numberOfAppsToProcess = options.numberOfAppsToProcess || 0;
 
+        // Constants and utils that the HTML template needs access to
+        self.splitTypes = {
+            multiselect: constants.MULTISELECT_SPLIT_TYPE,
+            plain: constants.PLAIN_SPLIT_TYPE,
+            userDefined: constants.USER_DEFINED_SPLIT_TYPES,
+        };
+        self.getTagCSSClass = utils.getTagCSSClass;
+
         if (self.include_errors) {
             self.initiallyIncludeErrors = ko.observable(self.include_errors());
         }
@@ -34,6 +42,10 @@ hqDefine('export/js/models', function () {
         // Determines the state of the save. Used for controlling the presentation
         // of the Save button.
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
+        self.saveStateReady = ko.computed(function () { return self.saveState() === constants.SAVE_STATES.READY; });
+        self.saveStateSaving = ko.computed(function () { return self.saveState() === constants.SAVE_STATES.SAVING; });
+        self.saveStateSuccess = ko.computed(function () { return self.saveState() === constants.SAVE_STATES.SUCCESS; });
+        self.saveStateError = ko.computed(function () { return self.saveState() === constants.SAVE_STATES.ERROR; });
 
         // True if the form has no errors
         self.isValid = ko.pureComputed(function () {
