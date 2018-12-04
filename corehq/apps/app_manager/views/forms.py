@@ -496,7 +496,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(xml.encode('utf-8')).hexdigest()
+        'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
