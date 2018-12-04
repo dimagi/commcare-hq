@@ -4539,34 +4539,6 @@ class LazyBlobDoc(BlobMixin):
         # these we do *not* send back down upon save
         self._LAZY_ATTACHMENTS_CACHE = {}
 
-    @classmethod
-    def wrap(cls, data):
-        if "_attachments" in data:
-            data = data.copy()
-            attachments = data.pop("_attachments").copy()
-            if cls._migrating_blobs_from_couch:
-                # preserve stubs so couch attachments don't get deleted on save
-                stubs = {}
-                for name, value in list(attachments.items()):
-                    if isinstance(value, dict) and "stub" in value:
-                        stubs[name] = attachments.pop(name)
-                if stubs:
-                    data["_attachments"] = stubs
-        else:
-            attachments = None
-        self = super(LazyBlobDoc, cls).wrap(data)
-        if attachments:
-            for name, attachment in attachments.items():
-                if isinstance(attachment, six.string_types):
-                    if isinstance(attachment, six.text_type):
-                        attachment = attachment.encode('utf-8')
-                    info = {"content": attachment}
-                else:
-                    raise ValueError("Unknown attachment format: {!r}"
-                                     .format(attachment))
-                self.lazy_put_attachment(name=name, **info)
-        return self
-
     def __attachment_cache_key(self, name):
         return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
