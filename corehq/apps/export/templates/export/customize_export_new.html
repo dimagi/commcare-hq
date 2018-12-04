@@ -238,22 +238,20 @@
                 {% if can_edit %}
                     <button type="submit" class="btn btn-lg btn-primary" data-bind="
                         click: save,
-                        disable: (saveState() === hqImport('export/js/const').SAVE_STATES.SAVING ||
-                                  saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS ||
-                                  ! isValid())
+                        disable: saveStateSaving() || saveStateSuccess || !isValid()
                     ">
                         <span data-bind="
-                            visible: saveState() === hqImport('export/js/const').SAVE_STATES.READY,
+                            visible: saveStateReady(),
                             text: getSaveText()">
                         </span>
-                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SAVING">
+                        <span data-bind="visible: saveStateSaving()">
                             <i class="fa fa-refresh fa-spin"></i>
                             {% trans "Saving" %}
                         </span>
-                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.ERROR">
+                        <span data-bind="visible: saveStateError()">
                             {% trans "Try Again" %}
                         </span>
-                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS">
+                        <span data-bind="visible: saveStateSuccess()">
                             {% trans "Saved!" %}
                         </span>
                     </button>
