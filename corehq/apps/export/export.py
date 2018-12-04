@@ -69,6 +69,7 @@ class _ExportWriter(object):
         Note that this function returns a context manager!
         A _Writer can only be opened once.
         """
+        print '_ExportWriter.open'
 
         if len(export_instances) == 1:
             name = export_instances[0].name or ''
@@ -112,6 +113,7 @@ class _ExportWriter(object):
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
+        print '_ExportWriter.write'
         return self.writer.write([(table, [FormattedRow(data=row.data)])], hyperlink_column_indices)  # (2)
 
     def get_preview(self):
@@ -337,6 +339,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     :param progress_tracker: A task for soil to track progress against
     :return: None
     """
+    print 'entering write_export_instance'
     if progress_tracker:
         DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
@@ -390,6 +393,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
     _record_export_duration(end - start, export_instance)
+    print 'exiting write_export_instance'
 
 
 def _time_in_milliseconds():
