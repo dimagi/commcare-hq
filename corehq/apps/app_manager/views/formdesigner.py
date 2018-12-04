@@ -174,11 +174,11 @@ def get_form_data_schema(request, domain, form_unique_id):
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
     except AppManagerException as e:
-        notify_exception(request, message=e.message)
-        return HttpResponseBadRequest(_(
-            str(e) or "There is an error in the case management of your application. "
-            "Please fix the error to see case properties in this tree"
-        ))
+        notify_exception(request, message=str(e))
+        return HttpResponseBadRequest(
+            str(e) or _("There is an error in the case management of your application. "
+            "Please fix the error to see case properties in this tree")
+        )
     except Exception as e:
         notify_exception(request, message=e.message)
         return HttpResponseBadRequest("schema error, see log for details")
