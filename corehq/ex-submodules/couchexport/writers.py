@@ -409,8 +409,10 @@ class Excel2007ExportWriter(ExportWriter):
                 value = ''
             return dirty_chars.sub('?', value)
 
-        cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
-        print cells
+        write_values = [get_write_value(val) for val in row]
+        print(write_values)
+        cells = [WriteOnlyCell(sheet, val) for val in write_values]
+        print(cells)
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
