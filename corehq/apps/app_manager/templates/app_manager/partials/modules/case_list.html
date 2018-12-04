@@ -292,20 +292,20 @@
         </div>
         <div class="form-horizontal panel-body">
             <div class="form-group">
-                <label class="control-label col-sm-2">
+                <label class="control-label {% css_label_class %}">
                     {% trans "Select Parent First" %}
                 </label>
-                <div class="col-sm-4 checkbox">
+                <div class="{% css_field_class %} checkbox">
                     <label>
                         <input type="checkbox" data-bind="checked: active"/>
                     </label>
                 </div>
             </div>
             <div class="form-group" data-bind="visible: active">
-                <label class="control-label col-sm-2">
+                <label class="control-label {% css_label_class %}">
                     {% trans "Use Case List from" %}
                 </label>
-                <div class="col-sm-4">
+                <div class="{% css_field_class %}">
                     <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
                 </div>
             </div>
