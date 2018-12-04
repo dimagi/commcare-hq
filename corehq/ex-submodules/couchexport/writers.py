@@ -390,6 +390,7 @@ class Excel2007ExportWriter(ExportWriter):
 
     def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
         print('Excel2007ExportWriter._write_row')
+        print(row)
         sheet = self.tables[sheet_index]
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
