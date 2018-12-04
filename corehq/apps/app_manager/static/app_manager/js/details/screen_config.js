@@ -241,8 +241,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
             });
             return name[firstLang];
         }
+        self.hasError = ko.computed(function() {
+            return !_.contains(self.parentModules(), self.moduleId());
+        });
         self.moduleOptions = ko.computed(function () {
-            return _(self.parentModules()).map(function (module) {
+            var options = _(self.parentModules()).map(function (module) {
                 var STAR = '\u2605',
                     SPACE = '\u3000';
                 var marker = (module.is_parent ? STAR : SPACE);
@@ -251,6 +254,13 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs())),
                 };
             });
+            if (self.hasError()) {
+                options.unshift({
+                    value: '',
+                    label: gettext('Unknown menu'),
+                });
+            }
+            return options;
         });
     };
 
