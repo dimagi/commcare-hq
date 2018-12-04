@@ -14,7 +14,7 @@ from corehq.apps.accounting.models import (
     DEFAULT_ACCOUNT_FORMAT,
 )
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
-from corehq.apps.app_manager.tasks import load_appcues_template_app
+from corehq.apps.app_manager.views.utils import load_appcues_template_app
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.tasks import send_domain_registration_email
 from dimagi.utils.couch import CriticalSection
