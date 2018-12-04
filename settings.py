@@ -1672,9 +1672,30 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
+            'name': 'kafka-case-ucr-es',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'kafka-xform-ucr-es',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
             'name': 'UserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
+        },
+        {
+            'name': 'user-to-es-ucr-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_es_ucr_pillow',
         },
         {
             'name': 'ApplicationToElasticsearchPillow',
@@ -1690,6 +1711,11 @@ PILLOWTOPS = {
             'name': 'GroupToUserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
+        {
+            'name': 'GroupESPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_es_pillow',
         },
         {
             'name': 'SqlSMSPillow',
@@ -1715,23 +1741,6 @@ PILLOWTOPS = {
             'name': 'UpdateUserSyncHistoryPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
-        },
-    ],
-    'core_ext': [
-        {
-            'name': 'AppDbChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'DomainDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'kafka-ucr-main',
@@ -1763,6 +1772,28 @@ PILLOWTOPS = {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
+        },
+    ],
+    'core_ext': [
+        {
+            'name': 'AppDbChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
+        },
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'DomainDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
+        },
+        {
+            'name': 'location-ucr-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_location_pillow',
         },
     ],
     'cache': [

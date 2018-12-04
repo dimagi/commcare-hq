@@ -14,7 +14,7 @@ from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow, \
+from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_es_pillow, \
     remove_group_from_users
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -165,7 +165,7 @@ class GroupToUserPillowDbTest(TestCase):
         producer.send_change(topics.GROUP, _group_to_change_meta(group.to_json()))
 
         # process using pillow
-        pillow = get_group_to_user_pillow()
+        pillow = get_group_es_pillow()
         pillow.process_changes(since=since, forever=False)
 
         # confirm updated in elasticsearch
@@ -181,7 +181,7 @@ class GroupToUserPillowDbTest(TestCase):
         since = get_topic_offset(topics.GROUP)
         producer.send_change(topics.GROUP, _group_to_change_meta(group.to_json()))
 
-        pillow = get_group_to_user_pillow()
+        pillow = get_group_es_pillow()
         pillow.process_changes(since=since, forever=False)
 
         # confirm removed in elasticsearch
