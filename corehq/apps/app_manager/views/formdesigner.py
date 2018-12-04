@@ -176,7 +176,7 @@ def get_form_data_schema(request, domain, form_unique_id):
     except AppManagerException as e:
         notify_exception(request, message=e.message)
         return HttpResponseBadRequest(_(
-            "There is an error in the case management of your application. "
+            e.message or "There is an error in the case management of your application. "
             "Please fix the error to see case properties in this tree"
         ))
     except Exception as e:
