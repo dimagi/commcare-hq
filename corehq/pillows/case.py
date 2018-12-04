@@ -4,6 +4,8 @@ import copy
 import datetime
 import logging
 
+from django.conf import settings
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
@@ -103,7 +105,9 @@ def get_case_pillow(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    processors = [case_to_es_processor, case_search_processor, get_case_to_report_es_processor()]
+    processors = [case_to_es_processor, case_search_processor]
+    if not settings.ENTERPRISE_MODE:
+        processors.append(get_case_to_report_es_processor())
     if not skip_ucr:
         # this option is useful in tests to avoid extra UCR setup where unneccessary
         processors = [ucr_processor] + processors
