@@ -2621,6 +2621,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     def validate_for_build(self):
         errors = []
+        try:
+            errors += self._validate_for_build()
+        except ModuleNotFoundException as ex:
+            errors.append({
+                "type": "missing module",
+                "message": six.text_type(ex),
+                "module": self.get_module_info(),
+            })
+
+        return errors
+
+    def _validate_for_build(self):
+        errors = []
         needs_case_detail = self.requires_case_details()
         needs_case_type = needs_case_detail or len([1 for f in self.get_forms() if f.is_registration_form()])
         if needs_case_detail or needs_case_type:
@@ -2914,8 +2927,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
             self.forms.append(new_form)
         return self.get_form(index or -1)
 
-    def validate_for_build(self):
-        errors = super(Module, self).validate_for_build() + self.validate_details_for_build()
+    def _validate_for_build(self):
+        errors = super(Module, self)._validate_for_build() + self.validate_details_for_build()
         if not self.forms and not self.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
@@ -3784,8 +3797,8 @@ class AdvancedModule(ModuleBase):
             for error in errors:
                 yield error
 
-    def validate_for_build(self):
-        errors = super(AdvancedModule, self).validate_for_build()
+    def _validate_for_build(self):
+        errors = super(AdvancedModule, self)._validate_for_build()
         if not self.forms and not self.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
@@ -4373,8 +4386,8 @@ class ReportModule(ModuleBase):
         return any(report_config.instance_id in duplicate_instance_ids
                    for report_config in self.report_configs)
 
-    def validate_for_build(self):
-        errors = super(ReportModule, self).validate_for_build()
+    def _validate_for_build(self):
+        errors = super(ReportModule, self)._validate_for_build()
         if not self.check_report_validity().is_valid:
             errors.append({
                 'type': 'report config ref invalid',
@@ -4498,8 +4511,8 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
-    def validate_for_build(self):
-        errors = super(ShadowModule, self).validate_for_build()
+    def _validate_for_build(self):
+        errors = super(ShadowModule, self)._validate_for_build()
         errors += self.validate_details_for_build()
         if not self.source_module:
             errors.append({
@@ -6301,13 +6314,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
-            try:
-                errors.extend(module.validate_for_build())
-            except ModuleNotFoundException as ex:
-                errors.append({
-                    "type": "missing module",
-                    "message": six.text_type(ex)
-                })
+            errors.extend(module.validate_for_build())
         return errors
 
     @time_method()
