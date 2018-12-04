@@ -421,6 +421,7 @@ class Excel2007ExportWriter(ExportWriter):
         """
         Close any open file references, do any cleanup.
         """
+        print('Excel2007ExportWriter._close')
         self.book.save(self.file)
 
 
