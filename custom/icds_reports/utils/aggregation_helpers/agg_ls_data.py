@@ -7,6 +7,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, \
     transform_day_to_month, month_formatter
+from six.moves import range
 
 
 class AggLsHelper(BaseICDSAggregationHelper):
@@ -73,7 +74,12 @@ class AggLsHelper(BaseICDSAggregationHelper):
         (
         SELECT
         {calculations}
-        from (select distinct state_id, district_id, block_id, supervisor_id from "{awc_location_ucr}") location
+        from (select distinct state_id, district_id, block_id, supervisor_id from "{awc_location_ucr}" where (
+        state_is_test=0 AND
+        district_is_test=0 AND
+        block_is_test=0 AND
+        supervisor_is_test=0
+        )) location
         LEFT  JOIN "{awc_table}" awc_table on (
             location.supervisor_id=awc_table.supervisor_id AND
             awc_table.month = %(start_date)s

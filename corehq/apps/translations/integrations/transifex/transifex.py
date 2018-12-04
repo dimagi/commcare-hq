@@ -1,15 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
-from django.conf import settings
 
 from corehq.apps.app_manager.dbaccessors import get_version_build_id
-from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
-from corehq.apps.app_manager.app_translations.generators import AppTranslationsGenerator, PoFileGenerator
-from corehq.apps.app_manager.app_translations.parser import TranslationsParser
-from custom.icds.translations.integrations.client import TransifexApiClient
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.generators import AppTranslationsGenerator, PoFileGenerator
+from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
+from corehq.apps.translations.integrations.transifex.parser import TranslationsParser
 
 
 class Transifex(object):

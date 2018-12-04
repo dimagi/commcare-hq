@@ -8,7 +8,6 @@ from wsgiref.util import FileWrapper
 import requests
 
 from datetime import datetime, date
-from memoized import memoized
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -20,7 +19,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
-from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
@@ -32,9 +30,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
-    use_select2_v4,
 )
-from corehq.apps.translations.views import ConvertTranslations, BaseTranslationsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
@@ -43,17 +39,9 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
-from custom.icds.tasks import (
-    push_translation_files_to_transifex,
-    pull_translation_files_from_transifex,
-    delete_resources_on_transifex,
-)
-from custom.icds.translations.integrations.exceptions import ResourceMissing
-from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
-from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AwcLocationMonths
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
@@ -113,7 +101,6 @@ from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -1651,122 +1638,6 @@ class ICDSImagesAccessorAPI(View):
             streaming_content=FileWrapper(content.content_stream),
             content_type=content.content_type
         )
-
-
-@location_safe
-@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
-class AppTranslations(BaseTranslationsView):
-    page_title = ugettext_lazy('App Translations')
-    urlname = 'app_translations'
-    template_name = 'icds_reports/icds_app/app_translations.html'
-    section_name = ugettext_lazy("Translations")
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppTranslations, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def translations_form(self):
-        if self.request.POST:
-            return AppTranslationsForm(self.domain, self.request.POST)
-        else:
-            return AppTranslationsForm(self.domain)
-
-    @property
-    def page_context(self):
-        context = super(AppTranslations, self).page_context
-        if context['transifex_details_available']:
-            context['translations_form'] = self.translations_form
-        return context
-
-    def section_url(self):
-        return reverse(ConvertTranslations.urlname, args=self.args, kwargs=self.kwargs)
-
-    def transifex(self, domain, form_data):
-        transifex_project_slug = form_data.get('transifex_project_slug')
-        source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
-        return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
-                         form_data['version'],
-                         use_version_postfix='yes' in form_data['use_version_postfix'],
-                         update_resource='yes' in form_data['update_resource'])
-
-    def perform_push_request(self, request, form_data):
-        if form_data['target_lang']:
-            if not self.ensure_resources_present(request):
-                return False
-        push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
-        messages.success(request, _('Successfully enqueued request to submit files for translations'))
-        return True
-
-    def resources_translated(self, request):
-        resource_pending_translations = (self._transifex.
-                                         resources_pending_translations(break_if_true=True))
-        if resource_pending_translations:
-            messages.error(
-                request,
-                _("Resources yet to be completely translated, for ex: {}".format(
-                    resource_pending_translations)))
-            return False
-        return True
-
-    def ensure_resources_present(self, request):
-        if not self._transifex.resource_slugs:
-            messages.error(request, _('Resources not found for this project and version.'))
-            return False
-        return True
-
-    def perform_pull_request(self, request, form_data):
-        if not self.ensure_resources_present(request):
-            return False
-        if form_data['perform_translated_check']:
-            if not self.resources_translated(request):
-                return False
-        if form_data['lock_translations']:
-            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
-                messages.error(request, _('Resources yet to be completely translated for all languages. '
-                                          'Hence, the request for locking resources can not be performed.'))
-                return False
-        pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
-        messages.success(request, _('Successfully enqueued request to pull for translations. '
-                                    'You should receive an email shortly'))
-        return True
-
-    def perform_delete_request(self, request, form_data):
-        if not self.ensure_resources_present(request):
-            return False
-        if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
-            messages.error(request, _('Resources yet to be completely translated for all languages. '
-                                      'Hence, the request for deleting resources can not be performed.'))
-            return False
-        delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
-        messages.success(request, _('Successfully enqueued request to delete resources.'))
-        return True
-
-    def perform_request(self, request, form_data):
-        self._transifex = self.transifex(request.domain, form_data)
-        if not self._transifex.source_lang_is(form_data.get('source_lang')):
-            messages.error(request, _('Source lang selected not available for the project'))
-            return False
-        else:
-            if form_data['action'] == 'push':
-                return self.perform_push_request(request, form_data)
-            elif form_data['action'] == 'pull':
-                return self.perform_pull_request(request, form_data)
-            elif form_data['action'] == 'delete':
-                return self.perform_delete_request(request, form_data)
-
-    def post(self, request, *args, **kwargs):
-        if self.transifex_integration_enabled(request):
-            form = self.translations_form
-            if form.is_valid():
-                form_data = form.cleaned_data
-                try:
-                    if self.perform_request(request, form_data):
-                        return redirect(self.urlname, domain=self.domain)
-                except ResourceMissing as e:
-                    messages.error(request, e)
-        return self.get(request, *args, **kwargs)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
