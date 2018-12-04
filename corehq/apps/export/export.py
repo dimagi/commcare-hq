@@ -299,7 +299,7 @@ def get_export_file(export_instances, filters, temp_path, progress_tracker=None)
     """
     Return an export file for the given ExportInstance and list of filters
     """
-    writer = get_export_writer(export_instances, temp_path)
+    writer = get_export_writer(export_instances, temp_path, allow_pagination=False)
     with writer.open(export_instances):
         for export_instance in export_instances:
             docs = get_export_documents(export_instance, filters)
