@@ -67,7 +67,7 @@ from corehq.apps.export.dbaccessors import (
     get_form_exports_by_domain,
 )
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.users.permissions import (
     can_download_data_files,
     CASE_EXPORT_PERMISSION,
@@ -210,7 +210,6 @@ class BaseNewExportView(BaseProjectDataView):
 
 class BaseModifyNewCustomView(BaseNewExportView):
 
-    @use_ko_validation
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
