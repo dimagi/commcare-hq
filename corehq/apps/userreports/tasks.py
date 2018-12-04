@@ -253,8 +253,6 @@ def reprocess_archive_stubs():
         if time.time() - start > cutoff:
             return
         xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
-        # Delete the original stub
-        UnfinishedArchiveStub.objects.filter(xform_id=stub.xform_id).all().delete()
         # If the history wasn't updated the first time around, run the whole thing again.
         if not stub.history_updated:
             if stub.archive:
