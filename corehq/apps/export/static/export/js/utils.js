@@ -3,13 +3,11 @@ hqDefine('export/js/utils', [
     'knockout',
     'underscore',
     'export/js/const',
-    'export/js/models',
 ], function (
     $,
     ko,
     _,
-    constants,
-    models
+    constants
 ) {
     var getTagCSSClass = function (tag) {
         var cls = 'label';
@@ -34,53 +32,10 @@ hqDefine('export/js/utils', [
         return string.charAt(0).toUpperCase() + string.substring(1).toLowerCase();
     };
 
-    /**
-     * readablePath
-     *
-     * Takes an array of PathNodes and converts them to a string dot path.
-     *
-     * @param {Array} pathNodes - An array of PathNodes to be converted to a string
-     *      dot path.
-     * @returns {string} A string dot path that represents the array of PathNodes
-     */
-    var readablePath = function (pathNodes) {
-        return _.map(pathNodes, function (pathNode) {
-            var name = pathNode.name();
-            return ko.utils.unwrapObservable(pathNode.is_repeat) ? name + '[]' : name;
-        }).join('.');
-    };
-
-    /**
-     * customPathToNodes
-     *
-     * This function takes a string path like form.meta.question and
-     * returns the equivalent path in an array of PathNodes.
-     *
-     * @param {string} customPathString - A string dot path to be converted
-     *      to PathNodes.
-     * @returns {Array} Returns an array of PathNodes.
-     */
-    var customPathToNodes = function (customPathString) {
-        var parts = customPathString.split('.');
-        return _.map(parts, function (part) {
-            var isRepeat = !!part.match(/\[]$/);
-            if (isRepeat) {
-                part = part.slice(0, part.length - 2);  // Remove the [] from the end of the path
-            }
-            return new models.PathNode({
-                name: part,
-                is_repeat: isRepeat,
-                doc_type: 'PathNode',
-            });
-        });
-    };
-
     return {
         getTagCSSClass: getTagCSSClass,
         redirect: redirect,
         animateToEl: animateToEl,
         capitalize: capitalize,
-        readablePath: readablePath,
-        customPathToNodes: customPathToNodes,
     };
 });
