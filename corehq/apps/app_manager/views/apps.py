@@ -706,7 +706,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
     attributes = [
         'all',
-        'recipients', 'name', 'use_commcare_sense',
+        'recipients', 'name',
         'text_input', 'platform', 'build_spec',
         'use_custom_suite', 'custom_suite',
         'admin_password',
