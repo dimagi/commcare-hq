@@ -27,6 +27,47 @@ hqDefine('export/js/models', [
     utils
 ) {
     /**
+     * readablePath
+     *
+     * Helper functio that takes an array of PathNodes and converts them to a string dot path.
+     *
+     * @param {Array} pathNodes - An array of PathNodes to be converted to a string
+     *      dot path.
+     * @returns {string} A string dot path that represents the array of PathNodes
+     */
+    var readablePath = function (pathNodes) {
+        return _.map(pathNodes, function (pathNode) {
+            var name = pathNode.name();
+            return ko.utils.unwrapObservable(pathNode.is_repeat) ? name + '[]' : name;
+        }).join('.');
+    };
+
+    /**
+     * customPathToNodes
+     *
+     * Helper function that takes a string path like form.meta.question and
+     * returns the equivalent path in an array of PathNodes.
+     *
+     * @param {string} customPathString - A string dot path to be converted
+     *      to PathNodes.
+     * @returns {Array} Returns an array of PathNodes.
+     */
+    var customPathToNodes = function (customPathString) {
+        var parts = customPathString.split('.');
+        return _.map(parts, function (part) {
+            var isRepeat = !!part.match(/\[]$/);
+            if (isRepeat) {
+                part = part.slice(0, part.length - 2);  // Remove the [] from the end of the path
+            }
+            return new PathNode({
+                name: part,
+                is_repeat: isRepeat,
+                doc_type: 'PathNode',
+            });
+        });
+    };
+
+    /**
      * ExportInstance
      * @class
      *
@@ -531,7 +572,7 @@ hqDefine('export/js/models', [
 
     TableConfiguration.prototype.getColumn = function (path) {
         return _.find(this.columns(), function (column) {
-            return utils.readablePath(column.item.path()) === path;
+            return readablePath(column.item.path()) === path;
         });
     };
 
@@ -585,7 +626,7 @@ hqDefine('export/js/models', [
     var UserDefinedTableConfiguration = function (tableJSON) {
         var self = this;
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
-        self.customPathString = ko.observable(utils.readablePath(self.path()));
+        self.customPathString = ko.observable(readablePath(self.path()));
         self.customPathString.extend({
             required: true,
             pattern: {
@@ -603,7 +644,7 @@ hqDefine('export/js/models', [
     UserDefinedTableConfiguration.prototype.onCustomPathChange = function () {
         var rowColumn,
             nestedRepeatCount;
-        this.path(utils.customPathToNodes(this.customPathString()));
+        this.path(customPathToNodes(this.customPathString()));
 
         // Update the rowColumn's repeat count by counting the number of
         // repeats in the table path
@@ -785,7 +826,7 @@ hqDefine('export/js/models', [
         ko.mapping.fromJS(columnJSON, UserDefinedExportColumn.mapping, self);
         self.showOptions = ko.observable(false);
         self.isUserDefined = true;
-        self.customPathString = ko.observable(utils.readablePath(self.custom_path())).extend({
+        self.customPathString = ko.observable(readablePath(self.custom_path())).extend({
             required: true,
         });
         self.customPathString.subscribe(self.customPathToNodes.bind(self));
@@ -805,7 +846,7 @@ hqDefine('export/js/models', [
     };
 
     UserDefinedExportColumn.prototype.customPathToNodes = function () {
-        this.custom_path(utils.customPathToNodes(this.customPathString()));
+        this.custom_path(customPathToNodes(this.customPathString()));
     };
 
     UserDefinedExportColumn.mapping = {
@@ -878,6 +919,8 @@ hqDefine('export/js/models', [
         ExportColumn: ExportColumn,
         ExportItem: ExportItem,
         PathNode: PathNode,
+        customPathToNodes: customPathToNodes,   // exported for tests only
+        readablePath: readablePath,             // exported for tests only
     };
 
 });
