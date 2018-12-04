@@ -53,7 +53,7 @@ def activation_24hr_reminder_email():
         )
 
 
-WIKI_LINK = 'http://help.commcarehq.org'
+WIKI_LINK = 'https://wiki.commcarehq.org'
 FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
