@@ -7,7 +7,8 @@ from corehq.apps.groups.models import Group
 from corehq.elastic import stream_es_query, get_es_new, ES_META
 from corehq.apps.es import UserES
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from corehq.pillows.group import get_group_to_elasticsearch_processor
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -19,7 +20,7 @@ class GroupsToUsersProcessor(PillowProcessor):
     def __init__(self):
         self._es = get_es_new()
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         if change.deleted:
             remove_group_from_users(change.get_document(), self._es)
         else:
@@ -27,6 +28,7 @@ class GroupsToUsersProcessor(PillowProcessor):
 
 
 def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, [topics.GROUP])
     processor = GroupsToUsersProcessor()
@@ -38,6 +40,26 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, pro
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=processor,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=10, change_feed=change_feed
+        ),
+    )
+
+def get_group_es_pillow(pillow_id='GroupESPillow', num_processes=1, process_num=0, **kwargs):
+    assert pillow_id == 'GroupESPillow', 'Pillow ID is not allowed to change'
+    to_user_es_processor = GroupsToUsersProcessor()
+    to_group_es_processor = get_group_to_elasticsearch_processor()
+    change_feed = KafkaChangeFeed(
+        topics=[topics.GROUP], client_id='groups-to-users', num_processes=num_processes, process_num=process_num
+    )
+    checkpoint_id = "{}-{}-{}".format(
+        pillow_id, USER_INDEX, to_group_es_processor.index_info.index)
+    checkpoint = KafkaPillowCheckpoint(checkpoint_id, [topics.GROUP])
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=[to_user_es_processor, to_group_es_processor],
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=10, change_feed=change_feed
         ),
@@ -104,7 +126,7 @@ class GroupToUserReindexerFactory(ReindexerFactory):
 
     def build(self):
         return PillowChangeProviderReindexer(
-            pillow=get_group_to_user_pillow(),
+            pillow_or_processor=get_group_to_user_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Group.get_db(),
                 view_name='all_docs/by_doc_type',
