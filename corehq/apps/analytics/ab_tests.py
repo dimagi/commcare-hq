@@ -147,3 +147,13 @@ DEMO_WORKFLOW = SessionAbTestConfig(
     'demo_workflow_dec2018',
     (DEMO_WORKFLOW_HUBSPOT, DEMO_WORKFLOW_DRIFT)
 )
+
+
+SIGNUP_ALT_UX_OFF = 'off'
+SIGNUP_ALT_UX_ON = 'on'
+
+SIGNUP_ALT_UX = SessionAbTestConfig(
+    'Signup Alternative UX',
+    'signup_ux_dec2018',
+    (SIGNUP_ALT_UX_OFF, SIGNUP_ALT_UX_ON)
+)
