@@ -13,7 +13,6 @@ from corehq.sql_db.connections import connection_manager
 from io import open
 
 PERSON_TABLE_ID = 'static-person_cases_v2'
-AWC_LOCATION_TABLE_ID = 'static-awc_location'
 
 
 class Command(BaseCommand):
@@ -31,28 +30,36 @@ class Command(BaseCommand):
         adapter = get_indicator_adapter(config)
         session_helper = connection_manager.get_session_helper(adapter.engine_id)
         person_table_name = get_table_name(domain, PERSON_TABLE_ID)
-        awc_location_table_name = get_table_name(domain, AWC_LOCATION_TABLE_ID)
         session = session_helper.Session
-
+        buckets = [('0 months', '6 months'),
+                   ('6 months', '2 years'),
+                   ('2 years', '6 years'),
+                   ('6 years', '14 years'),
+                   ('14 years', '18 years')
+                   ]
+        # 200 because we need 18+  and person of age more than 200 is not expected
+        buckets.append(('18 years', '200 years'))
         with open(
             os.path.join(os.path.dirname(__file__), 'sql_scripts', 'nos_of_deaths.sql'),
             encoding='utf-8'
         ) as f:
             sql_script = f.read()
-            rows = session.execute(
-                sql_script % {
-                    'person_table_name': person_table_name,
-                    'awc_location_table_name': awc_location_table_name
-                }
-            )
-
-            with open(file_path, 'w', encoding='utf-8') as file_object:
-                writer = csv.writer(file_object)
-                writer.writerow([
-                    'State',
-                    'District',
-                    'AWC',
-                    'Month',
-                    'Deaths',
-                ])
-                writer.writerows(rows)
+            for bucket in buckets:
+                rows = session.execute(
+                        sql_script % {
+                        'person_table_name': person_table_name,
+                        'from_age': bucket[0],
+                        'to_age': bucket[1]
+                        }
+                        )
+                f_path = file_path + os.sep + bucket[0].replace(' ', '_') + bucket[1].replace(' ', '_') + '.csv'
+                with open(f_path, 'w', encoding='utf-8') as file_object:
+                        writer = csv.writer(file_object)
+                        writer.writerow([
+                        'State',
+                        'District',
+                        'AWC',
+                        'Month',
+                        'Deaths',
+                        ])
+                        writer.writerows(rows)
