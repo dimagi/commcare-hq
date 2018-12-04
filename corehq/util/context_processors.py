@@ -123,8 +123,8 @@ def js_toggles(request):
     from corehq import toggles, feature_previews
     domain = request.project.name
     return {
-        'TOGGLES_DICT': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
-        'PREVIEWS_DICT': feature_previews.preview_values_by_name(domain=domain)
+        'toggles_dict': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
+        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
     }
 
 
