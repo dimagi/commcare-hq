@@ -241,7 +241,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             });
             return name[firstLang];
         }
-        self.hasError = ko.computed(function() {
+        self.hasError = ko.computed(function () {
             return !_.contains(self.parentModules(), self.moduleId());
         });
         self.moduleOptions = ko.computed(function () {
