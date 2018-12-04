@@ -755,7 +755,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
             return False
 
         self.retries -= 1
-        sleep(1)
+        gevent.sleep(1)
         return True
 
 

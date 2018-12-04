@@ -11,7 +11,7 @@
     "icds"
   ],
   "report_id": "static-mpr_3_children_registered-optimized",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR 3 - Children Registered (Static) (Optimized)",
     "description": "New children registered during month.  Displays person cases grouped by month opened, owner ID, and age group at time of registration",
@@ -91,7 +91,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
