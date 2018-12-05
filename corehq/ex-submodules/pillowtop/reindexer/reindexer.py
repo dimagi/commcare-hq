@@ -14,6 +14,7 @@ from corehq.util.doc_processor.interface import BaseDocProcessor, BulkDocProcess
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, initialize_mapping_if_necessary
 from pillowtop.feed.interface import Change
+from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.logger import pillow_logging
 from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload, ErrorCollector
 
@@ -127,22 +128,18 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
         )
 
 
-class PillowReindexer(Reindexer):
-    def __init__(self, pillow):
-        self.pillow = pillow
-
-
-class PillowChangeProviderReindexer(PillowReindexer):
+class PillowChangeProviderReindexer(Reindexer):
     start_from = None
 
-    def __init__(self, pillow, change_provider):
-        super(PillowChangeProviderReindexer, self).__init__(pillow)
+    def __init__(self, pillow_or_processor, change_provider):
+        self.pillow_or_processor = pillow_or_processor
         self.change_provider = change_provider
 
     def reindex(self):
         for i, change in enumerate(self.change_provider.iter_all_changes()):
             try:
-                self.pillow.process_change(change)
+                # below works because signature is same for pillow and processor
+                self.pillow_or_processor.process_change(change)
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
 
@@ -176,8 +173,8 @@ def _set_checkpoint(pillow):
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
     in_place = False
 
-    def __init__(self, pillow, change_provider, elasticsearch, index_info, in_place=False):
-        super(ElasticPillowReindexer, self).__init__(pillow, change_provider)
+    def __init__(self, pillow_or_processor, change_provider, elasticsearch, index_info, in_place=False):
+        super(ElasticPillowReindexer, self).__init__(pillow_or_processor, change_provider)
         self.es = elasticsearch
         self.index_info = index_info
         self.in_place = in_place
@@ -188,7 +185,8 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
     def reindex(self):
         if not self.in_place and not self.start_from:
             _prepare_index_for_reindex(self.es, self.index_info)
-            _set_checkpoint(self.pillow)
+            if isinstance(self.pillow_or_processor, ConstructedPillow):
+                _set_checkpoint(self.pillow_or_processor)
 
         super(ElasticPillowReindexer, self).reindex()
 

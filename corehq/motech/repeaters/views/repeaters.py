@@ -29,9 +29,8 @@ from corehq.motech.repeaters.forms import (
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
-    SOAPCaseRepeaterForm,
-    SOAPLocationRepeaterForm,
-    Dhis2RepeaterForm)
+    Dhis2RepeaterForm,
+)
 from corehq.motech.repeaters.models import Repeater, RepeatRecord, BASIC_AUTH, DIGEST_AUTH
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
@@ -236,28 +235,6 @@ class AddDhis2RepeaterView(AddFormRepeaterView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super(AddDhis2RepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
-        return repeater
-
-
-class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
-    repeater_form_class = SOAPCaseRepeaterForm
-
-    def make_repeater(self):
-        repeater = super(AddCustomSOAPCaseRepeaterView, self).make_repeater()
-        repeater.operation = self.add_repeater_form.cleaned_data['operation']
-        return repeater
-
-
-class AddCustomSOAPLocationRepeaterView(AddRepeaterView):
-    repeater_form_class = SOAPLocationRepeaterForm
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-    def make_repeater(self):
-        repeater = super(AddCustomSOAPLocationRepeaterView, self).make_repeater()
-        repeater.operation = self.add_repeater_form.cleaned_data['operation']
         return repeater
 
 
