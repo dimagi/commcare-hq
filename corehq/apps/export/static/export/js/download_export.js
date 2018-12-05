@@ -7,11 +7,34 @@
  *      downloadProgressModel: Controls the progress bar, etc. once the user has clicked 'Prepare Export'.
  *          Includes functionality to email the user when the export is done, rather than them waiting for it.
  */
-hqDefine('export/js/download_export', function () {
+hqDefine('export/js/download_export', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/assert_properties',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'reports/js/filters/main',
+    'reports/js/reports.util',
+    'export/js/utils',
+    'hqwebapp/js/daterangepicker.config',   // createDateRangePicker
+], function (
+    $,
+    ko,
+    _,
+    assertProperties,
+    initialPageData,
+    googleAnalytics,
+    kissmetricsAnalytics,
+    reportFilters,
+    reportUtils,
+    exportUtils
+) {
     'use strict';
 
     var downloadFormModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, [
+        assertProperties.assert(options, [
             'defaultDateRange',
             'exportList',
             'exportType',
@@ -31,7 +54,7 @@ hqDefine('export/js/download_export', function () {
         self.dateRange = ko.observable(self.defaultDateRange);
         self.getEMW = function () {
             // "expanded mobile worker" => the users (for forms) or case owners (for cases)
-            return hqImport('reports/js/reports.util').urlSerialize($('form[name="exportFiltersForm"]'));
+            return reportUtils.urlSerialize($('form[name="exportFiltersForm"]'));
         };
 
         // UI flags
@@ -78,10 +101,10 @@ hqDefine('export/js/download_export', function () {
 
         self.sendAnalytics = function () {
             var action = (self.exportList.length > 1) ? "Bulk" : "Regular";
-            hqImport('analytix/js/google').track.event("Download Export", self.exportType, action);
+            googleAnalytics.track.event("Download Export", self.exportType, action);
             _.each(self.exportList, function (export_) {
                 if (export_.has_case_history_table) {
-                    hqImport('analytix/js/google').track.event("Download Case History Export", export_.domain, export_.export_id);
+                    googleAnalytics.track.event("Download Case History Export", export_.domain, export_.export_id);
                 }
             });
         };
@@ -104,7 +127,7 @@ hqDefine('export/js/download_export', function () {
                 }).join();
             }
 
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export", {
+            kissmetricsAnalytics.track.event("Clicked Prepare Export", {
                 "Export type": self.exportType,
                 "filters": getFilterString(),
             });
@@ -180,7 +203,7 @@ hqDefine('export/js/download_export', function () {
     };
 
     var downloadProgressModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['exportType', 'formOrCase', 'emailUrl', 'pollUrl']);
+        assertProperties.assert(options, ['exportType', 'formOrCase', 'emailUrl', 'pollUrl']);
 
         var self = {};
 
@@ -249,8 +272,8 @@ hqDefine('export/js/download_export', function () {
         };
 
         self.sendAnalytics = function () {
-            hqImport('analytix/js/google').track.event("Download Export", hqImport('export/js/utils').capitalize(self.exportType), "Saved");
-            hqImport('analytix/js/kissmetrix').track.event("Clicked Download button");
+            googleAnalytics.track.event("Download Export", exportUtils.capitalize(self.exportType), "Saved");
+            kissmetricsAnalytics.track.event("Clicked Download button");
         };
 
         self._checkDownloadProgress = function () {
@@ -343,10 +366,9 @@ hqDefine('export/js/download_export', function () {
     };
 
     $(function () {
-        hqImport("reports/js/filters/main").init();
+        reportFilters.init();
 
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            exportList = initialPageData.get('export_list'),
+        var exportList = initialPageData.get('export_list'),
             exportType = exportList[0].export_type;
 
         var progressModel = downloadProgressModel({

@@ -4,10 +4,69 @@
  *
  */
 
-hqDefine('export/js/models', function () {
-    var constants = hqImport('export/js/const');
-    var utils = hqImport('export/js/utils');
-    var urls = hqImport('hqwebapp/js/initial_page_data');
+hqDefine('export/js/models', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'export/js/const',
+    'export/js/utils',
+    'hqwebapp/js/validators.ko',        // needed for validation of customPathString
+    'hqwebapp/js/knockout_bindings.ko', // needed for multirow_sortable binding
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    toggles,
+    googleAnalytics,
+    kissmetricsAnalytics,
+    constants,
+    utils
+) {
+    /**
+     * readablePath
+     *
+     * Helper functio that takes an array of PathNodes and converts them to a string dot path.
+     *
+     * @param {Array} pathNodes - An array of PathNodes to be converted to a string
+     *      dot path.
+     * @returns {string} A string dot path that represents the array of PathNodes
+     */
+    var readablePath = function (pathNodes) {
+        return _.map(pathNodes, function (pathNode) {
+            var name = pathNode.name();
+            return ko.utils.unwrapObservable(pathNode.is_repeat) ? name + '[]' : name;
+        }).join('.');
+    };
+
+    /**
+     * customPathToNodes
+     *
+     * Helper function that takes a string path like form.meta.question and
+     * returns the equivalent path in an array of PathNodes.
+     *
+     * @param {string} customPathString - A string dot path to be converted
+     *      to PathNodes.
+     * @returns {Array} Returns an array of PathNodes.
+     */
+    var customPathToNodes = function (customPathString) {
+        var parts = customPathString.split('.');
+        return _.map(parts, function (part) {
+            var isRepeat = !!part.match(/\[]$/);
+            if (isRepeat) {
+                part = part.slice(0, part.length - 2);  // Remove the [] from the end of the path
+            }
+            return new PathNode({
+                name: part,
+                is_repeat: isRepeat,
+                doc_type: 'PathNode',
+            });
+        });
+    };
 
     /**
      * ExportInstance
@@ -27,6 +86,14 @@ hqDefine('export/js/models', function () {
         self.schemaProgressText = ko.observable(gettext('Process'));
         self.numberOfAppsToProcess = options.numberOfAppsToProcess || 0;
 
+        // Constants and utils that the HTML template needs access to
+        self.splitTypes = {
+            multiselect: constants.MULTISELECT_SPLIT_TYPE,
+            plain: constants.PLAIN_SPLIT_TYPE,
+            userDefined: constants.USER_DEFINED_SPLIT_TYPES,
+        };
+        self.getTagCSSClass = utils.getTagCSSClass;
+
         if (self.include_errors) {
             self.initiallyIncludeErrors = ko.observable(self.include_errors());
         }
@@ -34,6 +101,10 @@ hqDefine('export/js/models', function () {
         // Determines the state of the save. Used for controlling the presentation
         // of the Save button.
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
+        self.saveStateReady = ko.computed(function () { return self.saveState() === constants.SAVE_STATES.READY; });
+        self.saveStateSaving = ko.computed(function () { return self.saveState() === constants.SAVE_STATES.SAVING; });
+        self.saveStateSuccess = ko.computed(function () { return self.saveState() === constants.SAVE_STATES.SUCCESS; });
+        self.saveStateError = ko.computed(function () { return self.saveState() === constants.SAVE_STATES.ERROR; });
 
         // True if the form has no errors
         self.isValid = ko.pureComputed(function () {
@@ -69,7 +140,7 @@ hqDefine('export/js/models', function () {
         // Set column widths
         self.questionColumnClass = ko.computed(function () {
             var width = 6;
-            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+            if (self.type && self.type() === 'case' && toggles.previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
                 width--;
             }
             if (self.isDeidColumnVisible()) {
@@ -79,7 +150,7 @@ hqDefine('export/js/models', function () {
         });
         self.displayColumnClass = ko.computed(function () {
             var width = 5;
-            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+            if (self.type && self.type() === 'case' && toggles.previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
                 width--;
             }
             if (self.isDeidColumnVisible()) {
@@ -123,7 +194,7 @@ hqDefine('export/js/models', function () {
             $btn = $(e.currentTarget),
             errorHandler,
             successHandler,
-            buildSchemaUrl = urls.reverse('build_schema', this.domain()),
+            buildSchemaUrl = initialPageData.reverse('build_schema', this.domain()),
             identifier = ko.utils.unwrapObservable(this.case_type) || ko.utils.unwrapObservable(this.xmlns);
 
         // We've already built the schema and now the user is clicking the button to refresh the page
@@ -175,7 +246,7 @@ hqDefine('export/js/models', function () {
 
     ExportInstance.prototype.checkBuildSchemaProgress = function (downloadId, successHandler, errorHandler) {
         var self = this,
-            buildSchemaUrl = urls.reverse('build_schema', this.domain());
+            buildSchemaUrl = initialPageData.reverse('build_schema', this.domain());
 
         $.ajax({
             url: buildSchemaUrl,
@@ -305,19 +376,19 @@ hqDefine('export/js/models', function () {
             args,
             eventCategory;
 
-        hqImport('analytix/js/google').track.event("Create Export", analyticsExportType, analyticsAction);
+        googleAnalytics.track.event("Create Export", analyticsExportType, analyticsAction);
         if (this.export_format === constants.EXPORT_FORMATS.HTML) {
             args = ["Create Export", analyticsExportType, 'Excel Dashboard', '', {}];
             // If it's not new then we have to add the callback in to redirect
             if (!this.isNew()) {
                 args.push(callback);
             }
-            hqImport('analytix/js/google').track.event.apply(null, args);
+            googleAnalytics.track.event.apply(null, args);
         }
         if (this.isNew()) {
             eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
-            hqImport('analytix/js/google').track.event(eventCategory, 'Custom export creation', '');
-            hqImport('analytix/js/kissmetrix').track.event("Clicked 'Create' in export edit page", {}, callback);
+            googleAnalytics.track.event(eventCategory, 'Custom export creation', '');
+            kissmetricsAnalytics.track.event("Clicked 'Create' in export edit page", {}, callback);
         } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();
         }
@@ -502,7 +573,7 @@ hqDefine('export/js/models', function () {
 
     TableConfiguration.prototype.getColumn = function (path) {
         return _.find(this.columns(), function (column) {
-            return utils.readablePath(column.item.path()) === path;
+            return readablePath(column.item.path()) === path;
         });
     };
 
@@ -556,7 +627,7 @@ hqDefine('export/js/models', function () {
     var UserDefinedTableConfiguration = function (tableJSON) {
         var self = this;
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
-        self.customPathString = ko.observable(utils.readablePath(self.path()));
+        self.customPathString = ko.observable(readablePath(self.path()));
         self.customPathString.extend({
             required: true,
             pattern: {
@@ -574,7 +645,7 @@ hqDefine('export/js/models', function () {
     UserDefinedTableConfiguration.prototype.onCustomPathChange = function () {
         var rowColumn,
             nestedRepeatCount;
-        this.path(utils.customPathToNodes(this.customPathString()));
+        this.path(customPathToNodes(this.customPathString()));
 
         // Update the rowColumn's repeat count by counting the number of
         // repeats in the table path
@@ -756,7 +827,7 @@ hqDefine('export/js/models', function () {
         ko.mapping.fromJS(columnJSON, UserDefinedExportColumn.mapping, self);
         self.showOptions = ko.observable(false);
         self.isUserDefined = true;
-        self.customPathString = ko.observable(utils.readablePath(self.custom_path())).extend({
+        self.customPathString = ko.observable(readablePath(self.custom_path())).extend({
             required: true,
         });
         self.customPathString.subscribe(self.customPathToNodes.bind(self));
@@ -776,7 +847,7 @@ hqDefine('export/js/models', function () {
     };
 
     UserDefinedExportColumn.prototype.customPathToNodes = function () {
-        this.custom_path(utils.customPathToNodes(this.customPathString()));
+        this.custom_path(customPathToNodes(this.customPathString()));
     };
 
     UserDefinedExportColumn.mapping = {
@@ -849,6 +920,8 @@ hqDefine('export/js/models', function () {
         ExportColumn: ExportColumn,
         ExportItem: ExportItem,
         PathNode: PathNode,
+        customPathToNodes: customPathToNodes,   // exported for tests only
+        readablePath: readablePath,             // exported for tests only
     };
 
 });

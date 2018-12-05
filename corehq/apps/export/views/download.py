@@ -74,12 +74,7 @@ from corehq.apps.export.dbaccessors import (
 )
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_ko_validation,
-    use_angular_js)
+from corehq.apps.hqwebapp.decorators import use_select2, use_daterangepicker
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.models import CouchUser
 from corehq.apps.analytics.tasks import track_workflow
@@ -175,7 +170,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
 
     @use_daterangepicker
     @use_select2
-    @use_angular_js
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)

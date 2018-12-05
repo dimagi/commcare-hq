@@ -67,12 +67,6 @@ from corehq.apps.export.dbaccessors import (
     get_form_exports_by_domain,
 )
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_ko_validation,
-    use_angular_js)
 from corehq.apps.users.permissions import (
     can_download_data_files,
     CASE_EXPORT_PERMISSION,
@@ -91,7 +85,6 @@ class BaseNewExportView(BaseProjectDataView):
     export_type = None
     is_async = True
 
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
 
@@ -215,7 +208,6 @@ class BaseNewExportView(BaseProjectDataView):
 
 class BaseModifyNewCustomView(BaseNewExportView):
 
-    @use_ko_validation
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
