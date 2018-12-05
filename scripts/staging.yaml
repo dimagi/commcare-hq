@@ -54,4 +54,5 @@ branches:
   - appcues-v3  # Gabriella Nov 27
   - jls/update-palette  # Jenny 11/30
   - rn_migrate_multimedia # Rohit 3 Dec
+  - jls/requirejs-export-download  # Jenny Dec 5
 submodules: {}
