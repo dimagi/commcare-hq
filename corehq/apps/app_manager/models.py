@@ -1133,7 +1133,8 @@ class FormBase(DocumentSchema):
                 raise
 
         try:
-            questions = self.get_questions([], include_triggers=True)
+            # Don't include groups - forms with only group questions count as blank
+            questions = self.cached_get_questions(include_triggers=True, include_groups=False)
         except XFormException as e:
             error = {'type': 'validation error', 'validation_message': six.text_type(e)}
             error.update(meta)
@@ -1217,6 +1218,18 @@ class FormBase(DocumentSchema):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
+
+    def cached_get_questions(self, include_triggers=False, include_groups=False):
+        # call to get_questions with a superset of necessary information, so
+        # it can hit the same cache across common app-building workflows
+        # performs filtering so it's a drop-in replacement for get_questions
+        def matches_params(question):
+            return (
+                (include_triggers or not question.get('is_trigger'))
+                and (include_groups or not question.get('is_group'))
+            )
+        questions = self.get_questions([], include_triggers=True, include_groups=True)
+        return [q for q in questions if matches_params(q)]
 
     @time_method()
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
@@ -1412,7 +1425,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def check_paths(self, paths):
         errors = []
         try:
-            questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
+            questions = self.cached_get_questions(include_triggers=True, include_groups=True)
             valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
