@@ -35,7 +35,7 @@ requirejs.config({
     packages: [{
         name: 'moment',
         location: 'moment',
-        main: 'moment'
+        main: 'moment',
     }],
     map: {
         "datatables.fixedColumns": {
