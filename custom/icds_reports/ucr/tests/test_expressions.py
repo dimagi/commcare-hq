@@ -498,7 +498,7 @@ class TestREACHCaseStructureOwnerID(_TestOwnerIDBase):
             },
             indices=[CaseIndex(
                 household_case,
-                identifier='awc',
+                identifier='owner_awc',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type='household',
             )],
@@ -515,7 +515,7 @@ class TestREACHCaseStructureOwnerID(_TestOwnerIDBase):
             },
             indices=[CaseIndex(
                 household_case,
-                identifier='village',
+                identifier='owner_village',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type='household',
             )],

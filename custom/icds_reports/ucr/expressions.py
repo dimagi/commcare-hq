@@ -370,7 +370,7 @@ class AWCOwnerId(JsonObject):
     """
     type = TypeProperty('icds_awc_owner_id')
     case_id_expression = DefaultProperty(required=True)
-    index_identifier = 'awc'
+    index_identifier = 'owner_awc'
 
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
@@ -432,7 +432,7 @@ class AWCOwnerId(JsonObject):
 
 class VillageOwnerId(AWCOwnerId):
     type = TypeProperty('icds_village_owner_id')
-    index_identifier = 'village'
+    index_identifier = 'owner_village'
 
     def __str__(self):
         return "village owner_id"
