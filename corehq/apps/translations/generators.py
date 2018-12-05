@@ -205,7 +205,7 @@ class AppTranslationsGenerator:
                     trans.module_id == module_id
                     and trans.field_type == list_or_detail
                     and trans.field_name == case_property
-                    and trans.display_text == default_en
+                    and (trans.display_text == default_en if trans.display_text else True)
                 )
             )
             if not in_blacklist:
