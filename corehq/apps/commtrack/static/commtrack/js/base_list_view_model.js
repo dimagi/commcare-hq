@@ -1,4 +1,12 @@
-hqDefine("hqwebapp/js/base_list_view_model", function () {
+hqDefine("commtrack/js/base_list_view_model", [
+    'jquery',
+    'knockout',
+    'underscore',
+], function (
+    $,
+    ko,
+    _
+) {
     var BaseListViewModel = function (o) {
         'use strict';
         var self = {};
