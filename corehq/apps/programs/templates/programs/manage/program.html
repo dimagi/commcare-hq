@@ -4,12 +4,7 @@
 {% load i18n %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
-        <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% requirejs_main 'commtrack/js/products_and_programs.async' %}
 
 {% block page_content %}
     {% initial_page_data 'program_product_options' program_product_options %}

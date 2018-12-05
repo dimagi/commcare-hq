@@ -3,12 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-    <!-- "Additional Information" uses a .ko-select2 -->
-    <!-- Uses v3 because BaseCommTrackManageView use_select2 -->
-    <script src="{% static 'hqwebapp/js/widgets_v3.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'commtrack/js/products_and_programs.async' %}
 
 {% block page_content %}
     <form class="form form-horizontal" name="product" method="post">

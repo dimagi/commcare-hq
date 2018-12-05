@@ -1,7 +1,19 @@
-/* globals hqDefine, hqImport */
-hqDefine('commtrack/js/products_and_programs.async', function () {
+hqDefine('commtrack/js/products_and_programs.async', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/base_list_view_model',
+    'hqwebapp/js/widgets_v3',   // "Additional Information" uses a .ko-select2
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    models
+) {
     var commtrackProductsProgramsViewModel = function (o) {
-        var self = hqImport("hqwebapp/js/base_list_view_model").BaseListViewModel(o);
+        var self = models.BaseListViewModel(o);
 
         self.currentlySearching = ko.observable(false);
 
@@ -96,7 +108,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
     };
 
     $(function () {
-        var options = hqImport('hqwebapp/js/initial_page_data').get('program_product_options');
+        var options = initialPageData.get('program_product_options');
         _.each($('.ko-program-product-list'), function (list) {
             var viewModel = commtrackProductsProgramsViewModel(options);
             $(list).koApplyBindings(viewModel);

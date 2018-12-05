@@ -3,12 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
-        <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% requirejs_main 'commtrack/js/products_and_programs.async' %}
 
 {% block stylesheets %}
     <style>
