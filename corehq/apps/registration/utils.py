@@ -138,7 +138,7 @@ def request_new_domain(request, form, is_new_user=True):
     if is_new_user:
         dom_req.save()
         if settings.IS_SAAS_ENVIRONMENT:
-            from corehq.apps.app_manager.views.utils import load_appcues_template_app
+            from corehq.apps.app_manager.tasks import load_appcues_template_app
             chain(
                 load_appcues_template_app.si(new_domain.name, current_user.username, HEALTH_APP),
                 load_appcues_template_app.si(new_domain.name, current_user.username, AGG_APP),
