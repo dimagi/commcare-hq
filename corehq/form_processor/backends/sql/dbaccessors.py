@@ -522,14 +522,14 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def archive_form(form, user_id):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL().send_to_kafka(form, user_id, archive=True)
+        FormAccessorSQL()._archive_unarchive_form(form, user_id, archive=True)
         form.state = XFormInstanceSQL.ARCHIVED
         publish_form_saved(form)
 
     @staticmethod
     def unarchive_form(form, user_id):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL().send_to_kafka(form, user_id, archive=False)
+        FormAccessorSQL()._archive_unarchive_form(form, user_id, archive=False)
         form.state = XFormInstanceSQL.NORMAL
         publish_form_saved(form)
 
@@ -585,7 +585,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         return affected_count
 
     @transaction.atomic
-    def send_to_kafka(self, form, user_id, archive):
+    def _archive_unarchive_form(self, form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
         from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
         form_id = form.form_id
