@@ -293,6 +293,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
+            notify_exception(request, six.text_type(e))
             if ajax:
                 return HttpResponseBadRequest(six.text_type(e))
             else:
