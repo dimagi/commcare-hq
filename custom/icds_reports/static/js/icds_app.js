@@ -301,6 +301,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_reports/:step", {
                 template: "<awc-reports></awc-reports>",
             })
+            .when("/lady_supervisor", {
+                template: "<lady-supervisor></lady-supervisor>",
+            })
             .when("/download", {
                 template: "<download></download>",
             })
