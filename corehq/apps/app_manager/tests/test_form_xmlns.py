@@ -38,21 +38,21 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
     def test_save_xform_changes_empty_xmlns(self):
         source = self.get_source(xmlns=None)
         self.assertNotIn(self.form.xmlns, source)
-        save_xform(self.app, self.form, source)
+        save_xform(self.app, self.form, source.encode('utf-8'))
         self.assertIn(self.form.xmlns, self.form.source)
         self.assertNotEqual(self.form.xmlns, GENERIC_XMLNS)
 
     def test_save_xform_changes_generic_xmlns(self):
         source = self.get_source(xmlns=GENERIC_XMLNS)
         self.assertNotIn(self.form.xmlns, source)
-        save_xform(self.app, self.form, source)
+        save_xform(self.app, self.form, source.encode('utf-8'))
         self.assertIn(self.form.xmlns, self.form.source)
         self.assertNotEqual(self.form.xmlns, GENERIC_XMLNS)
 
     def test_save_xform_does_not_change_xmlns_if_already_unique(self):
         source = self.get_source()
         form = self.form
-        save_xform(self.app, form, source)
+        save_xform(self.app, form, source.encode('utf-8'))
         self.assertEqual(form.source, source)
         self.assertEqual(form.xmlns, DEFAULT_XMLNS)
         # clear cach because form.xmlns changed in save_xform
@@ -61,7 +61,7 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
 
     def test_save_xform_with_conflicting_xmlns_sets_new_xmlns(self):
         source = self.get_source()
-        save_xform(self.app, self.form, source)
+        save_xform(self.app, self.form, source.encode('utf-8'))
         self.assertEqual(self.form.source, source)
 
         # clear cach because form.xmlns changed in save_xform
@@ -77,14 +77,14 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
         source = self.get_source()
         module = self.app.add_module(AdvancedModule.new_module('a module', None))
         form = self.app.new_form(self.module.id, "a form", None)
-        save_xform(self.app, form, source)
+        save_xform(self.app, form, source.encode('utf-8'))
         Application.get_xmlns_map.get_cache(self.app).clear()
 
         shadow = module.new_shadow_form("shadow form", "en")
         shadow.shadow_parent_form_id = form.unique_id
         self.assertEqual(shadow.shadow_parent_form, form)
 
-        save_xform(self.app, form, source)
+        save_xform(self.app, form, source.encode('utf-8'))
         self.assertEqual(form.source, source)
         self.assertEqual(form.xmlns, DEFAULT_XMLNS)
 
