@@ -17,15 +17,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_sql(
+        migrator.get_migration(
             SQL("DROP FUNCTION IF EXISTS get_form_attachment_by_name(TEXT, TEXT)"),
             "get_form_attachment_by_name.sql",
         ),
-        migrator.get_sql(
+        migrator.get_migration(
             SQL("DROP FUNCTION IF EXISTS get_form_attachments(TEXT)"),
             "get_form_attachments.sql",
         ),
-        migrator.get_sql(
+        migrator.get_migration(
             SQL("DROP FUNCTION IF EXISTS get_multiple_forms_attachments(TEXT[])"),
             "get_multiple_forms_attachments.sql",
         ),
