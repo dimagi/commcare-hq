@@ -16,7 +16,7 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
-    <div class="{$ $ctrl.label === 'Program Summary' && $ctrl.showSystemUsageMessage() ? 'report-content-with-message' : 'report-content' $}">
+    <div class="{$ $ctrl.label === 'Program Summary' && $ctrl.showSystemUsageMessage ? 'report-content-with-message' : 'report-content' $}">
         <kpi data="$ctrl.data"></kpi>
     </div>
     <div class="row fixed-dots">
@@ -25,7 +25,7 @@
                 <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
             </div>
         </div>
-        <div class="system-usage-message" ng-if="$ctrl.showSystemUsageMessage()">
+        <div class="system-usage-message" ng-if="$ctrl.showSystemUsageMessage">
             <i style="float: right;" ng-click="$ctrl.closeSystemUsageMessage()" class="fa fa-close pointer"></i>
             <span>The information in the report is based on the self-reported data entered by
                 the Anganwadi Worker in ICDS-CAS mobile application and is subject to timely data syncs.</span>

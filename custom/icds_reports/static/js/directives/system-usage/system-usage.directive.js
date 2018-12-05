@@ -10,7 +10,6 @@ function SystemUsageController($rootScope, $scope, $http, $log, $routeParams, $l
     vm.step = $routeParams.step;
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];
-    $rootScope.showSystemUsageMessage = $rootScope.showSystemUsageMessage !== false;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
@@ -97,13 +96,31 @@ function SystemUsageController($rootScope, $scope, $http, $log, $routeParams, $l
         return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
     };
 
-    vm.showSystemUsageMessage = function() {
-        return $rootScope.showSystemUsageMessage;
+    vm.setShowSystemUsageMessageCookie = function(value) {
+        document.cookie = "showSystemUsageMessage=" + value + ";";
+    };
+
+    vm.getShowSystemUsageMessageCookie = function() {
+        if (!document.cookie.includes("showSystemUsageMessage=")) {
+            return void(0);
+        }
+        return document.cookie.split("showSystemUsageMessage=")[1].split(';')[0] !== 'false';
     };
 
     vm.closeSystemUsageMessage = function() {
-        $rootScope.showSystemUsageMessage = false;
+        vm.setShowSystemUsageMessageCookie("false");
+        vm.showSystemUsageMessage = false;
     };
+
+    if (vm.getShowSystemUsageMessageCookie() !== false) {
+        vm.showSystemUsageMessage = true;
+        vm.setShowSystemUsageMessageCookie("true");
+    } else if (vm.getShowSystemUsageMessageCookie() === void(0)) {
+        vm.showSystemUsageMessage = true;
+        vm.setShowSystemUsageMessageCookie("true");
+    } else {
+        vm.showSystemUsageMessage = false;
+    }
 
     vm.getDataForStep(vm.step);
 }
