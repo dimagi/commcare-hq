@@ -115,6 +115,19 @@ def js_api_keys(request):
     }
 
 
+def js_toggles(request):
+    if not hasattr(request, 'couch_user') or not request.couch_user:
+        return {}
+    if not hasattr(request, 'project'):
+        return {}
+    from corehq import toggles, feature_previews
+    domain = request.project.name
+    return {
+        'toggles_dict': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
+        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    }
+
+
 def websockets_override(request):
     # for some reason our proxy setup doesn't properly detect these things, so manually override them
     try:

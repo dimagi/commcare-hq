@@ -68,8 +68,8 @@ and can be sent as either `XML` or `JSON`.
 
 **Custom repeaters** are defined in code, and subclass any of the
 `BaseRepeater` classes. They allow the developer to create custom
-payloads that can compile data from multiple sources and be sent in any
-format, including `JSON`, `XML` and `SOAP`. Custom triggers for when to
+payloads that can compile data from multiple sources and be sent as
+`JSON` or `XML`. Custom triggers for when to
 send this data are also defined in code. These trigger methods are run
 whenever the model in question (`case`, `form`, or `application`) is
 changed.

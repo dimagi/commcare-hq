@@ -45,6 +45,7 @@ from corehq.apps.registration.utils import (
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
+from corehq.apps.users.landing_pages import get_cloudcare_urlname
 from corehq import toggles
 from django.contrib.auth.models import User
 
@@ -125,7 +126,11 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            self._create_new_account(reg_form)
+            ab_test = ab_tests.ABTest(ab_tests.APPCUES_V3_APP, self.request)
+            appcues_ab_test = ab_test.context['version']
+            self._create_new_account(reg_form, additional_hubspot_data={
+                "appcues_test": appcues_ab_test,
+            })
             try:
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
@@ -145,6 +150,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
             return {
                 'success': True,
+                'appcues_ab_test': appcues_ab_test
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -429,6 +435,10 @@ def confirm_domain(request, guid=''):
         track_workflow(requesting_user.email, "Confirmed new project")
         track_confirmed_account_on_hubspot_v2.delay(requesting_user)
         request.session['CONFIRM'] = True
+
+        if settings.IS_SAAS_ENVIRONMENT:
+            # For AppCues v3, land new user in Web Apps
+            view_name = get_cloudcare_urlname(requested_domain.name)
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
