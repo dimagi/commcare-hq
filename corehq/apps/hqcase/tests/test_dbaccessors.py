@@ -27,6 +27,7 @@ from corehq.apps.hqcase.dbaccessors import (
 from corehq.elastic import get_es_new, EsMeta
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
 from six.moves import range
@@ -185,9 +186,11 @@ class ESAccessorsTest(TestCase):
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
+            initialize_index_and_mapping(self.elasticsearch, DOMAIN_INDEX_INFO)
 
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)
+        ensure_index_deleted(DOMAIN_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(ESAccessorsTest, self).tearDown()
 
@@ -204,7 +207,7 @@ class ESAccessorsTest(TestCase):
     def _create_case_and_sync_to_es(self):
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        with process_pillow_changes('CaseToElasticsearchPillow'):
+        with process_pillow_changes('case-pillow', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(self.domain, case_id, case_name)
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
