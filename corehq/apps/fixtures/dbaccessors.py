@@ -36,7 +36,7 @@ def get_fixture_data_types_in_domain(domain):
     filtered = []
     for doc in results:
         if isinstance(doc, FixtureDataType):
-            results.append(doc)
+            filtered.append(doc)
         else:
             sentry_link = 'https://sentry.io/dimagi/commcarehq/issues/702737433/'
             notify_exception(None, 'Deleted fixture in couch results. {}'.format(sentry_link))
