@@ -18,7 +18,7 @@ from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirec
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
-from corehq.apps.registration.utils import PRICING_LINK
+from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.hqwebapp.urls import legacy_prelogin
 
 try:
