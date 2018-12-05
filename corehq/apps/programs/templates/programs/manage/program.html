@@ -5,7 +5,6 @@
 {% load compress %}
 
 {% block js %}{{ block.super }}
-    {% include 'hqwebapp/includes/ui_element_js.html' %}
     {% compress js %}
     <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
         <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
