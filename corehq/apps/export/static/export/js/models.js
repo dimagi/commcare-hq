@@ -30,7 +30,7 @@ hqDefine('export/js/models', [
     /**
      * readablePath
      *
-     * Helper functio that takes an array of PathNodes and converts them to a string dot path.
+     * Helper function that takes an array of PathNodes and converts them to a string dot path.
      *
      * @param {Array} pathNodes - An array of PathNodes to be converted to a string
      *      dot path.
