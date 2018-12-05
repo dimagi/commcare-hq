@@ -587,7 +587,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
         with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            xform_archived.send(sender="form_processor", xform=self)
+            if archive:
+                xform_archived.send(sender="form_processor", xform=self)
+            else:
+                xform_unarchived.send(sender="form_processor", xform=self)
             publish_form_saved(self)
 
     def __unicode__(self):

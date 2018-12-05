@@ -389,7 +389,10 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
         with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            xform_archived.send(sender="couchforms", xform=self)
+            if archive:
+                xform_archived.send(sender="couchforms", xform=self)
+            else:
+                xform_unarchived.send(sender="couchforms", xform=self)
 
 
 class XFormError(XFormInstance):
