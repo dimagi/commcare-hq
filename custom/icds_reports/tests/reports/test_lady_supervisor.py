@@ -23,8 +23,8 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            'all': 2,
-            'format': 'div',
+            'all': None,
+            'format': 'number',
             'percent': None,
             'value': 1,
             'label': 'Number of AWCs visited/ Number of AWCs launched',

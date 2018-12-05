@@ -230,7 +230,7 @@ class AggLsMonthly(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
-    unique_awc_vists = models.IntegerField(help_text='Unique AWC visits by LS in the month')
+    awc_visits = models.IntegerField(help_text='Unique AWC visits by LS in the month')
     vhnd_observed = models.IntegerField(help_text='Vhnd forms submitted by LS where vhnd date in the month')
     beneficiary_vists = models.IntegerField(help_text='beneficiary visits made by LS in the month')
     num_launched_awcs = models.IntegerField(

@@ -19,7 +19,7 @@ def get_lady_supervisor_data(domain, config, show_test=False):
             month=date, **filters
         ).values(
             "aggregation_level",
-            "unique_awc_vists",
+            "awc_visits",
             "vhnd_observed",
             "beneficiary_vists",
             "num_launched_awcs",
@@ -40,9 +40,9 @@ def get_lady_supervisor_data(domain, config, show_test=False):
                     'label': _('Number of AWCs visited/ Number of AWCs launched'),
                     'help_text': lady_supervisor_number_of_awcs_visited_help_text(),
                     'percent': None,
-                    'value': get_value(data, 'unique_awc_vists'),
-                    'all': get_value(data, 'num_launched_awcs'),
-                    'format': 'div',
+                    'value': get_value(data, 'awc_visits'),
+                    'all': None,
+                    'format': 'number',
                     'frequency': 'month',
                 },
                 {
