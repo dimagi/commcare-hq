@@ -40,7 +40,7 @@ class FluffPillowProcessor(PillowProcessor):
         assert self.doc_type is not None
         assert self.doc_type not in self.deleted_types
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         if self.should_process_change(change):
             doc_dict = self.change_transform(change.get_document())
             if doc_dict:

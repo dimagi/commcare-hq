@@ -24,6 +24,12 @@ class HQFormHelper(FormHelper):
     field_class = CSS_FIELD_CLASS
 
 
+class HQModalFormHelper(FormHelper):
+    form_class = 'form form-horizontal'
+    label_class = 'col-xs-12 col-sm-3 col-md-3 col-lg-2'
+    field_class = 'col-xs-12 col-sm-9 col-md-9 col-lg-6'
+
+
 class HiddenFieldWithErrors(OldField):
     template = "hqwebapp/crispy/field/hidden_with_errors.html"
 
