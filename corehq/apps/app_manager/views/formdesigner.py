@@ -7,7 +7,7 @@ import logging
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -60,6 +60,11 @@ logger = logging.getLogger(__name__)
 @track_domain_request(calculated_prop='cp_n_form_builder_entered')
 def form_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
+    if app and app.copy_of:
+        # redirect to "main" app rather than specific build
+        return HttpResponseRedirect(reverse(
+            "view_app", args=[domain, app.copy_of]
+        ))
 
     try:
         form = app.get_form(form_unique_id)
@@ -82,6 +87,12 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
     PLEASE DO NOT DELETE.
     """
     app = get_app(domain, app_id)
+
+    if app and app.copy_of:
+        # redirect to "main" app rather than specific build
+        return HttpResponseRedirect(reverse(
+            "view_app", args=[domain, app.copy_of]
+        ))
 
     try:
         module = app.get_module(module_id)
