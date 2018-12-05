@@ -40,7 +40,9 @@ class Command(BaseCommand):
         version = options.get('version')
         if to_app_id:
             app = get_current_app(self.to_domain, to_app_id)
+            print('Overwriting application: {}'.format(app.name))
         else:
+            print('Creating new application')
             app = Application()
 
         if version:
@@ -52,6 +54,7 @@ class Command(BaseCommand):
             raise CommandError("From app not found")
 
         from_app = wrap_app(from_app_doc)
+        print('Overwring app with "{}" (version {})'.format(from_app.name, from_app.version))
         overwrite_app(app, from_app, self.report_map)
 
     @property
