@@ -3,7 +3,7 @@ hqDefine('commtrack/js/products_and_programs.async', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/base_list_view_model',
+    'commtrack/js/base_list_view_model',
     'hqwebapp/js/widgets_v3',   // "Additional Information" uses a .ko-select2
 ], function (
     $,

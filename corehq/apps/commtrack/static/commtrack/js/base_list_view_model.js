@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/base_list_view_model", [
+hqDefine("commtrack/js/base_list_view_model", [
     'jquery',
     'knockout',
     'underscore',
