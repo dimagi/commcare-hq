@@ -1,4 +1,4 @@
-hqDefine('commtrack/js/products_and_programs.async', [
+hqDefine('commtrack/js/products_and_programs_main', [
     'jquery',
     'knockout',
     'underscore',
