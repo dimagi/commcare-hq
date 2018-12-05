@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-11-27 20:59+0000\n"
-"PO-Revision-Date: 2018-11-20 21:27+0000\n"
+"POT-Creation-Date: 2018-12-04 21:16+0000\n"
+"PO-Revision-Date: 2018-11-27 21:01+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
@@ -69,7 +69,7 @@ msgstr ""
 msgid "Last Form Submission [UTC]"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:130 corehq/apps/export/forms.py:211
+#: corehq/apps/accounting/enterprise.py:130 corehq/apps/export/forms.py:209
 #: corehq/apps/reports/models.py:89
 msgid "Web Users"
 msgstr ""
@@ -77,9 +77,9 @@ msgstr ""
 #: corehq/apps/accounting/enterprise.py:138
 #: corehq/apps/accounting/enterprise.py:166
 #: corehq/apps/accounting/forms.py:1707 corehq/apps/accounting/forms.py:1771
-#: corehq/apps/app_manager/forms.py:27 corehq/apps/app_manager/models.py:2851
-#: corehq/apps/app_manager/models.py:3579
-#: corehq/apps/app_manager/models.py:4483
+#: corehq/apps/app_manager/forms.py:27 corehq/apps/app_manager/models.py:2861
+#: corehq/apps/app_manager/models.py:3589
+#: corehq/apps/app_manager/models.py:4493
 #: corehq/apps/case_search/templates/case_search/case_search.html:132
 #: corehq/apps/cloudcare/templates/formplayer/users.html:83
 #: corehq/apps/data_interfaces/forms.py:213
@@ -128,16 +128,16 @@ msgid "Name"
 msgstr ""
 
 #: corehq/apps/accounting/enterprise.py:138
-#: corehq/apps/registration/forms.py:321 corehq/apps/users/forms.py:929
+#: corehq/apps/registration/forms.py:321 corehq/apps/users/forms.py:928
 msgid "Email Address"
 msgstr ""
 
 #: corehq/apps/accounting/enterprise.py:138
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html:28
-#: corehq/apps/users/forms.py:1148
+#: corehq/apps/users/forms.py:1147
 #: corehq/apps/users/templates/users/web_users.html:116
 #: corehq/apps/users/templates/users/web_users.html:168
-#: corehq/apps/users/templates/users/web_users.html:228
+#: corehq/apps/users/templates/users/web_users.html:212
 #: custom/ilsgateway/tanzania/reports/facility_details.py:76
 #: custom/ilsgateway/tanzania/reports/facility_details.py:123
 msgid "Role"
@@ -162,10 +162,10 @@ msgstr ""
 #: corehq/apps/hqwebapp/forms.py:66 corehq/apps/reports/filters/simple.py:14
 #: corehq/apps/reports/standard/deployments.py:70
 #: corehq/apps/reports/standard/forms/reports.py:42
-#: corehq/apps/reports/standard/inspect.py:169
+#: corehq/apps/reports/standard/inspect.py:173
 #: corehq/apps/reports/standard/monitoring.py:782
 #: corehq/apps/reports/templates/reports/project_health/partials/user_list.html:10
-#: corehq/apps/users/forms.py:251 corehq/apps/users/forms.py:523
+#: corehq/apps/users/forms.py:252 corehq/apps/users/forms.py:524
 #: corehq/apps/users/templates/users/edit_web_user.html:13
 #: corehq/apps/users/templates/users/mobile_workers.html:269
 #: corehq/apps/users/templates/users/partials/basic_info_form.html:10
@@ -199,7 +199,7 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py:64
 #: corehq/apps/hqadmin/reports.py:1270
 #: corehq/apps/reports/standard/deployments.py:89
-#: corehq/ex-submodules/phonelog/reports.py:89 corehq/tabs/tabclasses.py:1922
+#: corehq/ex-submodules/phonelog/reports.py:89 corehq/tabs/tabclasses.py:1921
 msgid "CommCare Version"
 msgstr ""
 
@@ -395,7 +395,7 @@ msgstr ""
 #: corehq/apps/accounting/filters.py:309 corehq/apps/accounting/forms.py:460
 #: corehq/apps/accounting/forms.py:803
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html:17
-#: corehq/apps/domain/forms.py:2119 corehq/apps/export/forms.py:293
+#: corehq/apps/domain/forms.py:2119 corehq/apps/export/forms.py:313
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:91
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:127
 msgid "End Date"
@@ -655,8 +655,8 @@ msgstr ""
 #: corehq/apps/accounting/forms.py:1804 corehq/apps/case_migrations/forms.py:29
 #: corehq/apps/commtrack/forms.py:92
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/form_list_form.html:60
-#: corehq/apps/sms/forms.py:114 corehq/apps/translations/forms.py:81
-#: custom/icds_reports/forms.py:94
+#: corehq/apps/sms/forms.py:114 corehq/apps/translations/forms.py:83
+#: corehq/apps/translations/forms.py:168
 msgid "Submit"
 msgstr ""
 
@@ -750,14 +750,14 @@ msgid "Your card is being used to auto-pay for {billing_account}"
 msgstr ""
 
 #: corehq/apps/accounting/models.py:547
-#: corehq/apps/styleguide/example_forms.py:13 corehq/apps/users/forms.py:207
-#: corehq/apps/users/forms.py:528
+#: corehq/apps/styleguide/example_forms.py:13 corehq/apps/users/forms.py:208
+#: corehq/apps/users/forms.py:529
 #: corehq/apps/users/templates/users/mobile_workers.html:270
 msgid "First Name"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:550 corehq/apps/users/forms.py:208
-#: corehq/apps/users/forms.py:533
+#: corehq/apps/accounting/models.py:550 corehq/apps/users/forms.py:209
+#: corehq/apps/users/forms.py:534
 #: corehq/apps/users/templates/users/mobile_workers.html:271
 msgid "Last Name"
 msgstr ""
@@ -886,7 +886,7 @@ msgstr ""
 msgid "Your prepayment invoice"
 msgstr ""
 
-#: corehq/apps/accounting/models.py:3623
+#: corehq/apps/accounting/models.py:3624
 msgid "You can't specify both an invoice and a line item."
 msgstr ""
 
@@ -1156,8 +1156,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html:19
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/confirm_delete_form.html:34
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/confirm_delete_module.html:53
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:240
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:267
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:249
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:276
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html:33
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html:20
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:75
@@ -1166,9 +1166,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html:85
 #: corehq/apps/domain/templates/domain/stripe_cards.html:63
 #: corehq/apps/export/templates/export/customize_export_new.html:263
-#: corehq/apps/export/templates/export/partials/export_download_prepare.html:88
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html:104
-#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:33
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:32
 #: corehq/apps/export/templates/export/partials/table.html:240
 #: corehq/apps/export/templates/export/partials/table.html:271
 #: corehq/apps/groups/templates/groups/group_members.html:163
@@ -1202,9 +1201,9 @@ msgstr ""
 #: corehq/apps/users/templates/users/partials/basic_info_modals.html:30
 #: corehq/apps/users/templates/users/partials/basic_info_modals.html:59
 #: corehq/apps/users/templates/users/web_users.html:176
-#: corehq/apps/users/templates/users/web_users.html:415
-#: corehq/apps/users/templates/users/web_users.html:724
-#: corehq/apps/users/templates/users/web_users.html:785
+#: corehq/apps/users/templates/users/web_users.html:399
+#: corehq/apps/users/templates/users/web_users.html:746
+#: corehq/apps/users/templates/users/web_users.html:807
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html:65
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html:99
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html:143
@@ -1224,7 +1223,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html:82
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html:63
-#: corehq/tabs/tabclasses.py:994 corehq/tabs/tabclasses.py:1008
+#: corehq/tabs/tabclasses.py:993 corehq/tabs/tabclasses.py:1007
 msgid "New"
 msgstr ""
 
@@ -2699,7 +2698,7 @@ msgstr ""
 #: corehq/apps/reports/standard/sms.py:937
 #: corehq/apps/reports/standard/sms.py:1078
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:290
-#: corehq/apps/users/templates/users/web_users.html:229
+#: corehq/apps/users/templates/users/web_users.html:213
 #: custom/ilsgateway/tanzania/reports/facility_details.py:124
 #: custom/ilsgateway/tanzania/reports/supervision.py:128
 #: custom/intrahealth/sqldata.py:433 custom/intrahealth/sqldata.py:1583
@@ -2754,7 +2753,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html:9
 #: corehq/apps/accounting/templates/accounting/subscriptions.html:12
-#: corehq/tabs/tabclasses.py:1512
+#: corehq/tabs/tabclasses.py:1511
 msgid "Subscription"
 msgstr ""
 
@@ -2932,7 +2931,7 @@ msgstr ""
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:75
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html:99
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html:31
-#: corehq/tabs/tabclasses.py:998 corehq/tabs/tabclasses.py:1012
+#: corehq/tabs/tabclasses.py:997 corehq/tabs/tabclasses.py:1011
 #: custom/ilsgateway/templates/ilsgateway/slab/slab_configuration.html:34
 msgid "Edit"
 msgstr ""
@@ -3115,19 +3114,18 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/add_gateway.html:24
 #: corehq/apps/sms/templates/sms/backend_map.html:21
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html:12
+#: corehq/apps/translations/forms.py:125
 #: corehq/apps/users/templates/users/mobile_workers.html:273
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html:15
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html:33
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:38
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html:34
-#: custom/icds_reports/forms.py:51
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:14
 msgid "Action"
 msgstr ""
 
 #: corehq/apps/accounting/views.py:1179 corehq/apps/accounting/views.py:1180
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html:40
-#: corehq/tabs/tabclasses.py:1357
+#: corehq/tabs/tabclasses.py:1356
 msgid "Enterprise Dashboard"
 msgstr ""
 
@@ -3143,13 +3141,13 @@ msgid "Generating {title} report, will email to {email} when complete."
 msgstr ""
 
 #: corehq/apps/accounting/views.py:1239 corehq/apps/accounting/views.py:1240
-#: corehq/tabs/tabclasses.py:1344 corehq/tabs/tabclasses.py:1361
+#: corehq/tabs/tabclasses.py:1343 corehq/tabs/tabclasses.py:1360
 msgid "Enterprise Settings"
 msgstr ""
 
 #: corehq/apps/accounting/views.py:1265
 #: corehq/apps/domain/templates/domain/billing_statements.html:46
-#: corehq/apps/domain/views/accounting.py:394 corehq/tabs/tabclasses.py:1365
+#: corehq/apps/domain/views/accounting.py:394 corehq/tabs/tabclasses.py:1364
 msgid "Billing Statements"
 msgstr ""
 
@@ -3392,7 +3390,7 @@ msgid "Improve the user experience of your mobile workers"
 msgstr ""
 
 #: corehq/apps/app_manager/add_ons.py:178
-#: corehq/apps/app_manager/templates/app_manager/form_summary.html:29
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:32
 msgid "Calculations"
 msgstr ""
 
@@ -3408,98 +3406,6 @@ msgstr ""
 msgid "Tools to help build your apps faster"
 msgstr ""
 
-#: corehq/apps/app_manager/app_translations/app_translations.py:68
-msgid ""
-"App Translation Failed! There is an issue with Excel columns. Error details: "
-"{}."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:188
-msgid "App Translations Updated!"
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:198
-msgid "Issues found. You should receive an email shortly."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:200
-msgid "No issues found."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:494
-#, python-format
-msgid "Invalid sheet_name \"%s\", skipping row."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:506
-#, python-format
-msgid "Invalid module in row \"%s\", skipping row."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:518
-#, python-format
-msgid "Invalid form in row \"%s\", skipping row."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:576
-#, python-brace-format
-msgid ""
-"Found a ShadowForm at module-{module_index} form-{form_index} with the name "
-"{name}. Cannot translate ShadowForms, skipping."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:707
-#, python-format
-msgid ""
-"You must provide at least one translation for the label '%s' in sheet '%s'"
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:723
-#, python-brace-format
-msgid ""
-"Unrecognized translation label {0} in sheet {1}. That row has been skipped"
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:879
-#, python-brace-format
-msgid ""
-"Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. No "
-"changes were made for sheet {1}."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:917
-#, python-brace-format
-msgid ""
-"Expected {0} case {3} properties in sheet {2}, found {1}. No case list or "
-"detail properties for sheet {2} were updated"
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:941
-#, python-format
-msgid "You must provide at least one translation of the case property '%s'"
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:955
-msgid "You must provide all ID mappings for property '{}'"
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/app_translations.py:997
-#, python-brace-format
-msgid ""
-"A row in sheet {sheet} has an unexpected value of \"{field}\" in the "
-"case_property column. Case properties must appear in the same order as they "
-"do in the bulk app translation download. No translations updated for this "
-"row."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/validator.py:21
-msgid "We found less rows than expected. Validating what was uploaded."
-msgstr ""
-
-#: corehq/apps/app_manager/app_translations/validator.py:22
-msgid "We found more rows than expected. Validating what was uploaded."
-msgstr ""
-
 #: corehq/apps/app_manager/fields.py:78 corehq/apps/hqwebapp/doc_info.py:192
 #: corehq/apps/sms/models.py:950 corehq/apps/sms/models.py:1464
 #: corehq/apps/sms/views.py:776
@@ -3508,7 +3414,7 @@ msgid "Case"
 msgstr ""
 
 #: corehq/apps/app_manager/fields.py:80 corehq/apps/app_manager/fields.py:191
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:90
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:93
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:188
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html:10
 #: corehq/apps/app_manager/templates/app_manager/partials/form_error_message.html:5
@@ -3518,7 +3424,7 @@ msgstr ""
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:133
 #: corehq/apps/hqwebapp/doc_info.py:179
 #: corehq/apps/reports/filters/forms.py:577
-#: corehq/apps/reports/standard/inspect.py:175
+#: corehq/apps/reports/standard/inspect.py:179
 #: corehq/apps/reports/standard/ivr.py:63
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html:153
 #: corehq/apps/userreports/templates/userreports/expression_debugger.html:21
@@ -3554,28 +3460,28 @@ msgstr ""
 #: corehq/apps/app_manager/fields.py:190
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html:19
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html:45
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:194
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:249
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:200
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:255
 #: corehq/apps/reports/filters/forms.py:574
 msgid "Menu"
 msgstr ""
 
 #: corehq/apps/app_manager/fields.py:194 corehq/apps/app_manager/fields.py:199
-#: corehq/apps/export/forms.py:129
+#: corehq/apps/export/forms.py:127
 msgid "Select Application"
 msgstr ""
 
 #: corehq/apps/app_manager/fields.py:195
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html:87
-#: corehq/apps/export/forms.py:135
+#: corehq/apps/export/forms.py:133
 msgid "Select Menu"
 msgstr ""
 
-#: corehq/apps/app_manager/fields.py:196 corehq/apps/export/forms.py:140
+#: corehq/apps/app_manager/fields.py:196 corehq/apps/export/forms.py:138
 msgid "Select Form"
 msgstr ""
 
-#: corehq/apps/app_manager/fields.py:200 corehq/apps/export/forms.py:151
+#: corehq/apps/app_manager/fields.py:200 corehq/apps/export/forms.py:149
 msgid "Select Case Type"
 msgstr ""
 
@@ -3583,14 +3489,14 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html:13
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html:13
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:18
-#: corehq/apps/app_manager/views/app_summary.py:68
+#: corehq/apps/app_manager/views/app_summary.py:66
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html:6
-#: corehq/apps/dashboard/views.py:162 corehq/tabs/tabclasses.py:827
+#: corehq/apps/dashboard/views.py:162 corehq/tabs/tabclasses.py:826
 msgid "Applications"
 msgstr ""
 
 #: corehq/apps/app_manager/fields.py:365 corehq/apps/app_manager/fields.py:374
-#: corehq/apps/app_manager/views/app_summary.py:163
+#: corehq/apps/app_manager/views/app_summary.py:161
 #: corehq/apps/export/models/new.py:1179 corehq/apps/export/models/new.py:1195
 #: corehq/apps/export/templates/export/partials/table.html:398
 #: corehq/apps/reports/standard/deployments.py:216
@@ -3704,32 +3610,32 @@ msgstr ""
 msgid "Invalid app version %(version)s"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:1761
+#: corehq/apps/app_manager/models.py:1771
 msgid "This form opens a {}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:1764
+#: corehq/apps/app_manager/models.py:1774
 msgid "This form opens a subcase {}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:1767
+#: corehq/apps/app_manager/models.py:1777
 msgid "This form closes a {}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:1770
+#: corehq/apps/app_manager/models.py:1780
 msgid "This form updates a {}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:2534
+#: corehq/apps/app_manager/models.py:2544
 #, python-brace-format
 msgid "Could not find form with ID='{unique_id}' in module '{module_name}'."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:2548
+#: corehq/apps/app_manager/models.py:2558
 msgid "Could not find parent menu for '{}'"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:2601
+#: corehq/apps/app_manager/models.py:2611
 msgid ""
 "That format is no longer supported. To reference the location hierarchy you "
 "need to use the \"Custom Calculations in Case List\" feature preview. For "
@@ -3737,29 +3643,29 @@ msgid ""
 "pageId=38276915"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:2784
+#: corehq/apps/app_manager/models.py:2794
 msgid "Case tiles may only be used for the case list (not the case details)."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:2792
+#: corehq/apps/app_manager/models.py:2802
 msgid "A case property must be assigned to the \"{}\" tile field."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:2858
-#: corehq/apps/app_manager/models.py:3586
-#: corehq/apps/app_manager/models.py:4489
+#: corehq/apps/app_manager/models.py:2868
+#: corehq/apps/app_manager/models.py:3596
+#: corehq/apps/app_manager/models.py:4499
 msgid "Untitled Module"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:2878
-#: corehq/apps/app_manager/models.py:3613
-#: corehq/apps/app_manager/models.py:3628
+#: corehq/apps/app_manager/models.py:2888
+#: corehq/apps/app_manager/models.py:3623
+#: corehq/apps/app_manager/models.py:3638
 #: corehq/apps/app_manager/views/modules.py:587
 #: corehq/apps/reports/views.py:2067 corehq/apps/reports/views.py:2096
 msgid "Untitled Form"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:2904
+#: corehq/apps/app_manager/models.py:2914
 msgid ""
 "\n"
 "                Cannot move an advanced form with actions into a basic "
@@ -3767,47 +3673,47 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3175
+#: corehq/apps/app_manager/models.py:3185
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html:38
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html:93
 #: corehq/apps/domain/templates/domain/admin/partials/case_search_templates.html:5
 msgid "Case property"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3176
+#: corehq/apps/app_manager/models.py:3186
 msgid "Lookup Table field"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3177
+#: corehq/apps/app_manager/models.py:3187
 msgid "custom user property"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3178
+#: corehq/apps/app_manager/models.py:3188
 msgid "custom XPath expression"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3185
+#: corehq/apps/app_manager/models.py:3195
 msgid "Case tag"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3186
+#: corehq/apps/app_manager/models.py:3196
 msgid "Lookup Table tag"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3400
+#: corehq/apps/app_manager/models.py:3410
 msgid "Unknown, please change"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3542
-#: corehq/apps/app_manager/models.py:3870
+#: corehq/apps/app_manager/models.py:3552
+#: corehq/apps/app_manager/models.py:3880
 msgid "You can't create a phase without an anchor property"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3547
+#: corehq/apps/app_manager/models.py:3557
 msgid "You can't have more than one phase with the anchor {}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3598
+#: corehq/apps/app_manager/models.py:3608
 #: corehq/apps/products/templates/products/manage/products.html:105
 #: corehq/apps/products/views.py:480
 #: corehq/apps/programs/templates/programs/manage/program.html:71
@@ -3820,89 +3726,89 @@ msgstr ""
 msgid "Product"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3899
+#: corehq/apps/app_manager/models.py:3909
 #, python-brace-format
 msgid ""
 "You can't delete phases with anchors {phase_anchors} because they have forms "
 "attached to them"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3940
+#: corehq/apps/app_manager/models.py:3950
 msgid "Value equal to a standard user property"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3942
+#: corehq/apps/app_manager/models.py:3952
 msgid "Value equal to a custom user property"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3943
+#: corehq/apps/app_manager/models.py:3953
 msgid "An exact match of a constant value"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3945
+#: corehq/apps/app_manager/models.py:3955
 msgid "An exact match of a dynamic property"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3946
+#: corehq/apps/app_manager/models.py:3956
 msgid "A standard date range"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3947
+#: corehq/apps/app_manager/models.py:3957
 msgid "A custom range relative to today"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3949
+#: corehq/apps/app_manager/models.py:3959
 msgid "Custom Month Filter (you probably don't want this"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3950
+#: corehq/apps/app_manager/models.py:3960
 msgid "Show choices on mobile device"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3952
+#: corehq/apps/app_manager/models.py:3962
 msgid "Ancestor location of the user's assigned location of a particular type"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3953
+#: corehq/apps/app_manager/models.py:3963
 msgid "A numeric expression"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:4008
+#: corehq/apps/app_manager/models.py:4018
 msgid "The user's case sharing group"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:4009
+#: corehq/apps/app_manager/models.py:4019
 msgid "The user's assigned location"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:4010
+#: corehq/apps/app_manager/models.py:4020
 msgid "All of the user's assigned locations"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:4012
+#: corehq/apps/app_manager/models.py:4022
 msgid "The parent location of the user's assigned location"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:4013
+#: corehq/apps/app_manager/models.py:4023
 msgid "The user's username"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:4014
+#: corehq/apps/app_manager/models.py:4024
 msgid "The user's ID"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:4307
+#: corehq/apps/app_manager/models.py:4317
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html:14
 #: corehq/apps/dashboard/views.py:172
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html:13
 #: corehq/apps/userreports/reports/view.py:127
 #: corehq/apps/userreports/reports/view.py:619
 #: corehq/apps/users/landing_pages.py:25 corehq/reports.py:268
-#: corehq/tabs/tabclasses.py:70 corehq/tabs/tabclasses.py:1822
+#: corehq/tabs/tabclasses.py:70 corehq/tabs/tabclasses.py:1821
 msgid "Reports"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:5048
+#: corehq/apps/app_manager/models.py:5063
 #, python-brace-format
 msgid ""
 "Your app requires {0} passwords but the admin password is not {0}. To "
@@ -3910,45 +3816,45 @@ msgid ""
 "and reset the Admin Password to something that is {0}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:5168
+#: corehq/apps/app_manager/models.py:5183
 msgid ""
 "Usage of lookup tables is not supported by your current subscription. Please "
 "upgrade your subscription before using this feature."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:5184
+#: corehq/apps/app_manager/models.py:5199
 msgid ""
 "Usage of integrations is not supported by your current subscription. Please "
 "upgrade your subscription before using this feature."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:5192
+#: corehq/apps/app_manager/models.py:5207
 msgid ""
 "Usage of external integration is not supported by your current subscription. "
 "Please upgrade your subscription before using this feature."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:5967
+#: corehq/apps/app_manager/models.py:5982
 msgid ""
 "Unable to validate the forms due to a server error. Please try again later."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:5970
+#: corehq/apps/app_manager/models.py:5985
 msgid "Error in form \"{}\": {}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6036
-#: corehq/apps/app_manager/models.py:6044
+#: corehq/apps/app_manager/models.py:6051
+#: corehq/apps/app_manager/models.py:6059
 #, python-brace-format
 msgid "Could not find module with ID='{unique_id}' in app '{app_name}'."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6202
+#: corehq/apps/app_manager/models.py:6217
 #, python-brace-format
 msgid "Copy of {name}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6289
+#: corehq/apps/app_manager/models.py:6304
 msgid ""
 "Your application is using User Properties and your current subscription does "
 "not support that. You can remove User Properties functionality by opening "
@@ -3956,16 +3862,16 @@ msgid ""
 "Properties\"."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6447
+#: corehq/apps/app_manager/models.py:6462
 msgid "Error in case type hierarchy"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6566
+#: corehq/apps/app_manager/models.py:6581
 msgid ""
 "Problem loading suite file from profile file. Is your profile file correct?"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6751
+#: corehq/apps/app_manager/models.py:6766
 msgid "Could not find form '{}'"
 msgstr ""
 
@@ -4166,7 +4072,7 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py:52
 #: corehq/apps/domain/views/settings.py:117
 #: corehq/apps/locations/templates/locations/manage/location.html:54
-#: corehq/apps/users/forms.py:289
+#: corehq/apps/users/forms.py:290
 #: corehq/apps/users/templates/users/edit_commcare_user.html:33
 msgid "Basic"
 msgstr ""
@@ -4354,7 +4260,7 @@ msgid "Fuzzy Search"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:92 corehq/apps/sms/forms.py:348
-#: corehq/apps/sms/forms.py:920 corehq/tabs/tabclasses.py:1095
+#: corehq/apps/sms/forms.py:920 corehq/tabs/tabclasses.py:1094
 msgid "General Settings"
 msgstr ""
 
@@ -4466,7 +4372,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html:172
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:50
 #: corehq/apps/appstore/templates/appstore/project_info.html:113
-#: corehq/apps/sms/views.py:1695 corehq/tabs/tabclasses.py:1097
+#: corehq/apps/sms/views.py:1695 corehq/tabs/tabclasses.py:1096
 msgid "Languages"
 msgstr ""
 
@@ -5172,7 +5078,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html:13
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html:46
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html:101
-#: corehq/apps/dashboard/views.py:238 corehq/tabs/tabclasses.py:1156
+#: corehq/apps/dashboard/views.py:238 corehq/tabs/tabclasses.py:1155
 msgid "Settings"
 msgstr ""
 
@@ -5220,14 +5126,14 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/base_summary.html:60
 #: corehq/apps/app_manager/templates/app_manager/form_summary.html:5
 #: corehq/apps/app_manager/templates/app_manager/form_summary.html:18
-#: corehq/apps/app_manager/views/app_summary.py:99
+#: corehq/apps/app_manager/views/app_summary.py:97
 msgid "Form Summary"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/base_summary.html:72
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html:5
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html:15
-#: corehq/apps/app_manager/views/app_summary.py:84
+#: corehq/apps/app_manager/views/app_summary.py:82
 msgid "Case Summary"
 msgstr ""
 
@@ -5241,31 +5147,49 @@ msgstr ""
 msgid "Question IDs"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:28
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:5
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:15
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:5
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:18
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html:10
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:169
+#: corehq/apps/builds/templates/builds/all.html:8
+#: corehq/apps/builds/templates/builds/edit_menu.html:43
+#: corehq/apps/domain/templates/domain/snapshot_settings.html:114
+#: corehq/apps/translations/forms.py:93
+msgid "Version"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:17
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:20
+msgid "See latest"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:31
 msgid "Show Conditions"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:33
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:36
 msgid "Show Calculations"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:55
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:58
 msgid "Relationships:"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:64
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:67
 msgid "Opened by:"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:68
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:71
 msgid "Closed by:"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:74
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:77
 msgid "Problems:"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:89
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:92
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html:412
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html:143
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html:34
@@ -5276,19 +5200,19 @@ msgstr ""
 msgid "Case Property"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:91
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:94
 msgid "Load questions"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:92
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:95
 msgid "Save questions"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:93
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:96
 msgid "Case Lists"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/case_summary.html:94
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html:97
 msgid "Case Details"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -5343,30 +5267,30 @@ msgstr ""
 msgid "Comment"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/form_summary.html:31
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:34
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html:119
 msgid "Display"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/form_summary.html:33
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:36
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:99
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:101
 msgid "Validation"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/form_summary.html:35
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:38
 msgid "Comments"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/form_summary.html:37
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:40
 msgid "Default Values"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/form_summary.html:46
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:49
 msgid "Error in form:"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/form_summary.html:84
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html:87
 msgid "This question is required"
 msgstr ""
 
@@ -5397,8 +5321,8 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html:16
 #: corehq/apps/sms/views.py:1070 corehq/apps/sms/views.py:1449
 #: corehq/apps/users/templates/users/web_users.html:50
-#: corehq/apps/users/templates/users/web_users.html:230
-#: corehq/apps/users/templates/users/web_users.html:345
+#: corehq/apps/users/templates/users/web_users.html:214
+#: corehq/apps/users/templates/users/web_users.html:329
 msgid "Actions"
 msgstr ""
 
@@ -5607,8 +5531,8 @@ msgid "Followup"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:180
-#: corehq/apps/app_manager/views/forms.py:438 corehq/apps/users/forms.py:1036
-#: corehq/apps/users/forms.py:1044
+#: corehq/apps/app_manager/views/forms.py:438 corehq/apps/users/forms.py:1035
+#: corehq/apps/users/forms.py:1043
 msgid "Register"
 msgstr ""
 
@@ -5634,7 +5558,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html:275
 #: corehq/apps/appstore/templates/appstore/project_info.html:247
 #: corehq/apps/domain/templates/domain/billing_statements.html:94
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:45
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:30
 #: corehq/apps/export/templates/export/partials/table.html:167
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:325
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:18
@@ -5678,16 +5602,16 @@ msgstr ""
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html:17
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html:33
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html:11
-#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:12
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:11
 #: corehq/apps/export/templates/export/partials/table.html:211
 #: corehq/apps/export/templates/export/partials/table.html:254
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html:25
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html:35
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:512
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:530
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_30_day_trial.html:7
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_30_day_trial.html:52
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html:18
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html:8
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html:26
 #: corehq/apps/reports/templates/reports/standard/base_template.html:192
 #: corehq/apps/reports/templates/reports/standard/submission_error_report.html:26
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:56
@@ -5696,9 +5620,9 @@ msgstr ""
 #: corehq/apps/users/templates/users/mobile_workers.html:314
 #: corehq/apps/users/templates/users/mobile_workers.html:356
 #: corehq/apps/users/templates/users/web_users.html:152
-#: corehq/apps/users/templates/users/web_users.html:404
-#: corehq/apps/users/templates/users/web_users.html:431
-#: corehq/apps/users/templates/users/web_users.html:779
+#: corehq/apps/users/templates/users/web_users.html:388
+#: corehq/apps/users/templates/users/web_users.html:415
+#: corehq/apps/users/templates/users/web_users.html:801
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html:44
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html:38
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html:59
@@ -5706,6 +5630,7 @@ msgid "Close"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/app_summary_button.html:4
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:201
 msgid "App Summary"
 msgstr ""
 
@@ -6029,7 +5954,7 @@ msgstr ""
 #: corehq/apps/users/templates/users/partials/basic_info_modals.html:31
 #: corehq/apps/users/templates/users/partials/manage_my_numbers.html:68
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html:68
-#: corehq/apps/users/templates/users/web_users.html:786
+#: corehq/apps/users/templates/users/web_users.html:808
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html:29
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:34
 msgid "Delete"
@@ -8079,15 +8004,6 @@ msgstr ""
 msgid "Versions"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html:10
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:167
-#: corehq/apps/builds/templates/builds/all.html:8
-#: corehq/apps/builds/templates/builds/edit_menu.html:43
-#: corehq/apps/domain/templates/domain/snapshot_settings.html:114
-#: custom/icds_reports/forms.py:19
-msgid "Version"
-msgstr ""
-
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html:15
 msgid ""
 "\n"
@@ -8264,7 +8180,7 @@ msgid "Send Android app"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html:306
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:46
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:31
 msgid "Download Multimedia"
 msgstr ""
 
@@ -8351,75 +8267,75 @@ msgid ""
 "An error occurred while fetching versions. Reload the page to try again."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:133
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:134
 msgid "Could not update"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:139
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:140
 msgid "Latest"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:150
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:151
 msgid "Released"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:160
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:161
 msgid "In Test"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:168
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:170
 #: corehq/apps/appstore/templates/appstore/project_info.html:58
 msgid "by"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:171
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:173
 msgid "with CommCare v."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:174
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:176
 msgid "Unsigned Jar"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:187
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:189
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:62
 msgid "(Click here to add a comment)"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:191
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:193
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:64
 msgid "Error updating comment.  Please try again."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:200
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:207
 msgid "Revert to this Version"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:205
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:212
 msgid "View Changes"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:217
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:225
 #: corehq/apps/domain/templates/domain/snapshot_settings.html:80
 msgid "Publish"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:234
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:243
 msgid "Delete Version?"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:237
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:246
 msgid "Are you sure you want to delete this version"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:241
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:250
 msgid "Delete Version"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:253
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:262
 msgid "Revert to Version?"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:257
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:266
 msgid ""
 "\n"
 "                            This version uses an outdated form of case "
@@ -8429,7 +8345,7 @@ msgid ""
 "                        "
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:262
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:271
 msgid ""
 "\n"
 "                     Are you sure you want to revert to version <span data-"
@@ -8437,7 +8353,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:268
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:277
 msgid "Revert"
 msgstr ""
 
@@ -8598,7 +8514,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html:20
 #: corehq/apps/data_dictionary/models.py:17 corehq/apps/hqwebapp/forms.py:28
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py:22
-#: corehq/apps/users/forms.py:543
+#: corehq/apps/users/forms.py:544
 #: corehq/apps/users/templates/users/edit_commcare_user.html:38
 #: corehq/messaging/smsbackends/airtel_tcl/forms.py:19
 #: corehq/messaging/smsbackends/ivory_coast_mtn/forms.py:19
@@ -8716,23 +8632,23 @@ msgid ""
 "user"
 msgstr ""
 
-#: corehq/apps/app_manager/views/app_summary.py:33
+#: corehq/apps/app_manager/views/app_summary.py:29
 msgid "Summary"
 msgstr ""
 
-#: corehq/apps/app_manager/views/app_summary.py:324
-#: corehq/apps/app_manager/views/app_summary.py:330
+#: corehq/apps/app_manager/views/app_summary.py:322
+#: corehq/apps/app_manager/views/app_summary.py:328
 #: corehq/apps/reports/standard/monitoring.py:681
 msgid "All Forms"
 msgstr ""
 
-#: corehq/apps/app_manager/views/app_summary.py:414
-#: corehq/apps/app_manager/views/app_summary.py:422
+#: corehq/apps/app_manager/views/app_summary.py:412
+#: corehq/apps/app_manager/views/app_summary.py:420
 msgid "All Case Properties"
 msgstr ""
 
-#: corehq/apps/app_manager/views/app_summary.py:415
-#: corehq/apps/app_manager/views/app_summary.py:426
+#: corehq/apps/app_manager/views/app_summary.py:413
+#: corehq/apps/app_manager/views/app_summary.py:424
 #: corehq/motech/repeaters/forms.py:168
 msgid "Case Types"
 msgstr ""
@@ -8823,7 +8739,7 @@ msgid ""
 "persists, please contact us at commcarehq-support@dimagi.com"
 msgstr ""
 
-#: corehq/apps/app_manager/views/download.py:406
+#: corehq/apps/app_manager/views/download.py:404
 msgid ""
 "We were unable to get your files because your Application has errors. Please "
 "click <strong>Make New Version</strong> for feedback on how to fix these "
@@ -8954,24 +8870,8 @@ msgid ""
 "This form has been updated by {}. Reload the page to see the latest changes."
 msgstr ""
 
-#: corehq/apps/app_manager/views/releases.py:467
+#: corehq/apps/app_manager/views/releases.py:469
 msgid "App diff"
-msgstr ""
-
-#: corehq/apps/app_manager/views/translations.py:52
-msgid "Upload failed. We found problems with the following translations:"
-msgstr ""
-
-#: corehq/apps/app_manager/views/translations.py:63
-msgid "Upload succeeded, but we found following issues for some properties"
-msgstr ""
-
-#: corehq/apps/app_manager/views/translations.py:70
-msgid "Something went wrong! Update failed. We're looking into it"
-msgstr ""
-
-#: corehq/apps/app_manager/views/translations.py:73
-msgid "UI Translations Updated!"
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py:275
@@ -9109,7 +9009,7 @@ msgstr ""
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:7
 #: corehq/apps/appstore/views.py:93 corehq/apps/domain/views/exchange.py:95
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/domain_list_dropdown.html:19
-#: corehq/tabs/tabclasses.py:1554
+#: corehq/tabs/tabclasses.py:1553
 msgid "CommCare Exchange"
 msgstr ""
 
@@ -9197,13 +9097,13 @@ msgstr ""
 #: corehq/apps/dashboard/views.py:201
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:83
 #: corehq/apps/locations/templates/locations/manage/location.html:59
-#: corehq/apps/reports/filters/users.py:35
+#: corehq/apps/reports/filters/users.py:34
 #: corehq/apps/reports/standard/monitoring.py:269
 #: corehq/apps/reports/templates/reports/async/aggregate_user_status.html:10
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:29
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:44
-#: corehq/apps/users/views/__init__.py:108
-#: corehq/messaging/scheduling/forms.py:1042 corehq/tabs/tabclasses.py:1165
+#: corehq/apps/users/views/__init__.py:109
+#: corehq/messaging/scheduling/forms.py:1042 corehq/tabs/tabclasses.py:1164
 msgid "Users"
 msgstr ""
 
@@ -9252,8 +9152,8 @@ msgstr ""
 #: corehq/apps/appstore/templates/appstore/media_files.html:35
 #: corehq/apps/cloudcare/templates/formplayer/users.html:88
 #: corehq/apps/dashboard/views.py:210 corehq/apps/domain/forms.py:1769
-#: corehq/apps/hqadmin/reports.py:706 corehq/tabs/tabclasses.py:1331
-#: corehq/tabs/tabclasses.py:1334
+#: corehq/apps/hqadmin/reports.py:706 corehq/tabs/tabclasses.py:1330
+#: corehq/tabs/tabclasses.py:1333
 msgid "Organization"
 msgstr ""
 
@@ -9334,7 +9234,7 @@ msgstr ""
 #: corehq/apps/hqadmin/reports.py:704 corehq/apps/hqadmin/reports.py:1279
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html:130
 #: corehq/apps/settings/templates/settings/my_projects.html:11
-#: corehq/apps/users/views/__init__.py:683
+#: corehq/apps/users/views/__init__.py:685
 msgid "Project"
 msgstr ""
 
@@ -9447,7 +9347,7 @@ msgid "Disagree"
 msgstr ""
 
 #: corehq/apps/appstore/views.py:211 corehq/apps/domain/views/internal.py:61
-#: corehq/tabs/tabclasses.py:1450
+#: corehq/tabs/tabclasses.py:1449
 msgid "Project Information"
 msgstr ""
 
@@ -9485,8 +9385,6 @@ msgstr ""
 
 #: corehq/apps/builds/templates/builds/all.html:9
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:7
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:12
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:17
 msgid "Time"
 msgstr ""
 
@@ -9495,7 +9393,7 @@ msgid "Editing CommCare Builds"
 msgstr ""
 
 #: corehq/apps/builds/templates/builds/edit_menu.html:30
-#: corehq/tabs/tabclasses.py:1229
+#: corehq/tabs/tabclasses.py:1228
 msgid "Editing"
 msgstr ""
 
@@ -9535,11 +9433,11 @@ msgid "Import a new build from the build server"
 msgstr ""
 
 #: corehq/apps/builds/templates/builds/edit_menu.html:135
-msgid "Build Number*"
+msgid "Version*"
 msgstr ""
 
 #: corehq/apps/builds/templates/builds/edit_menu.html:143
-msgid "Version*"
+msgid "Build Number*"
 msgstr ""
 
 #: corehq/apps/builds/templates/builds/edit_menu.html:148
@@ -9777,7 +9675,6 @@ msgstr ""
 #: corehq/apps/export/templates/export/customize_export_new.html:265
 #: corehq/apps/settings/forms.py:126 corehq/apps/settings/forms.py:163
 #: corehq/apps/settings/forms.py:195 corehq/apps/settings/forms.py:239
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:5
 msgid "Back"
 msgstr ""
 
@@ -9856,7 +9753,6 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:11
 #: corehq/apps/export/templates/export/download_data_files.html:96
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:47
 msgid "File"
 msgstr ""
 
@@ -9889,7 +9785,7 @@ msgid "Info no longer available"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:44
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:81
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:60
 #: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html:24
 #: corehq/messaging/smsbackends/telerivet/templates/telerivet/partials/finish.html:6
 msgid "Complete"
@@ -10265,7 +10161,7 @@ msgid "No Web Apps applications available"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html:7
-#: corehq/apps/users/landing_pages.py:24 corehq/tabs/tabclasses.py:885
+#: corehq/apps/users/landing_pages.py:24 corehq/tabs/tabclasses.py:884
 msgid "Web Apps"
 msgstr ""
 
@@ -10401,8 +10297,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py:422
-#: corehq/apps/users/templates/users/web_users.html:640
-#: corehq/tabs/tabclasses.py:1239
+#: corehq/apps/users/templates/users/web_users.html:624
+#: corehq/tabs/tabclasses.py:1238
 msgid "Web Apps Permissions"
 msgstr ""
 
@@ -10595,7 +10491,7 @@ msgstr ""
 msgid "uncategorized"
 msgstr ""
 
-#: corehq/apps/commtrack/views.py:50 corehq/tabs/tabclasses.py:277
+#: corehq/apps/commtrack/views.py:50 corehq/tabs/tabclasses.py:276
 msgid "Setup"
 msgstr ""
 
@@ -10626,11 +10522,11 @@ msgstr ""
 msgid "Select one"
 msgstr ""
 
-#: corehq/apps/custom_data_fields/edit_entity.py:143
+#: corehq/apps/custom_data_fields/edit_entity.py:144
 msgid "Additional Information"
 msgstr ""
 
-#: corehq/apps/custom_data_fields/edit_entity.py:201
+#: corehq/apps/custom_data_fields/edit_entity.py:202
 msgid "Unrecognized Information"
 msgstr ""
 
@@ -10935,7 +10831,7 @@ msgstr ""
 #: corehq/apps/fixtures/templates/fixtures/fixtures_base.html:10
 #: corehq/apps/settings/views.py:435
 #: corehq/apps/userreports/reports/builder/forms.py:740
-#: corehq/motech/repeaters/models.py:112 corehq/tabs/tabclasses.py:411
+#: corehq/motech/repeaters/models.py:112 corehq/tabs/tabclasses.py:410
 msgid "Data"
 msgstr ""
 
@@ -10953,7 +10849,7 @@ msgstr ""
 
 #: corehq/apps/dashboard/views.py:219 corehq/apps/sms/views.py:125
 #: corehq/apps/sms/views.py:347 corehq/apps/sms/views.py:482
-#: corehq/reports.py:156 corehq/tabs/tabclasses.py:906
+#: corehq/reports.py:156 corehq/tabs/tabclasses.py:905
 msgid "Messaging"
 msgstr ""
 
@@ -10995,7 +10891,7 @@ msgid "GPS"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:8
-#: corehq/apps/data_dictionary/views.py:155 corehq/tabs/tabclasses.py:767
+#: corehq/apps/data_dictionary/views.py:155 corehq/tabs/tabclasses.py:766
 msgid "Data Dictionary"
 msgstr ""
 
@@ -11130,7 +11026,7 @@ msgstr ""
 #: corehq/apps/reminders/forms.py:242
 #: corehq/apps/styleguide/example_forms.py:38
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py:65
-#: corehq/apps/users/forms.py:592 corehq/apps/users/forms.py:976
+#: corehq/apps/users/forms.py:591 corehq/apps/users/forms.py:975
 msgid "Basic Information"
 msgstr ""
 
@@ -11293,21 +11189,21 @@ msgstr ""
 #: corehq/apps/reports/display.py:37
 #: corehq/apps/reports/standard/forms/reports.py:41
 #: corehq/apps/reports/standard/forms/reports.py:129
-#: corehq/apps/reports/standard/inspect.py:155
-#: corehq/apps/reports/standard/inspect.py:168
+#: corehq/apps/reports/standard/inspect.py:159
+#: corehq/apps/reports/standard/inspect.py:172
 msgid "View Form"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py:208
 #: corehq/apps/reports/filters/forms.py:615
-#: corehq/apps/reports/standard/inspect.py:171
+#: corehq/apps/reports/standard/inspect.py:175
 #: corehq/apps/reports/standard/monitoring.py:1088
 msgid "Submission Time"
 msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py:209
 #: corehq/apps/reports/filters/forms.py:610
-#: corehq/apps/reports/standard/inspect.py:172
+#: corehq/apps/reports/standard/inspect.py:176
 #: corehq/apps/reports/standard/monitoring.py:1087
 msgid "Completion Time"
 msgstr ""
@@ -11342,7 +11238,7 @@ msgid "NOTE: A system administrator is required to edit this rule."
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:17
-#: corehq/apps/domain/views/settings.py:384 corehq/tabs/tabclasses.py:1646
+#: corehq/apps/domain/views/settings.py:384 corehq/tabs/tabclasses.py:1645
 #: custom/m4change/fields.py:32 custom/m4change/fields.py:39
 msgid "Case Search"
 msgstr ""
@@ -11854,7 +11750,7 @@ msgstr ""
 msgid "Manage Group '%s'"
 msgstr ""
 
-#: corehq/apps/data_interfaces/views.py:354 corehq/apps/export/forms.py:72
+#: corehq/apps/data_interfaces/views.py:354 corehq/apps/export/forms.py:73
 msgid "case"
 msgstr ""
 
@@ -12398,7 +12294,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py:1426 corehq/apps/settings/forms.py:28
-#: corehq/apps/users/forms.py:369
+#: corehq/apps/users/forms.py:370
 msgid "New password"
 msgstr ""
 
@@ -12411,7 +12307,7 @@ msgid "Useful when you want to copy contact emails"
 msgstr ""
 
 #: corehq/apps/domain/forms.py:1523 corehq/apps/domain/forms.py:1598
-#: corehq/apps/domain/forms.py:1717 corehq/apps/users/forms.py:984
+#: corehq/apps/domain/forms.py:1717 corehq/apps/users/forms.py:983
 msgid "Mailing Address"
 msgstr ""
 
@@ -13346,7 +13242,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:43
-#: corehq/apps/domain/views/accounting.py:1236 corehq/apps/users/forms.py:1001
+#: corehq/apps/domain/views/accounting.py:1236 corehq/apps/users/forms.py:1000
 #: corehq/apps/users/templates/users/mobile_workers.html:153
 #: corehq/apps/users/views/mobile/users.py:288
 msgid "Confirm Billing Information"
@@ -14420,7 +14316,7 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html:11
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html:15
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html:9
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:204
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:210
 msgid "Sign In"
 msgstr ""
 
@@ -14435,7 +14331,7 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/password_reset_done.html:8
 #: corehq/apps/domain/templates/login_and_password/password_reset_form.html:14
 #: corehq/apps/domain/templates/login_and_password/password_reset_form.html:48
-#: corehq/apps/users/forms.py:408
+#: corehq/apps/users/forms.py:409
 msgid "Reset Password"
 msgstr ""
 
@@ -15050,7 +14946,7 @@ msgstr ""
 msgid "Created a new version of your app."
 msgstr ""
 
-#: corehq/apps/domain/views/fixtures.py:18 corehq/tabs/tabclasses.py:1651
+#: corehq/apps/domain/views/fixtures.py:18 corehq/tabs/tabclasses.py:1650
 msgid "Calendar Fixture"
 msgstr ""
 
@@ -15058,7 +14954,7 @@ msgstr ""
 msgid "Calendar configuration updated successfully"
 msgstr ""
 
-#: corehq/apps/domain/views/fixtures.py:44 corehq/tabs/tabclasses.py:1656
+#: corehq/apps/domain/views/fixtures.py:44 corehq/tabs/tabclasses.py:1655
 msgid "Location Fixture"
 msgstr ""
 
@@ -15115,8 +15011,8 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py:56
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html:49
-#: corehq/apps/locations/views.py:1034 corehq/reports.py:390
-#: corehq/tabs/tabclasses.py:1402
+#: corehq/apps/locations/views.py:1015 corehq/reports.py:390
+#: corehq/tabs/tabclasses.py:1401
 msgid "Project Settings"
 msgstr ""
 
@@ -15149,7 +15045,7 @@ msgstr ""
 msgid "Privacy and Security"
 msgstr ""
 
-#: corehq/apps/domain/views/settings.py:337 corehq/tabs/tabclasses.py:1560
+#: corehq/apps/domain/views/settings.py:337 corehq/tabs/tabclasses.py:1559
 msgid "Multimedia Sharing"
 msgstr ""
 
@@ -15238,58 +15134,58 @@ msgstr ""
 msgid "Export Cases and Users"
 msgstr ""
 
-#: corehq/apps/export/forms.py:71 corehq/apps/export/forms.py:113
+#: corehq/apps/export/forms.py:72 corehq/apps/export/forms.py:111
 msgid "Select model type"
 msgstr ""
 
-#: corehq/apps/export/forms.py:73
+#: corehq/apps/export/forms.py:74
 msgid "form"
 msgstr ""
 
-#: corehq/apps/export/forms.py:122
+#: corehq/apps/export/forms.py:120
 msgid "Select Application Type"
 msgstr ""
 
-#: corehq/apps/export/forms.py:187
+#: corehq/apps/export/forms.py:185
 msgid "Menu is required"
 msgstr ""
 
-#: corehq/apps/export/forms.py:189
+#: corehq/apps/export/forms.py:187
 msgid "Form is required"
 msgstr ""
 
-#: corehq/apps/export/forms.py:195
+#: corehq/apps/export/forms.py:193
 msgid "case type is required"
 msgstr ""
 
-#: corehq/apps/export/forms.py:209 corehq/apps/reports/filters/users.py:61
+#: corehq/apps/export/forms.py:207 corehq/apps/reports/filters/users.py:60
 msgid "All Mobile Workers"
 msgstr ""
 
-#: corehq/apps/export/forms.py:210
+#: corehq/apps/export/forms.py:208
 msgid "Demo User"
 msgstr ""
 
-#: corehq/apps/export/forms.py:212 corehq/apps/reports/models.py:86
+#: corehq/apps/export/forms.py:210 corehq/apps/reports/models.py:86
 msgid "Unknown Users"
 msgstr ""
 
-#: corehq/apps/export/forms.py:213 corehq/apps/reports/__init__.py:15
+#: corehq/apps/export/forms.py:211 corehq/apps/reports/__init__.py:15
 #: corehq/apps/reports/models.py:87 corehq/reports.py:128
-#: corehq/tabs/tabclasses.py:1154
+#: corehq/tabs/tabclasses.py:1153
 msgid "CommCare Supply"
 msgstr ""
 
-#: corehq/apps/export/forms.py:259 corehq/apps/reports/filters/case_list.py:37
+#: corehq/apps/export/forms.py:279 corehq/apps/reports/filters/case_list.py:37
 msgid "Case Owner(s)"
 msgstr ""
 
-#: corehq/apps/export/forms.py:264 corehq/apps/reports/filters/users.py:209
+#: corehq/apps/export/forms.py:284 corehq/apps/reports/filters/users.py:208
 msgid "User(s)"
 msgstr ""
 
-#: corehq/apps/export/forms.py:269 corehq/apps/export/forms.py:490
-#: corehq/apps/export/forms.py:978 corehq/apps/export/forms.py:1035
+#: corehq/apps/export/forms.py:289 corehq/apps/export/forms.py:507
+#: corehq/apps/export/forms.py:992 corehq/apps/export/forms.py:1048
 #: corehq/apps/reports/daterange.py:23 corehq/apps/reports/filters/dates.py:19
 #: corehq/apps/reports/filters/dates.py:62
 #: corehq/apps/reports/templates/reports/reports_home.html:53
@@ -15297,61 +15193,61 @@ msgstr ""
 msgid "Date Range"
 msgstr ""
 
-#: corehq/apps/export/forms.py:273
+#: corehq/apps/export/forms.py:293
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:52
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:97
 msgid "Last 7 days"
 msgstr ""
 
-#: corehq/apps/export/forms.py:274
+#: corehq/apps/export/forms.py:294
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:53
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:98
 msgid "Last 30 days"
 msgstr ""
 
-#: corehq/apps/export/forms.py:275
+#: corehq/apps/export/forms.py:295
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:54
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:99
 msgid "Last month"
 msgstr ""
 
-#: corehq/apps/export/forms.py:276
+#: corehq/apps/export/forms.py:296
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:55
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:100
 msgid "Last year"
 msgstr ""
 
-#: corehq/apps/export/forms.py:277
+#: corehq/apps/export/forms.py:297
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:56
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:101
 msgid "Days ago"
 msgstr ""
 
-#: corehq/apps/export/forms.py:278
+#: corehq/apps/export/forms.py:298
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:57
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:102
 msgid "Since a date"
 msgstr ""
 
-#: corehq/apps/export/forms.py:279
+#: corehq/apps/export/forms.py:299
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:58
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:103
 msgid "From a date to a date"
 msgstr ""
 
-#: corehq/apps/export/forms.py:283
+#: corehq/apps/export/forms.py:303
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:63
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:108
 msgid "Number of Days"
 msgstr ""
 
-#: corehq/apps/export/forms.py:287
+#: corehq/apps/export/forms.py:307
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:77
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:117
 msgid "Begin Date"
 msgstr ""
 
-#: corehq/apps/export/forms.py:290 corehq/apps/export/forms.py:296
+#: corehq/apps/export/forms.py:310 corehq/apps/export/forms.py:316
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:83
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:85
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:98
@@ -15361,29 +15257,29 @@ msgstr ""
 msgid "YYYY-MM-DD"
 msgstr ""
 
-#: corehq/apps/export/forms.py:323
+#: corehq/apps/export/forms.py:340
 msgid "Cannot submit case and form users and groups filter"
 msgstr ""
 
-#: corehq/apps/export/forms.py:328
+#: corehq/apps/export/forms.py:345
 msgid "A valid start date is required"
 msgstr ""
 
-#: corehq/apps/export/forms.py:332
+#: corehq/apps/export/forms.py:349
 msgid "A valid end date is required"
 msgstr ""
 
-#: corehq/apps/export/forms.py:499
+#: corehq/apps/export/forms.py:516
 #, python-format
 msgid ""
 "Filters forms by date received. The timezone for this export is %(timezone)s."
 msgstr ""
 
-#: corehq/apps/export/forms.py:980
+#: corehq/apps/export/forms.py:994
 msgid "Export cases modified in this date range"
 msgstr ""
 
-#: corehq/apps/export/forms.py:1037
+#: corehq/apps/export/forms.py:1050
 msgid "Export messages sent in this date range"
 msgstr ""
 
@@ -15423,8 +15319,8 @@ msgstr ""
 msgid "Parent Cases"
 msgstr ""
 
-#: corehq/apps/export/models/new.py:1193 corehq/tabs/tabclasses.py:1117
-#: corehq/tabs/tabclasses.py:1152
+#: corehq/apps/export/models/new.py:1193 corehq/tabs/tabclasses.py:1116
+#: corehq/tabs/tabclasses.py:1151
 msgid "Messages"
 msgstr ""
 
@@ -15812,18 +15708,18 @@ msgstr ""
 msgid "3 days"
 msgstr ""
 
-#: corehq/apps/export/templates/export/download_export.html:58
+#: corehq/apps/export/templates/export/download_export.html:62
 msgid ""
 "\n"
 "                    You are downloading the following exports:\n"
 "                "
 msgstr ""
 
-#: corehq/apps/export/templates/export/download_export.html:76
+#: corehq/apps/export/templates/export/download_export.html:79
 msgid "No submissions available."
 msgstr ""
 
-#: corehq/apps/export/templates/export/download_export.html:79
+#: corehq/apps/export/templates/export/download_export.html:82
 msgid ""
 "\n"
 "                        It seems your project doesn't have any submissions\n"
@@ -15832,7 +15728,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/export/templates/export/download_export.html:86
+#: corehq/apps/export/templates/export/download_export.html:89
 msgid ""
 "\n"
 "                        To get started, please\n"
@@ -15888,81 +15784,62 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_prepare.html:24
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html:18
 msgid "Filters inactive while download in progress. "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_prepare.html:37
-msgid ""
-"\n"
-"                    Sorry, there was a problem reaching the server.\n"
-"                    Please try again or\n"
-"                    <a href=\"#modalReportIssue\"\n"
-"                       data-toggle=\"modal\">Report an Issue</a>.\n"
-"                    "
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/export_download_prepare.html:56
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html:34
 msgid "Prepare Export"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_prepare.html:63
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html:37
 msgid "Preparing Export"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_prepare.html:74
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html:47
 msgid "Prepare Multimedia"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_prepare.html:81
+#: corehq/apps/export/templates/export/partials/export_download_prepare.html:50
 msgid "Preparing Multimedia"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:18
-msgid "Server maintenance in progress. Please try again later."
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:19
-msgid "There was an error downloading your export."
-msgstr ""
-
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:21
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:15
 msgid ""
 "\n"
 "                                If the problem persists, please\n"
-"                                <a href=\"#modalReportIssue\"\n"
-"                                   data-toggle=\"modal\">\n"
-"                                    Report an Issue</a>.\n"
+"                                <a href=\"#modalReportIssue\" data-toggle="
+"\"modal\"> Report an Issue</a>.\n"
 "                            "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:53
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:36
 msgid "Collecting Data"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:54
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:37
 msgid "Collecting Multimedia"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:57
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:40
 msgid ""
 "For exports that may take a while to prepare, email a link when download is "
 "ready"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:65
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:48
 msgid "Email me when ready"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:88
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:66
 msgid "Something went wrong!"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_download_progress.html:97
+#: corehq/apps/export/templates/export/partials/export_download_progress.html:72
 msgid "Update Filters"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_list_controller.html:9
+#: corehq/apps/export/templates/export/partials/export_list_controller.html:8
 #, python-format
 msgid ""
 "\n"
@@ -15971,7 +15848,7 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_list_controller.html:16
+#: corehq/apps/export/templates/export/partials/export_list_controller.html:15
 #, python-format
 msgid ""
 "\n"
@@ -15983,7 +15860,7 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/export_list_controller.html:28
+#: corehq/apps/export/templates/export/partials/export_list_controller.html:27
 #, python-format
 msgid ""
 "\n"
@@ -16078,28 +15955,28 @@ msgid ""
 "                        "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:14
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:13
 msgid "Filter Feed"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:19
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:18
 msgid "This export is limited to the following locations:"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:27
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:26
 msgid "There was an unknown error saving the filters"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:36
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:35
 msgid "Save filters"
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:39
+#: corehq/apps/export/templates/export/partials/feed_filter_modal.html:38
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:81
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/loading_exports.html:10
+#: corehq/apps/export/templates/export/partials/loading_exports.html:9
 #, python-format
 msgid ""
 "\n"
@@ -16108,7 +15985,7 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/export/templates/export/partials/loading_exports.html:14
+#: corehq/apps/export/templates/export/partials/loading_exports.html:13
 #, python-format
 msgid ""
 "\n"
@@ -16449,107 +16326,88 @@ msgstr ""
 msgid "Learn More About Pricing Plans"
 msgstr ""
 
-#: corehq/apps/export/views/download.py:160
+#: corehq/apps/export/views/download.py:233
 msgid "You have no submissions in this project."
 msgstr ""
 
-#: corehq/apps/export/views/download.py:245
-msgid "Requires a download id"
-msgstr ""
-
-#: corehq/apps/export/views/download.py:252
-msgid ""
-"Download Task Failed to Start. It seems that the server might be under "
-"maintenance."
-msgstr ""
-
-#: corehq/apps/export/views/download.py:284
-msgid "Request requires a list of exports and filters."
-msgstr ""
-
-#: corehq/apps/export/views/download.py:300
-msgid "Form did not validate."
-msgstr ""
-
-#: corehq/apps/export/views/download.py:331
-msgid ""
-"This file has more than 256 columns, which is not supported by xls. Please "
-"change the output type to csv or xlsx to export this file."
-msgstr ""
-
-#: corehq/apps/export/views/download.py:335
-msgid "There was an error."
-msgstr ""
-
-#: corehq/apps/export/views/download.py:360
-msgid "You do not have permission to export this De-Identified export."
-msgstr ""
-
-#: corehq/apps/export/views/download.py:370
+#: corehq/apps/export/views/download.py:298
 #, python-format
 msgid ""
 "This export contains %(row_count)s rows. Please change the filters to be "
 "less than %(max_rows)s rows."
 msgstr ""
 
-#: corehq/apps/export/views/download.py:388
+#: corehq/apps/export/views/download.py:311
+msgid "You do not have permission to export de-identified exports."
+msgstr ""
+
+#: corehq/apps/export/views/download.py:337
+msgid "Form did not validate."
+msgstr ""
+
+#: corehq/apps/export/views/download.py:366
+msgid ""
+"This file has more than 256 columns, which is not supported by xls. Please "
+"change the output type to csv or xlsx to export this file."
+msgstr ""
+
+#: corehq/apps/export/views/download.py:399
+msgid "Download task failed to start."
+msgstr ""
+
+#: corehq/apps/export/views/download.py:417
 msgid "Download Form Data Export"
 msgstr ""
 
-#: corehq/apps/export/views/download.py:433
-#: corehq/apps/export/views/download.py:460
-msgid "There was an error"
-msgstr ""
-
-#: corehq/apps/export/views/download.py:451
+#: corehq/apps/export/views/download.py:454
 msgid "Please check that you've submitted all required filters."
 msgstr ""
 
-#: corehq/apps/export/views/download.py:513
+#: corehq/apps/export/views/download.py:498
 msgid "Download Case Data Export"
 msgstr ""
 
-#: corehq/apps/export/views/download.py:576
+#: corehq/apps/export/views/download.py:512
 msgid "Export SMS Messages"
 msgstr ""
 
-#: corehq/apps/export/views/download.py:621
+#: corehq/apps/export/views/download.py:524
 msgid "Download Form Data Exports"
 msgstr ""
 
-#: corehq/apps/export/views/download.py:636
+#: corehq/apps/export/views/download.py:535
 msgid "Download ID or User ID blank/not provided"
 msgstr ""
 
-#: corehq/apps/export/views/download.py:640
+#: corehq/apps/export/views/download.py:539
 msgid "Export failed"
 msgstr ""
 
-#: corehq/apps/export/views/download.py:645
+#: corehq/apps/export/views/download.py:544
 msgid "Invalid user"
 msgstr ""
 
-#: corehq/apps/export/views/download.py:650
+#: corehq/apps/export/views/download.py:549
 msgid "Export e-mail request sent."
 msgstr ""
 
-#: corehq/apps/export/views/edit.py:129
+#: corehq/apps/export/views/edit.py:127
 msgid "Edit Form Data Export"
 msgstr ""
 
-#: corehq/apps/export/views/edit.py:135
+#: corehq/apps/export/views/edit.py:133
 msgid "Edit Case Data Export"
 msgstr ""
 
-#: corehq/apps/export/views/edit.py:141
+#: corehq/apps/export/views/edit.py:139
 msgid "Edit Case Feed"
 msgstr ""
 
-#: corehq/apps/export/views/edit.py:146
+#: corehq/apps/export/views/edit.py:144
 msgid "Edit Form Feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:108
+#: corehq/apps/export/views/list.py:107
 msgid ""
 "\n"
 "        Exports are a way to download data in a variety of formats (CSV, "
@@ -16558,65 +16416,65 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/views/list.py:132
+#: corehq/apps/export/views/list.py:131
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:7
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html:29
 msgid "Export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:133
+#: corehq/apps/export/views/list.py:132
 msgid "export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:134
+#: corehq/apps/export/views/list.py:133
 msgid "Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:135
+#: corehq/apps/export/views/list.py:134
 msgid "exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:136
+#: corehq/apps/export/views/list.py:135
 msgid "My Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:137
+#: corehq/apps/export/views/list.py:136
 msgid "Exports Shared with Me"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:320
+#: corehq/apps/export/views/list.py:319
 msgid "Daily Saved Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:462
+#: corehq/apps/export/views/list.py:461
 msgid "Problem saving dashboard feed filters: Invalid form"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:469
+#: corehq/apps/export/views/list.py:468
 msgid "Export Form Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:493
+#: corehq/apps/export/views/list.py:492
 msgid "Select a Form to Export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:534
+#: corehq/apps/export/views/list.py:533
 msgid "Export Case Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:541
+#: corehq/apps/export/views/list.py:540
 msgid "Export De-Identified Cases"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:559
+#: corehq/apps/export/views/list.py:558
 msgid "Select a Case Type to Export"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:599
+#: corehq/apps/export/views/list.py:598
 msgid "Excel Dashboard Integration"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:603
+#: corehq/apps/export/views/list.py:602
 msgid ""
 "\n"
 "        Excel dashboard feeds allow Excel to directly connect to CommCareHQ "
@@ -16625,89 +16483,89 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/export/views/list.py:623
+#: corehq/apps/export/views/list.py:622
 msgid "Dashboard Feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:624
+#: corehq/apps/export/views/list.py:623
 msgid "dashboard feed"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:625
+#: corehq/apps/export/views/list.py:624
 msgid "Dashboard Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:626
+#: corehq/apps/export/views/list.py:625
 msgid "dashboard feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:627
+#: corehq/apps/export/views/list.py:626
 msgid "My Dashboard Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:628
+#: corehq/apps/export/views/list.py:627
 msgid "Dashboard Feeds Shared with Me"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:653
+#: corehq/apps/export/views/list.py:652
 msgid "Export De-Identified Form Data"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:676
+#: corehq/apps/export/views/list.py:675
 msgid "Export De-Identified Daily Saved Exports"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:686
+#: corehq/apps/export/views/list.py:685
 msgid "Export De-Identified Dashboard Feeds"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:716
+#: corehq/apps/export/views/list.py:715
 msgid "Export not found"
 msgstr ""
 
-#: corehq/apps/export/views/list.py:806
+#: corehq/apps/export/views/list.py:805
 msgid "The form did not validate."
 msgstr ""
 
-#: corehq/apps/export/views/new.py:174
+#: corehq/apps/export/views/new.py:172
 msgid "Export <strong>{}</strong> saved."
 msgstr ""
 
-#: corehq/apps/export/views/new.py:254
+#: corehq/apps/export/views/new.py:252
 msgid "Create Form Data Export"
 msgstr ""
 
-#: corehq/apps/export/views/new.py:273
+#: corehq/apps/export/views/new.py:271
 msgid "Create Case Data Export"
 msgstr ""
 
-#: corehq/apps/export/views/new.py:291 corehq/apps/export/views/new.py:297
+#: corehq/apps/export/views/new.py:289 corehq/apps/export/views/new.py:295
 msgid "Create Dashboard Feed"
 msgstr ""
 
-#: corehq/apps/export/views/new.py:334
+#: corehq/apps/export/views/new.py:332
 msgid "Export <strong>{}</strong> was deleted."
 msgstr ""
 
-#: corehq/apps/export/views/new.py:377
+#: corehq/apps/export/views/new.py:375
 msgid "You can only copy new exports."
 msgstr ""
 
-#: corehq/apps/export/views/utils.py:285
+#: corehq/apps/export/views/utils.py:283
 msgid "Download Data Files"
 msgstr ""
 
-#: corehq/apps/export/views/utils.py:307
+#: corehq/apps/export/views/utils.py:305
 msgid "The data file exceeds the maximum size of {} MB."
 msgstr ""
 
-#: corehq/apps/export/views/utils.py:315
+#: corehq/apps/export/views/utils.py:313
 msgid ""
 "Uploading this data file would exceed the total allowance of {} GB for this "
 "project space. Please remove some files in order to upload new files."
 msgstr ""
 
-#: corehq/apps/export/views/utils.py:329
+#: corehq/apps/export/views/utils.py:327
 msgid "Data file \"{}\" uploaded"
 msgstr ""
 
@@ -16951,7 +16809,7 @@ msgid "Fetching additional data, please wait..."
 msgstr ""
 
 #: corehq/apps/fixtures/upload/failure_messages.py:8
-#: corehq/apps/locations/views.py:878
+#: corehq/apps/locations/views.py:866
 msgid "Invalid file-format. Please upload a valid xlsx file."
 msgstr ""
 
@@ -17150,7 +17008,7 @@ msgstr ""
 
 #: corehq/apps/fixtures/views.py:370
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/download_status.html:19
-#: corehq/apps/locations/views.py:827 corehq/apps/products/views.py:331
+#: corehq/apps/locations/views.py:815 corehq/apps/products/views.py:331
 #: corehq/apps/users/views/mobile/users.py:1012
 msgid "Importing your data. This may take some time..."
 msgstr ""
@@ -17166,11 +17024,11 @@ msgid "Return to manage lookup tables"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html:7
-#: corehq/apps/reports/filters/users.py:36
+#: corehq/apps/reports/filters/users.py:35
 #: corehq/apps/reports/templates/reports/project_health/user_details.html:12
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:35
 #: corehq/apps/users/templates/users/edit_commcare_user.html:34
-#: corehq/apps/users/views/mobile/groups.py:152 corehq/tabs/tabclasses.py:1222
+#: corehq/apps/users/views/mobile/groups.py:152 corehq/tabs/tabclasses.py:1221
 msgid "Groups"
 msgstr ""
 
@@ -17319,7 +17177,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html:82
-#: corehq/apps/users/forms.py:652 corehq/apps/users/forms.py:723
+#: corehq/apps/users/forms.py:651 corehq/apps/users/forms.py:722
 msgid "Group Membership"
 msgstr ""
 
@@ -17505,7 +17363,7 @@ msgstr ""
 msgid "ADMINREPORT"
 msgstr ""
 
-#: corehq/apps/hqadmin/reports.py:675 corehq/tabs/tabclasses.py:1908
+#: corehq/apps/hqadmin/reports.py:675 corehq/tabs/tabclasses.py:1907
 msgid "Project Space List"
 msgstr ""
 
@@ -17803,7 +17661,7 @@ msgstr ""
 msgid "Project Map"
 msgstr ""
 
-#: corehq/apps/hqadmin/reports.py:961 corehq/tabs/tabclasses.py:1914
+#: corehq/apps/hqadmin/reports.py:961 corehq/tabs/tabclasses.py:1913
 msgid "User List"
 msgstr ""
 
@@ -17831,7 +17689,7 @@ msgstr ""
 msgid "No Domain Data"
 msgstr ""
 
-#: corehq/apps/hqadmin/reports.py:1040 corehq/tabs/tabclasses.py:1916
+#: corehq/apps/hqadmin/reports.py:1040 corehq/tabs/tabclasses.py:1915
 msgid "Application List"
 msgstr ""
 
@@ -17863,7 +17721,7 @@ msgstr ""
 msgid "Global Device Logs Soft Asserts"
 msgstr ""
 
-#: corehq/apps/hqadmin/reports.py:1318 corehq/tabs/tabclasses.py:1924
+#: corehq/apps/hqadmin/reports.py:1318 corehq/tabs/tabclasses.py:1923
 msgid "Admin Phone Number Report"
 msgstr ""
 
@@ -17990,7 +17848,7 @@ msgid "Download as CSV"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html:21
-#: corehq/tabs/tabclasses.py:1823
+#: corehq/tabs/tabclasses.py:1822
 msgid "Admin Reports"
 msgstr ""
 
@@ -18009,7 +17867,7 @@ msgid "Enter a month to download all MALT data as csv for that month"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/messaging_case_updates.html:5
-#: corehq/apps/hqadmin/views/operations.py:113 corehq/tabs/tabclasses.py:1897
+#: corehq/apps/hqadmin/views/operations.py:113 corehq/tabs/tabclasses.py:1896
 msgid "Reprocess Messaging Case Updates"
 msgstr ""
 
@@ -18139,9 +17997,9 @@ msgstr ""
 msgid "Download GIR"
 msgstr ""
 
-#: corehq/apps/hqadmin/views/system.py:45 corehq/tabs/tabclasses.py:1817
-#: corehq/tabs/tabclasses.py:1824 corehq/tabs/tabclasses.py:1853
-#: corehq/tabs/tabclasses.py:1877
+#: corehq/apps/hqadmin/views/system.py:45 corehq/tabs/tabclasses.py:1816
+#: corehq/tabs/tabclasses.py:1823 corehq/tabs/tabclasses.py:1852
+#: corehq/tabs/tabclasses.py:1876
 msgid "System Info"
 msgstr ""
 
@@ -18149,7 +18007,7 @@ msgstr ""
 msgid "Recent Couch Changes"
 msgstr ""
 
-#: corehq/apps/hqadmin/views/users.py:57 corehq/tabs/tabclasses.py:1931
+#: corehq/apps/hqadmin/views/users.py:57 corehq/tabs/tabclasses.py:1930
 msgid "User Administration"
 msgstr ""
 
@@ -18191,7 +18049,7 @@ msgstr ""
 msgid "Two-Factor Auth successfully disabled."
 msgstr ""
 
-#: corehq/apps/hqadmin/views/utils.py:50 corehq/tabs/tabclasses.py:1807
+#: corehq/apps/hqadmin/views/utils.py:50 corehq/tabs/tabclasses.py:1806
 msgid "Admin"
 msgstr ""
 
@@ -18292,7 +18150,7 @@ msgstr ""
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:26
 #: corehq/apps/locations/templates/locations/manage/locations.html:84
 #: corehq/apps/users/templates/users/mobile_workers.html:71
-#: corehq/tabs/tabclasses.py:1214
+#: corehq/tabs/tabclasses.py:1213
 msgid "Bulk Upload"
 msgstr ""
 
@@ -18766,7 +18624,7 @@ msgstr ""
 msgid "Stack Trace:"
 msgstr ""
 
-#: corehq/apps/hqpillow_retry/views.py:43 corehq/tabs/tabclasses.py:1879
+#: corehq/apps/hqpillow_retry/views.py:43 corehq/tabs/tabclasses.py:1878
 msgid "PillowTop Errors"
 msgstr ""
 
@@ -18807,7 +18665,7 @@ msgstr ""
 msgid "%(num)s records successfully %(action)s"
 msgstr ""
 
-#: corehq/apps/hqwebapp/crispy.py:126
+#: corehq/apps/hqwebapp/crispy.py:132
 msgid "Step {} of {}"
 msgstr ""
 
@@ -18831,13 +18689,13 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/doc_info.py:154 corehq/apps/hqwebapp/doc_info.py:236
 #: corehq/apps/locations/templates/locations/manage/location.html:119
-#: corehq/apps/locations/views.py:248
+#: corehq/apps/locations/views.py:235
 #: corehq/apps/reports/commtrack/standard.py:276
 #: corehq/apps/reports/commtrack/standard.py:410
 #: corehq/apps/reports/commtrack/standard.py:419
 #: corehq/apps/reports/filters/fixtures.py:11
 #: corehq/apps/reports/templates/reports/project_health/user_details.html:8
-#: corehq/apps/sms/models.py:956 corehq/apps/users/forms.py:536
+#: corehq/apps/sms/models.py:956 corehq/apps/users/forms.py:537
 #: corehq/ex-submodules/casexml/apps/case/views.py:176
 #: corehq/motech/repeaters/forms.py:212 custom/intrahealth/filters.py:87
 msgid "Location"
@@ -18847,7 +18705,7 @@ msgstr ""
 #: corehq/apps/users/templates/users/web_users.html:49
 #: corehq/apps/users/templates/users/web_users.html:115
 #: corehq/apps/users/templates/users/web_users.html:162
-#: corehq/apps/users/templates/users/web_users.html:227
+#: corehq/apps/users/templates/users/web_users.html:211
 msgid "E-mail"
 msgstr ""
 
@@ -18960,28 +18818,26 @@ msgid ""
 "com"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:213
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:219
 msgid "Get Demo"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:219
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:224
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:225
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:230
 #: corehq/apps/registration/templates/registration/register_new_user.html:130
 #: corehq/apps/registration/templates/registration/register_new_user.html:135
-#, fuzzy
-#| msgid "Schedule Name"
 msgid "Schedule a Demo"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:269
-msgid "This is a snapshot of "
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:275
+msgid "This is a snapshot of "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:281
 msgid "CommCare HQ does not work well with Internet Explorer."
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:277
+#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:283
 msgid ""
 "\n"
 "                        We recommend\n"
@@ -18990,30 +18846,6 @@ msgid ""
 "                        or <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
 "                        "
 msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:513
-msgid "Get a Demo of CommCare"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:531
-#, fuzzy
-#| msgid "Request free Demo"
-msgid "Request a CommCare Demo"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/base.html:542
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                        On site. In person.<br />\n"
-#| "                        Our team works with your organization directly.\n"
-#| "                    "
-msgid ""
-"\n"
-"                        Select a time to see CommCare in action and review\n"
-"                        questions with our team.\n"
-"                      "
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:48
 msgid "CommCare HQ Mobile is Copyright"
@@ -19041,7 +18873,7 @@ msgid "Logged in As"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html:37
-#: corehq/tabs/tabclasses.py:1355
+#: corehq/tabs/tabclasses.py:1354
 msgid "Manage Enterprise"
 msgstr ""
 
@@ -19380,6 +19212,44 @@ msgstr ""
 msgid "Form has errors"
 msgstr ""
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_banner.html:8
+#, python-format
+msgid ""
+"\n"
+"    You have <a href=\"%(url_sub)s\" id=\"cta-trial-days-remaining\">"
+"%(num_trial_days_remaining)s\n"
+"    day%(days_plural)s remaining</a> in\n"
+"    your CommCare Trial.\n"
+"    Have questions?\n"
+"  "
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_banner.html:18
+msgid "Get A Tour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html:9
+msgid "Get a Demo of CommCare"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html:29
+msgid "Request a CommCare Demo"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html:31
+#, fuzzy
+#| msgid "Welcome to CommCare!"
+msgid "Get a Tour of CommCare"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html:44
+msgid ""
+"\n"
+"              Select a time to see CommCare in action and review\n"
+"              questions with our team.\n"
+"            "
+msgstr ""
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/mobile_ux_warning.html:9
 msgid "CommCare HQ looks better on desktop!"
 msgstr ""
@@ -19591,7 +19461,7 @@ msgstr ""
 msgid "We've redirected you to the %s matching your query"
 msgstr ""
 
-#: corehq/apps/hqwebapp/views.py:1123 corehq/tabs/tabclasses.py:1903
+#: corehq/apps/hqwebapp/views.py:1123 corehq/tabs/tabclasses.py:1902
 msgid "Maintenance Alerts"
 msgstr ""
 
@@ -19636,7 +19506,7 @@ msgid "Bulk Copy Indicators"
 msgstr ""
 
 #: corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:12
-#: corehq/apps/indicators/views.py:137 corehq/tabs/tabclasses.py:203
+#: corehq/apps/indicators/views.py:137 corehq/tabs/tabclasses.py:202
 msgid "Administer Indicators"
 msgstr ""
 
@@ -19737,7 +19607,7 @@ msgstr ""
 msgid "Projects Linked to this one"
 msgstr ""
 
-#: corehq/apps/linked_domain/views.py:85 corehq/tabs/tabclasses.py:1662
+#: corehq/apps/linked_domain/views.py:85 corehq/tabs/tabclasses.py:1661
 msgid "Linked Projects"
 msgstr ""
 
@@ -20025,7 +19895,7 @@ msgid ""
 "your project administrator to be assigned to a location.\n"
 msgstr ""
 
-#: corehq/apps/locations/permissions.py:101
+#: corehq/apps/locations/permissions.py:91
 #, python-brace-format
 msgid ""
 "This project has restricted data access rules. Please contact your project "
@@ -20066,7 +19936,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html:12
-#: corehq/apps/locations/views.py:263
+#: corehq/apps/locations/views.py:251
 msgid "Organization Levels"
 msgstr ""
 
@@ -20335,7 +20205,7 @@ msgid "Show Active Locations"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/manage/locations.html:73
-#: corehq/apps/locations/views.py:966
+#: corehq/apps/locations/views.py:954
 msgid "Download Organization Structure"
 msgstr ""
 
@@ -20417,147 +20287,147 @@ msgstr ""
 msgid "Download Empty Template"
 msgstr ""
 
-#: corehq/apps/locations/views.py:90
+#: corehq/apps/locations/views.py:87
 msgid ""
 "Some of the location edits are still in progress, please wait until they "
 "finish and then try again"
 msgstr ""
 
-#: corehq/apps/locations/views.py:142
+#: corehq/apps/locations/views.py:139
 msgid ""
 "Organizations can't be edited until <a href='{}''>current bulk upload</a> "
 "has finished."
 msgstr ""
 
-#: corehq/apps/locations/views.py:154 corehq/apps/locations/views.py:265
-#: corehq/apps/users/forms.py:809
+#: corehq/apps/locations/views.py:151 corehq/apps/locations/views.py:253
+#: corehq/apps/users/forms.py:808
 #: corehq/apps/users/templates/users/edit_commcare_user.html:36
 #: corehq/privileges.py:139
 msgid "Locations"
 msgstr ""
 
-#: corehq/apps/locations/views.py:183 corehq/apps/locations/views.py:859
-#: corehq/apps/locations/views.py:860
+#: corehq/apps/locations/views.py:180 corehq/apps/locations/views.py:847
+#: corehq/apps/locations/views.py:848
 msgid "Organization Structure"
 msgstr ""
 
-#: corehq/apps/locations/views.py:373
+#: corehq/apps/locations/views.py:361
 msgid ""
 "Looks like you are assigning a location name/code to a different location in "
 "the same request. Please do this in two separate updates by using a "
 "temporary name to free up the name/code to be re-assigned."
 msgstr ""
 
-#: corehq/apps/locations/views.py:452
+#: corehq/apps/locations/views.py:440
 msgid "You cannot delete organization levels that have locations"
 msgstr ""
 
-#: corehq/apps/locations/views.py:507
+#: corehq/apps/locations/views.py:495
 msgid "New Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:583
+#: corehq/apps/locations/views.py:571
 msgid "Location saved!"
 msgstr ""
 
-#: corehq/apps/locations/views.py:607 corehq/apps/locations/views.py:623
-#: corehq/apps/locations/views.py:658
+#: corehq/apps/locations/views.py:595 corehq/apps/locations/views.py:611
+#: corehq/apps/locations/views.py:646
 #, python-brace-format
 msgid "Location '{location_name}' has successfully been {action}."
 msgstr ""
 
-#: corehq/apps/locations/views.py:609
+#: corehq/apps/locations/views.py:597
 msgid "archived"
 msgstr ""
 
-#: corehq/apps/locations/views.py:625
+#: corehq/apps/locations/views.py:613
 msgid "deleted"
 msgstr ""
 
-#: corehq/apps/locations/views.py:660
+#: corehq/apps/locations/views.py:648
 msgid "unarchived"
 msgstr ""
 
-#: corehq/apps/locations/views.py:668
+#: corehq/apps/locations/views.py:656
 msgid "Edit Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:715
+#: corehq/apps/locations/views.py:703
 msgid "Update Product List"
 msgstr ""
 
-#: corehq/apps/locations/views.py:716
+#: corehq/apps/locations/views.py:704
 msgid "Specify Products Per Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:720
+#: corehq/apps/locations/views.py:708
 msgid "Products at Location"
 msgstr ""
 
-#: corehq/apps/locations/views.py:758
+#: corehq/apps/locations/views.py:746
 #, python-brace-format
 msgid "Edit {name} <small>{type}</small>"
 msgstr ""
 
-#: corehq/apps/locations/views.py:817 corehq/apps/locations/views.py:826
+#: corehq/apps/locations/views.py:805 corehq/apps/locations/views.py:814
 msgid "Organization Structure Import Status"
 msgstr ""
 
-#: corehq/apps/locations/views.py:828 corehq/apps/products/views.py:332
+#: corehq/apps/locations/views.py:816 corehq/apps/products/views.py:332
 #: corehq/apps/users/views/mobile/users.py:1013
 msgid "Problem importing data! Please try again or report an issue."
 msgstr ""
 
-#: corehq/apps/locations/views.py:839
+#: corehq/apps/locations/views.py:827
 msgid "Upload Organization Structure From Excel"
 msgstr ""
 
-#: corehq/apps/locations/views.py:872 corehq/apps/products/views.py:294
+#: corehq/apps/locations/views.py:860 corehq/apps/products/views.py:294
 msgid "no file uploaded"
 msgstr ""
 
-#: corehq/apps/locations/views.py:875
+#: corehq/apps/locations/views.py:863
 msgid "no domain specified"
 msgstr ""
 
-#: corehq/apps/locations/views.py:934 corehq/apps/products/views.py:349
+#: corehq/apps/locations/views.py:922 corehq/apps/products/views.py:349
 msgid "Import complete."
 msgstr ""
 
-#: corehq/apps/locations/views.py:935
+#: corehq/apps/locations/views.py:923
 msgid "Organization Structure importing has finished"
 msgstr ""
 
-#: corehq/apps/locations/views.py:948
+#: corehq/apps/locations/views.py:936
 msgid ""
 "You need to define organization levels before you can do a bulk import or "
 "export."
 msgstr ""
 
-#: corehq/apps/locations/views.py:975 corehq/apps/locations/views.py:983
+#: corehq/apps/locations/views.py:963 corehq/apps/locations/views.py:971
 msgid "Download Organization Structure Status"
 msgstr "Diagnóstico de Casos"
 
-#: corehq/apps/locations/views.py:984
+#: corehq/apps/locations/views.py:972
 msgid "Preparing organization structure download."
 msgstr "Diagnóstico de Casos"
 
-#: corehq/apps/locations/views.py:985
+#: corehq/apps/locations/views.py:973
 #: corehq/apps/userreports/reports/view.py:636
 #: corehq/apps/users/views/mobile/users.py:464
 #: corehq/apps/users/views/mobile/users.py:1087
 msgid "There was an unexpected error! Please try again or report an issue."
 msgstr ""
 
-#: corehq/apps/locations/views.py:987
+#: corehq/apps/locations/views.py:975
 msgid "Go back to organization structure"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/locations/views.py:1035
+#: corehq/apps/locations/views.py:1016
 msgid "Project Access"
 msgstr ""
 
-#: corehq/apps/locations/views.py:1060
+#: corehq/apps/locations/views.py:1041
 msgid "All users have been unassigned from their locations"
 msgstr ""
 
@@ -20706,7 +20576,7 @@ msgstr ""
 #: corehq/apps/products/forms.py:34
 #: corehq/apps/products/templates/products/manage/products.html:107
 #: corehq/apps/programs/templates/programs/manage/programs.html:60
-#: corehq/apps/reports/filters/commtrack.py:27 corehq/apps/users/forms.py:818
+#: corehq/apps/reports/filters/commtrack.py:27 corehq/apps/users/forms.py:817
 msgid "Program"
 msgstr ""
 
@@ -20979,7 +20849,7 @@ msgstr ""
 
 #: corehq/apps/registration/forms.py:37 corehq/apps/registration/forms.py:317
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py:16
-#: corehq/apps/users/forms.py:926
+#: corehq/apps/users/forms.py:925
 msgid "Full Name"
 msgstr ""
 
@@ -21050,7 +20920,7 @@ msgstr ""
 msgid "Finish"
 msgstr ""
 
-#: corehq/apps/registration/forms.py:222 corehq/apps/users/forms.py:471
+#: corehq/apps/registration/forms.py:222 corehq/apps/users/forms.py:472
 #, python-format
 msgid "%s is an invalid phone number."
 msgstr ""
@@ -21078,7 +20948,7 @@ msgstr ""
 msgid "Create Project"
 msgstr ""
 
-#: corehq/apps/registration/forms.py:323 corehq/apps/users/forms.py:931
+#: corehq/apps/registration/forms.py:323 corehq/apps/users/forms.py:930
 msgid "You will use this email to log in."
 msgstr ""
 
@@ -21515,16 +21385,11 @@ msgid "Loading...just a second!"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/register_new_user.html:114
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                        App Refinement by Dimagi\n"
-#| "                    "
 msgid ""
 "\n"
 "                    Want to learn more before signing up?\n"
 "                "
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/registration/templates/registration/register_new_user.html:123
 msgid "Get a Demo"
@@ -21822,7 +21687,7 @@ msgstr ""
 msgid "Edit Normal Keyword"
 msgstr ""
 
-#: corehq/apps/reminders/views.py:227 corehq/tabs/tabclasses.py:945
+#: corehq/apps/reminders/views.py:227 corehq/tabs/tabclasses.py:944
 msgid "Keywords"
 msgstr ""
 
@@ -21843,7 +21708,7 @@ msgid "Monitor Workers"
 msgstr "Change this translation manually"
 
 #: corehq/apps/reports/__init__.py:11 corehq/reports.py:111
-#: corehq/tabs/tabclasses.py:1935
+#: corehq/tabs/tabclasses.py:1934
 msgid "Inspect Data"
 msgstr ""
 
@@ -22345,42 +22210,42 @@ msgstr ""
 msgid "Optional"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:34
+#: corehq/apps/reports/filters/users.py:33
 msgid "View by Users or Groups"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:42
+#: corehq/apps/reports/filters/users.py:41
 msgid "User Type"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:60
+#: corehq/apps/reports/filters/users.py:59
 msgid "Select Mobile Worker"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:84
+#: corehq/apps/reports/filters/users.py:83
 #, python-format
 msgid "%s & Others"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:89
+#: corehq/apps/reports/filters/users.py:88
 msgid "Select Case Owner"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:90
+#: corehq/apps/reports/filters/users.py:89
 msgid "All Case Owners"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:151
-#: corehq/apps/reports/filters/users.py:269
-#: corehq/apps/reports/filters/users.py:417
+#: corehq/apps/reports/filters/users.py:150
+#: corehq/apps/reports/filters/users.py:268
+#: corehq/apps/reports/filters/users.py:415
 msgid "[Active Mobile Workers]"
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:211
+#: corehq/apps/reports/filters/users.py:210
 msgid "Add users and groups to filter this report."
 msgstr ""
 
-#: corehq/apps/reports/filters/users.py:269
+#: corehq/apps/reports/filters/users.py:268
 msgid "[Deactivated Mobile Workers]"
 msgstr ""
 
@@ -22749,12 +22614,12 @@ msgstr ""
 msgid "{username} {archived_form} on {date}"
 msgstr ""
 
-#: corehq/apps/reports/standard/inspect.py:50
+#: corehq/apps/reports/standard/inspect.py:51
 #: corehq/apps/reports/templates/reports/form/partials/form_breadcrumbs.html:9
 msgid "Submit History"
 msgstr ""
 
-#: corehq/apps/reports/standard/inspect.py:178
+#: corehq/apps/reports/standard/inspect.py:182
 msgid "Sync Log"
 msgstr ""
 
@@ -23184,8 +23049,8 @@ msgstr ""
 msgid "Number of Phone Numbers Used"
 msgstr ""
 
-#: corehq/apps/reports/standard/sms.py:182 corehq/tabs/tabclasses.py:1194
-#: corehq/tabs/tabclasses.py:1254
+#: corehq/apps/reports/standard/sms.py:182 corehq/tabs/tabclasses.py:1193
+#: corehq/tabs/tabclasses.py:1253
 msgid "Deleted"
 msgstr ""
 
@@ -23476,7 +23341,7 @@ msgid "This report's timezone is %(timezone)s."
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/filters/filter_users.html:26
-#: corehq/apps/users/templates/users/web_users.html:368
+#: corehq/apps/users/templates/users/web_users.html:352
 msgid "Only"
 msgstr ""
 
@@ -23846,7 +23711,7 @@ msgid "Confirm"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html:42
-#: corehq/apps/reports/templates/reports/reportdata/case_data.html:219
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html:218
 msgid "Clean Case Data"
 msgstr ""
 
@@ -24117,7 +23982,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/project_health/user_details.html:5
-#: corehq/apps/users/forms.py:1109
+#: corehq/apps/users/forms.py:1108
 msgid "Phone number"
 msgstr ""
 
@@ -24206,19 +24071,19 @@ msgstr ""
 msgid "page"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/reportdata/case_data.html:214
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html:213
 msgid "Download Case History"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/reportdata/case_data.html:226
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html:225
 msgid "Resave Case"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/reportdata/case_data.html:232
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html:231
 msgid "Rebuild Case"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/reportdata/case_data.html:240
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html:239
 msgid "Close Case"
 msgstr ""
 
@@ -24231,7 +24096,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/reports_home.html:15
-#: corehq/apps/reports/views.py:266 corehq/tabs/tabclasses.py:155
+#: corehq/apps/reports/views.py:266 corehq/tabs/tabclasses.py:154
 msgid "My Saved Reports"
 msgstr ""
 
@@ -25300,7 +25165,7 @@ msgid "(none)"
 msgstr ""
 
 #: corehq/apps/sms/forms.py:1034 corehq/apps/sms/views.py:606
-#: corehq/tabs/tabclasses.py:1796
+#: corehq/tabs/tabclasses.py:1795
 msgid "Default Gateways"
 msgstr ""
 
@@ -26124,7 +25989,7 @@ msgstr ""
 msgid "30 Days"
 msgstr ""
 
-#: corehq/apps/sms/views.py:168 corehq/tabs/tabclasses.py:982
+#: corehq/apps/sms/views.py:168 corehq/tabs/tabclasses.py:981
 msgid "Compose SMS Message"
 msgstr ""
 
@@ -26207,7 +26072,7 @@ msgid "System"
 msgstr ""
 
 #: corehq/apps/sms/views.py:1043 corehq/apps/sms/views.py:1424
-#: corehq/tabs/tabclasses.py:1079 corehq/tabs/tabclasses.py:1787
+#: corehq/tabs/tabclasses.py:1078 corehq/tabs/tabclasses.py:1786
 msgid "SMS Connectivity"
 msgstr ""
 
@@ -26306,7 +26171,7 @@ msgid "Registered on %(date)s"
 msgstr ""
 
 #: corehq/apps/sms/views.py:2071
-#: corehq/apps/users/templates/users/web_users.html:250
+#: corehq/apps/users/templates/users/web_users.html:234
 msgid "Expired"
 msgstr ""
 
@@ -26511,51 +26376,274 @@ msgstr ""
 msgid "Last Usage"
 msgstr ""
 
-#: corehq/apps/translations/forms.py:30
+#: corehq/apps/translations/app_translations.py:68
+msgid ""
+"App Translation Failed! There is an issue with Excel columns. Error details: "
+"{}."
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:188
+msgid "App Translations Updated!"
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:198
+msgid "Issues found. You should receive an email shortly."
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:200
+msgid "No issues found."
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:494
+#, python-format
+msgid "Invalid sheet_name \"%s\", skipping row."
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:506
+#, python-format
+msgid "Invalid module in row \"%s\", skipping row."
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:518
+#, python-format
+msgid "Invalid form in row \"%s\", skipping row."
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:576
+#, python-brace-format
+msgid ""
+"Found a ShadowForm at module-{module_index} form-{form_index} with the name "
+"{name}. Cannot translate ShadowForms, skipping."
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:707
+#, python-format
+msgid ""
+"You must provide at least one translation for the label '%s' in sheet '%s'"
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:723
+#, python-brace-format
+msgid ""
+"Unrecognized translation label {0} in sheet {1}. That row has been skipped"
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:879
+#, python-brace-format
+msgid ""
+"Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. No "
+"changes were made for sheet {1}."
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:917
+#, python-brace-format
+msgid ""
+"Expected {0} case {3} properties in sheet {2}, found {1}. No case list or "
+"detail properties for sheet {2} were updated"
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:941
+#, python-format
+msgid "You must provide at least one translation of the case property '%s'"
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:955
+msgid "You must provide all ID mappings for property '{}'"
+msgstr ""
+
+#: corehq/apps/translations/app_translations.py:997
+#, python-brace-format
+msgid ""
+"A row in sheet {sheet} has an unexpected value of \"{field}\" in the "
+"case_property column. Case properties must appear in the same order as they "
+"do in the bulk app translation download. No translations updated for this "
+"row."
+msgstr ""
+
+#: corehq/apps/translations/forms.py:32
 msgid "Convert"
 msgstr ""
 
-#: corehq/apps/translations/forms.py:46
+#: corehq/apps/translations/forms.py:48
 msgid "Please ensure columns 'source' and 'translation' in the sheet"
 msgstr ""
 
-#: corehq/apps/translations/forms.py:50
+#: corehq/apps/translations/forms.py:52
 msgid "Unexpected file passed. Please upload xls/xlsx/po file."
 msgstr ""
 
-#: corehq/apps/translations/forms.py:54 custom/icds_reports/forms.py:37
+#: corehq/apps/translations/forms.py:56 corehq/apps/translations/forms.py:111
 msgid "Trasifex project"
 msgstr ""
 
-#: corehq/apps/translations/forms.py:56 custom/icds_reports/forms.py:45
+#: corehq/apps/translations/forms.py:58 corehq/apps/translations/forms.py:119
 msgid "Target Language"
 msgstr ""
 
-#: corehq/apps/translations/forms.py:60
+#: corehq/apps/translations/forms.py:62
 msgid "Resource Slug"
 msgstr ""
 
-#: corehq/apps/translations/templates/convert_translations.html:7
-#: corehq/apps/translations/views.py:51
-msgid "Convert Translations"
+#: corehq/apps/translations/forms.py:92
+msgid "App"
 msgstr ""
 
+#: corehq/apps/translations/forms.py:94
+msgid "Leave blank to use current application state"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:113
+msgid "Source Language"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:120
+msgid "Select Target Language"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:122
+msgid "Leave blank to skip"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:126
+msgid "Push to transifex"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:127
+msgid "Pull from transifex"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:128
+msgid "Delete resources on transifex"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:130
+msgid "Lock resources"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:132
+msgid "Lock translations for resources that are being pulled"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:135
+msgid "Check for completion"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:137
+msgid "Check for translation completion before pulling files"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:184
+msgid "Version not available for app"
+msgstr ""
+
+#: corehq/apps/translations/forms.py:187
+msgid "Target lang required to confirm translation completion"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/transifex.py:83
+msgid "Transifex account details not available on this environment."
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/transifex.py:119
+msgid "Successfully Uploaded"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/transifex.py:187
+msgid "Successfully Removed"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:59
+#: corehq/apps/translations/templates/app_translations.html:12
 #: corehq/apps/translations/templates/pull_resource.html:12
-#: corehq/apps/translations/views.py:45
-#: custom/icds_reports/templates/icds_reports/icds_app/app_translations.html:12
 msgid "Transifex integration not set for this domain"
 msgstr ""
 
+#: corehq/apps/translations/integrations/transifex/views.py:65
+#: corehq/apps/translations/templates/convert_translations.html:7
+msgid "Convert Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:68
+#: corehq/apps/translations/integrations/transifex/views.py:183
+#: corehq/apps/translations/integrations/transifex/views.py:250
+#: corehq/tabs/tabclasses.py:868 corehq/tabs/tabclasses.py:1372
+#: corehq/tabs/tabclasses.py:1382 corehq/tabs/tabclasses.py:1389
+msgid "Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:180
 #: corehq/apps/translations/templates/pull_resource.html:17
-#: corehq/apps/translations/views.py:166
 msgid "Pull Resource"
 msgstr ""
 
-#: corehq/apps/translations/views.py:54 corehq/apps/translations/views.py:169
-#: corehq/tabs/tabclasses.py:869 corehq/tabs/tabclasses.py:1373
-#: corehq/tabs/tabclasses.py:1383 corehq/tabs/tabclasses.py:1390
-#: custom/icds_reports/views.py:1659
-msgid "Translations"
+#: corehq/apps/translations/integrations/transifex/views.py:247
+msgid "App Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:287
+msgid "Successfully enqueued request to submit files for translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:296
+msgid "Resources yet to be completely translated, for ex: {}"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:303
+msgid "Resources not found for this project and version."
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:315
+msgid ""
+"Resources yet to be completely translated for all languages. Hence, the "
+"request for locking resources can not be performed."
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:319
+msgid ""
+"Successfully enqueued request to pull for translations. You should receive "
+"an email shortly"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:327
+msgid ""
+"Resources yet to be completely translated for all languages. Hence, the "
+"request for deleting resources can not be performed."
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:331
+msgid "Successfully enqueued request to delete resources."
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py:337
+msgid "Source lang selected not available for the project"
+msgstr ""
+
+#: corehq/apps/translations/templates/app_translations.html:17
+msgid "ICDS App Translations"
+msgstr ""
+
+#: corehq/apps/translations/validator.py:21
+msgid "We found less rows than expected. Validating what was uploaded."
+msgstr ""
+
+#: corehq/apps/translations/validator.py:22
+msgid "We found more rows than expected. Validating what was uploaded."
+msgstr ""
+
+#: corehq/apps/translations/views.py:52
+msgid "Upload failed. We found problems with the following translations:"
+msgstr ""
+
+#: corehq/apps/translations/views.py:63
+msgid "Upload succeeded, but we found following issues for some properties"
+msgstr ""
+
+#: corehq/apps/translations/views.py:70
+msgid "Something went wrong! Update failed. We're looking into it"
+msgstr ""
+
+#: corehq/apps/translations/views.py:73
+msgid "UI Translations Updated!"
 msgstr ""
 
 #: corehq/apps/userreports/columns.py:73
@@ -27684,271 +27772,271 @@ msgstr ""
 msgid "Could not find organization with site code '%(site_code)s'"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:412
+#: corehq/apps/users/bulkupload.py:409
 msgid "username cannot contain spaces or symbols"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:428
+#: corehq/apps/users/bulkupload.py:425
 msgid "'is_active' column can only contain 'true' or 'false'"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:449
+#: corehq/apps/users/bulkupload.py:446
 msgid "Provide a unique password for each mobile worker"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:455
+#: corehq/apps/users/bulkupload.py:452
 msgid ""
 "Mobile Worker passwords must be 8 characters long with at least 1 capital "
 "letter, 1 special character and 1 number"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:459
+#: corehq/apps/users/bulkupload.py:456
 msgid "Please provide a stronger password"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:465
+#: corehq/apps/users/bulkupload.py:462
 #, python-format
 msgid "User with username %(username)r is somehow in domain %(domain)r"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:470
+#: corehq/apps/users/bulkupload.py:467
 #, python-format
 msgid "Changing usernames is not supported: %(username)r to %(new_username)r"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:481
+#: corehq/apps/users/bulkupload.py:478
 #, python-format
 msgid "username cannot contain greater than %d characters"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:486
+#: corehq/apps/users/bulkupload.py:483
 msgid "Cannot create a new user with a blank password"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:506
+#: corehq/apps/users/bulkupload.py:503
 msgid "User has an invalid email address"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:526
+#: corehq/apps/users/bulkupload.py:523
 #, python-format
 msgid "Role '%s' does not exist"
 msgstr ""
 
-#: corehq/apps/users/bulkupload.py:555
+#: corehq/apps/users/bulkupload.py:552
 #, python-format
 msgid "Can't add to group '%s' (try adding it to your spreadsheet)"
 msgstr ""
 
-#: corehq/apps/users/forms.py:72
+#: corehq/apps/users/forms.py:73
 #, python-format
 msgid ""
 "Username %(username)s is too long.  Must be under %(max_length)s characters."
 msgstr ""
 
-#: corehq/apps/users/forms.py:77
+#: corehq/apps/users/forms.py:78
 #, python-format
 msgid "The username \"%(username)s\" is reserved for CommCare."
 msgstr ""
 
-#: corehq/apps/users/forms.py:85
+#: corehq/apps/users/forms.py:86
 msgid "This Mobile Worker already exists."
 msgstr ""
 
-#: corehq/apps/users/forms.py:123
+#: corehq/apps/users/forms.py:124
 msgid "Please enter a valid two or three digit language code."
 msgstr ""
 
-#: corehq/apps/users/forms.py:194
+#: corehq/apps/users/forms.py:195
 msgid "System Super User"
 msgstr ""
 
-#: corehq/apps/users/forms.py:209
+#: corehq/apps/users/forms.py:210
 msgid "E-Mail"
 msgstr ""
 
-#: corehq/apps/users/forms.py:216
+#: corehq/apps/users/forms.py:217
 msgid ""
 "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
 "Apps and reports (if applicable), but does not affect mobile applications. "
 "Supported languages for reports are en, fr (partial), and hin (partial)."
 msgstr ""
 
-#: corehq/apps/users/forms.py:233
+#: corehq/apps/users/forms.py:234
 msgid "Enable Tracking"
 msgstr ""
 
-#: corehq/apps/users/forms.py:235
+#: corehq/apps/users/forms.py:236
 msgid ""
 "Allow Dimagi to collect usage information to improve CommCare. You can learn "
 "more about the information we collect and the ways we use it in our <a href="
 "\"http://www.dimagi.com/terms/latest/privacy/\">privacy policy</a>"
 msgstr ""
 
-#: corehq/apps/users/forms.py:255
+#: corehq/apps/users/forms.py:256
 #: corehq/messaging/smsbackends/telerivet/forms.py:20
 #: corehq/messaging/smsbackends/telerivet/forms.py:62
 #: corehq/messaging/smsbackends/telerivet/forms.py:83
 msgid "API Key"
 msgstr ""
 
-#: corehq/apps/users/forms.py:258
+#: corehq/apps/users/forms.py:259
 msgid "Generate API Key"
 msgstr ""
 
-#: corehq/apps/users/forms.py:267
+#: corehq/apps/users/forms.py:268
 msgid "My Language"
 msgstr ""
 
-#: corehq/apps/users/forms.py:293
+#: corehq/apps/users/forms.py:294
 msgid "Other Options"
 msgstr ""
 
-#: corehq/apps/users/forms.py:299
+#: corehq/apps/users/forms.py:300
 msgid "Update My Information"
 msgstr ""
 
-#: corehq/apps/users/forms.py:333
+#: corehq/apps/users/forms.py:334
 msgid ""
 "Multiply this user's case load by a number for load testing on phones. Leave "
 "blank for normal users."
 msgstr ""
 
-#: corehq/apps/users/forms.py:381 corehq/apps/users/forms.py:568
+#: corehq/apps/users/forms.py:382 corehq/apps/users/forms.py:569
 msgid ""
 "This password is automatically generated. Please copy it or create your own. "
 "It will not be shown again."
 msgstr ""
 
-#: corehq/apps/users/forms.py:396
+#: corehq/apps/users/forms.py:397
 msgid "Reset Password for Mobile Worker"
 msgstr ""
 
-#: corehq/apps/users/forms.py:419 custom/nic_compliance/forms.py:23
+#: corehq/apps/users/forms.py:420 custom/nic_compliance/forms.py:23
 msgid "Password cannot be empty"
 msgstr ""
 
-#: corehq/apps/users/forms.py:436
+#: corehq/apps/users/forms.py:437
 msgid "Please enter number, including international code, in digits only."
 msgstr ""
 
-#: corehq/apps/users/forms.py:451
+#: corehq/apps/users/forms.py:452
 msgid "Mobile Worker's Primary Information"
 msgstr ""
 
-#: corehq/apps/users/forms.py:486
+#: corehq/apps/users/forms.py:487
 msgid "Username contains invalid characters."
 msgstr ""
 
-#: corehq/apps/users/forms.py:513
+#: corehq/apps/users/forms.py:514
 msgid "Checking Availability..."
 msgstr ""
 
-#: corehq/apps/users/forms.py:514
+#: corehq/apps/users/forms.py:515
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
-#: corehq/apps/users/forms.py:660 corehq/apps/users/forms.py:729
+#: corehq/apps/users/forms.py:659 corehq/apps/users/forms.py:728
 msgid "Edit Group Membership"
 msgstr ""
 
-#: corehq/apps/users/forms.py:813
+#: corehq/apps/users/forms.py:812
 msgid "Primary Location"
 msgstr ""
 
-#: corehq/apps/users/forms.py:815
+#: corehq/apps/users/forms.py:814
 msgid "Primary Location must always be set to one of above locations"
 msgstr ""
 
-#: corehq/apps/users/forms.py:907
+#: corehq/apps/users/forms.py:906
 msgid "One or more of the locations was not found."
 msgstr ""
 
-#: corehq/apps/users/forms.py:919
+#: corehq/apps/users/forms.py:918
 msgid "Primary location can only be one of user's locations"
 msgstr ""
 
-#: corehq/apps/users/forms.py:922
+#: corehq/apps/users/forms.py:921
 msgid "Primary location can't be empty if user has any locations set"
 msgstr ""
 
-#: corehq/apps/users/forms.py:940
+#: corehq/apps/users/forms.py:939
 #: corehq/apps/users/templates/users/domain_request.html:5
 #: corehq/apps/users/templates/users/domain_request.html:7
-#: corehq/apps/users/views/__init__.py:931
+#: corehq/apps/users/views/__init__.py:933
 msgid "Request Access"
 msgstr ""
 
-#: corehq/apps/users/forms.py:997
+#: corehq/apps/users/forms.py:996
 msgid "Back to Mobile Workers List"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1054
+#: corehq/apps/users/forms.py:1053
 msgid "Create a Username"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1058
+#: corehq/apps/users/forms.py:1057
 msgid "Create a Password"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1063
+#: corehq/apps/users/forms.py:1062
 msgid "Re-enter Password"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1068
+#: corehq/apps/users/forms.py:1067
 msgid "Email address (used for tasks like resetting your password)"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1079
+#: corehq/apps/users/forms.py:1078
 msgid "Passwords do not match."
 msgstr ""
 
-#: corehq/apps/users/forms.py:1084
+#: corehq/apps/users/forms.py:1083
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html:111
 msgid "Please enter number, including country code, in digits only."
 msgstr ""
 
-#: corehq/apps/users/forms.py:1097
+#: corehq/apps/users/forms.py:1096
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html:97
 msgid "Add a Phone Number"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1103
+#: corehq/apps/users/forms.py:1102
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html:118
 msgid "Add Number"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1150
+#: corehq/apps/users/forms.py:1149
 msgid "Search by username"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1160 custom/succeed/fields.py:37
+#: corehq/apps/users/forms.py:1159 custom/succeed/fields.py:37
 msgid "All Roles"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1161 corehq/apps/users/views/__init__.py:1120
+#: corehq/apps/users/forms.py:1160 corehq/apps/users/views/__init__.py:1110
 msgid "(No Name)"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1175
+#: corehq/apps/users/forms.py:1174
 msgid "Filter and Download Users"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1181
+#: corehq/apps/users/forms.py:1180
 msgid "Download All Users"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1193
+#: corehq/apps/users/forms.py:1192
 msgid "Invalid Role"
 msgstr ""
 
-#: corehq/apps/users/forms.py:1199
+#: corehq/apps/users/forms.py:1198
 msgid "* and ? are not allowed"
 msgstr ""
 
 #: corehq/apps/users/landing_pages.py:23
-#: corehq/messaging/scheduling/views.py:72 corehq/tabs/tabclasses.py:241
-#: corehq/tabs/tabclasses.py:1108 corehq/tabs/tabclasses.py:1110
-#: corehq/tabs/tabclasses.py:1144 corehq/tabs/tabclasses.py:1146
+#: corehq/messaging/scheduling/views.py:72 corehq/tabs/tabclasses.py:240
+#: corehq/tabs/tabclasses.py:1107 corehq/tabs/tabclasses.py:1109
+#: corehq/tabs/tabclasses.py:1143 corehq/tabs/tabclasses.py:1145
 msgid "Dashboard"
 msgstr ""
 
@@ -27960,54 +28048,54 @@ msgstr ""
 msgid "No landing page found with id {}"
 msgstr ""
 
-#: corehq/apps/users/models.py:218
+#: corehq/apps/users/models.py:220
 msgid "Read Only (No Reports)"
 msgstr ""
 
-#: corehq/apps/users/models.py:219
+#: corehq/apps/users/models.py:221
 msgid "App Editor"
 msgstr ""
 
-#: corehq/apps/users/models.py:220
+#: corehq/apps/users/models.py:222
 msgid "Read Only"
 msgstr ""
 
-#: corehq/apps/users/models.py:221
+#: corehq/apps/users/models.py:223
 msgid "Field Implementer"
 msgstr ""
 
-#: corehq/apps/users/models.py:222
+#: corehq/apps/users/models.py:224
 msgid "Billing Admin"
 msgstr ""
 
-#: corehq/apps/users/models.py:705
+#: corehq/apps/users/models.py:709
 msgid "Unknown User"
 msgstr ""
 
-#: corehq/apps/users/models.py:707
+#: corehq/apps/users/models.py:711
 msgid "Dimagi User"
 msgstr ""
 
-#: corehq/apps/users/models.py:707
+#: corehq/apps/users/models.py:711
 msgid "Unauthorized User"
 msgstr ""
 
-#: corehq/apps/users/models.py:2521
+#: corehq/apps/users/models.py:2525
 #, python-format
 msgid "Request to join %s approved"
 msgstr ""
 
-#: corehq/apps/users/models.py:2537
+#: corehq/apps/users/models.py:2541
 #, python-format
 msgid "Request from %(name)s to join %(domain)s"
 msgstr ""
 
-#: corehq/apps/users/models.py:2582
+#: corehq/apps/users/models.py:2586
 #, python-format
 msgid "Invitation from %s to join CommCareHQ"
 msgstr ""
 
-#: corehq/apps/users/models.py:2586
+#: corehq/apps/users/models.py:2590
 msgid "Request to join CommCareHQ approved"
 msgstr ""
 
@@ -28839,7 +28927,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html:32
-#: corehq/tabs/tabclasses.py:1270
+#: corehq/tabs/tabclasses.py:1269
 msgid "Invite Web User"
 msgstr ""
 
@@ -28885,271 +28973,281 @@ msgid "Membership"
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html:204
-msgid "Restrict Web User access based on location"
-msgstr ""
-
-#: corehq/apps/users/templates/users/web_users.html:209
-msgid "Saved"
-msgstr ""
-
-#: corehq/apps/users/templates/users/web_users.html:220
 msgid "Pending Invitations"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:259
+#: corehq/apps/users/templates/users/web_users.html:243
 msgid "Resend Invitation"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:264
+#: corehq/apps/users/templates/users/web_users.html:248
 msgid "Delete Invitation"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:279
+#: corehq/apps/users/templates/users/web_users.html:263
 msgid "Roles"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:288
-#: corehq/apps/users/templates/users/web_users.html:290
-#: corehq/apps/users/templates/users/web_users.html:451
+#: corehq/apps/users/templates/users/web_users.html:272
+#: corehq/apps/users/templates/users/web_users.html:274
+#: corehq/apps/users/templates/users/web_users.html:435
 msgid "Edit Web Users"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:291
+#: corehq/apps/users/templates/users/web_users.html:275
 msgid ""
 "Specify web user access permissions; invite new web users to the domain; "
 "manage account settings for web users."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:294
-#: corehq/apps/users/templates/users/web_users.html:296
-#: corehq/apps/users/templates/users/web_users.html:465
+#: corehq/apps/users/templates/users/web_users.html:278
+#: corehq/apps/users/templates/users/web_users.html:280
+#: corehq/apps/users/templates/users/web_users.html:449
 msgid "Edit Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:297
+#: corehq/apps/users/templates/users/web_users.html:281
 msgid ""
 "Manage account settings for mobile workers; create accounts for mobile "
 "workers; archive and/or delete mobile users."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:300
-#: corehq/apps/users/templates/users/web_users.html:302
-#: corehq/apps/users/templates/users/web_users.html:479
+#: corehq/apps/users/templates/users/web_users.html:284
+#: corehq/apps/users/templates/users/web_users.html:286
+#: corehq/apps/users/templates/users/web_users.html:463
 msgid "Edit Locations"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:303
+#: corehq/apps/users/templates/users/web_users.html:287
 msgid "Create, update, and delete Locations in the Organization Hierarchy."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:307
-#: corehq/apps/users/templates/users/web_users.html:309
-#: corehq/apps/users/templates/users/web_users.html:494
+#: corehq/apps/users/templates/users/web_users.html:291
+#: corehq/apps/users/templates/users/web_users.html:293
+#: corehq/apps/users/templates/users/web_users.html:478
 msgid "Edit Integration"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:310
+#: corehq/apps/users/templates/users/web_users.html:294
 msgid "Manage integration with other systems."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:314
-#: corehq/apps/users/templates/users/web_users.html:316
-#: corehq/apps/users/templates/users/web_users.html:509 corehq/reports.py:308
+#: corehq/apps/users/templates/users/web_users.html:298
+#: corehq/apps/users/templates/users/web_users.html:300
+#: corehq/apps/users/templates/users/web_users.html:493 corehq/reports.py:308
 msgid "Edit Data"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:317
+#: corehq/apps/users/templates/users/web_users.html:301
 msgid "View, export, and edit form and case data; reassign cases."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:321
-#: corehq/apps/users/templates/users/web_users.html:323
-#: corehq/apps/users/templates/users/web_users.html:524
+#: corehq/apps/users/templates/users/web_users.html:305
+#: corehq/apps/users/templates/users/web_users.html:307
+#: corehq/apps/users/templates/users/web_users.html:508
 msgid "Edit Shared Exports"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:324
+#: corehq/apps/users/templates/users/web_users.html:308
 msgid "Access and edit the content and structure of shared exports."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:328
-#: corehq/apps/users/templates/users/web_users.html:330
+#: corehq/apps/users/templates/users/web_users.html:312
+#: corehq/apps/users/templates/users/web_users.html:314
 msgid "Edit Apps"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:331
+#: corehq/apps/users/templates/users/web_users.html:315
 msgid "Modify the structure and configuration of the application."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:334
-#: corehq/apps/users/templates/users/web_users.html:336
+#: corehq/apps/users/templates/users/web_users.html:318
+#: corehq/apps/users/templates/users/web_users.html:320
 msgid "View Reports"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:337
+#: corehq/apps/users/templates/users/web_users.html:321
 msgid "See all CommCareHQ performance reports."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:340
-#: corehq/apps/users/templates/users/web_users.html:342
-#: corehq/apps/users/templates/users/web_users.html:553
+#: corehq/apps/users/templates/users/web_users.html:324
+#: corehq/apps/users/templates/users/web_users.html:326
+#: corehq/apps/users/templates/users/web_users.html:537
 msgid "Edit Subscription Info"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:343
+#: corehq/apps/users/templates/users/web_users.html:327
 msgid "Edit the subscription information for this domain."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:352
+#: corehq/apps/users/templates/users/web_users.html:336
 msgid "No Name"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:379
+#: corehq/apps/users/templates/users/web_users.html:363
 msgid "Edit Role"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:383
+#: corehq/apps/users/templates/users/web_users.html:367
 msgid "Delete Role"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:393
+#: corehq/apps/users/templates/users/web_users.html:377
 msgid "Add Role"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:440
+#: corehq/apps/users/templates/users/web_users.html:424
 msgid "Role Name"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:458
+#: corehq/apps/users/templates/users/web_users.html:442
 msgid "Allow role to edit Web Users."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:472
+#: corehq/apps/users/templates/users/web_users.html:456
 msgid "Allow role to edit Mobile Workers."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:486
+#: corehq/apps/users/templates/users/web_users.html:470
 msgid "Allow role to edit Locations."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:501
+#: corehq/apps/users/templates/users/web_users.html:485
 msgid "Allow role to manage integration with other systems."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:516
+#: corehq/apps/users/templates/users/web_users.html:500
 msgid "Allow role to edit Data."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:531
+#: corehq/apps/users/templates/users/web_users.html:515
 msgid "Allow role to edit shared exports."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:539
+#: corehq/apps/users/templates/users/web_users.html:523
 msgid "Edit Applications"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:546
+#: corehq/apps/users/templates/users/web_users.html:530
 msgid "Allow role to edit Applications."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:560
+#: corehq/apps/users/templates/users/web_users.html:544
 msgid "Allow role to edit subscription information."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:570
+#: corehq/apps/users/templates/users/web_users.html:554
 msgid "Full Organization Access"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:578
+#: corehq/apps/users/templates/users/web_users.html:562
 msgid "Allow role to access data from all locations"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:580
+#: corehq/apps/users/templates/users/web_users.html:564
 msgid ""
 "Organization-based data access restrictions are only available on the Pro "
 "plan and above.  Saving this role will enable full organization access for "
 "the assigned users."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:588
+#: corehq/apps/users/templates/users/web_users.html:572
 msgid "View All Reports"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:595
+#: corehq/apps/users/templates/users/web_users.html:579
 msgid "Allow role to view all reports."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:603
+#: corehq/apps/users/templates/users/web_users.html:587
 msgid "View Specific Reports"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:608
+#: corehq/apps/users/templates/users/web_users.html:592
 msgid "Select which reports the role can view:"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:625
+#: corehq/apps/users/templates/users/web_users.html:609
 msgid "View All Web Apps"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:632
+#: corehq/apps/users/templates/users/web_users.html:616
 msgid "Allow role to view all Web Apps."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:645
+#: corehq/apps/users/templates/users/web_users.html:629
 msgid "Select which Web Apps the role can view:"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:663
+#: corehq/apps/users/templates/users/web_users.html:647
+#, fuzzy
+#| msgid "Manage Case"
+msgid "Manage Releases"
+msgstr "Diagnóstico de Casos"
+
+#: corehq/apps/users/templates/users/web_users.html:654
+msgid "Allow role to manage all Apps."
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html:662
+msgid "Manage Releases Permissions"
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html:667
+msgid "Select which Apps this role can manage:"
+msgstr ""
+
+#: corehq/apps/users/templates/users/web_users.html:685
 msgid "Default Landing Page"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:676
+#: corehq/apps/users/templates/users/web_users.html:698
 msgid "Allow Reporting Issues"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:683
+#: corehq/apps/users/templates/users/web_users.html:705
 msgid "Allow this role to report issues."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:690
+#: corehq/apps/users/templates/users/web_users.html:712
 msgid "Non-admin Editable"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:697
+#: corehq/apps/users/templates/users/web_users.html:719
 msgid "Allow non-admins to assign this role to other users."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:705
+#: corehq/apps/users/templates/users/web_users.html:727
 msgid "View File Dropzone"
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:712
+#: corehq/apps/users/templates/users/web_users.html:734
 msgid "Allow role to upload and download files from dropzone."
 msgstr ""
 
-#: corehq/apps/users/templates/users/web_users.html:746
+#: corehq/apps/users/templates/users/web_users.html:768
 msgid "Copy and paste admin emails"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:281
+#: corehq/apps/users/views/__init__.py:282
 #, python-format
 msgid "Changes saved for user \"%s\""
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:293
+#: corehq/apps/users/views/__init__.py:294
 msgid "Edit Web User"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:361
+#: corehq/apps/users/views/__init__.py:362
 #, python-format
 msgid "Changed system permissions for user \"%s\""
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:387
+#: corehq/apps/users/views/__init__.py:388
 msgid "Web Users & Roles"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:424
+#: corehq/apps/users/views/__init__.py:425
 msgid ""
 "We might be experiencing issues fetching the entire list of user roles right "
 "now. This issue is likely temporary and nothing to worry about, but if you "
@@ -29157,11 +29255,11 @@ msgid ""
 "data-toggle='modal'>Report an Issue</a>."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:458
+#: corehq/apps/users/views/__init__.py:459
 msgid "Use Default"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:471
+#: corehq/apps/users/views/__init__.py:472
 msgid ""
 "This project has user roles that restrict data access by organization, but "
 "the software plan no longer supports that. Any users assigned to roles that "
@@ -29169,45 +29267,45 @@ msgid ""
 "project.  Please update the existing roles."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:563
+#: corehq/apps/users/views/__init__.py:565
 #, python-brace-format
 msgid ""
 "You have successfully removed {username} from your domain. <a href=\"{url}\" "
 "class=\"post-link\">Undo</a>"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:570
+#: corehq/apps/users/views/__init__.py:572
 #, python-brace-format
 msgid "It appears {username} has already been removed from your domain."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:661
+#: corehq/apps/users/views/__init__.py:663
 msgid ""
 "Sorry, it looks like your invitation has expired. Please check the "
 "invitation link you received and try again, or request a project "
 "administrator to send you the invitation again."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:666
+#: corehq/apps/users/views/__init__.py:668
 msgid ""
 "Sorry, that invitation has already been used up. If you feel this is a "
 "mistake please ask the inviter for another invitation."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:687
+#: corehq/apps/users/views/__init__.py:689
 msgid "Project Invitation"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:689
+#: corehq/apps/users/views/__init__.py:691
 msgid "Project Invitation, Account Required"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:695
+#: corehq/apps/users/views/__init__.py:697
 #, python-brace-format
 msgid "You are already a member of {entity}."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:700
+#: corehq/apps/users/views/__init__.py:702
 #, python-brace-format
 msgid ""
 "It looks like you are trying to accept an invitation for {invited} but you "
@@ -29215,52 +29313,52 @@ msgid ""
 "to accept this invitation as another user."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:711
+#: corehq/apps/users/views/__init__.py:713
 #, python-brace-format
 msgid "The invited user {invited} and your user {current} do not match!"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:736
+#: corehq/apps/users/views/__init__.py:738
 #, python-format
 msgid "User account for %s created!"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:779
+#: corehq/apps/users/views/__init__.py:781
 #, python-format
 msgid "You have been added to the \"%s\" project space."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:806
+#: corehq/apps/users/views/__init__.py:808
 msgid "Invitation resent"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:808
+#: corehq/apps/users/views/__init__.py:810
 msgid "Error while attempting resend"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:847
+#: corehq/apps/users/views/__init__.py:849
 msgid "Invite Web User to Project"
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:962
+#: corehq/apps/users/views/__init__.py:964
 msgid ""
 "A request is pending for this email. You will receive an email when the "
 "request is approved."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1026
+#: corehq/apps/users/views/__init__.py:1028
 msgid "Cannot start verification workflow. Phone number is already in use."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1028
+#: corehq/apps/users/views/__init__.py:1030
 msgid "Phone number is already verified."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1030
+#: corehq/apps/users/views/__init__.py:1032
 msgid "Verification message resent."
 msgstr ""
 
-#: corehq/apps/users/views/__init__.py:1032
+#: corehq/apps/users/views/__init__.py:1034
 msgid "Verification workflow started."
 msgstr ""
 
@@ -30574,8 +30672,8 @@ msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:29
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html:32
-#: corehq/messaging/scheduling/views.py:538 corehq/tabs/tabclasses.py:1004
-#: corehq/tabs/tabclasses.py:1123
+#: corehq/messaging/scheduling/views.py:538 corehq/tabs/tabclasses.py:1003
+#: corehq/tabs/tabclasses.py:1122
 msgid "Conditional Alerts"
 msgstr ""
 
@@ -30823,8 +30921,8 @@ msgid "Events to be sent after"
 msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html:31
-#: corehq/messaging/scheduling/views.py:274 corehq/tabs/tabclasses.py:990
-#: corehq/tabs/tabclasses.py:1119
+#: corehq/messaging/scheduling/views.py:274 corehq/tabs/tabclasses.py:989
+#: corehq/tabs/tabclasses.py:1118
 msgid "Broadcasts"
 msgstr ""
 
@@ -31840,11 +31938,11 @@ msgstr ""
 msgid "Email Bulk Payload"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:350 corehq/tabs/tabclasses.py:1590
+#: corehq/motech/repeaters/models.py:350 corehq/tabs/tabclasses.py:1589
 msgid "Forward Forms"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:406 corehq/tabs/tabclasses.py:1594
+#: corehq/motech/repeaters/models.py:406 corehq/tabs/tabclasses.py:1593
 msgid "Forward Cases"
 msgstr ""
 
@@ -31856,7 +31954,7 @@ msgstr ""
 msgid "Forward Cases on Update Only"
 msgstr ""
 
-#: corehq/motech/repeaters/models.py:480 corehq/tabs/tabclasses.py:1592
+#: corehq/motech/repeaters/models.py:480 corehq/tabs/tabclasses.py:1591
 msgid "Forward Form Stubs"
 msgstr ""
 
@@ -32014,7 +32112,7 @@ msgstr ""
 msgid "Cancel or Requeue payload"
 msgstr ""
 
-#: corehq/motech/repeaters/views/repeaters.py:42 corehq/tabs/tabclasses.py:1598
+#: corehq/motech/repeaters/views/repeaters.py:42 corehq/tabs/tabclasses.py:1597
 msgid "Data Forwarding"
 msgstr ""
 
@@ -32243,243 +32341,247 @@ msgstr ""
 msgid "Tools"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:223
+#: corehq/tabs/tabclasses.py:222
 msgid "Other Actions"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:231
+#: corehq/tabs/tabclasses.py:230
 msgid "Download Indicators Export"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:266
+#: corehq/tabs/tabclasses.py:265
 msgid "Project Info"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:313 corehq/tabs/tabclasses.py:812
-#: corehq/tabs/tabclasses.py:1132 corehq/tabs/tabclasses.py:1841
+#: corehq/tabs/tabclasses.py:312 corehq/tabs/tabclasses.py:811
+#: corehq/tabs/tabclasses.py:1131 corehq/tabs/tabclasses.py:1840
 #: corehq/tabs/utils.py:116
 msgid "View All"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:407
+#: corehq/tabs/tabclasses.py:406
 msgid "CommCare Supply Setup"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:641 corehq/tabs/tabclasses.py:806
+#: corehq/tabs/tabclasses.py:640 corehq/tabs/tabclasses.py:805
 msgid "Find Data by ID"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:723
+#: corehq/tabs/tabclasses.py:722
 msgid "Export Data"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:759
+#: corehq/tabs/tabclasses.py:758
 msgid "Explore Data"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:844
+#: corehq/tabs/tabclasses.py:843
 msgid "My Applications"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:864
+#: corehq/tabs/tabclasses.py:863
 msgid "New Application"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1029
+#: corehq/tabs/tabclasses.py:1028
 msgid "Subscribe to SMS Reports"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1043
+#: corehq/tabs/tabclasses.py:1042
 msgid "Mobile Worker Registration"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1049
+#: corehq/tabs/tabclasses.py:1048
 msgid "Chat"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1083 corehq/tabs/tabclasses.py:1791
+#: corehq/tabs/tabclasses.py:1082 corehq/tabs/tabclasses.py:1790
 msgid "Add Gateway"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1087 corehq/tabs/tabclasses.py:1793
+#: corehq/tabs/tabclasses.py:1086 corehq/tabs/tabclasses.py:1792
 msgid "Edit Gateway"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1153
+#: corehq/tabs/tabclasses.py:1152
 msgid "Data Collection and Reminders"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1155
+#: corehq/tabs/tabclasses.py:1154
 msgid "Contacts"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1210
+#: corehq/tabs/tabclasses.py:1209
 msgid "Create and manage users for CommCare and CloudCare."
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1224
+#: corehq/tabs/tabclasses.py:1223
 msgid ""
 "Create and manage\n"
 "                        reporting and case sharing groups\n"
 "                        for Mobile Workers."
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1231
+#: corehq/tabs/tabclasses.py:1230
 msgid "Membership Info"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1246
+#: corehq/tabs/tabclasses.py:1245
 msgid "Application Users"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1263
+#: corehq/tabs/tabclasses.py:1262
 msgid "Project Users"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1267
+#: corehq/tabs/tabclasses.py:1266
 msgid ""
 "Grant other CommCare HQ users access to your project and manage user roles."
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1335
+#: corehq/tabs/tabclasses.py:1334
 msgid "No longer available"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1453
+#: corehq/tabs/tabclasses.py:1452
 msgid "Project Administration"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1456
+#: corehq/tabs/tabclasses.py:1455
 msgid "Integration"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1460
+#: corehq/tabs/tabclasses.py:1459
 msgid "Pre-release Features"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1506
+#: corehq/tabs/tabclasses.py:1505
 msgid "Internal Subscription Management (Dimagi Only)"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1537
+#: corehq/tabs/tabclasses.py:1536
 msgid "Internal Data (Dimagi Only)"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1612
+#: corehq/tabs/tabclasses.py:1611
 msgid "Data Forwarding Records"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1666
+#: corehq/tabs/tabclasses.py:1665
 msgid "Linked Project History"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1673
+#: corehq/tabs/tabclasses.py:1672
 msgid "My Settings"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1720
+#: corehq/tabs/tabclasses.py:1719
 msgid "Manage My Settings"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1724
+#: corehq/tabs/tabclasses.py:1723
 msgid "Accounting"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1774 corehq/tabs/tabclasses.py:1836
+#: corehq/tabs/tabclasses.py:1773 corehq/tabs/tabclasses.py:1835
 msgid "SMS Connectivity & Billing"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1788
+#: corehq/tabs/tabclasses.py:1787
 msgid "Gateways"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1818 corehq/tabs/tabclasses.py:1837
+#: corehq/tabs/tabclasses.py:1817 corehq/tabs/tabclasses.py:1836
 msgid "Feature Flags"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1825 corehq/tabs/tabclasses.py:1910
+#: corehq/tabs/tabclasses.py:1824 corehq/tabs/tabclasses.py:1909
 msgid "Submission Map"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1826
+#: corehq/tabs/tabclasses.py:1825
 msgid "Management"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1838
+#: corehq/tabs/tabclasses.py:1837
 msgid "CommCare Builds"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1840
+#: corehq/tabs/tabclasses.py:1839
 msgid "Django Admin"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1852 corehq/tabs/tabclasses.py:1933
+#: corehq/tabs/tabclasses.py:1851 corehq/tabs/tabclasses.py:1932
 msgid "System Health"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1861
+#: corehq/tabs/tabclasses.py:1860
 msgid "Look up user by email"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1871
+#: corehq/tabs/tabclasses.py:1870
 msgid "View raw couch documents"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1873
+#: corehq/tabs/tabclasses.py:1872
 msgid "View documents in ES"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1884
+#: corehq/tabs/tabclasses.py:1883
 msgid "Branches on Staging"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1888
+#: corehq/tabs/tabclasses.py:1887
 msgid "Login as another user"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1891
+#: corehq/tabs/tabclasses.py:1890
 msgid "Grant superuser privileges"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1895
+#: corehq/tabs/tabclasses.py:1894
 msgid "Check Call Center UCR tables"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1899
+#: corehq/tabs/tabclasses.py:1898
 msgid "Manage Notifications"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1901
+#: corehq/tabs/tabclasses.py:1900
 msgid "Mass Email Users"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1907
+#: corehq/tabs/tabclasses.py:1906
 msgid "Administrative Reports"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1912
+#: corehq/tabs/tabclasses.py:1911
 msgid "Active Project Map"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1918
+#: corehq/tabs/tabclasses.py:1917
 msgid "Download Malt table"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1920
+#: corehq/tabs/tabclasses.py:1919
 msgid "Download Global Impact Report"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1929
+#: corehq/tabs/tabclasses.py:1928
 msgid "Administrative Operations"
 msgstr ""
 
-#: corehq/tabs/tabclasses.py:1936
+#: corehq/tabs/tabclasses.py:1935
 msgid "CommCare Reports"
 msgstr ""
 
 #: corehq/trans_override.py:8
 msgid "Token generator"
 msgstr ""
+
+#: coverage-report/corehq_apps_users_forms_py.html:2150
+msgid "Specify Users At This Location"
+msgstr "Outros (negativos / indeterminados) "
 
 #: custom/_legacy/pact/models.py:328
 msgid "Follow-Up Date"
@@ -34177,74 +34279,6 @@ msgid ""
 "            "
 msgstr ""
 
-#: custom/icds/translations/integrations/transifex.py:83
-msgid "Transifex account details not available on this environment."
-msgstr ""
-
-#: custom/icds/translations/integrations/transifex.py:119
-msgid "Successfully Uploaded"
-msgstr ""
-
-#: custom/icds/translations/integrations/transifex.py:187
-msgid "Successfully Removed"
-msgstr ""
-
-#: custom/icds_reports/forms.py:18
-msgid "App"
-msgstr ""
-
-#: custom/icds_reports/forms.py:20
-msgid "Leave blank to use current application state"
-msgstr ""
-
-#: custom/icds_reports/forms.py:39
-msgid "Source Language"
-msgstr ""
-
-#: custom/icds_reports/forms.py:46
-msgid "Select Target Language"
-msgstr ""
-
-#: custom/icds_reports/forms.py:48
-msgid "Leave blank to skip"
-msgstr ""
-
-#: custom/icds_reports/forms.py:52
-msgid "Push to transifex"
-msgstr ""
-
-#: custom/icds_reports/forms.py:53
-msgid "Pull from transifex"
-msgstr ""
-
-#: custom/icds_reports/forms.py:54
-msgid "Delete resources on transifex"
-msgstr ""
-
-#: custom/icds_reports/forms.py:56
-msgid "Lock resources"
-msgstr ""
-
-#: custom/icds_reports/forms.py:58
-msgid "Lock translations for resources that are being pulled"
-msgstr ""
-
-#: custom/icds_reports/forms.py:61
-msgid "Check for completion"
-msgstr ""
-
-#: custom/icds_reports/forms.py:63
-msgid "Check for translation completion before pulling files"
-msgstr ""
-
-#: custom/icds_reports/forms.py:110
-msgid "Version not available for app"
-msgstr ""
-
-#: custom/icds_reports/forms.py:113
-msgid "Target lang required to confirm translation completion"
-msgstr ""
-
 #: custom/icds_reports/messages.py:7
 msgid ""
 "Of the children enrolled for Anganwadi services, whose weight and height was "
@@ -34912,10 +34946,6 @@ msgstr ""
 msgid "ICDS-CAS Dashboard"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/app_translations.html:17
-msgid "ICDS App Translations"
-msgstr ""
-
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:14
 msgid "Program Summary"
 msgstr ""
@@ -35010,48 +35040,6 @@ msgstr ""
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:161
 msgid "ASR Block Report"
-msgstr ""
-
-#: custom/icds_reports/views.py:1656
-msgid "App Translations"
-msgstr ""
-
-#: custom/icds_reports/views.py:1696
-msgid "Successfully enqueued request to submit files for translations"
-msgstr ""
-
-#: custom/icds_reports/views.py:1705
-msgid "Resources yet to be completely translated, for ex: {}"
-msgstr ""
-
-#: custom/icds_reports/views.py:1712
-msgid "Resources not found for this project and version."
-msgstr ""
-
-#: custom/icds_reports/views.py:1724
-msgid ""
-"Resources yet to be completely translated for all languages. Hence, the "
-"request for locking resources can not be performed."
-msgstr ""
-
-#: custom/icds_reports/views.py:1728
-msgid ""
-"Successfully enqueued request to pull for translations. You should receive "
-"an email shortly"
-msgstr ""
-
-#: custom/icds_reports/views.py:1736
-msgid ""
-"Resources yet to be completely translated for all languages. Hence, the "
-"request for deleting resources can not be performed."
-msgstr ""
-
-#: custom/icds_reports/views.py:1740
-msgid "Successfully enqueued request to delete resources."
-msgstr ""
-
-#: custom/icds_reports/views.py:1746
-msgid "Source lang selected not available for the project"
 msgstr ""
 
 #: custom/ilsgateway/filters.py:21
@@ -38252,64 +38240,18 @@ msgstr ""
 msgid "Delivered"
 msgstr ""
 
-#: manage.py:99
+#: manage.py:108
 msgid "Enter valid JSON"
 msgstr ""
 
-#: src/couchdbkit-debugpanel/couchdebugpanel/couchpanel.py:89
-#: src/couchdbkit-debugpanel/couchdebugpanel/couchpanel.py:92
-msgid "CouchDB"
-msgstr ""
+#~ msgid "View Name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:13
-msgid "Rows"
-msgstr ""
+#~ msgid "Request Params"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:15
-msgid "Stacktrace"
-msgstr ""
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:16
-#, fuzzy
-#| msgid "Village Name"
-msgid "View Name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:17
-#, fuzzy
-#| msgid "Request free Demo"
-msgid "Request Params"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:45
-msgid "Line"
-msgstr ""
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch.html:46
-msgid "Method"
-msgstr ""
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:6
-msgid "CouchDB View"
-msgstr ""
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:11
-msgid "Executed View"
-msgstr "Manejo de Casos"
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:13
-msgid "Parameters"
-msgstr ""
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:15
-#, fuzzy
-#| msgid "Total Users"
-msgid "Total Rows"
-msgstr "Manejo de Casos"
-
-#: src/couchdbkit-debugpanel/couchdebugpanel/templates/couchdebugpanel/couch_select.html:40
-msgid "Empty set"
-msgstr ""
+#~ msgid "Executed View"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Invalid date format"
 #~ msgstr "Casos IRA Tratados"
@@ -38347,9 +38289,6 @@ msgstr ""
 #~ "children\n"
 #~ "                    "
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Specify Users At This Location"
-#~ msgstr "Outros (negativos / indeterminados) "
 
 #~ msgid "No properties found"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
@@ -38749,6 +38688,12 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
+#~ "                        App Refinement by Dimagi\n"
+#~ "                    "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid ""
+#~ "\n"
 #~ "                        Technology for Reminder Messages\n"
 #~ "                    "
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
@@ -38781,9 +38726,6 @@ msgstr ""
 #~ "                        We then build the ideal project roadmap, taking\n"
 #~ "                        into account capacity-building needs.\n"
 #~ "                    "
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Welcome to CommCare!"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Activate CommCare"
@@ -39223,6 +39165,9 @@ msgstr ""
 #~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Bank Name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Village Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Payment last month"

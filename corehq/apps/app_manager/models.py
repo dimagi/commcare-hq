@@ -195,6 +195,8 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
+_soft_assert = soft_assert(to="{}@{}.com".format('npellegrino', 'dimagi'), exponential_backoff=True)
+
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
@@ -718,8 +720,10 @@ class FormSource(object):
             source = ''
         else:
             source = app.lazy_fetch_attachment(filename)
-            assert isinstance(source, bytes), type(source)
-            source = source.decode('utf-8')
+            if isinstance(source, bytes):
+                source = source.decode('utf-8')
+            else:
+                _soft_assert(False, type(source))
 
         return source
 
@@ -727,8 +731,11 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
-        assert isinstance(value, six.text_type), type(value)
-        app.lazy_put_attachment(value.encode('utf-8'), filename)
+        if isinstance(value, six.text_type):
+            value = value.encode('utf-8')
+        else:
+            _soft_assert(False, type(value))
+        app.lazy_put_attachment(value, filename)
         form.clear_validation_cache()
         try:
             form.xmlns = form.wrapped_xform().data_node.tag_xmlns
@@ -1212,7 +1219,8 @@ class FormBase(DocumentSchema):
         return xform.render()
 
     @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
+                timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
         try:
@@ -4573,6 +4581,9 @@ class LazyBlobDoc(BlobMixin):
         except KeyError:
             content = cache.get(self.__attachment_cache_key(name))
             if content is not None:
+                if isinstance(content, six.text_type):
+                    _soft_assert(False, 'cached attachment has type unicode')
+                    content = content.encode('utf-8')
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 
@@ -5951,7 +5962,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @time_method()
     def _make_language_files(self, prefix, build_profile_id):
         return {
-            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id)
+            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id).encode('utf-8')
             for lang in ['default'] + self.get_build_langs(build_profile_id)
         }
 

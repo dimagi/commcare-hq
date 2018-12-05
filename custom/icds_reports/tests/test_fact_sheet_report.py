@@ -344,7 +344,6 @@ class TestFactSheetReportInterventions(TestCase):
         self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 1)
 
     def test_nutrition_status_of_children(self):
-        print self.get_data()['config']['sections'][0]
         self.assertDictEqual(
             self.get_data()['config']['sections'][0],
             {

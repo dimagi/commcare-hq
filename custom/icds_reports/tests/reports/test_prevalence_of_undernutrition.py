@@ -266,11 +266,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {'loc_name': u'st6', 'percent': 0.0},
-                {'loc_name': u'st7', 'percent': 0.0},
-                {'loc_name': u'st3', 'percent': 0.0},
-                {'loc_name': u'st2', 'percent': 20.58047493403694},
-                {'loc_name': u'st1', 'percent': 22.71293375394322}
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 20.58047493403694},
+                {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )
 
@@ -285,11 +285,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {'loc_name': u'st4', 'percent': 0.0},
-                {'loc_name': u'st5', 'percent': 0.0},
-                {'loc_name': u'st6', 'percent': 0.0},
-                {'loc_name': u'st7', 'percent': 0.0},
-                {'loc_name': u'st3', 'percent': 0.0}
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -355,7 +355,6 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        print data['chart_data'][1]
         self.assertDictEqual(
             data['chart_data'][1],
             {
@@ -447,13 +446,13 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {'loc_name': u'st4', 'percent': 0.0},
-                {'loc_name': u'st5', 'percent': 0.0},
-                {'loc_name': u'st6', 'percent': 0.0},
-                {'loc_name': u'st7', 'percent': 0.0},
-                {'loc_name': u'st3', 'percent': 0.0},
-                {'loc_name': u'st2', 'percent': 20.58047493403694},
-                {'loc_name': u'st1', 'percent': 22.71293375394322}
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 20.58047493403694},
+                {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )
 

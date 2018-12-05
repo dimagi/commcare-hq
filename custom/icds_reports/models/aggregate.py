@@ -470,7 +470,7 @@ class AggAwc(models.Model):
 
 
 class AggregateLsAWCVisitForm(models.Model):
-    unique_awc_vists = models.IntegerField(help_text='unique awc visits made by LS')
+    awc_visits = models.IntegerField(help_text='awc visits made by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
@@ -537,7 +537,7 @@ class AggLs(models.Model):
     Model refers to the agg_ls table in database.
     Table contains the aggregated data from LS ucrs.
     """
-    unique_awc_vists = models.IntegerField(help_text='unique awc visits made by LS')
+    awc_visits = models.IntegerField(help_text='awc visits made by LS')
     vhnd_observed = models.IntegerField(help_text='VHND forms submitted by LS')
     beneficiary_vists = models.IntegerField(help_text='Beneficiary visits done by LS')
     month = models.DateField()
