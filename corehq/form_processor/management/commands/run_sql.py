@@ -170,26 +170,9 @@ ON public.form_processor_xformattachmentsql (((
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
 move_form_attachments_to_blobmeta = RunUntilZero("""
-WITH deleted AS (
-    DELETE FROM form_processor_xformattachmentsql
-    WHERE id IN (
-        SELECT id FROM form_processor_xformattachmentsql
-        LIMIT {chunk_size}
-    )
-    RETURNING *
-), moved AS (
-    INSERT INTO blobs_blobmeta_tbl (
-        "domain",
-        parent_id,
-        "name",
-        "key",
-        type_code,
-        content_type,
-        properties,
-        created_on,
-        content_length
-    ) SELECT
-        COALESCE(xform."domain", '<unknown>'),
+WITH to_move AS (
+    SELECT
+        COALESCE(xform."domain", '<unknown>') AS "domain",
         att.form_id AS parent_id,
         att."name",
         (CASE
@@ -210,13 +193,88 @@ WITH deleted AS (
         END AS properties,
         COALESCE(xform.received_on, CURRENT_TIMESTAMP) AS created_on,
         att.content_length
-    FROM deleted att
+    FROM form_processor_xformattachmentsql att
     -- outer join so we move deleted rows with no corresponding xform instance
     -- should not happen, but just in case (without this they would be lost)
     LEFT OUTER JOIN form_processor_xforminstancesql xform
         ON xform.form_id = att.form_id
+    LIMIT {chunk_size}
+), moved AS (
+    INSERT INTO blobs_blobmeta_tbl AS blob (
+        "domain",
+        parent_id,
+        "name",
+        "key",
+        type_code,
+        content_type,
+        properties,
+        created_on,
+        content_length
+    )
+    SELECT * FROM to_move
+    ON CONFLICT (key)
+        DO UPDATE SET created_on = EXCLUDED.created_on
+        -- this where clause will exclude a row with key conflict belonging to
+        -- a different parent or with different name (unexpected, but possible)
+        WHERE blob.parent_id = EXCLUDED.parent_id AND blob.name = EXCLUDED.name
     RETURNING *
-) SELECT COUNT(*) FROM moved
+), deleted AS (
+    -- do the delete last so we only delete rows that were inserted or updated
+    -- unfortunately this requires a bit more complex where clause because it
+    -- is not possible to pass form_processor_xformattachmentsql.id through
+    -- INSERT INTO blobs_blobmeta_tbl ... RETURNING
+    DELETE FROM form_processor_xformattachmentsql att
+    USING moved WHERE moved.parent_id = att.form_id
+    AND moved.name = att.name
+    AND moved.key = (CASE
+        WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+        ELSE COALESCE(
+            att.blob_bucket,
+            'form/' || REPLACE(att.attachment_id::text, '-', '')
+        ) || '/'
+    END || att.blob_id)::VARCHAR(255)
+    RETURNING *
+) SELECT COUNT(*) FROM deleted;
+""")
+
+
+# this is too slow, so probably will not be used on envs like ICDS and prod
+delete_dup_form_attachments = RunUntilZero("""
+BEGIN;
+WITH dups AS (
+    SELECT * FROM (
+        SELECT
+            att.id,
+            att.form_id,
+            (CASE
+                WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+                ELSE COALESCE(
+                    blob_bucket,
+                    'form/' || REPLACE(attachment_id::text, '-', '')
+                ) || '/'
+            END || blob_id) AS key
+        FROM form_processor_xformattachmentsql att
+    ) AS att
+    WHERE EXISTS (
+        SELECT 1 FROM blobs_blobmeta_tbl blob
+        WHERE blob.key = att.key
+        AND blob.parent_id = att.form_id
+        AND blob.name = att.name
+    )
+    LIMIT {chunk_size}
+), deleted AS (
+    DELETE FROM form_processor_xformattachmentsql att
+    USING dups WHERE att.id = dups.id
+), updated AS (
+    -- fix create_on date
+    UPDATE blobs_blobmeta_tbl
+    SET created_on = xform.received_on
+    FROM dups
+    INNER JOIN form_processor_xforminstancesql xform
+        ON xform.form_id = dups.form_id
+    WHERE blobs_blobmeta_tbl.key = dups.key
+    RETURNING blobs_blobmeta_tbl.*
+) SELECT COUNT(*) FROM updated;
 """)
 
 
@@ -335,5 +393,6 @@ TEMPLATES = {
     "blobmeta_forms": blobmeta_forms,
     "fix_bad_blobmeta_copies": fix_bad_blobmeta_copies,
     "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
+    "delete_dup_form_attachments": delete_dup_form_attachments,
     "show_invalid_indexes": show_invalid_indexes,
 }
