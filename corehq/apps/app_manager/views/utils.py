@@ -9,6 +9,9 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from django.conf import settings
+
+from celery.task import task
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain, get_current_app
@@ -363,3 +366,9 @@ def update_linked_app(app, user_id):
 def clear_xmlns_app_id_cache(domain):
     from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
     get_all_xmlns_app_id_pairs_submitted_to_in_domain.clear(domain)
+
+
+@task(queue=settings.CELERY_MAIN_QUEUE)
+def load_appcues_template_app(domain, username, app_slug):
+    from corehq.apps.app_manager.views.apps import load_app_from_slug
+    load_app_from_slug(domain, username, app_slug)
