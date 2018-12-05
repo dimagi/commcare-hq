@@ -42,7 +42,7 @@ from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_C
 from casexml.apps.case.mock import CaseBlock, ChildIndexAttrs
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.models import Module
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -67,19 +67,20 @@ def find_domain_cases(domains, include_cases=True):
         try:
             for app in get_apps_in_domain(domain, include_remote=False):
                 for module in app.get_modules():
-                    case_type = module.case_type
-                    subcase_types = module.get_subcase_types()
-                    if case_type in subcase_types:
-                        if include_cases:
-                            case_types.setdefault(case_type, [])
-                            for form in module.get_forms():
-                                if isinstance(form, Form) and 'subcases' in form.active_actions():
-                                    xform_ids = list(form_accessors.iter_form_ids_by_xmlns(form.xmlns))
-                                    xforms = form_accessors.get_forms(xform_ids)
-                                    cases = form_processor.get_cases_from_forms(case_db, xforms)
-                                    case_types[case_type].extend(cases)
-                        else:
-                            case_types.append(case_type)
+                    if isinstance(module, Module):
+                        case_type = module.case_type
+                        subcase_types = module.get_subcase_types()
+                        if case_type in subcase_types:
+                            if include_cases:
+                                case_types.setdefault(case_type, [])
+                                for form in module.get_forms():
+                                    if 'subcases' in form.active_actions():
+                                        xform_ids = list(form_accessors.iter_form_ids_by_xmlns(form.xmlns))
+                                        xforms = form_accessors.get_forms(xform_ids)
+                                        cases = form_processor.get_cases_from_forms(case_db, xforms)
+                                        case_types[case_type].extend(cases)
+                            else:
+                                case_types.append(case_type)
             if case_types:
                 yield domain, case_types
         except BadValueError:
