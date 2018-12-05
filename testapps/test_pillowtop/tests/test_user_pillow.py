@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 from django.test import TestCase
+
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
@@ -18,7 +18,8 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.user import get_user_pillow, get_unknown_users_pillow
+from corehq.pillows.user import get_user_pillow_old
+from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -64,7 +65,7 @@ class UserPillowTest(UserPillowTestBase):
         producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
-        pillow = get_user_pillow()
+        pillow = get_user_pillow_old(skip_ucr=True)
         pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self.assertEqual(0, UserES().run().total)
@@ -78,7 +79,7 @@ class UserPillowTest(UserPillowTestBase):
         producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
-        pillow = get_user_pillow()
+        pillow = get_user_pillow_old()
         pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self._verify_user_in_es(username)
@@ -107,7 +108,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
         producer.send_change(topic, _form_to_change_meta(form))
 
         # send to elasticsearch
-        pillow = get_unknown_users_pillow()
+        pillow = get_xform_pillow()
         pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
 

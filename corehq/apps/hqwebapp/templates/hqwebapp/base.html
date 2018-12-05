@@ -346,8 +346,8 @@
         {% endblock %}
         {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
         {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
-        {% initial_page_data 'toggles_dict' TOGGLES_DICT %}
-        {% initial_page_data 'previews_dict' PREVIEWS_DICT %}
+        {% initial_page_data 'toggles_dict' toggles_dict %}
+        {% initial_page_data 'previews_dict' previews_dict %}
         <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}

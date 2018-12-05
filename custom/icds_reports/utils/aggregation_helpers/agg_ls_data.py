@@ -62,7 +62,7 @@ class AggLsHelper(BaseICDSAggregationHelper):
             ('block_id', 'location.block_id'),
             ('supervisor_id', 'location.supervisor_id'),
             ('month', "'{}'".format(month_formatter(self.month_start))),
-            ('unique_awc_vists', 'COALESCE(awc_table.unique_awc_vists, 0)'),
+            ('awc_visits', 'COALESCE(awc_table.awc_visits, 0)'),
             ('vhnd_observed', 'COALESCE(vhnd_table.vhnd_observed, 0)'),
             ('beneficiary_vists', 'COALESCE(beneficiary_table.beneficiary_vists, 0)'),
             ('aggregation_level', '4')
@@ -142,7 +142,7 @@ class AggLsHelper(BaseICDSAggregationHelper):
             INSERT INTO "{to_table}" (
             vhnd_observed,
             beneficiary_vists,
-            unique_awc_vists,
+            awc_visits,
             aggregation_level,
             state_id,
             district_id,
@@ -153,7 +153,7 @@ class AggLsHelper(BaseICDSAggregationHelper):
                 SELECT
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
-                sum(unique_awc_vists) as unique_awc_vists,
+                sum(awc_visits) as awc_visits,
                 {agg_level},
                 {locations},
                 month

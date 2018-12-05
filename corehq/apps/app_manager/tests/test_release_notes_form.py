@@ -182,8 +182,8 @@ class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixi
 
     def setUp(self):
         self.set_up_app()
-        self.releases_form.source = self.get_xml('very_simple_form')
-        self.basic_form.source = self.get_xml('very_simple_form')
+        self.releases_form.source = self.get_xml('very_simple_form').decode('utf-8')
+        self.basic_form.source = self.get_xml('very_simple_form').decode('utf-8')
         self.factory.app.save()
 
         super(ReleaseNotesResourceFileTest, self).setUp()
