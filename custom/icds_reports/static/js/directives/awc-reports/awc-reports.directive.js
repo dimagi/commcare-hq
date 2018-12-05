@@ -1743,7 +1743,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.dtColumns = [
             DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNamePregnant).withClass('big-col'),
             DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
-            DTColumnBuilder.newColumn('closed').withTitle('Closed').renderWith(renderClosed).withClass('medium-col'),
+            DTColumnBuilder.newColumn('closed').withTitle('Status').renderWith(renderClosed).withClass('medium-col'),
             DTColumnBuilder.newColumn('opened_on').withTitle('Pregnancy registration').renderWith(renderOpenedOn).withClass('medium-col'),
             DTColumnBuilder.newColumn('edd').withTitle('EDD').renderWith(renderEdd).withClass('medium-col'),
             DTColumnBuilder.newColumn('trimester').withTitle('Trimester').renderWith(renderTrimester).withClass('medium-col'),
@@ -1794,7 +1794,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderClosed(data, type, full) {
-        return full.closed ? 'Closed' : 'Open';
+        return full.closed ? 'Pregnancy terminated' : 'Pregnant';
     }
 
     function renderOpenedOn(data, type, full) {
