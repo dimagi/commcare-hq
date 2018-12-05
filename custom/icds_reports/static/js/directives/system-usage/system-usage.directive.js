@@ -96,18 +96,18 @@ function SystemUsageController($rootScope, $scope, $http, $log, $routeParams, $l
         return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
     };
 
-    vm.setShowSystemUsageMessageCookie = function(value) {
+    vm.setShowSystemUsageMessageCookie = function (value) {
         document.cookie = "showSystemUsageMessage=" + value + ";";
     };
 
-    vm.getShowSystemUsageMessageCookie = function() {
+    vm.getShowSystemUsageMessageCookie = function () {
         if (!document.cookie.includes("showSystemUsageMessage=")) {
             return void(0);
         }
         return document.cookie.split("showSystemUsageMessage=")[1].split(';')[0] !== 'false';
     };
 
-    vm.closeSystemUsageMessage = function() {
+    vm.closeSystemUsageMessage = function () {
         vm.setShowSystemUsageMessageCookie("false");
         vm.showSystemUsageMessage = false;
     };
