@@ -169,6 +169,61 @@ ON public.form_processor_xformattachmentsql (((
 # Move rows incrementally.
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
+# This version should work on icds, but not prod and probably not india.
+simple_move_form_attachments_to_blobmeta = RunUntilZero("""
+WITH deleted AS (
+    DELETE FROM form_processor_xformattachmentsql
+    WHERE id IN (
+        SELECT id FROM form_processor_xformattachmentsql
+        LIMIT {chunk_size}
+    )
+    RETURNING *
+), moved AS (
+    INSERT INTO blobs_blobmeta_tbl (
+        "domain",
+        parent_id,
+        "name",
+        "key",
+        type_code,
+        content_type,
+        properties,
+        created_on,
+        content_length
+    ) SELECT
+        COALESCE(xform."domain", '<unknown>'),
+        att.form_id AS parent_id,
+        att."name",
+        (CASE
+            WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+            ELSE COALESCE(
+                att.blob_bucket,
+                'form/' || REPLACE(att.attachment_id::text, '-', '')
+            ) || '/'
+        END || att.blob_id)::VARCHAR(255) AS "key",
+        CASE
+            WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+            ELSE 3 -- corehq.blobs.CODES.form_attachment
+        END::SMALLINT AS type_code,
+        att.content_type,
+        CASE
+            WHEN att.properties = '{{}}' THEN NULL
+            ELSE att.properties
+        END AS properties,
+        COALESCE(xform.received_on, CURRENT_TIMESTAMP) AS created_on,
+        att.content_length
+    FROM deleted att
+    -- outer join so we move deleted rows with no corresponding xform instance
+    -- should not happen, but just in case (without this they would be lost)
+    LEFT OUTER JOIN form_processor_xforminstancesql xform
+        ON xform.form_id = att.form_id
+    RETURNING *
+) SELECT COUNT(*) FROM moved
+""")
+
+
+# Move rows incrementally.
+# WARNING monitor disk usage when running in large environments.
+# Does not require downtime, but may be slow.
 move_form_attachments_to_blobmeta = RunUntilZero("""
 WITH to_move AS (
     SELECT
@@ -392,6 +447,7 @@ TEMPLATES = {
     "blobmeta_key": blobmeta_key,
     "blobmeta_forms": blobmeta_forms,
     "fix_bad_blobmeta_copies": fix_bad_blobmeta_copies,
+    "simple_move_form_attachments_to_blobmeta": simple_move_form_attachments_to_blobmeta,
     "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
     "delete_dup_form_attachments": delete_dup_form_attachments,
     "show_invalid_indexes": show_invalid_indexes,
