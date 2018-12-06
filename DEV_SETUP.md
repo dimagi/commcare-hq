@@ -14,9 +14,10 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
 ##### macOS Notes
-
+- Ensure that you are on bash shell. 
 - You may need to use `sudo` to for some of the above setup:
 ```
+    $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     $ sudo python get-pip.py
     $ sudo pip install virtualenv
     $ sudo pip install virtualenvwrapper --ignore-installed six
