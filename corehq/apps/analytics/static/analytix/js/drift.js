@@ -65,7 +65,7 @@ hqDefine('analytix/js/drift', [
                     kissmetrics.track.event("Demo Workflow - Loaded Booking Options");
                 });
 
-                _drift.on("sliderMessage:close", function() {
+                _drift.on("sliderMessage:close", function () {
                     kissmetrics.track.event("Demo Workflow - Dismissed Form");
                     _drift.off("sliderMessage:close");
                 });
@@ -81,8 +81,8 @@ hqDefine('analytix/js/drift', [
                 });
 
                 _drift.api.startInteraction({
-                  interactionId: 43079,
-                  goToConversation: true,
+                    interactionId: 43079,
+                    goToConversation: true,
                 });
             });
 

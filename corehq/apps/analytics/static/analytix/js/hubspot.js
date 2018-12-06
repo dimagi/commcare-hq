@@ -106,21 +106,21 @@ hqDefine('analytix/js/hubspot', [
                             // submitted.
                             var lastKnownHeight = 0,
                                 observer = new MutationObserver(function (mutations) {
-                                mutations.forEach(function () {
-                                    var newHeight = $('#SOI_commcaredemoform').height();
-                                    if (newHeight < lastKnownHeight) {
-                                        var coreUrl = document.location.href.split('?')[0];
-                                        kissmetrics.track.event("Demo Workflow - Demo Scheduled");
-                                        $('#cta-form-get-demo').off('hide.bs.modal');
-                                        window.history.pushState({}, document.title, coreUrl);
-                                    }
-                                    lastKnownHeight = newHeight;
+                                    mutations.forEach(function () {
+                                        var newHeight = $('#SOI_commcaredemoform').height();
+                                        if (newHeight < lastKnownHeight) {
+                                            var coreUrl = document.location.href.split('?')[0];
+                                            kissmetrics.track.event("Demo Workflow - Demo Scheduled");
+                                            $('#cta-form-get-demo').off('hide.bs.modal');
+                                            window.history.pushState({}, document.title, coreUrl);
+                                        }
+                                        lastKnownHeight = newHeight;
 
-                                });
+                                    });
                             });
                             // target is the the iframe containing the schedule once form
                             var target = document.getElementById('SOI_commcaredemoform');
-                            observer.observe(target, { attributes : true, attributeFilter : ['style'] });
+                            observer.observe(target, { attributes: true, attributeFilter: ['style'] });
                         }, 3000);
                     });
             },
