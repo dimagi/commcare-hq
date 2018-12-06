@@ -1,10 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import random
+import logging
 from django.core.cache import cache
 
 from memoized import memoized
 from corehq.apps.accounting.models import Subscription
+
+
+logger = logging.getLogger('')
+logger.setLevel('DEBUG')
 
 
 class SessionAbTestConfig(object):
@@ -78,7 +83,7 @@ class SessionAbTest(object):
 
     def _debug_message(self, message):
         if self.config.is_debug:
-            print("SESSION AB TEST DEBUG [{}]: {}".format(self._cookie_id, message))
+            logger.info("SESSION AB TEST [{}]: {}".format(self._cookie_id, message))
 
     def update_response(self, response):
         if self.config.force_refresh:
