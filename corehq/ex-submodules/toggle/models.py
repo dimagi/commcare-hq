@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
+
+from couchdbkit import ResourceNotFound
+
 from dimagi.ext.couchdbkit import (
     Document, DateTimeProperty, ListProperty, StringProperty
 )
@@ -23,11 +26,19 @@ class Toggle(Document):
         if ('_id' not in self._doc):
             self._doc['_id'] = generate_toggle_id(self.slug)
         self.last_modified = datetime.utcnow()
+        print(self._doc['_id'])
         super(Toggle, self).save(**params)
         self.bust_cache()
 
     @classmethod
-    @quickcache(['cls.__name__', 'docid'], timeout=60 * 60 * 24, skip_arg="skip_cache")
+    @quickcache(['cls.__name__', 'docid'], timeout=60 * 60 * 24)
+    def cached_get(cls, docid):
+        try:
+            return cls.get(docid)
+        except ResourceNotFound:
+            return None
+
+    @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True, skip_cache=False):
         if not docid.startswith(TOGGLE_ID_PREFIX):
             docid = generate_toggle_id(docid)
@@ -54,7 +65,7 @@ class Toggle(Document):
         self.bust_cache()
 
     def bust_cache(self):
-        self.get.clear(self.__class__, self.slug)
+        self.cached_get.clear(self.__class__, self.slug)
 
 
 def generate_toggle_id(slug):
