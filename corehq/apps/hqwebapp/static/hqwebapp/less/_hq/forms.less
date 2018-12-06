@@ -498,7 +498,7 @@ table .ko-inline-edit .read-only:hover {
   // disabled if the fieldset is disabled. Due to implementation difficulty, we
   // don't honor that edge case; we style them as disabled anyway.
   &[disabled],
-  &[readonly], {
+  &[readonly] {
     background-color: @input-bg-disabled;
     opacity: 1; // iOS fix for unreadable disabled content; see https://github.com/twbs/bootstrap/issues/11655
   }
