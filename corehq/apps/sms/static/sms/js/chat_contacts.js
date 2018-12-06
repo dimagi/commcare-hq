@@ -1,5 +1,15 @@
-hqDefine('sms/js/chat_contacts', function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+hqDefine('sms/js/chat_contacts', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'datatables.bootstrap',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
     var contactListTable = null;
 
     function FilterViewModel() {

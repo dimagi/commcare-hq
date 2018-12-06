@@ -89,7 +89,7 @@ class Command(BaseCommand):
         check = options['check']
         confirm = input(
             """
-            Please make sure you have read <TODO; add process README>.
+            Please make sure you have read https://dimagi.github.io/commcare-cloud/changelog/0007-reorganize-pillows.html.
 
             Have you stopped all the to be merged pillows and added new pillows
             to this environment's app-processes.yml? y/N?

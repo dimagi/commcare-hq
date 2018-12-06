@@ -147,7 +147,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 'COALESCE(agg_delivery.valid_visits, 0)'
              ')'),
             ('opened_on', 'case_list.opened_on'),
-            ('dob', 'case_list.dob')
+            ('dob', 'case_list.dob'),
+            ('closed', 'case_list.closed')
         )
         return """
         INSERT INTO "{tablename}" (
