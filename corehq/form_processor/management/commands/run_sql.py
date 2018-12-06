@@ -329,11 +329,53 @@ SELECT 'KEPT' AS "status", * FROM blobs_blobmeta_tbl
 WHERE id < 0 AND id NOT IN (SELECT id FROM deleted)
 """
 
+# Expected output is updated rows, including with original form id.
+fix_bad_form_attachment_reparenting = """
+    WITH forms AS (
+        -- CTE reduces number of rows that must be considered in,
+        -- UPDATE WHERE clause below, a major optimization.
+        SELECT *
+        FROM form_processor_xforminstancesql form
+        WHERE form.server_modified_on BETWEEN '2018-11-25' AND '2018-12-02'
+        AND form.deprecated_form_id IS NOT NULL
+    )
+    UPDATE form_processor_xformattachmentsql upatt
+    SET form_id = form.deprecated_form_id
+    FROM forms form
+    WHERE form.form_id = upatt.form_id
+    AND EXISTS (
+        -- form has at least one old-style attachment
+        SELECT 1
+        FROM form_processor_xformattachmentsql att
+        WHERE att.form_id = form.form_id
+    )
+    AND EXISTS (
+        -- form has at least one new-style attachment
+        SELECT 1
+        FROM blobs_blobmeta_tbl blob
+        WHERE blob.parent_id = form.form_id
+    )
+    AND NOT EXISTS (
+        -- deprecated form has no old-style attachments
+        SELECT 1
+        FROM form_processor_xformattachmentsql depr
+        WHERE depr.form_id = form.deprecated_form_id
+    )
+    AND NOT EXISTS (
+        -- deprecated form has no new-style attachments
+        SELECT 1
+        FROM blobs_blobmeta_tbl depr
+        WHERE depr.parent_id = form.deprecated_form_id
+    )
+    RETURNING form.form_id AS old_form_id, upatt.*
+"""
+
 
 TEMPLATES = {
     "blobmeta_key": blobmeta_key,
     "blobmeta_forms": blobmeta_forms,
     "fix_bad_blobmeta_copies": fix_bad_blobmeta_copies,
+    "fix_bad_form_attachment_reparenting": fix_bad_form_attachment_reparenting,
     "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
     "show_invalid_indexes": show_invalid_indexes,
 }

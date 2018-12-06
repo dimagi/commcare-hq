@@ -490,13 +490,13 @@ def patch_xform(request, domain, app_id, form_unique_id):
     current_xml = form.source
     dmp = diff_match_patch()
     xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    xml = save_xform(app, form, xml)
+    xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(xml.encode('utf-8')).hexdigest()
+        'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
