@@ -32,7 +32,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.form = self.app.new_form(0, 'New Form', lang='en')
         self.module.case_type = 'test_case_type'
-        self.form.source = self.get_xml('original_form', override_path=('data',))
+        self.form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
 
     def test_no_actions(self):
         self.assertXmlEqual(self.get_xml('no_actions'), self.form.render_xform())
@@ -79,7 +79,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
 
     def test_update_attachment(self):
         self.form.requires = 'case'
-        self.form.source = self.get_xml('attachment')
+        self.form.source = self.get_xml('attachment').decode('utf-8')
         self.form.actions.update_case = UpdateCaseAction(update={'photo': '/data/thepicture'})
         self.form.actions.update_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('update_attachment_case'), self.form.render_xform())
@@ -136,7 +136,8 @@ class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):
         module_0 = app.add_module(Module.new_module('parent', None))
         module_0.unique_id = 'm0'
         module_0.case_type = 'parent'
-        form = app.new_form(0, "Form", None, attachment=self.get_xml('subcase_repeat_mixed_form_pre'))
+        form = app.new_form(0, "Form", None,
+                            attachment=self.get_xml('subcase_repeat_mixed_form_pre').decode('utf-8'))
 
         module_1 = app.add_module(Module.new_module('subcase', None))
         module_1.unique_id = 'm1'
@@ -225,7 +226,8 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.app.version = 3
         self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
         self.module.case_type = 'test_case_type'
-        self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
+        self.form = self.module.new_form("Untitled Form", "en",
+                                         self.get_xml('original_form', override_path=('data',)).decode('utf-8'))
 
         self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
@@ -314,7 +316,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('update_parent_case'), self.form.render_xform())
 
     def test_update_attachment(self):
-        self.form.source = self.get_xml('attachment')
+        self.form.source = self.get_xml('attachment').decode('utf-8')
         self.form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=self.module.case_type,
             case_tag='load_1',
@@ -338,7 +340,8 @@ class FormPreparationChildModules(SimpleTestCase, TestXmlMixin):
         """
         module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
         module.case_type = 'test_case_type'
-        form = module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
+        form = module.new_form("Untitled Form", "en",
+                               self.get_xml('original_form', override_path=('data',)).decode('utf-8'))
 
         form.actions.load_update_cases.append(LoadUpdateAction(
             case_type=module.case_type,
@@ -368,7 +371,8 @@ class FormPreparationChildModules(SimpleTestCase, TestXmlMixin):
         """
         module = self.app.add_module(Module.new_module('New Module', lang='en'))
         module.case_type = 'guppy'
-        form = module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
+        form = module.new_form("Untitled Form", "en",
+                               self.get_xml('original_form', override_path=('data',)).decode('utf-8'))
 
         form.requires = 'case'
         form.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
@@ -401,7 +405,7 @@ class BaseIndexTest(SimpleTestCase, TestXmlMixin):
         self.parent_module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.parent_form = self.app.new_form(0, 'New Form', lang='en')
         self.parent_module.case_type = 'parent_test_case_type'
-        self.parent_form.source = self.get_xml('original_form', override_path=('data',))
+        self.parent_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
         self.parent_form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
         self.parent_form.actions.open_case.condition.type = 'always'
 
@@ -410,7 +414,7 @@ class BaseIndexTest(SimpleTestCase, TestXmlMixin):
         self.module.forms.append(form)
         self.form = self.module.get_form(-1)
         self.module.case_type = 'test_case_type'
-        self.form.source = self.get_xml('subcase_original')
+        self.form.source = self.get_xml('subcase_original').decode('utf-8')
 
         child_module_1 = self.app.add_module(Module.new_module('New Module', lang='en'))
         child_module_1.case_type ='child1'

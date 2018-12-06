@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans "Form Summary" %}{% endblock %}
+{% block title %}{% trans "Form Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
 
 {% requirejs_main "app_manager/js/summary/form_summary" %}
 
@@ -15,7 +15,10 @@
     <div class="page-header" style="margin-top: 0;">
         <h3>
           <i class="fa fa-file-text-o"></i>
-          {% trans "Form Summary" %}</h1>
+          {% trans "Form Summary" %}  - {% trans "Version" %} {{ app_version }}
+          {% if app_id != latest_app_id %}
+              <small><a href="{% url 'app_form_summary' domain  latest_app_id %}">{% trans "See latest" %}</a> </small>
+          {% endif %}
         </h3>
         <div class="row">
             <div class="col-xs-3">

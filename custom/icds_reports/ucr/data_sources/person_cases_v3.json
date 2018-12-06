@@ -1,6 +1,8 @@
 {
   "domains": [
     "reach-test",
+    "reach-sandbox",
+    "cas-lab",
     "icds-dashboard-qa",
     "icds-cas"
   ],
