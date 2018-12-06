@@ -965,6 +965,9 @@ class XForm(WrappedNode):
 
         if the xform is bad, it will raise an XFormException
 
+        :param langs: A list of language codes - will use the first available language code in
+            determining the question's "label". When include_translations=True, it will attempt to
+            find a translation for each language in langs, though will only add it if non-null.
         :param include_triggers: When set to True will return label questions as well as regular questions
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
