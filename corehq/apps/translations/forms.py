@@ -89,6 +89,7 @@ class PullResourceForm(forms.Form):
 
 
 class AppTranslationsForm(forms.Form):
+    form_action = 'create'
     app_id = forms.ChoiceField(label=ugettext_lazy("App"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy("Version"), required=False,
                                  help_text=ugettext_lazy("Leave blank to use current application state"))
@@ -98,16 +99,9 @@ class AppTranslationsForm(forms.Form):
         ],
         widget=forms.CheckboxSelectMultiple(),
         required=False,
-        initial='yes',
-    )
-    update_resource = forms.MultipleChoiceField(
-        choices=[
-            ('yes', 'Update the resource files'),
-        ],
-        widget=forms.CheckboxSelectMultiple(),
-        required=False,
         initial='no',
     )
+    update_resource = forms.CharField(initial='no', required=False)
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
     source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
@@ -122,16 +116,7 @@ class AppTranslationsForm(forms.Form):
                                     help_text=ugettext_lazy("Leave blank to skip"),
                                     required=False,
                                     )
-    action = forms.ChoiceField(label=ugettext_lazy("Action"),
-                               choices=[('push', ugettext_lazy('Push to transifex')),
-                                        ('pull', ugettext_lazy('Pull from transifex')),
-                                        ('delete', ugettext_lazy('Delete resources on transifex'))]
-                               )
-    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock resources"),
-                                           help_text=ugettext_lazy(
-                                               "Lock translations for resources that are being pulled"),
-                                           required=False,
-                                           initial=False)
+    action = forms.CharField(widget=forms.HiddenInput)
     perform_translated_check = forms.BooleanField(label=ugettext_lazy("Check for completion"),
                                                   help_text=ugettext_lazy(
                                                       "Check for translation completion before pulling files"),
@@ -152,25 +137,26 @@ class AppTranslationsForm(forms.Form):
                 tuple((slug, slug)
                       for slug in settings.TRANSIFEX_DETAILS.get('project').get(domain))
             )
+        form_fields = self.form_fields()
+        form_fields.append(twbscrispy.StrictButton(
+            ugettext_lazy("Submit"),
+            type="submit",
+            css_class="btn btn-primary btn-lg disable-on-submit",
+        ))
         self.helper.layout = crispy.Layout(
+            *form_fields
+        )
+        self.fields['action'].initial = self.form_action
+
+    def form_fields(self):
+        return [
             'app_id',
             'version',
             'use_version_postfix',
-            'update_resource',
             'transifex_project_slug',
             hqcrispy.Field('source_lang', css_class="ko-select2"),
-            hqcrispy.Field('target_lang', css_class="ko-select2"),
             'action',
-            'lock_translations',
-            'perform_translated_check',
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    ugettext_lazy("Submit"),
-                    type="submit",
-                    css_class="btn btn-primary btn-lg disable-on-submit",
-                )
-            )
-        )
+        ]
 
     def clean(self):
         # ensure target lang when translation check requested during pull
@@ -186,3 +172,61 @@ class AppTranslationsForm(forms.Form):
                 (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
             self.add_error('target_lang', ugettext_lazy('Target lang required to confirm translation completion'))
         return cleaned_data
+
+    @classmethod
+    def form_for(cls, form_action):
+        if form_action == 'create':
+            return cls
+        elif form_action == 'update':
+            return UpdateAppTranslationsForm
+        elif form_action == 'push':
+            return PushAppTranslationsForm
+        elif form_action == 'pull':
+            return PullAppTranslationsForm
+        elif form_action == 'delete':
+            return DeleteAppTranslationsForm
+
+
+class UpdateAppTranslationsForm(AppTranslationsForm):
+    form_action = 'update'
+    update_resource = forms.CharField(initial='yes')
+
+
+class PushAppTranslationsForm(AppTranslationsForm):
+    form_action = 'push'
+
+    def form_fields(self):
+        form_fields = super(PushAppTranslationsForm, self).form_fields()
+        form_fields.extend([
+            hqcrispy.Field('target_lang', css_class="ko-select2")
+        ])
+        return form_fields
+
+
+class PullAppTranslationsForm(AppTranslationsForm):
+    form_action = 'pull'
+    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock resources"),
+                                           help_text=ugettext_lazy(
+                                               "Lock translations for resources that are being pulled"),
+                                           required=False,
+                                           initial=False)
+
+    def form_fields(self):
+        form_fields = super(PullAppTranslationsForm, self).form_fields()
+        form_fields.extend([
+            hqcrispy.Field('target_lang', css_class="ko-select2"),
+            'lock_translations',
+            'perform_translated_check'
+        ])
+        return form_fields
+
+
+class DeleteAppTranslationsForm(AppTranslationsForm):
+    form_action = 'delete'
+
+    def form_fields(self):
+        form_fields = super(DeleteAppTranslationsForm, self).form_fields()
+        form_fields.extend([
+            'perform_translated_check'
+        ])
+        return form_fields
