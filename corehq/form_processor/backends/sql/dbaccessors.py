@@ -520,16 +520,16 @@ class FormAccessorSQL(AbstractFormAccessor):
         return deleted_count
 
     @staticmethod
-    def archive_form(form, user_id):
+    def archive_form(form, user_id=None):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=True)
+        FormAccessorSQL._archive_unarchive_form(form, user_id, True)
         form.state = XFormInstanceSQL.ARCHIVED
         publish_form_saved(form)
 
     @staticmethod
-    def unarchive_form(form, user_id):
+    def unarchive_form(form, user_id=None):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=False)
+        FormAccessorSQL._archive_unarchive_form(form, user_id, False)
         form.state = XFormInstanceSQL.NORMAL
         publish_form_saved(form)
 
@@ -593,8 +593,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
-            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
-                           [case_ids, form_id, archive])
+            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
 
     @staticmethod
     @transaction.atomic
