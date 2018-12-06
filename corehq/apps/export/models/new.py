@@ -59,7 +59,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.blobs.mixin import BlobMixin, CODES
+from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format

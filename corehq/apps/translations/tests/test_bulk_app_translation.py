@@ -675,7 +675,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         self.app.langs = ['en', 'afr', 'fra']
         module1 = self.app.add_module(Module.new_module('module', None))
         form1 = self.app.new_form(module1.id, "Untitled Form", None)
-        form1.source = self.get_xml('initial_xform')
+        form1.source = self.get_xml('initial_xform').decode('utf-8')
 
         self.form1_worksheet = self.get_worksheet('module1_form1')
 
@@ -692,4 +692,4 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
-            self.assertEqual(save_xform_patch.call_args[0][2], expected_xform)
+            self.assertEqual(save_xform_patch.call_args[0][2].decode('utf-8'), expected_xform)
