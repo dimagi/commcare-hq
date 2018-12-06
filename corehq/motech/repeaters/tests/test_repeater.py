@@ -700,6 +700,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with patch('corehq.motech.repeaters.models.simple_post') as mock_post:
+            mock_post.return_value.status_code = 200
             repeat_record.fire()
             headers = self.repeater.get_headers(repeat_record)
             mock_post.assert_called_with(
