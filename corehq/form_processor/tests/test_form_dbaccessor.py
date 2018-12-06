@@ -487,7 +487,7 @@ class FormAccessorsTestsSQL(FormAccessorsTests):
         ).save(using=db)
         xform = acc.get_form(xform.form_id)
         self.assertLess(xform.get_attachments()[0].id, 0)
-        self.assertEqual(xform.get_xml(), formxml)
+        self.assertEqual(xform.get_xml().decode('utf-8'), formxml)
 
         updates = {'breakfast': 'fruit'}
         FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
@@ -495,8 +495,8 @@ class FormAccessorsTestsSQL(FormAccessorsTests):
         new_xml = new_form.get_xml()
         old_xml = acc.get_form(new_form.deprecated_form_id).get_xml()
         self.assertNotEqual(old_xml, new_xml)
-        self.assertNotIn("fruit", old_xml)
-        self.assertIn("fruit", new_xml)
+        self.assertNotIn("fruit", old_xml.decode('utf-8'))
+        self.assertIn("fruit", new_xml.decode('utf-8'))
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
