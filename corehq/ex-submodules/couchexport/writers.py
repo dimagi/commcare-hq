@@ -416,7 +416,7 @@ class Excel2007ExportWriter(ExportWriter):
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
-        for hyperlink_column_index in range(len(cells)):
+        for hyperlink_column_index in hyperlink_column_indices:
             cells[hyperlink_column_index].hyperlink = 'http://bbc.co.uk'
             cells[hyperlink_column_index].style = 'Hyperlink'
         sheet.append(cells)
