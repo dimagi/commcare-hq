@@ -256,16 +256,22 @@ class AppTranslations(BaseTranslationsView):
     @property
     @memoized
     def translations_form(self):
-        if self.request.POST:
-            return AppTranslationsForm(self.domain, self.request.POST)
-        else:
-            return AppTranslationsForm(self.domain)
+        form_action = self.request.POST.get('action')
+        form_class = AppTranslationsForm.form_for(form_action)
+        return form_class(self.domain, self.request.POST)
 
     @property
     def page_context(self):
         context = super(AppTranslations, self).page_context
         if context['transifex_details_available']:
-            context['translations_form'] = self.translations_form
+            context['create_form'] = AppTranslationsForm.form_for('create')(self.domain)
+            context['update_form'] = AppTranslationsForm.form_for('update')(self.domain)
+            context['push_form'] = AppTranslationsForm.form_for('push')(self.domain)
+            context['pull_form'] = AppTranslationsForm.form_for('pull')(self.domain)
+            context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
+        form_action = self.request.POST.get('action')
+        if form_action:
+            context[form_action + '_form'] = self.translations_form
         return context
 
     def section_url(self):
