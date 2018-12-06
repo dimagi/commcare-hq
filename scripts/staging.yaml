@@ -49,15 +49,10 @@
 trunk: master
 name: autostaging
 branches:
-  - pv/case-list-deac-label # Preethi Oct 26
-  - test_rjs_multimedia_integration # Rohit Oct 31
-  
-  # These exports branches are all going through QA and are prone to conflicts.
-  # If there's a conflict you can't resolve and I'm not around to fix it,
-  # please let Ben know which one(s) you're removing. Much appreciated.
-  - jls/rebased-ko-export-download+jls/ko-exports-list  # Jenny Nov 2
-  - jls/rebased-ko-export-download  # Jenny Nov 2
-  - jls/ko-exports-create  # Jenny Nov 2
-  - jls/ko-exports-list  # Jenny Nov 2
-  - fr/case-history      # Farid Nov 5
+  - sr-mutliprocessors   # Sravan Nov 13
+#  - np-export-links  # Nick Nov 25
+  - appcues-v3  # Gabriella Nov 27
+  - jls/update-palette  # Jenny 11/30
+  - rn_migrate_multimedia # Rohit 3 Dec
+  - jls/requirejs-export-download-unbranched # Jenny Dec 5
 submodules: {}

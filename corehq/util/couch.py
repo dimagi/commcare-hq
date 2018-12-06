@@ -8,7 +8,6 @@ from copy import deepcopy
 from functools import partial
 from time import sleep
 
-import requests
 from couchdbkit import ResourceNotFound, BulkSaveError, Document
 from django.conf import settings
 from django.http import Http404
@@ -17,7 +16,6 @@ from jsonobject.exceptions import WrappingAttributeError
 from corehq.util.exceptions import DocumentClassNotFound
 from dimagi.utils.chunked import chunked
 from memoized import memoized
-from dimagi.utils.requestskit import get_auth
 
 
 class DocumentNotFound(Exception):
@@ -259,10 +257,10 @@ def send_keys_to_couch(db, keys):
     Copied from dimagi-utils get_docs. Returns a response for every key.
     """
     url = db.uri + '/_all_docs'
-    r = requests.post(url=url,
+    rsession = db._request_session
+    r = rsession.post(url=url,
                       data=json.dumps({'keys': [_f for _f in keys if _f]}),
                       headers={'content-type': 'application/json'},
-                      auth=get_auth(url),
                       params={'include_docs': 'true'})
     return r.json()['rows']
 

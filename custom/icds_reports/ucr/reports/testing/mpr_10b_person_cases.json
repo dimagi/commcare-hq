@@ -11,7 +11,7 @@
     "icds"
   ],
   "report_id": "static-mpr_10b_person_cases-optimized",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR - 10b - Person cases (Static) (Optimized)",
     "description": "",
@@ -81,7 +81,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",

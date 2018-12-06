@@ -1026,7 +1026,9 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
                 'Normal weight for height',
                 data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
-            pse_days_attended=row_data.pse_days_attended
+            pse_days_attended=row_data.pse_days_attended,
+            mother_phone_number=row_data.mother_phone_number,
+            aww_phone_number=row_data.aww_phone_number
         )
 
     for row in data:
@@ -1105,7 +1107,7 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
         'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
-        'num_rations_distributed', 'last_date_thr', 'month'
+        'num_rations_distributed', 'last_date_thr', 'month', 'closed'
     )
     data_count = data.count()
     config = {
@@ -1117,6 +1119,7 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
             case_id=row_data['case_id'],
             person_name=row_data['person_name'],
             age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+            closed=row_data['closed'],
             opened_on=row_data['opened_on'],
             edd=row_data['edd'],
             trimester=row_data['trimester'],

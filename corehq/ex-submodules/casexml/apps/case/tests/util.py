@@ -53,7 +53,7 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     starttime = utcnow_sans_milliseconds()
 
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
-    with open(file_path, "rb") as f:
+    with open(file_path, "r") as f:
         xml_data = f.read()
     updated_xml, uid, case_id = _replace_ids_in_xform_xml(
         xml_data,
@@ -85,8 +85,8 @@ def check_xml_line_by_line(test_case, expected, actual):
     # this is totally wacky, but elementtree strips needless
     # whitespace that mindom will preserve in the original string
     parser = etree.XMLParser(remove_blank_text=True)
-    parsed_expected = etree.tostring(etree.XML(expected, parser), pretty_print=True)
-    parsed_actual = etree.tostring(etree.XML(actual, parser), pretty_print=True)
+    parsed_expected = etree.tostring(etree.XML(expected, parser), pretty_print=True).decode('utf-8')
+    parsed_actual = etree.tostring(etree.XML(actual, parser), pretty_print=True).decode('utf-8')
 
     if parsed_expected == parsed_actual:
         return

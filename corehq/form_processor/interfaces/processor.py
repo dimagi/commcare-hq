@@ -10,9 +10,12 @@ from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.exceptions import XFormQuestionValueNotFound, KafkaPublishingError, PostSaveError
-from corehq.form_processor.models import Attachment
-from couchforms.const import ATTACHMENT_NAME
+from corehq.form_processor.exceptions import (
+    KafkaPublishingError,
+    PostSaveError,
+    XFormLockError,
+    XFormQuestionValueNotFound,
+)
 from memoized import memoized
 from ..utils import should_use_sql_backend
 import six
@@ -322,7 +325,3 @@ class XFormQuestionValueIterator(object):
         return self._last
 
     next = __next__     # For Py2 compatibility
-
-
-class XFormLockError(Exception):
-    """Exception raised when a form lock cannot be acquired"""

@@ -171,7 +171,7 @@ class BaseDocMigrator(BaseDocProcessor):
         pass
 
     def _backup_doc(self, doc):
-        self.backup_file.write('{}\n'.format(json.dumps(doc)))
+        self.backup_file.write('{}\n'.format(json.dumps(doc)).encode('utf-8'))
         self.backup_file.flush()
 
     def process_doc(self, doc):

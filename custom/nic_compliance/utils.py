@@ -35,7 +35,7 @@ def extract_password(obfuscated_password):
         # b64 decode the encoded internal block to get raw internal block
         # raw internal block = (paddling_left + encoded_password + padding_right)
         try:
-            decoded_internal_block = base64.b64decode(encoded_internal_block)
+            decoded_internal_block = base64.b64decode(encoded_internal_block).decode('utf-8')
         except TypeError:
             return ''
         # match regex for padding along with b64 encoded password and find matches
@@ -73,9 +73,9 @@ def verify_password(password, encoded_password):
 
 
 def obfuscated_password_redis_key_for_user(username, obfuscated_password):
-    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + hashlib.md5("%s%s" % (
-        username, obfuscated_password
-    )).hexdigest()
+    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + hashlib.md5(
+        ("%s%s" % (username, obfuscated_password)).encode('utf-8')
+    ).hexdigest()
 
 
 def get_raw_password(obfuscated_password, username=None):

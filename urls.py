@@ -18,7 +18,7 @@ from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirec
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
-from corehq.apps.registration.utils import PRICING_LINK
+from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.hqwebapp.urls import legacy_prelogin
 
 try:
@@ -43,8 +43,6 @@ domain_specific = [
     url(r'^logo.png', logo, name='logo'),
     url(r'^apps/', include('corehq.apps.app_manager.urls')),
     url(r'^api/', include('corehq.apps.api.urls')),
-    # the receiver needs to accept posts at an endpoint that might
-    # not have a slash, so don't include it at the root urlconf
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
     url(r'^enterprise/', include(accounting_domain_specific)),

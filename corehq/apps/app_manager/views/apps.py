@@ -76,6 +76,7 @@ from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
+    track_domain_request
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
@@ -420,6 +421,12 @@ def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
     clear_app_cache(request, domain)
 
+    build = load_app_from_slug(domain, request.user.username, slug)
+    cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
+    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
+
+
+def load_app_from_slug(domain, username, slug):
     # Import app itself
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
@@ -433,7 +440,6 @@ def app_from_template(request, domain, slug):
             path_url_map = json.load(f)
             http = urllib3.PoolManager()
             for path, url in path_url_map.items():
-                media_class = None
                 try:
                     req = http.request('GET', url)
                 except Exception:
@@ -446,14 +452,15 @@ def app_from_template(request, domain, slug):
                         multimedia = media_class.get_by_data(data)
                         multimedia.attach_data(data,
                                                original_filename=os.path.basename(path),
-                                               username=request.user.username)
+                                               username=username)
                         multimedia.add_domain(domain, owner=True)
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_async_build(app, request.user.username, release=True, comment=comment)
-    cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
-    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
+    build = make_async_build(app, username, allow_prune=False, comment=comment)
+    build.is_released = True
+    build.save(increment_version=False)
+    return build
 
 
 @require_can_edit_apps
@@ -688,6 +695,7 @@ def get_app_ui_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
@@ -702,7 +710,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
     attributes = [
         'all',
-        'recipients', 'name', 'use_commcare_sense',
+        'recipients', 'name',
         'text_input', 'platform', 'build_spec',
         'use_custom_suite', 'custom_suite',
         'admin_password',

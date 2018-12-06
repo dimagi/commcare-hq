@@ -57,18 +57,13 @@ class TestFunctionalToilet(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 8,
-                    "original_name": ["st1"],
-                    "all": 17,
-                    "fillKey": "25%-75%"
-                },
-                "st2": {
-                    "in_month": 7,
-                    "original_name": ["st2"],
-                    "all": 13,
-                    "fillKey": "25%-75%"
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'}, 
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'}, 
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'}, 
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'}, 
+                'st1': {'in_month': 8, 'original_name': ['st1'], 'all': 17, 'fillKey': '25%-75%'}, 
+                'st2': {'in_month': 7, 'original_name': ['st2'], 'all': 13, 'fillKey': '25%-75%'}, 
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
 
@@ -96,7 +91,7 @@ class TestFunctionalToilet(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 50.452488687782804)
+        self.assertEquals(data['rightLegend']['average'], 50.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_functional_toilet_data_map(
@@ -193,7 +188,7 @@ class TestFunctionalToilet(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 47.22222222222222)
+        self.assertEquals(data['rightLegend']['average'], 47.05882352941177)
 
     def test_chart_data(self):
         data = get_functional_toilet_data_chart(
@@ -266,14 +261,11 @@ class TestFunctionalToilet(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 53.84615384615385
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 47.05882352941177
-                }
+                {'loc_name': 'st2', 'percent': 53.84615384615385},
+                {'loc_name': 'st1', 'percent': 47.05882352941177},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0}
             ]
         )
 
@@ -289,14 +281,11 @@ class TestFunctionalToilet(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 53.84615384615385
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 47.05882352941177
-                }
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -323,14 +312,13 @@ class TestFunctionalToilet(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 53.84615384615385
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 47.05882352941177
-                }
+                {"loc_name": "st2", "percent": 53.84615384615385},
+                {"loc_name": "st1", "percent": 47.05882352941177},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 

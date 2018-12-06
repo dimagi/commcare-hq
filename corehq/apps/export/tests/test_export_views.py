@@ -295,14 +295,12 @@ class ExportViewTest(ViewTestCase):
         }
 
         resp = self.client.post(
-            reverse(DailySavedExportListView.urlname, args=[self.domain.name]),
-            json.dumps({
-                "export": {"id": export._id},
-                "form_data": filter_form_data
-            }),
-            content_type="application/json",
-            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
-            HTTP_DJNG_REMOTE_METHOD='commit_filters',
+            reverse('commit_filters', args=[self.domain.name]),
+            {
+                "export_id": export._id,
+                "model_type": "case",
+                "form_data": json.dumps(filter_form_data),
+            },
         )
         self.assertEqual(resp.status_code, 200)
         response_content = json.loads(resp.content)

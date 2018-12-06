@@ -1,16 +1,16 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 
-from lxml import etree
+import commcare_translations
 from django.test import TestCase
+from lxml import etree
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import SuiteMixin
-from corehq.apps.app_manager.app_translations import escape_output_value
-
-import commcare_translations
+from corehq.apps.translations.app_translations import escape_output_value
 
 
 class AppManagerTranslationsTest(TestCase, SuiteMixin):
@@ -32,7 +32,7 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
 
         ]
         for input, expected_output in test_cases:
-            self.assertEqual(expected_output, etree.tostring(escape_output_value(input)))
+            self.assertEqual(expected_output, etree.tostring(escape_output_value(input)).decode('utf-8'))
 
     def test_language_names(self):
         app_json = self.get_json('app')

@@ -97,7 +97,7 @@ class TestDashboard1(YeksiTestCase):
                     {'style': 'color: red', 'html': '87.50%'},
                     {'style': 'color: red', 'html': '87.50%'}
                 ]
-            ], key=lambda x: x[0])
+            ], key=lambda x: x[0]['html'])
         )
         self.assertEqual(
             total_row,

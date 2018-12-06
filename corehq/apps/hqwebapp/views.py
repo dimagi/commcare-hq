@@ -59,9 +59,9 @@ from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
-from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt, \
+    track_domain_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
@@ -452,6 +452,7 @@ def logout(req):
 
 
 @login_and_domain_required
+@track_domain_request(calculated_prop='cp_n_downloads_custom_exports')
 def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
     next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
     return soil_views.retrieve_download(req, download_id, template,
@@ -1196,16 +1197,6 @@ class DataTablesAJAXPaginationMixin(object):
             'iTotalRecords': total_records,
             'iTotalDisplayRecords': filtered_records or total_records,
         }))
-
-
-@always_allow_browser_caching
-@login_and_domain_required
-@location_safe
-def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
-    return render(request, template, {
-        'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
-        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
-    })
 
 
 # Use instead of djangular's base JSONResponseMixin

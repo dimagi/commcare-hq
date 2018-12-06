@@ -579,6 +579,23 @@ class MigrationTestCase(BaseMigrationTestCase):
         with self.assertRaises(CommandError):
             call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
+
+        xml = """<?xml version="1.0" ?>
+        <n0:registration xmlns:n0="http://openrosa.org/user/registration">
+            <username>W4</username>
+            <password>2</password>
+            <uuid>P8DU7OLHVLZXU21JR10H3W8J2</uuid>
+            <date>2013-11-19</date>
+            <registering_phone_id>8H1N48EFPF6PA4UOO8YGZ2KFZ</registering_phone_id>
+            <user_data>
+                <data key="user_type">standard</data>
+             </user_data>
+        </n0:registration>
+        """
+        submit_form_locally(xml, self.domain_name)
+        couch_form_ids = self._get_form_ids()
+        self.assertEqual(1, len(couch_form_ids))
+
         call_command('migrate_domain_from_couch_to_sql', self.domain_name, blow_away=True, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
 

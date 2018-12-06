@@ -3027,7 +3027,8 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
         }
 
     def get_data(self, invoice):
-        return self.fetch_attachment(self.get_filename(invoice), True).read()
+        with self.fetch_attachment(self.get_filename(invoice), stream=True) as fh:
+            return fh.read()
 
 
 class LineItemManager(models.Manager):
@@ -3103,7 +3104,7 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
-class CreditLine(ValidateModelMixin, models.Model):
+class CreditLine(models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
     a specific subscription, or specific rates in that subscription.
@@ -3169,8 +3170,9 @@ class CreditLine(ValidateModelMixin, models.Model):
             web_user=web_user,
         )
         credit_adjustment.save()
-        self.balance += amount
+        self.balance = F('balance') + amount
         self.save()
+        self.refresh_from_db()
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
@@ -3254,15 +3256,14 @@ class CreditLine(ValidateModelMixin, models.Model):
 
     @classmethod
     def get_credits_for_subscriptions(cls, subscriptions, feature_type=None, is_product=False):
-        credit_list = []
+        credit_list = cls.objects.none()
         for subscription in subscriptions.all():
-            credit_list.append(cls.get_credits_by_subscription_and_features(subscription,
-                                                                            feature_type=feature_type,
-                                                                            is_product=is_product))
-        credits = credit_list.pop()
-        for credit_line in credit_list:
-            credits.union(credit_line)
-        return credits
+            credit_list = credit_list.union(cls.get_credits_by_subscription_and_features(
+                subscription,
+                feature_type=feature_type,
+                is_product=is_product
+            ))
+        return credit_list
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, is_product=False):
@@ -3362,7 +3363,6 @@ class CreditLine(ValidateModelMixin, models.Model):
             if adjustment_amount > Decimal('0.0000'):
                 credit_line.adjust_credit_balance(-adjustment_amount, **kwargs)
                 balance -= adjustment_amount
-        return balance
 
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):

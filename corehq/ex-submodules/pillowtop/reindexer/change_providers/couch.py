@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from copy import copy
 from corehq.util.couch_helpers import paginate_view, MultiKeyViewArgsProvider
-from corehq.util.pagination import paginate_function
+from corehq.util.pagination import paginate_function, ResumableFunctionIterator
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
@@ -45,7 +45,7 @@ class CouchDomainDocTypeChangeProvider(ChangeProvider):
         self.couch_db = couch_db
         self.event_handler = event_handler
 
-    def iter_all_changes(self, start_from=None):
+    def iter_all_changes(self, start_from=None, resumable_key=None):
         if not self.domains:
             return
 
@@ -59,7 +59,12 @@ class CouchDomainDocTypeChangeProvider(ChangeProvider):
 
         args_provider = MultiKeyViewArgsProvider(keys, include_docs=True, chunk_size=self.chunk_size)
 
-        for row in paginate_function(data_function, args_provider, event_handler=self.event_handler):
+        for row in self._get_paginated_iterable(
+                data_function,
+                args_provider,
+                self.event_handler,
+                self._format_resumable_key(resumable_key)
+        ):
             yield Change(
                 id=row['id'],
                 sequence_id=None,
@@ -67,3 +72,19 @@ class CouchDomainDocTypeChangeProvider(ChangeProvider):
                 deleted=False,
                 document_store=None
             )
+
+    @staticmethod
+    def _get_paginated_iterable(data_function, args_provider, event_handler=None, resumable_key=None):
+        if resumable_key:
+            return ResumableFunctionIterator(
+                resumable_key,
+                data_function,
+                args_provider,
+                lambda x: x.id,
+                event_handler=event_handler
+            )
+        else:
+            return paginate_function(data_function, args_provider, event_handler=event_handler)
+
+    def _format_resumable_key(self, resumable_key):
+        return "resumable_couch_changes.%s" % resumable_key if resumable_key else None

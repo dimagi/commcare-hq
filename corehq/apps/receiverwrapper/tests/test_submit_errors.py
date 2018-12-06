@@ -83,14 +83,14 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         _, res_openrosa3 = self._submit('simple_form.xml', open_rosa_header=OPENROSA_VERSION_3)
         self.assertEqual(201, res_openrosa3.status_code)
 
-        self.assertIn("Form is a duplicate", res.content)
+        self.assertIn("Form is a duplicate", res.content.decode('utf-8'))
 
         # make sure we logged it
         [log] = FormAccessors(self.domain.name).get_forms_by_type('XFormDuplicate', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
-        with open(file, encoding='utf-8') as f:
+        with open(file, 'rb') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     def _test_submission_error_post_save(self, openrosa_version):
@@ -130,7 +130,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
                     "xml_submission_file": f
             })
             self.assertEqual(500, res.status_code)
-            self.assertIn('Invalid XML', res.content)
+            self.assertIn('Invalid XML', res.content.decode('utf-8'))
 
         # make sure we logged it
         [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
@@ -144,14 +144,14 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         file, res = self._submit('missing_xmlns.xml')
         self.assertEqual(500, res.status_code)
         message = "Form is missing a required field: XMLNS"
-        self.assertIn(message, res.content)
+        self.assertIn(message, res.content.decode('utf-8'))
 
         # make sure we logged it
         [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn(message, log.problem)
-        with open(file, encoding='utf-8') as f:
+        with open(file, 'rb') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     @flag_enabled('DATA_MIGRATION')
@@ -159,7 +159,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         file, res = self._submit('simple_form.xml')
         self.assertEqual(503, res.status_code)
         message = "Service Temporarily Unavailable"
-        self.assertIn(message, res.content)
+        self.assertIn(message, res.content.decode('utf-8'))
 
     def test_error_saving_normal_form(self):
         sql_patch = patch(
@@ -187,10 +187,10 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         if openrosa_version == OPENROSA_VERSION_3:
             self.assertEqual(422, res.status_code)
-            self.assertIn(ResponseNature.PROCESSING_FAILURE, res.content)
+            self.assertIn(ResponseNature.PROCESSING_FAILURE, res.content.decode('utf-8'))
         else:
             self.assertEqual(201, res.status_code)
-            self.assertIn(ResponseNature.SUBMIT_ERROR, res.content)
+            self.assertIn(ResponseNature.SUBMIT_ERROR, res.content.decode('utf-8'))
 
         form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
         self.assertTrue(form.is_error)
@@ -203,6 +203,54 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self._test_case_processing_error(OPENROSA_VERSION_3)
         # make sure that a re-submission has the same response
         self._test_case_processing_error(OPENROSA_VERSION_3)
+
+    def test_no_form_lock_on_submit_device_log(self):
+        from corehq.form_processor.submission_post import FormProcessingResult as FPR
+        from corehq.form_processor.parsers.form import FormProcessingResult
+
+        class FakeResponse(dict):
+            content = "device-log-response"
+            status_code = 200
+            streaming = False
+            cookies = []
+            _closable_objects = []
+
+            def has_header(self, name):
+                return False
+
+            def set_cookie(self, *args, **kw):
+                pass
+
+            def close(self):
+                pass
+
+        def process_device_log(self_, xform):
+            result = FormProcessingResult(xform)
+            # verify form is not locked: acquire lock without XFormLockError
+            with result.get_locked_forms() as forms:
+                self.assertEqual(forms, [xform])
+            calls.append(1)
+            return FPR(FakeResponse(), xform, [], [], 'device-log')
+
+        calls = []
+        with patch(
+            'corehq.form_processor.submission_post.SubmissionPost.process_device_log',
+            new_callable=lambda: process_device_log,
+        ):
+            _, res = self._submit('device_log.xml')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(calls, [1])
+
+    def test_xform_locked(self):
+        from corehq.form_processor.interfaces.processor import FormProcessorInterface
+        form_id = 'ad38211be256653bceac8e2156475664'
+        proc = FormProcessorInterface(self.domain)
+        lock = proc.acquire_lock_for_xform(form_id)
+        try:
+            _, response = self._submit('simple_form.xml')
+        finally:
+            lock.release()
+        self.assertEqual(response.status_code, 423)
 
 
 @use_sql_backend
