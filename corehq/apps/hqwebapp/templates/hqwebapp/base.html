@@ -208,28 +208,20 @@
 
                         <div class="nav-settings-bar pull-right">
                           <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
 
-                            <span class="optimize-abtest">
-
+                              {% if demo_workflow_ab.version == 'hubspot' %}
                               <a href="#cta-form-get-demo"
-                                 target="_blank"
                                  data-toggle="modal"
-                                 id="cta-form-get-demo-button"
-                                 class="optimize-abtest-control btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
+                                 id="cta-form-get-demo-button-header"
+                                 class="btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+                              {% endif %}
 
-                              {# hubspot #}
-                              <a href="#cta-form-get-demo-new"
-                                 data-toggle="modal"
-                                 id="cta-form-get-demo-button-new"
-                                 class="optimize-abtest-variant-a btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
-
-                              {# drift #}
-                              <a href="#demo-request"
-                                 id="cta-form-get-demo-button-drift"
-                                 class="optimize-abtest-variant-b btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
-
-                            </span>
+                              {% if demo_workflow_ab.version == 'drift' %}
+                              <button id="cta-form-get-demo-button-header"
+                                      class="btn btn-purple navbar-btn shedule-demo-drift-cta">
+                                {% trans 'Schedule a Demo' %}</button>
+                              {% endif %}
 
                           {% endif %}
                         </div>

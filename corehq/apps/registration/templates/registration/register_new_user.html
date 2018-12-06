@@ -74,6 +74,9 @@
 {% endblock %}
 
 {% block content %}
+  {% if demo_workflow_ab %}
+    {% analytics_ab_test 'kissmetrics.demo_workflow_ab' demo_workflow_ab %}
+  {% endif %}
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
@@ -109,32 +112,26 @@
           </div>
         </form>
 
-        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
             <div class="form-bubble form-bubble-purple text-center">
                 {% blocktrans %}
                     Want to learn more before signing up?
                 {% endblocktrans %}
-                  &nbsp;&nbsp;&nbsp;
-                  <span class="optimize-abtest">
-                    <a href="#cta-form-get-demo"
-                       id="test-cta-form-get-demo-button"
-                       data-toggle="modal"
-                       class="optimize-abtest-control btn btn-purple">
-                        {% trans "Get a Demo" %}
-                    </a>
 
-                    {# hubspot #}
-                    <a href="#cta-form-get-demo-new"
-                       data-toggle="modal"
-                       id="cta-form-get-demo-button-new-body"
-                       class="optimize-abtest-variant-a btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+                &nbsp;&nbsp;&nbsp;
+                {% if demo_workflow_ab.version == 'hubspot' %}
+                <a href="#cta-form-get-demo"
+                   data-toggle="modal"
+                   id="cta-form-get-demo-button-body"
+                   class="btn btn-purple ">{% trans 'Schedule a Demo' %}</a>
+                {% endif %}
 
-                    {# drift #}
-                    <a href="#demo-request"
-                       id="cta-form-get-demo-button-drift-body"
-                       class="optimize-abtest-variant-b btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+                {% if demo_workflow_ab.version == 'drift' %}
+                <button id="cta-form-get-demo-button-drift-body"
+                        class="btn btn-purple shedule-demo-drift-cta">
+                  {% trans 'Schedule a Demo' %}</button>
+                {% endif %}
 
-                  </span>
             </div>
         {% endif %}
       </div>

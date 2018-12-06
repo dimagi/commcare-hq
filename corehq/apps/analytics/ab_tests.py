@@ -127,3 +127,13 @@ APPCUES_V3_APP = SessionAbTestConfig(
     'appcues_template_app_december2018',
     (APPCUES_TEMPLATE_APP_VARIANT_A, APPCUES_TEMPLATE_APP_VARIANT_B)
 )
+
+
+DEMO_WORKFLOW_HUBSPOT = 'hubspot'
+DEMO_WORKFLOW_DRIFT = 'drift'
+
+DEMO_WORKFLOW = SessionAbTestConfig(
+    'Demo Workflow A/B',
+    'demo_workflow_dec2018',
+    (DEMO_WORKFLOW_HUBSPOT, DEMO_WORKFLOW_DRIFT)
+)

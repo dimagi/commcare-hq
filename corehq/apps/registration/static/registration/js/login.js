@@ -6,4 +6,16 @@ $(function () {
     new Blazy({
         container: 'body',
     });
+
+    hqImport("analytix/js/hubspot").then(function () {  // because hubspot loads after kissmetrics
+        var kissmetrics = hqImport('analytix/js/kissmetrix');
+
+        $('#cta-form-get-demo-button-body').click(function () {
+            kissmetrics.track.event("Demo Workflow - Body Button Clicked");
+        });
+
+        $('#cta-form-get-demo-button-header').click(function () {
+            kissmetrics.track.event("Demo Workflow - Header Button Clicked");
+        });
+    });
 });
