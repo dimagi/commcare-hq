@@ -39,7 +39,7 @@ class Toggle(Document):
             return None
 
     @classmethod
-    def get(cls, docid, rev=None, db=None, dynamic_properties=True, skip_cache=False):
+    def get(cls, docid):
         if not docid.startswith(TOGGLE_ID_PREFIX):
             docid = generate_toggle_id(docid)
         return super(Toggle, cls).get(docid, rev=None, db=None, dynamic_properties=True)
