@@ -126,7 +126,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            ab_test = ab_tests.ABTest(ab_tests.APPCUES_V3_APP, self.request)
+            ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
             appcues_ab_test = ab_test.context['version']
             self._create_new_account(reg_form, additional_hubspot_data={
                 "appcues_test": appcues_ab_test,
