@@ -6,11 +6,13 @@ from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.sql_db.operations import RawSQLMigration
+from corehq.sql_db.migrations import partitioned
 
 
 migrator = RawSQLMigration(('corehq', 'blobs', 'sql_templates'), {})
 
 
+@partitioned
 class Migration(migrations.Migration):
 
     dependencies = [
