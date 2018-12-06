@@ -54,6 +54,11 @@ requirejs.config({
             exports: 'HQMediaUploaderTypes',
         },
     },
+    packages: [{
+        name: 'moment',
+        location: 'moment',
+        main: 'moment',
+    }],
     map: {
         "datatables.fixedColumns": {
             "datatables.net": "datatables",
