@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
-import time
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
@@ -239,32 +238,9 @@ def delete_data_source_task(domain, config_id):
     delete_data_source_shared(domain, config_id)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
-def reprocess_archive_stubs():
-    # Check for archive stubs
-    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-    from couchforms.models import UnfinishedArchiveStub
-    stubs = UnfinishedArchiveStub.objects.filter()
-    datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
-    start = time.time()
-    cutoff = start + timedelta(minutes=4).total_seconds()
-    for stub in stubs:
-        # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
-        if time.time() - start > cutoff:
-            return
-        xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
-        # If the history wasn't updated the first time around, run the whole thing again.
-        if not stub.history_updated:
-            if stub.archive:
-                xform.archive(user_id=stub.user_id)
-            else:
-                xform.unarchive(user_id=stub.user_id)
-        # If the history was updated the first time around, just send the update to kafka
-        else:
-            xform.publish_archive_action_to_kafka(user_id=stub.user_id, archive=stub.archive)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(serializer='pickle',
+    run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
+)
 def run_queue_async_indicators_task():
     if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
@@ -460,7 +436,10 @@ def _build_async_indicators(indicator_doc_ids):
         )
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(serializer='pickle',
+    run_every=crontab(minute="*/5"),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
 def async_indicators_metrics():
     now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()

@@ -349,50 +349,24 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def archive(self, user_id=None):
         if self.is_archived:
             return
-        # If this archive was initiated by a user, delete all other stubs for this action so that this action
-        # isn't overridden
-        from couchforms.models import UnfinishedArchiveStub
-        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
-            self.doc_type = "XFormArchived"
-
-            self.history.append(XFormOperation(
-                user=user_id,
-                operation='archive',
-            ))
-            self.save()
-            archive_stub.archive_history_updated()
-            xform_archived.send(sender="couchforms", xform=self)
+        self.doc_type = "XFormArchived"
+        self.history.append(XFormOperation(
+            user=user_id,
+            operation='archive',
+        ))
+        self.save()
+        xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None):
         if not self.is_archived:
             return
-        # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
-        # isn't overridden
-        from couchforms.models import UnfinishedArchiveStub
-        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
-            self.doc_type = "XFormInstance"
-            self.history.append(XFormOperation(
-                user=user_id,
-                operation='unarchive',
-            ))
-            XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
-            archive_stub.archive_history_updated()
-            xform_unarchived.send(sender="couchforms", xform=self)
-
-    def publish_archive_action_to_kafka(self, user_id, archive):
-        from couchforms.models import UnfinishedArchiveStub
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        # Delete the original stub
-        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            if archive:
-                xform_archived.send(sender="couchforms", xform=self)
-            else:
-                xform_unarchived.send(sender="couchforms", xform=self)
+        self.doc_type = "XFormInstance"
+        self.history.append(XFormOperation(
+            user=user_id,
+            operation='unarchive',
+        ))
+        XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
+        xform_unarchived.send(sender="couchforms", xform=self)
 
 
 class XFormError(XFormInstance):
@@ -538,29 +512,6 @@ class UnfinishedSubmissionStub(models.Model):
             "xform_id={s.xform_id},"
             "timestamp={s.timestamp},"
             "saved={s.saved},"
-            "domain={s.domain})"
-        ).format(s=self)
-
-    class Meta(object):
-        app_label = 'couchforms'
-
-
-class UnfinishedArchiveStub(models.Model):
-    xform_id = models.CharField(max_length=200)
-    user_id = models.CharField(max_length=200, default=None, blank=True, null=True)
-    timestamp = models.DateTimeField(db_index=True)
-    archive = models.BooleanField(default=False)
-    history_updated = models.BooleanField(default=False)
-    domain = models.CharField(max_length=256)
-
-    def __unicode__(self):
-        return six.text_type(
-            "UnfinishedArchiveStub("
-            "xform_id={s.xform_id},"
-            "user_id={s.user_id},"
-            "timestamp={s.timestamp},"
-            "archive={s.archive},"
-            "history_updated={s.history_updated},"
             "domain={s.domain})"
         ).format(s=self)
 
