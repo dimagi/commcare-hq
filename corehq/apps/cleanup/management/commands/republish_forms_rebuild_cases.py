@@ -10,6 +10,7 @@ from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.change_publishers import publish_form_saved
 from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import FormReprocessRebuild
 from corehq.util.log import with_progress_bar
@@ -58,6 +59,10 @@ def rebuild_case_changes(form, rebuild_reason=None):
     for case_id in case_ids:
         detail = FormReprocessRebuild(form_id=form.form_id)
         FormProcessorInterface(domain).hard_rebuild_case(case_id, detail)
+        if LedgerAccessors(domain).get_ledger_values_for_case(case_id):
+            with open('case_ids_with_ledgers.csv', 'a+') as f:
+                print("{}, {}".format(domain, case_id), file=f)
+
     return len(case_ids)
 
 
