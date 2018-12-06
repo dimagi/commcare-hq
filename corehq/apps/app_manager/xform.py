@@ -18,6 +18,7 @@ from corehq.apps.app_manager.const import (
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
+from corehq.toggles import DONT_INDEX_SAME_CASETYPE
 from corehq.util.view_utils import get_request
 from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
@@ -1621,7 +1622,8 @@ class XForm(WrappedNode):
                 if subcase.close_condition.is_active():
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
-                if case_block is not None:
+                index_same_casetype = not DONT_INDEX_SAME_CASETYPE.enabled(form.get_app().domain)
+                if case_block is not None and (index_same_casetype or subcase.case_type != form.get_case_type()):
                     reference_id = subcase.reference_id or 'parent'
 
                     subcase_block.add_index_ref(
