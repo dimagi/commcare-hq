@@ -12,7 +12,7 @@ import csv342 as csv
 
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import XFormOperationSQL, XFormAttachmentSQL
+from corehq.form_processor.models import XFormOperationSQL, BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.util.log import with_progress_bar
@@ -111,7 +111,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def _add_attachment_to_sql_form(form_id, attachment):
-        new_att = XFormAttachmentSQL(
+        new_att = BlobMeta(
             form_id=form_id,
             name=attachment.name,
             attachment_id=uuid.uuid4(),
