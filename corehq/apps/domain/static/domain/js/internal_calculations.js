@@ -14,7 +14,7 @@ hqDefine("domain/js/internal_calculations", [
         $.get(initialPageData.reverse('calculated_properties'), {calc_tag: calc_tag}, function (data) {
             if (!data.error) {
                 $('#calc-' + calc_tag).html(data.value);
-                $calc_btn.addClass('btn-success');
+                $calc_btn.addClass('btn-default');
                 $calc_error.html("");
             }
             else {

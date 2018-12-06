@@ -255,7 +255,7 @@
                         {% if app.is_approved %}
                             <a class="btn btn-danger" href="{% url "approve_appstore_app" app.get_id %}?approve=false">{% trans "Unapprove" %}</a>
                         {% else %}
-                            <a class="btn btn-success" href="{% url "approve_appstore_app" app.get_id %}?approve=true">{% trans "Approve" %}</a>
+                            <a class="btn btn-primary" href="{% url "approve_appstore_app" app.get_id %}?approve=true">{% trans "Approve" %}</a>
                         {% endif %}
                     {% endif %}
                 </div>
