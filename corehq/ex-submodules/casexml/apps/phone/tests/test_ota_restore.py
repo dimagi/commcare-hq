@@ -150,7 +150,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertNotIsInstance(restore_config_other_device.get_payload(), CachedResponse)
 
     def testUserRestoreWithCase(self):
-        xml_data = self.get_xml('create_short')
+        xml_data = self.get_xml('create_short').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
 
         # implicit length assertion
@@ -227,7 +227,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         def get_all_syncslogs():
             return [properly_wrap_sync_log(log.doc) for log in SyncLogSQL.objects.all()]
 
-        xml_data = self.get_xml('create_short')
+        xml_data = self.get_xml('create_short').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
 
@@ -292,7 +292,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
                                sync_restore_payload)
 
     def testRestoreAttributes(self):
-        xml_data = self.get_xml('attributes')
+        xml_data = self.get_xml('attributes').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         newcase = submit_form_locally(xml_data, domain=self.project.name).case
 

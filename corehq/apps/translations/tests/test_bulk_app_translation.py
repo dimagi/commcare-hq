@@ -692,4 +692,4 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
-            self.assertEqual(save_xform_patch.call_args[0][2], expected_xform)
+            self.assertEqual(save_xform_patch.call_args[0][2].decode('utf-8'), expected_xform)

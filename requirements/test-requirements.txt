@@ -9,7 +9,6 @@ git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
-appdirs==1.4.3
 argparse==1.4.0           # via unittest2
 asn1crypto==0.24.0
 attrs==18.1.0
@@ -18,7 +17,6 @@ beautifulsoup4==4.6.3
 billiard==3.3.0.23
 boto3==1.4.4
 botocore==1.5.95
-cached-property==1.5.1
 celery==3.1.25
 certifi==2018.11.29
 cffi==1.11.5
@@ -87,7 +85,6 @@ httpagentparser==1.7.8
 idna==2.7
 ipaddress==1.0.22
 iso8601==0.1.12
-isodate==0.6.0
 jdcal==1.4
 jinja2==2.10
 jmespath==0.9.3
@@ -144,7 +141,6 @@ redis-py-cluster==1.3.5
 redis==2.10.6
 reportlab==3.0
 requests-mock==1.5.2
-requests-toolbelt==0.8.0
 requests[security]==2.20.1
 rjsmin==1.0.12
 s3transfer==0.1.13
@@ -176,4 +172,3 @@ wrapt==1.10.11
 xhtml2pdf==0.2.3
 xlrd==1.0.0
 xlwt==1.3.0
-zeep==1.6.0
