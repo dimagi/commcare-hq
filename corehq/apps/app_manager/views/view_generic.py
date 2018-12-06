@@ -131,15 +131,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             "view_app", args=[domain, app.copy_of]
         ))
 
-    # grandfather in people who set commcare sense earlier
-    if app and 'use_commcare_sense' in app:
-        if app['use_commcare_sense']:
-            if 'features' not in app.profile:
-                app.profile['features'] = {}
-            app.profile['features']['sense'] = 'true'
-        del app['use_commcare_sense']
-        app.save()
-
     context.update({
         'module': module,
         'form': form,

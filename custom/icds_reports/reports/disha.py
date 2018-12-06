@@ -1,14 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
+from django.http import JsonResponse
 from io import open
-from wsgiref.util import FileWrapper
 
 import json
 import logging
+import re
 from corehq.apps.reports.util import batch_qs
+from corehq.util.download import get_download_response
 from corehq.util.files import TransientTempfile
+from couchexport.export import Format
 
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.views import DishaIndicatorView
@@ -29,7 +31,9 @@ class DishaDump(object):
         self.month = month
 
     def _blob_id(self):
-        return 'disha_dump-{}-{}.json'.format(self.state_name.encode('ascii', 'ignore').replace(" ", ""), self.month.strftime('%Y-%m-%d'))
+        # strip all non-alphanumeric chars
+        safe_state_name = re.sub('[^0-9a-zA-Z]+', '', self.state_name)
+        return 'disha_dump-{}-{}.json'.format(safe_state_name, self.month.strftime('%Y-%m-%d'))
 
     @memoized
     def _get_file_ref(self):
@@ -41,19 +45,12 @@ class DishaDump(object):
         else:
             return False
 
-    def get_export_as_http_response(self, stream=False):
+    def get_export_as_http_response(self, request):
         file_ref = self._get_file_ref()
         if file_ref:
             _file = file_ref.get_file_from_blobdb()
-            if stream:
-                response = StreamingHttpResponse(
-                    FileWrapper(_file),
-                    content_type='application/json'
-                )
-                response['Content-Length'] = file_ref.get_file_size()
-                return response
-            else:
-                return HttpResponse(_file.read(), content_type='application/json')
+            content_format = Format('', 'json', '', True)
+            return get_download_response(_file, file_ref.get_file_size(), content_format, self._blob_id(), request)
         else:
             return JsonResponse({"message": "Data is not updated for this month"})
 
@@ -81,7 +78,7 @@ class DishaDump(object):
         #   }
         columns = self._get_columns()
         indicators = self._get_rows()
-        metadata_line = u'{{'\
+        metadata_line = '{{'\
             '"month":"{month}", '\
             '"state_name": "{state_name}", '\
             '"column_names": {columns}, '\
@@ -99,7 +96,8 @@ class DishaDump(object):
             written_count += len(chunk)
             if written_count != total:
                 file_obj.write(",")
-            logger.info("Processed {count}/{total} batches".format(count=count, total=num_batches))
+            logger.info("Processed {count}/{batches} batches. Total records:{total}".format(
+                count=count, total=total, batches=num_batches))
         file_obj.write("]}")
 
     def build_export_json(self):

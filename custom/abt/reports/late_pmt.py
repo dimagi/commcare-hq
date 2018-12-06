@@ -15,7 +15,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.sms.models import SMS, INCOMING, MessagingSubEvent, MessagingEvent
+from corehq.apps.sms.models import SMS, INCOMING, MessagingSubEvent, MessagingEvent, OUTGOING
 from corehq.apps.userreports.util import get_table_name
 from custom.abt.reports.filters import UsernameFilter, CountryFilter, LevelOneFilter, LevelTwoFilter, \
     LevelThreeFilter, LevelFourFilter, SubmissionStatusFilter
@@ -36,7 +36,6 @@ class LatePMTUsers(SqlData):
     def filters(self):
         filters = []
         filter_fields = [
-            'user_id',
             'country',
             'level_1',
             'level_2',
@@ -46,6 +45,8 @@ class LatePMTUsers(SqlData):
         for filter_field in filter_fields:
             if filter_field in self.config and self.config[filter_field]:
                 filters.append(EQ(filter_field, filter_field))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(EQ('doc_id', 'user_id'))
         return filters
 
     @property
@@ -116,7 +117,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def enddate(self):
-        return self.request.datespan.enddate
+        return self.request.datespan.end_of_end_day
 
     @property
     def headers(self):
@@ -131,6 +132,17 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             DataTablesColumn(_("Level 4")),
             DataTablesColumn(_("Submission Status")),
         )
+
+    @cached_property
+    def welcome_smses(self):
+        data = SMS.objects.filter(
+            domain=self.domain,
+            couch_recipient_doc_type='CommCareUser',
+            couch_recipient__in=self.get_user_ids,
+            direction=OUTGOING,
+            text__startswith="Welcome to"
+        ).values('date', 'couch_recipient')
+        return {user['couch_recipient']: user['date'].date() for user in data}
 
     @cached_property
     def get_users_in_group_a(self):
@@ -187,7 +199,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 group
             ]
 
-        def is_not_in_group(key, group):
+        def not_in_group(key, group):
             return key not in group
 
         users = self.get_users
@@ -198,21 +210,21 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             byweekday=(MO, TU, WE, TH, FR, SA)
         )
         rows = []
-        users_in_group_a = []
-        users_in_group_b = []
-        submission_status = self.report_config['submission_status']
+        sub_status = self.report_config['submission_status']
         if users:
-            if submission_status in ['group_a', '']:
-                users_in_group_a = self.get_users_in_group_a
-            if submission_status in ['group_b', '']:
-                users_in_group_b = self.get_users_in_group_b
+            group_a = self.get_users_in_group_a
+            group_b = self.get_users_in_group_b
 
             for date in dates:
                 for user in users:
                     key = (date.date(), user['user_id'])
-                    if is_not_in_group(key, users_in_group_a) and submission_status != 'group_b':
+                    welcome_sms_date = self.welcome_smses.get(user['user_id'])
+                    if not welcome_sms_date or date.date() <= welcome_sms_date:
+                        continue
+
+                    if not_in_group(key, group_a) and sub_status != 'group_b':
                         group = 'No PMT data Submitted'
-                    elif is_not_in_group(key, users_in_group_b) and submission_status != 'group_a':
+                    elif not_in_group(key, group_b) and not not_in_group(key, group_a) and sub_status != 'group_a':
                         group = 'Incorrect PMT data Submitted'
                     else:
                         continue

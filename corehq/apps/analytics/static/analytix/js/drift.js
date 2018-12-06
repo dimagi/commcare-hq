@@ -50,6 +50,11 @@ hqDefine('analytix/js/drift', [
                 hubspot.identify({email: e.data.email});
                 hubspot.trackEvent('Identified via Drift');
             });
+
+            $('a[href="#demo-request"]').click(function () {
+                _drift.api.startInteraction({ interactionId: 43079 });
+            });
+
         });
     });
 

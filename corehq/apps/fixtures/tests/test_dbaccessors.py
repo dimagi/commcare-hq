@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
-import json
-
 from django.test import TestCase
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_types_in_domain, \
     get_number_of_fixture_data_types_in_domain
@@ -38,6 +35,6 @@ class DBAccessorTest(TestCase):
         )
 
     def test_get_fixture_data_types_in_domain(self):
-        expected = set(json.dumps(data_type.to_json()) for data_type in self.data_types if data_type.domain == self.domain)
-        actual = set(json.dumps(o.to_json()) for o in get_fixture_data_types_in_domain(self.domain))
-        self.assertEqual(actual, expected)
+        expected = [data_type.to_json() for data_type in self.data_types if data_type.domain == self.domain]
+        actual = [o.to_json() for o in get_fixture_data_types_in_domain(self.domain)]
+        self.assertItemsEqual(actual, expected)

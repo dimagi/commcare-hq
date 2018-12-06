@@ -48,7 +48,7 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.post import simple_post, perform_SOAP_operation
+from dimagi.utils.post import simple_post
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
@@ -461,13 +461,6 @@ class UpdateCaseRepeater(CaseRepeater):
 
     def allowed_to_forward(self, payload):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
-
-
-class SOAPRepeaterMixin(Repeater):
-    operation = StringProperty()
-
-    def send_request(self, repeat_record, payload):
-        return perform_SOAP_operation(payload, self.url, self.operation, verify=self.verify)
 
 
 class ShortFormRepeater(Repeater):

@@ -195,6 +195,8 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
+_soft_assert = soft_assert(to="{}@{}.com".format('npellegrino', 'dimagi'), exponential_backoff=True)
+
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
@@ -711,13 +713,17 @@ class FormSource(object):
         except AttributeError:
             pass
         else:
-            app.lazy_put_attachment(old_contents, filename)
+            app.lazy_put_attachment(old_contents.encode('utf-8'), filename)
             del form['contents']
 
         if not app.has_attachment(filename):
             source = ''
         else:
             source = app.lazy_fetch_attachment(filename)
+            if isinstance(source, bytes):
+                source = source.decode('utf-8')
+            else:
+                _soft_assert(False, type(source))
 
         return source
 
@@ -725,6 +731,10 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
+        if isinstance(value, six.text_type):
+            value = value.encode('utf-8')
+        else:
+            _soft_assert(False, type(value))
         app.lazy_put_attachment(value, filename)
         form.clear_validation_cache()
         try:
@@ -1209,7 +1219,8 @@ class FormBase(DocumentSchema):
         return xform.render()
 
     @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
+                timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
         try:
@@ -1260,8 +1271,7 @@ class FormBase(DocumentSchema):
         source = XForm(self.source)
         if source.exists():
             source.rename_language(old_code, new_code)
-            source = source.render()
-            self.source = source
+            self.source = source.render().decode('utf-8')
 
     def default_name(self):
         app = self.get_app()
@@ -4548,6 +4558,8 @@ class LazyBlobDoc(BlobMixin):
         if attachments:
             for name, attachment in attachments.items():
                 if isinstance(attachment, six.string_types):
+                    if isinstance(attachment, six.text_type):
+                        attachment = attachment.encode('utf-8')
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"
@@ -4569,6 +4581,9 @@ class LazyBlobDoc(BlobMixin):
         except KeyError:
             content = cache.get(self.__attachment_cache_key(name))
             if content is not None:
+                if isinstance(content, six.text_type):
+                    _soft_assert(False, 'cached attachment has type unicode')
+                    content = content.encode('utf-8')
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 
@@ -4602,7 +4617,7 @@ class LazyBlobDoc(BlobMixin):
 
             if content is None:
                 try:
-                    content = self.fetch_attachment(name)
+                    content = self.fetch_attachment(name, return_bytes=True)
                 except ResourceNotFound as e:
                     # django cache will pickle this exception for you
                     # but e.response isn't picklable
@@ -5609,7 +5624,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def wrap(cls, data):
-        data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
@@ -5697,7 +5711,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         previous_form = previous_version.get_form(form.unique_id)
                         # take the previous version's compiled form as-is
                         # (generation code may have changed since last build)
-                        previous_source = previous_version.fetch_attachment(filename)
+                        previous_source = previous_version.fetch_attachment(filename, return_bytes=True)
                     except (ResourceNotFound, FormNotFoundException):
                         form.version = None
                     else:
@@ -5947,7 +5961,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @time_method()
     def _make_language_files(self, prefix, build_profile_id):
         return {
-            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id)
+            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id).encode('utf-8')
             for lang in ['default'] + self.get_build_langs(build_profile_id)
         }
 
@@ -6203,7 +6217,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         to_app = to_module.get_app()
-        save_xform(to_app, copy_form, form.source)
+        save_xform(to_app, copy_form, form.source.encode('utf-8'))
 
         return copy_form
 
@@ -6587,7 +6601,7 @@ class RemoteApp(ApplicationBase):
 
             def fetch(location):
                 filepath = self.strip_location(location)
-                return self.fetch_attachment('files/%s' % filepath)
+                return self.fetch_attachment('files/%s' % filepath, return_bytes=True)
 
             profile_xml = _parse_xml(fetch('profile.xml'))
             suite_location = profile_xml.find(self.SUITE_XPATH).text
@@ -6595,7 +6609,7 @@ class RemoteApp(ApplicationBase):
 
             for tag, location in self.get_locations(suite_xml):
                 if tag == 'xform':
-                    xform = XForm(fetch(location))
+                    xform = XForm(fetch(location).decode('utf-8'))
                     xmlns = xform.data_node.tag_xmlns
                     questions = xform.get_questions(langs_for_build)
                     xmlns_map[xmlns] = questions

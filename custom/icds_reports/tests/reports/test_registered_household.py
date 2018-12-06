@@ -24,7 +24,7 @@ class TestRegisteredHousehold(TestCase):
             {
                 "rightLegend": {
                     "info": "Total number of households registered: 6,964",
-                    "average": 3482.0,
+                    "average": 994.8571428571429,
                     "average_format": "number"
                 },
                 "fills": {
@@ -32,16 +32,13 @@ class TestRegisteredHousehold(TestCase):
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
-                    "st1": {
-                        "household": 3633,
-                        'original_name': ["st1"],
-                        "fillKey": "Household"
-                    },
-                    "st2": {
-                        "household": 3331,
-                        'original_name': ["st2"],
-                        "fillKey": "Household"
-                    }
+                    'st4': {'household': 0, 'original_name': ['st4'], 'fillKey': 'Household'}, 
+                    'st5': {'household': 0, 'original_name': ['st5'], 'fillKey': 'Household'}, 
+                    'st6': {'household': 0, 'original_name': ['st6'], 'fillKey': 'Household'}, 
+                    'st7': {'household': 0, 'original_name': ['st7'], 'fillKey': 'Household'}, 
+                    'st1': {'household': 3633, 'original_name': ['st1'], 'fillKey': 'Household'}, 
+                    'st2': {'household': 3331, 'original_name': ['st2'], 'fillKey': 'Household'}, 
+                    'st3': {'household': 0, 'original_name': ['st3'], 'fillKey': 'Household'}
                 },
                 "slug": "registered_household",
                 "label": ""
@@ -96,24 +93,18 @@ class TestRegisteredHousehold(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "value": 3633
-                    },
-                    {
-                        "loc_name": "st2",
-                        "value": 3331
-                    }
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "value": 3633
-                    },
-                    {
-                        "loc_name": "st2",
-                        "value": 3331
-                    }
+                    {'loc_name': 'st1', 'value': 3633.0},
+                    {'loc_name': 'st2', 'value': 3331.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -146,14 +137,13 @@ class TestRegisteredHousehold(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "value": 3633
-                    },
-                    {
-                        "loc_name": "st2",
-                        "value": 3331
-                    }
+                    {'loc_name': 'st1', 'value': 3633.0},
+                    {'loc_name': 'st2', 'value': 3331.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ]
             }
         )

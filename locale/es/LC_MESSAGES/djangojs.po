@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-11-20 21:26+0000\n"
+"POT-Creation-Date: 2018-12-04 21:19+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2018\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -907,16 +907,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
-#, fuzzy
-#| msgid ""
-#| "{nodeID} is not a legal Question ID. It must start with a letter and "
-#| "contain only letters, numbers, and '-' or '_' characters."
 msgid ""
 "{nodeID} is not a valid Question ID. It must start with a letter and contain "
 "only letters, numbers, and '-' or '_' characters."
 msgstr ""
-"{nodeID} no es una Pregunta de ID legal. Debe comenzar con una letra y "
-"contener solo letras, números, y  caracteres '-' o '_' ."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid ""
@@ -1347,7 +1341,6 @@ msgstr "Agregue Expresión"
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:558
 #: corehq/apps/export/static/export/js/models.js:264
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:260
-#: corehq/apps/users/static/users/js/web_users.js:94
 msgid "Save"
 msgstr "Guardar"
 
@@ -2769,26 +2762,17 @@ msgid "<%= count %> form submissions available."
 msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js:95
-#, fuzzy
-#| msgid "Insert Questions"
 msgid "User Registration"
-msgstr "Inserte Preguntas"
+msgstr "Registro de Usuario"
 
 #: corehq/apps/export/static/export/js/create_export.js:266
-#, fuzzy
-#| msgid "Please check your Internet connection!"
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
-msgstr "¡Por favor revise su conexión de Internet!"
+msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js:301
-#, fuzzy
-#| msgid ""
-#| "There was an issue communicating with the server. Please try back later."
 msgid "There is an issue communicating with the server at this time."
-msgstr ""
-"Ocurrió un problema al comunicarnos con el servidor. Por favor inténtelo más "
-"tarde."
+msgstr "Hay un problema de comunicación con el servidor en este momento."
 
 #: corehq/apps/export/static/export/js/download_data_files.js:26
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
@@ -2802,20 +2786,38 @@ msgstr "El archivo de datos URL fue copiado al portapapeles."
 msgid "Data file deleted."
 msgstr "Archivo de datos borrado."
 
+#: corehq/apps/export/static/export/js/download_export.js:173
+#, fuzzy
+#| msgid "Oops, there was a problem loading this section. Please try again."
+msgid "Sorry, there was a problem reaching the server. Please try again."
+msgstr ""
+"Vaya, ocurrió un problema al cargar esta sección. Por favor intente otra "
+"vez. "
+
+#: corehq/apps/export/static/export/js/download_export.js:302
+#, fuzzy
+#| msgid "We could not turn off the new feature. Please try again later."
+msgid "Server maintenance in progress. Please try again later."
+msgstr "No pudimos apagar la nueva función. Por favor intente más tarde."
+
+#: corehq/apps/export/static/export/js/download_export.js:312
+#, fuzzy
+#| msgid "There was an error saving."
+msgid "There was an error downloading your export."
+msgstr "Ocurrió un error al guardar."
+
 #: corehq/apps/export/static/export/js/export_list.js:37
 msgid "Download Requested"
 msgstr "Descarga Solicitada"
 
 #: corehq/apps/export/static/export/js/export_list.js:207
 #: corehq/apps/export/static/export/js/export_list.js:213
-#, fuzzy
-#| msgid "Unsupported paste format"
 msgid "Invalid date format"
-msgstr "Formato de pegado sin soporte"
+msgstr "Formato de fecha inválido"
 
 #: corehq/apps/export/static/export/js/export_list.js:320
 msgid "Problem saving dashboard feed filters"
-msgstr ""
+msgstr "Ocurrió un problema al guardar filtros de alimentación del tablero"
 
 #: corehq/apps/export/static/export/js/models.js:27
 #: corehq/apps/export/static/export/js/models.js:148
@@ -2959,7 +2961,6 @@ msgid "Saving..."
 msgstr "Guardando..."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:262
-#: corehq/apps/users/static/users/js/web_users.js:103
 msgid "Saved"
 msgstr "Guardado"
 
@@ -3605,19 +3606,19 @@ msgstr "Apellido"
 msgid "Status"
 msgstr "Estatus"
 
-#: corehq/apps/users/static/users/js/roles.js:117
+#: corehq/apps/users/static/users/js/roles.js:135
 msgid "New Role"
 msgstr "Nuevo Rol"
 
-#: corehq/apps/users/static/users/js/roles.js:117
+#: corehq/apps/users/static/users/js/roles.js:135
 msgid "Edit Role: "
 msgstr "Editar Rol:"
 
-#: corehq/apps/users/static/users/js/roles.js:128
+#: corehq/apps/users/static/users/js/roles.js:146
 msgid "Delete Role: "
 msgstr "Eliminar Rol:"
 
-#: corehq/apps/users/static/users/js/roles.js:129
+#: corehq/apps/users/static/users/js/roles.js:147
 msgid "Are you sure you want to delete this role?"
 msgstr "¿Está seguro que desea eliminar este rol?"
 
@@ -3627,23 +3628,19 @@ msgid ""
 "problem persists."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:97
-msgid "Saving ..."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/web_users.js:162
+#: corehq/apps/users/static/users/js/web_users.js:141
 msgid "Delete request"
 msgstr "Eliminar solicitud"
 
-#: corehq/apps/users/static/users/js/web_users.js:163
+#: corehq/apps/users/static/users/js/web_users.js:142
 msgid "Are you sure you want to delete this request?"
 msgstr "¿Está seguro que desea eliminar esta solicitud?"
 
-#: corehq/apps/users/static/users/js/web_users.js:170
+#: corehq/apps/users/static/users/js/web_users.js:149
 msgid "Delete invitation"
 msgstr "Eliminar invitación"
 
-#: corehq/apps/users/static/users/js/web_users.js:171
+#: corehq/apps/users/static/users/js/web_users.js:150
 msgid "Are you sure you want to delete this invitation?"
 msgstr "¿Está seguro que desea eliminar esta invitación?"
 

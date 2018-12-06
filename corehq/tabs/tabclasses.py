@@ -1,13 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from six.moves.urllib.parse import urlencode
 
-from django.urls import reverse
 from django.conf import settings
 from django.http import Http404
+from django.urls import reverse
 from django.utils.html import escape, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django_prbac.utils import has_privilege
+from memoized import memoized
+from six.moves import map
+from six.moves.urllib.parse import urlencode
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
@@ -34,6 +38,7 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
@@ -53,17 +58,12 @@ from corehq.messaging.scheduling.views import (
 )
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
-from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
+from corehq.motech.views import MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from memoized import memoized
-from django_prbac.utils import has_privilege
-from six.moves import map
-
-from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 
 
 class ProjectReportsTab(UITab):
@@ -131,7 +131,6 @@ class ProjectReportsTab(UITab):
         """
         Return the url for the start of the report builder, or the paywall.
         """
-        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
         from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
         return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
@@ -1186,7 +1185,7 @@ class ProjectUsersTab(UITab):
         items = []
 
         if self.couch_user.can_edit_commcare_users():
-            def commcare_username(request=None, couch_user=None, **context):
+            def _get_commcare_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                         couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
@@ -1209,7 +1208,7 @@ class ProjectUsersTab(UITab):
                     'description': _(
                         "Create and manage users for CommCare and CloudCare."),
                     'subpages': [
-                        {'title': commcare_username,
+                        {'title': _get_commcare_username,
                          'urlname': EditCommCareUserView.urlname},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
@@ -1246,7 +1245,7 @@ class ProjectUsersTab(UITab):
             items.append((_('Application Users'), mobile_users_menu))
 
         if self.couch_user.can_edit_web_users():
-            def web_username(request=None, couch_user=None, **context):
+            def _get_web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                         not couch_user.is_commcare_user()):
                     username = couch_user.human_friendly_name
@@ -1271,7 +1270,7 @@ class ProjectUsersTab(UITab):
                             'urlname': 'invite_web_user'
                         },
                         {
-                            'title': web_username,
+                            'title': _get_web_username,
                             'urlname': EditWebUserView.urlname
                         }
                     ],
@@ -1320,7 +1319,7 @@ class ProjectUsersTab(UITab):
                 })
 
             from corehq.apps.locations.permissions import user_can_edit_location_types
-            if user_can_edit_location_types(self.couch_user, self.project):
+            if user_can_edit_location_types(self.couch_user, self.domain):
                 from corehq.apps.locations.views import LocationTypesView
                 locations_config.append({
                     'title': _(LocationTypesView.page_title),
@@ -1585,7 +1584,7 @@ def _get_administration_section(domain):
 
 def _get_integration_section(domain):
 
-    def forward_name(repeater_type=None, **context):
+    def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
             return _("Forward Forms")
         elif repeater_type == 'ShortFormRepeater':
@@ -1599,11 +1598,11 @@ def _get_integration_section(domain):
             'url': reverse('domain_forwarding', args=[domain]),
             'subpages': [
                 {
-                    'title': forward_name,
+                    'title': _get_forward_name,
                     'urlname': 'add_repeater',
                 },
                 {
-                    'title': forward_name,
+                    'title': _get_forward_name,
                     'urlname': 'add_form_repeater',
                 },
             ]

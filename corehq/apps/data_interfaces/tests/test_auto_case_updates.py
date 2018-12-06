@@ -23,21 +23,22 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
-from datetime import datetime, date
+from datetime import datetime
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import (run_with_all_backends, FormProcessorTestUtils,
-    set_case_property_directly)
+from corehq.form_processor.tests.utils import (
+    run_with_all_backends,
+    set_case_property_directly
+)
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.signals import sql_case_post_save
 
-from corehq.util.test_utils import set_parent_case as set_actual_parent_case, update_case
+from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 from django.test import TestCase, override_settings
 from mock import patch
 
 from corehq.util.context_managers import drop_connected_signals
-from toggle.shortcuts import update_toggle_cache
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.apps import hqcase
 
@@ -888,10 +889,10 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
 class CaseRuleOnSaveTests(BaseCaseRuleTest):
 
     def enable_updates_on_save(self):
-        update_toggle_cache(RUN_AUTO_CASE_UPDATES_ON_SAVE.slug, self.domain, True, NAMESPACE_DOMAIN)
+        RUN_AUTO_CASE_UPDATES_ON_SAVE.set(self.domain, True, NAMESPACE_DOMAIN)
 
     def disable_updates_on_save(self):
-        update_toggle_cache(RUN_AUTO_CASE_UPDATES_ON_SAVE.slug, self.domain, False, NAMESPACE_DOMAIN)
+        RUN_AUTO_CASE_UPDATES_ON_SAVE.set(self.domain, False, NAMESPACE_DOMAIN)
 
     def tearDown(self):
         super(CaseRuleOnSaveTests, self).tearDown()

@@ -9,13 +9,13 @@
     {% registerurl "delete_request" domain %}
     {% registerurl "post_user_role" domain %}
     {% registerurl "delete_user_role" domain %}
-    {% registerurl "location_restriction_for_users" domain %}
     {% registerurl "paginate_web_users" domain %}
     {% registerurl "reinvite_web_user" domain %}
     {% initial_page_data "user_roles" user_roles %}
     {% initial_page_data "default_role" default_role %}
     {% initial_page_data "report_list" report_list %}
     {% initial_page_data "web_apps_list" web_apps_list %}
+    {% initial_page_data "apps_list" apps_list %}
     {% initial_page_data "can_edit_roles" can_edit_roles %}
     {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
     {% initial_page_data "landing_page_choices" landing_page_choices %}
@@ -194,22 +194,6 @@
                                 maxPagesShown: 10,
                                 totalItems: totalItems"></pagination>
 
-            {% if uses_locations and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox"
-                               id="restrict_users"
-                               name="restrict_users"
-                               value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}/>
-                        {% trans "Restrict Web User access based on location" %}
-                    </label>
-                    <button type="button"
-                            class="btn btn-sm btn-default disabled"
-                            id="save_restrict_option">
-                        {% trans "Saved" %}
-                    </button>
-                </div>
-            {% endif %}
         </div><!-- end .panel-body -->
     </div><!-- end .panel -->
 
@@ -646,6 +630,44 @@
                                                     </div>
                                                     <div class="panel-body"
                                                          data-bind="foreach: webAppsPermissions.specific, slideVisible: !webAppsPermissions.all()">
+                                                        <div class="checkbox">
+                                                            <label>
+                                                                <input type="checkbox" data-bind="checked: value"/>
+                                                                <span data-bind="html: name"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if request|toggle_enabled:"RESTRICT_APP_RELEASE" %}
+                                        <div class="form-group">
+                                            <label class="col-sm-4 control-label">
+                                                {% trans "Manage Releases" %}
+                                            </label>
+                                            <div class="col-sm-8 controls">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox"
+                                                               data-bind="checked: manageAppReleasePermissions.all" />
+                                                        {% trans "Allow role to manage all Apps." %}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group"
+                                             data-bind="visible: !manageAppReleasePermissions.all()">
+                                            <label class="col-sm-4 control-label">
+                                                {% trans "Manage Releases Permissions" %}
+                                            </label>
+                                            <div class="col-sm-8 controls">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        {% trans "Select which Apps this role can manage:" %}
+                                                    </div>
+                                                    <div class="panel-body"
+                                                         data-bind="foreach: manageAppReleasePermissions.specific, slideVisible: !manageAppReleasePermissions.all()">
                                                         <div class="checkbox">
                                                             <label>
                                                                 <input type="checkbox" data-bind="checked: value"/>

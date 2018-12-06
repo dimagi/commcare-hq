@@ -170,11 +170,10 @@ class EditFormTest(TestCase, TestFileMixin):
             with self.assertRaises(HTTPError):
                 submit_form_locally(edit_xml, self.domain)
 
-        # it didn't go through, so make sure there are no edits still
-        self.assertIsNone(getattr(xform, 'deprecated_form_id', None))
-
         xform = self.formdb.get_form(self.ID)
         self.assertIsNotNone(xform)
+        # it didn't go through, so make sure there are no edits still
+        self.assertIsNone(getattr(xform, 'deprecated_form_id', None))
         self.assertEqual(UnfinishedSubmissionStub.objects.filter(xform_id=self.ID).count(), 0)
 
     def test_case_management(self):

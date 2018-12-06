@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from ddtrace import tracer
 
+from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
@@ -65,7 +66,8 @@ def process_xform_xml(domain, instance, attachments=None, auth_context=None):
     Create a new xform to ready to be saved to a database in a thread-safe manner
 
     attachments is a dictionary of the request.FILES that are not the xform;
-    key is parameter name, value is django MemoryFile object stream
+    key is parameter name, value is
+    `django.core.files.uploadedfile.UploadedFile` object.
 
     :returns: FormProcessingResult containing the new XFormInstance(SQL)
     or raises an exception if anything goes wrong.
@@ -203,11 +205,15 @@ def _handle_duplicate(new_doc):
             #    but a different ID and a doc_type of XFormDeprecated
             #  - Save the new instance to the previous document to preserve the ID
             existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
+            device_id = new_doc.metadata.deviceID
+            # we expect edits from formplayer so exclude those
             _soft_assert(
-                False, "Form edit", {
+                device_id == FORMPLAYER_DEVICE_ID, "Form edit", {
                     'form_id': new_doc.form_id,
                     'deprecated_form': existing_doc.form_id,
                     'domain': new_doc.domain,
+                    'device_id': device_id,
+                    'cc_version': new_doc.metadata.appVersion,
                 }
             )
             return new_doc, existing_doc
