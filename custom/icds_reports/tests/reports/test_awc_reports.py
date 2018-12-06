@@ -2501,6 +2501,7 @@ class TestAWCReport(TestCase):
                 data['data'][0],
                 {
                     'age': 23,
+                    'closed': None,
                     'anemic': 'Unknown',
                     'beneficiary': 'Yes',
                     'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
