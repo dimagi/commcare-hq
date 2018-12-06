@@ -39,26 +39,12 @@ hqDefine('analytix/js/hubspot', [
 
                 $.when.apply($, _.map(formScriptUrls, function (url) { return $.getScript(url); }))
                     .done(function () {
-                        _utils.loadOldDemoForm(apiId);
                         _utils.loadDemoForm(apiId);
                     });
             });
         }
 
     });
-
-    /**
-    * Loads the Legacy Hubspot Demo Form (to be phased out after A/B test
-    * @param {string} apiId
-    */
-    _utils.loadOldDemoForm = function (apiId) {
-        hbspt.forms.create({
-            portalId: apiId,
-            formId: "0f5de42e-b562-4ece-85e5-cfd2db97eba8",
-            target: "#get-demo-cta-form-body",
-            css: "",
-        });
-    };
 
     /**
      * Loads the Hubspot Request Demo form and loads a Schedule Once Calendar
