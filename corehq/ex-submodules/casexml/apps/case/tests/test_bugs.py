@@ -321,7 +321,7 @@ class TestCaseHierarchy(TestCase):
         case_block = CaseBlock(
             case_id=case_id1,
             create=True,
-        ).as_string()
+        ).as_string().decode('utf-8')
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
         with self.assertRaises(CaseNotFound):
             CaseAccessors().get_case(case_id2)
@@ -331,7 +331,7 @@ class TestCaseHierarchy(TestCase):
             case_id=case_id2,
             create=True,
             case_type='t1',
-        ).as_string()
+        ).as_string().decode('utf-8')
         submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
         case2 = CaseAccessors().get_case(case_id2)
         self.assertEqual([form_id], case2.xform_ids)
