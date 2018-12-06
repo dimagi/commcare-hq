@@ -152,8 +152,6 @@ hqDefine('export/js/models', function () {
             $btn.removeSpinnerFromButton();
             $btn.removeClass('disabled');
             $btn.attr('disabled', false);
-            $btn.removeClass('btn-primary');
-            $btn.addClass('btn-success');
             self.schemaProgressText(gettext('Refresh page'));
         };
 

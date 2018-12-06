@@ -262,7 +262,7 @@ hqDefine('hqwebapp/js/main', [
         SAVED: django.gettext("Saved"),
         RETRY: django.gettext("Try Again"),
         ERROR_SAVING: django.gettext("There was an error saving"),
-    }, 'btn btn-success');
+    }, 'btn btn-primary');
 
     var DeleteButton = makeSaveButton({
         SAVE: django.gettext("Delete"),
