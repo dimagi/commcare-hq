@@ -6217,7 +6217,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         to_app = to_module.get_app()
-        save_xform(to_app, copy_form, form.source)
+        save_xform(to_app, copy_form, form.source.encode('utf-8'))
 
         return copy_form
 
