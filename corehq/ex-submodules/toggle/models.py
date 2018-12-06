@@ -26,7 +26,6 @@ class Toggle(Document):
         if ('_id' not in self._doc):
             self._doc['_id'] = generate_toggle_id(self.slug)
         self.last_modified = datetime.utcnow()
-        print(self._doc['_id'])
         super(Toggle, self).save(**params)
         self.bust_cache()
 
