@@ -279,7 +279,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     def get_xml(self):
         try:
-            return self.fetch_attachment(ATTACHMENT_NAME)
+            return self.fetch_attachment(ATTACHMENT_NAME, return_bytes=True)
         except ResourceNotFound:
             logging.warn("no xml found for %s, trying old attachment scheme." % self.get_id)
             try:
@@ -344,7 +344,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             if name != ATTACHMENT_NAME}
 
     def xml_md5(self):
-        return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
+        return hashlib.md5(self.get_xml()).hexdigest()
 
     def archive(self, user_id=None):
         if self.is_archived:
@@ -466,7 +466,7 @@ class SubmissionErrorLog(XFormError):
         return "Doc id: %s, Error %s" % (self.get_id, self.problem)
 
     def get_xml(self):
-        return self.fetch_attachment(ATTACHMENT_NAME)
+        return self.fetch_attachment(ATTACHMENT_NAME, return_bytes=True)
 
     def save(self, *args, **kwargs):
         # we have to override this because XFormError does too
