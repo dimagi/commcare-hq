@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import inspect
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -1644,6 +1646,16 @@ FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
                 '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
                 'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
                 'have group and location filters, such as the Submissions by Form report.',
+)
+
+DONT_INDEX_SAME_CASETYPE = StaticToggle(
+    'dont_index_same_casetype',
+    "Don't create a parent index if the child case has the same case type as the parent case",
+    TAG_DEPRECATED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=inspect.cleandoc("""This toggle preserves old behaviour
+        of not creating a parent index on the child case if their case
+        types are the same.""")
 )
 
 SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
