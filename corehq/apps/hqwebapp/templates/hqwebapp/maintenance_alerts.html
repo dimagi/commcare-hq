@@ -62,7 +62,7 @@
                                 <form method="post" action="{% url 'activate_alert' %}" data-bind="visible: !active">
                                     {% csrf_token %}
                                     <input name="alert_id" type="hidden" data-bind="value: id">
-                                    <button type="submit" class="btn btn-success ">Activate Alert</button>
+                                    <button type="submit" class="btn btn-primary ">Activate Alert</button>
                                 </form>
                                 <form method="post" action="{% url 'deactivate_alert' %}" data-bind="visible: active">
                                     {% csrf_token %}

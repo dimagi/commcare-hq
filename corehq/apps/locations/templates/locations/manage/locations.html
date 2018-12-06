@@ -196,7 +196,7 @@
                 {% if not show_inactive %}
                     <!-- create child button -->
                     <!-- ko if: can_edit() -->
-                        <a class="btn btn-success loc_child"
+                        <a class="btn btn-primary loc_child"
                            data-bind="attr: { href: new_loc_url() + '?parent=' + (uuid() || '') },
                                       click: new_location_tracking">
                             <i class="fa fa-plus"></i> <span data-bind="text: new_child_caption"></span>

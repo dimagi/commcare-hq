@@ -25,7 +25,7 @@
                     <form class="form-inline download-form" method="POST" data-bind="attr: {action: dropboxUrl}">
                         {% csrf_token %}
                         <a data-bind="attr: {href: downloadUrl}, visible: isDownloadReady(), click: clickDownload"
-                           class="btn btn-success btn-full-width">
+                           class="btn btn-primary btn-full-width">
                                 <i class="fa fa-cloud-download"></i>
                                 <span data-bind="visible: !isMultimediaDownload()">{% trans "Download" %}</span>
                                 <span data-bind="visible: isMultimediaDownload()">{% trans "Download Multimedia" %}</span>
