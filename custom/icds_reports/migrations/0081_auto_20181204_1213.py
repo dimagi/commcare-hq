@@ -25,4 +25,3 @@ class Migration(migrations.Migration):
             new_name='awc_visits'
         )
     ]
-    operations.extend(get_view_migrations())
