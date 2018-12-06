@@ -279,7 +279,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     def get_xml(self):
         try:
-            return self.fetch_attachment(ATTACHMENT_NAME).encode('utf-8')
+            return self.fetch_attachment(ATTACHMENT_NAME, return_bytes=True)
         except ResourceNotFound:
             logging.warn("no xml found for %s, trying old attachment scheme." % self.get_id)
             try:
@@ -466,7 +466,7 @@ class SubmissionErrorLog(XFormError):
         return "Doc id: %s, Error %s" % (self.get_id, self.problem)
 
     def get_xml(self):
-        return self.fetch_attachment(ATTACHMENT_NAME).encode('utf-8')
+        return self.fetch_attachment(ATTACHMENT_NAME, return_bytes=True)
 
     def save(self, *args, **kwargs):
         # we have to override this because XFormError does too
