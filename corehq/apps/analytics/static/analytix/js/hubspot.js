@@ -104,9 +104,8 @@ hqDefine('analytix/js/hubspot', [
                             // the Schedule Once Form was submitted on our side.
                             // The style attribute changes when the form is successfully
                             // submitted.
-                            /* eslint-disable no-unblessed-new */
                             var lastKnownHeight = 0,
-                                observer = new MutationObserver(function (mutations) {
+                                observer = new MutationObserver(function (mutations) {  // eslint-disable-line eslint-dimagi/no-unblessed-new
                                     mutations.forEach(function () {
                                         var newHeight = $('#SOI_commcaredemoform').height();
                                         if (newHeight < lastKnownHeight) {
@@ -122,7 +121,6 @@ hqDefine('analytix/js/hubspot', [
                             // target is the the iframe containing the schedule once form
                             var target = document.getElementById('SOI_commcaredemoform');
                             observer.observe(target, { attributes: true, attributeFilter: ['style'] });
-                            /* eslint-enable */
                         }, 3000);
                     });
             },
