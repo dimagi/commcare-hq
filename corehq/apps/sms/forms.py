@@ -1264,7 +1264,7 @@ class InitiateAddSMSBackendForm(Form):
                 Div(InlineField('hq_api_id'), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(
                     mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
-                    css_class='btn-default',
+                    css_class='btn-primary',
                     type='submit',
                     style="margin-left:5px;"
                 ), css_class='col-sm-3 col-md-2 col-lg-2'),
