@@ -2,10 +2,11 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function NavigationController($window, $scope, $route, $routeParams, $location) {
+function NavigationController($window, $scope, $route, $routeParams, $location, haveAccessToFeatures) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
+    $scope.haveAccessToFeatures = haveAccessToFeatures;
 
     var checkColapse = function(reports) {
         var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
@@ -37,7 +38,7 @@ function NavigationController($window, $scope, $route, $routeParams, $location) 
     };
 }
 
-NavigationController.$inject = ['$window', '$scope', '$route', '$routeParams', '$location'];
+NavigationController.$inject = ['$window', '$scope', '$route', '$routeParams', '$location', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('navigation', function() {
     return {

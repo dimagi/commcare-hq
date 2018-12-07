@@ -49,10 +49,11 @@
 trunk: master
 name: autostaging
 branches:
-  - test_rjs_multimedia_integration # Rohit Oct 31
   - sr-mutliprocessors   # Sravan Nov 13
   - np-export-links  # Nick Nov 25
   - appcues-v3  # Gabriella Nov 27
-  - mk-populate-translation-app  # MK Nov 28
   - jls/update-palette  # Jenny 11/30
+  - rn_migrate_multimedia # Rohit 3 Dec
+  - jls/requirejs-export-download-unbranched # Jenny Dec 5
+  - pv/archive-form-283938 # Preethi Dec 6
 submodules: {}

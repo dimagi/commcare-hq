@@ -11,7 +11,7 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
-    HaveAccessToLocation, AppTranslations, InactiveAWW, DownloadExportReport, DishaAPIView
+    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, LadySupervisorView
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
@@ -124,6 +124,7 @@ urlpatterns = [
     url(r'^icds_dashboard/', include(dashboardurls)),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
+    url(r'^lady_supervisor/', LadySupervisorView.as_view(), name='lady_supervisor'),
     url(r'^maternal_and_child/', include(maternal_and_child_urls)),
     url(r'^icds_cas_reach/', include(cas_reach_urls)),
     url(r'^demographics/', include(demographics_urls)),
@@ -142,5 +143,4 @@ urlpatterns = [
     url(r'^have_access_to_location/', HaveAccessToLocation.as_view(), name='have_access_to_location'),
     url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww'),
     url(r'^health_indicators', DishaAPIView.as_view(), name='disha_api'),
-    url(r'^translations/apps/', AppTranslations.as_view(), name='app_translations'),
 ]

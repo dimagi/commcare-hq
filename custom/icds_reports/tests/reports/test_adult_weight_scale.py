@@ -54,20 +54,14 @@ class TestAdultWeightScale(TestCase):
         )
         self.assertDictEqual(
             data['data'],
-            {
-                "st1": {
-                    "in_month": 5,
-                    "original_name": ["st1"],
-                    "all": 17,
-                    "fillKey": "25%-75%"
-                },
-                "st2": {
-                    "in_month": 4,
-                    "original_name": ["st2"],
-                    "all": 13,
-                    "fillKey": "25%-75%"
-                }
-            }
+            {'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+             'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+             'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+             'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'},
+             'st1': {'in_month': 5, 'original_name': ['st1'], 'all': 17, 'fillKey': '25%-75%'},
+             'st2': {'in_month': 4, 'original_name': ['st2'], 'all': 13, 'fillKey': '25%-75%'},
+             'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
+             },
         )
 
     def test_map_data_right_legend_info(self):
@@ -236,35 +230,28 @@ class TestAdultWeightScale(TestCase):
                     }
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 30.76923076923077
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 29.41176470588235
-                    }
+                    {'loc_name': 'st2', 'percent': 30.76923076923077},
+                    {'loc_name': 'st1', 'percent': 29.41176470588235},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "location_type": "State",
                 "all_locations": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 30.76923076923077
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 29.41176470588235
-                    }
+                    {'loc_name': 'st2', 'percent': 30.76923076923077},
+                    {'loc_name': 'st1', 'percent': 29.41176470588235},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "bottom_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 30.76923076923077
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 29.41176470588235
-                    }
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )

@@ -4,7 +4,6 @@ import re
 import json
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.bootstrap import InlineField, StrictButton
-from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div
 from django import forms
 from django.urls import reverse
@@ -14,6 +13,7 @@ from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
@@ -95,10 +95,7 @@ class ForwardingRuleForm(Form):
     def __init__(self, *args, **kwargs):
         super(ForwardingRuleForm, self).__init__(*args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Forwarding Rule Options'),
@@ -118,7 +115,7 @@ class ForwardingRuleForm(Form):
                 ),
             )
         )
-    
+
     def clean_keyword(self):
         forward_type = self.cleaned_data.get("forward_type")
         keyword = self.cleaned_data.get("keyword", "").strip()
@@ -580,10 +577,7 @@ class SettingsForm(Form):
         self.new_reminders_migrator = new_reminders_migrator
         super(SettingsForm, self).__init__(data, *args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal"
-        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-10 col-lg-8'
+        self.helper = HQFormHelper()
 
         self.helper.layout = crispy.Layout(
             *self.sections
@@ -910,10 +904,7 @@ class BackendForm(Form):
         self._cchq_domain = kwargs.pop('domain')
         self._cchq_backend_id = kwargs.pop('backend_id')
         super(BackendForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -1024,10 +1015,7 @@ class BackendMapForm(Form):
         self.fields['catchall_backend_id'].choices = backend_choices
 
     def setup_crispy(self):
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-2 col-md-2'
-        self.helper.field_class = 'col-sm-5 col-md-5'
+        self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -1182,10 +1170,7 @@ class SendRegistrationInvitationsForm(Form):
         super(SendRegistrationInvitationsForm, self).__init__(*args, **kwargs)
         self.set_app_id_choices()
 
-        self.helper = FormHelper()
-        self.helper.form_class = "form-horizontal"
-        self.helper.label_class = 'col-sm-4'
-        self.helper.field_class = 'col-sm-8'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 'app_id',
@@ -1271,10 +1256,7 @@ class InitiateAddSMSBackendForm(Form):
                 backend_choices.append((api_id, friendly_name))
         self.fields['hq_api_id'].choices = backend_choices
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_class = "form form-horizontal"
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             hqcrispy.B3MultiField(
                 _("Create Another Gateway"),
@@ -1326,10 +1308,7 @@ class SubscribeSMSForm(Form):
 
     def __init__(self, *args, **kwargs):
         super(SubscribeSMSForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-3 col-lg-2'
-        self.helper.field_class = 'col-sm-8 col-md-8 col-lg-6'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Subscribe settings'),
@@ -1366,11 +1345,8 @@ class ComposeMessageForm(forms.Form):
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')
         super(ComposeMessageForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_action = reverse('send_to_recipients', args=[domain])
-        self.helper.form_class = "form form-horizontal"
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-10 col-md-10 col-lg-10'
         self.helper.layout = crispy.Layout(
             crispy.Field('recipients', rows=2, css_class='sms-typeahead'),
             crispy.Field('message', rows=2),

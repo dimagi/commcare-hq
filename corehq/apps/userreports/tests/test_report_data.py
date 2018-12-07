@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
-import uuid
 from django.test import TestCase
+import uuid
+
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.pillows.case import get_case_pillow
 from six.moves import range
 
 
@@ -151,8 +152,7 @@ class ReportDataTest(TestCase):
         return rows
 
     def _add_rows(self, rows):
-        pillow = get_kafka_ucr_pillow()
-        pillow.bootstrap(configs=[self.data_source])
+        pillow = get_case_pillow(ucr_configs=[self.data_source])
 
         def _get_case(row):
             return {

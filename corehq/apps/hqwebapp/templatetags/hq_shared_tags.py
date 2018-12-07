@@ -291,21 +291,6 @@ def can_use_restore_as(request):
 
 
 @register.simple_tag
-def toggle_js_url(domain, username):
-    return (
-        '{url}?username={username}'
-        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
-    ).format(
-        url=reverse('toggles_js', args=[domain]),
-        username=username,
-        domain_cb=toggle_js_domain_cachebuster(domain),
-        user_cb=toggle_js_user_cachebuster(username),
-        toggles_cb=toggles_cachebuster(),
-        previews_cb=previews_cachebuster(),
-    )
-
-
-@register.simple_tag
 def css_label_class():
     from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS
     return CSS_LABEL_CLASS
@@ -323,19 +308,6 @@ def css_action_class():
     return CSS_ACTION_CLASS
 
 
-@quickcache(['domain'], timeout=30 * 24 * 60 * 60)
-def toggle_js_domain_cachebuster(domain):
-    # to get fresh cachebusters on the next deploy
-    # change the date below (output from *nix `date` command)
-    #   Wed Apr 25 14:12:12 EDT 2018
-    return random_hex()[:3]
-
-
-@quickcache(['username'], timeout=30 * 24 * 60 * 60)
-def toggle_js_user_cachebuster(username):
-    return random_hex()[:3]
-
-
 def _get_py_filename(module):
     """
     return the full path to the .py file of a module
@@ -343,20 +315,6 @@ def _get_py_filename(module):
 
     """
     return module.__file__.rstrip('c')
-
-
-@memoized
-def toggles_cachebuster():
-    import corehq.toggles
-    with open(_get_py_filename(corehq.toggles)) as f:
-        return hashlib.sha1(f.read().encode('utf-8')).hexdigest()[:3]
-
-
-@memoized
-def previews_cachebuster():
-    import corehq.feature_previews
-    with open(_get_py_filename(corehq.feature_previews)) as f:
-        return hashlib.sha1(f.read().encode('utf-8')).hexdigest()[:3]
 
 
 @register.filter

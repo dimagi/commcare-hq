@@ -62,10 +62,10 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1608,
+            "all": 1610,
             "format": "percent_and_div",
             "color": "green",
-            "percent": 10.11427760526228,
+            "percent": 10.049606069448492,
             "value": 346,
             "label": "Percent Aadhaar-seeded Beneficiaries",
             "frequency": "month",
@@ -86,11 +86,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1287,
+            "all": 1288,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0.0,
-            "value": 1287,
+            "value": 1288,
             "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
             "frequency": "month",
             "help_text": percent_children_enrolled_help_text()
@@ -132,11 +132,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             'redirect': 'demographics/lactating_enrolled_women',
-            "all": 166,
+            "all": 167,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0.0,
-            "value": 166,
+            "value": 167,
             "label": "Percent lactating women enrolled for Anganwadi Services",
             "frequency": "month",
             "help_text": percent_lactating_women_enrolled_help_text()
@@ -217,7 +217,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1608,
+            "all": 1610,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
@@ -243,11 +243,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1287,
+            "all": 1288,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 1287,
+            "value": 1288,
             "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()
@@ -289,11 +289,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/lactating_enrolled_women",
-            "all": 166,
+            "all": 167,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 166,
+            "value": 167,
             "label": "Percent lactating women enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_lactating_women_enrolled_help_text()
@@ -374,7 +374,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1608,
+            "all": 1610,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
@@ -400,11 +400,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1287,
+            "all": 1288,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 1287,
+            "value": 1288,
             "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()
@@ -446,11 +446,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/lactating_enrolled_women",
-            "all": 166,
+            "all": 167,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 166,
+            "value": 167,
             "label": "Percent lactating women enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_lactating_women_enrolled_help_text()

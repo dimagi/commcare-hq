@@ -9,8 +9,6 @@ from django.contrib import messages
 from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
-    toggle_js_user_cachebuster
 from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
@@ -148,11 +146,11 @@ class ToggleEditView(ToggleBaseView):
         """
         return find_static_toggle(self.toggle_slug)
 
-    def get_toggle(self, skip_cache=False):
+    def get_toggle(self):
         if not self.static_toggle:
             raise Http404()
         try:
-            return Toggle.get(self.toggle_slug, skip_cache=skip_cache)
+            return Toggle.get(self.toggle_slug)
         except ResourceNotFound:
             return Toggle(slug=self.toggle_slug)
 
@@ -186,7 +184,7 @@ class ToggleEditView(ToggleBaseView):
         return context
 
     def post(self, request, *args, **kwargs):
-        toggle = self.get_toggle(skip_cache=True)
+        toggle = self.get_toggle()
         item_list = request.POST.get('item_list', [])
         randomness = request.POST.get('randomness', None)
         randomness = decimal.Decimal(randomness) if randomness else None
@@ -275,12 +273,10 @@ def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enable
             domain = entry
             if static_toggle.save_fn is not None:
                 static_toggle.save_fn(domain, enabled)
-            toggle_js_domain_cachebuster.clear(domain)
         else:
             # these are sent down with no namespace
             assert ':' not in entry, entry
             username = entry
-            toggle_js_user_cachebuster.clear(username)
 
 
 def _clear_caches_for_dynamic_toggle(toggle_meta):
