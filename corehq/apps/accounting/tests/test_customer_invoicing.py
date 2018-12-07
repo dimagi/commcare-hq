@@ -234,7 +234,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('1100.0000'))
+        self.assertEqual(invoice.balance, Decimal('1500.0000'))
         user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
         self.assertEqual(user_line_items.count(), 2)
         for user_line_item in user_line_items:

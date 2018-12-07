@@ -40,7 +40,7 @@ def ensure_plans(config, verbose, apps):
 
         software_plan = SoftwarePlan(
             name=(
-                ('%s Edition' % product_rate.name)
+                ('%s%s Edition' % (' Trial' if is_trial else '', product_rate.name))
                 if product is None else product.name  # TODO - remove after squashing migrations
             ),
             edition=edition,
@@ -69,11 +69,6 @@ def ensure_plans(config, verbose, apps):
             software_plan_version.feature_rates.add(feature_rate)
         software_plan_version.save()
 
-        default_product_plan = DefaultProductPlan(
-            edition=edition, is_trial=is_trial
-        )
-        default_product_plan.is_report_builder_enabled = is_report_builder_enabled
-
         try:
             default_product_plan = DefaultProductPlan.objects.get(
                 edition=edition,
@@ -86,12 +81,16 @@ def ensure_plans(config, verbose, apps):
                     % (default_product_plan.edition, is_trial)
                 )
         except DefaultProductPlan.DoesNotExist:
+            default_product_plan = DefaultProductPlan(
+                edition=edition, is_trial=is_trial, is_report_builder_enabled=is_report_builder_enabled
+            )
+        finally:
             default_product_plan.plan = software_plan
             default_product_plan.save()
             if verbose:
                 log_accounting_info(
-                    "Setting plan as default for edition '%s' with is_trial='%s'."
-                    % (default_product_plan.edition, is_trial)
+                    "Setting plan as default for edition '%s' with is_trial='%s' and is_report_builder_enabled='%s'."
+                    % (edition, is_trial, is_report_builder_enabled)
                 )
 
 
