@@ -183,6 +183,8 @@ class AppTranslationsForm(forms.Form):
             return PushAppTranslationsForm
         elif form_action == 'pull':
             return PullAppTranslationsForm
+        elif form_action == 'backup':
+            return BackUpAppTranslationsForm
         elif form_action == 'delete':
             return DeleteAppTranslationsForm
 
@@ -230,3 +232,7 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
             'perform_translated_check'
         ])
         return form_fields
+
+
+class BackUpAppTranslationsForm(AppTranslationsForm):
+    form_action = 'backup'

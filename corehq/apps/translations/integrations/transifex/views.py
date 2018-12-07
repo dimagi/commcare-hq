@@ -37,6 +37,7 @@ from corehq.apps.translations.tasks import (
     push_translation_files_to_transifex,
     pull_translation_files_from_transifex,
     delete_resources_on_transifex,
+    backup_project_from_transifex,
 )
 from corehq.util.files import safe_filename_header
 
@@ -268,6 +269,7 @@ class AppTranslations(BaseTranslationsView):
             context['update_form'] = AppTranslationsForm.form_for('update')(self.domain)
             context['push_form'] = AppTranslationsForm.form_for('push')(self.domain)
             context['pull_form'] = AppTranslationsForm.form_for('pull')(self.domain)
+            context['backup_form'] = AppTranslationsForm.form_for('backup')(self.domain)
             context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
         form_action = self.request.POST.get('action')
         if form_action:
@@ -283,7 +285,7 @@ class AppTranslations(BaseTranslationsView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'],
                          use_version_postfix='yes' in form_data['use_version_postfix'],
-                         update_resource='yes' in form_data['update_resource'])
+                         update_resource='yes' in form_data.get('update_resource', []))
 
     def perform_push_request(self, request, form_data):
         if form_data['target_lang']:
@@ -326,6 +328,13 @@ class AppTranslations(BaseTranslationsView):
                                     'You should receive an email shortly'))
         return True
 
+    def perform_backup_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
+            return False
+        backup_project_from_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to take backup.'))
+        return True
+
     def perform_delete_request(self, request, form_data):
         if not self.ensure_resources_present(request):
             return False
@@ -347,6 +356,8 @@ class AppTranslations(BaseTranslationsView):
                 return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
                 return self.perform_pull_request(request, form_data)
+            elif form_data['action'] == 'backup':
+                return self.perform_backup_request(request, form_data)
             elif form_data['action'] == 'delete':
                 return self.perform_delete_request(request, form_data)
 

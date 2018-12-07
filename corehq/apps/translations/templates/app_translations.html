@@ -18,7 +18,8 @@
           <li><a data-toggle="tab" href="#update-trans-form" id="update-tab"><b>{% trans "Update" %}</b></a></li>
           <li><a data-toggle="tab" href="#push-trans-form" id="push-tab"><b>{% trans "Push" %}</b></a></li>
           <li><a data-toggle="tab" href="#pull-trans-form" id="pull-tab"><b>{% trans "Pull" %}</b></a></li>
-          <li><a data-toggle="tab" href="#del-trans-form" id="advanced-tab"><b>{% trans "Delete" %}</b></a></li>
+          <li><a data-toggle="tab" href="#backup-trans-form" id="backup-tab"><b>{% trans "BackUp" %}</b></a></li>
+          <li><a data-toggle="tab" href="#del-trans-form" id="delete-tab"><b>{% trans "Delete" %}</b></a></li>
         </ul>
         <div class="tab-content">
             <div id="create-trans-form" class="tab-pane">
@@ -43,6 +44,12 @@
                 <form class="form form-horizontal" name="product" method="post">
                     <legend>{% trans "Pull App Translations" %}</legend>
                     {% crispy pull_form %}
+                </form>
+            </div>
+            <div id="backup-trans-form" class="tab-pane">
+                <form class="form form-horizontal" name="product" method="post">
+                    <legend>{% trans "BackUp Translations" %}</legend>
+                    {% crispy backup_form %}
                 </form>
             </div>
             <div id="del-trans-form" class="tab-pane">
