@@ -338,10 +338,11 @@ class AppTranslations(BaseTranslationsView):
     def perform_delete_request(self, request, form_data):
         if not self.ensure_resources_present(request):
             return False
-        if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
-            messages.error(request, _('Resources yet to be completely translated for all languages. '
-                                      'Hence, the request for deleting resources can not be performed.'))
-            return False
+        if form_data['perform_translated_check']:
+            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+                messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                          'Hence, the request for deleting resources can not be performed.'))
+                return False
         delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to delete resources.'))
         return True
