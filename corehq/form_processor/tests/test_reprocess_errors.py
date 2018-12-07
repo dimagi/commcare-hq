@@ -368,7 +368,7 @@ class TestReprocessDuringSubmission(TestCase):
         form_id = uuid.uuid4().hex
         with _patch_save_to_raise_error(self):
             submit_case_blocks(
-                CaseBlock(case_id=case_id, create=True, case_type='box').as_string(),
+                CaseBlock(case_id=case_id, create=True, case_type='box').as_string().decode('utf-8'),
                 self.domain,
                 form_id=form_id
             )
