@@ -174,7 +174,6 @@ class ExportWriter(object):
             tuple(sheet_name, [['col1header', 'col2header', ....]])
             tuple(sheet_name, [FormattedRow])
         """
-        print('ExportWriter.open')
         table_titles = table_titles or {}
 
         self._isopen = True
@@ -222,7 +221,6 @@ class ExportWriter(object):
         Given a document that's been parsed into the appropriate
         rows, write those rows to the resulting files.
         """
-        print('ExportWriter.write')
         assert self._isopen
         for table_index, table in document_table:
             for i, row in enumerate(table):
@@ -389,8 +387,6 @@ class Excel2007ExportWriter(ExportWriter):
         self.table_indices[table_index] = 0
 
     def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
-        print('Excel2007ExportWriter._write_row')
-        print(row)
         sheet = self.tables[sheet_index]
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
@@ -410,9 +406,7 @@ class Excel2007ExportWriter(ExportWriter):
             return dirty_chars.sub('?', value)
 
         write_values = [get_write_value(val) for val in row]
-        print(write_values)
         cells = [WriteOnlyCell(sheet, val) for val in write_values]
-        print(cells)
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
@@ -425,7 +419,6 @@ class Excel2007ExportWriter(ExportWriter):
         """
         Close any open file references, do any cleanup.
         """
-        print('Excel2007ExportWriter._close')
         self.book.save(self.file)
 
 
