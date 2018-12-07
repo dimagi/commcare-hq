@@ -12,11 +12,8 @@ def toggle_enabled(slug, item, namespace=None):
     """
     item = namespaced_item(item, namespace)
     if not settings.UNIT_TESTING or getattr(settings, 'DB_ENABLED', True):
-        try:
-            toggle = Toggle.get(slug)
-            return item in toggle.enabled_users
-        except ResourceNotFound:
-            return False
+        toggle = Toggle.cached_get(slug)
+        return item in toggle.enabled_users if toggle else False
 
 
 def set_toggle(slug, item, enabled, namespace=None):
