@@ -349,7 +349,7 @@ class AppTranslations(BaseTranslationsView):
 
     def perform_request(self, request, form_data):
         self._transifex = self.transifex(request.domain, form_data)
-        if not self._transifex.source_lang_is(form_data.get('source_lang')):
+        if form_data.get('source_lang') and not self._transifex.source_lang_is(form_data.get('source_lang')):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:

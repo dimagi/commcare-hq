@@ -59,9 +59,10 @@ def push_translation_files_to_transifex(domain, data, email):
                                   use_version_postfix='yes' in data['use_version_postfix'],
                                   update_resource='yes' in data['update_resource']
                                   ).send_translation_files()
+    data['language'] = data.get('target_lang') or data.get('source_lang')
     if upload_status:
         result_note = "Hi,\nThe upload for app {app_id}(version {version}), " \
-                      "with source language '{source_lang}' and target lang '{target_lang}' " \
+                      "for language '{language}' " \
                       "was completed on project {transifex_project_slug} on transifex. " \
                       "The result is as follows:\n".format(**data)
         email = EmailMessage(
@@ -113,8 +114,8 @@ def backup_project_from_transifex(domain, data, email):
                           use_version_postfix='yes' in data['use_version_postfix'])
     project_details = transifex.client.project_details().json()
     target_lang_codes = project_details.get('teams')
-    with NamedTemporaryFile(mode='wb', suffix='.zip') as tmp:
-        with ZipFile(tmp, 'wb') as zipfile:
+    with NamedTemporaryFile(mode='w+b', suffix='.zip') as tmp:
+        with ZipFile(tmp, 'w') as zipfile:
             for target_lang in target_lang_codes:
                 transifex = Transifex(domain,
                                       data.get('app_id'),
@@ -123,9 +124,10 @@ def backup_project_from_transifex(domain, data, email):
                                       version,
                                       use_version_postfix='yes' in data['use_version_postfix'])
                 translation_file, filename = transifex.generate_excel_file()
-                with open(translation_file.name, 'rb', encoding='utf-8') as file_obj:
+                with open(translation_file.name, 'rb') as file_obj:
                     zipfile.writestr(filename, file_obj.read())
                 os.remove(translation_file.name)
+        tmp.seek(0)
         email = EmailMessage(
             subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
             body="PFA Translations backup from transifex.",
