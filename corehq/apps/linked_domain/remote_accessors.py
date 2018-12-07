@@ -128,7 +128,7 @@ def _do_request_to_remote_hq(relative_url, remote_details, linked_domain, params
             'params': params,
             'headers': headers
         })
-        raise RemoteRequestError(response.status_code)
+        raise RemoteRequestError()
     if response.status_code == 401:
         raise RemoteAuthError(response.status_code)
     elif response.status_code == 403:
