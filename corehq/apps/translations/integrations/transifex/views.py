@@ -353,7 +353,7 @@ class AppTranslations(BaseTranslationsView):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:
-            if form_data['action'] == 'push':
+            if form_data['action'] in ['create', 'update', 'push']:
                 return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
                 return self.perform_pull_request(request, form_data)
