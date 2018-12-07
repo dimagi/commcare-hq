@@ -49,7 +49,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
             temp_path,
             # We don't have a great way to calculate progress if it's a bulk download,
             # so only track the progress for single instance exports.
-            # progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
+            progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
         )
 
         file_format = Format.from_format(export_file.format)
