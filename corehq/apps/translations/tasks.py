@@ -3,9 +3,11 @@ from __future__ import unicode_literals
 
 import os
 from io import open
+from zipfile import ZipFile
 
 from celery.task import task
 from django.conf import settings
+from django.core.files.temp import NamedTemporaryFile
 from django.core.mail.message import EmailMessage
 
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
@@ -57,9 +59,10 @@ def push_translation_files_to_transifex(domain, data, email):
                                   use_version_postfix='yes' in data['use_version_postfix'],
                                   update_resource='yes' in data['update_resource']
                                   ).send_translation_files()
+    data['language'] = data.get('target_lang') or data.get('source_lang')
     if upload_status:
         result_note = "Hi,\nThe upload for app {app_id}(version {version}), " \
-                      "with source language '{source_lang}' and target lang '{target_lang}' " \
+                      "for language '{language}' " \
                       "was completed on project {transifex_project_slug} on transifex. " \
                       "The result is as follows:\n".format(**data)
         email = EmailMessage(
@@ -98,3 +101,39 @@ def pull_translation_files_from_transifex(domain, data, email=None):
     finally:
         if translation_file and os.path.exists(translation_file.name):
             os.remove(translation_file.name)
+
+
+@task(serializer='pickle')
+def backup_project_from_transifex(domain, data, email):
+    version = data.get('version')
+    transifex = Transifex(domain,
+                          data.get('app_id'),
+                          data.get('source_lang'),
+                          data.get('transifex_project_slug'),
+                          version,
+                          use_version_postfix='yes' in data['use_version_postfix'])
+    project_details = transifex.client.project_details().json()
+    target_lang_codes = project_details.get('teams')
+    with NamedTemporaryFile(mode='w+b', suffix='.zip') as tmp:
+        with ZipFile(tmp, 'w') as zipfile:
+            for target_lang in target_lang_codes:
+                transifex = Transifex(domain,
+                                      data.get('app_id'),
+                                      target_lang,
+                                      data.get('transifex_project_slug'),
+                                      version,
+                                      use_version_postfix='yes' in data['use_version_postfix'])
+                translation_file, filename = transifex.generate_excel_file()
+                with open(translation_file.name, 'rb') as file_obj:
+                    zipfile.writestr(filename, file_obj.read())
+                os.remove(translation_file.name)
+        tmp.seek(0)
+        email = EmailMessage(
+            subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
+            body="PFA Translations backup from transifex.",
+            to=[email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        filename = "%s-TransifexBackup" % project_details.get('name')
+        email.attach(filename=filename, content=tmp.read())
+        email.send()
