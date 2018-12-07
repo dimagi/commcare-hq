@@ -214,9 +214,9 @@ class ExportWriter(object):
                 headers = [g.next_unique(header) for header in headers]
 
         self._init_table(table_index, table_title_truncated)
-        self.write_row(table_index, headers)
+        self.write_row(table_index, headers, [])
 
-    def write(self, document_table, skip_first=False):
+    def write(self, document_table, hyperlink_column_indices, skip_first=False):
         """
         Given a document that's been parsed into the appropriate
         rows, write those rows to the resulting files.
@@ -235,17 +235,17 @@ class ExportWriter(object):
                 if row_has_id:
                     row.id = (self._current_primary_id,) + tuple(row.id[1:])
 
-                self.write_row(table_index, row)
+                self.write_row(table_index, row, hyperlink_column_indices)  # (3)
 
         self._current_primary_id += 1
 
-    def write_row(self, table_index, headers):
+    def write_row(self, table_index, row, hyperlink_column_indices):
         """
         Currently just calls the subclass's implementation
         but if we were to add a universal validation step,
         such a thing would happen here.
         """
-        return self._write_row(table_index, headers)
+        return self._write_row(table_index, row, hyperlink_column_indices)  # (4)
 
     def close(self):
         """
@@ -261,7 +261,7 @@ class ExportWriter(object):
     def _init_table(self, table_index, table_title):
         raise NotImplementedError
 
-    def _write_row(self, sheet_index, row):
+    def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
         raise NotImplementedError
 
     def _close(self):
@@ -290,7 +290,7 @@ class OnDiskExportWriter(ExportWriter):
         writer.open(table_title)
         self.table_names[table_index] = table_title
 
-    def _write_row(self, sheet_index, row):
+    def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
 
         def _transform(val):
             if isinstance(val, six.text_type):
@@ -386,7 +386,7 @@ class Excel2007ExportWriter(ExportWriter):
         self.tables[table_index] = sheet
         self.table_indices[table_index] = 0
 
-    def _write_row(self, sheet_index, row):
+    def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
         sheet = self.tables[sheet_index]
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
@@ -398,17 +398,21 @@ class Excel2007ExportWriter(ExportWriter):
             if isinstance(value, six.integer_types + (float,)):
                 return value
             if isinstance(value, bytes):
-                value = six.text_type(value, encoding="utf-8")
+                value = value.decode('utf-8')
             elif value is not None:
                 value = six.text_type(value)
             else:
                 value = ''
             return dirty_chars.sub('?', value)
 
-        cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        write_values = [get_write_value(val) for val in row]
+        cells = [WriteOnlyCell(sheet, val) for val in write_values]
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
+        for hyperlink_column_index in hyperlink_column_indices:
+            cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
+            cells[hyperlink_column_index].style = 'Hyperlink'
         sheet.append(cells)
 
     def _close(self):
@@ -432,7 +436,7 @@ class Excel2003ExportWriter(ExportWriter):
         self.tables[table_index] = sheet
         self.table_indices[table_index] = 0
 
-    def _write_row(self, sheet_index, row):
+    def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
         row_index = self.table_indices[sheet_index]
         sheet = self.tables[sheet_index]
 
@@ -461,7 +465,7 @@ class InMemoryExportWriter(ExportWriter):
         self.table_names[table_index] = table_title
         self.tables[table_index] = []
 
-    def _write_row(self, sheet_index, row):
+    def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
         table = self.tables[sheet_index]
         # have to deal with primary ids
         table.append(list(row))
@@ -577,7 +581,7 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
     def _init_table(self, table_index, table_title):
         pass
 
-    def _write_row(self, sheet_index, row):
+    def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
         if sheet_index == 'study':
             if not self.study_keys:
                 self.study_keys = row

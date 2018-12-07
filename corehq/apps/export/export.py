@@ -31,7 +31,7 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
     SMSExportInstance,
 )
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS, CASE_ID_TO_LINK, FORM_ID_TO_LINK
 import six
 from io import open
 
@@ -105,14 +105,14 @@ class _ExportWriter(object):
             finally:
                 self.writer.close()
 
-    def write(self, table, row):
+    def write(self, table, row, hyperlink_column_indices):
         """
         Write the given row to the given table of the export.
         _Writer must be opened first.
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        return self.writer.write([(table, [FormattedRow(data=row.data)])])
+        return self.writer.write([(table, [FormattedRow(data=row.data)])], hyperlink_column_indices)  # (2)
 
     def get_preview(self):
         return self.writer.get_preview()
@@ -299,7 +299,7 @@ def get_export_file(export_instances, filters, temp_path, progress_tracker=None)
     """
     Return an export file for the given ExportInstance and list of filters
     """
-    writer = get_export_writer(export_instances, temp_path)
+    writer = get_export_writer(export_instances, temp_path, allow_pagination=False)
     with writer.open(export_instances):
         for export_instance in export_instances:
             docs = get_export_documents(export_instance, filters)
@@ -368,10 +368,14 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
             compute_total += _time_in_milliseconds() - compute_start
 
             write_start = _time_in_milliseconds()
+            hyperlink_column_indices = [
+                i for i, column in enumerate(table.columns)
+                if column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]
+            ]
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.
-                writer.write(table, row)
+                writer.write(table, row, hyperlink_column_indices)  # (1)
             write_total += _time_in_milliseconds() - write_start
 
             total_rows += len(rows)
