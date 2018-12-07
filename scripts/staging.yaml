@@ -56,4 +56,5 @@ branches:
   - rn_migrate_multimedia # Rohit 3 Dec
   #- jls/requirejs-export-download-unbranched # Jenny Dec 5
   - pv/archive-form-283938 # Preethi Dec 6
+  - mk-transifex-improv # MK Dec 8
 submodules: {}
