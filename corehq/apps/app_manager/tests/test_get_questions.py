@@ -34,6 +34,7 @@ QUESTIONS = [
         'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -50,6 +51,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': "This is a comment",
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -66,6 +68,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'trigger',
@@ -82,6 +85,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -98,6 +102,7 @@ QUESTIONS = [
         'constraint': '1',
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'select1',
@@ -121,6 +126,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -137,6 +143,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -153,6 +160,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'hidden',
