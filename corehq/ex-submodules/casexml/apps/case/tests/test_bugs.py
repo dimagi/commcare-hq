@@ -41,7 +41,7 @@ class CaseBugTestCouchOnly(TestCase):
         case_block = CaseBlock(
             case_id=conflict_id,
             create=True,
-        ).as_string()
+        ).as_string().decode('utf-8')
         with self.assertRaises(BulkSaveError):
             submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
 
