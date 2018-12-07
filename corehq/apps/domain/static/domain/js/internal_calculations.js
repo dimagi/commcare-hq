@@ -21,7 +21,7 @@ hqDefine("domain/js/internal_calculations", [
                 $calc_btn.addClass('btn-danger');
                 $calc_error.html(data.error);
             }
-            $calc_btn.html('Reload Data').removeClass('btn-info');
+            $calc_btn.html('Reload Data').removeClass('btn-primary');
         });
     }
 
