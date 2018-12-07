@@ -1,13 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
+import uuid
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, ResourceConflict
+from django.contrib import admin
+from django.db import models
 
+from corehq.apps.couch_sql_migration.fields import DocumentField
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     Document, DateTimeProperty, ListProperty, StringProperty
 )
-from corehq.util.quickcache import quickcache
 
 
 TOGGLE_ID_PREFIX = 'hqFeatureToggle'
@@ -25,8 +29,25 @@ class Toggle(Document):
     def save(self, **params):
         if ('_id' not in self._doc):
             self._doc['_id'] = generate_toggle_id(self.slug)
+        if ('_rev' not in self._doc):
+            self._rev = self._doc['_rev'] = uuid.uuid4().hex
+            rev_not_provided = True
+        else:
+            rev_not_provided = False
         self.last_modified = datetime.utcnow()
         super(Toggle, self).save(**params)
+        obj, created = SqlToggle.objects.get_or_create(
+            id=self._doc['_id'], defaults={'document': self, 'rev': self._rev}
+        )
+        if created is False:
+            if rev_not_provided or self._rev != obj.rev:
+                raise ResourceConflict
+
+            self._doc['_rev'] = obj.rev = uuid.uuid4().hex
+            obj.document = self
+            obj.save()
+        self._rev = obj.rev
+
         self.bust_cache()
 
     @classmethod
@@ -60,6 +81,7 @@ class Toggle(Document):
             self.save()
 
     def delete(self):
+        SqlToggle.objects.filter(id=self._doc['_id']).delete()
         super(Toggle, self).delete()
         self.bust_cache()
 
@@ -71,3 +93,12 @@ def generate_toggle_id(slug):
     # use the slug to build the ID to avoid needing couch views
     # and to make looking up in futon easier
     return '{prefix}-{slug}'.format(prefix=TOGGLE_ID_PREFIX, slug=slug)
+
+
+class SqlToggle(models.Model):
+    id = models.CharField(max_length=126, primary_key=True)
+    rev = models.CharField(max_length=126)
+    document = DocumentField(document_class=Toggle)
+
+
+admin.site.register(SqlToggle)  # note that this does not work well as document is not JSON serializable
