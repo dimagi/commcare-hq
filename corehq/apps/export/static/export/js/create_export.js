@@ -9,9 +9,18 @@
  * The daily saved and feeds pages aren't form/case specific,
  * so for those the drilldown starts with model type (form/case).
  */
-hqDefine("export/js/create_export", function () {
+hqDefine("export/js/create_export", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/assert_properties',
+], function (
+    $,
+    ko,
+    _,
+    assertProperties
+) {
     var createExportModel = function (options) {
-        var assertProperties = hqImport("hqwebapp/js/assert_properties");
         assertProperties.assert(options, ['drilldown_fetch_url', 'drilldown_submit_url', 'page'], ['model_type']);
 
         var self = {};
