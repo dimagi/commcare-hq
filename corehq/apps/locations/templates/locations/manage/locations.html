@@ -196,7 +196,7 @@
                 {% if not show_inactive %}
                     <!-- create child button -->
                     <!-- ko if: can_edit() -->
-                        <a class="btn btn-success loc_child"
+                        <a class="btn btn-primary loc_child"
                            data-bind="attr: { href: new_loc_url() + '?parent=' + (uuid() || '') },
                                       click: new_location_tracking">
                             <i class="fa fa-plus"></i> <span data-bind="text: new_child_caption"></span>
@@ -273,7 +273,7 @@
             </div>
             <div class="modal-footer">
                 <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-                <button data-bind="click: archive_fn" class="btn btn-warning">{% trans "Archive" %}</button>
+                <button data-bind="click: archive_fn" class="btn btn-danger">{% trans "Archive" %}</button>
             </div>
         </div>
     </div>

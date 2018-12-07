@@ -128,8 +128,8 @@ class AddCaseGroupForm(forms.Form):
         self.helper.layout = Layout(
             InlineField('name'),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Create Group")),
-                css_class='btn-success',
+                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Group")),
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -198,7 +198,7 @@ class AddCaseToGroupForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
-                css_class='btn-success',
+                css_class='btn-primary',
                 type="submit"
             )
         )
