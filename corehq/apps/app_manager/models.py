@@ -1133,15 +1133,15 @@ class FormBase(DocumentSchema):
                 raise
 
         try:
-            # Don't include groups - forms with only group questions count as blank
-            questions = self.cached_get_questions(include_groups=False)
+            questions = self.cached_get_questions()
         except XFormException as e:
             error = {'type': 'validation error', 'validation_message': six.text_type(e)}
             error.update(meta)
             errors.append(error)
 
         if not errors:
-            if len(questions) == 0 and self.form_type != 'shadow_form':
+            has_questions = any(not q.get('is_group') for q in questions)
+            if not has_questions and self.form_type != 'shadow_form':
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
@@ -1219,15 +1219,13 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
-    def cached_get_questions(self, include_groups=False):
-        # call to get_questions with a superset of necessary information, so
-        # it can hit the same cache across common app-building workflows
-        # performs filtering so it's a drop-in replacement for get_questions
-        def matches_params(question):
-            return include_groups or not question.get('is_group')
+    def cached_get_questions(self):
+        """
+        Call to get_questions with a superset of necessary information, so
+        it can hit the same cache across common app-building workflows
+        """
         # it is important that this is called with the same params every time
-        questions = self.get_questions([], include_triggers=True, include_groups=True)
-        return [q for q in questions if matches_params(q)]
+        return self.get_questions([], include_triggers=True, include_groups=True)
 
     @time_method()
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
@@ -1423,7 +1421,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def check_paths(self, paths):
         errors = []
         try:
-            questions = self.cached_get_questions(include_groups=True)
+            questions = self.cached_get_questions()
             valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
