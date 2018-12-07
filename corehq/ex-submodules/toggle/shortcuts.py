@@ -3,13 +3,12 @@ from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 
-from .models import Toggle
-
 
 def toggle_enabled(slug, item, namespace=None):
     """
     Given a toggle and a username, whether the toggle is enabled for that user
     """
+    from .models import Toggle
     item = namespaced_item(item, namespace)
     if not settings.UNIT_TESTING or getattr(settings, 'DB_ENABLED', True):
         toggle = Toggle.cached_get(slug)
@@ -20,6 +19,7 @@ def set_toggle(slug, item, enabled, namespace=None):
     """
     Sets a toggle value explicitly. Should only save anything if the value needed to be changed.
     """
+    from .models import Toggle
     if toggle_enabled(slug, item, namespace=namespace) != enabled:
         ns_item = namespaced_item(item, namespace)
         try:
@@ -59,6 +59,7 @@ def parse_toggle(entry):
 
 def find_users_with_toggle_enabled(toggle):
     from corehq.toggles import ALL_NAMESPACES, NAMESPACE_USER
+    from .models import Toggle
     try:
         doc = Toggle.get(toggle.slug)
     except ResourceNotFound:
@@ -70,6 +71,7 @@ def find_users_with_toggle_enabled(toggle):
 
 def find_domains_with_toggle_enabled(toggle):
     from corehq.toggles import NAMESPACE_DOMAIN
+    from .models import Toggle
     try:
         doc = Toggle.get(toggle.slug)
     except ResourceNotFound:

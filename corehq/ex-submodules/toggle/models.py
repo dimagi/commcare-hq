@@ -3,11 +3,14 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 from couchdbkit import ResourceNotFound
+from django.db import models
 
+from corehq.apps.couch_sql_migration.fields import DocumentField
+from corehq.apps.couch_sql_migration.utils import sql_save_with_resource_conflict
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     Document, DateTimeProperty, ListProperty, StringProperty
 )
-from corehq.util.quickcache import quickcache
 
 
 TOGGLE_ID_PREFIX = 'hqFeatureToggle'
@@ -26,7 +29,10 @@ class Toggle(Document):
         if ('_id' not in self._doc):
             self._doc['_id'] = generate_toggle_id(self.slug)
         self.last_modified = datetime.utcnow()
+        old_doc_rev = self._rev
         super(Toggle, self).save(**params)
+        sql_save_with_resource_conflict(SqlToggle, self, old_doc_rev)
+
         self.bust_cache()
 
     @classmethod
@@ -60,6 +66,7 @@ class Toggle(Document):
             self.save()
 
     def delete(self):
+        SqlToggle.objects.filter(id=self._doc['_id']).delete()
         super(Toggle, self).delete()
         self.bust_cache()
 
@@ -71,3 +78,9 @@ def generate_toggle_id(slug):
     # use the slug to build the ID to avoid needing couch views
     # and to make looking up in futon easier
     return '{prefix}-{slug}'.format(prefix=TOGGLE_ID_PREFIX, slug=slug)
+
+
+class SqlToggle(models.Model):
+    id = models.CharField(max_length=126, primary_key=True)
+    rev = models.CharField(max_length=126)
+    document = DocumentField(document_class=Toggle)
