@@ -5,7 +5,7 @@ hqDefine('hqadmin/js/app_build_timings', [
     $(function () {
         $("#timingTable").treetable({
             expandable: true,
-            expanderTemplate: '<i class="fa fa-angle-double-down" />',
+            expanderTemplate: '<i class="fa fa-angle-double-down" /> ',
             initialState: 'expanded',
             clickableNodeNames: true,
             onNodeExpand: function () {
