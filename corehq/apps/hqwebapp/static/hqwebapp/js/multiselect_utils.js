@@ -61,7 +61,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         $('#' + multiselectId).multiSelect({
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
-                _renderAction(selectAllId, 'btn-info', 'fa fa-plus', django.gettext("Add All")),
+                _renderAction(selectAllId, 'btn-default', 'fa fa-plus', django.gettext("Add All")),
                 _renderSearch(searchSelectableId, searchItemTitle)
             ),
             selectionHeader: _renderHeader(

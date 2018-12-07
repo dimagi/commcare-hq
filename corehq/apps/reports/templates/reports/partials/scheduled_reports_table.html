@@ -66,11 +66,11 @@
 
                     <div class="btn-group">
                         {% if not report.is_editable or not is_owner and not is_admin %}
-                            <button type="button" class="btn btn-info disabled" disabled="disabled">
+                            <button type="button" class="btn btn-default disabled" disabled="disabled">
                                 <i class="fa fa-edit"></i> {% trans "Edit" %}
                             </button>
                         {% else %}
-                            <a class="btn btn-info"
+                            <a class="btn btn-default"
                                 href="{% url "edit_scheduled_report" domain report.get_id %}">
                                 <i class="fa fa-edit"></i> {% trans "Edit" %}
                             </a>
@@ -78,17 +78,17 @@
                     </div>
 
                     <div class="btn-group">
-                        <a class="btn btn-info" href="{% url "view_scheduled_report" domain report.get_id %}">
+                        <a class="btn btn-default" href="{% url "view_scheduled_report" domain report.get_id %}">
                             <i class="fa fa-eye"></i> {% trans "View" %}
                         </a>
-                        <a class="btn btn-info {% if not is_owner and not is_admin %}disabled{% endif %}" href="{% url "send_test_scheduled_report" domain report.get_id %}">
+                        <a class="btn btn-default {% if not is_owner and not is_admin %}disabled{% endif %}" href="{% url "send_test_scheduled_report" domain report.get_id %}">
                             <i class="fa fa-envelope"></i> {% trans "Send Now" %}
                         </a>
                     </div>
 
                     <div class="btn-group">
                         {% if not is_owner and not is_admin %}
-                            <button type="button" class="btn btn-info disabled" disabled="disabled">
+                            <button type="button" class="btn btn-danger disabled" disabled="disabled">
                                 <i class="fa fa-trash"></i> {% trans "Delete" %}
                             </button>
                         {% else %}
@@ -99,7 +99,7 @@
                     </div>
                     {% if not is_owner and not is_admin %}
                     <div class="btn-group">
-                        <a class="btn btn-info" href="{% url "notification_unsubscribe" report.get_id user_email report.context_secret %}">
+                        <a class="btn btn-default" href="{% url "notification_unsubscribe" report.get_id user_email report.context_secret %}">
                             <i class="fa fa-ban"></i> {% trans "Unsubscribe me" %}
                         </a>
                     </div>

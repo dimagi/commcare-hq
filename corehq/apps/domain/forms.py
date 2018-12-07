@@ -1612,7 +1612,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 StrictButton(_("Subscribe to Plan"),
                              type="submit",
                              id='btn-subscribe-to-plan',
-                             css_class='btn btn-success disable-on-submit-no-spinner '
+                             css_class='btn btn-primary disable-on-submit-no-spinner '
                                        'add-spinner-on-click'),
             ),
             crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
@@ -1732,7 +1732,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 StrictButton(
                     _("Renew Plan"),
                     type="submit",
-                    css_class='btn btn-success',
+                    css_class='btn btn-primary',
                 ),
             ),
         )

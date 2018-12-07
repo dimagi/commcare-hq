@@ -49,7 +49,7 @@
                                 <form method="post" action="">
                                     {% csrf_token %}
                                     <input name="alert_id" type="hidden" data-bind="value: id">
-                                    <button type="submit" name="activate" class="btn btn-success" data-bind="visible: !isActive">Activate</button>
+                                    <button type="submit" name="activate" class="btn btn-primary" data-bind="visible: !isActive">Activate</button>
                                     <button type="submit" name="deactivate" class="btn btn-danger" data-bind="visible: isActive">Deactivate</button>
                                 </form>
                             </td>
