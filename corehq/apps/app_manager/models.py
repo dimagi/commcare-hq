@@ -1225,6 +1225,7 @@ class FormBase(DocumentSchema):
         # performs filtering so it's a drop-in replacement for get_questions
         def matches_params(question):
             return include_groups or not question.get('is_group')
+        # it is important that this is called with the same params every time
         questions = self.get_questions([], include_triggers=True, include_groups=True)
         return [q for q in questions if matches_params(q)]
 
