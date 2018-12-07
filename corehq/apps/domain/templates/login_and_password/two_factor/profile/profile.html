@@ -14,7 +14,7 @@
               <form method="post" action="{% url 'two_factor:phone_delete' phone.id %}"
                     onsubmit="return confirm('Are you sure?')">
                 {% csrf_token %}
-                <button class="btn btn-xs btn-warning"
+                <button class="btn btn-xs btn-danger"
                         type="submit">{% trans "Unregister" %}</button>
               </form>
             </li>
