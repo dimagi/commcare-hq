@@ -52,12 +52,10 @@ hqDefine('app_manager/js/case_config_utils', function () {
                     form_unique_id: formUniqueId,
                 },
                 success: function (data) {
-                    $el.addClass('btn-success').removeClass('btn-danger');
                     questions_observable(data);
                     $el.find('i').removeClass('fa-spin');
                 },
                 error: function () {
-                    $el.removeClass('btn-success').addClass('btn-danger');
                     $el.find('i').removeClass('fa-spin');
                     hqImport("hqwebapp/js/alert_user").alert_user(gettext("Something went wrong refreshing "
                                + "your form properties. Please refresh the page and try again", "danger"));

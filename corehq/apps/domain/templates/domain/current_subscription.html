@@ -83,7 +83,7 @@
                                 <p class="form-control-text">{{ plan.date_end }}</p>
                                 {% if plan.next_subscription.can_renew %}
                                     <a href="{{ plan.next_subscription.renew_url }}"
-                                       class="btn btn-success">
+                                       class="btn btn-primary">
                                         {% trans "Renew Plan" %}
                                     </a>
                                 {% endif %}
@@ -167,7 +167,7 @@
                             <div class="col-sm-10 col-sm-offset-2">
                                 {% if can_purchase_credits %}
                                     <button type="button"
-                                            class="btn btn-success"
+                                            class="btn btn-primary"
                                             data-toggle="modal"
                                             data-target="#paymentModal"
                                             data-bind="click: function(){triggerPayment($root.paymentHandler.CREDIT_CARD)}">
