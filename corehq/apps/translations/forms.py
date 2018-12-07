@@ -89,7 +89,6 @@ class PullResourceForm(forms.Form):
 
 
 class AppTranslationsForm(forms.Form):
-    form_action = 'create'
     app_id = forms.ChoiceField(label=ugettext_lazy("App"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy("Version"), required=False,
                                  help_text=ugettext_lazy("Leave blank to use current application state"))
@@ -104,16 +103,11 @@ class AppTranslationsForm(forms.Form):
     update_resource = forms.CharField(initial='no', required=False)
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
-    source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
-                                    choices=langcodes.get_all_langs_for_select(),
-                                    initial="en"
-                                    )
     # Unfortunately transifex api does not provide a way to pull all possible target languages and
     # allow us to just add a checkbox instead of selecting a single/multiple target languages at once
     target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
                                     choices=([(None, ugettext_lazy('Select Target Language'))] +
                                              langcodes.get_all_langs_for_select()),
-                                    help_text=ugettext_lazy("Leave blank to skip"),
                                     required=False,
                                     )
     action = forms.CharField(widget=forms.HiddenInput)
@@ -154,7 +148,6 @@ class AppTranslationsForm(forms.Form):
             'version',
             'use_version_postfix',
             'transifex_project_slug',
-            hqcrispy.Field('source_lang', css_class="ko-select2"),
             'action',
         ]
 
@@ -176,7 +169,7 @@ class AppTranslationsForm(forms.Form):
     @classmethod
     def form_for(cls, form_action):
         if form_action == 'create':
-            return cls
+            return CreateAppTranslationsForm
         elif form_action == 'update':
             return UpdateAppTranslationsForm
         elif form_action == 'push':
@@ -189,7 +182,22 @@ class AppTranslationsForm(forms.Form):
             return DeleteAppTranslationsForm
 
 
-class UpdateAppTranslationsForm(AppTranslationsForm):
+class CreateAppTranslationsForm(AppTranslationsForm):
+    form_action = 'create'
+    source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
+                                    choices=langcodes.get_all_langs_for_select(),
+                                    initial="en"
+                                    )
+
+    def form_fields(self):
+        form_fields = super(CreateAppTranslationsForm, self).form_fields()
+        form_fields.extend([
+            hqcrispy.Field('source_lang', css_class="ko-select2")
+        ])
+        return form_fields
+
+
+class UpdateAppTranslationsForm(CreateAppTranslationsForm):
     form_action = 'update'
     update_resource = forms.CharField(initial='yes')
 
