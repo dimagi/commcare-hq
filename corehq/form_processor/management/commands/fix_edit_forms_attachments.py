@@ -4,7 +4,6 @@ from __future__ import print_function
 
 from django.core.management.base import BaseCommand, CommandError
 from collections import defaultdict
-import uuid
 import datetime
 
 from io import open
@@ -12,7 +11,7 @@ import csv342 as csv
 
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import XFormOperationSQL, BlobMeta
+from corehq.form_processor.models import XFormOperationSQL
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.util.log import with_progress_bar
