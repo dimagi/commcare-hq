@@ -192,12 +192,12 @@ class AppTranslationsGenerator:
         return TransifexBlacklist.objects.filter(domain=self.domain, app_id=self.app_id).all()
 
     def _filter_invalid_rows_for_module(self, rows, module_id, case_property_index,
-                                        list_or_detail_index, default_en_index):
+                                        list_or_detail_index, default_lang_index):
         valid_rows = []
         for i, row in enumerate(rows):
             list_or_detail = row[list_or_detail_index]
             case_property = row[case_property_index]
-            default_en = row[default_en_index]
+            default_lang = row[default_lang_index]
             in_blacklist = any(
                 True
                 for trans in self._blacklisted_translations
@@ -205,7 +205,7 @@ class AppTranslationsGenerator:
                     trans.module_id == module_id
                     and trans.field_type == list_or_detail
                     and trans.field_name == case_property
-                    and (trans.display_text == default_en if trans.display_text else True)
+                    and (trans.display_text == default_lang if trans.display_text else True)
                 )
             )
             if not in_blacklist:
@@ -233,9 +233,8 @@ class AppTranslationsGenerator:
             if type_and_id.type == "Module":
                 case_property_index = self._get_header_index(sheet_name, 'case_property')
                 list_or_detail_index = self._get_header_index(sheet_name, 'list_or_detail')
-                default_en_index = self._get_header_index(sheet_name, 'default_en')
                 rows = self._filter_invalid_rows_for_module(rows, type_and_id.id, case_property_index,
-                                                            list_or_detail_index, default_en_index)
+                                                            list_or_detail_index, default_lang_index)
 
                 def occurrence(_row):
                     case_property = _row[case_property_index]

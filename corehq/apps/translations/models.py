@@ -137,7 +137,7 @@ class TransifexBlacklist(models.Model):
     )
     field_name = models.TextField(help_text=FIELD_NAME_HELP)
     display_text = models.TextField(
-        help_text="The default English translation for this detail/list. "
+        help_text="The default language's translation for this detail/list. "
         "If display_text is not filled out then all translations will be blacklisted")
 
 
