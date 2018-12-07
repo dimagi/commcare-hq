@@ -100,7 +100,7 @@ class AppTranslationsForm(forms.Form):
         required=False,
         initial='no',
     )
-    update_resource = forms.CharField(initial='no', required=False)
+    update_resource = forms.CharField(initial='no', required=False, widget=forms.HiddenInput)
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
     # Unfortunately transifex api does not provide a way to pull all possible target languages and
@@ -199,7 +199,14 @@ class CreateAppTranslationsForm(AppTranslationsForm):
 
 class UpdateAppTranslationsForm(CreateAppTranslationsForm):
     form_action = 'update'
-    update_resource = forms.CharField(initial='yes')
+    update_resource = forms.CharField(initial='yes', widget=forms.HiddenInput)
+
+    def form_fields(self):
+        form_fields = super(UpdateAppTranslationsForm, self).form_fields()
+        form_fields.extend([
+            'update_resource'
+        ])
+        return form_fields
 
 
 class PushAppTranslationsForm(AppTranslationsForm):
