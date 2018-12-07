@@ -5,6 +5,10 @@
 
 .btn-default {
   .button-variant(@call-to-action-mid; #ffffff; @call-to-action-mid);
+  &[disabled], &.disabled {
+    background-color: @call-to-action-mid;
+    color: #ffffff;
+  }
 }
 
 .btn-primary-dark {
