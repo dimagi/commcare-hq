@@ -5,6 +5,7 @@
 #    `make requirements` or `make upgrade-requirements`
 #
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+-e git+git://github.com/nickpell/openpyxl@master#egg=openpyxl_hyperlink
 alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
@@ -106,7 +107,6 @@ monotonic==1.5            # via eventlet
 msgpack-python==0.5.6
 ndg-httpsclient==0.5.1
 numpy==1.7.1
-openpyxl==2.5.12
 pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.1.1
 pexpect==4.6.0            # via ipython
