@@ -235,7 +235,7 @@ class ExportWriter(object):
                 if row_has_id:
                     row.id = (self._current_primary_id,) + tuple(row.id[1:])
 
-                self.write_row(table_index, row, hyperlink_column_indices)  # (3)
+                self.write_row(table_index, row, hyperlink_column_indices)
 
         self._current_primary_id += 1
 
@@ -245,7 +245,7 @@ class ExportWriter(object):
         but if we were to add a universal validation step,
         such a thing would happen here.
         """
-        return self._write_row(table_index, row, hyperlink_column_indices)  # (4)
+        return self._write_row(table_index, row, hyperlink_column_indices)
 
     def close(self):
         """
