@@ -115,6 +115,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
             }
         });
 
+        $('.save-button-holder').button().on('click', function() {
+            hideCaseTypeChangedWarning();
+        });
+
         // Module filter
         var $moduleFilter = $('#module-filter');
         if ($moduleFilter.length) {
