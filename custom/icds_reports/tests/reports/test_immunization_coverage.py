@@ -53,18 +53,13 @@ class TestImmunizationCoverage(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "all": 570,
-                    "children": 83,
-                    'original_name': ["st1"],
-                    "fillKey": "0%-20%"
-                },
-                "st2": {
-                    "all": 620,
-                    "children": 45,
-                    'original_name': ["st2"],
-                    "fillKey": "0%-20%"
-                }
+                'st4': {'all': 0, 'original_name': ['st4'], 'children': 0, 'fillKey': '0%-20%'},
+                'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
+                'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
+                'st7': {'all': 1, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
+                'st1': {'all': 570, 'original_name': ['st1'], 'children': 83, 'fillKey': '0%-20%'},
+                'st2': {'all': 620, 'original_name': ['st2'], 'children': 45, 'fillKey': '0%-20%'},
+                'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -97,7 +92,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 10.756302521008404)
+        self.assertEquals(data['rightLegend']['average'], 10.747271200671705)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_immunization_coverage_data_map(
@@ -113,7 +108,7 @@ class TestImmunizationCoverage(TestCase):
             [
                 {
                     'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                    'value': "1,190"
+                    'value': "1,191"
                 },
                 {
                     'indicator': (
@@ -126,7 +121,7 @@ class TestImmunizationCoverage(TestCase):
                     'indicator': (
                         '% of children who have recieved complete immunizations required by age 1:'
                     ),
-                    'value': '10.76%'
+                    'value': '10.75%'
                 }
             ]
         )
@@ -221,24 +216,18 @@ class TestImmunizationCoverage(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 14.56140350877193
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 7.258064516129032
-                    }
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 14.56140350877193
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 7.258064516129032
-                    }
+                    {'loc_name': 'st1', 'percent': 14.56140350877193},
+                    {'loc_name': 'st2', 'percent': 7.258064516129032},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -265,9 +254,9 @@ class TestImmunizationCoverage(TestCase):
                                 "in_month": 123
                             },
                             {
-                                "y": 0.10756302521008404,
+                                "y": 0.10747271200671704,
                                 "x": 1493596800000,
-                                "all": 1190,
+                                "all": 1191,
                                 "in_month": 128
                             }
                         ],
@@ -275,14 +264,13 @@ class TestImmunizationCoverage(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 14.56140350877193
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 7.258064516129032
-                    }
+                    {'loc_name': 'st1', 'percent': 14.56140350877193},
+                    {'loc_name': 'st2', 'percent': 7.258064516129032},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )

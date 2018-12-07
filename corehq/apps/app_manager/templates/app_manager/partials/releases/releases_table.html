@@ -195,11 +195,16 @@
             </div>
           </div><!-- .panel-body -->
           <div class="panel-footer">
-            <button class="btn btn-default hide"
-                    data-bind="
-                        openModal: 'revert-build-modal-template',
-                        visible: version() !== $root.currentAppVersion(),
-                        css: {hide: false}">{% trans "Revert to this Version" %}</button>
+              <a class="btn btn-default" target="_blank"
+                 data-bind="attr: { href: hqImport('hqwebapp/js/initial_page_data').reverse('app_form_summary', $data.id()) }">
+                  <i class="fa fa-list-alt"></i>
+                  {% trans "App Summary" %}
+              </a>
+              <button class="btn btn-default hide"
+                      data-bind="
+                             openModal: 'revert-build-modal-template',
+                             visible: version() !== $root.currentAppVersion(),
+                             css: {hide: false}">{% trans "Revert to this Version" %}</button>
             {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
             <button class="btn btn-default" data-toggle="modal" data-target="#app-diff-modal" data-bind="
                 click: function() { $parent.onViewChanges($data.id(), $parent.previousBuildId($index())) }
@@ -207,17 +212,19 @@
                 {% trans "View Changes" %}
             </button>
             {% endif %}
-            <a class="btn"
-               data-bind="
-                openModal: 'deploy-build-modal-template',
-                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                click: clickDeploy
-            ">
-                <span class="fa fa-exclamation-circle hide"
-                      data-bind="visible: build_broken, css: {hide: false}">
-                </span>
-                {% trans "Publish" %}
-            </a>
+            <span class="pull-right">
+                <a class="btn"
+                   data-bind="
+                          openModal: 'deploy-build-modal-template',
+                          css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
+                          click: clickDeploy
+                          ">
+                    <span class="fa fa-exclamation-circle hide"
+                          data-bind="visible: build_broken, css: {hide: false}">
+                    </span>
+                    {% trans "Publish" %}
+                </a>
+            </span>
           </div><!-- .panel-footer -->
         </div><!-- .panel-release -->
     </div> <!-- .releases-container -->

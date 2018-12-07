@@ -563,16 +563,33 @@ def _migrate_form_attachments(sql_form, couch_form):
     """Copy over attachment meta - includes form.xml"""
     attachments = []
     metadb = get_blob_db().metadb
-    for name, blob in six.iteritems(couch_form.blobs):
-        type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
+
+    def try_to_get_blob_meta(parent_id, type_code, name):
         try:
             meta = metadb.get(
-                parent_id=sql_form.form_id,
+                parent_id=parent_id,
                 type_code=type_code,
                 name=name
             )
             assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
+            return meta
         except BlobMeta.DoesNotExist:
+            return None
+
+    for name, blob in six.iteritems(couch_form.blobs):
+        type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
+        meta = try_to_get_blob_meta(sql_form.form_id, type_code, name)
+
+        # there was a bug in a migration causing the type code for many form attachments to be set as form_xml
+        # this checks the db for a meta resembling this and fixes it for postgres
+        # https://github.com/dimagi/commcare-hq/blob/3788966119d1c63300279418a5bf2fc31ad37f6f/corehq/blobs/migrate.py#L371
+        if not meta and name != "form.xml":
+            meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, name)
+            if meta:
+                meta.type_code = CODES.form_attachment
+                meta.save()
+
+        if not meta:
             meta = metadb.new(
                 domain=couch_form.domain,
                 name=name,
@@ -583,6 +600,7 @@ def _migrate_form_attachments(sql_form, couch_form):
                 key=blob.key,
             )
             meta.save()
+
         attachments.append(meta)
     sql_form.attachments_list = attachments
 
@@ -737,7 +755,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
             return False
 
         self.retries -= 1
-        sleep(1)
+        gevent.sleep(1)
         return True
 
 

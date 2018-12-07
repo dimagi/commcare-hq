@@ -192,12 +192,16 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
         columns = list(map(_transform_column, columns))
 
         group_by = ["state_id"]
+        child_location = 'district_is_test'
         if aggregation_level > 1:
             group_by.append("district_id")
+            child_location = 'block_is_test'
         if aggregation_level > 2:
             group_by.append("block_id")
+            child_location = 'supervisor_is_test'
         if aggregation_level > 3:
             group_by.append("supervisor_id")
+            child_location = 'awc_is_test'
 
         group_by.append("date")
 
@@ -207,7 +211,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
         ) (
             SELECT {calculations}
             FROM "{tablename}"
-            WHERE aggregation_level = {aggregation_level}
+            WHERE aggregation_level = {aggregation_level} AND {child_is_test} = 0
             GROUP BY {group_by}
         )
         """.format(
@@ -215,7 +219,8 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by),
-            aggregation_level=aggregation_level + 1
+            aggregation_level=aggregation_level + 1,
+            child_is_test=child_location
         )
 
     def indexes(self):

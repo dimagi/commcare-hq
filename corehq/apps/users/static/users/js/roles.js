@@ -33,6 +33,17 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.manageAppReleasePermissions = {
+                    all: data.permissions.manage_releases,
+                    specific: ko.utils.arrayMap(root.appsList, function (app) {
+                        return {
+                            path: app._id,
+                            name: app.name,
+                            value: data.permissions.manage_releases_list.indexOf(app._id) !== -1,
+                        };
+                    }),
+                };
+
                 self = ko.mapping.fromJS(data);
                 self.reportPermissions.filteredSpecific = ko.computed(function () {
                     return ko.utils.arrayFilter(self.reportPermissions.specific(), function (report) {
@@ -65,6 +76,12 @@ hqDefine('users/js/roles',[
                 }), function (app) {
                     return app.path;
                 });
+                data.permissions.manage_releases = data.manageAppReleasePermissions.all;
+                data.permissions.manage_releases_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageAppReleasePermissions.specific, function (app) {
+                    return app.value;
+                }), function (app) {
+                    return app.path;
+                });
                 return data;
             },
         };
@@ -72,6 +89,7 @@ hqDefine('users/js/roles',[
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
         self.webAppsList = o.webAppsList;
+        self.appsList = o.appsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.getReportObject = function (path) {

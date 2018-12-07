@@ -144,6 +144,7 @@ class CcsRecordMonthly(models.Model):
     opened_on = models.DateField(blank=True, null=True)
     valid_visits = models.SmallIntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
+    closed = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -469,7 +470,7 @@ class AggAwc(models.Model):
 
 
 class AggregateLsAWCVisitForm(models.Model):
-    unique_awc_vists = models.IntegerField(help_text='unique awc visits made by LS')
+    awc_visits = models.IntegerField(help_text='awc visits made by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
@@ -536,7 +537,7 @@ class AggLs(models.Model):
     Model refers to the agg_ls table in database.
     Table contains the aggregated data from LS ucrs.
     """
-    unique_awc_vists = models.IntegerField(help_text='unique awc visits made by LS')
+    awc_visits = models.IntegerField(help_text='awc visits made by LS')
     vhnd_observed = models.IntegerField(help_text='VHND forms submitted by LS')
     beneficiary_vists = models.IntegerField(help_text='Beneficiary visits done by LS')
     month = models.DateField()
@@ -644,6 +645,7 @@ class AggCcsRecord(models.Model):
     def aggregate(cls, month):
         helper = AggCcsRecordAggregationHelper(month)
         agg_query, agg_params = helper.aggregation_query()
+        update_queries = helper.update_queries()
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
         index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
         index_queries = [query for index_list in index_queries for query in index_list]
@@ -652,6 +654,8 @@ class AggCcsRecord(models.Model):
             with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
+                for query, params in update_queries:
+                    cursor.execute(query, params)
                 for query in rollup_queries:
                     cursor.execute(query)
                 for query in index_queries:
@@ -737,6 +741,7 @@ class AggChildHealth(models.Model):
     def aggregate(cls, month):
         helper = AggChildHealthAggregationHelper(month)
         agg_query, agg_params = helper.aggregation_query()
+        update_queries = helper.update_queries()
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
         index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
         index_queries = [query for index_list in index_queries for query in index_list]
@@ -745,6 +750,8 @@ class AggChildHealth(models.Model):
             with transaction.atomic(using=db_for_read_write(cls)):
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
+                for query, params in update_queries:
+                    cursor.execute(query, params)
                 for query in rollup_queries:
                     cursor.execute(query)
                 for query in index_queries:
