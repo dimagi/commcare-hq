@@ -25,7 +25,6 @@ gunicorn
 lxml==3.4.4
 kafka-python~=1.4
 mock==2.0.0
-openpyxl~=2.5
 Pillow==5.2.0
 phonenumberslite==8.8.9
 psycopg2~=2.7
@@ -112,3 +111,4 @@ werkzeug==0.11.15
 # but once they're in requirements.txt we will strip the -e
 
 -e git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+-e git+git://github.com/nickpell/openpyxl@master#egg=openpyxl_hyperlink
