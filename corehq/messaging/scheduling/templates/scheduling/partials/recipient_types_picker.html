@@ -2,12 +2,12 @@
     {% for code, description in schedule_form.recipient_types.field.choices %}
         <span {% if not read_only_mode %}
               class="btn btn-default"
-              data-bind="css: {'btn-success': recipientTypeSelected('{{ code }}'),
+              data-bind="css: {'btn-primary': recipientTypeSelected('{{ code }}'),
                                'active': !recipientTypeSelected('{{ code }}')},
                          click: function(data, event) {toggleRecipientType('{{ code }}');}"
               {% else %}
               class="btn btn-default disabled"
-              data-bind="css: {'btn-success': recipientTypeSelected('{{ code }}')}"
+              data-bind="css: {'btn-primary': recipientTypeSelected('{{ code }}')}"
               {% endif %}
               >
         {{ description }}</span>

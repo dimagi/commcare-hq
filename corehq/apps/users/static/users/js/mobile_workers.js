@@ -12,7 +12,7 @@ hqDefine("users/js/mobile_workers", function () {
             var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
                 $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
 
-            $modal.find(".btn-danger, .btn-success").addSpinnerToButton();
+            $modal.find(".btn").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse(urlName, self.user_id()),
