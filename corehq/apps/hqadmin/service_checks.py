@@ -18,6 +18,7 @@ from celery import Celery
 import requests
 
 from corehq.util.timer import TimingContext
+from pillowtop.utils import get_all_pillows_json
 from soil import heartbeat
 
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
@@ -214,6 +215,42 @@ def check_formplayer():
         return ServiceStatus(res.ok, msg)
 
 
+def check_pillowtop():
+    def changes_behind(pillow_meta):
+        lag = 0
+        for k, offset in pillow_meta['offsets'].items():
+            # seq_format is 'json' for KafkaChangeFeed and 'text' for
+            # ChangeFeed. The former seems to have offsets that are greater
+            # than the corresponding seq, while the latter has a seq value
+            # that's greater than the offset
+            if pillow_meta['seq_format'] == 'json':
+                seq = pillow_meta['seq'].get(k, 0)
+                lag += offset - seq
+            else:
+                seq = pillow_meta['seq']
+                lag += seq - offset
+        return lag
+
+    bad_pillows = []
+    for pillow_meta in get_all_pillows_json():
+        # numbers chosen arbitrarily
+        if (changes_behind(pillow_meta) > 100
+                # More than two days without a checkpoint?  Probably intentionally inactive
+                and 60 * 60 * 48 > pillow_meta['seconds_since_last'] > 60 * 10):
+            bad_pillows.append("{} ({}, {})".format(pillow_meta['name'],
+                                                    changes_behind(pillow_meta),
+                                                    pillow_meta['time_since_last']))
+
+    if bad_pillows:
+        return ServiceStatus(
+            False,
+            "The following pillows have old checkpoints and pending changes: {}".format(
+                ", ".join(bad_pillows)
+            )
+        )
+    return ServiceStatus(True, "No pillows have old checkpoints and pending changes.")
+
+
 def run_checks(checks_to_do):
     greenlets = []
     with TimingContext() as timer:
@@ -277,5 +314,9 @@ CHECKS = {
     'rabbitmq': {
         "always_check": True,
         "check_func": check_rabbitmq,
+    },
+    'pillowtop': {
+        "always_check": False,
+        "check_func": check_pillowtop,
     },
 }
