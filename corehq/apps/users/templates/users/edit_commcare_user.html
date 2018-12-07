@@ -120,7 +120,7 @@
                           method="post">
                         <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
                         {% csrf_token %}
-                            <button type="submit" class="btn btn-info">
+                            <button type="submit" class="btn btn-default">
                                 {% if couch_user.is_demo_user %}
                                     <i class="icon-trash"></i>
                                     {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
