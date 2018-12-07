@@ -752,7 +752,7 @@ class HQMediaMixin(Document):
             if path not in permitted_paths:
                 map_item = self.multimedia_map[path]
                 deleted_media.append((path, map_item, None))
-                if not allow_deletion:
+                if allow_deletion:
                     map_changed = True
                     del self.multimedia_map[path]
 
