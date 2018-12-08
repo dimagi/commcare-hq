@@ -53,10 +53,14 @@
                 </form>
             </div>
             <div id="del-trans-form" class="tab-pane">
+                {% if delete_form %}
                 <form class="form form-horizontal" name="product" method="post">
                     <legend>{% trans "Delete Project" %}</legend>
                     {% crispy delete_form %}
                 </form>
+                {% else %}
+                    <b>{% trans "Action permitted to only users with staff access" %}</b>
+                {% endif %}
             </div>
         </div>
     {% endif %}

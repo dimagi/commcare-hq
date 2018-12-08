@@ -270,7 +270,8 @@ class AppTranslations(BaseTranslationsView):
             context['push_form'] = AppTranslationsForm.form_for('push')(self.domain)
             context['pull_form'] = AppTranslationsForm.form_for('pull')(self.domain)
             context['backup_form'] = AppTranslationsForm.form_for('backup')(self.domain)
-            context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
+            if self.request.user.is_staff:
+                context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
         form_action = self.request.POST.get('action')
         if form_action:
             context[form_action + '_form'] = self.translations_form
