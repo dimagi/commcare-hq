@@ -35,9 +35,8 @@ class Toggle(Document):
         else:
             rev_not_provided = False
         self.last_modified = datetime.utcnow()
-        super(Toggle, self).save(**params)
         obj, created = SqlToggle.objects.get_or_create(
-            id=self._doc['_id'], defaults={'document': self, 'rev': self._rev}
+            id=self._doc['_id'], defaults={'document': self, 'rev': self._rev or 1}
         )
         if created is False:
             if rev_not_provided or self._rev != obj.rev:
@@ -57,12 +56,6 @@ class Toggle(Document):
             return cls.get(docid)
         except ResourceNotFound:
             return None
-
-    @classmethod
-    def couch_get(cls, docid):
-        if not docid.startswith(TOGGLE_ID_PREFIX):
-            docid = generate_toggle_id(docid)
-        return super(Toggle, cls).get(docid, rev=None, db=None, dynamic_properties=True)
 
     @classmethod
     def get(cls, docid):
@@ -91,7 +84,6 @@ class Toggle(Document):
 
     def delete(self):
         SqlToggle.objects.filter(id=self._doc['_id']).delete()
-        super(Toggle, self).delete()
         self.bust_cache()
 
     def bust_cache(self):
