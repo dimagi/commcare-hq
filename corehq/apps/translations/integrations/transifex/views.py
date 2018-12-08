@@ -285,7 +285,7 @@ class AppTranslations(BaseTranslationsView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'],
                          use_version_postfix='yes' in form_data['use_version_postfix'],
-                         update_resource='yes' in form_data.get('update_resource', []))
+                         update_resource=(form_data['action'] == 'update'))
 
     def perform_push_request(self, request, form_data):
         if form_data['target_lang']:
