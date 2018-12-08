@@ -100,8 +100,8 @@ class AppTranslationsForm(forms.Form):
         required=False,
         initial='no',
         help_text=ugettext_lazy("Check this if you want to maintain different resources separately for different "
-                                "versions of the application. Leave it unchecked for continuous update to the same "
-                                "set of resources")
+                                "versions of the application. Leave it unchecked for continuous update to the same"
+                                " set of resources")
     )
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
@@ -210,8 +210,10 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
 class PullAppTranslationsForm(AppTranslationsForm):
     form_action = 'pull'
-    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock translations for resources that are being pulled"),
-                                           help_text=ugettext_lazy("This will lock the resource for all languages"),
+    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock translations for resources that are being "
+                                                               "pulled"),
+                                           help_text=ugettext_lazy("Please note that this will lock the resource"
+                                                                   " for all languages"),
                                            required=False,
                                            initial=False)
 
