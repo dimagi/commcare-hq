@@ -132,12 +132,12 @@ class AppTranslationsForm(forms.Form):
                       for slug in settings.TRANSIFEX_DETAILS.get('project').get(domain))
             )
         form_fields = self.form_fields()
-        form_fields.append(twbscrispy.StrictButton(
+        form_fields.append(hqcrispy.Field(StrictButton(
             ugettext_lazy("Submit"),
             type="submit",
             css_class="btn btn-primary btn-lg disable-on-submit",
             onclick="return confirm('%s')" % ugettext_lazy("Please confirm that you want to proceed?")
-        ))
+        )))
         self.helper.layout = crispy.Layout(
             *form_fields
         )
@@ -145,11 +145,11 @@ class AppTranslationsForm(forms.Form):
 
     def form_fields(self):
         return [
-            'app_id',
-            'version',
-            'use_version_postfix',
-            'transifex_project_slug',
-            'action',
+            hqcrispy.Field('app_id'),
+            hqcrispy.Field('version'),
+            hqcrispy.Field('use_version_postfix'),
+            hqcrispy.Field('transifex_project_slug'),
+            hqcrispy.Field('action')
         ]
 
     def clean(self):
@@ -221,8 +221,8 @@ class PullAppTranslationsForm(AppTranslationsForm):
         form_fields = super(PullAppTranslationsForm, self).form_fields()
         form_fields.extend([
             hqcrispy.Field('target_lang', css_class="ko-select2"),
-            'lock_translations',
-            'perform_translated_check'
+            hqcrispy.Field('lock_translations'),
+            hqcrispy.Field('perform_translated_check'),
         ])
         return form_fields
 
@@ -232,7 +232,7 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(DeleteAppTranslationsForm, self).form_fields()
-        form_fields.append('perform_translated_check')
+        form_fields.append(hqcrispy.Field('perform_translated_check'))
         return form_fields
 
 
