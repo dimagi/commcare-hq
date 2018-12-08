@@ -101,7 +101,7 @@ class AppTranslationsForm(forms.Form):
         initial='no',
         help_text=ugettext_lazy("Check this if you want to maintain different resources separately for different "
                                 "versions of the application. Leave it unchecked for continuous update to the same "
-                                "set of resources.")
+                                "set of resources")
     )
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
@@ -111,11 +111,10 @@ class AppTranslationsForm(forms.Form):
                                     required=False,
                                     )
     action = forms.CharField(widget=forms.HiddenInput)
-    perform_translated_check = forms.BooleanField(label=ugettext_lazy("Check for translation completion"),
-                                                  help_text=ugettext_lazy(
-                                                      "Check for translation completion before pulling files"),
-                                                  required=False,
-                                                  initial=True)
+    perform_translated_check = forms.BooleanField(
+        label=ugettext_lazy("Confirm that resources are completely translated before performing request"),
+        required=False,
+        initial=True)
 
     def __init__(self, domain, *args, **kwargs):
         super(AppTranslationsForm, self).__init__(*args, **kwargs)
@@ -211,9 +210,8 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
 class PullAppTranslationsForm(AppTranslationsForm):
     form_action = 'pull'
-    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock resources"),
-                                           help_text=ugettext_lazy(
-                                               "Lock translations for resources that are being pulled"),
+    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock translations for resources that are being pulled"),
+                                           help_text=ugettext_lazy("This will lock the resource for all languages"),
                                            required=False,
                                            initial=False)
 
