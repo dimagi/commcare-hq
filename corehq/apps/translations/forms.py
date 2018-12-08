@@ -190,9 +190,7 @@ class CreateAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(CreateAppTranslationsForm, self).form_fields()
-        form_fields.extend([
-            hqcrispy.Field('source_lang', css_class="ko-select2")
-        ])
+        form_fields.append(hqcrispy.Field('source_lang', css_class="ko-select2"))
         return form_fields
 
 
@@ -205,9 +203,7 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(PushAppTranslationsForm, self).form_fields()
-        form_fields.extend([
-            hqcrispy.Field('target_lang', css_class="ko-select2")
-        ])
+        form_fields.append(hqcrispy.Field('target_lang', css_class="ko-select2"))
         return form_fields
 
 
@@ -234,9 +230,7 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(DeleteAppTranslationsForm, self).form_fields()
-        form_fields.extend([
-            'perform_translated_check'
-        ])
+        form_fields.append('perform_translated_check')
         return form_fields
 
 
