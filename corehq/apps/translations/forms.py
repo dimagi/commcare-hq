@@ -89,28 +89,31 @@ class PullResourceForm(forms.Form):
 
 
 class AppTranslationsForm(forms.Form):
-    app_id = forms.ChoiceField(label=ugettext_lazy("App"), choices=(), required=True)
-    version = forms.IntegerField(label=ugettext_lazy("Version"), required=False,
-                                 help_text=ugettext_lazy("Leave blank to use current application state"))
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
+    version = forms.IntegerField(label=ugettext_lazy("Application Version"), required=False,
+                                 help_text=ugettext_lazy("Leave blank to use current saved state"))
     use_version_postfix = forms.MultipleChoiceField(
         choices=[
-            ('yes', 'Use Version Postfix in resources'),
+            ('yes', 'Track resources per version'),
         ],
         widget=forms.CheckboxSelectMultiple(),
         required=False,
         initial='no',
+        help_text=ugettext_lazy("Check this if you want to maintain different resources separately for different "
+                                "versions of the application. Leave it unchecked for continuous update to the same "
+                                "set of resources.")
     )
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
     # Unfortunately transifex api does not provide a way to pull all possible target languages and
     # allow us to just add a checkbox instead of selecting a single/multiple target languages at once
-    target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
-                                    choices=([(None, ugettext_lazy('Select Target Language'))] +
+    target_lang = forms.ChoiceField(label=ugettext_lazy("Translated Language"),
+                                    choices=([(None, ugettext_lazy('Select Translated Language'))] +
                                              langcodes.get_all_langs_for_select()),
                                     required=False,
                                     )
     action = forms.CharField(widget=forms.HiddenInput)
-    perform_translated_check = forms.BooleanField(label=ugettext_lazy("Check for completion"),
+    perform_translated_check = forms.BooleanField(label=ugettext_lazy("Check for translation completion"),
                                                   help_text=ugettext_lazy(
                                                       "Check for translation completion before pulling files"),
                                                   required=False,
@@ -183,7 +186,7 @@ class AppTranslationsForm(forms.Form):
 
 class CreateAppTranslationsForm(AppTranslationsForm):
     form_action = 'create'
-    source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
+    source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language on Transifex"),
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
                                     )
