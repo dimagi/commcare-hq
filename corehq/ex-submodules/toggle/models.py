@@ -59,10 +59,19 @@ class Toggle(Document):
             return None
 
     @classmethod
-    def get(cls, docid):
+    def couch_get(cls, docid):
         if not docid.startswith(TOGGLE_ID_PREFIX):
             docid = generate_toggle_id(docid)
         return super(Toggle, cls).get(docid, rev=None, db=None, dynamic_properties=True)
+
+    @classmethod
+    def get(cls, docid):
+        if not docid.startswith(TOGGLE_ID_PREFIX):
+            docid = generate_toggle_id(docid)
+        tog = SqlToggle.objects.filter(id=docid).first()
+        if tog is None:
+            raise ResourceNotFound
+        return tog.document
 
     def add(self, item):
         """
