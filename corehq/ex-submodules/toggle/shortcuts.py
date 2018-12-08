@@ -25,7 +25,12 @@ def set_toggle(slug, item, enabled, namespace=None):
         try:
             toggle_doc = Toggle.get(slug)
         except ResourceNotFound:
-            toggle_doc = Toggle(slug=slug, enabled_users=[])
+            try:
+                # UGH. Tests don't actually clean up toggles...
+                # For now we'll fall back on the couch doc to avoid Resource Conflicts
+                toggle_doc = Toggle.couch_get(slug)
+            except ResourceNotFound:
+                toggle_doc = Toggle(slug=slug, enabled_users=[])
         if enabled:
             toggle_doc.add(ns_item)
         else:

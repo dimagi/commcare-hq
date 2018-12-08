@@ -4,6 +4,6 @@
 4. Removing the couch views
 5. Stop saving to couch
 
-Document | Owner | Phase
----------|-------|------
-Toggle | @emord | 1
+Document | Owner | Phase Completed
+---------|-------|----------------
+Toggle | @emord | 3
