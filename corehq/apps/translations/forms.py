@@ -136,6 +136,7 @@ class AppTranslationsForm(forms.Form):
             ugettext_lazy("Submit"),
             type="submit",
             css_class="btn btn-primary btn-lg disable-on-submit",
+            onclick="return confirm('%s')" % ugettext_lazy("Please confirm that you want to proceed?")
         ))
         self.helper.layout = crispy.Layout(
             *form_fields
