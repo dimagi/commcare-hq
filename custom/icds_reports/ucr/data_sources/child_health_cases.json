@@ -1316,6 +1316,15 @@
           "type": "constant",
           "constant": null
         }
+      },
+      {
+        "column_id": "mother_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "mother_id"
+        }
       }
     ],
     "named_expressions": {
