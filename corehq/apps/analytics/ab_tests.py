@@ -8,7 +8,7 @@ from memoized import memoized
 from corehq.apps.accounting.models import Subscription
 
 
-logger = logging.getLogger('')
+logger = logging.getLogger(__name__)
 logger.setLevel('DEBUG')
 
 

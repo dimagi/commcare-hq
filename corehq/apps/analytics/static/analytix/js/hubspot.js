@@ -7,11 +7,13 @@ hqDefine('analytix/js/hubspot', [
     'analytix/js/initial',
     'analytix/js/logging',
     'analytix/js/utils',
+    'analytix/js/kissmetrix',
 ], function (
     _,
     initialAnalytics,
     logging,
-    utils
+    utils,
+    kissmetrics
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
@@ -58,8 +60,7 @@ hqDefine('analytix/js/hubspot', [
             target: "#get-demo-cta-form-content",
             css: "",
             onFormReady: function () {
-                var kissmetrics = hqImport('analytix/js/kissmetrix'),
-                    $hubspotFormModal = $('#cta-form-get-demo'),
+                var $hubspotFormModal = $('#cta-form-get-demo'),
                     hasInteractedWithForm = false;
 
                 $hubspotFormModal.on('shown.bs.modal', function () {
@@ -84,8 +85,7 @@ hqDefine('analytix/js/hubspot', [
                 var email = $form.find('[name="email"]').val(),
                     firstname = $form.find('[name="firstname"]').val(),
                     lastname = $form.find('[name="lastname"]').val(),
-                    newUrl = document.location.href + '?email=' + email + '&name=' + firstname + '%20' + lastname,
-                    kissmetrics = hqImport('analytix/js/kissmetrix');
+                    newUrl = document.location.href + '?email=' + email + '&name=' + firstname + '%20' + lastname;
 
                 kissmetrics.track.event("Demo Workflow - Contact Info Received");
 
@@ -105,7 +105,7 @@ hqDefine('analytix/js/hubspot', [
                             // The style attribute changes when the form is successfully
                             // submitted.
                             var lastKnownHeight = 0,
-                                observer = new MutationObserver(function (mutations) {  // eslint-disable-line eslint-dimagi/no-unblessed-new
+                                observer = new MutationObserver(function (mutations) {
                                     mutations.forEach(function () {
                                         var newHeight = $('#SOI_commcaredemoform').height();
                                         if (newHeight < lastKnownHeight) {

@@ -9,12 +9,14 @@ hqDefine('analytix/js/drift', [
     'analytix/js/logging',
     'analytix/js/utils',
     'analytix/js/hubspot',
+    'analytix/js/kissmetrix',
 ], function (
     _,
     initialAnalytics,
     logging,
     utils,
-    hubspot
+    hubspot,
+    kissmetrics
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('drift'),
@@ -53,8 +55,6 @@ hqDefine('analytix/js/drift', [
 
             $('.schedule-demo-drift-cta').click(function (e) {
                 e.preventDefault();
-
-                var kissmetrics = hqImport('analytix/js/kissmetrix');
 
                 _drift.on('startConversation', function () {
                     kissmetrics.track.event("Demo Workflow - Viewed Form");

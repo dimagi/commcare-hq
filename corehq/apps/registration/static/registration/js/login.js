@@ -7,7 +7,7 @@ $(function () {
         container: 'body',
     });
 
-    hqImport("analytix/js/hubspot").then(function () {  // because hubspot loads after kissmetrics
+    hqImport("analytix/js/kissmetrix").whenReadyAlways(function () {
         var kissmetrics = hqImport('analytix/js/kissmetrix');
 
         $('#cta-form-get-demo-button-body').click(function () {
