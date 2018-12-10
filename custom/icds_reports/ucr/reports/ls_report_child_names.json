@@ -15,7 +15,7 @@
     "icds"
   ],
   "report_id": "static-ls_report_child_names",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-child_health_cases",
   "config": {
     "title": "LS Report - Child Names (Static)",
     "description": "",
@@ -74,16 +74,16 @@
         "type": "dynamic_choice_list",
         "slug": "owner_id"
       },
-	  {  
+      {
         "required": false,
-		"type": "numeric",
+        "type": "numeric",
         "slug": "is_migrated",
         "field": "is_migrated",
         "display": "Whether Migrated"
       },
       {
         "required": false,
-		"type": "numeric",
+        "type": "numeric",
         "slug": "is_availing",
         "field": "is_availing",
         "display": "Whether Availing Services"
@@ -96,7 +96,7 @@
         "format": "default",
         "aggregation": "simple",
         "column_id": "name",
-        "field": "name",
+        "field": "person_name",
         "transform": { },
         "calculate_total": false,
         "type": "field",
