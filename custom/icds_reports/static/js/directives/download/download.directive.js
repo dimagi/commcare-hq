@@ -334,21 +334,21 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.onSelectYear = function (year) {
-        date = new Date();
-        latest = date;
+        var date = new Date();
+        var latest = date;
         if (vm.isIncentiveReportSelected()) {
-            offset = date.getDate() < 15 ? 2 : 1;
+            var offset = date.getDate() < 15 ? 2 : 1;
             latest.setMonth(date.getMonth() - offset);
         }
         if (year.id > latest.getFullYear()) {
-            vm.years =  _.filter(vm.yearsCopy, function(y) {
+            vm.years =  _.filter(vm.yearsCopy, function (y) {
                 return y.id <= latest.getFullYear();
             });
             vm.selectedYear = latest.getFullYear();
             vm.selectedMonth = 12;
         }
         if (year.id === latest.getFullYear()) {
-            vm.months = _.filter(vm.monthsCopy, function(month) {
+            vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
             vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
