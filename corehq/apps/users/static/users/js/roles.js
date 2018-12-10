@@ -144,7 +144,7 @@ hqDefine('users/js/roles',[
         self.setRoleBeingDeleted = function (role) {
             if (!role._id || !role.hasUsersAssigned) {
                 var title = gettext("Delete Role: ") + role.name();
-                var modalConfirmation = gettext("Are you sure you want to delete this role?") + role.name();
+                var modalConfirmation = gettext("Are you sure you want to delete the role ") + role.name() + "?";
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
                 roleCopy.modalTitle = title;
                 roleCopy.modalConfirmation = modalConfirmation;
