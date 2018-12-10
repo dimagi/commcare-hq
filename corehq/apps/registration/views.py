@@ -126,7 +126,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            ab_test = ab_tests.ABTest(ab_tests.APPCUES_V3_APP, self.request)
+            ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
             appcues_ab_test = ab_test.context['version']
             self._create_new_account(reg_form, additional_hubspot_data={
                 "appcues_test": appcues_ab_test,
@@ -202,7 +202,11 @@ class UserRegistrationView(BasePageView):
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
-        return super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
+        response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
+        if settings.IS_SAAS_ENVIRONMENT:
+            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, request).update_response(
+                response)
+        return response
 
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
@@ -225,12 +229,16 @@ class UserRegistrationView(BasePageView):
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
-        return {
+        context = {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
         }
+        if settings.IS_SAAS_ENVIRONMENT:
+            context['demo_workflow_ab'] = ab_tests.SessionAbTest(
+                ab_tests.DEMO_WORKFLOW, self.request).context
+        return context
 
     @property
     def page_url(self):
