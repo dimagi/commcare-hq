@@ -30,7 +30,7 @@
         <div class="btn-toolbar" style="margin-bottom: 20px;">
 
           {% if location.get_id and location.location_type_object.can_have_children %}
-          <a class="btn btn-success" href="{% url "create_location" domain %}?parent={{ location.get_id }}">
+          <a class="btn btn-primary" href="{% url "create_location" domain %}?parent={{ location.get_id }}">
             <i class="fa fa-plus"></i> {% trans "New Child Location" %}
           </a>
           {% endif %}
@@ -132,7 +132,7 @@
               <div class="col-sm-12">
                 {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' %}
                 <p>
-                  <a href="#new_user" role="button" class="btn btn-info" data-toggle="modal">
+                  <a href="#new_user" role="button" class="btn btn-default" data-toggle="modal">
                     <i class="fa fa-plus"></i> {% trans "Create Mobile Worker at this Location" %}
                   </a>
                 </p>

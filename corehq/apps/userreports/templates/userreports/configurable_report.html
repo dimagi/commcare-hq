@@ -47,7 +47,7 @@
     {% initial_page_data 'title' report.title %}
 
     {% if has_report_builder_trial %}
-    <a class="btn btn-success" href="{% url 'report_builder_paywall_pricing' domain %}">
+    <a class="btn btn-primary" href="{% url 'report_builder_paywall_pricing' domain %}">
         {% trans "Subscribe to Report Builder" %}
     </a>
     {% endif %}

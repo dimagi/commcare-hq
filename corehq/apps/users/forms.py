@@ -1179,7 +1179,7 @@ class CommCareUserFilterForm(forms.Form):
                 twbscrispy.StrictButton(
                     _("Download All Users"),
                     type="submit",
-                    css_class="btn btn-success submit_button",
+                    css_class="btn btn-primary submit_button",
                 )
             ),
         )
