@@ -7,6 +7,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.months = [];
     vm.monthsCopy = [];
     vm.years = [];
+    vm.yearsCopy = [];
     vm.task_id = $location.search()['task_id'] || '';
     $rootScope.report_link = '';
 
@@ -66,11 +67,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     }
 
     for (var year=2017; year <= new Date().getFullYear(); year++ ) {
-        vm.years.push({
+        vm.yearsCopy.push({
             name: year,
             id: year,
         });
     }
+    vm.years = vm.yearsCopy;
     vm.queuedTask = false;
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xlsx';
@@ -331,20 +333,26 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.onSelectYear = function (item) {
-        if (item.id === new Date().getFullYear()) {
-            if (vm.isIncentiveReportSelected() && new Date().getDate() < 15) {
-                vm.months = _.filter(vm.monthsCopy, function(month) {
-                    return month.id <= new Date().getMonth();
-                });
-                vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() ? vm.selectedMonth : new Date().getMonth();
-            } else {
-                vm.months = _.filter(vm.monthsCopy, function(month) {
-                    return month.id <= new Date().getMonth() + 1;
-                });
-                vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
-            }
-        } else if (item.id === 2017) {
+    vm.onSelectYear = function (year) {
+        date = new Date();
+        latest = date;
+        if (vm.isIncentiveReportSelected()) {
+            offset = date.getDate() < 15 ? 2 : 1;
+            latest.setMonth(date.getMonth() - offset);
+        }
+        if (year.id > latest.getFullYear()) {
+            vm.years =  _.filter(vm.yearsCopy, function(y) {
+                return y.id <= latest.getFullYear();
+            });
+            vm.selectedYear = latest.getFullYear();
+            vm.selectedMonth = 12;
+        }
+        if (year.id === latest.getFullYear()) {
+            vm.months = _.filter(vm.monthsCopy, function(month) {
+                return month.id <= latest.getMonth() + 1;
+            });
+            vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
+        } else if (year.id === 2017) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id >= 3;
             });

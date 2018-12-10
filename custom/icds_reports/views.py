@@ -730,7 +730,9 @@ class ExportIndicatorView(View):
             if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
                 return HttpResponseBadRequest()
             today = datetime.now(INDIA_TIMEZONE)
-            if today.day < 15 and month == today.month and year == today.year:
+            month_offset = 2 if today.day < 15 else 1
+            latest_year, latest_month = add_months(today.year, today.month, -offset)
+            if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT):
