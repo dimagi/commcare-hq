@@ -101,7 +101,7 @@ from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
-from dimagi.utils.dates import force_to_date
+from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
@@ -731,7 +731,7 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
             today = datetime.now(INDIA_TIMEZONE)
             month_offset = 2 if today.day < 15 else 1
-            latest_year, latest_month = add_months(today.year, today.month, -offset)
+            latest_year, latest_month = add_months(today.year, today.month, -month_offset)
             if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
