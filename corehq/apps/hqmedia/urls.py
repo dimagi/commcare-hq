@@ -4,6 +4,7 @@ from django.conf.urls import url
 from corehq.apps.hqmedia.views import (
     DownloadMultimediaZip,
     BulkUploadMultimediaView,
+    BulkUploadMultimediaPathsView,
     ProcessBulkUploadView,
     MultimediaUploadStatusView,
     ViewMultimediaFile,
@@ -26,6 +27,7 @@ urlpatterns = [
 
 application_urls = [
     url(r'^upload/$', BulkUploadMultimediaView.as_view(), name=BulkUploadMultimediaView.name),
+    url(r'^upload/paths/$', BulkUploadMultimediaPathsView.as_view(), name=BulkUploadMultimediaPathsView.name),
     url(r'^uploaded/bulk/$', ProcessBulkUploadView.as_view(), name=ProcessBulkUploadView.name),
     url(r'^uploaded/image/$', ProcessImageFileUploadView.as_view(), name=ProcessImageFileUploadView.name),
     url(r'^uploaded/app_logo/(?P<logo_name>[\w\-]+)/$', ProcessLogoFileUploadView.as_view(),

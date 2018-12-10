@@ -1,0 +1,36 @@
+{% extends "hqmedia/uploader_base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans 'Bulk Update Multimedia Paths' %}{% endblock title %}
+
+{% block page_name %}
+    {% trans 'Bulk Update Multimedia Paths' %}
+{% endblock %}
+
+{# TODO: clean up breadcrumbs between the various children of hqmedia/uploader_base.html? #}
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+        <li><a href="{% url "view_app" domain app.get_id %}"><strong>{% trans 'Application' %} "{{ app.name }}"</strong></a></li>
+        <li><a href="{% url "hqmedia_references" domain app.get_id %}">{% trans 'Multimedia Reference Checker' %}</a></li>
+        <li class="active">{% trans 'Bulk Update Paths' %}</li>
+    </ol>
+{% endblock %}
+
+
+{% block page_content %}
+
+    {% blocktrans %}
+        <h3>Download Paths</h3>
+        <div class="help-block">
+            Download a file containing each unique multimedia path in this application
+            and the places where that path is referenced.
+        </div>
+    {% endblocktrans %}
+
+    <a class="btn btn-primary" href="#TODO">
+        <i class="fa fa-cloud-download"></i>
+        {% trans "Download Paths" %}
+    </a>
+
+{% endblock %}

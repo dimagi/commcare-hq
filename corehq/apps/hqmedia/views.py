@@ -136,6 +136,17 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
                                                                        args=[self.domain, self.app_id]))]
 
 
+@method_decorator(require_can_edit_apps, name='dispatch')
+@method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
+class BulkUploadMultimediaPathsView(BaseMultimediaUploaderView):
+    name = "hqmedia_bulk_upload_paths"
+    template_name = "hqmedia/bulk_upload_paths.html"
+
+    @property
+    def upload_controllers(self):
+        return []
+
+
 class BaseProcessUploadedView(BaseMultimediaView):
 
     @property
