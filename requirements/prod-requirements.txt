@@ -20,7 +20,7 @@ celery==3.1.25
 certifi==2018.11.29
 cffi==1.11.5
 chardet==3.0.4
-cloudant==2.10.1
+cloudant==2.7.0
 concurrentloghandler==0.9.1
 contextlib2==0.5.4
 cryptography==2.4.2
@@ -91,8 +91,8 @@ jinja2==2.10
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.14
-jsonobject==0.9.5
+jsonobject-couchdbkit==0.9.12
+jsonobject==0.9.4
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==3.0.37
@@ -127,7 +127,7 @@ pycryptodome==3.7.2
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
-pyjwt==1.7.1
+pyjwt==1.7.0
 pyopenssl==18.0.0
 pypdf2==1.26.0
 pystache==0.5.4
