@@ -15,7 +15,7 @@ from corehq.form_processor.models import XFormOperationSQL
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.util.log import with_progress_bar
-from corehq.blobs import CODES, get_blob_db
+from corehq.blobs import get_blob_db
 
 EDIT_FORM_FEATURE_LIVE_DATE = datetime.datetime(2018, 5, 14)  # actually 15th
 IGNORE_DOMAIN = ['qa-performance-testing']
@@ -111,13 +111,12 @@ class Command(BaseCommand):
 
     @staticmethod
     def _add_attachment_to_sql_form(form_id, attachment):
-        code = CODES.form_xml if attachment.name == "form.xml" else CODES.form_attachment
-        with attachment.read_content(stream=True) as content:
+        with attachment.open() as fileobj:
             get_blob_db().put(
-                content,
-                domain=attachment.form.domain,  # ToDo: Check that this is available on all forms
+                fileobj.read(),
+                domain=attachment.domain,
                 parent_id=form_id,
-                type_code=code,
+                type_code=attachment.type_code,
                 name=attachment.name,
                 content_type=attachment.content_type,
                 properties=attachment.properties,
