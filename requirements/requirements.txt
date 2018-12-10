@@ -18,7 +18,7 @@ celery==3.1.25
 certifi==2018.11.29       # via requests
 cffi==1.11.5              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff, requests
-cloudant==2.10.1          # via jsonobject-couchdbkit
+cloudant==2.7.0           # via jsonobject-couchdbkit
 concurrentloghandler==0.9.1
 contextlib2==0.5.4
 cryptography==2.4.2       # via pyopenssl, requests
@@ -84,8 +84,8 @@ jinja2==2.10
 jmespath==0.9.3           # via boto3, botocore
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.14
-jsonobject==0.9.5
+jsonobject-couchdbkit==0.9.12
+jsonobject==0.9.4
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==3.0.37             # via celery
@@ -112,7 +112,7 @@ pycryptodome==3.7.2
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
-pyjwt==1.7.1              # via pygithub, twilio
+pyjwt==1.7.0              # via pygithub, twilio
 pyopenssl==18.0.0         # via requests
 pypdf2==1.26.0            # via xhtml2pdf
 pystache==0.5.4           # via pycco
