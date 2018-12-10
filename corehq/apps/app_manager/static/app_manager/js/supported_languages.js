@@ -15,7 +15,6 @@ hqDefine('app_manager/js/supported_languages',[
         self.show_error = ko.observable();
         self.languages = languages;
         self.message = ko.computed(function () {
-
             if (self.langcode()) {
                 var lang = self.langcode().toLowerCase();
                 $.getJSON('/langcodes/langs.json', {term: lang}, function (res) {
@@ -31,6 +30,15 @@ hqDefine('app_manager/js/supported_languages',[
             }
 
             return self.message_content();
+        });
+        self.originalLangcodeMessage = ko.computed(function () {
+            if (!self.originalLangcode()) {
+                return '';
+            }
+
+            return "(" + _.template("originally <%= originalLanguage %>")({
+                originalLanguage: self.originalLangcode(),
+            }) + ")";
         });
 
         self.isDefaultLang = ko.computed(function () {
