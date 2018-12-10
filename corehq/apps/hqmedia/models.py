@@ -535,7 +535,7 @@ def _log_media_deletion(app, deleted_media):
         False, "path deleted from multimedia map", json.dumps({
             'domain': app.domain,
             'app_id': app._id,
-            'deleted_media': formatted_media
+            'deleted_media': list(formatted_media),
         }, indent=4)
     )
 
