@@ -226,7 +226,7 @@
                             <td>
                                 {{ invitation.invited_on }}
                                 {% if  invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil != "0 minutes"%}
-                                <span class="label label-info">
+                                <span class="label label-default">
                                     {{ invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil }} remaining
                                 </span>
                                 {% else %}
