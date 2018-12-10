@@ -51,7 +51,7 @@ hqDefine('analytix/js/drift', [
                 hubspot.trackEvent('Identified via Drift');
             });
 
-            $('.shedule-demo-drift-cta').click(function (e) {
+            $('.schedule-demo-drift-cta').click(function (e) {
                 e.preventDefault();
 
                 var kissmetrics = hqImport('analytix/js/kissmetrix');
