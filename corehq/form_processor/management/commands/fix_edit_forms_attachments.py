@@ -82,9 +82,9 @@ class Command(BaseCommand):
                     continue
                 edit_chain = get_sql_previous_versions(edit_form_id, form_accessor)
                 original_form = edit_chain[0]
-                original_attachments = list(FormAccessorSQL.get_attachments_for_forms([original_form.form_id]))
+                original_attachments = list(FormAccessorSQL.get_attachments(original_form.form_id))
                 for edited_form in edit_chain[1:]:
-                    attachments = list(FormAccessorSQL.get_attachments_for_forms([edited_form.form_id]))
+                    attachments = list(FormAccessorSQL.get_attachments(edited_form.form_id))
                     attachment_names = [a.name for a in attachments]
                     for attachment in original_attachments:
                         if attachment.name != 'form.xml' and attachment.name not in attachment_names:
