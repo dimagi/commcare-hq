@@ -125,7 +125,7 @@ class GenericRepeaterForm(forms.Form):
                         _('Test Link'),
                         type='button',
                         css_id='test-forward-link',
-                        css_class='btn btn-info disabled',
+                        css_class='btn btn-default disabled',
                     ),
                     crispy.Div(
                         css_id='test-forward-result',
