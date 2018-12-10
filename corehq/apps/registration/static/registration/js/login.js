@@ -6,9 +6,9 @@ $(function () {
     new Blazy({
         container: 'body',
     });
-
-    hqImport("analytix/js/kissmetrix").whenReadyAlways(function () {
-        var kissmetrics = hqImport('analytix/js/kissmetrix');
+    
+    var kissmetrics = hqImport('analytix/js/kissmetrix');
+    kissmetrics.whenReadyAlways(function () {
 
         $('#cta-form-get-demo-button-body').click(function () {
             kissmetrics.track.event("Demo Workflow - Body Button Clicked");
