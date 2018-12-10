@@ -17,5 +17,7 @@ hqDefine("reports/js/form_data_main", [
         });
     });
 
-    kissmetrics.track.event('Viewed Form');
+    $(function () {
+        kissmetrics.track.event('Viewed Form');
+    });
 });

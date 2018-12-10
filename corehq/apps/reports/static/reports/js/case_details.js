@@ -278,5 +278,7 @@ hqDefine("reports/js/case_details", [
 
     });
 
-    kissmetrics.track.event('Viewed Case');
+    $(function () {
+        kissmetrics.track.event('Viewed Case');
+    });
 });
