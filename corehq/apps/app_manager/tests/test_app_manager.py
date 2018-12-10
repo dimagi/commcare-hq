@@ -151,7 +151,8 @@ class AppManagerTest(TestCase):
         self.assertTrue(self.app.blobs)
         self._test_import_app(self.app.id)
 
-    def testImportApp_from_source(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def testImportApp_from_source(self, mock):
         report_module = self.app.add_module(ReportModule.new_module('Reports', None))
         report_module.report_configs = [
             ReportAppConfig(report_id='config_id1', header={'en': 'CommBugz'}),
