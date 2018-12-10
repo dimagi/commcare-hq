@@ -56,4 +56,5 @@ branches:
   #- jls/requirejs-export-download-unbranched # Jenny Dec 5
   - mk-transifex-improv # MK Dec 8
   - case-type-changes  # Nick Dec 7
+  - case-form-kiss  # Nick Dec 10
 submodules: {}
