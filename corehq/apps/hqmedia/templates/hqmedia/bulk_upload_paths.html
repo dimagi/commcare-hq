@@ -28,7 +28,7 @@
         </div>
     {% endblocktrans %}
 
-    <a class="btn btn-primary" href="#TODO">
+    <a class="btn btn-primary" href="{% url 'download_multimedia_paths' domain app.id %}">
         <i class="fa fa-cloud-download"></i>
         {% trans "Download Paths" %}
     </a>
