@@ -88,10 +88,10 @@ class Command(BaseCommand):
                     attachment_names = [a.name for a in attachments]
                     for attachment in original_attachments:
                         if attachment.name != 'form.xml' and attachment.name not in attachment_names:
-                            assert attachment.form_id == original_form.form_id
+                            assert attachment.parent_id == original_form.form_id
                             self.forms[edited_form.form_id] = edited_form
                             for attachment_to_be_added in add_forms_with_attachments[edited_form.form_id]:
-                                if attachment_to_be_added.attachment_id == attachment.attachment_id:
+                                if attachment_to_be_added.key == attachment.key:
                                     # this attachment add request is already present
                                     continue
                             add_forms_with_attachments[edited_form.form_id].append(attachment)
@@ -148,5 +148,5 @@ class Command(BaseCommand):
                 for form_id in forms_to_process:
                     attachments = forms_to_process[form_id]
                     for attachment in attachments:
-                        writer.writerow([form_id, attachment.form_id,
-                                         attachment.attachment_id, attachment.name])
+                        writer.writerow([form_id, attachment.parent_id,
+                                         attachment.key, attachment.name])
