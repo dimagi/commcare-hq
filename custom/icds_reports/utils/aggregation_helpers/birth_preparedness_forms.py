@@ -27,6 +27,11 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(immediate_breastfeeding) OVER w AS immediate_breastfeeding,
+        MAX(play_birth_preparedness_vid) OVER w as play_birth_preparedness_vid,
+        MAX(counsel_preparation) OVER w as counsel_preparation,
+        MAX(play_family_planning_vid) OVER w as play_family_planning_vid,
+        MAX(conceive) OVER w as conceive,
+        MAX(counsel_accessible_ppfp) OVER w as counsel_accessible_ppfp,
         LAST_VALUE(eating_extra) OVER w as eating_extra,
         LAST_VALUE(resting) OVER w as resting,
         LAST_VALUE(anc_weight) OVER w as anc_weight,
@@ -71,7 +76,9 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
           state_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
           anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
-          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities, valid_visits
+          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities, valid_visits,
+          play_birth_preparedness_vid, counsel_preparation, play_family_planning_vid, conceive,
+          counsel_accessible_ppfp
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -93,7 +100,12 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             ucr.convulsions as convulsions,
             ucr.rupture as rupture,
             ucr.anc_abnormalities as anc_abnormalities,
-            COALESCE(ucr.valid_visits, 0) as valid_visits
+            COALESCE(ucr.valid_visits, 0) as valid_visits,
+            ucr.play_birth_preparedness_vid as play_birth_preparedness_vid,
+            ucr.counsel_preparation as counsel_preparation,
+            ucr.play_family_planning_vid as play_family_planning_vid,
+            ucr.conceive as conceive,
+            ucr.counsel_accessible_ppfp as counsel_accessible_ppfp
           FROM ({ucr_table_query}) ucr
           LEFT JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
