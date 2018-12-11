@@ -559,14 +559,14 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
             languages = app.build_profiles[build_profile_id].langs
         file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
-        index_files, index_file_errors = iter_index_files(
+        index_files, index_file_errors, index_file_count = iter_index_files(
             app, build_profile_id=build_profile_id, download_targeted_version=download_targeted_version
         )
         if index_file_errors:
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
 
-    return file_iterator, errors
+    return file_iterator, errors, index_file_count
 
 
 class DownloadMultimediaZip(View, ApplicationViewMixin):
@@ -752,4 +752,4 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
         notify_exception(None, e.message)
         errors = [six.text_type(e)]
 
-    return _files(files), errors
+    return _files(files), errors, len(files)
