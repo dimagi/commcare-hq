@@ -113,7 +113,7 @@ class Command(BaseCommand):
     def _add_attachment_to_sql_form(form_id, attachment):
         with attachment.open() as fileobj:
             get_blob_db().put(
-                fileobj.read(),
+                fileobj,
                 domain=attachment.domain,
                 parent_id=form_id,
                 type_code=attachment.type_code,
