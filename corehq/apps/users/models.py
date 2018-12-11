@@ -1651,9 +1651,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
+            from corehq.apps.callcenter.tasks import sync_user_cases
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
+            sync_user_cases.delay(self)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):

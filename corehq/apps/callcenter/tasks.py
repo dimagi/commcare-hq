@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from celery.schedules import crontab
-from celery.task.base import periodic_task
-from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.callcenter.utils import get_call_center_domains, is_midnight_for_domain, get_call_center_cases
+from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
+
+from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case, sync_usercase
+from corehq.apps.callcenter.utils import get_call_center_domains, is_midnight_for_domain, get_call_center_cases
 
 logger = get_task_logger(__name__)
 
@@ -34,3 +36,9 @@ def calculate_indicators():
             override_cache=True
         )
         indicator_set.get_data()
+
+
+@task(serializer='pickle')
+def sync_user_cases(user):
+    sync_call_center_user_case(user)
+    sync_usercase(user)
