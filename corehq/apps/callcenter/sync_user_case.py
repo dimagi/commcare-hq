@@ -27,7 +27,7 @@ class _UserCaseHelper(object):
     def _submit_case_block(self, caseblock, source):
         device_id = self.CASE_SOURCE_ID + source
         casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
-        submit_case_blocks(casexml, self.domain.name, device_id=device_id)
+        submit_case_blocks(casexml, self.domain, device_id=device_id)
 
     @staticmethod
     def re_open_case(case):
@@ -63,10 +63,10 @@ class _UserCaseHelper(object):
 
     def _user_case_changed(self, fields):
         field_names = list(fields)
-        if _domain_has_new_fields(self.domain.name, field_names):
+        if _domain_has_new_fields(self.domain, field_names):
             add_inferred_export_properties.delay(
                 'UserSave',
-                self.domain.name,
+                self.domain,
                 USERCASE_TYPE,
                 field_names,
             )
@@ -92,9 +92,9 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
     first time.
     """
     with CriticalSection(['user_case_%s_for_%s' % (case_type, commcare_user._id)]):
-        domain = commcare_user.project
+        domain = commcare_user.domain
         fields = _get_user_case_fields(commcare_user, case_type, owner_id)
-        case = case or CaseAccessors(domain.name).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
+        case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         user_case_helper = _UserCaseHelper(domain, owner_id)
 
@@ -173,29 +173,29 @@ def _get_changed_fields(case, fields):
 
 
 def sync_call_center_user_case(user):
-    domain = user.project
-    config = domain.call_center_config
-    if domain and config.enabled and config.config_is_valid():
-        case, owner_id = _get_call_center_case_and_owner(user, domain)
+    config = user.project.call_center_config
+    if config.enabled and config.config_is_valid():
+        case, owner_id = _get_call_center_case_and_owner(user)
         sync_user_case(user, config.case_type, owner_id, case)
 
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
 
 
-def _get_call_center_case_and_owner(user, domain):
+def _get_call_center_case_and_owner(user):
     """
     Return the appropriate owner id for the given users call center case.
     """
-    case = CaseAccessors(domain.name).get_case_by_domain_hq_user_id(
-        user._id, domain.call_center_config.case_type
+    config = user.project.call_center_config
+    case = CaseAccessors(user.domain).get_case_by_domain_hq_user_id(
+        user._id, config.case_type
     )
-    if domain.call_center_config.use_user_location_as_owner:
-        owner_id = _call_center_location_owner(user, domain.call_center_config.user_location_ancestor_level)
+    if config.use_user_location_as_owner:
+        owner_id = _call_center_location_owner(user, config.user_location_ancestor_level)
     elif case and case.owner_id:
         owner_id = case.owner_id
     else:
-        owner_id = domain.call_center_config.case_owner_id
+        owner_id = config.case_owner_id
     return CallCenterCaseAndOwner(case, owner_id)
 
 
@@ -215,8 +215,7 @@ def _call_center_location_owner(user, ancestor_level):
 
 
 def sync_usercase(user):
-    domain = user.project
-    if domain and domain.usercase_enabled:
+    if user.project.usercase_enabled:
         sync_user_case(
             user,
             USERCASE_TYPE,
