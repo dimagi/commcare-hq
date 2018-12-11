@@ -125,6 +125,11 @@ class TestMetaDB(TestCase):
         with self.assertRaises(BlobMeta.DoesNotExist):
             self.db.metadb.get(parent_id=xid, type_code=CODES.form_xml, name=xid)
 
+    def test_get_missing_blobmeta_by_key(self):
+        xid = uuid4().hex
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            self.db.metadb.get(parent_id=xid, key=xid)
+
     def create_blobs(self):
         def put(parent_id, code):
             meta = new_meta(parent_id=parent_id, type_code=code)
