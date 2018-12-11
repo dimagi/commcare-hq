@@ -118,7 +118,7 @@ def js_api_keys(request):
 def js_toggles(request):
     if not hasattr(request, 'couch_user') or not request.couch_user:
         return {}
-    if not hasattr(request, 'project'):
+    if not hasattr(request, 'project') or not request.project:
         return {}
     from corehq import toggles, feature_previews
     domain = request.project.name
