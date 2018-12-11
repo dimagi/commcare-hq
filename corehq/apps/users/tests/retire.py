@@ -28,6 +28,8 @@ class RetireUserTestCase(TestCase):
         super(RetireUserTestCase, cls).setUpClass()
         cls.domain = 'test'
         cls.domain_object = create_domain(cls.domain)
+        cls.domain_object.usercase_enabled = True
+        cls.domain_object.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -260,8 +262,8 @@ class RetireUserTestCase(TestCase):
 
     @run_with_all_backends
     def test_all_case_forms_deleted(self):
-        from corehq.apps.callcenter.utils import sync_user_case
-        sync_user_case(self.commcare_user, USERCASE_TYPE, self.commcare_user.get_id)
+        from corehq.apps.callcenter.sync_user_case import sync_usercase
+        sync_usercase(self.commcare_user)
 
         user_case_id = self.commcare_user.get_usercase_id()
 
