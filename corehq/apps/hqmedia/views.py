@@ -14,6 +14,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
@@ -87,7 +88,7 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
         context = super(BaseMultimediaTemplateView, self).page_context
         views = [MultimediaReferencesView, BulkUploadMultimediaView]
         if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
-            views.append(BulkUploadMultimediaPathsView)
+            views.append(ManageMultimediaPathsView)
         context.update({
             "domain": self.domain,
             "app": self.app,
@@ -177,9 +178,9 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
 
 @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
 @method_decorator(require_can_edit_apps, name='dispatch')
-class BulkUploadMultimediaPathsView(BaseMultimediaTemplateView):
-    urlname = "hqmedia_bulk_upload_paths"
-    template_name = "hqmedia/bulk_upload_paths.html"
+class ManageMultimediaPathsView(BaseMultimediaTemplateView):
+    urlname = "manage_multimedia_paths"
+    template_name = "hqmedia/manage_paths.html"
     page_title = ugettext_noop("Manage Multimedia Paths")
 
     @property
@@ -192,10 +193,11 @@ class BulkUploadMultimediaPathsView(BaseMultimediaTemplateView):
 
 @toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
 @require_can_edit_apps
+@require_GET
 def download_multimedia_paths(request, domain, app_id):
-    headers = ((_("Paths"), (_("Path in Application"), _("Usages"))),)
-
     app = get_app(domain, app_id)
+
+    headers = ((_("Paths"), (_("Path in Application"), _("Usages"))),)
     rows = download_multimedia_paths_rows(app)
 
     temp = io.BytesIO()
@@ -204,6 +206,20 @@ def download_multimedia_paths(request, domain, app_id):
         app_name=app.name,
         app_version=app.version)
     return export_response(temp, Format.XLS_2007, filename)
+
+
+@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
+@require_can_edit_apps
+@require_POST
+def validate_multimedia_paths(request, domain, app_id):
+    pass
+
+
+@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
+@require_can_edit_apps
+@require_POST
+def upload_multimedia_paths(request, domain, app_id):
+    pass
 
 
 class BaseProcessUploadedView(BaseMultimediaView):

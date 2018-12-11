@@ -1,0 +1,37 @@
+{% extends "hqmedia/uploader_base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block page_content %}
+
+    <p class="lead">{{ current_page.page_name }}</p>
+
+    <div>
+        {% blocktrans %}
+            <h3>Download Paths</h3>
+            <div class="help-block">
+                Download a file containing each unique multimedia path in this application
+                and the places where that path is referenced.
+            </div>
+        {% endblocktrans %}
+
+        <a class="btn btn-primary" href="{% url 'download_multimedia_paths' domain app_id %}">
+            <i class="fa fa-cloud-download"></i>
+            {% trans "Download Paths" %}
+        </a>
+    </div>
+
+    <br><br>{# TODO: make this page look more like Find Data by ID? #}
+
+    <div>
+        {% blocktrans %}
+            <h3>Upload Paths</h3>
+            <div class="help-block">
+                Upload a file where the first column contains the existing <code>jr://...</code> path
+                and the second column contains the new path.
+            </div>
+        {% endblocktrans %}
+
+    </div>
+
+{% endblock %}
