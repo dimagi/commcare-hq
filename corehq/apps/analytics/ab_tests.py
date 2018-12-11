@@ -47,6 +47,12 @@ class SessionAbTest(object):
         self.config = config
         self.request = request
 
+        # If the session isn't manually saved, then incognito will cause the
+        # session_key to return None, making caching unique values per user not
+        # possible.
+        if not self.request.session.session_key:
+            self.request.session.save()
+
     @property
     def _cookie_id(self):
         return "{}_ab".format(self.config.slug)
