@@ -127,21 +127,25 @@ class Command(BaseCommand):
         if options.get('inspect') and options.get('update'):
             raise CommandError("Cant have updating with inspect")
         source = options.get("source") or 'sql'
+        file_name = '%s_forms_missing_attachments.csv' % source
         if source == 'sql':
             print('looking for sql forms with missing attachments now')
             forms_to_process = self._find_sql_forms_with_missing_attachments()
             if options.get('update'):
                 print('starting with adding attachments. Need to update %s forms.' % len(forms_to_process))
-                for form_id, attachments in with_progress_bar(list(forms_to_process.items())):
-                    for attachment in attachments:
-                        self._add_attachment_to_sql_form(form_id, attachment)
+                with open(file_name, 'w') as output_file:
+                    writer = csv.writer(output_file)
+                    for form_id, attachments in with_progress_bar(list(forms_to_process.items())):
+                        for attachment in attachments:
+                            writer.writerow([form_id, attachment.parent_id,
+                                             attachment.key, attachment.name])
+                            self._add_attachment_to_sql_form(form_id, attachment)
         elif source == 'couch':
             print('looking for couch forms with missing attachments now')
             forms_to_process = self._find_couch_forms_with_missing_attachments()
         else:
             raise NotImplementedError()
         if options.get('inspect'):
-            file_name = '%s_forms_missing_attachments.csv' % source
             print('writing findings to file %s' % file_name)
             with open(file_name, 'w') as output_file:
                 writer = csv.writer(output_file)
