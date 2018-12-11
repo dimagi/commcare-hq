@@ -10,7 +10,7 @@ import pprint
 import sys
 import traceback
 from datetime import datetime, timedelta
-from functools import wraps
+from contextlib import contextmanager
 
 import attr
 import gevent
@@ -65,16 +65,14 @@ def confirm(msg):
     return input(msg + "\n(y/N) ").lower() == 'y'
 
 
-def timed(func):
-    @wraps(func)
-    def timed(sql, dbname, *args, **kw):
-        print("running on %s database" % dbname)
-        start = datetime.now()
-        try:
-            return func(sql, dbname, *args, **kw)
-        finally:
-            print("{} elapsed: {}".format(dbname, datetime.now() - start))
-    return timed
+@contextmanager
+def timer(dbname):
+    print("running on %s database" % dbname)
+    start = datetime.now()
+    try:
+        yield
+    finally:
+        print("{} elapsed: {}".format(dbname, datetime.now() - start))
 
 
 def fetch_dicts(cursor):
@@ -90,13 +88,12 @@ def fetch_dicts(cursor):
     return [{c: v for c, v in zip(cols, row)} for row in rows]
 
 
-@timed
 def run_once(sql, dbname, print_rows):
     """Run sql statement once on database
 
     This is the default run mode for statements
     """
-    with connections[dbname].cursor() as cursor:
+    with connections[dbname].cursor() as cursor, timer(dbname):
         cursor.execute(sql)
         if print_rows:
             rows = fetch_dicts(cursor)
@@ -117,14 +114,17 @@ class RunUntilZero(object):
     def format(self, **kw):
         return self.sql.format(**kw)
 
-    @staticmethod
-    @timed
-    def run(sql, dbname, print_rows):
+    @classmethod
+    def run(cls, sql, dbname, print_rows):
         next_update = datetime.now()
         total = 0
-        with connections[dbname].cursor() as cursor:
+        with timer(dbname), connections[dbname].cursor() as cursor:
             while True:
-                cursor.execute(sql)
+                try:
+                    cursor.execute(sql)
+                except Exception as err:
+                    cls.handle_err(err, dbname)
+                    continue
                 rows = cursor.fetchmany(2)
                 assert len(rows) == 1 and len(rows[0]) == 1, \
                     "expected 1 row with 1 column, got %r" % (rows,)
@@ -137,6 +137,54 @@ class RunUntilZero(object):
                     print("{}: processed {} items".format(dbname, total))
                     next_update = now + timedelta(seconds=5)
         print("{} final: processed {} items".format(dbname, total))
+
+    @classmethod
+    def handle_err(cls, err, dbname):
+        raise
+
+
+import re
+from django.db import IntegrityError, transaction
+from corehq.blobs import get_blob_db
+from corehq.blobs.models import BlobMeta
+
+KEYRE = re.compile(r"DETAIL:  Key \(key\)=\((.*)\) already exists\.")
+
+
+class RunUntilZeroHandleDupBlobs(RunUntilZero):
+    # this will not be efficient if there are many duplicates
+
+    @classmethod
+    def handle_err(cls, err, dbname):
+        if not isinstance(err, IntegrityError):
+            raise
+        match = KEYRE.search(six.text_type(err))
+        if not match:
+            raise
+        key = match.group(1)
+        metas = list(BlobMeta.objects.using(dbname).filter(key=key))
+        if len({m.parent_id for m in metas}) == 1:
+            # TODO handle two blobs, same key, same parent
+            # delete the newer one
+            raise
+        assert len(metas) == 2, metas
+        meta = next(m for m in metas if m.id < 0)
+        print("{dbname}: creating new blob for "
+            "{meta.parent_id} / {meta.name} key={key}".format(**locals()))
+        with meta.open() as content, transaction.atomic(using=dbname):
+            get_blob_db().put(
+                content,
+                domain=meta.domain,
+                parent_id=meta.parent_id,
+                type_code=meta.type_code,
+                name=meta.name,
+                content_length=meta.content_length,
+                content_type=meta.content_type,
+                properties=meta.properties,
+                created_on=meta.created_on,
+                expires_on=meta.expires_on,
+            )
+            meta.delete()
 
 
 # Run after creating an index concurrently to verify successful index
@@ -170,7 +218,7 @@ ON public.form_processor_xformattachmentsql (((
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
 # This version should work on icds, but not prod and probably not india.
-simple_move_form_attachments_to_blobmeta = RunUntilZero("""
+simple_move_form_attachments_to_blobmeta = RunUntilZeroHandleDupBlobs("""
 WITH deleted AS (
     DELETE FROM form_processor_xformattachmentsql
     WHERE id IN (
@@ -224,7 +272,7 @@ WITH deleted AS (
 # Move rows incrementally.
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
-move_form_attachments_to_blobmeta = RunUntilZero("""
+move_form_attachments_to_blobmeta = RunUntilZeroHandleDupBlobs("""
 WITH to_move AS (
     SELECT
         COALESCE(xform."domain", '<unknown>') AS "domain",
