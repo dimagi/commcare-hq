@@ -22,7 +22,7 @@ from corehq.apps.app_manager.views import (
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
     edit_form_attr_api, patch_xform, validate_form_for_build, rename_language, validate_language,
     edit_form_actions, edit_advanced_form_actions, edit_visit_schedule,
-    edit_schedule_phases, multimedia_list_download, edit_module_detail_screens, edit_module_attr,
+    edit_schedule_phases, edit_module_detail_screens, edit_module_attr,
     edit_report_module, validate_module_for_build, commcare_profile, edit_commcare_profile, edit_commcare_settings,
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
@@ -140,8 +140,6 @@ urlpatterns = [
         name='edit_schedule_phases'),
 
     # multimedia stuff
-    url(r'^multimedia/(?P<app_id>[\w-]+)/download/$',
-        multimedia_list_download, name='multimedia_list_download'),
     url(r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
     url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_module_detail_screens, name='edit_module_detail_screens'),

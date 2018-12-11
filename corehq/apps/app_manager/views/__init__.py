@@ -90,7 +90,6 @@ from corehq.apps.app_manager.views.modules import (
 )
 from corehq.apps.app_manager.views.multimedia import (
     multimedia_ajax,
-    multimedia_list_download,
 )
 from corehq.apps.app_manager.views.releases import (
     AppDiffView,

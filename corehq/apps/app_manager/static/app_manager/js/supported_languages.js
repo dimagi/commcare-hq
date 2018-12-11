@@ -134,6 +134,10 @@ hqDefine('app_manager/js/supported_languages',[
             self.languages.remove(language);
             self.removedLanguages.push(language);
         };
+        self.setAsDefault = function (language) {
+            self.languages.remove(language);
+            self.languages.unshift(language);
+        };
         self.unremoveLanguage = function (language) {
             self.removedLanguages.remove(language);
             self.languages.push(language);
