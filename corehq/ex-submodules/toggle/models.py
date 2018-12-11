@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
-import uuid
 
-from couchdbkit import ResourceNotFound, ResourceConflict
+from couchdbkit import ResourceNotFound
 from django.contrib import admin
 from django.db import models
 
 from corehq.apps.couch_sql_migration.fields import DocumentField
+from corehq.apps.couch_sql_migration.utils import sql_save_with_resource_conflict
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     Document, DateTimeProperty, ListProperty, StringProperty
@@ -29,23 +29,8 @@ class Toggle(Document):
     def save(self, **params):
         if ('_id' not in self._doc):
             self._doc['_id'] = generate_toggle_id(self.slug)
-        if ('_rev' not in self._doc):
-            self._rev = self._doc['_rev'] = uuid.uuid4().hex
-            rev_not_provided = True
-        else:
-            rev_not_provided = False
         self.last_modified = datetime.utcnow()
-        obj, created = SqlToggle.objects.get_or_create(
-            id=self._doc['_id'], defaults={'document': self, 'rev': self._rev or 1}
-        )
-        if created is False:
-            if rev_not_provided or self._rev != obj.rev:
-                raise ResourceConflict
-
-            self._doc['_rev'] = obj.rev = uuid.uuid4().hex
-            obj.document = self
-            obj.save()
-        self._rev = obj.rev
+        sql_save_with_resource_conflict(SqlToggle, self)
 
         self.bust_cache()
 
