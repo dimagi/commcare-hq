@@ -103,6 +103,7 @@ class Translation(object):
 
 
 FIELD_NAME_HELP = """
+This is the same string that appears in the bulk translations download.
 Usually the string in either case list or detail under 'property'.
 This could be an xpath or case property name.
 If it is an ID Mapping then the property should be '<property> (ID Mapping Text)'.
@@ -117,8 +118,6 @@ Example: case detail for tasks_type would have entries:
 class TransifexBlacklist(models.Model):
     """Used for removing case list and case detail translations before an
     upload to Transifex.
-
-    This assumes that a default source translation is English exists.
 
     Note that field_name is not sufficient to exclude properties as you can
     have two details in the same module that display the same information in a
@@ -138,7 +137,8 @@ class TransifexBlacklist(models.Model):
     field_name = models.TextField(help_text=FIELD_NAME_HELP)
     display_text = models.TextField(
         help_text="The default language's translation for this detail/list. "
-        "If display_text is not filled out then all translations will be blacklisted")
+        "If display_text is not filled out then all translations that match "
+        "the field_type and field_name will be blacklisted")
 
 
 admin.site.register(TransifexBlacklist)

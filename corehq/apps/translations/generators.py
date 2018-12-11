@@ -200,12 +200,14 @@ class AppTranslationsGenerator:
             default_lang = row[default_lang_index]
             in_blacklist = any(
                 True
-                for trans in self._blacklisted_translations
+                for blacklisted_trans in self._blacklisted_translations
                 if (
-                    trans.module_id == module_id
-                    and trans.field_type == list_or_detail
-                    and trans.field_name == case_property
-                    and (trans.display_text == default_lang if trans.display_text else True)
+                    blacklisted_trans.module_id == module_id
+                    and blacklisted_trans.field_type == list_or_detail
+                    and blacklisted_trans.field_name == case_property
+                    and (
+                        blacklisted_trans.display_text == default_lang if blacklisted_trans.display_text else True
+                    )
                 )
             )
             if not in_blacklist:
