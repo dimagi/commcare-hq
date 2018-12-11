@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
@@ -10,6 +9,7 @@ from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.generators import AppTranslationsGenerator, PoFileGenerator
 from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
 from corehq.apps.translations.integrations.transifex.parser import TranslationsParser
+from corehq.apps.translations.models import TransifexProject
 
 
 class Transifex(object):
@@ -71,16 +71,14 @@ class Transifex(object):
 
     @cached_property
     def client(self):
-        transifex_account_details = settings.TRANSIFEX_DETAILS
-        if transifex_account_details:
-            return TransifexApiClient(
-                transifex_account_details['token'],
-                transifex_account_details['organization'],
-                self.project_slug,
-                self.use_version_postfix,
-            )
-        else:
-            raise Exception(_("Transifex account details not available on this environment."))
+        transifex_project = TransifexProject.objects.filter(slug=self.project_slug).first()
+        transifex_organization = transifex_project.organization
+        return TransifexApiClient(
+            transifex_organization.get_api_token,
+            transifex_organization.slug,
+            self.project_slug,
+            self.use_version_postfix,
+        )
 
     @cached_property
     def transifex_project_source_lang(self):
@@ -153,7 +151,7 @@ class Transifex(object):
                                                                     self.lock_translations)
         return po_entries
 
-    def resources_pending_translations(self, break_if_true=False, all_langs=False):
+    def resources_pending_translations(self, break_if_true=True, all_langs=False):
         """
         :param break_if_true: break as soon as untranslated resource is found and return its slug/name
         :param all_langs: check for all langs for translation, if False just the source lang
