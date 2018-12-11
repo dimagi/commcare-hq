@@ -191,7 +191,7 @@ def _get_call_center_case_and_owner(user, domain):
         user._id, domain.call_center_config.case_type
     )
     if domain.call_center_config.use_user_location_as_owner:
-        owner_id = call_center_location_owner(user, domain.call_center_config.user_location_ancestor_level)
+        owner_id = _call_center_location_owner(user, domain.call_center_config.user_location_ancestor_level)
     elif case and case.owner_id:
         owner_id = case.owner_id
     else:
@@ -199,7 +199,7 @@ def _get_call_center_case_and_owner(user, domain):
     return CallCenterCaseAndOwner(case, owner_id)
 
 
-def call_center_location_owner(user, ancestor_level):
+def _call_center_location_owner(user, ancestor_level):
     if user.location_id is None:
         return ""
     if ancestor_level == 0:
