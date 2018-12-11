@@ -137,8 +137,8 @@ hqDefine('hqwebapp/js/main', [
                     $retry: $('<div/>').text(SaveButton.message.RETRY).click(function () {
                         button.fire('save');
                     }).addClass(cssClass),
-                    $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
-                    $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
+                    $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-primary disabled'),
+                    $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-primary disabled'),
                     ui: $('<div/>').addClass('pull-right savebtn-bar ' + barClass),
                     setStateWhenReady: function (state) {
                         if (this.state === 'saving') {
