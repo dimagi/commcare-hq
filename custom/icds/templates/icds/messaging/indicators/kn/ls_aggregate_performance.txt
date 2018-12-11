@@ -1,0 +1,10 @@
+Aggregate Performance Report over the last 30 days for your AWCs
+
+1. Number of visits / Number of desired visits: {{ visits }} / {{ visits_goal }}
+2. Number of visits on time / Number of visits: {{ on_time_visits }} / {{ visits }}
+
+THR Distribution: {{ thr_distribution }}
+
+Number of children weighed: {{ children_weighed }}
+
+Average no. of days AWC open / Goal: {{ days_open }} / 25

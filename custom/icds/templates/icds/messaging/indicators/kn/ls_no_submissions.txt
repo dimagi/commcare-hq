@@ -1,0 +1,7 @@
+{% if location_names and timeframe == 'week' %}
+The following AWC have not done any activity in ICDS CAS application in more than one week: {{ location_names }}.  Please follow up with them to provide assistance.
+{% endif %}
+
+{% if location_names and timeframe == 'month' %}
+The following AWC have not done any activity in ICDS CAS application in more than one month: {{ location_names }}.  Please follow up with them to provide assistance.
+{% endif %}
