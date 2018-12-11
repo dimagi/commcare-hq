@@ -83,7 +83,7 @@ def _domain_has_new_fields(domain, field_names):
     return False
 
 
-def sync_user_case(commcare_user, case_type, owner_id, case=None):
+def _sync_user_case(commcare_user, case_type, owner_id, case=None):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
@@ -176,7 +176,7 @@ def sync_call_center_user_case(user):
     config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user)
-        sync_user_case(user, config.case_type, owner_id, case)
+        _sync_user_case(user, config.case_type, owner_id, case)
 
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
@@ -216,7 +216,7 @@ def _call_center_location_owner(user, ancestor_level):
 
 def sync_usercase(user):
     if user.project.usercase_enabled:
-        sync_user_case(
+        _sync_user_case(
             user,
             USERCASE_TYPE,
             user.get_id
