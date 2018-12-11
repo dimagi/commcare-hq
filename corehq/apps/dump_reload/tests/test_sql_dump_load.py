@@ -223,12 +223,6 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
 
 class TestSQLDumpLoad(BaseDumpLoadTest):
-    def assertModelsEqual(self, pre_models, post_models):
-        for pre, post in zip(pre_models, post_models):
-            pre_json = serializers.serialize('python', [pre])[0]
-            post_json = serializers.serialize('python', [post])[0]
-            self.assertDictEqual(pre_json, post_json)
-
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
         expected_object_counts = Counter({
