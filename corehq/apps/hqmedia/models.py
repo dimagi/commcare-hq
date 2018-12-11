@@ -756,7 +756,7 @@ class HQMediaMixin(Document):
                     map_changed = True
                     del self.multimedia_map[path]
 
-        if not allow_deletion:
+        if not allow_deletion and deleted_media:
             _log_media_deletion(self, deleted_media)
 
         if map_changed:
@@ -813,7 +813,7 @@ class HQMediaMixin(Document):
                         del self.multimedia_map[path]
                         found_missing_mm = True
 
-        if not allow_deletion:
+        if not allow_deletion and deleted_media:
             _log_media_deletion(self, deleted_media)
 
         if found_missing_mm:
