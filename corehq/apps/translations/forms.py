@@ -15,6 +15,7 @@ from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.translations.models import TransifexProject
+from corehq.motech.utils import b64_aes_decrypt
 
 
 class ConvertTranslationsForm(forms.Form):
@@ -239,3 +240,9 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
 
 class BackUpAppTranslationsForm(AppTranslationsForm):
     form_action = 'backup'
+
+
+class TransifexOrganizationForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(TransifexOrganizationForm, self).__init__(*args, **kwargs)
+        self.initial['api_token'] = b64_aes_decrypt(self.instance.api_token)

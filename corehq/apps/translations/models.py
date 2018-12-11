@@ -7,6 +7,8 @@ from dimagi.utils.couch import CouchDocLockableMixIn
 
 from django.db import models
 from django.contrib import admin
+from django.utils.functional import cached_property
+from corehq.motech.utils import b64_aes_decrypt
 
 
 class TranslationMixin(Document):
@@ -105,6 +107,10 @@ class TransifexOrganization(models.Model):
     def __str__(self):
         return self.name + ' (' + self.slug + ')'
 
+    @cached_property
+    def get_api_token(self):
+        return b64_aes_decrypt(self.api_token)
+
 
 class TransifexProject(models.Model):
     organization = models.ForeignKey(TransifexOrganization)
@@ -116,5 +122,4 @@ class TransifexProject(models.Model):
         return self.name + ' (' + self.slug + ')'
 
 
-admin.site.register(TransifexOrganization)
 admin.site.register(TransifexProject)
