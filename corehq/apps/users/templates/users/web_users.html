@@ -358,11 +358,11 @@
                         </td>
                         <td><i data-bind="staticChecked: permissions.edit_billing"></i></td>
                         <td data-bind="visible: $root.allowEdit">
-                            <button class="btn btn-default" data-bind="css: {disabled: !$data._id}, click: $data._id ? $root.setRoleBeingEdited : null">
+                            <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
                                 <i class="fa fa-edit"></i>
                                 {% trans "Edit Role" %}
                             </button>
-                            <button class="btn btn-danger" data-bind="css: {disabled: !$data._id || $data.hasUsersAssigned}, click: $data._id ? $root.setRoleBeingDeleted : null">
+                            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.hasUsersAssigned, click: $data._id ? $root.setRoleBeingDeleted : null">
                                 <i class="fa fa-trash"></i>
                                 {% trans "Delete Role" %}
                             </button>
