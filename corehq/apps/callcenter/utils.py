@@ -11,8 +11,6 @@ from corehq.apps.es import filters
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
-# I'm gonna clean this up in a later commit
-from .sync_user_case import sync_usercase, sync_call_center_user_case, sync_user_case
 
 
 @attr.s

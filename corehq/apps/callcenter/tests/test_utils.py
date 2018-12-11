@@ -8,12 +8,11 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case, sync_usercase
 from corehq.apps.callcenter.utils import (
-    sync_call_center_user_case,
     is_midnight_for_domain,
     get_call_center_cases,
     DomainLite,
-    sync_usercase,
     get_call_center_domains)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
