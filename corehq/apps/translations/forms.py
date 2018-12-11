@@ -4,7 +4,7 @@ import openpyxl
 import langcodes
 
 from django import forms
-from django.conf import settings
+
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -14,6 +14,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.translations.models import TransifexProject
 
 
 class ConvertTranslationsForm(forms.Form):
@@ -69,10 +70,10 @@ class PullResourceForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
-        if settings.TRANSIFEX_DETAILS:
+        projects = TransifexProject.objects.filter(domain=domain).all()
+        if projects:
             self.fields['transifex_project_slug'].choices = (
-                tuple((slug, slug)
-                      for slug in settings.TRANSIFEX_DETAILS.get('project').get(domain))
+                tuple((project.slug, project) for project in projects)
             )
         self.helper.layout = crispy.Layout(
             'transifex_project_slug',
@@ -125,10 +126,10 @@ class AppTranslationsForm(forms.Form):
         self.helper.field_class = 'col-sm-6 col-md-6 col-lg-5'
 
         self.fields['app_id'].choices = tuple((app.id, app.name) for app in get_brief_apps_in_domain(domain))
-        if settings.TRANSIFEX_DETAILS:
+        projects = TransifexProject.objects.filter(domain=domain).all()
+        if projects:
             self.fields['transifex_project_slug'].choices = (
-                tuple((slug, slug)
-                      for slug in settings.TRANSIFEX_DETAILS.get('project').get(domain))
+                tuple((project.slug, project) for project in projects)
             )
         form_fields = self.form_fields()
         form_fields.append(hqcrispy.Field(StrictButton(
