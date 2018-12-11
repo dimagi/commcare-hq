@@ -1274,6 +1274,13 @@ LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
     help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
+BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
+    'bulk_update_multimedia_paths',
+    'Add a page to update multimedia paths in bulk',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
