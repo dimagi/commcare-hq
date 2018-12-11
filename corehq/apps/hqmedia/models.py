@@ -527,10 +527,10 @@ class ApplicationMediaReference(object):
 
 def _log_media_deletion(app, deleted_media):
     # https://dimagi-dev.atlassian.net/browse/ICDS-2
-    formatted_media = {
+    formatted_media = [
         {'path': path, 'map_item': map_item.to_json(), 'media': media.as_dict() if media else None}
         for path, map_item, media in deleted_media
-    }
+    ]
     soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
         False, "path deleted from multimedia map", json.dumps({
             'domain': app.domain,
@@ -756,7 +756,7 @@ class HQMediaMixin(Document):
                     map_changed = True
                     del self.multimedia_map[path]
 
-        if not allow_deletion:
+        if not allow_deletion and deleted_media:
             _log_media_deletion(self, deleted_media)
 
         if map_changed:
@@ -813,7 +813,7 @@ class HQMediaMixin(Document):
                         del self.multimedia_map[path]
                         found_missing_mm = True
 
-        if not allow_deletion:
+        if not allow_deletion and deleted_media:
             _log_media_deletion(self, deleted_media)
 
         if found_missing_mm:
