@@ -298,7 +298,7 @@ class AppTranslations(BaseTranslationsView):
 
     def resources_translated(self, request):
         resource_pending_translations = (self._transifex.
-                                         resources_pending_translations(break_if_true=True))
+                                         resources_pending_translations())
         if resource_pending_translations:
             messages.error(
                 request,
@@ -320,7 +320,7 @@ class AppTranslations(BaseTranslationsView):
             if not self.resources_translated(request):
                 return False
         if form_data['lock_translations']:
-            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+            if self._transifex.resources_pending_translations(all_langs=True):
                 messages.error(request, _('Resources yet to be completely translated for all languages. '
                                           'Hence, the request for locking resources can not be performed.'))
                 return False
@@ -340,7 +340,7 @@ class AppTranslations(BaseTranslationsView):
         if not self.ensure_resources_present(request):
             return False
         if form_data['perform_translated_check']:
-            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+            if self._transifex.resources_pending_translations(all_langs=True):
                 messages.error(request, _('Resources yet to be completely translated for all languages. '
                                           'Hence, the request for deleting resources can not be performed.'))
                 return False
