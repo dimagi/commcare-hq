@@ -9,6 +9,8 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, H
     HttpResponseServerError
 from django.views.decorators.http import require_GET, require_POST
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.domain.models import Domain
@@ -137,7 +139,10 @@ class FormDownloadExportViewHelper(DownloadExportViewHelper):
     filter_form_class = EmwfFilterFormExport
 
     def get_export(self, id=None):
-        return FormExportInstance.get(id)
+        try:
+            return FormExportInstance.get(id)
+        except ResourceNotFound:
+            raise Http404()
 
 
 class CaseDownloadExportViewHelper(DownloadExportViewHelper):
