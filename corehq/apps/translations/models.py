@@ -108,7 +108,7 @@ class TransifexOrganization(models.Model):
 
 class TransifexProject(models.Model):
     organization = models.ForeignKey(TransifexOrganization)
-    slug = models.CharField(max_length=255)
+    slug = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     domain = models.CharField(max_length=255)
 
