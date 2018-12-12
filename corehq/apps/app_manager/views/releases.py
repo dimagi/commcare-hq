@@ -42,7 +42,7 @@ from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.permissions import can_manage_releases
 from corehq.util.timezones.utils import get_timezone_for_user
 
-from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
+from corehq.apps.app_manager.const import APP_STREAMS, DEFAULT_FETCH_LIMIT
 from corehq.apps.app_manager.dbaccessors import (
     get_app, get_latest_build_doc, get_latest_build_id,
     get_latest_released_app_version, get_built_app_ids_for_app_id,
@@ -109,7 +109,7 @@ def paginate_releases(request, domain, app_id):
     if not bool(only_show_released or build_comment):
         # If user is limiting builds by released status or build comment, it's much
         # harder to be performant with couch. So if they're not doing so, take shortcuts.
-        if app_stream in ('qa', 'translations', 'development'):
+        if app_stream in APP_STREAMS:
             query_set = AppStream.objects.filter(app_id=app_id, stream=app_stream)
             paginator = Paginator(query_set, limit)
             total_apps = paginator.count
@@ -154,7 +154,7 @@ def paginate_releases(request, domain, app_id):
             if toggles.TARGET_COMMCARE_FLAVOR.enabled(domain)
             else 'none'
         )
-        app['stream'] = streams_by_build_version.get(app['version'], 'blah')
+        app['stream'] = streams_by_build_version.get(app['version'])
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
