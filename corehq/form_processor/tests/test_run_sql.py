@@ -20,6 +20,7 @@ from corehq.form_processor.models import (
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
+    new_id_in_same_dbalias,
 )
 
 
@@ -69,7 +70,7 @@ class TestRunSql(TransactionTestCase):
     def create_form(self, action="normal"):
         def put(parent_id, name, code):
             def create_old_meta(form_id, **kw):
-                deprecated_ids.add((form_id, code, name))
+                deprecated_keys.add((form_id, code, name))
                 if name == "form.xml":
                     XFormInstanceSQL(
                         domain=meta.domain,
@@ -100,10 +101,18 @@ class TestRunSql(TransactionTestCase):
                 args["created_on"] = RECEIVED_ON
             meta = new_meta(**args)
 
-            # move blob metadata into old xformattachmentsql table
+            # put metadata into old xformattachmentsql table
             deprecated = "deprecated" in action
+            if deprecated:
+                try:
+                    form_id = deprecated_ids[parent_id]
+                except KeyError:
+                    form_id = new_id_in_same_dbalias(parent_id)
+                    deprecated_ids[parent_id] = form_id
+            else:
+                form_id = parent_id
             create_old_meta(
-                form_id=parent_id + ("-dep" if deprecated else ""),
+                form_id=form_id,
                 orig_id=(parent_id if deprecated else None),
             )
             if action == "normal":
@@ -115,7 +124,7 @@ class TestRunSql(TransactionTestCase):
                     assert deprecated, action
                     create_old_meta(
                         form_id=parent_id,
-                        deprecated_form_id=parent_id + "-dep",
+                        deprecated_form_id=form_id,
                     )
                     if "dup" not in action:
                         meta.delete()
@@ -126,7 +135,8 @@ class TestRunSql(TransactionTestCase):
             return meta
 
         assert action in "normal dup-deprecated-old", action
-        deprecated_ids = set()
+        deprecated_ids = {}
+        deprecated_keys = set()
 
         class namespace(object):
             form_id = action
@@ -135,13 +145,13 @@ class TestRunSql(TransactionTestCase):
                 put(form_id, "pic.jpg", CODES.form_attachment),
                 #put(form_id, "img.jpg", CODES.form_attachment),
             ]
-            keys = {get_key(m) for m in metas} | deprecated_ids
+            keys = {get_key(m) for m in metas} | deprecated_keys
         return namespace
 
-    def get_metas(self):
+    def get_metas(self, model=BlobMeta):
         metas = []
         for db in get_db_aliases_for_partitioned_query():
-            metas.extend(BlobMeta.objects.using(db).all())
+            metas.extend(model.objects.using(db).all())
         return metas
 
     def assert_expected_state(self, forms):
@@ -161,7 +171,6 @@ class TestRunSql(TransactionTestCase):
     @patch('corehq.form_processor.management.commands.run_sql.confirm', return_value=True)
     def test_simple_move_form_attachments_to_blobmeta(self, mock):
         # this test can be removed with form_processor_xformattachmentsql table
-        return
 
         forms = [
             # Normal form, no dups.
@@ -182,7 +191,7 @@ class TestRunSql(TransactionTestCase):
             print_rows=False,
         )
 
-        attachments = list(DeprecatedXFormAttachmentSQL.objects.all())
+        attachments = self.get_metas(DeprecatedXFormAttachmentSQL)
         self.assertEqual(attachments, [])
         self.assert_expected_state(forms)
 
@@ -215,7 +224,7 @@ class TestRunSql(TransactionTestCase):
             print_rows=False,
         )
 
-        attachments = list(DeprecatedXFormAttachmentSQL.objects.all())
+        attachments = self.get_metas(DeprecatedXFormAttachmentSQL)
         # some attachments will not be processed, need to be handled separately
         self.assertEqual(attachments, [])
         self.assert_expected_state(forms)
@@ -254,8 +263,8 @@ class TestRunSql(TransactionTestCase):
             print_rows=False,
         )
 
-        attachments = list(DeprecatedXFormAttachmentSQL.objects.all())
         # some attachments will not be processed, need to be handled separately
+        attachments = self.get_metas(DeprecatedXFormAttachmentSQL)
         self.assertNotEqual(attachments, [])
 
         metas = self.get_metas()
