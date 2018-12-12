@@ -150,6 +150,7 @@ class RunUntilZero(object):
 
 
 import re
+from collections import defaultdict
 from django.db import IntegrityError, transaction
 from corehq.blobs import get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -168,29 +169,52 @@ class RunUntilZeroHandleDupBlobs(RunUntilZero):
         if not match:
             raise
         key = match.group(1)
-        metas = list(BlobMeta.objects.using(dbname).filter(key=key))
-        if len({m.parent_id for m in metas}) == 1:
-            # TODO handle two blobs, same key, same parent
-            # delete the newer one
-            raise
-        assert len(metas) == 2, metas
-        meta = next(m for m in metas if m.id < 0)
-        print("{dbname}: creating new blob for "
-            "{meta.parent_id} / {meta.name} key={key}".format(**locals()))
-        with meta.open() as content, transaction.atomic(using=dbname):
-            get_blob_db().put(
-                content,
-                domain=meta.domain,
-                parent_id=meta.parent_id,
-                type_code=meta.type_code,
-                name=meta.name,
-                content_length=meta.content_length,
-                content_type=meta.content_type,
-                properties=meta.properties,
-                created_on=meta.created_on,
-                expires_on=meta.expires_on,
-            )
+        key_metas = list(BlobMeta.objects.using(dbname).filter(key=key))
+        assert len(key_metas) < 4, key_metas
+        by_parent = defaultdict(list)
+        for meta in key_metas:
+            by_parent[meta.parent_id].append(meta)
+        assert len(by_parent) < 3, by_parent
+        diff_parents = []
+        for metas in by_parent.values():
+            if len(metas) == 1:
+                diff_parents.append(metas[0])
+                continue
+            # delete newest duplicate
+            assert len(metas) == 2, metas
+            f1, f2 = [cls.meta_fields(m, False) for m in metas]
+            assert f1 == f2, "refusing to delete: {} != {}".format(f1, f2)
+            metas.sort(key=lambda m: m.created_on)
+            meta = metas.pop()
+            print("{dbname}: deleting duplicate blob for "
+                "{meta.parent_id} / {meta.name} key={key}".format(**locals()))
             meta.delete()
+            diff_parents.extend(metas)
+        if len(diff_parents) > 1:
+            # copy blob if multiple parents
+            assert len(diff_parents) == 2, diff_parents
+            meta = next(m for m in diff_parents if m.id < 0)
+            print("{dbname}: creating new blob for "
+                "{meta.parent_id} / {meta.name} key={key}".format(**locals()))
+            with meta.open() as content, transaction.atomic(using=dbname):
+                newmeta = get_blob_db().put(content, **cls.meta_fields(meta))
+                meta.delete()
+
+    @staticmethod
+    def meta_fields(meta, with_created_on=True):
+        fields = {f: getattr(meta, f) for f in [
+            "domain",
+            "parent_id",
+            "type_code",
+            "name",
+            "content_length",
+            "content_type",
+            "properties",
+            "expires_on",
+        ]}
+        if with_created_on:
+            fields["created_on"] = meta.created_on
+        return fields
 
 
 # Run after creating an index concurrently to verify successful index
@@ -278,6 +302,10 @@ WITH deleted AS (
 # Move rows incrementally.
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
+# This variant may be faster than the "simple" version above if there
+# are many duplicate metadata records. However, it will likely "finish"
+# before all records have been migrated due to returning zero even
+# though there are more to migrate.
 move_form_attachments_to_blobmeta = RunUntilZeroHandleDupBlobs("""
 WITH to_move AS (
     SELECT

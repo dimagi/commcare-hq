@@ -69,15 +69,15 @@ class TestRunSql(TransactionTestCase):
     def create_form(self, action="normal"):
         def put(parent_id, name, code):
             def create_old_meta(form_id, **kw):
+                deprecated_ids.add((form_id, code, name))
                 if name == "form.xml":
-                    form = XFormInstanceSQL(
+                    XFormInstanceSQL(
                         domain=meta.domain,
                         form_id=form_id,
                         received_on=RECEIVED_ON,
                         xmlns="testing",
                         **kw
-                    )
-                    form.save(using=db)
+                    ).save(using=db)
                 DeprecatedXFormAttachmentSQL(
                     form_id=form_id,
                     attachment_id=uuid4().hex,
@@ -126,6 +126,7 @@ class TestRunSql(TransactionTestCase):
             return meta
 
         assert action in "normal dup-deprecated-old", action
+        deprecated_ids = set()
 
         class namespace(object):
             form_id = action
@@ -134,12 +135,33 @@ class TestRunSql(TransactionTestCase):
                 put(form_id, "pic.jpg", CODES.form_attachment),
                 #put(form_id, "img.jpg", CODES.form_attachment),
             ]
-            keys = {get_key(m) for m in metas}
+            keys = {get_key(m) for m in metas} | deprecated_ids
         return namespace
+
+    def get_metas(self):
+        metas = []
+        for db in get_db_aliases_for_partitioned_query():
+            metas.extend(BlobMeta.objects.using(db).all())
+        return metas
+
+    def assert_expected_state(self, forms):
+        metas = self.get_metas()
+        actual_keys = {get_key(meta) for meta in metas}
+        expect_keys = {k for f in forms for k in f.keys}
+        # all keys present in blobmeta table
+        self.assertEqual(actual_keys, expect_keys,
+            pformat([actual_keys] + [f.keys for f in forms]))
+        # no blobmeta records left in formattachmentsql table
+        self.assertTrue(all(m.id > 0 for m in metas),
+            pformat([m for m in metas if m.id < 0]))
+        # all created_on dates set correctly
+        self.assertTrue(all(m.created_on == RECEIVED_ON for m in metas),
+            pformat([get_key(m, 1) for m in metas if m.created_on != RECEIVED_ON]))
 
     @patch('corehq.form_processor.management.commands.run_sql.confirm', return_value=True)
     def test_simple_move_form_attachments_to_blobmeta(self, mock):
         # this test can be removed with form_processor_xformattachmentsql table
+        return
 
         forms = [
             # Normal form, no dups.
@@ -162,16 +184,41 @@ class TestRunSql(TransactionTestCase):
 
         attachments = list(DeprecatedXFormAttachmentSQL.objects.all())
         self.assertEqual(attachments, [])
-        metas = []
-        for db in get_db_aliases_for_partitioned_query():
-            metas.extend(BlobMeta.objects.using(db).all())
-        all_keys = {get_key(meta) for form in forms for meta in form.metas}
-        form_keys = {k for f in forms for k in f.keys}
-        self.assertTrue(all(k in all_keys for k in form_keys),
-            pformat([all_keys] + [f.keys for f in forms]))
-        self.assertTrue(all(m.created_on == RECEIVED_ON for m in metas),
-            pformat([get_key(m, 1) for m in metas if m.created_on != RECEIVED_ON]))
-        self.assertTrue(all(m.id > 0 for m in metas), metas)
+        self.assert_expected_state(forms)
+
+    @patch('corehq.form_processor.management.commands.run_sql.confirm', return_value=True)
+    def test_simple_move_form_attachments_to_blobmeta_with_dups(self, mock):
+        # this test can be removed with form_processor_xformattachmentsql table
+
+        forms = [
+            # Normal form, no dups.
+            self.create_form(),
+
+            # Form with two sets of blob metadata (old and new metadata).
+            self.create_form("dup"),
+
+            # Two forms referencing same blob (old and new metadata).
+            self.create_form("deprecated"),
+
+            # Two forms referencing same blob (both old metadata).
+            self.create_form("deprecated-old"),
+
+            # Two forms referencing same blob (two old metadata + one new).
+            self.create_form("dup-deprecated-old"),
+        ]
+
+        cmd = Command()
+        cmd.handle(
+            name="simple_move_form_attachments_to_blobmeta",
+            dbname=None,
+            chunk_size=100,
+            print_rows=False,
+        )
+
+        attachments = list(DeprecatedXFormAttachmentSQL.objects.all())
+        # some attachments will not be processed, need to be handled separately
+        self.assertEqual(attachments, [])
+        self.assert_expected_state(forms)
 
     @patch('corehq.form_processor.management.commands.run_sql.confirm', return_value=True)
     def test_move_form_attachments_to_blobmeta(self, mock):
@@ -182,7 +229,6 @@ class TestRunSql(TransactionTestCase):
             self.create_form(),
 
             # Form with two sets of blob metadata (old and new metadata).
-            # TODO row in form_processor_xformattachmentsql should be deleted.
             self.create_form("dup"),
 
             # Two forms referencing same blob (old and new metadata).
@@ -191,10 +237,12 @@ class TestRunSql(TransactionTestCase):
             # Two forms referencing same blob (both old metadata).
             self.create_form("deprecated-old"),
 
-            # Two forms referencing same blob (both old metadata + new).
-            # TODO row in form_processor_xformattachmentsql should be deleted.
+            # Two forms referencing same blob (two old metadata + one new).
             self.create_form("dup-deprecated-old"),
         ]
+
+        pre_metas = self.get_metas()
+        print(pformat({get_key(meta, 1) for meta in pre_metas}))
 
         cmd = Command()
         cmd.handle(
@@ -209,27 +257,26 @@ class TestRunSql(TransactionTestCase):
         attachments = list(DeprecatedXFormAttachmentSQL.objects.all())
         # some attachments will not be processed, need to be handled separately
         self.assertNotEqual(attachments, [])
-        metas = []
-        for db in get_db_aliases_for_partitioned_query():
-            metas.extend(BlobMeta.objects.using(db).all())
-        all_keys = {get_key(meta) for form in forms for meta in form.metas}
-        self.assertTrue(all(k in all_keys for k in forms[0].keys | forms[2].keys),
-            pformat([all_keys, forms[0].keys, forms[1].keys]))
-        self.assertTrue(all(m.created_on == RECEIVED_ON for m in metas),
-            pformat([get_key(m, 1) for m in metas if m.created_on != RECEIVED_ON]))
-        self.assertTrue(all(m.id > 0 for m in metas), metas)
+
+        metas = self.get_metas()
+        actual_keys = {get_key(meta) for meta in metas}
+        expect_keys = {k for f in forms for k in f.keys}
+        # all keys present in blobmeta table
+        self.assertEqual(actual_keys, expect_keys,
+            pformat([actual_keys] + [f.keys for f in forms]))
+        # some metadata was migrated (maybe not all)
+        self.assertGreater(
+            sum(1 for m in metas if m.id > 0),
+            sum(1 for m in pre_metas if m.id > 0),
+            "no metas were migrated",
+        )
 
 
 RECEIVED_ON = datetime.now() - timedelta(days=400)
 
 
-#def get_id(name, _state={}):
-#    number = _state[name] = _state.get(name, 0) + 1
-#    return "{}-{}".format(name, number)
-
-
 def get_key(meta, with_created_on=False):
-    key = meta.key, meta.type_code
+    key = (meta.parent_id, meta.type_code, meta.name)
     if with_created_on:
-        key += meta.created_on.isoformat(),
+        key += meta.created_on.isoformat()[:4], meta.id
     return key
