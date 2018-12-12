@@ -20,6 +20,7 @@ from corehq.apps.app_manager.util import add_odk_profile_after_build, purge_repo
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.tests.utils import get_sample_report_config
 from corehq.util.test_utils import flag_enabled
 
 from six.moves import zip
@@ -151,7 +152,10 @@ class AppManagerTest(TestCase):
         self.assertTrue(self.app.blobs)
         self._test_import_app(self.app.id)
 
-    def testImportApp_from_source(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.ReportAppConfig.report')
+    def testImportApp_from_source(self, mock, report_mock):
+        report_mock.return_value = get_sample_report_config()
         report_module = self.app.add_module(ReportModule.new_module('Reports', None))
         report_module.report_configs = [
             ReportAppConfig(report_id='config_id1', header={'en': 'CommBugz'}),

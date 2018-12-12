@@ -383,7 +383,7 @@ def get_anamic_status(value):
     elif value['anemic_unknown']:
         return 'Unknown'
     else:
-        return 'Not entered'
+        return DATA_NOT_ENTERED
 
 
 def get_symptoms(value):

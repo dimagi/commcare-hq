@@ -97,6 +97,13 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
 
 
 def _get_form_designer_view(request, domain, app, module, form):
+    if app and app.copy_of:
+        messages.warning(request, _(
+            "You tried to edit a form that was from a previous release, so "
+            "we have directed you to the latest version of your application."
+        ))
+        return back_to_main(request, domain, app_id=app.id)
+
     if form.no_vellum:
         messages.warning(request, _(
             "You tried to edit this form in the Form Builder. "
@@ -174,11 +181,11 @@ def get_form_data_schema(request, domain, form_unique_id):
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
     except AppManagerException as e:
-        notify_exception(request, message=e.message)
-        return HttpResponseBadRequest(_(
-            "There is an error in the case management of your application. "
-            "Please fix the error to see case properties in this tree"
-        ))
+        notify_exception(request, message=str(e))
+        return HttpResponseBadRequest(
+            str(e) or _("There is an error in the case management of your application. "
+            "Please fix the error to see case properties in this tree")
+        )
     except Exception as e:
         notify_exception(request, message=e.message)
         return HttpResponseBadRequest("schema error, see log for details")

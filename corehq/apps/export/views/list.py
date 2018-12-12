@@ -75,12 +75,7 @@ from corehq.apps.export.dbaccessors import (
 )
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_ko_validation,
-)
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.permissions import (
     can_download_data_files,
@@ -110,7 +105,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     ''')
 
     @use_select2
-    @use_ko_validation
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)

@@ -28,10 +28,10 @@
 <header>
     <div class="row">
         <div class="col-sm-8">
-            <h2>{% trans "Manage Organization Structure" %}</h2>
+            <p class="lead">{% trans "Manage Organization Structure" %}</p>
             <p>
                 {% blocktrans %}
-                    The Organization feature allows you to represent the real-world
+                    The organization feature allows you to represent the real-world
                     structure of your project (districts, facilities, frontline workers, etc.).
                     Once this structure has been defined, you can use it for reporting and
                     case sharing. Learn more about Organizations on our <a href="https://help.commcarehq.org/display/commcarepublic/Organizations">Help Site</a>.
@@ -41,17 +41,6 @@
             <p class="alert alert-info">
                 {% if show_inactive %}{% trans 'Showing the Archived Location List.' %}{% endif %}
             </p>
-            {% endif %}
-        </div>
-        <div class="col-sm-4">
-            {% if not show_inactive %}
-                <a class="btn btn-default pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
-                    {% trans "Show Archived Locations" %}
-                </a>
-            {% else %}
-                <a class="btn btn-default pull-right" href="?" style="margin-right: 2.5em;">
-                    {% trans "Show Active Locations" %}
-                </a>
             {% endif %}
         </div>
     </div>
@@ -99,115 +88,46 @@
 
 <hr />
 
-<div class="col-xs-12 col-md-12 col-lg-12 loc_search" id="location_search">
-    <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">Location</label>
+<div class="row">
+    <div class="col-xs-8 col-md-8 col-lg-8 loc_search" id="location_search">
+        <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">Location</label>
 
-    <div class="col-xs-7 col-md-7 col-lg-8">
+        <div class="col-xs-7 col-md-7 col-lg-8">
 
-        <select type="text"
-            id="location_search_select"
-            data-bind="value: l__selected_location_id"
-            class="span4 form-control"
-            placeholder="Specify location"
-            name="location_search"
-            style="max-width:80%;"></select>
+            <select type="text"
+                id="location_search_select"
+                data-bind="value: l__selected_location_id"
+                class="span4 form-control"
+                placeholder="Specify location"
+                name="location_search"
+                style="max-width:80%;"></select>
 
-        <button type="button" class="btn btn-secondary" style="display:inline; cursor:pointer;" data-bind="visible: selected_location_id(), click: clearLocationSelection">
-            <i class="fa fa-times" aria-hidden="true"></i>
-        </button>
+            <button type="button" class="btn btn-secondary" style="display:inline; cursor:pointer;" data-bind="visible: selected_location_id(), click: clearLocationSelection">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </button>
 
-        <span class="help-block">
-            <i class="fa fa-info-circle"></i>
-            To quick search for a location, write your query as "parent"/descendant. For more info, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a> help page.
-        </span>
+            <span class="help-block">
+                <i class="fa fa-info-circle"></i>
+                To quick search for a location, write your query as "parent"/descendant. For more info, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a> help page.
+            </span>
 
-    </div>
-
-</div>
-
-{% if has_location_types %}
-    <script type="text/html" id="location-template">
-
-        <div class="loc_section">
-            <!-- header bar -->
-            <div class="loc_header clearfix" data-bind="if: name() != '_root'">
-                <div style="float:right;" data-bind="if: can_edit()" id="button-template">
-                    {% if not show_inactive %}
-                        <a class="btn btn-primary"
-                           data-bind="attr: { href: loc_edit_url(uuid()) }">
-                            <i class="fa fa-edit"></i>
-                            {% trans "Edit" %}
-                        </a>
-                    {% endif %}
-
-                    {% if show_inactive %}
-                        <button class="btn btn-default"
-                            data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
-                            <i class="fa fa-archive"></i>
-                            {% trans "Unarchive" %}
-                        </button>
-                    {% else %}
-                        <button class="btn btn-default"
-                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
-                            <i class="fa fa-archive"></i>
-                            {% trans "Archive" %}
-                        </button>
-                    {% endif %}
-                    <button class="btn btn-danger"
-                        data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
-                        <i class="fa fa-trash"></i>
-                        {% trans "Delete" %}
-                    </button>
-                </div>
-
-                <!-- want to make entire row clickable, but overrides click on 'edit' button -->
-                <div data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
-                    <span data-bind="if: can_have_children">
-                        <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded()==true, 'fa-plus-square-o': expanded()=='semi' }"></i>
-                    </span>
-                    <span class="loc_name" data-bind="text: name"></span>
-                    <span class="loc_type">(<span data-bind="text: type"></span>)</span>
-                </div>
-                <div style="clear: both;"></div>
-                <hr style="margin: 0px;"/>
-            </div>
-
-            <!-- child content -->
-            <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
-
-                <!-- ajax spinner -->
-                <div class="loc_section loc_child" data-bind="visible: children_status() == 'loading'">
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
-                </div>
-
-                <!-- ajax content -->
-                <div data-bind="fadeVisible: children_status() == 'loaded' || children_status() == 'semi_loaded'">
-
-                    <!-- child entries -->
-                    <div data-bind="foreach: children">
-                        <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
-                    </div>
-
-                    <!-- 'no children' message -->
-                    <div class="loc_child no_children alert alert-info" data-bind="visible: children().length == 0, text: no_children_caption"></div>
-
-                </div>
-
-                {% if not show_inactive %}
-                    <!-- create child button -->
-                    <!-- ko if: can_edit() -->
-                        <a class="btn btn-success loc_child"
-                           data-bind="attr: { href: new_loc_url() + '?parent=' + (uuid() || '') },
-                                      click: new_location_tracking">
-                            <i class="fa fa-plus"></i> <span data-bind="text: new_child_caption"></span>
-                        </a>
-                    <!-- /ko -->
-                {% endif %}
-            </div>
         </div>
 
-    </script>
-{% else %}
+    </div>
+    <div class="col-sm-4">
+        {% if not show_inactive %}
+            <a class="btn btn-default pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
+                {% trans "Show Archived Locations" %}
+            </a>
+        {% else %}
+            <a class="btn btn-default pull-right" href="?" style="margin-right: 2.5em;">
+                {% trans "Show Active Locations" %}
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if not has_location_types %}
     <div class="loc_child no_children alert alert-info">
         {% url "location_types" domain as location_types_url %}
         {% blocktrans %}
@@ -217,6 +137,7 @@
         {% endblocktrans %}
     </div>
 {% endif %}
+
 <div class="row">
     <div class="col-lg-12" style="clear: both">
         <div id="location_tree">
@@ -224,6 +145,87 @@
         </div>
     </div>
 </div>
+
+<script type="text/html" id="location-template">
+    <div class="loc_section">
+        <!-- header bar -->
+        <div class="loc_header clearfix" data-bind="if: name() != '_root'">
+            <div style="float:right;" data-bind="if: can_edit()" id="button-template">
+                {% if not show_inactive %}
+                    <a class="btn btn-primary"
+                       data-bind="attr: { href: loc_edit_url(uuid()) }">
+                        <i class="fa fa-edit"></i>
+                        {% trans "Edit" %}
+                    </a>
+                {% endif %}
+
+                {% if show_inactive %}
+                    <button class="btn btn-default"
+                        data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
+                        <i class="fa fa-archive"></i>
+                        {% trans "Unarchive" %}
+                    </button>
+                {% else %}
+                    <button class="btn btn-default"
+                        data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                        <i class="fa fa-archive"></i>
+                        {% trans "Archive" %}
+                    </button>
+                {% endif %}
+                <button class="btn btn-danger"
+                    data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete" %}
+                </button>
+            </div>
+
+            <!-- want to make entire row clickable, but overrides click on 'edit' button -->
+            <div data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
+                <span data-bind="if: can_have_children">
+                    <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded()==true, 'fa-plus-square-o': expanded()=='semi' }"></i>
+                </span>
+                <span class="loc_name" data-bind="text: name"></span>
+                <span class="loc_type">(<span data-bind="text: type"></span>)</span>
+            </div>
+            <div style="clear: both;"></div>
+            <hr style="margin: 0px;"/>
+        </div>
+
+        <!-- child content -->
+        <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
+
+            <!-- ajax spinner -->
+            <div class="loc_section loc_child" data-bind="visible: children_status() == 'loading'">
+                <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
+            </div>
+
+            <!-- ajax content -->
+            <div data-bind="fadeVisible: children_status() == 'loaded' || children_status() == 'semi_loaded'">
+
+                <!-- child entries -->
+                <div data-bind="foreach: children">
+                    <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+                </div>
+
+                <!-- 'no children' message -->
+                <div class="loc_child no_children alert alert-info" data-bind="visible: children().length == 0, text: no_children_caption"></div>
+
+            </div>
+
+            {% if not show_inactive %}
+                <!-- create child button -->
+                <!-- ko if: can_edit() -->
+                    <a class="btn btn-success loc_child"
+                       data-bind="attr: { href: new_loc_url() + '?parent=' + (uuid() || '') },
+                                  click: new_location_tracking">
+                        <i class="fa fa-plus"></i> <span data-bind="text: new_child_caption"></span>
+                    </a>
+                <!-- /ko -->
+            {% endif %}
+        </div>
+    </div>
+</script>
+
 {% endblock %}
 
 {% block modals %}

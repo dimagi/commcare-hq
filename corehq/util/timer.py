@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import time
+import uuid
 
 from functools import wraps
 from memoized import memoized
@@ -18,6 +19,7 @@ class NestableTimer(object):
         self.subs = []
         self.root = self if is_root else None
         self.parent = None
+        self.uuid = uuid.uuid4()
 
     def init(self, root, parent):
         self.root = root

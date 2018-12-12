@@ -192,7 +192,7 @@ hqDefine("reports/js/filters/main", [
             var $el = $(el), data = $el.data();
             var model = locationDrilldown.locationSelectViewModel({
                 "hierarchy": data.hierarchy,
-                "show_location_filter": data.makeOptional && !data.locId ? "n" : "y",
+                "show_location_filter": data.makeOptional && (data.locId === 'None' || !data.locId) ? "n" : "y",
                 "loc_url": data.locationUrl,
                 "auto_drill": data.autoDrill,
                 "max_drilldown_length": data.maxDrilldownLength,

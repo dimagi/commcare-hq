@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import inspect
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -1272,6 +1274,13 @@ LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
     help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
+BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
+    'bulk_update_multimedia_paths',
+    'Add a page to update multimedia paths in bulk',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
@@ -1646,6 +1655,16 @@ FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
                 'have group and location filters, such as the Submissions by Form report.',
 )
 
+DONT_INDEX_SAME_CASETYPE = StaticToggle(
+    'dont_index_same_casetype',
+    "Don't create a parent index if the child case has the same case type as the parent case",
+    TAG_DEPRECATED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=inspect.cleandoc("""This toggle preserves old behaviour
+        of not creating a parent index on the child case if their case
+        types are the same.""")
+)
+
 SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'sort_out_of_order_form_submissions_sql',
     'Sort out of order form submissions in the SQL update strategy',
@@ -1656,8 +1675,7 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
 
 RESTRICT_APP_RELEASE = StaticToggle(
     'restrict_app_release',
-    'ICDS: Restrict App Release management to only specific users for a domain',
+    'ICDS: Show permission to manage app releases on user roles',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'softlayer'},
+    namespaces=[NAMESPACE_DOMAIN],
 )
