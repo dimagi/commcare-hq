@@ -85,6 +85,8 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
     def page_context(self, **kwargs):
         context = super(BaseMultimediaTemplateView, self).page_context
         views = [MultimediaReferencesView, BulkUploadMultimediaView]
+        if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
+            views.append(BulkUploadMultimediaPathsView)
         context.update({
             "domain": self.domain,
             "app": self.app,
@@ -174,13 +176,17 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
 
 @method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
 @method_decorator(require_can_edit_apps, name='dispatch')
-class BulkUploadMultimediaPathsView(BaseMultimediaUploaderView):
-    name = "hqmedia_bulk_upload_paths"
+class BulkUploadMultimediaPathsView(BaseMultimediaTemplateView):
+    urlname = "hqmedia_bulk_upload_paths"
     template_name = "hqmedia/bulk_upload_paths.html"
+    page_title = ugettext_noop("Manage Multimedia Paths")
 
     @property
-    def upload_controllers(self):
-        return []
+    def parent_pages(self):
+        return [{
+            'title': _("Multimedia Reference Checker"),
+            'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+        }]
 
 
 @toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
