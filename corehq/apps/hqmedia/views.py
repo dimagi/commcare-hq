@@ -48,16 +48,17 @@ from corehq.apps.hqmedia.controller import (
 )
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from memoized import memoized
 from soil.util import expose_cached_download
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from django_prbac.decorators import requires_privilege_raise404
 import six
 
 
-class BaseMultimediaView(ApplicationViewMixin, View):
+class BaseMultimediaView(ApplicationViewMixin, BaseSectionPageView):
 
     @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_and_domain_required))
     def dispatch(self, request, *args, **kwargs):
@@ -68,10 +69,17 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
     """
         The base view for all the multimedia templates.
     """
+    @property
+    def section_name(self):
+        return self.app.name
 
     @property
-    def page_context(self):
-        return {}
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.app.get_id])
+
+    @property
+    def section_url(self):
+        return reverse("app_settings", args=[self.domain, self.app.get_id])
 
     def get_context_data(self, **kwargs):
         context = {
@@ -106,6 +114,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 class MultimediaReferencesView(BaseMultimediaUploaderView):
     urlname = "hqmedia_references"
     template_name = "hqmedia/references.html"
+    page_title = ugettext_noop("Multimedia Reference Checker")
 
     @property
     def page_context(self):
@@ -135,6 +144,14 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
     urlname = "hqmedia_bulk_upload"
     template_name = "hqmedia/bulk_upload.html"
+    page_title = ugettext_noop("Bulk Upload Multimedia")
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Multimedia Reference Checker"),
+            'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+        }]
 
     @property
     def upload_controllers(self):
