@@ -104,7 +104,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
 
 class MultimediaReferencesView(BaseMultimediaUploaderView):
-    name = "hqmedia_references"
+    urlname = "hqmedia_references"
     template_name = "hqmedia/references.html"
 
     @property
@@ -123,22 +123,22 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
     @property
     def upload_controllers(self):
         return [
-            MultimediaImageUploadController("hqimage", reverse(ProcessImageFileUploadView.name,
+            MultimediaImageUploadController("hqimage", reverse(ProcessImageFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
-            MultimediaAudioUploadController("hqaudio", reverse(ProcessAudioFileUploadView.name,
+            MultimediaAudioUploadController("hqaudio", reverse(ProcessAudioFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
-            MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.name,
+            MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
         ]
 
 
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
-    name = "hqmedia_bulk_upload"
+    urlname = "hqmedia_bulk_upload"
     template_name = "hqmedia/bulk_upload.html"
 
     @property
     def upload_controllers(self):
-        return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.name,
+        return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.urlname,
                                                                        args=[self.domain, self.app_id]))]
 
 
@@ -248,7 +248,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
 
 
 class ProcessBulkUploadView(BaseProcessUploadedView):
-    name = "hqmedia_uploader_bulk"
+    urlname = "hqmedia_uploader_bulk"
 
     @property
     @memoized
@@ -387,7 +387,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
 
 class ProcessImageFileUploadView(BaseProcessFileUploadView):
     media_class = CommCareImage
-    name = "hqmedia_uploader_image"
+    urlname = "hqmedia_uploader_image"
 
     @classmethod
     def valid_base_types(cls):
@@ -395,7 +395,7 @@ class ProcessImageFileUploadView(BaseProcessFileUploadView):
 
 
 class ProcessLogoFileUploadView(ProcessImageFileUploadView):
-    name = "hqmedia_uploader_logo"
+    urlname = "hqmedia_uploader_logo"
 
     @method_decorator(requires_privilege_raise404(privileges.COMMCARE_LOGO_UPLOADER))
     def post(self, request, *args, **kwargs):
@@ -428,7 +428,7 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
 
 class ProcessAudioFileUploadView(BaseProcessFileUploadView):
     media_class = CommCareAudio
-    name = "hqmedia_uploader_audio"
+    urlname = "hqmedia_uploader_audio"
 
     @classmethod
     def valid_base_types(cls):
@@ -437,7 +437,7 @@ class ProcessAudioFileUploadView(BaseProcessFileUploadView):
 
 class ProcessVideoFileUploadView(BaseProcessFileUploadView):
     media_class = CommCareVideo
-    name = "hqmedia_uploader_video"
+    urlname = "hqmedia_uploader_video"
 
     @classmethod
     def valid_base_types(cls):
@@ -446,7 +446,7 @@ class ProcessVideoFileUploadView(BaseProcessFileUploadView):
 
 class ProcessTextFileUploadView(BaseProcessFileUploadView):
     media_class = CommCareMultimedia
-    name = "hqmedia_uploader_text"
+    urlname = "hqmedia_uploader_text"
 
     @classmethod
     def valid_base_types(cls):
@@ -454,7 +454,7 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
 
 
 class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
-    name = "hqmedia_uploader_detail_print_template"
+    urlname = "hqmedia_uploader_detail_print_template"
 
     @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
     def post(self, request, *args, **kwargs):
@@ -482,7 +482,7 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
 
 
 class RemoveDetailPrintTemplateView(BaseMultimediaView):
-    name = "hqmedia_remove_detail_print_template"
+    urlname = "hqmedia_remove_detail_print_template"
 
     @property
     def module_unique_id(self):
@@ -498,7 +498,7 @@ class RemoveDetailPrintTemplateView(BaseMultimediaView):
 
 
 class RemoveLogoView(BaseMultimediaView):
-    name = "hqmedia_remove_logo"
+    urlname = "hqmedia_remove_logo"
 
     @property
     def logo_slug(self):
@@ -515,7 +515,7 @@ class RemoveLogoView(BaseMultimediaView):
 
 
 class CheckOnProcessingFile(BaseMultimediaView):
-    name = "hqmedia_check_processing"
+    urlname = "hqmedia_check_processing"
 
     def get(self, request, *args, **kwargs):
         return HttpResponse("workin on it")
@@ -576,7 +576,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
     """
 
-    name = "download_multimedia_zip"
+    urlname = "download_multimedia_zip"
     compress_zip = False
     include_multimedia_files = True
     include_index_files = False
@@ -631,7 +631,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
 
 class MultimediaUploadStatusView(View):
-    name = "hqmedia_upload_status"
+    urlname = "hqmedia_upload_status"
 
     @property
     @memoized
@@ -664,7 +664,7 @@ class MultimediaUploadStatusView(View):
 
 
 class ViewMultimediaFile(View):
-    name = "hqmedia_download"
+    urlname = "hqmedia_download"
 
     @always_allow_browser_caching
     def dispatch(self, request, *args, **kwargs):

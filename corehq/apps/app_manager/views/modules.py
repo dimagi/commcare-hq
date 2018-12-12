@@ -146,7 +146,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
         print_uploader = MultimediaHTMLUploadController(
             slug,
             reverse(
-                ProcessDetailPrintTemplateUploadView.name,
+                ProcessDetailPrintTemplateUploadView.urlname,
                 args=[app.domain, app.id, module.unique_id],
             )
         )
