@@ -28,28 +28,32 @@ class TestUserSignals(SimpleTestCase):
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2.delay')
     @patch('corehq.apps.callcenter.tasks.sync_call_center_user_case')
+    @patch('corehq.apps.callcenter.tasks.sync_usercase')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_call_center,
-                               update_hubspot_properties_v2):
+                               sync_usercase, update_hubspot_properties_v2):
         CommCareUser(username='test').save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
         self.assertTrue(sync_call_center.called)
+        self.assertTrue(sync_usercase.called)
         self.assertFalse(update_hubspot_properties_v2.called)
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2.delay')
     @patch('corehq.apps.callcenter.tasks.sync_call_center_user_case')
+    @patch('corehq.apps.callcenter.tasks.sync_usercase')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_webuser_save(self, send_to_es, invalidate, sync_call_center,
-                          update_hubspot_properties_v2):
+                          sync_usercase, update_hubspot_properties_v2):
         WebUser().save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
         self.assertFalse(sync_call_center.called)
+        self.assertFalse(sync_usercase.called)
         self.assertTrue(update_hubspot_properties_v2.called)
 
 
@@ -57,6 +61,7 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2')
 @patch('corehq.apps.callcenter.tasks.sync_call_center_user_case')
+@patch('corehq.apps.callcenter.tasks.sync_usercase')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 class TestUserSyncToEs(SimpleTestCase):
 
