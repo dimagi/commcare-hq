@@ -185,8 +185,7 @@
         {% if request.user.is_authenticated and is_demo_visible %}
           {% include "hqwebapp/partials/get_demo_banner.html" %}
         {% endif %}
-        <!-- .hide used for A/B test of account creation page -->
-        <div class="hq-container{% if is_register_user %} molly{% endif %}">
+        <div class="hq-container">
             {% block navigation %}
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
