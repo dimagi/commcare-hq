@@ -118,8 +118,7 @@ textarea.vertical-resize {
   .border-top-radius(5px);
   .border-bottom-radius(5px);
   box-sizing: content-box;
-  background-color: @cc-brand-mid;
-  color: white;
+  background-color: @call-to-action-extra-hi;
 
   fieldset {
     padding: 0.01em 0 0 0;
@@ -131,26 +130,33 @@ textarea.vertical-resize {
     padding: 0;
     display: table;
     text-align: center;
-    color: white;
   }
 
   .help-block {
     text-align: left;
-    color: white;
   }
 
   a,
   a:visited,
   a:link {
-    color: @cc-brand-hi;
+    color: @cc-brand-mid;
+  }
+
+  .btn-default {
+    background-color: @call-to-action-extra-hi;
   }
 }
 
 .form-bubble-purple {
   background-color: @color-purple-dark;
   color: @color-purple-dark-inverse;
+  border: none;
 
-  a.btn-purple {
+  a, a:active, a:hover {
+    color: @color-purple-dark-inverse;
+  }
+
+  .btn-purple {
     background-color: @color-purple-dark;
     color: @component-active-color;
     border: 1px solid @color-purple-dark-inverse;
@@ -164,10 +170,6 @@ textarea.vertical-resize {
 .form-bubble-actions {
   text-align: center;
   padding-bottom: 10px;
-
-  a.btn {
-    color: white;
-  }
 }
 
 .form-bubble-lg {
