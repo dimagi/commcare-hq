@@ -27,7 +27,8 @@ from corehq.apps.app_manager.views import (
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
-    update_linked_whitelist, overwrite_module_case_list, app_settings
+    update_linked_whitelist, overwrite_module_case_list, app_settings,
+    set_app_stream
 )
 from corehq.apps.translations.views import (
     download_bulk_ui_translations, download_bulk_app_translations, upload_bulk_ui_translations,
@@ -53,6 +54,7 @@ app_urls = [
         name='release_build'),
     url(r'^releases/unrelease/(?P<saved_app_id>[\w-]+)/$', release_build,
         name='unrelease_build', kwargs={'is_released': False}),
+    url(r'^releases/set_app_stream/(?P<saved_app_id>[\w-]+)/$', set_app_stream, name='set_app_stream'),
     url(r'^releases/profiles/$', LanguageProfilesView.as_view(), name=LanguageProfilesView.urlname),
     url(r'^modules-(?P<module_id>[\w-]+)/$', view_module_legacy,
         name='view_module_legacy'),

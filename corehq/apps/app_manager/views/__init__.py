@@ -103,6 +103,7 @@ from corehq.apps.app_manager.views.releases import (
     release_build,
     revert_to_copy,
     save_copy,
+    set_app_stream,
     short_odk_url,
     short_url,
     update_build_comment,

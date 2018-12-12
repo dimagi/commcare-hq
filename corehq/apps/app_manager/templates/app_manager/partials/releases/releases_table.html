@@ -138,31 +138,31 @@
                       <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
                       <div class="btn-group">
                           <button type="button"
-                                  class="btn btn-xs"
-                                  data-bind="click: $root.toggleRelease,
+                                  class="btn btn-xs stream-qa"
+                                  data-bind="click: $root.changeStream,
                                              css: {
-                                                'active': stream() == 'qa',
-                                                'btn-primary': stream() == 'qa',
+                                                'active': stream() === 'qa',
+                                                'btn-primary': stream() === 'qa',
                                                 'btn-default': stream() !== 'qa'
                                              }">
                               {% trans "QA" %}
                           </button>
                           <button type="button"
-                                  class="btn btn-xs btn-default"
-                                  data-bind="click: $root.toggleRelease,
+                                  class="btn btn-xs stream-translations"
+                                  data-bind="click: $root.changeStream,
                                              css: {
-                                                'active': stream() == 'translations',
-                                                'btn-primary': stream() == 'translations',
+                                                'active': stream() === 'translations',
+                                                'btn-primary': stream() === 'translations',
                                                 'btn-default': stream() !== 'translations'
                                              }">
                               {% trans "Translations" %}
                           </button>
                           <button type="button"
-                                  class="btn btn-xs btn-default"
-                                  data-bind="click: $root.toggleRelease,
+                                  class="btn btn-xs stream-development"
+                                  data-bind="click: $root.changeStream,
                                              css: {
-                                                'active': stream() == 'development',
-                                                'btn-primary': stream() == 'development',
+                                                'active': stream() === 'development',
+                                                'btn-primary': stream() === 'development',
                                                 'btn-default': stream() !== 'development'
                                              }">
                               {% trans "Development" %}

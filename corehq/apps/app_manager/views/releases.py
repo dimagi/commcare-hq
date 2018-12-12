@@ -265,6 +265,24 @@ def release_build(request, domain, app_id, saved_app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+def set_app_stream(request, domain, app_id, saved_app_id):
+    stream = request.POST.get('stream')
+    num_updated = AppStream.objects.filter(
+        app_id=app_id, build_id=saved_app_id
+    ).update(stream=stream)
+    if num_updated == 0:
+        saved_app = get_app(domain, saved_app_id)
+        AppStream.objects.create(
+            app_id=app_id, build_id=saved_app_id,
+            build_version=saved_app.version,
+            stream=stream
+        )
+
+    return json_response({'status': 'success'})
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
 def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.

@@ -335,6 +335,25 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
+        self.changeStream = function (savedApp, event) {
+            var classPrefix = 'stream-',
+                streamClass = _.find(event.target.classList, function (className) {
+                    return className.startsWith(classPrefix);
+                }),
+                stream = streamClass.slice(classPrefix.length);
+            if (savedApp.stream !== stream) {
+                $.ajax({
+                    url: self.reverse('set_app_stream', savedApp.id()),
+                    type: 'post',
+                    dataType: 'json',
+                    data: {ajax: true, stream: stream},
+                    success: function (data) {
+                        savedApp.stream(stream);
+                    },
+                });
+            }
+        };
+
         self.toggleRelease = function (savedApp, event) {
             $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
             var isReleased = savedApp.is_released();
