@@ -51,21 +51,8 @@
             {% if totals|length %}
                 <p>
                     {% blocktrans %}
-                        You can manage multimedia by uploading files <strong>individually</strong> below.
+                        You can manage multimedia by uploading files individually below.
                     {% endblocktrans %}
-                    <br><br>
-                    {% blocktrans %}
-                        Alternatively, you can
-                    {% endblocktrans %}
-                    <a href="{% url "hqmedia_bulk_upload" domain app.get_id %}">
-                        {% trans 'bulk upload files' %}
-                    </a>
-                    {% if request|toggle_enabled:"BULK_UPDATE_MULTIMEDIA_PATHS" %}
-                        or
-                        <a href="{% url "hqmedia_bulk_upload_paths" domain app.get_id %}">
-                            {% trans 'organize file paths' %}
-                        </a>
-                    {% endif %}
                 </p>
                 <p>
                     <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
