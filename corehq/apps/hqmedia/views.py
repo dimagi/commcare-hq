@@ -81,12 +81,23 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
     def section_url(self):
         return reverse("app_settings", args=[self.domain, self.app.get_id])
 
-    def get_context_data(self, **kwargs):
-        context = {
+    @property
+    def page_context(self, **kwargs):
+        context = super(BaseMultimediaTemplateView, self).page_context
+        views = [MultimediaReferencesView, BulkUploadMultimediaView]
+        context.update({
             "domain": self.domain,
             "app": self.app,
-        }
-        context.update(self.page_context)
+            "navigation_sections": (
+                (_("Multimedia"), [
+                    {
+                        'title': view.page_title,
+                        'url': reverse(view.urlname, args=[self.domain, self.app.id]),
+                        'is_active': view.urlname == self.urlname,
+                    } for view in views
+                ]),
+            ),
+        })
         return context
 
     def render_to_response(self, context, **response_kwargs):
@@ -97,11 +108,13 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
     @property
     def page_context(self):
-        return {
+        context = super(BaseMultimediaUploaderView, self).page_context
+        context.update({
             'uploaders': self.upload_controllers,
             'uploaders_js': [u.js_options for u in self.upload_controllers],
             "sessionid": self.request.COOKIES.get('sessionid'),
-        }
+        })
+        return context
 
     @property
     def upload_controllers(self):
