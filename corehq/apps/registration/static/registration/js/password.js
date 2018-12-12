@@ -35,5 +35,8 @@
         return self;
     };
 
-    $('.check-password').koApplyBindings(passwordModel());
+    var $checkPassword = $('.check-password');
+    if ($checkPassword.length) {
+        $checkPassword.koApplyBindings(passwordModel());
+    }
 })();
