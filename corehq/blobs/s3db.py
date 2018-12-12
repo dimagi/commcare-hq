@@ -150,6 +150,17 @@ class BlobStream(ClosingContextProxy):
         self._blob_db = weakref.ref(blob_db)
         self.blob_key = blob_key
 
+    def seek(self, offset, from_what=os.SEEK_SET):
+        try:
+            return super(BlobStream, self).seek(offset, from_what)
+        except AttributeError:
+            pass
+        if from_what != os.SEEK_SET:
+            raise ValueError("seek mode not supported")
+        if offset != self._amount_read:
+            name = type(self._obj).__name__
+            raise ValueError("%s.seek not supported" % name)
+
     @property
     def blob_db(self):
         return self._blob_db()
@@ -161,6 +172,10 @@ def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
 
 
 def get_file_size(fileobj):
+    # botocore.response.StreamingBody has a '_content_length' attribute
+    length = getattr(fileobj, "_content_length", None)
+    if length is not None:
+        return int(length)
 
     def tell_end(fileobj_):
         pos = fileobj_.tell()
