@@ -56,7 +56,7 @@
 
 
                   <div class="form-bubble-actions">
-                    <button type="submit" class="btn btn-lg btn-success">
+                    <button type="submit" class="btn btn-lg btn-primary">
                       {% trans "Accept Invitation" %}
                     </button>
                   </div>
@@ -75,17 +75,17 @@
                 </p>
             {% endif %}
           </div>
-          <div class="well sign-up-bubble ">
+          <div class="well sign-up-bubble form-bubble-purple">
               <h2 class="text-center">
                 {% blocktrans with formatted_username|safe as username %}
                   Not {{ username }}?
                 {% endblocktrans %}
               </h2>
               <p class="text-center">
-                <a href="?create=true" class="btn btn-primary-dark btn-lg">
+                <a href="?create=true" class="btn btn-purple btn-lg">
                     {% trans 'Create an Account' %}
                 </a> or
-                <a href="?switch=true" class="btn btn-primary-dark btn-lg">
+                <a href="?switch=true" class="btn btn-purple btn-lg">
                     {% trans 'Switch Accounts' %}
                 </a>
               </p>
@@ -140,7 +140,7 @@
 
                 <div class="form-bubble-actions">
                   <button type="submit"
-                          class="btn btn-lg btn-success"
+                          class="btn btn-lg btn-primary"
                           data-bind="enable: passwordSufficient">
                     {% trans "Create Account" %}
                   </button>
@@ -148,10 +148,10 @@
               </fieldset>
             </form>
           </div>
-          <div class="well sign-up-bubble ">
+          <div class="well sign-up-bubble form-bubble-purple">
               <h2 class="text-center">{% trans 'Already have an account?' %}</h2>
               <p class="text-center">
-                <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-primary-dark btn-lg">
+                <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-purple btn-lg">
                     {% trans 'Sign In Now' %}
                 </a>
               </p>
