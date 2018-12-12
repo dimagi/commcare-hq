@@ -102,7 +102,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
     def test_form_media_with_app_profile(self, dom_has_priv):
         # Test that form media for languages not in the profile are removed from the media suite
         # Media outside of forms is still included in the suite file even for langs not in the profile
-        #    (not sure why that's the case)
+        #    See note as to why that's the case: https://github.com/dimagi/commcare-hq/pull/11295#discussion_r126147881
 
         app = Application.wrap(self.get_json('app'))
         app.build_profiles['profid'] = BuildProfile(
