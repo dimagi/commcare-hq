@@ -92,6 +92,7 @@ def paginate_releases(request, domain, app_id):
     skip = (page - 1) * limit
     timezone = get_timezone_for_user(request.couch_user, domain)
     app_stream_info = None
+    use_app_streams = toggles.APP_STREAMS.enabled(domain)
 
     def _get_batch(start_build=None, skip=None):
         start_build = {} if start_build is None else start_build
@@ -109,7 +110,7 @@ def paginate_releases(request, domain, app_id):
     if not bool(only_show_released or build_comment):
         # If user is limiting builds by released status or build comment, it's much
         # harder to be performant with couch. So if they're not doing so, take shortcuts.
-        if app_stream in APP_STREAMS:
+        if use_app_streams and app_stream in APP_STREAMS:
             query_set = AppStream.objects.filter(app_id=app_id, stream=app_stream)
             paginator = Paginator(query_set, limit)
             total_apps = paginator.count
@@ -265,6 +266,7 @@ def release_build(request, domain, app_id, saved_app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@toggles.APP_STREAMS.required_decorator()
 def set_app_stream(request, domain, app_id, saved_app_id):
     stream = request.POST.get('stream')
     num_updated = AppStream.objects.filter(

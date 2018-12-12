@@ -1679,3 +1679,11 @@ RESTRICT_APP_RELEASE = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+
+APP_STREAMS = StaticToggle(
+    'app_streams',
+    'ICDS: Adds ability to tag builds based on what stream it is on',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)

@@ -69,6 +69,7 @@
             </span>
         </div>
     </div>
+    {% if request|toggle_enabled:"APP_STREAMS" %}
     <div class="row">
         <div class="col-md-3 col-md-offset-9">
             <span class="input-group input-group-sm">
@@ -113,6 +114,7 @@
             </span>
         </div>
     </div>
+    {% endif %}
 
 
     <div id="build-errors-wrapper"></div>
@@ -178,8 +180,7 @@
 
                   <!--/ko-->
                   <!--ko if: is_released() != 'error' -->
-                  {% if can_manage_releases %}
-                      <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
+                  {% if can_manage_releases and request|toggle_enabled:"APP_STREAMS" %}
                       <div class="btn-group">
                           <button type="button"
                                   class="btn btn-xs stream-qa"
