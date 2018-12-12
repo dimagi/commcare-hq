@@ -256,11 +256,11 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {'loc_name': u'st2', 'percent': 84.61538461538461},
-                {'loc_name': u'st1', 'percent': 52.94117647058823},
-                {'loc_name': u'st4', 'percent': 0.0},
-                {'loc_name': u'st5', 'percent': 0.0},
-                {'loc_name': u'st6', 'percent': 0.0}
+                {'loc_name': 'st2', 'percent': 84.61538461538461},
+                {'loc_name': 'st1', 'percent': 52.94117647058823},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0}
             ]
         )
 
@@ -276,11 +276,11 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {'loc_name': u'st4', 'percent': 0.0},
-                {'loc_name': u'st5', 'percent': 0.0},
-                {'loc_name': u'st6', 'percent': 0.0},
-                {'loc_name': u'st7', 'percent': 0.0},
-                {'loc_name': u'st3', 'percent': 0.0}
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -307,13 +307,13 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {'loc_name': u'st2', 'percent': 84.61538461538461},
-                {'loc_name': u'st1', 'percent': 52.94117647058823},
-                {'loc_name': u'st4', 'percent': 0.0},
-                {'loc_name': u'st5', 'percent': 0.0},
-                {'loc_name': u'st6', 'percent': 0.0},
-                {'loc_name': u'st7', 'percent': 0.0},
-                {'loc_name': u'st3', 'percent': 0.0}
+                {'loc_name': 'st2', 'percent': 84.61538461538461},
+                {'loc_name': 'st1', 'percent': 52.94117647058823},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 

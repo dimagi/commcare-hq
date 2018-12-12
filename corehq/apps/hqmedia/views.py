@@ -3,18 +3,20 @@ from __future__ import unicode_literals
 from mimetypes import guess_all_extensions, guess_type
 import uuid
 import zipfile
+import io
 import logging
 import os
 from django.contrib.auth.decorators import login_required
 import json
 import itertools
+from collections import defaultdict
 from django.conf import settings
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, TemplateView
 
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 
 from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
 
@@ -27,10 +29,14 @@ from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from corehq import toggles
 from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.decorators import safe_cached_download
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
@@ -134,6 +140,45 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
     def upload_controllers(self):
         return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.name,
                                                                        args=[self.domain, self.app_id]))]
+
+
+@method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
+class BulkUploadMultimediaPathsView(BaseMultimediaUploaderView):
+    name = "hqmedia_bulk_upload_paths"
+    template_name = "hqmedia/bulk_upload_paths.html"
+
+    @property
+    def upload_controllers(self):
+        return []
+
+
+@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
+@require_can_edit_apps
+def download_multimedia_paths(request, domain, app_id):
+    app = get_app(domain, app_id)
+    headers = ((_("paths"), (_("Path in Application"), _("Usages"))),)
+
+    paths = defaultdict(list)
+    for ref in app.all_media():
+        paths[ref.path].append(ref)
+
+    def _readable_ref(ref):
+        readable = _("Menu {index}: {name}").format(index=ref.module_id, name=ref.get_module_name())
+        if ref.form_id is not None:
+            readable += _(" > Form {index}: {name}").format(index=ref.form_order, name=ref.get_form_name())
+        return readable
+
+    rows = []
+    for path, refs in six.iteritems(paths):
+        rows.append((_("paths"), [path] + [_readable_ref(r) for r in refs]))
+
+    temp = io.BytesIO()
+    export_raw(headers, rows, temp)
+    filename = '{app_name} v.{app_version} - App Multimedia Paths'.format(
+        app_name=app.name,
+        app_version=app.version)
+    return export_response(temp, Format.XLS_2007, filename)
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
@@ -514,14 +559,14 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
             languages = app.build_profiles[build_profile_id].langs
         file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
-        index_files, index_file_errors = iter_index_files(
+        index_files, index_file_errors, index_file_count = iter_index_files(
             app, build_profile_id=build_profile_id, download_targeted_version=download_targeted_version
         )
         if index_file_errors:
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
 
-    return file_iterator, errors
+    return file_iterator, errors, index_file_count
 
 
 class DownloadMultimediaZip(View, ApplicationViewMixin):
@@ -543,18 +588,6 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
     def check_before_zipping(self):
         if not self.app.multimedia_map and self.include_multimedia_files:
             return HttpResponse("You have no multimedia to download.")
-
-    def log_errors(self, errors):
-        logging.error(
-            "Error downloading multimedia ZIP "
-            "for domain %s and application %s." % (
-                self.domain, self.app_id)
-        )
-        return HttpResponseServerError(
-            "Errors were encountered while "
-            "retrieving media for this application.<br /> %s" % (
-                "<br />".join(errors))
-        )
 
     def get(self, request, *args, **kwargs):
         assert self.include_multimedia_files or self.include_index_files
@@ -701,10 +734,19 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
                 extension = os.path.splitext(name)[1]
                 data = _encode_if_unicode(f) if extension in text_extensions else f
                 yield (_get_name(name), data)
+
+    def _download_index_files(app, build_profile_id, is_retry=False):
+        try:
+            return download_index_files(app, build_profile_id)
+        except ResourceConflict as e:
+            if is_retry:
+                raise e
+            return _download_index_files(app, build_profile_id, is_retry=True)
+
     try:
-        files = download_index_files(app, build_profile_id)
+        files = _download_index_files(app, build_profile_id)
     except Exception as e:
         notify_exception(None, e.message)
         errors = [six.text_type(e)]
 
-    return _files(files), errors
+    return _files(files), errors, len(files)

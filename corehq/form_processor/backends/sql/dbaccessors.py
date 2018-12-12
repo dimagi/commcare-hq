@@ -404,7 +404,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         return paginate_query_across_partitioned_databases(
             XFormInstanceSQL,
-            Q(last_modified__gt=start_datetime),
+            Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
             annotate=annotate,
         )
 
@@ -520,16 +520,16 @@ class FormAccessorSQL(AbstractFormAccessor):
         return deleted_count
 
     @staticmethod
-    def archive_form(form, user_id=None):
+    def archive_form(form, user_id):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, True)
+        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=True)
         form.state = XFormInstanceSQL.ARCHIVED
         publish_form_saved(form)
 
     @staticmethod
-    def unarchive_form(form, user_id=None):
+    def unarchive_form(form, user_id):
         from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, False)
+        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=False)
         form.state = XFormInstanceSQL.NORMAL
         publish_form_saved(form)
 
@@ -593,7 +593,8 @@ class FormAccessorSQL(AbstractFormAccessor):
         case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
-            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
+            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
+                           [case_ids, form_id, archive])
 
     @staticmethod
     @transaction.atomic
@@ -646,8 +647,13 @@ class FormAccessorSQL(AbstractFormAccessor):
             if form.form_id_updated():
                 operations = form.original_operations + new_operations
                 with transaction.atomic(db_name):
+                    # Reparent must happen before form.save() changes the
+                    # form id; otherwise the form's attachments will disappear
+                    # from the blobs_blobmeta view because of the INNER JOIN
+                    # with the old form attachments table in the view.
+                    # This can be removed when with the blobs_blobmeta view.
+                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
                     form.save()
-                    get_blob_db().metadb.reparent(form.original_form_id, form.form_id)
                     for model in operations:
                         model.form = form
                         model.save()

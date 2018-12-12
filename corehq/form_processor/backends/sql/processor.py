@@ -15,8 +15,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 )
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
-    republish_all_changes_for_form)
+    publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
 from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (

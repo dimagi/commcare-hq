@@ -34,6 +34,9 @@
 {% endblock stylesheets %}
 
 {% block content %}
+  {% if demo_workflow_ab %}
+    {% analytics_ab_test 'kissmetrics.demo_workflow_ab' demo_workflow_ab %}
+  {% endif %}
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% block login-content %}
   {% include "login_and_password/partials/login_full.html" %}

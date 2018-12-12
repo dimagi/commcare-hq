@@ -10,6 +10,7 @@ import six
 from alembic.autogenerate.api import compare_metadata
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
 from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
@@ -75,7 +76,7 @@ def _filter_by_hash(configs, ucr_division):
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
+    def __init__(self, data_source_providers, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
         """Initializes the processor for UCRs
 
@@ -89,8 +90,7 @@ class ConfigurableReportTableManagerMixin(object):
         """
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
-        self.data_source_provider = data_source_provider
-        self.auto_repopulate_tables = auto_repopulate_tables
+        self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
@@ -99,7 +99,11 @@ class ConfigurableReportTableManagerMixin(object):
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
     def get_all_configs(self):
-        return self.data_source_provider.get_data_sources()
+        return [
+            source
+            for provider in self.data_source_providers
+            for source in provider.get_data_sources()
+        ]
 
     def get_filtered_configs(self, configs=None):
         configs = configs or self.get_all_configs()
@@ -190,7 +194,7 @@ class ConfigurableReportTableManagerMixin(object):
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         adapter.rebuild_table()
-        if self.auto_repopulate_tables:
+        if config.is_static:
             rebuild_indicators.delay(adapter.config.get_id)
 
 
@@ -207,7 +211,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             # remove it until the next bootstrap call
             self.table_adapters_by_domain[domain].remove(table)
 
-    def process_changes_chunk(self, pillow_instance, changes):
+    def process_changes_chunk(self, changes):
         """
         Update UCR tables in bulk by breaking up changes per domain per UCR table.
             If an exception is raised in bulk operations of a set of changes,
@@ -298,7 +302,10 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         docs = []
         for _, _changes in six.iteritems(changes_by_doctype):
             doc_store = _changes[0].document_store
-            docs.extend(list(doc_store.iter_documents([change.id for change in _changes])))
+            doc_ids_to_query = [change.id for change in _changes if change.should_fetch_document()]
+            new_docs = list(doc_store.iter_documents(doc_ids_to_query))
+            docs_queried_prior = [change.document for change in _changes if not change.should_fetch_document()]
+            docs.extend(new_docs + docs_queried_prior)
 
         # catch missing docs
         retry_changes = set()
@@ -309,13 +316,16 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 #   so let pillow fall back to serial mode to capture the error for missing docs
                 retry_changes.add(change)
                 continue
+            else:
+                # set this, so that subsequent doc lookups are avoided
+                change.set_document(docs_by_id[change.id])
             try:
                 ensure_matched_revisions(change, docs_by_id.get(change.id))
             except DocumentMismatchError:
                 retry_changes.add(change)
         return retry_changes, docs
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         self.bootstrap_if_needed()
 
         domain = change.metadata.domain
@@ -375,10 +385,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
-    # the only reason this is a class is to avoid exposing processors
-    # for tests to be able to call bootstrap on it.
-    # we could easily remove the class and push all the stuff in __init__ to
-    # get_kafka_ucr_pillow below if we wanted.
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False,
             processor_chunk_size=0):
@@ -419,12 +426,12 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=0,
                          processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
-            data_source_provider=DynamicDataSourceProvider(),
-            auto_repopulate_tables=False,
+            data_source_providers=[DynamicDataSourceProvider()],
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
@@ -441,12 +448,12 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
                                 num_processes=1, process_num=0,
                                 processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
-            data_source_provider=StaticDataSourceProvider(),
-            auto_repopulate_tables=True,
+            data_source_providers=[StaticDataSourceProvider()],
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
@@ -458,4 +465,29 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         process_num=process_num,
         retry_errors=True,
         processor_chunk_size=processor_chunk_size,
+    )
+
+def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
+                        num_processes=1, process_num=0, ucr_configs=None, **kwargs):
+    # Todo; is ucr_division needed?
+    change_feed = KafkaChangeFeed(
+        [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
+    )
+    ucr_processor = ConfigurableReportPillowProcessor(
+        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        include_ucrs=include_ucrs,
+    )
+    if ucr_configs:
+        ucr_processor.bootstrap(ucr_configs)
+    checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
+    event_handler = KafkaCheckpointEventHandler(
+        checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+        checkpoint_callback=ucr_processor
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        change_feed=change_feed,
+        checkpoint=checkpoint,
+        change_processed_event_handler=event_handler,
+        processor=[ucr_processor]
     )

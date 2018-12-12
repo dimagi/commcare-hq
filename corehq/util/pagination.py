@@ -161,8 +161,8 @@ class ResumableArgsProvider(ArgsProvider):
     def __init__(self, iterator_state, args_provider):
         self.args_provider = args_provider
         self.resume = bool(getattr(iterator_state, '_rev', None))  # if there is a _rev then we're resuming
-        self.resume_args = iterator_state.args
-        self.resume_kwargs = iterator_state.kwargs
+        self.resume_args = iterator_state.to_json()['args']
+        self.resume_kwargs = iterator_state.to_json()['kwargs']
 
     def get_initial_args(self):
         if self.resume:

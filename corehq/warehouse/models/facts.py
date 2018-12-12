@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import architect
+
 from django.db import models, transaction
 
 from corehq.form_processor.models import XFormInstanceSQL
@@ -37,6 +39,7 @@ class BaseFact(models.Model, WarehouseTable):
         truncate_records_for_cls(cls, cascade=True)
 
 
+@architect.install('partition', type='range', subtype='date', constraint='month', column='received_on')
 class FormFact(BaseFact, CustomSQLETLMixin):
     '''
     Contains all `XFormInstance`s

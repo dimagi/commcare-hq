@@ -195,6 +195,8 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
+_soft_assert = soft_assert(to="{}@{}.com".format('npellegrino', 'dimagi'), exponential_backoff=True)
+
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
@@ -711,7 +713,7 @@ class FormSource(object):
         except AttributeError:
             pass
         else:
-            app.lazy_put_attachment(old_contents, filename)
+            app.lazy_put_attachment(old_contents.encode('utf-8'), filename)
             del form['contents']
 
         if not app.has_attachment(filename):
@@ -720,6 +722,8 @@ class FormSource(object):
             source = app.lazy_fetch_attachment(filename)
             if isinstance(source, bytes):
                 source = source.decode('utf-8')
+            else:
+                _soft_assert(False, type(source))
 
         return source
 
@@ -727,6 +731,10 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
+        if isinstance(value, six.text_type):
+            value = value.encode('utf-8')
+        else:
+            _soft_assert(False, type(value))
         app.lazy_put_attachment(value, filename)
         form.clear_validation_cache()
         try:
@@ -1125,14 +1133,15 @@ class FormBase(DocumentSchema):
                 raise
 
         try:
-            questions = self.get_questions(self.get_app().langs, include_triggers=True)
+            questions = self.cached_get_questions()
         except XFormException as e:
             error = {'type': 'validation error', 'validation_message': six.text_type(e)}
             error.update(meta)
             errors.append(error)
 
         if not errors:
-            if len(questions) == 0 and self.form_type != 'shadow_form':
+            has_questions = any(not q.get('is_group') for q in questions)
+            if not has_questions and self.form_type != 'shadow_form':
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
@@ -1210,8 +1219,17 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
+    def cached_get_questions(self):
+        """
+        Call to get_questions with a superset of necessary information, so
+        it can hit the same cache across common app-building workflows
+        """
+        # it is important that this is called with the same params every time
+        return self.get_questions([], include_triggers=True, include_groups=True)
+
     @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
+                timeout=24 * 60 * 60)
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
         try:
@@ -1262,8 +1280,7 @@ class FormBase(DocumentSchema):
         source = XForm(self.source)
         if source.exists():
             source.rename_language(old_code, new_code)
-            source = source.render()
-            self.source = source
+            self.source = source.render().decode('utf-8')
 
     def default_name(self):
         app = self.get_app()
@@ -1404,7 +1421,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def check_paths(self, paths):
         errors = []
         try:
-            questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
+            questions = self.cached_get_questions()
             valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
@@ -2620,6 +2637,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     def validate_for_build(self):
         errors = []
+        try:
+            errors += self._validate_for_build()
+        except ModuleNotFoundException as ex:
+            errors.append({
+                "type": "missing module",
+                "message": six.text_type(ex),
+                "module": self.get_module_info(),
+            })
+
+        return errors
+
+    def _validate_for_build(self):
+        errors = []
         needs_case_detail = self.requires_case_details()
         needs_case_type = needs_case_detail or len([1 for f in self.get_forms() if f.is_registration_form()])
         if needs_case_detail or needs_case_type:
@@ -2913,8 +2943,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
             self.forms.append(new_form)
         return self.get_form(index or -1)
 
-    def validate_for_build(self):
-        errors = super(Module, self).validate_for_build() + self.validate_details_for_build()
+    def _validate_for_build(self):
+        errors = super(Module, self)._validate_for_build() + self.validate_details_for_build()
         if not self.forms and not self.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
@@ -3783,8 +3813,8 @@ class AdvancedModule(ModuleBase):
             for error in errors:
                 yield error
 
-    def validate_for_build(self):
-        errors = super(AdvancedModule, self).validate_for_build()
+    def _validate_for_build(self):
+        errors = super(AdvancedModule, self)._validate_for_build()
         if not self.forms and not self.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
@@ -4372,8 +4402,8 @@ class ReportModule(ModuleBase):
         return any(report_config.instance_id in duplicate_instance_ids
                    for report_config in self.report_configs)
 
-    def validate_for_build(self):
-        errors = super(ReportModule, self).validate_for_build()
+    def _validate_for_build(self):
+        errors = super(ReportModule, self)._validate_for_build()
         if not self.check_report_validity().is_valid:
             errors.append({
                 'type': 'report config ref invalid',
@@ -4497,8 +4527,8 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
-    def validate_for_build(self):
-        errors = super(ShadowModule, self).validate_for_build()
+    def _validate_for_build(self):
+        errors = super(ShadowModule, self)._validate_for_build()
         errors += self.validate_details_for_build()
         if not self.source_module:
             errors.append({
@@ -4550,6 +4580,8 @@ class LazyBlobDoc(BlobMixin):
         if attachments:
             for name, attachment in attachments.items():
                 if isinstance(attachment, six.string_types):
+                    if isinstance(attachment, six.text_type):
+                        attachment = attachment.encode('utf-8')
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"
@@ -4571,6 +4603,9 @@ class LazyBlobDoc(BlobMixin):
         except KeyError:
             content = cache.get(self.__attachment_cache_key(name))
             if content is not None:
+                if isinstance(content, six.text_type):
+                    _soft_assert(False, 'cached attachment has type unicode')
+                    content = content.encode('utf-8')
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 
@@ -5949,7 +5984,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @time_method()
     def _make_language_files(self, prefix, build_profile_id):
         return {
-            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id)
+            "{}{}/app_strings.txt".format(prefix, lang): self.create_app_strings(lang, build_profile_id).encode('utf-8')
             for lang in ['default'] + self.get_build_langs(build_profile_id)
         }
 
@@ -6205,7 +6240,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         to_app = to_module.get_app()
-        save_xform(to_app, copy_form, form.source)
+        save_xform(to_app, copy_form, form.source.encode('utf-8'))
 
         return copy_form
 
@@ -6300,13 +6335,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
-            try:
-                errors.extend(module.validate_for_build())
-            except ModuleNotFoundException as ex:
-                errors.append({
-                    "type": "missing module",
-                    "message": six.text_type(ex)
-                })
+            errors.extend(module.validate_for_build())
         return errors
 
     @time_method()
