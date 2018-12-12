@@ -230,7 +230,7 @@ class TestRunSql(TransactionTestCase):
         ]
 
         pre_metas = self.get_metas()
-        print(pformat({get_key(meta, 1) for meta in pre_metas}))
+        print(pformat({get_key(meta, 1) for meta in pre_metas}))  # noqa: E1601
 
         cmd = Command()
         cmd.handle(

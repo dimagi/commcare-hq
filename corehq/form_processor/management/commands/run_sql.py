@@ -4,6 +4,7 @@ SQL statement templates may use the `{chunk_size}` placeholder, which
 will be replaced with the value of the --chunk-size=N command argument.
 """
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 import pprint
@@ -137,7 +138,7 @@ class RunUntilZero(object):
                 now = datetime.now()
                 if now > next_update:
                     secs = (now - next_update).total_seconds() or 1
-                    rate = round(next_processed / float(secs), 0)
+                    rate = round(next_processed / float(secs))  # noqa: W1633
                     print("{}: processed {} items ({:.0f}/s)".format(
                         dbname, total, rate))
                     next_update = now + timedelta(seconds=5)
@@ -149,11 +150,11 @@ class RunUntilZero(object):
         raise
 
 
-import re
-from collections import defaultdict
-from django.db import IntegrityError, transaction
-from corehq.blobs import get_blob_db
-from corehq.blobs.models import BlobMeta
+import re  # noqa: E402
+from collections import defaultdict  # noqa: E402
+from django.db import IntegrityError, transaction  # noqa: E402
+from corehq.blobs import get_blob_db  # noqa: E402
+from corehq.blobs.models import BlobMeta  # noqa: E402
 
 KEYRE = re.compile(r"DETAIL:  Key \(key\)=\((.*)\) already exists\.")
 
