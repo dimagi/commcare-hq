@@ -589,18 +589,6 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         if not self.app.multimedia_map and self.include_multimedia_files:
             return HttpResponse("You have no multimedia to download.")
 
-    def log_errors(self, errors):
-        logging.error(
-            "Error downloading multimedia ZIP "
-            "for domain %s and application %s." % (
-                self.domain, self.app_id)
-        )
-        return HttpResponseServerError(
-            "Errors were encountered while "
-            "retrieving media for this application.<br /> %s" % (
-                "<br />".join(errors))
-        )
-
     def get(self, request, *args, **kwargs):
         assert self.include_multimedia_files or self.include_index_files
         error_response = self.check_before_zipping()
