@@ -69,6 +69,50 @@
             </span>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-3 col-md-offset-9">
+            <span class="input-group input-group-sm">
+                <div class="btn-group">
+                    <button type="button"
+                            class="btn btn-xs stream-all"
+                            data-bind="click: $root.changeStreamFilter,
+                                       css: {
+                                         'btn-primary': filterByStream() === 'all'
+                                       }"
+                      >
+                        {% trans "All" %}
+                    </button>
+                    <button type="button"
+                            class="btn btn-xs stream-qa"
+                            data-bind="click: $root.changeStreamFilter,
+                                       css: {
+                                         'btn-primary': filterByStream() === 'qa'
+                                       }"
+                      >
+                        {% trans "QA" %}
+                    </button>
+                    <button type="button"
+                            class="btn btn-xs stream-translations"
+                            data-bind="click: $root.changeStreamFilter,
+                                       css: {
+                                         'btn-primary': filterByStream() === 'translations'
+                                       }"
+                      >
+                        {% trans "Translations" %}
+                    </button>
+                    <button type="button"
+                            class="btn btn-xs stream-development"
+                            data-bind="click: $root.changeStreamFilter,
+                                       css: {
+                                         'btn-primary': filterByStream() === 'development'
+                                       }"
+                      >
+                        {% trans "Development" %}
+                    </button>
+                </div>
+            </span>
+        </div>
+    </div>
 
 
     <div id="build-errors-wrapper"></div>

@@ -219,6 +219,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildState = ko.observable('');
         self.buildErrorCode = ko.observable('');
         self.onlyShowReleased = ko.observable(false);
+        self.filterByStream = ko.observable('all');
         self.fetchState = ko.observable('');
         self.fetchLimit = ko.observable(o.fetchLimit || 5);
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
@@ -305,6 +306,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     limit: self.fetchLimit,
                     only_show_released: self.onlyShowReleased(),
                     build_comment: self.buildComment(),
+                    app_stream: self.filterByStream(),
                 },
                 success: function (data) {
                     self.savedApps(
@@ -385,6 +387,16 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.toggleLimitToReleased = function () {
             self.onlyShowReleased(!self.onlyShowReleased());
+            self.goToPage(1);
+        };
+
+        self.changeStreamFilter = function (_window, event) {
+            var classPrefix = 'stream-',
+                streamClass = _.find(event.target.classList, function (className) {
+                    return className.startsWith(classPrefix);
+                }),
+                stream = streamClass.slice(classPrefix.length);
+            self.filterByStream(stream);
             self.goToPage(1);
         };
 
