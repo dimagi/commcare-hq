@@ -30,9 +30,8 @@ class CaseListFilterUtils(EmwfUtils):
             ("all_data", _("[All Data]")),
             ('project_data', _("[Project Data]"))
         ]
-        for option in hq_user_type_options:
-            filters_to_display.append(super(CaseListFilterUtils, self).create_static_option(option))
-
+        filters_to_display.extend(self.create_static_option(option) for option in hq_user_type_options)
+        
         return filters_to_display
 
     def _group_to_choice_tuple(self, group):
