@@ -24,7 +24,10 @@ class IncentiveReport(object):
             'awc_num_open', 'valid_visits', 'expected_visits'
         )
 
-        headers = ['District', 'Block', 'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number', 'Home Visits Conducted', 'Number of Days AWC was Open', 'Weighing Efficiency', 'Eligible for Incentive']
+        headers = [
+            'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number', 'Home Visits Conducted',
+            'Number of Days AWC was Open', 'Weighing Efficiency', 'Eligible for Incentive'
+        ]
 
         excel_rows = []
         excel_rows.append(headers)
