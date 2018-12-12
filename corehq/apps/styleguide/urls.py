@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.conf.urls import include, url
 
 from corehq.apps.styleguide.views import (
+    AccessibilityStyleGuideView,
     ClassBasedViewStyleGuideView,
     ColorsStyleGuide,
     CSSStyleGuideView,
@@ -20,6 +21,8 @@ doc_urlpatterns = [
 
 urlpatterns = [
     url(r'^$', MainStyleGuideView.as_view(), name=MainStyleGuideView.urlname),
+    url(r'^accessibility/$', AccessibilityStyleGuideView.as_view(),
+        name=AccessibilityStyleGuideView.urlname),
     url(r'^forms/$', FormsStyleGuideView.as_view(),
         name=FormsStyleGuideView.urlname),
     url(r'^icons/$', IconsStyleGuideView.as_view(),

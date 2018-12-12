@@ -70,6 +70,19 @@ class BaseStyleGuideArticleView(TemplateView):
             context, **response_kwargs)
 
 
+class AccessibilityStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_accessibility'
+    navigation_name = 'accessibility'
+
+    @property
+    def sections(self):
+        return [
+            'accessibility/intro',
+            'accessibility/background',
+            'accessibility/design',
+        ]
+
+
 class ClassBasedViewStyleGuideView(BaseStyleGuideArticleView):
     urlname = 'styleguide_views'
     navigation_name = 'cb_views'
