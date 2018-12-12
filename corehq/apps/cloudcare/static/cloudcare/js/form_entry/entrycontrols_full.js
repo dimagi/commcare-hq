@@ -88,9 +88,17 @@ EntryArrayAnswer.prototype.onPreProcess = function (newValue) {
 EntrySingleAnswer = function (question, options) {
     var self = this;
 
+    var getRawAnswer = function (answer) {
+        // Zero is a perfectly valid answer
+        if (answer !== 0 && !answer) {
+            return Formplayer.Const.NO_ANSWER;
+        }
+        return answer;
+    };
+
     Entry.call(self, question, options);
     self.valueUpdate = undefined;
-    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER);
+    self.rawAnswer = ko.observable(getRawAnswer(question.answer()));
     self.placeholderText = '';
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
@@ -104,6 +112,7 @@ EntrySingleAnswer = function (question, options) {
             },
         });
     }
+
 };
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
 EntrySingleAnswer.prototype.constructor = Entry;
