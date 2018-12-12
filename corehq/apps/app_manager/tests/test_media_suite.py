@@ -195,6 +195,65 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(app.all_media()), 2)
 
 
+class TestRemoveMedia(TestCase, TestXmlMixin):
+    file_path = ('data', 'suite')
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestRemoveMedia, cls).setUpClass()
+        cls.domain = uuid.uuid4().hex
+
+    @softer_assert()
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_unused_media_removed(self, mock):
+        image_path = 'jr://file/commcare/image{}_{}.jpg'
+        audio_path = 'jr://file/commcare/audio{}_{}.mp3'
+        app = Application.wrap(self.get_json('app'))
+        app.domain = self.domain
+        app.save()
+
+        for lang in ['en', 'hin']:
+            for num in ['1', '2', '3', '4']:
+                app.create_mapping(CommCareImage(_id=num), image_path.format(num, lang), save=False)
+                app.create_mapping(CommCareAudio(_id=num), audio_path.format(num, lang), save=False)
+        app.get_module(0).case_list.show = True
+        app.get_module(0).case_list.set_icon('en', image_path.format('4', 'en'))
+        app.get_module(0).case_list.set_audio('en', audio_path.format('4', 'en'))
+
+        app.get_module(0).set_icon('en', image_path.format('1', 'en'))
+        app.get_module(0).set_audio('en', audio_path.format('1', 'en'))
+
+        app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
+        app.get_module(0).case_list_form.set_icon('en', image_path.format('2', 'en'))
+        app.get_module(0).case_list_form.set_audio('en', audio_path.format('2', 'en'))
+
+        app.get_module(0).get_form(0).set_icon('en', image_path.format('3', 'en'))
+        app.get_module(0).get_form(0).set_audio('en', audio_path.format('3', 'en'))
+
+        app.save()
+
+        should_contain_media = [image_path.format(num, 'en') for num in [1, 2, 3, 4]] + \
+                               [audio_path.format(num, 'en') for num in [1, 2, 3, 4]]
+        media_for_removal = [image_path.format(num, 'hin') for num in [1, 2, 3, 4]] + \
+                            [audio_path.format(num, 'hin') for num in [1, 2, 3, 4]]
+        self.assertTrue(app.get_module(0).uses_media())
+        self.assertEqual(app.all_media_paths(), set(should_contain_media))
+        self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media + media_for_removal))
+        app.remove_unused_mappings()
+        self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media))
+
+        # test multimedia removed
+        app.get_module(0).case_list.set_icon('en', '')
+        app.get_module(0).case_list.set_audio('en', '')
+        app.get_module(0).set_icon('en', '')
+        app.get_module(0).set_audio('en', '')
+        app.get_module(0).case_list_form.set_icon('en', '')
+        app.get_module(0).case_list_form.set_audio('en', '')
+        app.get_module(0).get_form(0).set_icon('en', '')
+        app.get_module(0).get_form(0).set_audio('en', '')
+        self.assertFalse(list(app.multimedia_map.keys()))
+
+
 class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
     """
         For CC >= 2.21
