@@ -7,9 +7,10 @@ from django.http import HttpResponseRedirect, HttpResponse
 from couchdbkit.exceptions import ResourceConflict
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+from corehq import toggles
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import AppEditingError
+from corehq.apps.app_manager.models import AppEditingError, LatestEnabledBuildProfiles
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -68,7 +69,18 @@ def safe_cached_download(f):
             request.GET.pop('username')
 
         try:
-            request.app = get_app(domain, app_id, latest=latest, target=target)
+            use_build_id = None
+            if request.GET.get('profile') and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+                latest_enabled_build = (LatestEnabledBuildProfiles.objects.
+                                        filter(build_profile_id=request.GET.get('profile'))
+                                        .order_by('-version')
+                                        .first())
+                if latest_enabled_build:
+                    use_build_id = latest_enabled_build.build_id
+            if use_build_id:
+                request.app = get_app(domain, use_build_id)
+            else:
+                request.app = get_app(domain, app_id, latest=latest, target=target)
             if not request.app.doc_type.endswith(DELETED_SUFFIX):
                 response = f(request, *args, **kwargs)
                 if request.app.copy_of is not None and request.app.is_released:
