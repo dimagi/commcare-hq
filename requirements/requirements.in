@@ -1,6 +1,4 @@
 attrs==18.1.0
-# used to build jsonobject from source
-cython>=0.29.1,<1.0.0
 iso8601==0.1.12
 jsonobject==0.9.4
 jsonobject-couchdbkit==0.9.12
