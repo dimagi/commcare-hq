@@ -56,4 +56,5 @@ branches:
   - mk-transifex-improv # MK Dec 8
   - case-type-changes  # Nick Dec 7
   - vellum-staging   # Nick Dec 10
+  - jls/standardize-mm-views . # Jenny Dec 12
 submodules: {}
