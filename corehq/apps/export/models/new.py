@@ -640,7 +640,7 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
-    user_types = ListProperty(IntegerProperty, default=[HQUserType.get_index(HQUserType.ACTIVE)])
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE.code])
 
 
 class ExportInstance(BlobMixin, Document):

@@ -31,7 +31,7 @@ class CaseListFilterUtils(EmwfUtils):
             ('project_data', _("[Project Data]"))
         ]
         filters_to_display.extend(self.create_static_option(option) for option in hq_user_type_options)
-        
+
         return filters_to_display
 
     def _group_to_choice_tuple(self, group):
@@ -66,7 +66,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     @staticmethod
     def show_deactivated_data(mobile_user_and_group_slugs):
         from corehq.apps.reports.models import HQUserType
-        return "t__{}".format(HQUserType.get_index(HQUserType.DEACTIVATED)) in mobile_user_and_group_slugs
+        return "t__{}".format(HQUserType.DEACTIVATED.code) in mobile_user_and_group_slugs
 
     @staticmethod
     def selected_sharing_group_ids(mobile_user_and_group_slugs):

@@ -105,9 +105,9 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             users = []
             for id in user_ids:
                 user = CommCareUser.get_by_user_id(id)
-                if not user and (user_filter[HQUserType.ADMIN].show or
-                      user_filter[HQUserType.DEMO_USER].show or
-                      user_filter[HQUserType.UNKNOWN].show):
+                if not user and (user_filter[HQUserType.ADMIN.code].show or
+                      user_filter[HQUserType.DEMO_USER.code].show or
+                      user_filter[HQUserType.UNKNOWN.code].show):
                     user = _create_temp_user(id)
                 if user:
                     users.append(user)
@@ -126,20 +126,20 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                 [(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]
             ))
         for user_id in submitted_user_ids:
-            if user_id in registered_users_by_id and user_filter[HQUserType.ACTIVE].show:
+            if user_id in registered_users_by_id and user_filter[HQUserType.ACTIVE.code].show:
                 user = registered_users_by_id[user_id]
                 users.append(user)
             elif (user_id not in registered_users_by_id and
-                 (user_filter[HQUserType.ADMIN].show or
-                  user_filter[HQUserType.DEMO_USER].show or
-                  user_filter[HQUserType.UNKNOWN].show)):
+                 (user_filter[HQUserType.ADMIN.code].show or
+                  user_filter[HQUserType.DEMO_USER.code].show or
+                  user_filter[HQUserType.UNKNOWN.code].show)):
                 user = _create_temp_user(user_id)
                 if user:
                     users.append(user)
-        if user_filter[HQUserType.UNKNOWN].show:
+        if user_filter[HQUserType.UNKNOWN.code].show:
             users.append(TempCommCareUser(domain, '*', None))
 
-        if user_filter[HQUserType.ACTIVE].show:
+        if user_filter[HQUserType.ACTIVE.code].show:
             # now add all the registered users who never submitted anything
             users.extend(user for id, user in registered_users_by_id.items() if id not in submitted_user_ids)
 

@@ -73,86 +73,77 @@ from six.moves import map
 
 
 class HQUserType(object):
-    ACTIVE = "ACTIVE"
-    DEMO_USER = "DEMO_USER"
-    ADMIN = "ADMIN"
-    UNKNOWN = "UNKNOWN"
-    COMMTRACK = "COMMTRACK"
-    DEACTIVATED = "DEACTIVATED"
-    WEB = "WEB"
 
-    HqUserTypesList = [
-        {
-            "user": ACTIVE,
-            "friendly_name": settings.COMMCARE_USER_TERM,
-            "toggle_defaults": True,
-            "included_defaults": True,
-        },
-        {
-            "user": DEMO_USER,
-            "friendly_name": ugettext_noop("demo_user"),
-            "toggle_defaults": False,
-            "included_defaults": True,
-        },
-        {
-            "user": ADMIN,
-            "friendly_name": ugettext_noop("admin"),
-            "toggle_defaults": False,
-            "included_defaults": True,
-        },
-        {
-            "user": UNKNOWN,
-            "friendly_name": ugettext_noop("Unknown Users"),
-            "toggle_defaults": False,
-            "included_defaults": True,
-        },
-        {
-            "user": COMMTRACK,
-            "friendly_name": ugettext_noop("CommCare Supply"),
-            "toggle_defaults": False,
-            "included_defaults": False,
-        },
-        {
-            "user": DEACTIVATED,
-            "friendly_name": ugettext_noop("Deactivated Mobile Workers"),
-            "toggle_defaults": True,
-            "included_defaults": True,
-        },
-        {
-            "user": WEB,
-            "friendly_name": ugettext_noop("Web Users"),
-            "toggle_defaults": True,
-            "included_defaults": True,
-        },
-    ]
+    # code refers to the number that is used to identify this user type in some parts of the code, ie t__0, where
+    # 0 is the user_type's code.
+
+    user_type = namedtuple('user_type', 'friendly_name unfriendly_name toggle_defaults included_defaults code')
+
+    ACTIVE = user_type(friendly_name=settings.COMMCARE_USER_TERM,
+                       unfriendly_name="ACTIVE",
+                       toggle_defaults=True,
+                       included_defaults=True,
+                       code=0)
+
+    DEMO_USER = user_type(friendly_name=ugettext_noop("demo_user"),
+                          unfriendly_name="DEMO_USER",
+                          toggle_defaults=False,
+                          included_defaults=True,
+                          code=1)
+
+    ADMIN = user_type(friendly_name=ugettext_noop("admin"),
+                      unfriendly_name="ADMIN",
+                      toggle_defaults=False,
+                      included_defaults=True,
+                      code=2)
+
+    UNKNOWN = user_type(friendly_name=ugettext_noop("Unknown Users"),
+                        unfriendly_name="UNKNOWN",
+                        toggle_defaults=False,
+                        included_defaults=True,
+                        code=3)
+
+    COMMTRACK = user_type(friendly_name=ugettext_noop("CommCare Supply"),
+                          unfriendly_name="COMMTRACK",
+                          toggle_defaults=False,
+                          included_defaults=True,
+                          code=4)
+
+    DEACTIVATED = user_type(friendly_name=ugettext_noop("Deactivated Mobile Workers"),
+                            unfriendly_name="DEACTIVATED",
+                            toggle_defaults=True,
+                            included_defaults=True,
+                            code=5)
+
+    WEB = user_type(friendly_name=ugettext_noop("Web Users"),
+                    unfriendly_name="WEB",
+                    toggle_defaults=True,
+                    included_defaults=True,
+                    code=6)
+
+    all_user_types = [ACTIVE, DEMO_USER, ADMIN, UNKNOWN, COMMTRACK, DEACTIVATED, WEB]
+
+    user_types_by_code = {user_type.code: user_type for user_type in all_user_types}
 
     @classmethod
-    def get_friendly_name(cls, key, index=False):
-        # If index is True, then the input argument is the index
-        if index:
-            return cls.HqUserTypesList[key]["friendly_name"]
+    def get_friendly_name(cls, key, code=False):
+        # If code is True, then the input argument is the index
+        if code:
+            return cls.user_types_by_code[key].friendly_name
         else:
-            for entry in cls.HqUserTypesList:
-                if entry["user"] == key:
-                    return entry["friendly_name"]
+            return key.friendly_name
 
     @classmethod
     def get_all_friendly_names(cls):
-        return [entry["friendly_name"] for entry in cls.HqUserTypesList]
-
-    @classmethod
-    def get_index(cls, key):
-        for index, value in enumerate(cls.HqUserTypesList):
-            if value["user"] == key:
-                return index
+        return [entry.friendly_name for entry in cls.all_user_types]
 
     @classmethod
     def get_all_toggle_defaults(cls):
-        return [entry["toggle_defaults"] for entry in cls.HqUserTypesList]
+        return [entry.toggle_defaults for entry in cls.all_user_types]
 
     @classmethod
     def get_all_included_defaults(cls):
-        return [entry["included_defaults"] for entry in cls.HqUserTypesList]
+        return [entry.included_defaults for entry in cls.all_user_types]
 
     @classmethod
     def use_defaults(cls):
@@ -160,7 +151,7 @@ class HQUserType(object):
 
     @classmethod
     def all_but_users(cls):
-        no_users = [True] * len(cls.HqUserTypesList)
+        no_users = [True] * len(cls.all_user_types)
         no_users[cls.ACTIVE] = False
         return cls._get_manual_filterset(cls.get_all_included_defaults(), no_users)
 
@@ -171,7 +162,7 @@ class HQUserType(object):
 
     @classmethod
     def all(cls):
-        defaults = (True,) * len(cls.HqUserTypesList)
+        defaults = (True,) * len(cls.all_user_types)
         return cls._get_manual_filterset(defaults, cls.get_all_toggle_defaults())
 
     @classmethod
@@ -181,11 +172,11 @@ class HQUserType(object):
         arrays of booleans mapping to values in human_readable and whether they should be
         included and defaulted, respectively.
         """
-        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.HqUserTypesList)) if included[i]]
+        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.all_user_types)) if included[i]]
 
     @classmethod
     def use_filter(cls, ufilter):
-        return [HQUserToggle(i, six.text_type(i) in ufilter) for i in range(len(cls.HqUserTypesList))]
+        return [HQUserToggle(i, six.text_type(i) in ufilter) for i in range(len(cls.all_user_types))]
 
 
 class HQToggle(object):
@@ -210,7 +201,7 @@ class HQToggle(object):
 class HQUserToggle(HQToggle):
 
     def __init__(self, index, show):
-        name = _(HQUserType.get_friendly_name(index, index=True))
+        name = _(HQUserType.get_friendly_name(index, code=True))
         super(HQUserToggle, self).__init__(index, show, name)
 
 

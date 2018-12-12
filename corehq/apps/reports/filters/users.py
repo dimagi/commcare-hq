@@ -28,6 +28,7 @@ from .base import (
 from six.moves import map
 
 
+
 class UserOrGroupFilter(BaseSingleOptionFilter):
     slug = "view_by"
     label = ugettext_lazy("View by Users or Groups")
@@ -137,7 +138,7 @@ class EmwfUtils(object):
     def user_type_tuple(self, t):
         return (
             "t__%s" % t,
-            "[%s]" % HQUserType.get_friendly_name(t, index=True)
+            "[%s]" % HQUserType.get_friendly_name(t, code=True)
 
         )
 
@@ -146,8 +147,8 @@ class EmwfUtils(object):
                 '%s [location]' % location.get_path_display())
 
     @memoized
-    def create_static_option(self, key):
-        user_type = HQUserType.get_index(key)
+    def create_static_option(self, user_type):
+        user_type = user_type.code
         return self.user_type_tuple(user_type)
 
     @property
@@ -155,9 +156,10 @@ class EmwfUtils(object):
     def static_options(self):
         static_options = [("t__0", _("[Active Mobile Workers]"))]
 
-        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'WEB', 'UNKNOWN']
+        types = [HQUserType.DEACTIVATED, HQUserType.DEMO_USER, HQUserType.ADMIN,
+                 HQUserType.WEB, HQUserType.UNKNOWN]
         if Domain.get_by_name(self.domain).commtrack_enabled:
-            types.append('COMMTRACK')
+            types.append(HQUserType.COMMTRACK)
         for t in types:
             static_options.append(self.create_static_option(t))
 
@@ -239,7 +241,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         """
         usage: ``HQUserType.DEMO_USER in selected_user_types``
         """
-        return [HQUserType.HqUserTypesList[int(t[3:])]['user'] for t in mobile_user_and_group_slugs
+
+        return [HQUserType.user_types_by_code[int(t[3:])].unfriendly_name for t in mobile_user_and_group_slugs
                 if t.startswith("t__") and t[3:].isdigit()]
 
     @classmethod
@@ -272,7 +275,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         defaults = [('t__0', _("[Active Mobile Workers]")), ('t__5', _("[Deactivated Mobile Workers]"))]
         if self.request.project.commtrack_enabled:
-            defaults.append(self.utils.user_type_tuple(HQUserType.get_index(HQUserType.COMMTRACK)))
+            defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK.code))
         return defaults
 
     @property
