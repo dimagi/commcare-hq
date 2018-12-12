@@ -27,7 +27,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 class TestUserSignals(SimpleTestCase):
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2.delay')
-    @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
+    @patch('corehq.apps.callcenter.tasks.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_call_center,
@@ -40,7 +40,7 @@ class TestUserSignals(SimpleTestCase):
         self.assertFalse(update_hubspot_properties_v2.called)
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2.delay')
-    @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
+    @patch('corehq.apps.callcenter.tasks.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_webuser_save(self, send_to_es, invalidate, sync_call_center,
@@ -56,7 +56,7 @@ class TestUserSignals(SimpleTestCase):
 @mock_out_couch()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2')
-@patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
+@patch('corehq.apps.callcenter.tasks.sync_call_center_user_case')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 class TestUserSyncToEs(SimpleTestCase):
 
