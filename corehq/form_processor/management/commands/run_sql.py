@@ -117,7 +117,7 @@ class RunUntilZero(object):
 
     @classmethod
     def run(cls, sql, dbname, print_rows):
-        next_update = datetime.now()
+        next_update = prev_update = datetime.now()
         next_processed = 0
         total = 0
         with timer(dbname), connections[dbname].cursor() as cursor:
@@ -137,10 +137,11 @@ class RunUntilZero(object):
                 next_processed += moved
                 now = datetime.now()
                 if now > next_update:
-                    secs = (now - next_update).total_seconds() or 1
+                    secs = (now - prev_update).total_seconds() or 1
                     rate = round(next_processed / float(secs))  # noqa: W1633
                     print("{}: processed {} items ({:.0f}/s)".format(
                         dbname, total, rate))
+                    prev_update = now
                     next_update = now + timedelta(seconds=5)
                     next_processed = 0
         print("{} final: processed {} items".format(dbname, total))
