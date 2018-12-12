@@ -40,7 +40,7 @@ class BaseMultimediaUploadController(object):
     @property
     def processing_url(self):
         from corehq.apps.hqmedia.views import MultimediaUploadStatusView
-        return reverse(MultimediaUploadStatusView.name)
+        return reverse(MultimediaUploadStatusView.urlname)
 
     @property
     def js_options(self):
