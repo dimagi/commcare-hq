@@ -27,6 +27,7 @@ from couchdbkit import MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
+from django.db import models
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
@@ -83,7 +84,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.const import APP_STREAMS, USERCASE_TYPE
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     interpolate_xpath,
@@ -6832,6 +6833,21 @@ class GlobalAppConfig(Document):
     def save(self, *args, **kwargs):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
         super(GlobalAppConfig, self).save(*args, **kwargs)
+
+
+class AppStream(models.Model):
+    app_id = models.TextField()
+    build_id = models.TextField()
+    build_version = models.PositiveIntegerField()
+    stream = models.TextField(
+        choices=tuple((stream, stream) for stream in APP_STREAMS)
+    )
+
+    class Meta:
+        # only to ensure that we do not have duplicate entries
+        unique_together = ('build_id', 'stream')
+        index_together = ('app_id', 'build_id')
+        ordering = ('-build_version', )
 
 
 # backwards compatibility with suite-1.0.xml

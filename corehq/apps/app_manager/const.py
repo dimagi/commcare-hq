@@ -71,3 +71,6 @@ SYNC_FLAT_FIXTURES = ('both_fixtures', 'only_flat_fixture')
 
 TARGET_COMMCARE = 'commcare'
 TARGET_COMMCARE_LTS = 'commcare_lts'
+
+
+APP_STREAMS = ('qa', 'translations', 'development')
