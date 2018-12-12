@@ -242,7 +242,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             return name[firstLang];
         }
         self.hasError = ko.computed(function () {
-            return !_.contains(self.parentModules(), self.moduleId());
+            return !_.contains(_.pluck(self.parentModules(), 'unique_id'), self.moduleId());
         });
         self.moduleOptions = ko.computed(function () {
             var options = _(self.parentModules()).map(function (module) {
