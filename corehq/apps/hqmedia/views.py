@@ -16,7 +16,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, TemplateView
 
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 
 from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
 
@@ -734,8 +734,17 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
                 extension = os.path.splitext(name)[1]
                 data = _encode_if_unicode(f) if extension in text_extensions else f
                 yield (_get_name(name), data)
+
+    def _download_index_files(app, build_profile_id, is_retry=False):
+        try:
+            return download_index_files(app, build_profile_id)
+        except ResourceConflict as e:
+            if is_retry:
+                raise e
+            return _download_index_files(app, build_profile_id, is_retry=True)
+
     try:
-        files = download_index_files(app, build_profile_id)
+        files = _download_index_files(app, build_profile_id)
     except Exception as e:
         notify_exception(None, e.message)
         errors = [six.text_type(e)]
