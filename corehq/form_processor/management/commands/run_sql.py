@@ -138,7 +138,7 @@ class RunUntilZero(object):
                 now = datetime.now()
                 if now > next_update:
                     secs = (now - prev_update).total_seconds() or 1
-                    rate = round(next_processed / float(secs))  # noqa: W1633
+                    rate = int(next_processed / float(secs) + 0.5)
                     print("{}: processed {} items ({:.0f}/s)".format(
                         dbname, total, rate))
                     prev_update = now

@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from datetime import datetime, timedelta
 from io import BytesIO
-from pprint import pformat
+from pprint import pformat, pprint
 from uuid import uuid4
 
 from django.db import connections
@@ -230,7 +230,7 @@ class TestRunSql(TransactionTestCase):
         ]
 
         pre_metas = self.get_metas()
-        print(pformat({get_key(meta, 1) for meta in pre_metas}))  # noqa: E1601
+        pprint({get_key(meta, 1) for meta in pre_metas})
 
         cmd = Command()
         cmd.handle(
