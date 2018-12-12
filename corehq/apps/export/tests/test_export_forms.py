@@ -166,7 +166,7 @@ class TestEmwfFilterExportMixin(TestCase):
 
     def test_get_selected_es_user_types(self):
         self.filter_export = self.subject(self.domain, pytz.utc)
-        self.assertEqual(self.filter_export._get_selected_es_user_types(['t__0', 't__1']), [0, 1])
+        self.assertEqual(self.filter_export._get_selected_es_user_types(['t__0', 't__1']), ['ACTIVE', 'DEMO_USER'])
 
 
 class TestEmwfFilterFormExportFilters(TestCase):
