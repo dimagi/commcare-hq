@@ -163,7 +163,7 @@ class RegisterWebUserForm(forms.Form):
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
-                        css_class="btn btn-success btn-lg",
+                        css_class="btn btn-primary btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
                     ),
                     hqcrispy.InlineField('is_mobile'),
@@ -193,12 +193,12 @@ class RegisterWebUserForm(forms.Form):
                     ),
                     twbscrispy.StrictButton(
                         ugettext("Previous"),
-                        css_class="btn btn-primary-dark btn-lg",
+                        css_class="btn btn-default btn-lg",
                         data_bind="click: previousStep"
                     ),
                     twbscrispy.StrictButton(
                         ugettext("Finish"),
-                        css_class="btn btn-success btn-lg",
+                        css_class="btn btn-primary btn-lg",
                         data_bind="click: submitForm, "
                                   "disable: disableNextStepTwo"
                     )
