@@ -34,7 +34,7 @@
         </span>
     </p>
     <p>
-        <button class="btn btn-success" data-bind="
+        <button class="btn btn-primary" data-bind="
             click: function() {
                 hqImport('analytix/js/kissmetrix').track.event('Clicked Make New Version');
                           return makeNewBuild();
@@ -146,7 +146,7 @@
                                   data-bind="click: $root.toggleRelease,
                                              css: {
                                                 'active': is_released(),
-                                                'btn-success': is_released(),
+                                                'btn-primary': is_released(),
                                                 'btn-default': !is_released()
                                              }">
                               {% trans "Released" %}
