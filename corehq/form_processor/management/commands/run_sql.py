@@ -575,4 +575,9 @@ TEMPLATES = {
     "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
     "delete_dup_form_attachments": delete_dup_form_attachments,
     "show_invalid_indexes": show_invalid_indexes,
+
+    # use to verify tables are empty
+    # warning, may be slow (requires a table scan) if the table has many records
+    "count_form_attachments":
+        "SELECT COUNT(*) FROM form_processor_xformattachmentsql;"
 }
