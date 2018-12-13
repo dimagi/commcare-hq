@@ -297,6 +297,7 @@ class ExportOnlyTests(SimpleTestCase):
         should not be exported.
         """
         requests = mock.Mock()
+        requests.post.return_value.status_code = 500
         info = mock.Mock(
             updates={'sex': 'M', 'dob': '1918-07-18'},
             extra_fields={},
