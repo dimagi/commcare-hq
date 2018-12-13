@@ -46,6 +46,7 @@ from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
     MultimediaVideoUploadController
 )
+from corehq.apps.hqmedia.view_helpers import download_multimedia_paths_rows
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -192,22 +193,10 @@ class BulkUploadMultimediaPathsView(BaseMultimediaTemplateView):
 @toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
 @require_can_edit_apps
 def download_multimedia_paths(request, domain, app_id):
+    headers = ((_("Paths"), (_("Path in Application"), _("Usages"))),)
+
     app = get_app(domain, app_id)
-    headers = ((_("paths"), (_("Path in Application"), _("Usages"))),)
-
-    paths = defaultdict(list)
-    for ref in app.all_media():
-        paths[ref.path].append(ref)
-
-    def _readable_ref(ref):
-        readable = _("Menu {index}: {name}").format(index=ref.module_id, name=ref.get_module_name())
-        if ref.form_id is not None:
-            readable += _(" > Form {index}: {name}").format(index=ref.form_order, name=ref.get_form_name())
-        return readable
-
-    rows = []
-    for path, refs in six.iteritems(paths):
-        rows.append((_("paths"), [path] + [_readable_ref(r) for r in refs]))
+    rows = download_multimedia_paths_rows(app)
 
     temp = io.BytesIO()
     export_raw(headers, rows, temp)
