@@ -173,6 +173,8 @@ def _get_changed_fields(case, fields):
 
 
 def sync_call_center_user_case(user):
+    if not user.project:
+        return
     config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user)
@@ -215,7 +217,7 @@ def _call_center_location_owner(user, ancestor_level):
 
 
 def sync_usercase(user):
-    if user.project.usercase_enabled:
+    if user.project and user.project.usercase_enabled:
         _sync_user_case(
             user,
             USERCASE_TYPE,
