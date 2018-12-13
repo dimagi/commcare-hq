@@ -5,9 +5,11 @@ from __future__ import unicode_literals
 from datetime import date
 
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
+from django.http import HttpResponseBadRequest, Http404, HttpResponse, \
     HttpResponseServerError
 from django.views.decorators.http import require_GET, require_POST
+
+from couchdbkit import ResourceNotFound
 
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
@@ -17,8 +19,6 @@ from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.export.views.utils import ExportsPermissionsManager, get_timezone
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
-from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -28,50 +28,22 @@ import json
 
 from couchexport.writers import XlsLengthException
 
-from djangular.views.mixins import allow_remote_invocation
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.tasks import (
-    generate_schema_for_all_builds,
-    get_saved_export_task_status,
-    rebuild_saved_export,
-)
-from corehq.apps.export.exceptions import (
-    ExportAppException,
-    BadExportConfiguration,
-    ExportAsyncException,
-)
+from corehq.apps.export.exceptions import ExportAsyncException
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
-    FilterSmsESExportDownloadForm,
-    CreateExportTagForm,
-    DashboardFeedFilterForm,
+    FilterSmsESExportDownloadForm
 )
 from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
     SMSExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
     SMSExportInstance,
     ExportInstance,
 )
-from corehq.apps.export.const import (
-    FORM_EXPORT,
-    CASE_EXPORT,
-    MAX_EXPORTABLE_ROWS,
-    MAX_DATA_FILE_SIZE,
-    MAX_DATA_FILE_SIZE_TOTAL,
-    SharingOption,
-    UNKNOWN_EXPORT_OWNER,
-)
-from corehq.apps.export.dbaccessors import (
-    get_form_export_instances,
-    get_properly_wrapped_export_instance,
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
-)
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.hqwebapp.decorators import use_select2, use_daterangepicker
@@ -137,7 +109,10 @@ class FormDownloadExportViewHelper(DownloadExportViewHelper):
     filter_form_class = EmwfFilterFormExport
 
     def get_export(self, id=None):
-        return FormExportInstance.get(id)
+        try:
+            return FormExportInstance.get(id)
+        except ResourceNotFound:
+            raise Http404()
 
 
 class CaseDownloadExportViewHelper(DownloadExportViewHelper):

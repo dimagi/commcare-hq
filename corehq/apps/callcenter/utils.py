@@ -64,7 +64,7 @@ class _UserCaseHelper(object):
 
     def _submit_case_block(self, caseblock, source):
         device_id = self.CASE_SOURCE_ID + source
-        casexml = ElementTree.tostring(caseblock.as_xml())
+        casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
         submit_case_blocks(casexml, self.domain.name, device_id=device_id)
 
     @staticmethod
