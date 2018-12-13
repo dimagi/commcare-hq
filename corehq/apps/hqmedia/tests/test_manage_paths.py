@@ -2,15 +2,18 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
+from mock import patch
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqmedia.view_helpers import download_multimedia_paths_rows
 
 
+@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
 class ManagePathsTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 
-    def test_paths_download(self):
+    def test_paths_download(self, mock):
         factory = AppFactory(build_version='2.40.0')
         app = factory.app
         app.langs = ['en', 'fra']
