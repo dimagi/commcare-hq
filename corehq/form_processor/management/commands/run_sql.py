@@ -402,7 +402,7 @@ WITH to_move AS (
 """)
 
 
-# this is too slow, so probably will not be used on envs like ICDS and prod
+# use this when simple_move_form_attachments_to_blobmeta gets too slow
 delete_dup_form_attachments = RunUntilZero("""
 BEGIN;
 WITH dups AS (
@@ -443,7 +443,7 @@ WITH dups AS (
         ON xform.form_id = dups.form_id
     WHERE blobs_blobmeta_tbl.key = dups.key
     RETURNING blobs_blobmeta_tbl.*
-) SELECT COUNT(*) FROM updated;
+) SELECT COUNT(*) FROM deleted;
 """)
 
 
