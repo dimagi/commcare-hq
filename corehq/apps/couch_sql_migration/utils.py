@@ -50,7 +50,7 @@ def sql_save_with_resource_conflict(model, document, old_doc_rev=None):
         res = cursor.fetchone()
 
     if res is None:
-        raise ResourceConflict
+        raise ResourceConflict(doc_id)
 
     if sql_only_model:
         # update the document in place. If couchdbkit is still handling saves,
