@@ -230,3 +230,59 @@ class MPR5ChildHealth(ChildHealthMonthlyUCR):
         if not total_row:
             query = query.group_by(self.table.c.awc_id)
         return query
+
+
+class LSTimelyHomeVisitsUCR(ConfigurableReportCustomQueryProvider):
+    def __init__(self, report_data_source):
+        self.report_data_source = report_data_source
+        self.helper = self.report_data_source.helper
+        self.table = self.helper.get_table()
+
+    def _filter_filters(self, filters):
+        return [
+            f
+            for f in filters
+            if str(f.left) not in ('is_migrated', 'is_availing')
+        ]
+
+    def _get_query_object(self):
+        filters = self._filter_filters(self.helper.sql_alchemy_filters)
+        filter_values = self.helper.sql_alchemy_filter_values
+        query = (
+            self.helper.adapter.session_helper.Session.query(
+                self.table.c.awc_id,
+                func.sum(self.table.c.count),
+                func.sum(self.table.c.visit_on_time),
+            )
+            .filter(*filters)
+            .params(filter_values)
+            .group_by(self.table.c.awc_id)
+        )
+        return query
+
+    def get_data(self, start=None, limit=None):
+        query_obj = self._get_query_object()
+        if start:
+            query_obj = query_obj.start(start)
+        if limit:
+            query_obj = query_obj.limit(limit)
+        return OrderedDict([
+            (r.awc_id, r._asdict())
+            for r in query_obj.all()
+        ])
+
+    def get_total_row(self):
+        filters = self._filter_filters(self.helper.sql_alchemy_filters)
+        filter_values = self.helper.sql_alchemy_filter_values
+        query = (
+            self.helper.adapter.session_helper.Session.query(
+                func.sum(self.table.c.count),
+                func.sum(self.table.c.visit_on_time),
+            )
+            .filter(*filters)
+            .params(filter_values)
+        )
+        return ["Total"] + [r for r in query.first()]
+
+    def get_total_records(self):
+        return self._get_query_object().count()

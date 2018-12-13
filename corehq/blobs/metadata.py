@@ -95,10 +95,19 @@ class MetaDB(object):
         :param parent_id: `BlobMeta.parent_id`
         :param type_code: `BlobMeta.type_code`
         :param name: `BlobMeta.name`
+        :param key: `BlobMeta.key`
         :raises: `BlobMeta.DoesNotExist` if the metadata is not found.
         :returns: A `BlobMeta` object.
         """
-        if set(kw) != {"parent_id", "type_code", "name"}:
+        keywords = set(kw)
+        if 'key' in keywords and keywords != {'key', 'parent_id'}:
+            kw.pop('key', None)
+            if 'parent_id' not in keywords:
+                raise TypeError("Missing argument 'parent_id'")
+            else:
+                kw.pop('parent_id')
+                raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
+        elif 'key' not in keywords and keywords != {"parent_id", "type_code", "name"}:
             # arg check until on Python 3 -> PEP 3102: required keyword args
             kw.pop("parent_id", None)
             kw.pop("type_code", None)
@@ -107,7 +116,10 @@ class MetaDB(object):
                 raise TypeError("Missing argument 'name' and/or 'parent_id'")
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
         dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
-        return BlobMeta.objects.using(dbname).get(**kw)
+        meta = BlobMeta.objects.using(dbname).filter(**kw).first()
+        if meta is None:
+            raise BlobMeta.DoesNotExist(repr(kw))
+        return meta
 
     def get_for_parent(self, parent_id, type_code=None):
         """Get a list of `BlobMeta` objects for the given parent

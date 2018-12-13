@@ -7,11 +7,13 @@ hqDefine('analytix/js/hubspot', [
     'analytix/js/initial',
     'analytix/js/logging',
     'analytix/js/utils',
+    'analytix/js/kissmetrix',
 ], function (
     _,
     initialAnalytics,
     logging,
-    utils
+    utils,
+    kissmetrics
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
@@ -39,26 +41,12 @@ hqDefine('analytix/js/hubspot', [
 
                 $.when.apply($, _.map(formScriptUrls, function (url) { return $.getScript(url); }))
                     .done(function () {
-                        _utils.loadOldDemoForm(apiId);
                         _utils.loadDemoForm(apiId);
                     });
             });
         }
 
     });
-
-    /**
-    * Loads the Legacy Hubspot Demo Form (to be phased out after A/B test
-    * @param {string} apiId
-    */
-    _utils.loadOldDemoForm = function (apiId) {
-        hbspt.forms.create({
-            portalId: apiId,
-            formId: "0f5de42e-b562-4ece-85e5-cfd2db97eba8",
-            target: "#get-demo-cta-form-body",
-            css: "",
-        });
-    };
 
     /**
      * Loads the Hubspot Request Demo form and loads a Schedule Once Calendar
@@ -71,6 +59,25 @@ hqDefine('analytix/js/hubspot', [
             formId: "38980202-f1bd-412e-b490-f390f40e9ee1",
             target: "#get-demo-cta-form-content",
             css: "",
+            onFormReady: function () {
+                var $hubspotFormModal = $('#cta-form-get-demo'),
+                    hasInteractedWithForm = false;
+
+                $hubspotFormModal.on('shown.bs.modal', function () {
+                    kissmetrics.track.event("Demo Workflow - Viewed Form");
+                });
+
+                $hubspotFormModal.on('hide.bs.modal', function () {
+                    kissmetrics.track.event("Demo Workflow - Dismissed Form");
+                });
+
+                $('#get-demo-cta-form-content').find('input').click(function () {
+                    if (!hasInteractedWithForm) {
+                        kissmetrics.track.event("Demo Workflow - Interacted With Form");
+                        hasInteractedWithForm = true;
+                    }
+                });
+            },
             onFormSubmit: function ($form) {
                 $('#get-demo-cta-calendar-content').fadeIn();
                 $('#get-demo-cta-form-content').addClass('hide');
@@ -80,17 +87,42 @@ hqDefine('analytix/js/hubspot', [
                     lastname = $form.find('[name="lastname"]').val(),
                     newUrl = document.location.href + '?email=' + email + '&name=' + firstname + '%20' + lastname;
 
+                kissmetrics.track.event("Demo Workflow - Contact Info Received");
+
                 // This nastiness is required for Schedule Once to auto-fill
                 // required fields. Sending snark the way of the S.O. devs...
-                window.history.pushState(
-                    "dimagi-contact-url " + document.title, document.title, newUrl
-                );
+                window.history.pushState({}, document.title, newUrl);
 
                 // Causes the Schedule Once form to populate the element
                 // #SOIDIV_commcaredemoform as soon as it loads. Once it's
                 // loaded this does not leave the page.
-                $.getScript('//cdn.scheduleonce.com/mergedjs/so.js');
+                $.getScript('//cdn.scheduleonce.com/mergedjs/so.js')
+                    .done(function () {
+                        kissmetrics.track.event("Demo Workflow - Loaded Booking Options");
+                        setTimeout(function () {
+                            // This is a bit of a hack, but the only way to detect if
+                            // the Schedule Once Form was submitted on our side.
+                            // The style attribute changes when the form is successfully
+                            // submitted.
+                            var lastKnownHeight = 0,
+                                observer = new MutationObserver(function (mutations) {
+                                    mutations.forEach(function () {
+                                        var newHeight = $('#SOI_commcaredemoform').height();
+                                        if (newHeight < lastKnownHeight) {
+                                            var coreUrl = document.location.href.split('?')[0];
+                                            kissmetrics.track.event("Demo Workflow - Demo Scheduled");
+                                            $('#cta-form-get-demo').off('hide.bs.modal');
+                                            window.history.pushState({}, document.title, coreUrl);
+                                        }
+                                        lastKnownHeight = newHeight;
 
+                                    });
+                            });
+                            // target is the the iframe containing the schedule once form
+                            var target = document.getElementById('SOI_commcaredemoform');
+                            observer.observe(target, { attributes: true, attributeFilter: ['style'] });
+                        }, 3000);
+                    });
             },
         });
     };

@@ -34,7 +34,7 @@
         </span>
     </p>
     <p>
-        <button class="btn btn-success" data-bind="
+        <button class="btn btn-primary" data-bind="
             click: function() {
                 hqImport('analytix/js/kissmetrix').track.event('Clicked Make New Version');
                           return makeNewBuild();
@@ -110,34 +110,35 @@
                 'error': build_broken
             }">
           <div class="panel-heading">
-              {% if can_manage_releases %}
-                  {% if request|toggle_enabled:"SUPPORT" %}
-                      <div class="release-trash-container">
-                        <a href="#"
-                           class="hide release-remove"
-                           data-bind="openModal: 'delete-build-modal-template',
-                                      visible: !_deleteState(),
-                                      css: {hide: false}">
-                            <i class="fa fa-trash"></i>
-                        </a>
-                        <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-                            <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                        </div>
-                        <i class="fa fa-exclamation-circle hide"
-                           data-bind="visible: _deleteState() == 'error',
-                                      css: {hide: false}"></i>
-                      </div>
-                  {% endif %}
-                  <div class="build-is-released">
-                      <!--ko if: is_released() == 'error' -->
+              {% if can_manage_releases and request|toggle_enabled:"SUPPORT" %}
+                  <div class="release-trash-container">
+                    <a href="#"
+                       class="hide release-remove"
+                       data-bind="openModal: 'delete-build-modal-template',
+                                  visible: !_deleteState(),
+                                  css: {hide: false}">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+                    </div>
+                    <i class="fa fa-exclamation-circle hide"
+                       data-bind="visible: _deleteState() == 'error',
+                                  css: {hide: false}"></i>
+                  </div>
+              {% endif %}
+              <div class="build-is-released">
+                  <!--ko if: is_released() == 'error' -->
 
-                      <span class="label label-danger">{% trans "Could not update" %}</span>
+                  <span class="label label-danger">{% trans "Could not update" %}</span>
 
-                      <!--/ko-->
-                      <!--ko if: is_released() != 'error' -->
+                  <!--/ko-->
+                  <!--ko if: is_released() != 'error' -->
 
-                      <span class="label label-info"
-                            data-bind="visible: version() === $root.latestReleasedVersion()">{% trans "Latest" %}</span>
+                  <span class="label label-info"
+                        data-bind="visible: version() === $root.latestReleasedVersion()">{% trans "Latest" %}</span>
+
+                  {% if can_manage_releases %}
                       <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
                       <div class="btn-group">
                           <button type="button"
@@ -145,7 +146,7 @@
                                   data-bind="click: $root.toggleRelease,
                                              css: {
                                                 'active': is_released(),
-                                                'btn-success': is_released(),
+                                                'btn-primary': is_released(),
                                                 'btn-default': !is_released()
                                              }">
                               {% trans "Released" %}
@@ -161,10 +162,17 @@
                               {% trans "In Test" %}
                           </button>
                       </div>
+                  {% else %}
+                      <span class="label label-success" data-bind="visible: is_released()">
+                          {% trans "Released" %}
+                      </span>
+                      <span class="label label-primary" data-bind="visible: !is_released()">
+                          {% trans "In Test" %}
+                      </span>
+                  {% endif %}
 
-                      <!--/ko-->
-                  </div>
-              {% endif %}
+                  <!--/ko-->
+              </div>
               <h4 class="panel-release-title">
                 <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
                 <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}

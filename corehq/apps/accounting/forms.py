@@ -1297,7 +1297,7 @@ class SoftwarePlanVersionForm(forms.Form):
                     crispy.Div(
                         StrictButton(
                             "Create Feature",
-                            css_class="btn-success",
+                            css_class="btn-primary",
                             data_bind="event: {click: featureRates.createNew}",
 
                         ),
@@ -1335,7 +1335,7 @@ class SoftwarePlanVersionForm(forms.Form):
                     crispy.Div(
                         StrictButton(
                             "Create Product",
-                            css_class="btn-success",
+                            css_class="btn-primary",
                             data_bind="event: {click: productRates.createNew}",
                         ),
                         style="margin: 10px 0;"
@@ -2482,7 +2482,7 @@ class CreateAdminForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="fa fa-plus"></i> %s' % "Add Admin"),
-                css_class="btn-success disable-on-submit",
+                css_class="btn-primary disable-on-submit",
                 type="submit",
             )
         )

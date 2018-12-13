@@ -51,9 +51,10 @@ name: autostaging
 branches:
   - sr-mutliprocessors   # Sravan Nov 13
   - np-export-links  # Nick Nov 25
-  - appcues-v3  # Gabriella Nov 27
   - jls/update-palette  # Jenny 11/30
   - rn_migrate_multimedia # Rohit 3 Dec
-  - jls/requirejs-export-download-unbranched # Jenny Dec 5
-  - pv/archive-form-283938 # Preethi Dec 6
+  - mk-transifex-improv # MK Dec 8
+  - case-type-changes  # Nick Dec 7
+  - vellum-staging   # Nick Dec 10
+  - form-has-submissions  # Nick Dec 10
 submodules: {}
