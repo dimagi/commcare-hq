@@ -40,7 +40,7 @@ def ensure_plans(config, verbose, apps):
 
         software_plan = SoftwarePlan(
             name=(
-                ('%s Edition' % product_rate.name)
+                (('%s Trial' % product_rate.name) if is_trial else ('%s Edition' % product_rate.name))
                 if product is None else product.name  # TODO - remove after squashing migrations
             ),
             edition=edition,
