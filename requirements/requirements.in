@@ -1,9 +1,8 @@
 attrs==18.1.0
-# used to build jsonobject from source
-cython>=0.29.1,<1.0.0
 iso8601==0.1.12
 jsonobject==0.9.8
 jsonobject-couchdbkit==0.9.15
+cloudant==2.7.0  # Remove after version is released containg bugfix https://github.com/cloudant/python-cloudant/pull/415
 celery==3.1.25
 # required by django-digest
 decorator==4.0.11
