@@ -172,11 +172,9 @@ class RunUntilZeroHandleDupBlobs(RunUntilZero):
             raise
         key = match.group(1)
         key_metas = list(BlobMeta.objects.using(dbname).filter(key=key))
-        assert len(key_metas) < 4, key_metas
         by_parent = defaultdict(list)
         for meta in key_metas:
             by_parent[meta.parent_id].append(meta)
-        assert len(by_parent) < 3, by_parent
         diff_parents = []
         for metas in by_parent.values():
             if len(metas) == 1:
@@ -191,16 +189,15 @@ class RunUntilZeroHandleDupBlobs(RunUntilZero):
             print("{dbname}: deleting duplicate blob for "
                 "{meta.parent_id} / {meta.name} key={key}".format(**locals()))
             meta.delete()
-            diff_parents.extend(metas)
+            diff_parents.append(metas[0])
         if len(diff_parents) > 1:
-            # copy blob if multiple parents
-            assert len(diff_parents) == 2, diff_parents
-            meta = next(m for m in diff_parents if m.id < 0)
-            print("{dbname}: creating new blob for "
-                "{meta.parent_id} / {meta.name} key={key}".format(**locals()))
-            with meta.open() as content, transaction.atomic(using=dbname):
-                newmeta = get_blob_db().put(content, **cls.meta_fields(meta))
-                meta.delete()
+            # copy blob for all except one
+            for meta in sorted(diff_parents, key=lambda m: m.id)[:-1]:
+                print("{dbname}: creating new blob for {meta.parent_id} / "
+                      "{meta.name} key={key}".format(**locals()))
+                with meta.open() as content, transaction.atomic(using=dbname):
+                    newmeta = get_blob_db().put(content, **cls.meta_fields(meta))
+                    meta.delete()
 
     @staticmethod
     def meta_fields(meta, with_created_on=True):
