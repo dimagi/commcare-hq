@@ -238,7 +238,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         usage: ``HQUserType.DEMO_USER in selected_user_types``
         """
 
-        return [HQUserType.user_types_by_code[int(t[3:])].unfriendly_name for t in mobile_user_and_group_slugs
+        return [HQUserType.user_types_by_code[int(t[3:])] for t in mobile_user_and_group_slugs
                 if t.startswith("t__") and t[3:].isdigit()]
 
     @classmethod
