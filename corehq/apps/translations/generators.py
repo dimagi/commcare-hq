@@ -70,6 +70,9 @@ class AppTranslationsGenerator:
                             and 'label_ref' in question):
                         labels_to_skip[form['id']].append(question['label_ref'])
                         labels_to_skip[form['id']].append(question['constraintMsg_ref'])
+                        if question.get('options'):
+                            for option in question['options']:
+                                labels_to_skip[form['id']].append(option['label_ref'])
         return labels_to_skip
 
     def _translation_data(self, app):
