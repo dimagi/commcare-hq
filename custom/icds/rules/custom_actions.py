@@ -24,7 +24,7 @@ def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):
         index={'parent': (tech_issue.type, tech_issue.case_id, 'child')},
     )
     return submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()),
+        ElementTree.tostring(caseblock.as_xml()).decode('utf-8'),
         tech_issue.domain,
         user_id=SYSTEM_USER_ID,
         xmlns=AUTO_UPDATE_XMLNS,

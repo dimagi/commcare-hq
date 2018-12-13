@@ -162,13 +162,13 @@ class ReprocessSubmissionStubTests(TestCase):
         case_id = uuid.uuid4().hex
         form_ids = []
         form_ids.append(submit_case_blocks(
-            CaseBlock(case_id=case_id, create=True, case_type='box').as_string(),
+            CaseBlock(case_id=case_id, create=True, case_type='box').as_string().decode('utf-8'),
             self.domain
         )[0].form_id)
 
         with _patch_save_to_raise_error(self):
             submit_case_blocks(
-                CaseBlock(case_id=case_id, update={'prop': 'a'}).as_string(),
+                CaseBlock(case_id=case_id, update={'prop': 'a'}).as_string().decode('utf-8'),
                 self.domain
             )
 
@@ -179,7 +179,7 @@ class ReprocessSubmissionStubTests(TestCase):
 
         # submit second form with case update
         form_ids.append(submit_case_blocks(
-            CaseBlock(case_id=case_id, update={'prop': 'b'}).as_string(),
+            CaseBlock(case_id=case_id, update={'prop': 'b'}).as_string().decode('utf-8'),
             self.domain
         )[0].form_id)
 
@@ -313,7 +313,7 @@ class ReprocessSubmissionStubTests(TestCase):
         form_id = uuid.uuid4().hex
         with failing_signal_handler('signal death'):
             submit_case_blocks(
-                CaseBlock(case_id=case_id, create=True, case_type='box').as_string(),
+                CaseBlock(case_id=case_id, create=True, case_type='box').as_string().decode('utf-8'),
                 self.domain,
                 form_id=form_id
             )
@@ -368,7 +368,7 @@ class TestReprocessDuringSubmission(TestCase):
         form_id = uuid.uuid4().hex
         with _patch_save_to_raise_error(self):
             submit_case_blocks(
-                CaseBlock(case_id=case_id, create=True, case_type='box').as_string(),
+                CaseBlock(case_id=case_id, create=True, case_type='box').as_string().decode('utf-8'),
                 self.domain,
                 form_id=form_id
             )
@@ -405,7 +405,7 @@ class TestReprocessDuringSubmission(TestCase):
             CaseBlock(
                 case_id=case_id, create=True, case_type='box',
                 index={'cupboard': ('cupboard', parent_case_id)},
-            ).as_string(),
+            ).as_string().decode('utf-8'),
             self.domain,
             form_id=form_id
         )
@@ -422,7 +422,7 @@ class TestReprocessDuringSubmission(TestCase):
 
         # create parent case
         submit_case_blocks(
-            CaseBlock(case_id=parent_case_id, create=True, case_type='cupboard').as_string(),
+            CaseBlock(case_id=parent_case_id, create=True, case_type='cupboard').as_string().decode('utf-8'),
             self.domain,
         )
 
