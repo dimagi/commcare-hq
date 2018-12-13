@@ -410,6 +410,11 @@ WITH dups AS (
         SELECT
             att.id,
             att.form_id,
+            att.name,
+            CASE
+                WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+                ELSE 3 -- corehq.blobs.CODES.form_attachment
+            END::SMALLINT AS type_code,
             (CASE
                 WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
                 ELSE COALESCE(
@@ -432,7 +437,7 @@ WITH dups AS (
 ), updated AS (
     -- fix create_on date
     UPDATE blobs_blobmeta_tbl
-    SET created_on = xform.received_on
+    SET created_on = xform.received_on, type_code = dups.type_code
     FROM dups
     INNER JOIN form_processor_xforminstancesql xform
         ON xform.form_id = dups.form_id

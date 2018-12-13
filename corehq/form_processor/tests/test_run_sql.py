@@ -24,6 +24,7 @@ from corehq.sql_db.util import (
 
 
 class TestRunSql(TransactionTestCase):
+    # this can be removed with form_processor_xformattachmentsql table
 
     @classmethod
     def setUpClass(cls):
@@ -145,10 +146,10 @@ class TestRunSql(TransactionTestCase):
             metas.extend(model.objects.using(db).all())
         return metas
 
-    def test_simple_move_form_attachments_to_blobmeta(self):
-        # this test can be removed with form_processor_xformattachmentsql table
-
-        key_sets = [
+    def setUp(self):
+        super(TestRunSql, self).setUp()
+        self.delete_all_forms_and_blob_metadata()
+        self.key_sets = [
             # Normal form, no dups (old metadata).
             self.create_metas(),
 
@@ -171,6 +172,7 @@ class TestRunSql(TransactionTestCase):
             self.create_metas("deprecated-old-x3"),
         ]
 
+    def test_simple_move_form_attachments_to_blobmeta(self):
         cmd = Command()
         cmd.handle(
             name="simple_move_form_attachments_to_blobmeta",
@@ -182,11 +184,11 @@ class TestRunSql(TransactionTestCase):
 
         metas = self.get_metas()
         actual_keys = {get_key(meta) for meta in metas}
-        expect_keys = {key for keys in key_sets for key in keys}
+        expect_keys = {key for keys in self.key_sets for key in keys}
         # all keys present in blobmeta table
         self.assertEqual(actual_keys, expect_keys,
             "actual keys != expected keys\n" +
-            pformat([actual_keys] + list(key_sets)))
+            pformat([actual_keys] + list(self.key_sets)))
         # all created_on dates set correctly
         self.assertTrue(all(m.created_on == RECEIVED_ON for m in metas),
             pformat([get_key(m, 1) for m in metas if m.created_on != RECEIVED_ON]))
@@ -195,31 +197,6 @@ class TestRunSql(TransactionTestCase):
         self.assertEqual(attachments, [])
 
     def test_move_form_attachments_to_blobmeta(self):
-        # this test can be removed with form_processor_xformattachmentsql table
-
-        key_sets = [
-            # Normal form, no dups.
-            self.create_metas(),
-
-            # Form with two sets of blob metadata (old and new metadata).
-            self.create_metas("dup"),
-
-            # Form with two sets of blob metadata (old and new metadata).
-            self.create_metas("dup-badcode"),
-
-            # Two forms referencing same blob (old and new metadata).
-            self.create_metas("deprecated"),
-
-            # Two forms referencing same blob (both old metadata).
-            self.create_metas("deprecated-old"),
-
-            # Two forms referencing same blob (two old metadata + one new).
-            self.create_metas("dup-deprecated-old"),
-
-            # Three forms referencing same blob (all old metadata).
-            self.create_metas("deprecated-old-x3"),
-        ]
-
         pre_metas = self.get_metas()
         pprint({get_key(meta, 1) for meta in pre_metas})
 
@@ -240,11 +217,11 @@ class TestRunSql(TransactionTestCase):
 
         metas = self.get_metas()
         actual_keys = {get_key(meta) for meta in metas}
-        expect_keys = {key for keys in key_sets for key in keys}
+        expect_keys = {key for keys in self.key_sets for key in keys}
         # all keys present in blobmeta table
         self.assertTrue(actual_keys.issubset(expect_keys),
             "actual keys is not a subset of expected keys:\n" +
-            pformat([actual_keys] + list(key_sets)) +
+            pformat([actual_keys] + list(self.key_sets)) +
             "\ndifference:\n" + pformat(expect_keys - actual_keys))
         # some metadata was migrated (maybe not all)
         self.assertGreater(
@@ -252,6 +229,35 @@ class TestRunSql(TransactionTestCase):
             sum(1 for m in pre_metas if m.id > 0),
             "nothing migrated",
         )
+
+    def test_delete_dup_form_attachments(self):
+        cmd = Command()
+        cmd.handle(
+            name="delete_dup_form_attachments",
+            dbname=None,
+            chunk_size=100,
+            print_rows=False,
+            yes=True,
+        )
+
+        metas = self.get_metas()
+        actual_keys = {get_key(meta) for meta in metas}
+        expect_keys = {key for keys in self.key_sets for key in keys}
+        # all keys present in blobmeta table
+        self.assertEqual(actual_keys, expect_keys,
+            "actual keys != expected keys\n" +
+            pformat([actual_keys] + list(self.key_sets)) +
+            "\ndifference:\n" + pformat(expect_keys - actual_keys))
+        # all created_on dates set correctly
+        self.assertTrue(all(m.created_on == RECEIVED_ON for m in metas),
+            pformat([get_key(m, 1) for m in metas if m.created_on != RECEIVED_ON]))
+        # all duplicates should have been deleted
+        old_keys = {(m.form_id, m.blob_id)
+            for m in self.get_metas(DeprecatedXFormAttachmentSQL)}
+        new_keys = {(m.parent_id, m.key) for m in metas if m.id > 0}
+        self.assertFalse(old_keys.intersection(new_keys),
+            "some duplicate records were not deleted\n" +
+            pformat(old_keys.intersection(new_keys)))
 
 
 # put it back far enough so it's in a different year
