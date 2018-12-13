@@ -54,7 +54,7 @@ def get_es_new():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(hosts)
+    return Elasticsearch(hosts, timeout=30)
 
 
 @memoized
