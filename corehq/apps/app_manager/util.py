@@ -27,6 +27,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_app
 )
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
+from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
@@ -688,3 +689,7 @@ def get_form_source_download_url(xform):
         xform.build_id,
         app.get_form_filename(module=form.get_module(), form=form),
     ])
+
+def get_enabled_build_profiles_for_version(app_id, version):
+    return list(LatestEnabledBuildProfiles.objects.filter(
+            app_id=app_id, version=version).values_list('build_profile_id', flat=True))

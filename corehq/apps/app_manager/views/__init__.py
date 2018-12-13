@@ -106,6 +106,7 @@ from corehq.apps.app_manager.views.releases import (
     short_odk_url,
     short_url,
     update_build_comment,
+    toggle_build_profile,
 )
 from corehq.apps.app_manager.views.schedules import (
     edit_schedule_phases,
