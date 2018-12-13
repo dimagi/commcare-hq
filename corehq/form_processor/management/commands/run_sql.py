@@ -21,6 +21,7 @@ from django.db import connections
 from six.moves import input
 
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.util.teeout import tee_output
 from six.moves import zip
 
 MULTI_DB = 'Executing on ALL (%s) databases in parallel. Continue?'
@@ -31,35 +32,45 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('name', choices=list(TEMPLATES), help="SQL statement name.")
-        parser.add_argument('-d', '--dbname', help='Django DB alias to run on')
+        parser.add_argument('-d', '--dbname', help='Django DB alias to run on.')
         parser.add_argument('--chunk-size', type=int, default=1000,
             help="Maximum number of records to move at once.")
+        parser.add_argument('-y', '--yes', action="store_true",
+            help='Answer yes to run on all databases prompt.')
         parser.add_argument('--ignore-rows',
             action="store_false", dest="print_rows", default=True,
             help="Do not print returned rows. Has no effect on RunUntilZero "
                  "statements since results are not printed for those.")
+        parser.add_argument('-o', '--log-output', action="store_true",
+            help='Log output to a file: ./NAME-TIMESTAMP.log')
 
-    def handle(self, name, dbname, chunk_size, print_rows, **options):
+    def handle(self, name, dbname, chunk_size, yes, print_rows, **options):
         template = TEMPLATES[name]
         sql = template.format(chunk_size=chunk_size)
         run = getattr(template, "run", run_once)
         dbnames = get_db_aliases_for_partitioned_query()
-        if dbname or len(dbnames) == 1:
-            run(sql, dbname or dbnames[0], print_rows)
-        elif not confirm(MULTI_DB % len(dbnames)):
-            sys.exit('abort')
+        if options.get('log_output'):
+            logfile = "{}-{}.log".format(name, datetime.now().isoformat())
+            print("writing output to file: {}".format(logfile))
         else:
-            greenlets = []
-            for dbname in dbnames:
-                g = gevent.spawn(run, sql, dbname, print_rows)
-                greenlets.append(g)
+            logfile = None
+        with tee_output(logfile):
+            if dbname or len(dbnames) == 1:
+                run(sql, dbname or dbnames[0], print_rows)
+            elif not (yes or confirm(MULTI_DB % len(dbnames))):
+                sys.exit('abort')
+            else:
+                greenlets = []
+                for dbname in dbnames:
+                    g = gevent.spawn(run, sql, dbname, print_rows)
+                    greenlets.append(g)
 
-            gevent.joinall(greenlets)
-            try:
-                for job in greenlets:
-                    job.get()
-            except Exception:
-                traceback.print_exc()
+                gevent.joinall(greenlets)
+                try:
+                    for job in greenlets:
+                        job.get()
+                except Exception:
+                    traceback.print_exc()
 
 
 def confirm(msg):

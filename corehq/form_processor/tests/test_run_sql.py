@@ -7,7 +7,6 @@ from uuid import uuid4
 
 from django.db import connections
 from django.test import TransactionTestCase
-from mock import patch
 
 from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
@@ -146,8 +145,7 @@ class TestRunSql(TransactionTestCase):
             metas.extend(model.objects.using(db).all())
         return metas
 
-    @patch('corehq.form_processor.management.commands.run_sql.confirm', return_value=True)
-    def test_simple_move_form_attachments_to_blobmeta(self, mock):
+    def test_simple_move_form_attachments_to_blobmeta(self):
         # this test can be removed with form_processor_xformattachmentsql table
 
         key_sets = [
@@ -179,6 +177,7 @@ class TestRunSql(TransactionTestCase):
             dbname=None,
             chunk_size=100,
             print_rows=False,
+            yes=True,
         )
 
         metas = self.get_metas()
@@ -195,8 +194,7 @@ class TestRunSql(TransactionTestCase):
         attachments = self.get_metas(DeprecatedXFormAttachmentSQL)
         self.assertEqual(attachments, [])
 
-    @patch('corehq.form_processor.management.commands.run_sql.confirm', return_value=True)
-    def test_move_form_attachments_to_blobmeta(self, mock):
+    def test_move_form_attachments_to_blobmeta(self):
         # this test can be removed with form_processor_xformattachmentsql table
 
         key_sets = [
@@ -233,6 +231,7 @@ class TestRunSql(TransactionTestCase):
             # ON CONFLICT DO UPDATE command cannot affect row a second time
             chunk_size=1,
             print_rows=False,
+            yes=True,
         )
 
         # some attachments will not be processed, need to be handled separately
