@@ -40,6 +40,12 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return get_table_name(self.domain, config.table_id)
 
     @property
+    def person_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+    
+    @property
     def tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
@@ -148,7 +154,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
              ')'),
             ('opened_on', 'case_list.opened_on'),
             ('dob', 'case_list.dob'),
-            ('closed', 'case_list.closed')
+            ('closed', 'case_list.closed'),
+            ('date_death', 'person.date_death')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -163,6 +170,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON ucr.doc_id = agg_delivery.case_id AND ucr.month = agg_delivery.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{ccs_record_case_ucr}" case_list ON ucr.doc_id = case_list.doc_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON ucr.doc_id = ut.ccs_record_case_id
+            LEFT OUTER JOIN "{person_cases_ucr}" person ON person.doc_id = ucr.person_case_id
             WHERE ucr.month = %(start_date)s
             ORDER BY ucr.awc_id, ucr.case_id
         )
@@ -178,6 +186,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_delivery_table=AGG_CCS_RECORD_DELIVERY_TABLE,
             pregnant_tasks_case_ucr=self.pregnant_tasks_cases_ucr_tablename,
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
+            person_cases_ucr=self.person_case_ucr_tablename
         ), {
             "start_date": self.month,
             "end_date": self.end_date
