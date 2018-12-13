@@ -598,8 +598,10 @@ def validate_xform(domain, source):
         )
 
 
-ControlNode = collections.namedtuple('ControlNode', ['node', 'path', 'repeat', 'group', 'items',
+ControlNode = collections.namedtuple('ControlNode', ['node', 'bind_node', 'path', 'repeat', 'group', 'items',
                                      'is_leaf', 'data_type', 'relevant', 'required', 'constraint'])
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -1039,6 +1041,7 @@ class XForm(WrappedNode):
                 "relevant": cnode.relevant,
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
+                "constraintMsg_ref": self._normalize_itext_id(cnode.bind_node.attrib.get('{http://openrosa.org/javarosa}constraintMsg')) if cnode.constraint else None,
                 "comment": self._get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self._get_setvalue(path),
@@ -1222,6 +1225,7 @@ class XForm(WrappedNode):
                     if not skip:
                         control_nodes.append(ControlNode(
                             node=node,
+                            bind_node=bind,
                             path=path,
                             repeat=repeat_context,
                             group=group_context,
@@ -1230,7 +1234,7 @@ class XForm(WrappedNode):
                             data_type=data_type,
                             relevant=relevant,
                             required=required,
-                            constraint=constraint
+                            constraint=constraint,
                         ))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)

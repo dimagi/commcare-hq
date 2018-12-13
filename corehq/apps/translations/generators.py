@@ -69,6 +69,7 @@ class AppTranslationsGenerator:
                     if (question['comment'] and SKIP_TRANSFEX_STRING in question['comment']
                             and 'label_ref' in question):
                         labels_to_skip[form['id']].append(question['label_ref'])
+                        labels_to_skip[form['id']].append(question['constraintMsg_ref'])
         return labels_to_skip
 
     def _translation_data(self, app):
