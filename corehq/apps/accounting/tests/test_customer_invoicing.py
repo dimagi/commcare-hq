@@ -129,7 +129,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('1000.0000'))
+        self.assertEqual(invoice.balance, Decimal('1200.0000'))
         self.assertEqual(invoice.account, self.account)
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
@@ -175,8 +175,8 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(product_line_items.count(), 2)
         for line_item in product_line_items:
             self.assertIn(line_item.base_description, [
-                'One month of CommCare Advanced Software Plan.',
-                'One month of CommCare Standard Software Plan.',
+                'One month of CommCare Advanced Edition Software Plan.',
+                'One month of CommCare Standard Edition Software Plan.',
             ])
             self.assertIn(line_item.base_cost, [
                 self.product_rate.monthly_fee,
@@ -238,7 +238,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('1100.0000'))
+        self.assertEqual(invoice.balance, Decimal('1500.0000'))
         user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
         self.assertEqual(user_line_items.count(), 2)
         for user_line_item in user_line_items:
