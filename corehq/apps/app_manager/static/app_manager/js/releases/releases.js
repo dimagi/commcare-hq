@@ -349,7 +349,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     type: 'post',
                     dataType: 'json',
                     data: {ajax: true, stream: stream},
-                    success: function (data) {
+                    success: function () {
                         savedApp.stream(stream);
                     },
                 });
