@@ -177,7 +177,7 @@ class RetireUserTestCase(TestCase):
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         )
-        casexml = ElementTree.tostring(caseblock.as_xml())
+        casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
         submit_case_blocks(casexml, self.domain, user_id=self.other_user._id)
 
         self.other_user.retire()
@@ -197,7 +197,7 @@ class RetireUserTestCase(TestCase):
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         )
-        casexml = ElementTree.tostring(caseblock.as_xml())
+        casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
         submit_case_blocks(casexml, self.domain, user_id=self.commcare_user._id)
 
         self.other_user.retire()
@@ -248,7 +248,7 @@ class RetireUserTestCase(TestCase):
                 owner_id=owner_id,
                 user_id=self.commcare_user._id,
             )
-            submit_case_blocks(caseblock.as_string(), self.domain, user_id=self.other_user._id)
+            submit_case_blocks(caseblock.as_string().decode('utf-8'), self.domain, user_id=self.other_user._id)
 
         self.other_user.retire()
 
@@ -270,7 +270,7 @@ class RetireUserTestCase(TestCase):
             create=False,
             case_id=user_case_id,
         )
-        submit_case_blocks(caseblock.as_string(), self.domain, user_id=self.other_user._id)
+        submit_case_blocks(caseblock.as_string().decode('utf-8'), self.domain, user_id=self.other_user._id)
 
         case_ids = CaseAccessors(self.domain).get_case_ids_by_owners([self.commcare_user._id])
         self.assertEqual(1, len(case_ids))
@@ -297,7 +297,7 @@ class RetireUserTestCase(TestCase):
             owner_id=self.commcare_user._id,
             user_id=self.commcare_user._id,
         )
-        xform, _ = submit_case_blocks(caseblock.as_string(), self.domain)
+        xform, _ = submit_case_blocks(caseblock.as_string().decode('utf-8'), self.domain)
 
         # other user submits form against the case and another case not owned by the user
         # should NOT get deleted since this form touches a case that's still 'alive'
