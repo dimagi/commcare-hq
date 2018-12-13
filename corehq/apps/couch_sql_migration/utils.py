@@ -36,17 +36,20 @@ def sql_save_with_resource_conflict(model, document, old_doc_rev=None):
         INSERT INTO {tablename} (
            id, rev, document
         ) VALUES (
-           %s, %s, %s
+           %(doc_id)s, %(new_doc_rev)s, %(doc_json)s
         )
         ON CONFLICT (id)
         DO UPDATE SET
-           rev = %s,
-           document = %s
-        WHERE {tablename}.rev = %s
+           rev = %(new_doc_rev)s,
+           document = %(doc_json)s
+        WHERE {tablename}.rev = %(old_doc_rev)s
         RETURNING 1
-        """.format(tablename=model._meta.db_table), [
-            doc_id, new_doc_rev, doc_json_string, new_doc_rev, doc_json_string, old_doc_rev
-        ])
+        """.format(tablename=model._meta.db_table), {
+            'doc_id': doc_id,
+            'new_doc_rev': new_doc_rev,
+            'doc_json': doc_json_string,
+            'old_doc_rev': old_doc_rev
+        })
         res = cursor.fetchone()
 
     if res is None:
