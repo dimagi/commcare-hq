@@ -241,7 +241,6 @@ class TestRunSql(TransactionTestCase):
         metas = self.get_metas()
         actual_keys = {get_key(meta) for meta in metas}
         expect_keys = {key for keys in key_sets for key in keys}
-        expect_keys.add(('dup-badcode', 2, 'pic.jpg'))
         # all keys present in blobmeta table
         self.assertTrue(actual_keys.issubset(expect_keys),
             "actual keys is not a subset of expected keys:\n" +

@@ -275,7 +275,6 @@ ON public.form_processor_xformattachmentsql (((
 # Move rows incrementally.
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
-# This version should work on icds, but not prod and probably not india.
 simple_move_form_attachments_to_blobmeta = RunUntilZeroHandleDupBlobs("""
 WITH deleted AS (
     DELETE FROM form_processor_xformattachmentsql
@@ -377,8 +376,8 @@ WITH to_move AS (
         content_length
     )
     SELECT * FROM to_move
-    ON CONFLICT (key)
-        DO UPDATE SET created_on = EXCLUDED.created_on
+    ON CONFLICT (key) DO UPDATE
+        SET created_on = EXCLUDED.created_on, type_code = EXCLUDED.type_code
         -- this where clause will exclude a row with key conflict belonging to
         -- a different parent or with different name (unexpected, but possible)
         WHERE blob.parent_id = EXCLUDED.parent_id AND blob.name = EXCLUDED.name
