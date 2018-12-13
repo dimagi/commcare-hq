@@ -225,11 +225,11 @@ class AwcMbtHelper(MBTHelper):
 
     @property
     def columns(self):
-        return ('state_id',
-                'district_id',
-                'block_id',
-                'supervisor_id',
-                'awc_id',
+        return ('t.state_id',
+                't.district_id',
+                't.block_id',
+                't.supervisor_id',
+                't.awc_id',
                 'month',
                 'num_awcs',
                 'awc_days_open',
@@ -341,7 +341,7 @@ class AwcMbtHelper(MBTHelper):
                 'trained_phase_2',
                 'trained_phase_3',
                 'trained_phase_4',
-                'aggregation_level',
+                't.aggregation_level',
                 'num_launched_states',
                 'num_launched_districts',
                 'num_launched_blocks',

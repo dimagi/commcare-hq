@@ -265,8 +265,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_awc.get()
 
+            first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
-                create_mbt_for_month.delay(state_id, calculation_date)
+                create_mbt_for_month.delay(state_id, first_of_month_string)
 
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
