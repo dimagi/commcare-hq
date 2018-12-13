@@ -101,3 +101,5 @@ AWW_USER_TABLE_ID = 'static-commcare_user_cases'
 DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'softlayer' else 'icds-cas'
+
+THREE_MONTHS = 60 * 60 * 24 * 95
