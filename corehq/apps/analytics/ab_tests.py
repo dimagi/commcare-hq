@@ -153,7 +153,7 @@ SIGNUP_ALT_UX_OFF = 'off'
 SIGNUP_ALT_UX_ON = 'on'
 
 SIGNUP_ALT_UX = SessionAbTestConfig(
-    'Signup Alternative UX',
+    'Signup alt ux dec2018 A/B',
     'signup_ux_dec2018',
     (SIGNUP_ALT_UX_OFF, SIGNUP_ALT_UX_ON)
 )
