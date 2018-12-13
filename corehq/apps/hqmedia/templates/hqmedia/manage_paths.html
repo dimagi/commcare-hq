@@ -59,7 +59,26 @@
                     </button>
                 </div>
                 <br>
-                <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+                <div class="alert alert-danger" data-bind="visible: serverError(), text: serverError()"></div>
+                <div class="alert alert-success" data-bind="visible: successMessage(), text: successMessage()"></div>
+                <div class="alert alert-danger" data-bind="visible: errorMessages().length">
+                    {% blocktrans %}
+                        Your file has the following errors and may not be used to update multimedia paths.
+                    {% endblocktrans %}
+                    <br><br>
+                    <ul data-bind="foreach: errorMessages">
+                        <li data-bind="html: $data"></li>
+                    </ul>
+                </div>
+                <div class="alert alert-warning" data-bind="visible: warningMessages().length">
+                    {% blocktrans %}
+                        Your file has the following warnings. Please verify that these are intentional before proceeding.
+                    {% endblocktrans %}
+                    <br><br>
+                    <ul data-bind="foreach: warningMessages">
+                        <li data-bind="html: $data"></li>
+                    </ul>
+                </div>
             </form>
         </div>
     </div>
