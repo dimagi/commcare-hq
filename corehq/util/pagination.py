@@ -186,15 +186,23 @@ class ResumableFunctionIterator(object):
     :param args_provider: An instance of the ``ArgsProvider`` class.
     :param item_getter: Function which can be used to get an item by ID. Used for retrying items that failed.
     :param event_handler: Instance of ``PaginationEventHandler`` to be notified on page start and page end.
+    :param reset_complete: If true, will start iteration even if previously marked complete
     """
 
-    def __init__(self, iteration_key, data_function, args_provider, item_getter, event_handler=None):
+    def __init__(self,
+                 iteration_key,
+                 data_function,
+                 args_provider,
+                 item_getter,
+                 event_handler=None,
+                 reset_complete=False):
         self.iteration_key = iteration_key
         self.data_function = data_function
         self.args_provider = args_provider
         self.item_getter = item_getter
         self.event_handler = event_handler
         self.iteration_id = hashlib.sha1(self.iteration_key.encode('utf-8')).hexdigest()
+        self.reset_complete = reset_complete
 
         self.couch_db = get_db('meta')
         self._state = None
@@ -204,6 +212,11 @@ class ResumableFunctionIterator(object):
         if not self._state:
             try:
                 self._state = ResumableIteratorState(self.couch_db.get(self.iteration_id))
+                # on first getting state, reset complete flag if so requested
+                if self.reset_complete:
+                    self._state.complete = False
+                    self._save_state()
+                    self.reset_complete = False
             except ResourceNotFound:
                 # new iteration
                 self._state = ResumableIteratorState(
@@ -233,8 +246,6 @@ class ResumableFunctionIterator(object):
                 if item is not None:
                     yield item
 
-        self.state.args = None
-        self.state.kwargs = None
         self.state.retry = {}
         self.state.complete = True
         self._save_state()
