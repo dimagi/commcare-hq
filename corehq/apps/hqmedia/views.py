@@ -39,7 +39,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.views.media_utils import interpolate_media_path
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -50,7 +49,6 @@ from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
     MultimediaVideoUploadController
 )
-from corehq.apps.hqmedia.view_helpers import download_multimedia_paths_rows
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -202,6 +200,7 @@ class ManageMultimediaPathsView(BaseMultimediaTemplateView):
 @require_can_edit_apps
 @require_GET
 def download_multimedia_paths(request, domain, app_id):
+    from corehq.apps.hqmedia.view_helpers import download_multimedia_paths_rows
     app = get_app(domain, app_id)
 
     headers = ((_("Paths"), (_("Path in Application"), _("Usages"))),)
@@ -244,50 +243,10 @@ def validate_multimedia_paths(request, domain, app_id):
             'error': _("File does not appear to be an Excel file. Please choose another file.")
         })
 
-    valid_count = 0
-    errors = []
-    warnings = []
+    from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows
     app = get_app(domain, app_id)
-    old_path_counts = {i.path: 0 for i in app.all_media()}
-    new_path_counts = defaultdict(lambda: 0)
     with get_spreadsheet(f) as spreadsheet:
-        for i, row in enumerate(spreadsheet.iter_rows()):
-            i += 1  # spreadsheet rows are one-indexed
-            row_is_valid = True
-
-            expected_length = 2
-            if len(row) != expected_length:
-                row_is_valid = False
-                errors.append(_("Row {} should have {} columns but has {}").format(i, expected_length, len(row)))
-            else:
-                (old_path, new_path) = row
-
-                if old_path not in old_path_counts:
-                    row_is_valid = False
-                    errors.append(_("Path in row {} could not be found in application: <code>{}</code>").format(
-                                    i, old_path))
-                else:
-                    old_path_counts[old_path] += 1
-
-                interpolated_new_path = interpolate_media_path(new_path)    # checks for jr://
-                if interpolated_new_path != new_path:
-                    warnings.append(_("Badly formatted path <code>{}</code> in row {} will be replaced with " \
-                                      "<code>{}</code>").format(new_path, i, interpolated_new_path))
-                else:
-                    new_path_counts[new_path] += 1
-
-            if row_is_valid:
-                valid_count += 1
-
-        # Duplicate old paths is an error: can't rename to two different new values
-        for old_path, count in six.iteritems(old_path_counts):
-            if count > 1:
-                errors.append(_("Old path <code>{}</code> appears {} times in file.").format(old_path, count))
-
-        # Duplicate new paths is a warning: will combine what were previously different items
-        for new_path, count in six.iteritems(new_path_counts):
-            if count > 1:
-                warnings.append(_("New path <code>{}</code> appears {} times in file.").format(new_path, count))
+        (valid_count, errors, warnings) = validate_multimedia_paths_rows(app, spreadsheet.iter_rows())
 
     return json_response({
         'success': 1,
