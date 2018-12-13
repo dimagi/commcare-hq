@@ -154,7 +154,7 @@ class RunUntilZero(object):
 import re  # noqa: E402
 from collections import defaultdict  # noqa: E402
 from django.db import IntegrityError, transaction  # noqa: E402
-from corehq.blobs import get_blob_db  # noqa: E402
+from corehq.blobs import CODES, get_blob_db  # noqa: E402
 from corehq.blobs.models import BlobMeta  # noqa: E402
 
 KEYRE = re.compile(r"DETAIL:  Key \(key\)=\((.*)\) already exists\.")
@@ -180,11 +180,29 @@ class RunUntilZeroHandleDupBlobs(RunUntilZero):
             if len(metas) == 1:
                 diff_parents.append(metas[0])
                 continue
-            # delete newest duplicate
+            # handle form with duplicate attachments (old and new metadata)
             assert len(metas) == 2, metas
             f1, f2 = [cls.meta_fields(m, False) for m in metas]
             assert f1 == f2, "refusing to delete: {} != {}".format(f1, f2)
-            metas.sort(key=lambda m: m.created_on)
+            m1, m2 = metas
+            if m1.type_code != m2.type_code:
+                # delete (new) metadata with bad type code. this happened as a
+                # result of the earlier migration of relatively new SQL domains
+                # that had thier defunct couch metadata migrated into the
+                # blobmeta table, but with wrong type code
+                real_type_code = (CODES.form_xml
+                    if m1.name == "form.xml" else CODES.form_attachment)
+                assert real_type_code in [m1.type_code, m2.type_code], \
+                    (real_type_code, m1.type_code, m2.type_code)
+
+                def sort_key(meta):
+                    return 0 if meta.type_code == real_type_code else 1
+            else:
+                # delete the newer metadata
+                def sort_key(meta):
+                    return meta.created_on
+            # sort_key should sort the one to keep before the one to delete
+            metas.sort(key=sort_key)
             meta = metas.pop()
             print("{dbname}: deleting duplicate blob for "
                 "{meta.parent_id} / {meta.name} key={key}".format(**locals()))
@@ -200,18 +218,18 @@ class RunUntilZeroHandleDupBlobs(RunUntilZero):
                     meta.delete()
 
     @staticmethod
-    def meta_fields(meta, with_created_on=True):
+    def meta_fields(meta, with_variable_fields=True):
         fields = {f: getattr(meta, f) for f in [
             "domain",
             "parent_id",
-            "type_code",
             "name",
             "content_length",
             "content_type",
             "properties",
             "expires_on",
         ]}
-        if with_created_on:
+        if with_variable_fields:
+            fields["type_code"] = meta.type_code
             fields["created_on"] = meta.created_on
         return fields
 

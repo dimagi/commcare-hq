@@ -92,7 +92,7 @@ class TestRunSql(TransactionTestCase):
         def iter_keys(parent_id, name, code):
             args = {
                 "parent_id": parent_id,
-                "type_code": code,
+                "type_code": (CODES.form_xml if "badcode" in action else code),
                 "name": name,
                 "key": parent_id + "-" + name,
                 "content_length": 2,
@@ -116,10 +116,11 @@ class TestRunSql(TransactionTestCase):
                 if "old" in action:
                     assert deprecated, action
                     attach(meta, parent_id, deprecated_form_id=form_id)
-                    if "dup" not in action:
-                        meta.delete()
-                    else:
+                    if "dup" in action:
                         meta_count += 1
+                    else:
+                        assert "badcode" not in action, action
+                        meta.delete()
                 if "x3" in action:
                     meta_count += 1
                     third_id = get_new_id(form_id)
@@ -155,6 +156,9 @@ class TestRunSql(TransactionTestCase):
 
             # Form with two sets of blob metadata (old and new metadata).
             self.create_metas("dup"),
+
+            # Form with two sets of blob metadata (old and new metadata).
+            self.create_metas("dup-badcode"),
 
             # Two forms referencing same blob (old and new metadata).
             self.create_metas("deprecated"),
@@ -202,6 +206,9 @@ class TestRunSql(TransactionTestCase):
             # Form with two sets of blob metadata (old and new metadata).
             self.create_metas("dup"),
 
+            # Form with two sets of blob metadata (old and new metadata).
+            self.create_metas("dup-badcode"),
+
             # Two forms referencing same blob (old and new metadata).
             self.create_metas("deprecated"),
 
@@ -235,14 +242,17 @@ class TestRunSql(TransactionTestCase):
         metas = self.get_metas()
         actual_keys = {get_key(meta) for meta in metas}
         expect_keys = {key for keys in key_sets for key in keys}
+        expect_keys.add(('dup-badcode', 2, 'pic.jpg'))
         # all keys present in blobmeta table
-        self.assertEqual(actual_keys, expect_keys,
-            pformat([actual_keys] + list(key_sets)))
+        self.assertTrue(actual_keys.issubset(expect_keys),
+            "actual keys is not a subset of expected keys:\n" +
+            pformat([actual_keys] + list(key_sets)) +
+            "\ndifference:\n" + pformat(expect_keys - actual_keys))
         # some metadata was migrated (maybe not all)
         self.assertGreater(
             len(attachments),
             sum(1 for m in pre_metas if m.id > 0),
-            "no metas were migrated",
+            "nothing migrated",
         )
 
 
