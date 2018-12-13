@@ -11,7 +11,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
-from couchdbkit.ext.django.schema import IntegerProperty
+from dimagi.ext.couchdbkit import IntegerProperty
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
@@ -59,7 +59,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.blobs.mixin import BlobMixin, CODES
+from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
@@ -636,6 +636,7 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
     sharing_groups = ListProperty(StringProperty)
     show_all_data = BooleanProperty(default=True)
     show_project_data = BooleanProperty()
+    show_deactivated_data = BooleanProperty()
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
@@ -1029,6 +1030,7 @@ class CaseExportInstance(ExportInstance):
                 self.filters.accessible_location_ids,
                 self.filters.show_all_data,
                 self.filters.show_project_data,
+                self.filters.show_deactivated_data,
                 self.filters.user_types,
                 self.filters.date_period,
                 self.filters.sharing_groups + self.filters.reporting_groups,

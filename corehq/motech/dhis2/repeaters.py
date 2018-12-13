@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import json
 
-from couchdbkit.ext.django.schema import SchemaProperty
+from dimagi.ext.couchdbkit import SchemaProperty
 from memoized import memoized
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors

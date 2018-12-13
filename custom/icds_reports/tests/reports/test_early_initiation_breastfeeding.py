@@ -54,18 +54,13 @@ class TestEarlyInitiationBreastFeeding(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 4,
-                    "birth": 3,
-                    'original_name': ["st1"],
-                    "fillKey": "60%-100%"
-                },
-                "st2": {
-                    "in_month": 3,
-                    "birth": 1,
-                    'original_name': ["st2"],
-                    "fillKey": "20%-60%"
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'birth': 0, 'fillKey': '0%-20%'},
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'birth': 0, 'fillKey': '0%-20%'},
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'birth': 0, 'fillKey': '0%-20%'},
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'birth': 0, 'fillKey': '0%-20%'},
+                'st1': {'in_month': 4, 'original_name': ['st1'], 'birth': 3, 'fillKey': '60%-100%'},
+                'st2': {'in_month': 3, 'original_name': ['st2'], 'birth': 1, 'fillKey': '20%-60%'},
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'birth': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -90,7 +85,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 54.16666666666667)
+        self.assertEquals(data['rightLegend']['average'], 57.142857142857146)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_early_initiation_breastfeeding_map(
@@ -193,7 +188,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 50.0)
+        self.assertEquals(data['rightLegend']['average'], 75.0)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -208,24 +203,18 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 75.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 33.333333333333336
-                    }
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 75.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 33.333333333333336
-                    }
+                    {'loc_name': 'st1', 'percent': 75.0},
+                    {'loc_name': 'st2', 'percent': 33.333333333333336},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
                 ],
                 "chart_data": [
                     {
@@ -262,14 +251,13 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 75.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 33.333333333333336
-                    }
+                    {'loc_name': 'st1', 'percent': 75.0},
+                    {'loc_name': 'st2', 'percent': 33.333333333333336},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
 

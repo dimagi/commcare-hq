@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import hashlib
 import os
 import re
-from base64 import urlsafe_b64encode
-from datetime import datetime, timedelta
+from base64 import urlsafe_b64encode, b64encode
+from datetime import datetime
 
 from jsonfield import JSONField
 
 from corehq.blobs.exceptions import BadName
-from corehq.util.datadog.gauges import datadog_counter
 
 SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 
@@ -119,26 +119,21 @@ def check_safe_key(key):
         raise BadName("unsafe key: %r" % key)
 
 
-def set_blob_expire_object(bucket, identifier, length, timeout):
-    from .models import BlobExpiration
-    try:
-        blob_expiration = BlobExpiration.objects.get(
-            bucket=bucket,
-            identifier=identifier,
-            deleted=False,
-        )
-    except BlobExpiration.DoesNotExist:
-        blob_expiration = BlobExpiration(
-            bucket=bucket,
-            identifier=identifier,
-        )
-
-    blob_expiration.expires_on = _utcnow() + timedelta(minutes=timeout)
-    blob_expiration.length = length
-    blob_expiration.save()
-    datadog_counter('commcare.temp_blobs.count')
-    datadog_counter('commcare.temp_blobs.bytes_added', value=length)
-
-
 def _utcnow():
     return datetime.utcnow()
+
+
+def get_content_md5(fileobj):
+    """Get Content-MD5 value
+
+    All content will be read from the current position to the end of the
+    file. The file will be left open with its seek position at the end
+    of the file.
+
+    :param fileobj: A file-like object.
+    :returns: RFC-1864-compliant Content-MD5 header value.
+    """
+    md5 = hashlib.md5()
+    for chunk in iter(lambda: fileobj.read(1024 * 1024), b''):
+        md5.update(chunk)
+    return b64encode(md5.digest()).decode('ascii')

@@ -58,8 +58,8 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
-    login_or_digest, api_domain_view
-)
+    login_or_digest, api_domain_view,
+    track_domain_request)
 from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.models import (
@@ -287,10 +287,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 except Exception:
                     pass
             if xform:
+                if isinstance(xform, six.text_type):
+                    xform = xform.encode('utf-8')
                 save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
+            notify_exception(request, six.text_type(e))
             if ajax:
                 return HttpResponseBadRequest(six.text_type(e))
             else:
@@ -474,6 +477,7 @@ def new_form(request, domain, app_id, module_unique_id):
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
@@ -489,13 +493,13 @@ def patch_xform(request, domain, app_id, form_unique_id):
     current_xml = form.source
     dmp = diff_match_patch()
     xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    xml = save_xform(app, form, xml)
+    xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(xml.encode('utf-8')).hexdigest()
+        'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)

@@ -69,9 +69,12 @@ Creating an index can lock the table and cause it to not respond to queries. If 
 large, an index is going to take a long time. In that case:
 
 1. Create the migration normally using django.
-2. On all large environments, create the index concurrently
-3. Once finished, fake the migration.
-4. Merge your PR
+2. On all large environments, create the index concurrently. One way to do this
+   is to use `./manage.py run_sql ... <https://github.com/dimagi/commcare-hq/blob/master/corehq/form_processor/management/commands/run_sql.py>`_
+   to apply the SQL to the database.
+3. Once finished, fake the migration. Avoid this by using
+   `CREATE INDEX IF NOT EXISTS ...` in the migration if possible.
+4. Merge your PR.
 
 Couch
 '''''

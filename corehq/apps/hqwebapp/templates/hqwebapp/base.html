@@ -1,7 +1,10 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 {% requirejs_main %}
-<html lang="{{ LANGUAGE_CODE }}">
+<!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
+<!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!--><html lang="{{ LANGUAGE_CODE }}"><!--<![endif]-->
     <head>
         {% if ANALYTICS_IDS.GTM_ID %}
             {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
@@ -179,8 +182,10 @@
         {% endif %}
         {% block background_content %}{% endblock %}
         {% maintenance_alert %}
-        <!-- .hide used for A/B test of account creation page -->
-        <div class="hq-container{% if is_register_user %} molly{% endif %}">
+        {% if request.user.is_authenticated and is_demo_visible %}
+          {% include "hqwebapp/partials/get_demo_banner.html" %}
+        {% endif %}
+        <div class="hq-container">
             {% block navigation %}
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
@@ -199,14 +204,24 @@
 
                     {% if not request.user.is_authenticated %}
                       <nav class="navbar-menus navbar-signin" role="navigation">
+
                         <div class="nav-settings-bar pull-right">
                           <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
-                            <a href="#cta-form-get-demo"
-                               target="_blank"
-                               data-toggle="modal"
-                               id="cta-form-get-demo-button"
-                               class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
+                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
+
+                              {% if demo_workflow_ab.version == 'hubspot' %}
+                              <a href="#cta-form-get-demo"
+                                 data-toggle="modal"
+                                 id="cta-form-get-demo-button-header"
+                                 class="btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+                              {% endif %}
+
+                              {% if demo_workflow_ab.version == 'drift' %}
+                              <button id="cta-form-get-demo-button-header"
+                                      class="btn btn-purple navbar-btn schedule-demo-drift-cta">
+                                {% trans 'Schedule a Demo' %}</button>
+                              {% endif %}
+
                           {% endif %}
                         </div>
                       </nav>
@@ -320,8 +335,10 @@
                 awkward or impossible to include it in another block
             {% endcomment %}
         {% endblock %}
-        {%  initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
-        {%  initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
+        {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
+        {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
+        {% initial_page_data 'toggles_dict' toggles_dict %}
+        {% initial_page_data 'previews_dict' previews_dict %}
         <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
@@ -484,46 +501,14 @@
           <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
         {% endif %}
 
-        {% if not request.user.is_authenticated and is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
-
-          <div class="modal fade" id="cta-form-get-demo">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
-                  <h4 class="modal-title">{% trans "Get a Demo of CommCare" %}</h4>
-                </div>
-                <div class="modal-body form-horizontal">
-                  <div class="form form-horizontal" id="get-demo-cta-form-body">
-
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!--[if lte IE 8]>
-          <script charset="utf-8" src="//js.hsforms.net/forms/v2-legacy.js"></script>
-          <![endif]-->
-          <script charset="utf-8" src="//js.hsforms.net/forms/v2.js"></script>
-          <script>
-            hbspt.forms.create({
-              portalId: "{{ ANALYTICS_IDS.HUBSPOT_API_ID }}",
-              formId: "0f5de42e-b562-4ece-85e5-cfd2db97eba8",
-              target: "#get-demo-cta-form-body",
-              css: ""
-            });
-          </script>
+        {% if is_demo_visible %}
+          {% include "hqwebapp/partials/get_demo_modals.html" %}
         {% endif %}
 
         {# Knockout component templates #}
         {% include 'hqwebapp/ko_pagination.html' %}
         {% include 'hqwebapp/partials/ko_inline_edit.html' %}
 
-        {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
-        {# If it's loaded early, then execution of all following scripts block on it #}
-        {% if request.domain and request.user.username and not requirejs_main %}
-            <script src="{% toggle_js_url request.domain request.user.username %}"></script>
-        {% endif %}
         {% block js %}{% endblock js %}
 
         {% block js-inline %}{% endblock js-inline %}

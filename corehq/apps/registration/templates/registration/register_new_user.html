@@ -74,6 +74,9 @@
 {% endblock %}
 
 {% block content %}
+  {% if demo_workflow_ab %}
+    {% analytics_ab_test 'kissmetrics.demo_workflow_ab' demo_workflow_ab %}
+  {% endif %}
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
@@ -109,15 +112,26 @@
           </div>
         </form>
 
-        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
             <div class="form-bubble form-bubble-purple text-center">
                 {% blocktrans %}
                     Want to learn more before signing up?
-                    &nbsp;&nbsp;&nbsp;
-                    <a href="#cta-form-get-demo" id="test-cta-form-get-demo-button" target="_blank" data-toggle="modal" class="btn btn-purple">
-                        Get a Demo
-                    </a>
                 {% endblocktrans %}
+
+                &nbsp;&nbsp;&nbsp;
+                {% if demo_workflow_ab.version == 'hubspot' %}
+                <a href="#cta-form-get-demo"
+                   data-toggle="modal"
+                   id="cta-form-get-demo-button-body"
+                   class="btn btn-purple ">{% trans 'Schedule a Demo' %}</a>
+                {% endif %}
+
+                {% if demo_workflow_ab.version == 'drift' %}
+                <button id="cta-form-get-demo-button-drift-body"
+                        class="btn btn-purple schedule-demo-drift-cta">
+                  {% trans 'Schedule a Demo' %}</button>
+                {% endif %}
+
             </div>
         {% endif %}
       </div>
