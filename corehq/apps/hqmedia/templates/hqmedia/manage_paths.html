@@ -2,7 +2,13 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqmedia/js/manage_paths_main.js' %}"></script>
+{% endblock js %}
+
 {% block page_content %}
+    {% registerurl 'validate_multimedia_paths' domain app_id %}
+    {% registerurl 'upload_multimedia_paths' domain app_id %}
 
     <p class="lead">{{ current_page.page_name }}</p>
 
@@ -32,6 +38,20 @@
             </div>
         {% endblocktrans %}
 
+        <form id="upload-paths" enctype="multipart/form-data" data-bind="submit: validate">
+            {% csrf_token %}
+            <input name="file" id="file" type="file" />
+            <br>
+            <div class="btn-toolbar">
+                <button class="btn" type="submit" data-bind="css: {'btn-primary': !allowUpload(), 'btn-default': allowUpload()}">
+                    {% trans "Validate" %}
+                </button>
+                <button class="btn" type="button"
+                        data-bind="css: {'btn-primary': allowUpload(), 'btn-default': !allowUpload()}, enable: allowUpload(), click: upload">
+                    {% trans "Upload" %}
+                </button>
+            </div>
+        </form>
     </div>
 
 {% endblock %}

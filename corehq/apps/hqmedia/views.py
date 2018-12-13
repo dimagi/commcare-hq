@@ -39,6 +39,8 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
+from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
@@ -53,11 +55,15 @@ from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from dimagi.utils.web import json_response
 from memoized import memoized
 from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _, ugettext_noop
 from django_prbac.decorators import requires_privilege_raise404
 import six
+
+
+transient_file_store = TransientFileStore("hqmedia_upload_paths", timeout=1 * 60 * 60)
 
 
 class BaseMultimediaView(ApplicationViewMixin, BaseSectionPageView):
@@ -212,14 +218,57 @@ def download_multimedia_paths(request, domain, app_id):
 @require_can_edit_apps
 @require_POST
 def validate_multimedia_paths(request, domain, app_id):
-    pass
+    if not request.FILES:
+        return json_response({
+            'error': _("Please choose an Excel file to import.")
+        })
+
+    handle = request.FILES['file']
+
+    extension = os.path.splitext(handle.name)[1][1:].strip().lower()
+    if extension not in ALLOWED_EXTENSIONS:
+        return json_response({
+            'error': _("Please choose a file with one of the following extensions: {}").format(
+                       ", ".join(ALLOWED_EXTENSIONS))
+        })
+
+    meta = transient_file_store.write_file(handle, handle.name, domain)
+    file_id = meta.identifier
+
+    f = transient_file_store.get_tempfile_ref_for_contents(file_id)
+    try:
+        open_spreadsheet_download_ref(f)
+    except SpreadsheetFileExtError:
+        return json_response({
+            'error': _("File does not appear to be an Excel file. Please choose another file.")
+        })
+
+    # TODO: validate file
+
+    return json_response({
+        'success': 1,
+        'file_id': file_id,
+    })
 
 
 @toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
 @require_can_edit_apps
 @require_POST
 def upload_multimedia_paths(request, domain, app_id):
-    pass
+    file_id = request.POST.get('file_id')
+
+    f = transient_file_store.get_tempfile_ref_for_contents(file_id)
+
+    if not f:
+        return json_response({
+            'error': _("Could not find file. Please re-upload file.")
+        })
+
+    # TODO: update paths
+
+    return json_response({
+        'success': 1,
+    })
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
