@@ -2,20 +2,6 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
 
-    // Demo CTA test
-    hqImport("analytix/js/hubspot").then(function () {
-        var kissmetrics = hqImport('analytix/js/kissmetrix');
-        $("#test-cta-form-get-demo-button").click(function () {
-            kissmetrics.track.event("Body Get Demo CTA clicked");
-        });
-        $("#cta-form-get-demo-button").click(function () {
-            kissmetrics.track.event("Header Get Demo button clicked");
-        });
-        $(".hs_submit .hs-button").click(function () {
-            kissmetrics.track.event("Demo request sent");
-        });
-    });
-
     // Link up with registration form ko model
     var reg = hqImport('registration/js/new_user.ko');
     reg.onModuleLoad = function () {
@@ -80,4 +66,5 @@ $(function () {
     reg.setGetPhoneNumberFn(function () {
         return $number.intlTelInput("getNumber");
     });
+
 });

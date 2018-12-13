@@ -265,10 +265,6 @@ class RepeatRecordView(View):
             payload = indent_xml(payload)
         elif content_type == 'application/json':
             payload = pformat_json(payload)
-        elif content_type == 'application/soap+xml':
-            # we return a payload that is a dict, which is then converted to
-            # XML by the zeep library before being sent along as a SOAP request.
-            payload = json.dumps(payload, indent=4)
 
         return json_response({
             'payload': payload,

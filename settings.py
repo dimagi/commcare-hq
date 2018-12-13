@@ -160,7 +160,6 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'custom.icds_reports.middleware.ICDSAuditMiddleware',
-    'corehq.apps.domain.middleware.DomainAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -722,11 +721,6 @@ ENABLE_PRELOGIN_SITE = False
 # dimagi.com urls
 PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
 
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
-
 # Sumologic log aggregator
 SUMOLOGIC_URL = None
 
@@ -742,7 +736,8 @@ BITLY_APIKEY = ''
 INTERNAL_DATA = defaultdict(list)
 
 COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
-
+# Run reindex every 10 minutes (by default)
+COUCH_REINDEX_SCHEDULE = {'timedelta': {'minutes': 10}}
 
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
@@ -939,11 +934,6 @@ except ImportError as error:
     from dev_settings import *
 
 
-COUCH_DATABASES['default'] = {
-    k: v.encode('utf-8') if isinstance(v, six.text_type) else v
-    for (k, v) in COUCH_DATABASES['default'].items()
-}
-
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
 # hosting environments use pgBouncer with transaction pooling. For more information, see:
 # https://docs.djangoproject.com/en/1.11/releases/1.11.1/#allowed-disabling-server-side-cursors-on-postgresql
@@ -993,7 +983,9 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
+                'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.js_api_keys',
+                'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
             ],
@@ -1676,7 +1668,28 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
+            'name': 'case-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'xform-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
             'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow_old',
+        },
+        {
+            'name': 'user-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
@@ -1688,12 +1701,17 @@ PILLOWTOPS = {
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.group.get_group_pillow',
+            'instance': 'corehq.pillows.group.get_group_pillow_old',
         },
         {
             'name': 'GroupToUserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
+        {
+            'name': 'group-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_pillow',
         },
         {
             'name': 'SqlSMSPillow',
@@ -1719,23 +1737,6 @@ PILLOWTOPS = {
             'name': 'UpdateUserSyncHistoryPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
-        },
-    ],
-    'core_ext': [
-        {
-            'name': 'AppDbChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'DomainDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'kafka-ucr-main',
@@ -1767,6 +1768,28 @@ PILLOWTOPS = {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
+        },
+    ],
+    'core_ext': [
+        {
+            'name': 'AppDbChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
+        },
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'DomainDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
+        },
+        {
+            'name': 'location-ucr-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_location_pillow',
         },
     ],
     'cache': [
@@ -1946,7 +1969,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
@@ -2183,7 +2208,6 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
-
 
 
 if 'locmem' not in CACHES:

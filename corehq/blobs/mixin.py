@@ -11,7 +11,7 @@ from hashlib import sha1
 from itertools import chain
 from os.path import join
 
-from corehq.blobs import BlobInfo, get_blob_db, CODES  # noqa: F401
+from corehq.blobs import get_blob_db, CODES  # noqa: F401
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
 from corehq.blobs.util import (
     classproperty,
@@ -37,10 +37,6 @@ class BlobMetaRef(DocumentSchema):
     blobmeta_id = IntegerProperty()
     content_type = StringProperty()
     content_length = IntegerProperty()
-
-    @property
-    def info(self):
-        return BlobInfo(self.key, self.content_length, "unknown-md5")
 
     @classmethod
     def _from_attachment(cls, data):
@@ -179,7 +175,7 @@ class BlobMixin(Document):
         return True
 
     @document_method
-    def fetch_attachment(self, name, stream=False):
+    def fetch_attachment(self, name, stream=False, return_bytes=False):
         """Get named attachment
 
         :param stream: When true, return a file-like object that can be
@@ -208,6 +204,10 @@ class BlobMixin(Document):
 
         with blob:
             body = blob.read()
+
+        if return_bytes:
+            return body
+
         try:
             body = body.decode("utf-8", "strict")
         except UnicodeDecodeError:
@@ -459,7 +459,7 @@ class DeferredBlobMixin(BlobMixin):
         return super(DeferredBlobMixin, self).put_attachment(content, name,
                                                              *args, **kw)
 
-    def fetch_attachment(self, name, stream=False):
+    def fetch_attachment(self, name, stream=False, return_bytes=False):
         if self._deferred_blobs and name in self._deferred_blobs:
             if self._deferred_blobs[name] is None:
                 raise ResourceNotFound(
@@ -471,6 +471,10 @@ class DeferredBlobMixin(BlobMixin):
             body = self._deferred_blobs[name]["content"]
             if stream:
                 return ClosingContextProxy(BytesIO(body))
+
+            if return_bytes:
+                return body
+
             try:
                 body = body.decode("utf-8", "strict")
             except UnicodeDecodeError:
@@ -478,7 +482,7 @@ class DeferredBlobMixin(BlobMixin):
                 # Ugly, but consistent with restkit.wrappers.Response.body_string
                 pass
             return body
-        return super(DeferredBlobMixin, self).fetch_attachment(name, stream)
+        return super(DeferredBlobMixin, self).fetch_attachment(name, stream, return_bytes)
 
     def delete_attachment(self, name):
         if self._deferred_blobs:

@@ -1553,7 +1553,7 @@ class ScheduleForm(Form):
                 hqcrispy.B3MultiField(
                     '',
                     crispy.HTML(
-                        '<span data-bind="click: addCustomEvent" class="btn btn-success">'
+                        '<span data-bind="click: addCustomEvent" class="btn btn-primary">'
                         '<i class="fa fa-plus"></i> %s</span>'
                         % _("Add Event")
                     ),

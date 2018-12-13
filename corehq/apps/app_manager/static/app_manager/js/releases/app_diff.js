@@ -53,7 +53,7 @@ hqDefine('app_manager/js/releases/app_diff', function () {
         if (!$el.length) {
             window.console.warn(selector + ' does not resolve to an element');
         }
-        return new AppDiff($el, options);
+        return appDiff($el, options);
     };
 
     /**
@@ -66,10 +66,10 @@ hqDefine('app_manager/js/releases/app_diff', function () {
      * appIdOne {String} - An app id
      * appIdTwo {String} - An app id
      */
-    var AppDiff = function ($el, options) {
-        var self = this;
+    var appDiff = function ($el, options) {
+        var self = {};
         self.$el = $el;
-        self.controller = new Controller();
+        self.controller = controllerModel();
         self.options = options || {};
         _.defaults(self.options, {
             lang: 'en',
@@ -160,18 +160,18 @@ hqDefine('app_manager/js/releases/app_diff', function () {
                 text;
 
             // Insert form elements
-            elements.push(new TitleDatum(gettext('Form Changes') + '\n'));
+            elements.push(titleDatum(gettext('Form Changes') + '\n'));
             _.each(appDataJson.form_data.modules, function (d) {
-                elements.push(new ModuleDatum(d, self.options));
+                elements.push(moduleDatum(d, self.options));
             });
 
             // Title block for case changes
             elements.push({ toString: function () { return '<hr />\n'; } });
-            elements.push(new TitleDatum(gettext('Case Changes') + '\n'));
+            elements.push(titleDatum(gettext('Case Changes') + '\n'));
 
             // Insert case changes
             _.each(appDataJson.case_data.case_types, function (d) {
-                elements.push(new CaseTypeDatum(d, $.extend(true, {}, options, self.options)));
+                elements.push(caseTypeDatum(d, $.extend(true, {}, options, self.options)));
             });
 
 
@@ -179,22 +179,24 @@ hqDefine('app_manager/js/releases/app_diff', function () {
 
             return text;
         };
+        return self;
     };
 
-    var TitleDatum = function (title) {
-
-        this.toString = function () {
+    var titleDatum = function (title) {
+        var self = {};
+        self.toString = function () {
             return HtmlUtils.makeHeader(title);
         };
+        return self;
     };
 
-    var CaseTypeDatum = function (json, options) {
-        var self = this;
-        this.options = options;
-        this.name = json.name;
-        this.properties = _.map(json.properties, function (p) { return new CasePropertyDatum(p, self.options); });
+    var caseTypeDatum = function (json, options) {
+        var self = {};
+        self.options = options;
+        self.name = json.name;
+        self.properties = _.map(json.properties, function (p) { return casePropertyDatum(p, self.options); });
 
-        this.toString = function () {
+        self.toString = function () {
             var lines = [
                 HtmlUtils.makeLi(sanitize(self.name), 'diff-case-type', 'envelope'),
                 HtmlUtils.makeUl('diff-properties fa-ul'),
@@ -204,13 +206,14 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             ];
             return lines.join('\n');
         };
+        return self;
     };
 
-    var CasePropertyDatum = function (json, options) {
+    var casePropertyDatum = function (json, options) {
         var self = this;
-        this.options = options;
-        this.name = json.name;
-        this.forms = _.map(json.forms, function (form) { return new ShortFormDatum(form, self.options); });
+        self.options = options;
+        self.name = json.name;
+        self.forms = _.map(json.forms, function (form) { return shortFormDatum(form, self.options); });
 
         this.toString = function () {
             var lines = [
@@ -222,22 +225,23 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             ];
             return lines.join('\n');
         };
+        return self;
     };
 
-    var ShortFormDatum = function (json, options) {
-        var self = this;
-        this.id = json.form_id;
-        this.options = options;
-        this.saveQuestions = _.map(
+    var shortFormDatum = function (json, options) {
+        var self = {};
+        self.id = json.form_id;
+        self.options = options;
+        self.saveQuestions = _.map(
             json.save_questions,
-            function (q) { return new CaseUpdateQuestion(q, self.options); }
+            function (q) { return caseUpdateQuestion(q, self.options); }
         );
-        this.loadQuestions = _.map(
+        self.loadQuestions = _.map(
             json.load_questions,
-            function (q) { return new CaseUpdateQuestion(q, self.options); }
+            function (q) { return caseUpdateQuestion(q, self.options); }
         );
 
-        this.toString = function () {
+        self.toString = function () {
             var formName = (
                 self.options.formNameMap[self.id].module_name[self.options.lang] + ' > ' +
                 self.options.formNameMap[self.id].form_name[self.options.lang]
@@ -256,35 +260,37 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             ];
             return lines.join('\n');
         };
+        return self;
     };
 
-    var CaseUpdateQuestion = function (json, options) {
-        var self = this;
-        this.options = options;
-        this.condition = json.condition;
-        this.hashtagValue = json.question.hashtagValue;
+    var caseUpdateQuestion = function (json, options) {
+        var self = {};
+        self.options = options;
+        self.condition = json.condition;
+        self.hashtagValue = json.question.hashtagValue;
 
-        this.toString = function () {
+        self.toString = function () {
             var lines = [
                 HtmlUtils.makeLi(self.hashtagValue, 'diff-question-id', '', true),
                 (self.condition ? HtmlUtils.makeLi(sanitize(self.condition), '', 'calculator', true) : ''),
             ];
             return lines.join('\n');
         };
+        return self;
     };
 
     /**
      * Represents the module data structure and renders it to an HTML string
      */
-    var ModuleDatum = function (json, options) {
-        var self = this;
-        this.id = json.id;
-        this.name = json.name;
-        this.options = options;
-        this.shortComment = json.short_comment || '';
-        this.forms = _.map(json.forms, function (form) { return new FormDatum(form, self.options); });
+    var moduleDatum = function (json, options) {
+        var self = {};
+        self.id = json.id;
+        self.name = json.name;
+        self.options = options;
+        self.shortComment = json.short_comment || '';
+        self.forms = _.map(json.forms, function (form) { return formDatum(form, self.options); });
 
-        this.toString = function () {
+        self.toString = function () {
             var lines = [
                 // We want these to be considered one line
                 (HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-module', 'folder-open') +
@@ -296,20 +302,21 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             ];
             return lines.join('\n');
         };
+        return self;
     };
 
     /**
      * Represents the form data structure and renders it to an HTML string
      */
-    var FormDatum = function (json, options) {
-        var self = this;
-        this.id = json.id;
-        this.name = json.name;
-        this.options = options;
-        this.shortComment = json.short_comment || '';
-        this.questions = _.map(json.questions, function (q) { return new QuestionDatum(q, self.options); });
+    var formDatum = function (json, options) {
+        var self = {};
+        self.id = json.id;
+        self.name = json.name;
+        self.options = options;
+        self.shortComment = json.short_comment || '';
+        self.questions = _.map(json.questions, function (q) { return questionDatum(q, self.options); });
 
-        this.toString = function () {
+        self.toString = function () {
             var lines = [
                 // We want these to be considered one line
                 (HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-form', 'file-o') +
@@ -321,29 +328,30 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             ];
             return lines.join('\n');
         };
+        return self;
     };
 
     /**
      * Represents the question data structure and renders it to an HTML string
      */
-    var QuestionDatum = function (json, options) {
-        var self = this;
-        this.comment = json.comment || '';
-        this.group = json.group;
-        this.hashtagValue = json.hashtagValue;
-        this.label = json.label;
-        this.options = json.options || [];
-        this.relevant = json.relevant;
-        this.repeat = json.repeat;
-        this.required = json.required;
-        this.response = json.response;
-        this.tag = json.tag;
-        this.translations = json.translations;
-        this.type = json.type;
-        this.value = json.value;
-        this.options = options;
+    var questionDatum = function (json, options) {
+        var self = {};
+        self.comment = json.comment || '';
+        self.group = json.group;
+        self.hashtagValue = json.hashtagValue;
+        self.label = json.label;
+        self.options = json.options || [];
+        self.relevant = json.relevant;
+        self.repeat = json.repeat;
+        self.required = json.required;
+        self.response = json.response;
+        self.tag = json.tag;
+        self.translations = json.translations;
+        self.type = json.type;
+        self.value = json.value;
+        self.options = options;
 
-        this.toString = function () {
+        self.toString = function () {
             var lines = [
                 // We want these to be considered one line
                 (HtmlUtils.makeLi(sanitize(self.label) || gettext('[unknown]'), 'diff-question') +
@@ -370,15 +378,17 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             ]);
             return lines.join('\n');
         };
+        return self;
     };
 
     /**
      * Controller used to formd data from the server
      */
-    var Controller = function () {
+    var controllerModel = function () {
+        var self = {};
         var cache = {};
 
-        this.getAppData = function (appId) {
+        self.getAppData = function (appId) {
             var url = reverse('app_data_json', appId),
                 deferred = $.Deferred();
 
@@ -396,6 +406,7 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             }
             return deferred;
         };
+        return self;
     };
 
     /**
@@ -458,6 +469,6 @@ hqDefine('app_manager/js/releases/app_diff', function () {
     return {
         init: init,
         HtmlUtils: HtmlUtils,
-        ModuleDatum: ModuleDatum,
+        moduleDatum: moduleDatum,
     };
 });

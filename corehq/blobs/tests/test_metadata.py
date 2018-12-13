@@ -10,7 +10,10 @@ from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import get_meta, new_meta, TemporaryFilesystemBlobDB
 from corehq.form_processor.tests.utils import only_run_with_partitioned_database
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
+    new_id_in_same_dbalias,
+)
 
 
 class TestMetaDB(TestCase):
@@ -109,12 +112,147 @@ class TestMetaDB(TestCase):
         )
         self.assertEqual(copy.key, meta.key)
 
+    def test_get_by_key(self):
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta())
+        copy = self.db.metadb.get(
+            parent_id=meta.parent_id,
+            key=meta.key
+        )
+        self.assertEqual(copy.key, meta.key)
+
     def test_get_missing_blobmeta(self):
         xid = uuid4().hex
         with self.assertRaises(BlobMeta.DoesNotExist):
             self.db.metadb.get(parent_id=xid, type_code=CODES.form_xml, name=xid)
 
+    def test_get_missing_blobmeta_by_key(self):
+        xid = uuid4().hex
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            self.db.metadb.get(parent_id=xid, key=xid)
+
+    def create_blobs(self):
+        def put(parent_id, code):
+            meta = new_meta(parent_id=parent_id, type_code=code)
+            return self.db.put(BytesIO(b"cx"), meta=meta)
+
+        class namespace(object):
+            p1 = uuid4().hex
+            p2 = uuid4().hex
+            p3 = uuid4().hex
+            m1 = put(p1, CODES.form_xml)
+            m2 = put(p2, CODES.multimedia)
+            m3 = put(p3, CODES.multimedia)
+
+        return namespace
+
+    def test_get_for_parent(self):
+        ns = self.create_blobs()
+        items = self.db.metadb.get_for_parent(ns.p1)
+        self.assertEqual([x.key for x in items], [ns.m1.key])
+
+    def test_get_for_parent_with_type_code(self):
+        m1 = self.db.put(BytesIO(b"fx"), meta=new_meta(type_code=CODES.form_xml))
+        m2 = self.db.put(BytesIO(b"cx"), meta=new_meta(type_code=CODES.multimedia))
+        self.assertEqual(m1.parent_id, m2.parent_id)
+        items = self.db.metadb.get_for_parent(m1.parent_id, CODES.form_xml)
+        self.assertEqual([x.key for x in items], [m1.key])
+
+    def test_get_for_parents(self):
+        ns = self.create_blobs()
+        items = self.db.metadb.get_for_parents([ns.p1, ns.p2])
+        self.assertEqual({x.key for x in items}, {ns.m1.key, ns.m2.key})
+
+    def test_get_for_parents_with_type_code(self):
+        ns = self.create_blobs()
+        items = self.db.metadb.get_for_parents(
+            [ns.p1, ns.p2, ns.p3],
+            CODES.multimedia,
+        )
+        self.assertEqual({x.key for x in items}, {ns.m2.key, ns.m3.key})
+
+    def test_reparent(self):
+        metadb = self.db.metadb
+        self.db.put(BytesIO(b"content"), meta=new_meta(parent_id="no-change"))
+        metas = []
+        for name in "abc":
+            meta = new_meta(parent_id="old", name=name)
+            metas.append(self.db.put(BytesIO(b"content"), meta=meta))
+        a, b, c = metas
+        new_parent = new_id_in_same_dbalias("old")
+        metadb.reparent("old", new_parent)
+        self.assertEqual(metadb.get_for_parent("old"), [])
+        self.assertEqual(
+            [m.id for m in metadb.get_for_parent(new_parent)],
+            [m.id for m in metas],
+        )
+        self.assertEqual(len(metadb.get_for_parent("no-change")), 1)
+
+    def test_get_when_dup_exists(self):
+        # this test can be removed with form_processor_xformattachmentsql table
+        from datetime import datetime
+        from corehq.form_processor.models import (
+            DeprecatedXFormAttachmentSQL,
+            XFormInstanceSQL,
+        )
+
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta(
+            parent_id=uuid4().hex,
+            type_code=CODES.form_xml,
+            name="form.xml",
+        ))
+
+        db = get_db_alias_for_partitioned_doc(meta.parent_id)
+        with connections[db].cursor() as cursor:
+            cursor.execute("""
+            DROP TRIGGER IF EXISTS legacy_xform_attachment_insert_not_allowed
+                ON form_processor_xformattachmentsql;
+            """)
+        # move blob metadata into old xformattachmentsql table
+        XFormInstanceSQL(
+            domain=meta.domain,
+            form_id=meta.parent_id,
+            received_on=datetime.now(),
+            xmlns="testing",
+        ).save(using=db)
+        att = DeprecatedXFormAttachmentSQL(
+            form_id=meta.parent_id,
+            attachment_id=uuid4().hex,
+            blob_id=meta.key,
+            blob_bucket="",
+            name=meta.name,
+            content_length=meta.content_length,
+            md5='wrong',
+        )
+        att.save(using=db)
+        metas = self.db.metadb.get_for_parent(meta.parent_id, CODES.form_xml)
+        self.assertEqual(len(metas), 2, metas)
+
+        copy = self.db.metadb.get(
+            parent_id=meta.parent_id,
+            type_code=CODES.form_xml,
+            name=meta.name,
+        )
+        self.assertEqual(copy.key, meta.key)
+
 
 @only_run_with_partitioned_database
 class TestPartitionedMetaDB(TestMetaDB):
-    pass
+    """MetaDB tests for partitioned database
+
+    Extra cleanup is necessary because partition db operations are not
+    done in a separate transaction per test.
+    """
+
+    def tearDown(self):
+        # new_meta always uses the same parent_id by default
+        metas = self.db.metadb.get_for_parent(new_meta().parent_id)
+        self.db.bulk_delete(metas=metas)
+        super(TestPartitionedMetaDB, self).tearDown()
+
+    def create_blobs(self):
+        def delete_blobs():
+            self.db.bulk_delete(metas=[namespace.m1, namespace.m2, namespace.m3])
+
+        namespace = super(TestPartitionedMetaDB, self).create_blobs()
+        self.addCleanup(delete_blobs)
+        return namespace

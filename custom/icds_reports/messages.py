@@ -159,3 +159,22 @@ def awcs_reported_medicine_kit_help_text():
         'Of the AWCs that have submitted an Infrastructure Details form, '
         'the percentage of AWCs that reported having a Medicine Kit'
     )
+
+
+def lady_supervisor_number_of_awcs_visited_help_text():
+    return _(
+        'Number of AWCs visited/Number of AWCs launched: Out of the total number of Aanganwadi centres launched '
+        'in the sector, the number of unique Aanganwadi Centres visited by LS in the current month'
+    )
+
+
+def lady_supervisor_number_of_beneficiaries_visited_help_text():
+    return _(
+        'Number of Beneficiaries visited: Number of beneficiaries visited by LS in the current month'
+    )
+
+
+def lady_supervisor_number_of_vhnds_observed_help_text():
+    return _(
+        'Number of VHND observed: Number of VHND observed by LS in the current month'
+    )

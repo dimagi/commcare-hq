@@ -33,17 +33,3 @@ class TestBlobDownload(TestCase):
 
         response = BlobDownload.get(ref.download_id).toHttpResponse()
         self.assertEqual(next(response.streaming_content), b'content')
-
-    def test_expose_blob_download_with_legacy_download_id(self):
-        self.db.put(BytesIO(b'legacy-blob'), self.identifier)
-
-        ref = BlobDownload(
-            self.identifier,
-            mimetype='text/plain',
-            content_disposition='text/xml',
-        )
-        ref.download_id = uuid4().hex  # old download id format
-        ref.save(60)
-
-        response = BlobDownload.get(ref.download_id).toHttpResponse()
-        self.assertEqual(next(response.streaming_content), b'legacy-blob')

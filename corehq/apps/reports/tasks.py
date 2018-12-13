@@ -510,7 +510,7 @@ def _extract_form_attachment_info(form, properties):
 
     # TODO make form.attachments always return objects that conform to a
     # uniform interface. XFormInstance attachment values are dicts, and
-    # XFormInstanceSQL attachment values are XFormAttachmentSQL objects.
+    # XFormInstanceSQL attachment values are BlobMeta objects.
     for attachment_name, attachment in six.iteritems(form.attachments):
         if hasattr(attachment, 'content_type'):
             content_type = attachment.content_type
@@ -528,10 +528,10 @@ def _extract_form_attachment_info(form, properties):
         if not properties or question_id in properties:
             extension = six.text_type(os.path.splitext(attachment_name)[1])
             if hasattr(attachment, 'content_length'):
-                # FormAttachmentSQL or BlobMeta
+                # BlobMeta
                 size = attachment.content_length
             elif 'content_length' in attachment:
-                # dict from BlobMeta.to_json() or possibly FormAttachmentSQL
+                # dict from BlobMeta.to_json()
                 size = attachment['content_length']
             else:
                 # couch attachment dict

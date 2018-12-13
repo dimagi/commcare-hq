@@ -33,12 +33,13 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.domain.decorators import login_or_api_key
+from corehq.apps.domain.decorators import login_or_api_key, track_domain_request
 from corehq.apps.domain.views.base import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.users.permissions import can_manage_releases
 from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id, \
@@ -46,6 +47,7 @@ from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, g
 from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
+from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
@@ -168,6 +170,7 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
+        'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id)
     }
     if not app.is_remote_app():
         context.update({
@@ -205,6 +208,7 @@ def current_app_version(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_click_app_deploy')
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     ajax = request.POST.get('ajax') == 'true'
@@ -212,6 +216,7 @@ def release_build(request, domain, app_id, saved_app_id):
     if saved_app.copy_of != app_id:
         raise Http404
     saved_app.is_released = is_released
+    saved_app.is_auto_generated = False
     saved_app.save(increment_version=False)
     from corehq.apps.app_manager.signals import app_post_release
     app_post_release.send(Application, application=saved_app)
@@ -251,12 +256,15 @@ def save_copy(request, domain, app_id):
     if not errors:
         try:
             user_id = request.couch_user.get_id
-            copy = app.make_build(
-                comment=comment,
-                user_id=user_id,
-                previous_version=app.get_latest_app(released_only=False)
-            )
-            copy.save(increment_version=False)
+            timer = datadog_bucket_timer('commcare.app_build.new_release', tags=[],
+                                         timing_buckets=(1, 10, 30, 60, 120, 240))
+            with timer:
+                copy = app.make_build(
+                    comment=comment,
+                    user_id=user_id,
+                    previous_version=app.get_latest_app(released_only=False)
+                )
+                copy.save(increment_version=False)
             CouchUser.get(user_id).set_has_built_app()
         finally:
             # To make a RemoteApp always available for building
@@ -403,6 +411,7 @@ def update_build_comment(request, domain, app_id):
     except ResourceNotFound:
         raise Http404()
     build.build_comment = request.POST.get('comment')
+    build.is_auto_generated = False
     build.save()
     return json_response({'status': 'success'})
 

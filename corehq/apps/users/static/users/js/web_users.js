@@ -85,28 +85,6 @@ hqDefine("users/js/web_users",[
 
     $(function () {
         var url = initialPageData.reverse;
-        $('#restrict_users').on('change', function () {
-            var $saveButton = $('#save_restrict_option');
-            $saveButton
-                .prop('disabled', false)
-                .removeClass('disabled btn-default')
-                .addClass('btn-success')
-                .text(gettext("Save"));
-        });
-        $('#save_restrict_option').click(function (e) {
-            $(this).text(gettext('Saving ...'));
-            $.post(url("location_restriction_for_users"), {
-                restrict_users: $('#restrict_users')[0].checked,
-            },
-            function () {
-                $('#save_restrict_option')
-                    .text(gettext("Saved"))
-                    .removeClass('btn-success')
-                    .prop('disabled', true)
-                    .addClass('disabled btn-default');
-            });
-            e.preventDefault();
-        });
 
         $('.resend-invite').click(function (e) {
             $(this).addClass('disabled').prop('disabled', true);
@@ -131,6 +109,7 @@ hqDefine("users/js/web_users",[
             deleteUrl: url("delete_user_role"),
             reportOptions: initialPageData.get("report_list"),
             webAppsList: initialPageData.get("web_apps_list"),
+            appsList: initialPageData.get("apps_list"),
             allowEdit: initialPageData.get("can_edit_roles"),
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
             landingPageChoices: initialPageData.get("landing_page_choices"),

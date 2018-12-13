@@ -15,7 +15,7 @@ RATE_LIMITED_EXCEPTIONS = {
 
     'corehq.elastic.ESError': 'elastic',
 
-    'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
+    # 'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
 
     'socket.error': 'rabbitmq',
 

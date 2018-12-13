@@ -86,11 +86,11 @@ def validate_case_property_name(value, allow_parent_case_references=True):
     return value
 
 
-def hidden_bound_field(field_name):
+def hidden_bound_field(field_name, data_value):
     return Field(
         field_name,
         type='hidden',
-        data_bind='value: %s' % field_name,
+        data_bind='value: %s' % data_value,
     )
 
 
@@ -128,8 +128,8 @@ class AddCaseGroupForm(forms.Form):
         self.helper.layout = Layout(
             InlineField('name'),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Create Group")),
-                css_class='btn-success',
+                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Group")),
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -198,7 +198,7 @@ class AddCaseToGroupForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
-                css_class='btn-success',
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -369,11 +369,11 @@ class CaseRuleCriteriaForm(forms.Form):
                 HTML(
                     '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
                 ),
-                hidden_bound_field('filter_on_server_modified'),
-                hidden_bound_field('server_modified_boundary'),
-                hidden_bound_field('custom_match_definitions'),
-                hidden_bound_field('property_match_definitions'),
-                hidden_bound_field('filter_on_closed_parent'),
+                hidden_bound_field('filter_on_server_modified', 'filterOnServerModified'),
+                hidden_bound_field('server_modified_boundary', 'serverModifiedBoundary'),
+                hidden_bound_field('custom_match_definitions', 'customMatchDefinitions'),
+                hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
+                hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
                 Div(data_bind="template: {name: 'case-filters'}"),
                 css_id="rule-criteria",
             ),
@@ -632,9 +632,9 @@ class CaseRuleActionsForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _("Actions"),
-                hidden_bound_field('close_case'),
-                hidden_bound_field('properties_to_update'),
-                hidden_bound_field('custom_action_definitions'),
+                hidden_bound_field('close_case', 'closeCase'),
+                hidden_bound_field('properties_to_update', 'propertiesToUpdate'),
+                hidden_bound_field('custom_action_definitions', 'customActionDefinitions'),
                 Div(data_bind="template: {name: 'case-actions'}"),
                 css_id="rule-actions",
             ),

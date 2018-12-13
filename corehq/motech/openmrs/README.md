@@ -422,21 +422,26 @@ change the "external_data_type" to "omrs_date", as shown in the example.
 Provider
 --------
 
-In OpenMRS, observations about a patient, like their height or their
-blood pressure, can be associated with a data provider. A "provider" is
-usually an OpenMRS user who can enter data.
+Every time a form is completed in OpenMRS, it
+[creates a new Encounter](https://wiki.openmrs.org/display/docs/Encounters+and+observations).
 
-It is useful to label data from CommCare. OpenMRS Configuration has a
-field called "Provider's Person UUID", and the value entered here is
-stored in OpenmrsConfig.openmrs_provider.
+Observations about a patient, like their height or their blood pressure,
+belong to an Encounter; just as a form submission in CommCare can have
+many form question values.
+
+The OpenMRS [Data Model](https://wiki.openmrs.org/display/docs/Data+Model)
+documentation explains that an Encounter can be associated with health
+care providers.
+
+It is useful to label data from CommCare by creating a Provider in
+OpenMRS for CommCare.
+
+OpenMRS Configuration has a field called "Provider UUID", and the value
+entered here is stored in OpenmrsConfig.openmrs_provider.
 
 There are three different kinds of entities involved in setting up a
 provider in OpenMRS: A Person instance; a Provider instance; and a User
 instance.
-
-**NOTE**: The value that OpenMRS expects in the "Provider's Person UUID"
-field is a **Person UUID**, not a **Provider UUID**. The distinction is
-not obvious in the OpenMRS interface.
 
 Use the following steps to create a provider for CommCare:
 
@@ -447,24 +452,29 @@ it into a given name ("CommCare") and a family name ("Provider").
 CommCare HQ's first Git commit is dated 2009-03-10, so that seems close
 enough to a date of birth. OpenMRS equates gender with sex, and is quite
 binary about it. You will have to decided whether CommCare is male or
-female. When you are done, click "Create Person".
-
-Make a note of the greyed UUID at the bottom of the next page. This is
-the value you will need for "Provider's Person UUID" in the
-configuration for the OpenMRS Repeater.
+female. When you are done, click "Create Person". On the next page, 
+"City/Village" is a required field. You can set "State/Province" to
+"Other" and set "City/Village" to "Cambridge". Then click "Save Person".
 
 Go back to the OpenMRS Administration page, choose "Manage Providers"
 and click "Add Provider". In the "Person" field, type the name of the
-person you just created. Then click Save.
+person you just created. You can also give it an Identifier, like
+"commcare". Then click Save.
+
+You will need the UUID of the new Provider. Find the Provider by
+entering its name, and selecting it.
+
+**Make a note of the greyed UUID**. This is the value you will need for
+"Provider UUID" in the configuration for the OpenMRS Repeater.
 
 Next, go back to the OpenMRS Administration page, choose "Manage Users"
 and click "Add User". Under "Use a person who already exists" enter the
 name of your new person and click "Next". Give your user a username
 (like "commcare"), and a password. **Under "Roles" select "Provider"**.
-Click "Save"
+Click "Save User".
 
 Now CommCare's "Provider UUID" will be recognised by OpenMRS as a
-provider. Copy the value of the person UUID you made a note of earlier
+provider. Copy the value of the Provider UUID you made a note of earlier
 into your OpenMRS configuration in CommCare HQ.
 
 
@@ -472,8 +482,8 @@ Atom Feed Integration
 ---------------------
 
 The [OpenMRS Atom Feed Module](https://wiki.openmrs.org/display/docs/Atom+Feed+Module)
-allows MOTECH to poll a feed of updates to patients, concepts,
-encounters and observations. The feed adheres to the
+allows MOTECH to poll feeds of updates to patients and encounters. The 
+feed adheres to the
 [Atom syndication format](https://validator.w3.org/feed/docs/rfc4287.html).
 
 An example URL for the patient feed would be like
@@ -519,19 +529,63 @@ Example content:
       </entry>
     </feed>
 
-At the time of writing, the Atom feed does not use ETags or offer HEAD
+Similarly, an encounter feed URL would be like
+http://www.example.com/openmrs/ws/atomfeed/encounter/recent
+
+Example content:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <title>Patient AOP</title>
+      <link rel="self" type="application/atom+xml" href="https://13.232.58.186/openmrs/ws/atomfeed/encounter/recent" />
+      <link rel="via" type="application/atom+xml" href="https://13.232.58.186/openmrs/ws/atomfeed/encounter/335" />
+      <link rel="prev-archive" type="application/atom+xml" href="https://13.232.58.186/openmrs/ws/atomfeed/encounter/334" />
+      <author>
+        <name>OpenMRS</name>
+      </author>
+      <id>bec795b1-3d17-451d-b43e-a094019f6984+335</id>
+      <generator uri="https://github.com/ICT4H/atomfeed">OpenMRS Feed Publisher</generator>
+      <updated>2018-06-13T08:32:57Z</updated>
+      <entry>
+        <title>Encounter</title>
+        <category term="Encounter" />
+        <id>tag:atomfeed.ict4h.org:af713a2e-b961-4cb0-be59-d74e8b054415</id>
+        <updated>2018-06-13T05:08:57Z</updated>
+        <published>2018-06-13T05:08:57Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]></content>
+      </entry>
+      <entry>
+        <title>Encounter</title>
+        <category term="Encounter" />
+        <id>tag:atomfeed.ict4h.org:320834be-e9c8-4b09-a99e-691dff18b3e4</id>
+        <updated>2018-06-13T05:08:57Z</updated>
+        <published>2018-06-13T05:08:57Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]></content>
+      </entry>
+      <entry>
+        <title>Encounter</title>
+        <category term="Encounter" />
+        <id>tag:atomfeed.ict4h.org:fca253aa-b917-4166-946e-9da9baa901da</id>
+        <updated>2018-06-13T05:09:12Z</updated>
+        <published>2018-06-13T05:09:12Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/c6d6c248-8cd4-4e96-a110-93668e48e4db?includeAll=true]]></content>
+      </entry>
+    </feed>
+
+At the time of writing, the Atom feeds do not use ETags or offer HEAD
 requests. MOTECH uses a GET request to fetch the document, and checks
 the timestamp in the `<updated>` tag to tell whether there is new
 content.
 
-The feed is paginated, and the page number is given at the end of the
+The feeds are paginated, and the page number is given at the end of the
 `href` attribute of the `<link rel="via" ...` tag, which is found at the
 start of the feed. A `<link rel="next-archive" ...` tag indicates that
 there is a next page.
 
 MOTECH stores the last page number polled in the
-`OpenmrsRepeater.atom_feed_last_page` property. When it polls again, it
-starts at this page, and iterates "next-archive" links until all have
+`OpenmrsRepeater.patients_last_page` and 
+`OpenmrsRepeater.encounters_last_page`  properties. When it polls again,
+it starts at this page, and iterates "next-archive" links until all have
 been fetched.
 
 If this is the first time MOTECH is polling an Atom feed, it uses the

@@ -5,6 +5,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import chain
 
+from django.db import connections
+
 from corehq.sql_db.routers import get_cursor
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
@@ -78,9 +80,9 @@ class MetaDB(object):
         parents = defaultdict(list)
         for meta in metas:
             parents[meta.parent_id].append(meta.id)
-        for db_name, split_parent_ids in split_list_by_db_partition(parents):
+        for dbname, split_parent_ids in split_list_by_db_partition(parents):
             ids = chain.from_iterable(parents[x] for x in split_parent_ids)
-            BlobMeta.objects.using(db_name).filter(id__in=list(ids)).delete()
+            BlobMeta.objects.using(dbname).filter(id__in=list(ids)).delete()
         deleted_bytes = sum(meta.content_length for m in metas)
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
         datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
@@ -93,10 +95,19 @@ class MetaDB(object):
         :param parent_id: `BlobMeta.parent_id`
         :param type_code: `BlobMeta.type_code`
         :param name: `BlobMeta.name`
+        :param key: `BlobMeta.key`
         :raises: `BlobMeta.DoesNotExist` if the metadata is not found.
         :returns: A `BlobMeta` object.
         """
-        if set(kw) != {"parent_id", "type_code", "name"}:
+        keywords = set(kw)
+        if 'key' in keywords and keywords != {'key', 'parent_id'}:
+            kw.pop('key', None)
+            if 'parent_id' not in keywords:
+                raise TypeError("Missing argument 'parent_id'")
+            else:
+                kw.pop('parent_id')
+                raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
+        elif 'key' not in keywords and keywords != {"parent_id", "type_code", "name"}:
             # arg check until on Python 3 -> PEP 3102: required keyword args
             kw.pop("parent_id", None)
             kw.pop("type_code", None)
@@ -105,7 +116,51 @@ class MetaDB(object):
                 raise TypeError("Missing argument 'name' and/or 'parent_id'")
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
         dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
-        return BlobMeta.objects.using(dbname).get(**kw)
+        meta = BlobMeta.objects.using(dbname).filter(**kw).first()
+        if meta is None:
+            raise BlobMeta.DoesNotExist(repr(kw))
+        return meta
+
+    def get_for_parent(self, parent_id, type_code=None):
+        """Get a list of `BlobMeta` objects for the given parent
+
+        :param parent_id: `BlobMeta.parent_id`
+        :param type_code: `BlobMeta.type_code` (optional).
+        :returns: A list of `BlobMeta` objects.
+        """
+        dbname = get_db_alias_for_partitioned_doc(parent_id)
+        kw = {"parent_id": parent_id}
+        if type_code is not None:
+            kw["type_code"] = type_code
+        return list(BlobMeta.objects.using(dbname).filter(**kw))
+
+    def get_for_parents(self, parent_ids, type_code=None):
+        """Get a list of `BlobMeta` objects for the given parent(s)
+
+        :param parent_ids: List of `BlobMeta.parent_id` values.
+        :param type_code: `BlobMeta.type_code` (optional).
+        :returns: A list of `BlobMeta` objects sorted by `parent_id`.
+        """
+        return list(BlobMeta.objects.raw(
+            'SELECT * FROM get_blobmetas(%s, %s::SMALLINT)',
+            [parent_ids, type_code],
+        ))
+
+    def reparent(self, old_parent_id, new_parent_id):
+        """Reassign blobs' parent
+
+        Both `old_parent_id` and `new_parent_id` must map to the same
+        database partition.
+        """
+        dbname = get_db_alias_for_partitioned_doc(old_parent_id)
+        new_db = get_db_alias_for_partitioned_doc(new_parent_id)
+        assert dbname == new_db, ("Cannot reparent to new partition: %s -> %s" %
+            (old_parent_id, new_parent_id))
+        with connections[dbname].cursor() as cursor:
+            cursor.execute(
+                "UPDATE blobs_blobmeta SET parent_id = %s WHERE parent_id = %s",
+                [new_parent_id, old_parent_id],
+            )
 
 
 def _utcnow():

@@ -6,6 +6,7 @@ import re
 
 from requests import RequestException
 from six.moves import zip
+from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
@@ -22,9 +23,11 @@ from corehq.motech.openmrs.const import (
     PERSON_UUID_IDENTIFIER_TYPE_ID,
     XMLNS_OPENMRS,
 )
+from corehq.motech.openmrs.exceptions import OpenmrsConfigurationError
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.value_source import CaseTriggerInfo
+from corehq.util.quickcache import quickcache
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
@@ -267,15 +270,20 @@ class CreateEncounterTask(WorkflowTask):
         encounter = {
             'encounterDatetime': self.start_datetime,
             'patient': self.person_uuid,
-            'form': self.openmrs_form,
             'encounterType': self.encounter_type,
         }
+        if self.openmrs_form:
+            encounter['form'] = self.openmrs_form
         if self.visit_uuid:
             encounter['visit'] = self.visit_uuid
         if self.location_uuid:
             encounter['location'] = self.location_uuid
         if self.provider_uuid:
-            encounter['provider'] = self.provider_uuid
+            encounter_role = get_unknown_encounter_role(self.requests)
+            encounter['encounterProviders'] = [{
+                'provider': self.provider_uuid,
+                'encounterRole': encounter_role['uuid']
+            }]
         response = self.requests.post('/ws/rest/v1/encounter', json=encounter, raise_for_status=True)
         self.encounter_uuid = response.json()['uuid']
 
@@ -376,7 +384,7 @@ def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
             return get_patient_by_uuid(requests, patient_identifier)
         else:
             return get_patient_by_identifier(requests, patient_identifier_type, patient_identifier)
-    except RequestException as err:
+    except (RequestException, HTTPError) as err:
         # This message needs to be useful to an administrator because
         # it will be shown in the Repeat Records report.
         http_error_msg = (
@@ -714,6 +722,35 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 form_question_values={}
             ))
     return result
+
+
+@quickcache(['requests.base_url'])
+def get_unknown_encounter_role(requests):
+    """
+    Return "Unknown" encounter role for legacy providers with no
+    encounter role set
+    """
+    response_json = requests.get('/ws/rest/v1/encounterrole').json()
+    for encounter_role in response_json['results']:
+        if encounter_role['display'] == 'Unknown':
+            return encounter_role
+    raise OpenmrsConfigurationError(
+        'The standard "Unknown" EncounterRole was not found on the OpenMRS server at "{}". Please notify the '
+        'administrator of that server.'.format(requests.base_url)
+    )
+
+
+@quickcache(['requests.base_url'])
+def get_unknown_location_uuid(requests):
+    """
+    Returns the UUID of Bahmni's "Unknown Location" or None if it
+    doesn't exist.
+    """
+    response_json = requests.get('/ws/rest/v1/location').json()
+    for location in response_json['results']:
+        if location['display'] == 'Unknown Location':
+            return location['uuid']
+    return None
 
 
 def get_patient_identifier_types(requests):

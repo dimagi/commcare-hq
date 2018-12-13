@@ -128,7 +128,7 @@ def first_elem(elem_list):
 def save_xform(app, form, xml):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
-        data = xform.data_node.render()
+        data = xform.data_node.render().decode('utf-8')
         data = data.replace(old_xmlns, new_xmlns, 1)
         xform.instance_node.remove(xform.data_node.xml)
         xform.instance_node.append(parse_xml(data))
@@ -159,7 +159,7 @@ def save_xform(app, form, xml):
                 # or form is being updated with source copied from other form
                 xml = change_xmlns(xform, tag_xmlns, new_xmlns)
 
-    form.source = xml
+    form.source = xml.decode('utf-8')
 
     if form.is_registration_form():
         # For registration forms, assume that the first question is the

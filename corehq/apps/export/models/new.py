@@ -11,7 +11,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
-from couchdbkit.ext.django.schema import IntegerProperty
+from dimagi.ext.couchdbkit import IntegerProperty
 from django.core.exceptions import ValidationError
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
@@ -36,7 +36,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.timezones.utils import get_timezone_for_domain
 from memoized import memoized
-from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
+from couchdbkit import (
+    SchemaListProperty,
+    SchemaProperty,
+    BooleanProperty,
+    DictProperty,
+)
 
 from corehq import feature_previews
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
@@ -54,7 +59,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.blobs.mixin import BlobMixin, CODES
+from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
@@ -631,6 +636,7 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
     sharing_groups = ListProperty(StringProperty)
     show_all_data = BooleanProperty(default=True)
     show_project_data = BooleanProperty()
+    show_deactivated_data = BooleanProperty()
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
@@ -671,6 +677,7 @@ class ExportInstance(BlobMixin, Document):
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
+    last_build_duration = IntegerProperty()
 
     description = StringProperty(default='')
 
@@ -1023,6 +1030,7 @@ class CaseExportInstance(ExportInstance):
                 self.filters.accessible_location_ids,
                 self.filters.show_all_data,
                 self.filters.show_project_data,
+                self.filters.show_deactivated_data,
                 self.filters.user_types,
                 self.filters.date_period,
                 self.filters.sharing_groups + self.filters.reporting_groups,
@@ -1424,9 +1432,10 @@ class ExportDataSchema(Document):
         app_label = 'export'
 
     def get_number_of_apps_to_process(self):
+        app_ids_for_domain = self._get_current_app_ids_for_domain(self.domain, self.app_id)
         return len(self._get_app_build_ids_to_process(
             self.domain,
-            self.app_id,
+            app_ids_for_domain,
             self.last_app_versions,
         ))
 
@@ -1456,18 +1465,19 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
+        app_ids_for_domain = cls._get_current_app_ids_for_domain(domain, app_id)
         app_build_ids = []
         if not only_process_current_builds:
             app_build_ids = cls._get_app_build_ids_to_process(
                 domain,
-                app_id,
+                app_ids_for_domain,
                 current_schema.last_app_versions,
             )
-        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
+        app_build_ids.extend(app_ids_for_domain)
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
-            if doc_type not in ('Application', 'LinkedApplication'):
+            if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
                 continue
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
@@ -1667,12 +1677,15 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):
+        """Get all app IDs of 'current' apps that should be included in this schema"""
         if not app_id:
             return []
         return [app_id]
 
     @staticmethod
-    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
+    def _get_app_build_ids_to_process(domain, app_ids, last_app_versions):
+        """Get all built apps that should be included in this schema"""
+        app_id = app_ids[0] if app_ids else None
         return get_built_app_ids_with_submissions_for_app_id(
             domain,
             app_id,
@@ -1977,9 +1990,10 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_app_ids_in_domain(domain)
 
     @staticmethod
-    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
+    def _get_app_build_ids_to_process(domain, app_ids, last_app_versions):
         return get_built_app_ids_with_submissions_for_app_ids_and_versions(
             domain,
+            app_ids,
             last_app_versions
         )
 
@@ -1989,13 +2003,14 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, case_type):
-        case_property_mapping = get_case_properties(
-            app,
-            [case_type],
+        builder = ParentCasePropertyBuilder(
+            app.domain,
+            [app],
             include_parent_properties=False
         )
-        parent_types = (ParentCasePropertyBuilder.for_app(app)
-                        .get_case_relationships_for_case_type(case_type))
+        case_property_mapping = builder.get_case_property_map([case_type])
+
+        parent_types = builder.get_case_relationships_for_case_type(case_type)
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,

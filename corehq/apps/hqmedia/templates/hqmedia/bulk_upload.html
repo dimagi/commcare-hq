@@ -2,8 +2,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans 'Bulk Upload of Multimedia' %}{% endblock title %}
-
 {% block stylesheets %}{{ block.super }}
     <style type="text/css">
         .hqm-select-files-container {
@@ -15,23 +13,12 @@
     </style>
 {% endblock %}
 
-{% block page_name %}
-    {% trans 'Multimedia Bulk Upload' %}
-{% endblock %}
-
-{% block page_breadcrumbs %}
-    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-        <li><a href="{% url "view_app" domain app.get_id %}"><strong>{% trans 'Application' %} "{{ app.name }}"</strong></a></li>
-        <li><a href="{% url "hqmedia_references" domain app.get_id %}">{% trans 'Multimedia Reference Checker' %}</a></li>
-        <li class="active"><a href="{% url "hqmedia_bulk_upload" domain app.get_id %}">{% trans 'Bulk Upload' %}</a></li>
-    </ol>
-{% endblock %}
-
-
 {% block page_content %}
     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
     {% initial_page_data 'uploaders' uploaders_js %}
+
+    <p class="lead">{{ current_page.page_name }}</p>
 
     <p>{% blocktrans %}Use this tool to upload ZIP files of your multimedia, so you don't have to
         upload each file one-by-one.{% endblocktrans %}</p>
@@ -50,7 +37,6 @@
             We recommend <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>.
             {% endblocktrans %}
         </div>
-        <a href="{% url "hqmedia_references" domain app.get_id %}" class="btn btn-default pull-right"><i class="fa fa-arrow-left"></i> {% trans 'Back to Reference Checker' %}</a>
         <div class="btn-toolbar">
             <div class="hqm-select-files-container">
                 <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>
