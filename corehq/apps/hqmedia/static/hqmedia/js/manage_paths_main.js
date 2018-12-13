@@ -1,6 +1,6 @@
 hqDefine("hqmedia/js/manage_paths_main", function () {
     var uploadPathsModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['validateUrl', 'uploadUrl']);
+        hqImport("hqwebapp/js/assert_properties").assert(options, ['validateUrl', 'updateUrl']);
         var self = options;
 
         self.validated = ko.observable(false);
@@ -9,7 +9,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
         self.genericError = gettext("There was an error processing your file. Please try again or report an issue if the problem persists.");
         self.error = ko.observable();
 
-        self.allowUpload = ko.computed(function () {
+        self.allowUpdate = ko.computed(function () {
             return self.validated() && !self.error();
         });
 
@@ -42,18 +42,17 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
             return false;
         };
 
-        // TODO: rename: this is updating not uploading, validate does the upload
-        self.upload = function () {
+        self.update = function () {
             // TODO: spinner behavior
             $.ajax({
                 method: 'POST',
-                url: self.uploadUrl,
+                url: self.updateUrl,
                 data: {
                     file_id: self.fileId(),
                 },
                 success: function (data) {
                     if (data.success) {
-                        console.log("TODO: upload successful, show output");
+                        console.log("TODO: update successful, show output");
                         self.error('');
                     } else {
                         self.error(data.error || self.genericError);
@@ -72,7 +71,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         $("#upload-paths").koApplyBindings(uploadPathsModel({
             validateUrl: initialPageData.reverse("validate_multimedia_paths"),
-            uploadUrl: initialPageData.reverse("upload_multimedia_paths"),
+            updateUrl: initialPageData.reverse("update_multimedia_paths"),
         }));
     });
 });

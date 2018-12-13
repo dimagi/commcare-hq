@@ -8,7 +8,7 @@
 
 {% block page_content %}
     {% registerurl 'validate_multimedia_paths' domain app_id %}
-    {% registerurl 'upload_multimedia_paths' domain app_id %}
+    {% registerurl 'update_multimedia_paths' domain app_id %}
 
     <p class="lead">{{ current_page.page_name }}</p>
 
@@ -48,12 +48,12 @@
                 <input name="file" type="file" />
                 <br>
                 <div class="btn-toolbar">
-                    <button class="btn" type="submit" data-bind="css: {'btn-primary': !allowUpload(), 'btn-default': allowUpload()}">
+                    <button class="btn" type="submit" data-bind="css: {'btn-primary': !allowUpdate(), 'btn-default': allowUpdate()}">
                         <i class="fa fa-cloud-upload"></i>
-                        {% trans "Upload & Validate" %}
+                        {% trans "Update & Validate" %}
                     </button>
                     <button class="btn" type="button"
-                            data-bind="css: {'btn-primary': allowUpload(), 'btn-default': !allowUpload()}, enable: allowUpload(), click: upload">
+                            data-bind="css: {'btn-primary': allowUpdate(), 'btn-default': !allowUpdate()}, enable: allowUpdate(), click: update">
                         <i class="fa fa-check"></i>
                         {% trans "Update Paths" %}
                     </button>

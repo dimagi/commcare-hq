@@ -254,7 +254,7 @@ def validate_multimedia_paths(request, domain, app_id):
 @toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
 @require_can_edit_apps
 @require_POST
-def upload_multimedia_paths(request, domain, app_id):
+def update_multimedia_paths(request, domain, app_id):
     file_id = request.POST.get('file_id')
 
     f = transient_file_store.get_tempfile_ref_for_contents(file_id)
