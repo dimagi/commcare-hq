@@ -30,7 +30,8 @@ class CaseListFilterUtils(EmwfUtils):
             ("all_data", _("[All Data]")),
             ('project_data', _("[Project Data]"))
         ]
-        filters_to_display.extend(self.create_static_option(option) for option in hq_user_type_options)
+        from corehq.apps.reports.filters.users import EmwfUtils
+        filters_to_display.extend(EmwfUtils.user_type_tuple(option) for option in hq_user_type_options)
 
         return filters_to_display
 

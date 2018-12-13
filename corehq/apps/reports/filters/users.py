@@ -135,21 +135,17 @@ class EmwfUtils(object):
     def reporting_group_tuple(self, g):
         return "g__%s" % g['_id'], '%s [group]' % g['name']
 
-    def user_type_tuple(self, t):
+    @staticmethod
+    def user_type_tuple(t):
         return (
-            "t__%s" % t,
-            "[%s]" % HQUserType.get_friendly_name(t, code=True)
+            "t__%s" % t.code,
+            "[%s]" % t.friendly_name
 
         )
 
     def location_tuple(self, location):
         return ("l__%s" % location.location_id,
                 '%s [location]' % location.get_path_display())
-
-    @memoized
-    def create_static_option(self, user_type):
-        user_type = user_type.code
-        return self.user_type_tuple(user_type)
 
     @property
     @memoized
@@ -161,7 +157,7 @@ class EmwfUtils(object):
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append(HQUserType.COMMTRACK)
         for t in types:
-            static_options.append(self.create_static_option(t))
+            static_options.append(self.user_type_tuple(t))
 
         return static_options
 
@@ -275,7 +271,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         defaults = [('t__0', _("[Active Mobile Workers]")), ('t__5', _("[Deactivated Mobile Workers]"))]
         if self.request.project.commtrack_enabled:
-            defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK.code))
+            defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
 
     @property
