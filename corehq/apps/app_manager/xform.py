@@ -983,7 +983,8 @@ class XForm(WrappedNode):
                 raise XFormException(_("<item> ({}) has no <value>").format(translation))
             option = {
                 'label': translation,
-                'value': value
+                'label_ref': self._get_label_ref(item),
+                'value': value,
             }
             if include_translations:
                 option['translations'] = self._get_label_translations(item, langs)
