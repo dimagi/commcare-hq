@@ -8,8 +8,8 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         "usercase_update", "usercase_preload",
     ];
 
-    var CaseConfig = function (params) {
-        var self = this;
+    var caseConfig = function (params) {
+        var self = {};
         var i;
         self.makePopover = function () {
             $('.property-description').closest('.read-only').popover({
@@ -130,7 +130,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             questionScores[question.value] = i;
         });
         self.questionScores = questionScores;
-        self.caseConfigViewModel = new CaseConfigViewModel(self);
+        self.caseConfigViewModel = caseConfigViewModel(self);
 
         self.ensureBlankProperties = function () {
             self.caseConfigViewModel.case_transaction.ensureBlankProperties();
@@ -214,11 +214,13 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             });
 
         };
+
+        return self;
     };
 
 
-    var CaseConfigViewModel = function (caseConfig) {
-        var self = this;
+    var caseConfigViewModel = function (caseConfig) {
+        var self = {};
 
         self.caseConfig = caseConfig;
         self.moduleCaseTypes = caseConfig.moduleCaseTypes;
@@ -284,10 +286,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }
             self.case_transaction.setRequired(required);
         });
+
+        return self;
     };
 
 
-    var CaseTransaction = {
+    var caseTransaction = {
         mapping: function (self) {
             return {
                 include: [
@@ -301,19 +305,19 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 ],
                 case_properties: {
                     create: function (options) {
-                        return CaseProperty.wrap(options.data, self);
+                        return caseProperty.wrap(options.data, self);
                     },
                 },
                 case_preload: {
                     create: function (options) {
-                        return CasePreload.wrap(options.data, self);
+                        return casePreload.wrap(options.data, self);
                     },
                 },
             };
         },
         wrap: function (data, caseConfig) {
             var self = {};
-            ko.mapping.fromJS(data, CaseTransaction.mapping(self), self);
+            ko.mapping.fromJS(data, caseTransaction.mapping(self), self);
             self.case_type(self.case_type() || caseConfig.caseType);
             self.caseConfig = caseConfig;
 
@@ -337,7 +341,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }, self);
 
             self.addProperty = function () {
-                var property = CaseProperty.wrap({
+                var property = caseProperty.wrap({
                     path: '',
                     key: '',
                     required: false,
@@ -366,7 +370,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             if (self.case_preload) {
                 self.addPreload = function () {
-                    var property = CasePreload.wrap({
+                    var property = casePreload.wrap({
                         path: '',
                         key: '',
                         required: false,
@@ -438,7 +442,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     self.case_properties.remove(case_property);
                 });
                 _(required).each(function (key) {
-                    self.case_properties.splice(0, 0, CaseProperty.wrap({
+                    self.case_properties.splice(0, 0, caseProperty.wrap({
                         path: '',
                         key: key,
                         required: true,
@@ -447,7 +451,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             };
 
             self.unwrap = function () {
-                CaseTransaction.unwrap(self);
+                caseTransaction.unwrap(self);
             };
 
             self.ensureBlankProperties = function () {
@@ -473,12 +477,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             return self;
         },
         unwrap: function (self) {
-            return ko.mapping.toJS(self, CaseTransaction.mapping(self));
+            return ko.mapping.toJS(self, caseTransaction.mapping(self));
         },
     };
 
 
-    var UserCaseTransaction = {
+    var userCaseTransaction = {
         mapping: function (self) {
             return {
                 include: [
@@ -487,12 +491,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 ],
                 case_properties: {
                     create: function (options) {
-                        return CaseProperty.wrap(options.data, self);
+                        return caseProperty.wrap(options.data, self);
                     },
                 },
                 case_preload: {
                     create: function (options) {
-                        return CasePreload.wrap(options.data, self);
+                        return casePreload.wrap(options.data, self);
                     },
                 },
             };
@@ -500,7 +504,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
         wrap: function (data, caseConfig) {
             var self = {};
-            ko.mapping.fromJS(data, UserCaseTransaction.mapping(self), self);
+            ko.mapping.fromJS(data, userCaseTransaction.mapping(self), self);
             self.caseConfig = caseConfig;
             self.case_type = function () {
                 return 'commcare-user';
@@ -526,7 +530,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }, self);
 
             self.addProperty = function () {
-                var property = CaseProperty.wrap({
+                var property = caseProperty.wrap({
                     path: '',
                     key: '',
                     required: false,
@@ -555,7 +559,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             if (self.case_preload) {
                 self.addPreload = function () {
-                    var property = CasePreload.wrap({
+                    var property = casePreload.wrap({
                         path: '',
                         key: '',
                         required: false,
@@ -612,7 +616,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     self.case_properties.remove(case_property);
                 });
                 _(required).each(function (key) {
-                    self.case_properties.splice(0, 0, CaseProperty.wrap({
+                    self.case_properties.splice(0, 0, caseProperty.wrap({
                         path: '',
                         key: key,
                         required: true,
@@ -621,7 +625,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             };
 
             self.unwrap = function () {
-                UserCaseTransaction.unwrap(self);
+                userCaseTransaction.unwrap(self);
             };
 
             self.ensureBlankProperties = function () {
@@ -648,17 +652,17 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         },
 
         unwrap: function (self) {
-            return ko.mapping.toJS(self, UserCaseTransaction.mapping(self));
+            return ko.mapping.toJS(self, userCaseTransaction.mapping(self));
         },
     };
 
 
-    var CasePropertyBase = {
+    var casePropertyBase = {
         mapping: {
             include: ['key', 'path', 'required'],
         },
         wrap: function (data, case_transaction) {
-            var self = ko.mapping.fromJS(data, CaseProperty.mapping);
+            var self = ko.mapping.fromJS(data, caseProperty.mapping);
             self.case_transaction = case_transaction;
             self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
@@ -686,10 +690,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         },
     };
 
-    var CaseProperty = {
-        mapping: CasePropertyBase.mapping,
+    var caseProperty = {
+        mapping: casePropertyBase.mapping,
         wrap: function (data, case_transaction) {
-            var self = CasePropertyBase.wrap(data, case_transaction);
+            var self = casePropertyBase.wrap(data, case_transaction);
             self.defaultKey = ko.computed(function () {
                 var path = self.path() || '';
                 var value = path.split('/');
@@ -721,9 +725,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         },
     };
 
-    var CasePreload = {
+    var casePreload = {
         wrap: function (data, case_transaction) {
-            var self = CasePropertyBase.wrap(data, case_transaction);
+            var self = casePropertyBase.wrap(data, case_transaction);
             self.defaultKey = ko.computed(function () {
                 return '';
             });
@@ -814,7 +818,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 caseConfig,
                 true
             );
-            var x = CaseTransaction.wrap({
+            var x = caseTransaction.wrap({
                 case_type: null, // will get overridden by the default
                 reference_id: null, // not used in normal case config
                 case_properties: case_properties,
@@ -845,7 +849,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             return x;
         },
         from_case_transaction: function (case_transaction) {
-            var o = CaseTransaction.unwrap(case_transaction);
+            var o = caseTransaction.unwrap(case_transaction);
             var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0],
                 case_name = x[1].name;
@@ -897,7 +901,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 caseConfig,
                 true
             );
-            return UserCaseTransaction.wrap({
+            return userCaseTransaction.wrap({
                 case_properties: case_properties,
                 case_preload: case_preload,
                 allow: {
@@ -918,7 +922,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }, caseConfig);
         },
         from_usercase_transaction: function (usercase_transaction) {
-            var o = UserCaseTransaction.unwrap(usercase_transaction);
+            var o = userCaseTransaction.unwrap(usercase_transaction);
             var x = caseConfigUtils.propertyArrayToDict([], o.case_properties);
             var case_properties = x[0];
             var case_preload = caseConfigUtils.preloadArrayToDict(o.case_preload);
@@ -955,7 +959,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 required: true,
             }], self.case_properties, caseConfig);
 
-            return CaseTransaction.wrap({
+            return caseTransaction.wrap({
                 case_type: self.case_type,
                 reference_id: self.reference_id,
                 case_properties: case_properties,
@@ -989,7 +993,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }, caseConfig);
         },
         from_case_transaction: function (case_transaction) {
-            var o = CaseTransaction.unwrap(case_transaction);
+            var o = caseTransaction.unwrap(case_transaction);
             var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0],
                 case_name = x[1].name;
@@ -1009,7 +1013,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
     $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         if (initial_page_data('has_form_source')) {
-            var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
+            var caseConfig = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
                 home: $('#case-config-ko'),
                 requires: ko.observable(initial_page_data("form_requires")),
             }));
