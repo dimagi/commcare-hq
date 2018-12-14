@@ -15,6 +15,7 @@ QUESTIONS = [
         'tag': 'input',
         'repeat': None,
         'group': None,
+        'constraintMsg_ref': 'question1-constraintMsg',
         'value': '/data/question1',
         'hashtagValue': '#form/question1',
         'label': 'label en ____ label en',
@@ -112,6 +113,7 @@ QUESTIONS = [
             {
                 'value': 'item22',
                 'label': None,
+                'label_ref': 'question21-item22-label',
                 'translations': {},
             }
         ],
