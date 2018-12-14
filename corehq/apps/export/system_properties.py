@@ -51,20 +51,6 @@ TOP_MAIN_FORM_TABLE_PROPERTIES = [
         help_text=_('Unique identifier of the form submission'),
         selected=True,
     ),
-    ExportColumn(
-        tags=[PROPERTY_TAG_INFO],
-        label="form_link",
-        item=ExportItem(
-            path=[
-                PathNode(name='form'),
-                PathNode(name='meta'),
-                PathNode(name='instanceID')
-            ],
-            transform=FORM_ID_TO_LINK,
-        ),
-        help_text=_('Link to this form'),
-        selected=True,
-    ),
 ]
 
 # System properties to be displayed below the form questions
@@ -216,6 +202,20 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         is_advanced=True,
         help_text=_("The IP address from which the form was submitted")
     ),
+    ExportColumn(
+        tags=[PROPERTY_TAG_INFO],
+        label="form_link",
+        item=ExportItem(
+            path=[
+                PathNode(name='form'),
+                PathNode(name='meta'),
+                PathNode(name='instanceID')
+            ],
+            transform=FORM_ID_TO_LINK,
+        ),
+        help_text=_('Link to this form'),
+        selected=True,
+    ),
 ]
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
 
@@ -258,13 +258,6 @@ TOP_MAIN_CASE_TABLE_PROPERTIES = [
         label='caseid',
         item=ExportItem(path=[PathNode(name='_id')]),
         help_text=_("The ID of the case"),
-        selected=True
-    ),
-    ExportColumn(
-        tags=[PROPERTY_TAG_INFO],
-        label='case_link',
-        item=ExportItem(path=[PathNode(name='_id')], transform=CASE_ID_TO_LINK),
-        help_text=_("Link to this case"),
         selected=True
     ),
     ExportColumn(
@@ -387,6 +380,13 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
         label='state',
         item=ExportItem(path=[PathNode(name='doc_type')]),
         is_advanced=True,
+    ),
+    ExportColumn(
+        tags=[PROPERTY_TAG_INFO],
+        label='case_link',
+        item=ExportItem(path=[PathNode(name='_id')], transform=CASE_ID_TO_LINK),
+        help_text=_("Link to this case"),
+        selected=True
     ),
 ]
 MAIN_CASE_TABLE_PROPERTIES = TOP_MAIN_CASE_TABLE_PROPERTIES + BOTTOM_MAIN_CASE_TABLE_PROPERTIES
