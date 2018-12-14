@@ -36,6 +36,8 @@
               href="{% url 'osdd' %}"
               title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
 
+        <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
         {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
         {% block stylesheets %}{% endblock stylesheets %}
