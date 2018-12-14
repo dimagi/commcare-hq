@@ -57,6 +57,7 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.es.apps import AppES
 from corehq.apps.users.models import CouchUser
 import six
 
@@ -84,9 +85,9 @@ def paginate_releases(request, domain, app_id):
     except (TypeError, ValueError):
         limit = 10
     skip = (page - 1) * limit
+    timezone = get_timezone_for_user(request.couch_user, domain)
 
     def _get_batch(start_build=None, skip=None):
-        timezone = get_timezone_for_user(request.couch_user, domain)
         start_build = {} if start_build is None else start_build
         return Application.get_db().view('app_manager/saved_app',
             startkey=[domain, app_id, start_build],
@@ -104,19 +105,27 @@ def paginate_releases(request, domain, app_id):
         total_apps = len(get_built_app_ids_for_app_id(domain, app_id))
         saved_apps = _get_batch(skip=skip)
     else:
-        saved_apps = []
-        batch = [None]
-        start_build = {}
-        while len(batch):
-            batch = _get_batch(start_build=start_build)
-            if len(batch):
-                start_build = batch[-1]['version'] - 1
-            for app in batch:
-                if not only_show_released or app['is_released']:
-                    if not build_comment or build_comment.lower() in (app['build_comment'] or '').lower():
-                        saved_apps.append(app)
-        total_apps = len(saved_apps)
-        saved_apps = saved_apps[skip:skip + limit]
+        app_es = (
+            AppES()
+            .start((page - 1) * limit)
+            .size(limit)
+            .sort('version', desc=True)
+            .domain(domain)
+            .is_build()
+            .app_id(app_id)
+        )
+        if only_show_released:
+            app_es = app_es.is_released()
+        if build_comment:
+            app_es = app_es.build_comment(build_comment)
+        results = app_es.exclude_source().run()
+        app_ids = results.doc_ids
+        apps = get_docs(Application.get_db(), app_ids)
+        saved_apps = [
+            SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
+            for app in apps
+        ]
+        total_apps = results.total
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
