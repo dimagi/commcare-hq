@@ -82,10 +82,11 @@
         </span>
     </div>
 
-    <div class="label label-primary label-lg hide"
-         data-bind="visible: fetchState() === 'pending', css: {hide: false}">
-        <i class="fa fa-spin fa-spinner"></i> {% trans "Loading Versions..." %}
-    </div>
+    <h4 id="loading" class="hide"
+        data-bind="visible: fetchState() === 'pending', css: {hide: false}">
+        <i class="fa fa-spin fa-spinner"></i>
+        {% trans "Loading versions..." %}
+    </h4>
 
     <div class="alert alert-danger hide"
          data-bind="visible: fetchState() === 'error', css: {hide: false}">
