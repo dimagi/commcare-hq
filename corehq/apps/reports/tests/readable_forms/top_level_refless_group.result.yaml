@@ -3,10 +3,11 @@
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
     is_group: true, label: '', label_ref: null, relevant: null, repeat: null, required: false,
     response: null, setvalue: null, tag: group, type: FieldList, value: ''}
-  - {calculate: null, comment: null, constraint: int(.) <= (int(today())+1), group: '',
-    hashtagValue: /progress_note/note/encounter_date, is_group: false, label: Date
-      of Encounter, label_ref: encounter_date, relevant: null, repeat: null, required: true,
-    response: null, setvalue: null, tag: input, type: Date, value: /progress_note/note/encounter_date}
+  - {calculate: null, comment: null, constraint: int(.) <= (int(today())+1), constraintMsg_ref: Encounter
+      date cannot be in the future, group: '', hashtagValue: /progress_note/note/encounter_date,
+    is_group: false, label: Date of Encounter, label_ref: encounter_date, relevant: null,
+    repeat: null, required: true, response: null, setvalue: null, tag: input, type: Date,
+    value: /progress_note/note/encounter_date}
   - calculate: null
     comment: null
     constraint: null
@@ -16,8 +17,8 @@
     label: Missed Visit
     label_ref: missed_visit
     options:
-    - {label: 'Yes', value: 'yes'}
-    - {label: 'No', value: 'no'}
+    - {label: 'Yes', label_ref: 'yes', value: 'yes'}
+    - {label: 'No', label_ref: 'no', value: 'no'}
     relevant: null
     repeat: null
     required: false
@@ -31,38 +32,41 @@
     required: false, response: null, setvalue: null, tag: group, type: FieldList,
     value: ''}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/office,
-    is_group: false, label: PACT Office Visit, label_ref: time_office, relevant: null,
-    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Int,
-    value: /progress_note/note/times/office}
+    hintMsg_ref: time_hint, is_group: false, label: PACT Office Visit, label_ref: time_office,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Int, value: /progress_note/note/times/office}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/home,
-    is_group: false, label: Home Visit, label_ref: time_home, relevant: null, repeat: null,
-    required: false, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/home}
+    hintMsg_ref: time_hint, is_group: false, label: Home Visit, label_ref: time_home,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Int, value: /progress_note/note/times/home}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/other,
-    is_group: false, label: Other Visit, label_ref: time_other, relevant: null, repeat: null,
-    required: false, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/other}
+    hintMsg_ref: time_hint, is_group: false, label: Other Visit, label_ref: time_other,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Int, value: /progress_note/note/times/other}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/wait,
-    is_group: false, label: Time Waiting for Client, label_ref: time_wait, relevant: null,
-    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Int,
-    value: /progress_note/note/times/wait}
+    hintMsg_ref: time_hint, is_group: false, label: Time Waiting for Client, label_ref: time_wait,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Int, value: /progress_note/note/times/wait}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/accompaniment,
-    is_group: false, label: Accompaniment Time, label_ref: accompaniment, relevant: null,
-    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Int,
-    value: /progress_note/note/times/accompaniment}
+    hintMsg_ref: time_hint, is_group: false, label: Accompaniment Time, label_ref: accompaniment,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Int, value: /progress_note/note/times/accompaniment}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/phone,
-    is_group: false, label: Phone Call/Leave Message, label_ref: time_phone, relevant: null,
-    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Int,
-    value: /progress_note/note/times/phone}
+    hintMsg_ref: time_hint, is_group: false, label: Phone Call/Leave Message, label_ref: time_phone,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Int, value: /progress_note/note/times/phone}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/discussion,
-    is_group: false, label: Provider/Discussion Message, label_ref: time_discussion,
+    hintMsg_ref: time_hint, is_group: false, label: Provider/Discussion Message, label_ref: time_discussion,
     relevant: null, repeat: null, required: false, response: null, setvalue: null,
     tag: input, type: Int, value: /progress_note/note/times/discussion}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/administrative,
-    is_group: false, label: Administrative, label_ref: time_administrative, relevant: null,
-    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Int,
-    value: /progress_note/note/times/administrative}
+    hintMsg_ref: time_hint, is_group: false, label: Administrative, label_ref: time_administrative,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Int, value: /progress_note/note/times/administrative}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/travel,
-    is_group: false, label: Travel, label_ref: time_travel, relevant: null, repeat: null,
-    required: false, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/travel}
+    hintMsg_ref: time_hint, is_group: false, label: Travel, label_ref: time_travel,
+    relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: input, type: Int, value: /progress_note/note/times/travel}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
     is_group: true, label: '', label_ref: null, relevant: null, repeat: null, required: false,
     response: null, setvalue: null, tag: group, type: FieldList, value: ''}
@@ -79,13 +83,13 @@
     label: Accompaniment Type
     label_ref: accompaniment_type
     options:
-    - {label: HIV MD, value: hivmd}
-    - {label: PCP, value: pcp}
-    - {label: Psychiatry, value: psych}
-    - {label: OB/GYN, value: obgyn}
-    - {label: Ophthalmologist, value: opth}
-    - {label: Social Service, value: social}
-    - {label: Other, value: other}
+    - {label: HIV MD, label_ref: accompaniment_type_hivmd, value: hivmd}
+    - {label: PCP, label_ref: accompaniment_type_pcp, value: pcp}
+    - {label: Psychiatry, label_ref: accompaniment_type_psych, value: psych}
+    - {label: OB/GYN, label_ref: accompaniment_type_obgyn, value: obgyn}
+    - {label: Ophthalmologist, label_ref: accompaniment_type_opth, value: opth}
+    - {label: Social Service, label_ref: accompaniment_type_social, value: social}
+    - {label: Other, label_ref: accompaniment_type_other, value: other}
     relevant: /progress_note/note/times/accompaniment > 0
     repeat: null
     required: false
@@ -110,8 +114,8 @@
     label: Discussed scheduled appointments
     label_ref: discussed_appointments
     options:
-    - {label: 'Yes', value: 'yes'}
-    - {label: 'No', value: 'no'}
+    - {label: 'Yes', label_ref: 'yes', value: 'yes'}
+    - {label: 'No', label_ref: 'no', value: 'no'}
     relevant: null
     repeat: null
     required: false
@@ -129,8 +133,8 @@
     label: Discussed goals for current/upcoming appointment
     label_ref: discussed_goals
     options:
-    - {label: 'Yes', value: 'yes'}
-    - {label: 'No', value: 'no'}
+    - {label: 'Yes', label_ref: 'yes', value: 'yes'}
+    - {label: 'No', label_ref: 'no', value: 'no'}
     relevant: null
     repeat: null
     required: false
@@ -148,8 +152,8 @@
     label: Discussed follow up after appointment
     label_ref: discussed_followup
     options:
-    - {label: 'Yes', value: 'yes'}
-    - {label: 'No', value: 'no'}
+    - {label: 'Yes', label_ref: 'yes', value: 'yes'}
+    - {label: 'No', label_ref: 'no', value: 'no'}
     relevant: null
     repeat: null
     required: false
@@ -170,8 +174,8 @@
     label: "Reviewed patient\u2019s CD4 & VL"
     label_ref: reviewed_cd
     options:
-    - {label: 'Yes', value: 'yes'}
-    - {label: 'No', value: 'no'}
+    - {label: 'Yes', label_ref: 'yes', value: 'yes'}
+    - {label: 'No', label_ref: 'no', value: 'no'}
     relevant: null
     repeat: null
     required: false
@@ -189,8 +193,8 @@
     label: Discussed QSP
     label_ref: discussed_qsp
     options:
-    - {label: 'Yes', value: 'yes'}
-    - {label: 'No', value: 'no'}
+    - {label: 'Yes', label_ref: 'yes', value: 'yes'}
+    - {label: 'No', label_ref: 'no', value: 'no'}
     relevant: null
     repeat: null
     required: false
@@ -225,11 +229,11 @@
       week'
     label_ref: self_report
     options:
-    - {label: All, value: all}
-    - {label: Most, value: most}
-    - {label: About Half, value: half}
-    - {label: Very Few, value: few}
-    - {label: None, value: none}
+    - {label: All, label_ref: self_report_all, value: all}
+    - {label: Most, label_ref: self_report_most, value: most}
+    - {label: About Half, label_ref: self_report_half, value: half}
+    - {label: Very Few, label_ref: self_report_few, value: few}
+    - {label: None, label_ref: self_report_none, value: none}
     relevant: null
     repeat: null
     required: false
@@ -246,12 +250,13 @@
     constraint: null
     group: ''
     hashtagValue: /progress_note/note/newreferral
+    hintMsg_ref: newentries
     is_group: false
     label: New Referral(s)
     label_ref: newreferral
     options:
-    - {label: 'Yes', value: 'yes'}
-    - {label: 'No', value: 'no'}
+    - {label: 'Yes', label_ref: 'yes', value: 'yes'}
+    - {label: 'No', label_ref: 'no', value: 'no'}
     relevant: null
     repeat: null
     required: false
@@ -265,12 +270,13 @@
     constraint: null
     group: ''
     hashtagValue: /progress_note/note/newbw
+    hintMsg_ref: newentries
     is_group: false
     label: New Bloodwork Record(s)
     label_ref: newbw
     options:
-    - {label: 'Yes', value: 'yes'}
-    - {label: 'No', value: 'no'}
+    - {label: 'Yes', label_ref: 'yes', value: 'yes'}
+    - {label: 'No', label_ref: 'no', value: 'no'}
     relevant: null
     repeat: null
     required: false
@@ -301,9 +307,9 @@
         label: Type of Referral
         label_ref: referral_type
         options:
-        - {label: Social, value: social}
-        - {label: Medical, value: medical}
-        - {label: Other, value: other}
+        - {label: Social, label_ref: referral_social, value: social}
+        - {label: Medical, label_ref: referral_medical, value: medical}
+        - {label: Other, label_ref: referral_other, value: other}
         relevant: null
         repeat: /progress_note/note/referrals/referral
         required: false
@@ -360,8 +366,8 @@
         label: Types of test performed
         label_ref: bloodwork_types
         options:
-        - {label: Viral Load, value: vl}
-        - {label: CD4 Count, value: cd}
+        - {label: Viral Load, label_ref: bloodwork_vl, value: vl}
+        - {label: CD4 Count, label_ref: bloodwork_cd, value: cd}
         relevant: null
         repeat: /progress_note/note/bwresults/bw
         required: false
@@ -440,22 +446,26 @@
     label: In what topics did you have a discussion?
     label_ref: conversations_which
     options:
-    - {label: Introduction to the Health Promotion Curriculum, value: conversations_1}
-    - {label: Me and IHV, value: conversations_2}
-    - {label: Using a Pillbox, value: conversations_3}
-    - {label: Handling your ART Medications, value: conversations_4}
-    - {label: What is Adherence, value: conversations_5}
-    - {label: Side Effects, value: conversations_6}
-    - {label: What is HIV and How does it Affect My Body, value: conversations_7}
-    - {label: Identifying and Building Social Support Networks, value: conversations_8}
-    - {label: Adherence Strengths and Difficulties, value: conversations_9}
-    - {label: Medical Appointments and Providers, value: conversations_10}
-    - {label: Health Maintenance, value: conversations_11}
-    - {label: Harm Reduction, value: conversations_12}
-    - {label: Harm Reduction - Substance Abuse, value: conversations_13}
-    - {label: Harm Reduction - Safety in Relationships, value: conversations_14}
-    - {label: Healthy Living - Diet and Exercise, value: conversations_15}
-    - {label: Wrap Up, value: conversations_16}
+    - {label: Introduction to the Health Promotion Curriculum, label_ref: conversations_1,
+      value: conversations_1}
+    - {label: Me and IHV, label_ref: conversations_2, value: conversations_2}
+    - {label: Using a Pillbox, label_ref: conversations_3, value: conversations_3}
+    - {label: Handling your ART Medications, label_ref: conversations_4, value: conversations_4}
+    - {label: What is Adherence, label_ref: conversations_5, value: conversations_5}
+    - {label: Side Effects, label_ref: conversations_6, value: conversations_6}
+    - {label: What is HIV and How does it Affect My Body, label_ref: conversations_7,
+      value: conversations_7}
+    - {label: Identifying and Building Social Support Networks, label_ref: conversations_8,
+      value: conversations_8}
+    - {label: Adherence Strengths and Difficulties, label_ref: conversations_9, value: conversations_9}
+    - {label: Medical Appointments and Providers, label_ref: conversations_10, value: conversations_10}
+    - {label: Health Maintenance, label_ref: conversations_11, value: conversations_11}
+    - {label: Harm Reduction, label_ref: conversations_12, value: conversations_12}
+    - {label: Harm Reduction - Substance Abuse, label_ref: conversations_13, value: conversations_13}
+    - {label: Harm Reduction - Safety in Relationships, label_ref: conversations_14,
+      value: conversations_14}
+    - {label: Healthy Living - Diet and Exercise, label_ref: conversations_15, value: conversations_15}
+    - {label: Wrap Up, label_ref: conversations_16, value: conversations_16}
     relevant: null
     repeat: null
     required: false
@@ -473,12 +483,13 @@
     label: Introduction to the Health Promotion Curriculum
     label_ref: conversations_1
     options:
-    - {label: Initial Adherence Assessment, value: conversation_01_A_c}
-    - {label: Introduce the Health Promotion Curriculum, value: conversation_01_B_c}
-    - {label: "PACT\u2019s Goals", value: conversation_01_C_c}
-    - {label: Goal Setting, value: conversation_01_D_c}
-    - {label: Quarterly Service Plan, value: conversation_01_E_c}
-    - {label: Patient Workbook storage, value: conversation_01_F_c}
+    - {label: Initial Adherence Assessment, label_ref: conversation_01_A_c, value: conversation_01_A_c}
+    - {label: Introduce the Health Promotion Curriculum, label_ref: conversation_01_B_c,
+      value: conversation_01_B_c}
+    - {label: "PACT\u2019s Goals", label_ref: conversation_01_C_c, value: conversation_01_C_c}
+    - {label: Goal Setting, label_ref: conversation_01_D_c, value: conversation_01_D_c}
+    - {label: Quarterly Service Plan, label_ref: conversation_01_E_c, value: conversation_01_E_c}
+    - {label: Patient Workbook storage, label_ref: conversation_01_F_c, value: conversation_01_F_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_1')
     repeat: null
     required: false
@@ -496,9 +507,9 @@
     label: Me and IHV
     label_ref: conversations_2
     options:
-    - {label: Me and HIV, value: conversation_02_A_c}
-    - {label: My Life Goals, value: conversation_02_B_c}
-    - {label: 'Me, My HIV, and Other People', value: conversation_02_C_c}
+    - {label: Me and HIV, label_ref: conversation_02_A_c, value: conversation_02_A_c}
+    - {label: My Life Goals, label_ref: conversation_02_B_c, value: conversation_02_B_c}
+    - {label: 'Me, My HIV, and Other People', label_ref: conversation_02_C_c, value: conversation_02_C_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_2')
     repeat: null
     required: false
@@ -516,12 +527,12 @@
     label: Using a Pillbox
     label_ref: conversations_3
     options:
-    - {label: How to read a pill bottle, value: conversation_03_A_c}
-    - {label: Medication List, value: conversation_03_B_c}
-    - {label: Benefits of Pillboxes, value: conversation_03_C_d}
-    - {label: Medication Organizing, value: conversation_03_D_c}
-    - {label: Filling a Pillbox, value: conversation_03_E_d}
-    - {label: Correct use of Pillboxes, value: conversation_03_F_d}
+    - {label: How to read a pill bottle, label_ref: conversation_03_A_c, value: conversation_03_A_c}
+    - {label: Medication List, label_ref: conversation_03_B_c, value: conversation_03_B_c}
+    - {label: Benefits of Pillboxes, label_ref: conversation_03_C_d, value: conversation_03_C_d}
+    - {label: Medication Organizing, label_ref: conversation_03_D_c, value: conversation_03_D_c}
+    - {label: Filling a Pillbox, label_ref: conversation_03_E_d, value: conversation_03_E_d}
+    - {label: Correct use of Pillboxes, label_ref: conversation_03_F_d, value: conversation_03_F_d}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_3')
     repeat: null
     required: false
@@ -539,12 +550,12 @@
     label: Handling your ART Medications
     label_ref: conversations_4
     options:
-    - {label: Pharmacy Plan, value: conversation_04_A_c}
-    - {label: Refilling your Medication, value: conversation_04_B_c}
-    - {label: Barriers and Solutions, value: conversation_04_C_c}
-    - {label: Practice calling pharmacy, value: conversation_04_D_c}
-    - {label: When to call the pharmacy, value: conversation_04_E_c}
-    - {label: Medication Logistics, value: conversation_04_F_c}
+    - {label: Pharmacy Plan, label_ref: conversation_04_A_c, value: conversation_04_A_c}
+    - {label: Refilling your Medication, label_ref: conversation_04_B_c, value: conversation_04_B_c}
+    - {label: Barriers and Solutions, label_ref: conversation_04_C_c, value: conversation_04_C_c}
+    - {label: Practice calling pharmacy, label_ref: conversation_04_D_c, value: conversation_04_D_c}
+    - {label: When to call the pharmacy, label_ref: conversation_04_E_c, value: conversation_04_E_c}
+    - {label: Medication Logistics, label_ref: conversation_04_F_c, value: conversation_04_F_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_4')
     repeat: null
     required: false
@@ -562,12 +573,14 @@
     label: What is Adherence
     label_ref: conversations_5
     options:
-    - {label: "Your patient\u2019s perceptions of treatment", value: conversation_05_A_c}
-    - {label: 'What is adherence?', value: conversation_05_B_c}
-    - {label: 'Why is adherence to ART important?', value: conversation_05_C_c}
-    - {label: Taking medications on time, value: conversation_05_D_c}
-    - {label: Resistance, value: conversation_05_E_c}
-    - {label: Daily routine chart, value: conversation_05_F_c}
+    - {label: "Your patient\u2019s perceptions of treatment", label_ref: conversation_05_A_c,
+      value: conversation_05_A_c}
+    - {label: 'What is adherence?', label_ref: conversation_05_B_c, value: conversation_05_B_c}
+    - {label: 'Why is adherence to ART important?', label_ref: conversation_05_C_c,
+      value: conversation_05_C_c}
+    - {label: Taking medications on time, label_ref: conversation_05_D_c, value: conversation_05_D_c}
+    - {label: Resistance, label_ref: conversation_05_E_c, value: conversation_05_E_c}
+    - {label: Daily routine chart, label_ref: conversation_05_F_c, value: conversation_05_F_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_5')
     repeat: null
     required: false
@@ -585,10 +598,10 @@
     label: Side Effects
     label_ref: conversations_6
     options:
-    - {label: Understanding Side Effects, value: conversation_06_A_d}
-    - {label: Identifying Side Effects, value: conversation_06_B_d}
-    - {label: Severe Side Effects, value: conversation_06_C_d}
-    - {label: Managing Side Effects, value: conversation_06_D_d}
+    - {label: Understanding Side Effects, label_ref: conversation_06_A_d, value: conversation_06_A_d}
+    - {label: Identifying Side Effects, label_ref: conversation_06_B_d, value: conversation_06_B_d}
+    - {label: Severe Side Effects, label_ref: conversation_06_C_d, value: conversation_06_C_d}
+    - {label: Managing Side Effects, label_ref: conversation_06_D_d, value: conversation_06_D_d}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_6')
     repeat: null
     required: false
@@ -606,13 +619,15 @@
     label: What is HIV and How does it Affect My Body
     label_ref: conversations_7
     options:
-    - {label: 'What is HIV and how does it affect my body?', value: conversation_07_A_c}
-    - {label: The Immune System, value: conversation_07_B_c}
-    - {label: 'What is HIV?', value: conversation_07_C_c}
-    - {label: 'What is AIDS?', value: conversation_07_D_c}
-    - {label: 'What is a viral load?', value: conversation_07_E_c}
-    - {label: 'What is an opportunistic infection?', value: conversation_07_F_c}
-    - {label: 'How is HIV Transmitted?', value: conversation_07_G_c}
+    - {label: 'What is HIV and how does it affect my body?', label_ref: conversation_07_A_c,
+      value: conversation_07_A_c}
+    - {label: The Immune System, label_ref: conversation_07_B_c, value: conversation_07_B_c}
+    - {label: 'What is HIV?', label_ref: conversation_07_C_c, value: conversation_07_C_c}
+    - {label: 'What is AIDS?', label_ref: conversation_07_D_c, value: conversation_07_D_c}
+    - {label: 'What is a viral load?', label_ref: conversation_07_E_c, value: conversation_07_E_c}
+    - {label: 'What is an opportunistic infection?', label_ref: conversation_07_F_c,
+      value: conversation_07_F_c}
+    - {label: 'How is HIV Transmitted?', label_ref: conversation_07_G_c, value: conversation_07_G_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_7')
     repeat: null
     required: false
@@ -630,10 +645,11 @@
     label: Identifying and Building Social Support Networks
     label_ref: conversations_8
     options:
-    - {label: Understanding Social Support, value: conversation_08_A_c}
-    - {label: Community Influences, value: conversation_08_B_c}
-    - {label: Disclosure and Networks of Social Support, value: conversation_08_C_c}
-    - {label: Important Contact Information, value: conversation_08_D_c}
+    - {label: Understanding Social Support, label_ref: conversation_08_A_c, value: conversation_08_A_c}
+    - {label: Community Influences, label_ref: conversation_08_B_c, value: conversation_08_B_c}
+    - {label: Disclosure and Networks of Social Support, label_ref: conversation_08_C_c,
+      value: conversation_08_C_c}
+    - {label: Important Contact Information, label_ref: conversation_08_D_c, value: conversation_08_D_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_8')
     repeat: null
     required: false
@@ -651,9 +667,10 @@
     label: Adherence Strengths and Difficulties
     label_ref: conversations_9
     options:
-    - {label: Your ART Experience, value: conversation_09_A_c}
-    - {label: Adherence Strengths and Difficulties, value: conversation_09_B_c}
-    - {label: Difficult Days, value: conversation_09_C_c}
+    - {label: Your ART Experience, label_ref: conversation_09_A_c, value: conversation_09_A_c}
+    - {label: Adherence Strengths and Difficulties, label_ref: conversation_09_B_c,
+      value: conversation_09_B_c}
+    - {label: Difficult Days, label_ref: conversation_09_C_c, value: conversation_09_C_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_9')
     repeat: null
     required: false
@@ -671,9 +688,10 @@
     label: Medical Appointments and Providers
     label_ref: conversations_10
     options:
-    - {label: Appointment logistics, value: conversation_10_A_c}
-    - {label: Communicating with Providers, value: conversation_10_B_c}
-    - {label: Keeping Track of Medical Information, value: conversation_10_C_c}
+    - {label: Appointment logistics, label_ref: conversation_10_A_c, value: conversation_10_A_c}
+    - {label: Communicating with Providers, label_ref: conversation_10_B_c, value: conversation_10_B_c}
+    - {label: Keeping Track of Medical Information, label_ref: conversation_10_C_c,
+      value: conversation_10_C_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_10')
     repeat: null
     required: false
@@ -691,11 +709,15 @@
     label: Health Maintenance
     label_ref: conversations_11
     options:
-    - {label: Introduction to Health Maintenance, value: conversation_11_A_d}
-    - {label: Building Patient-Doctor Relationships, value: conversation_11_B_d}
-    - {label: "Routine Questions and Tests at the Doctor\u2019s Office", value: conversation_11_C_d}
-    - {label: Appointment Tracking, value: conversation_11_D_d}
-    - {label: Roles of Different Service Providers, value: conversation_11_E_d}
+    - {label: Introduction to Health Maintenance, label_ref: conversation_11_A_d,
+      value: conversation_11_A_d}
+    - {label: Building Patient-Doctor Relationships, label_ref: conversation_11_B_d,
+      value: conversation_11_B_d}
+    - {label: "Routine Questions and Tests at the Doctor\u2019s Office", label_ref: conversation_11_C_d,
+      value: conversation_11_C_d}
+    - {label: Appointment Tracking, label_ref: conversation_11_D_d, value: conversation_11_D_d}
+    - {label: Roles of Different Service Providers, label_ref: conversation_11_E_d,
+      value: conversation_11_E_d}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_11')
     repeat: null
     required: false
@@ -713,12 +735,13 @@
     label: Harm Reduction
     label_ref: conversations_12
     options:
-    - {label: 'What is Harm Reduction?', value: conversation_12_A_d}
-    - {label: Risky sex and possible harms, value: conversation_12_B_d}
-    - {label: Safer Sex, value: conversation_12_C_d}
-    - {label: Why Safer Sex is Important for People with HIV, value: conversation_12_D_d}
-    - {label: My Sexual Behaviors, value: conversation_12_E_d}
-    - {label: Condom Demonstration, value: conversation_12_F_d}
+    - {label: 'What is Harm Reduction?', label_ref: conversation_12_A_d, value: conversation_12_A_d}
+    - {label: Risky sex and possible harms, label_ref: conversation_12_B_d, value: conversation_12_B_d}
+    - {label: Safer Sex, label_ref: conversation_12_C_d, value: conversation_12_C_d}
+    - {label: Why Safer Sex is Important for People with HIV, label_ref: conversation_12_D_d,
+      value: conversation_12_D_d}
+    - {label: My Sexual Behaviors, label_ref: conversation_12_E_d, value: conversation_12_E_d}
+    - {label: Condom Demonstration, label_ref: conversation_12_F_d, value: conversation_12_F_d}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_12')
     repeat: null
     required: false
@@ -736,13 +759,14 @@
     label: Harm Reduction - Substance Abuse
     label_ref: conversations_13
     options:
-    - {label: Assessment, value: conversation_13_A_d}
-    - {label: Introduction to Harm Reduction, value: conversation_13_B_d}
-    - {label: ART adherence and substance use, value: conversation_13_C_d}
-    - {label: Substances commonly used, value: conversation_13_D_d}
-    - {label: Relationships and Substance Use, value: conversation_13_E_d}
-    - {label: Substance Use and HIV Transmission, value: conversation_13_F_d}
-    - {label: Create a Harm Reduction plan, value: conversation_13_G_d}
+    - {label: Assessment, label_ref: conversation_13_A_d, value: conversation_13_A_d}
+    - {label: Introduction to Harm Reduction, label_ref: conversation_13_B_d, value: conversation_13_B_d}
+    - {label: ART adherence and substance use, label_ref: conversation_13_C_d, value: conversation_13_C_d}
+    - {label: Substances commonly used, label_ref: conversation_13_D_d, value: conversation_13_D_d}
+    - {label: Relationships and Substance Use, label_ref: conversation_13_E_d, value: conversation_13_E_d}
+    - {label: Substance Use and HIV Transmission, label_ref: conversation_13_F_d,
+      value: conversation_13_F_d}
+    - {label: Create a Harm Reduction plan, label_ref: conversation_13_G_d, value: conversation_13_G_d}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_13')
     repeat: null
     required: false
@@ -760,12 +784,13 @@
     label: Harm Reduction - Safety in Relationships
     label_ref: conversations_14
     options:
-    - {label: 'What is Harm Reduction?', value: conversation_14_A_d}
-    - {label: Healthy Relationships, value: conversation_14_B_d}
-    - {label: Relationship Dynamics, value: conversation_14_C_d}
-    - {label: Identifying Safe/Unsafe Situations, value: conversation_14_D_d}
-    - {label: Personal Safety Plan, value: conversation_14_E_d}
-    - {label: Additional Resources, value: conversation_14_F_d}
+    - {label: 'What is Harm Reduction?', label_ref: conversation_14_A_d, value: conversation_14_A_d}
+    - {label: Healthy Relationships, label_ref: conversation_14_B_d, value: conversation_14_B_d}
+    - {label: Relationship Dynamics, label_ref: conversation_14_C_d, value: conversation_14_C_d}
+    - {label: Identifying Safe/Unsafe Situations, label_ref: conversation_14_D_d,
+      value: conversation_14_D_d}
+    - {label: Personal Safety Plan, label_ref: conversation_14_E_d, value: conversation_14_E_d}
+    - {label: Additional Resources, label_ref: conversation_14_F_d, value: conversation_14_F_d}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_14')
     repeat: null
     required: false
@@ -783,12 +808,15 @@
     label: Healthy Living - Diet and Exercise
     label_ref: conversations_15
     options:
-    - {label: Healthy eating assessment, value: conversation_15_A_d}
-    - {label: 'Why does eating healthy matter HIV?', value: conversation_15_B_d}
-    - {label: Principles of Good Nutrition and Exercise, value: conversation_15_C_d}
-    - {label: Barriers to Healthy Eating and Potential Solutions, value: conversation_15_D_d}
-    - {label: Food Safety, value: conversation_15_E_d}
-    - {label: Setting Healthy Eating Goals, value: conversation_15_F_d}
+    - {label: Healthy eating assessment, label_ref: conversation_15_A_d, value: conversation_15_A_d}
+    - {label: 'Why does eating healthy matter HIV?', label_ref: conversation_15_B_d,
+      value: conversation_15_B_d}
+    - {label: Principles of Good Nutrition and Exercise, label_ref: conversation_15_C_d,
+      value: conversation_15_C_d}
+    - {label: Barriers to Healthy Eating and Potential Solutions, label_ref: conversation_15_D_d,
+      value: conversation_15_D_d}
+    - {label: Food Safety, label_ref: conversation_15_E_d, value: conversation_15_E_d}
+    - {label: Setting Healthy Eating Goals, label_ref: conversation_15_F_d, value: conversation_15_F_d}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_15')
     repeat: null
     required: false
@@ -806,8 +834,8 @@
     label: Wrap Up
     label_ref: conversations_16
     options:
-    - {label: Review the Patient Workbook tools, value: conversation_16_A_c}
-    - {label: Review goals, value: conversation_16_B_c}
+    - {label: Review the Patient Workbook tools, label_ref: conversation_16_A_c, value: conversation_16_A_c}
+    - {label: Review goals, label_ref: conversation_16_B_c, value: conversation_16_B_c}
     relevant: selected(/progress_note/note/conversations/which, 'conversations_16')
     repeat: null
     required: false
