@@ -1030,6 +1030,10 @@ class XForm(WrappedNode):
                     and cnode.node.find('{f}itemset').exists()):
                 continue
 
+            constraintMsg_ref = None
+            if cnode.constraint:
+                constraintMsg_ref = self._normalize_itext_id(cnode.bind_node.attrib.get('{jr}constraintMsg'))
+
             question = {
                 "label": self._get_label_text(node, langs),
                 "label_ref": self._get_label_ref(node),
@@ -1041,7 +1045,7 @@ class XForm(WrappedNode):
                 "relevant": cnode.relevant,
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
-                "constraintMsg_ref": self._normalize_itext_id(cnode.bind_node.attrib.get('{http://openrosa.org/javarosa}constraintMsg')) if cnode.constraint else None,
+                "constraintMsg_ref": constraintMsg_ref,
                 "comment": self._get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self._get_setvalue(path),
