@@ -27,6 +27,7 @@ from corehq import privileges
 from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.files import file_extention_from_filename
+from corehq.util.workbook_reading import SpreadsheetFileExtError
 
 from soil import DownloadBase
 
@@ -228,8 +229,8 @@ def validate_multimedia_paths(request, domain, app_id):
     extension = os.path.splitext(handle.name)[1][1:].strip().lower()
     if extension not in ALLOWED_EXTENSIONS:
         return json_response({
-            'error': _("Please choose a file with one of the following extensions: {}").format(
-                       ", ".join(ALLOWED_EXTENSIONS))
+            'error': _("Please choose a file with one of the following extensions: "
+                       "{}").format(", ".join(ALLOWED_EXTENSIONS))
         })
 
     meta = transient_file_store.write_file(handle, handle.name, domain)

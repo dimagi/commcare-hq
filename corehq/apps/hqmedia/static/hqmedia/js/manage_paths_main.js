@@ -40,7 +40,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                             self.successMessage(gettext("File validated with no errors or warnings."));
                         }
                     } else {
-                        self.serverError(data.error || self.genericError)
+                        self.serverError(data.error || self.genericError);
                     }
                 },
                 error: function () {
@@ -62,7 +62,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                 },
                 success: function (data) {
                     if (data.success) {
-                        console.log("TODO: update successful, show output");
+                        alert("TODO: implement");
                     } else {
                         self.serverError(data.error || self.genericError);
                     }

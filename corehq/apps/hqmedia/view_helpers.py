@@ -44,8 +44,8 @@ def validate_multimedia_paths_rows(app, rows):
             (old_path, new_path) = row
 
             if old_path not in old_paths_last_seen:
-                errors.append(_("Path in row {} could not be found in application: <code>{}</code>").format(
-                                i, old_path))
+                errors.append(_("Path in row {} could not be found in application: "
+                                "<code>{}</code>").format(i, old_path))
             elif old_paths_last_seen[old_path] is not None:
                 # Duplicate old paths is an error: can't rename to two different new values
                 errors.append(_("Path in row {} was already renamed in row {}: "
@@ -54,7 +54,7 @@ def validate_multimedia_paths_rows(app, rows):
 
             interpolated_new_path = interpolate_media_path(new_path)    # checks for jr://
             if interpolated_new_path != new_path:
-                warnings.append(_("Path <code>{}</code> in row {} will be replaced with " \
+                warnings.append(_("Path <code>{}</code> in row {} will be replaced with "
                                   "<code>{}</code>").format(new_path, i, interpolated_new_path))
             else:
                 # Duplicate new paths is a warning: will combine what were previously different items
