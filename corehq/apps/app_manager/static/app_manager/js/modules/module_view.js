@@ -179,7 +179,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         } else if (moduleType === 'advanced') {
             if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {
                 var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
-                var visitScheduler = new VisitScheduler.ModuleScheduler({
+                var visitScheduler = VisitScheduler.moduleScheduler({
                     home: $('#module-scheduler'),
                     saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_schedule_phases'),
                     hasSchedule: moduleBrief.has_schedule,
