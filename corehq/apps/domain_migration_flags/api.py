@@ -19,6 +19,19 @@ def set_migration_started(domain, slug, dry_run=False):
         )
 
 
+def set_migration_continuing(domain, slug, dry_run=False):
+    progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
+    if migration_in_progress(domain, slug, True):
+        progress.migration_status = MigrationStatus.DRY_RUN if dry_run else MigrationStatus.IN_PROGRESS
+        progress.save()
+        reset_caches(domain, slug)
+    else:
+        raise DomainMigrationProgressError(
+            'Cannot resume a migration that is in state {}'
+            .format(progress.migration_status)
+        )
+
+
 def set_migration_not_started(domain, slug):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
     if migration_in_progress(domain, slug, True):

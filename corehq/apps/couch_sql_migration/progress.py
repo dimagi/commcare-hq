@@ -6,9 +6,10 @@ from django.conf import settings
 from corehq.apps.domain_migration_flags.api import (
     set_migration_started,
     set_migration_not_started,
-    migration_in_progress
+    migration_in_progress,
+    set_migration_continuing
 )
-from corehq.apps.domain_migration_flags.models import MigrationStatus, DomainMigrationProgress
+from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.tzmigration.api import set_tz_migration_complete
 
 COUCH_TO_SQL_SLUG = 'couch_to_sql'
@@ -20,6 +21,10 @@ def set_couch_sql_migration_started(domain, dry_run=False):
 
 def set_couch_sql_migration_not_started(domain):
     set_migration_not_started(domain, COUCH_TO_SQL_SLUG)
+
+
+def set_couch_sql_migration_continuing(domain, dry_run=False):
+    set_migration_continuing(domain, COUCH_TO_SQL_SLUG, dry_run)
 
 
 def couch_sql_migration_in_progress(domain, include_dry_runs=True):

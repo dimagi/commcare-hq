@@ -11,8 +11,11 @@ from sqlalchemy.exc import OperationalError
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, delete_diff_db, get_diff_db)
 from corehq.apps.couch_sql_migration.progress import (
-    set_couch_sql_migration_started, couch_sql_migration_in_progress,
-    set_couch_sql_migration_not_started, set_couch_sql_migration_complete
+    set_couch_sql_migration_started,
+    couch_sql_migration_in_progress,
+    set_couch_sql_migration_continuing,
+    set_couch_sql_migration_not_started,
+    set_couch_sql_migration_complete
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
@@ -86,6 +89,7 @@ class Command(BaseCommand):
             if options.get('run_timestamp'):
                 if not couch_sql_migration_in_progress(domain):
                     raise CommandError("Migration must be in progress if run_timestamp is passed in")
+                set_couch_sql_migration_continuing(domain, self.dry_run)
             else:
                 set_couch_sql_migration_started(domain, self.dry_run)
 
