@@ -1,4 +1,4 @@
-{% extends "hqmedia/uploader_base.html" %}
+{% extends "hqwebapp/base_page.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -27,12 +27,7 @@
     </style>
 {% endblock %}
 
-{% block js %} {{ block.super }}
-    <!-- todo add the media player back in -->
-    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
-    <script src="{% static 'hqmedia/js/references_main.js' %}"></script>
-    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'hqmedia/js/references_main' %}
 
 {% block page_content %}
 {% initial_page_data 'object_map' object_map %}
