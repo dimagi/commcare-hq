@@ -11,7 +11,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         // Set up details
         if (moduleBrief.case_type) {
             var state = hqImport('app_manager/js/details/screen_config').state;
-            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').DetailScreenConfig;
+            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').detailScreenConfig;
             state.requires_case_details(moduleBrief.requires_case_details);
 
             var details = initial_page_data('details');
