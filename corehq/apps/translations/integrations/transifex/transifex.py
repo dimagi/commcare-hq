@@ -71,7 +71,7 @@ class Transifex(object):
 
     @cached_property
     def client(self):
-        transifex_project = TransifexProject.objects.filter(slug=self.project_slug).first()
+        transifex_project = TransifexProject.objects.get(slug=self.project_slug)
         transifex_organization = transifex_project.organization
         return TransifexApiClient(
             transifex_organization.get_api_token,
