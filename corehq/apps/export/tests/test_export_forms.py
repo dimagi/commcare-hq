@@ -165,8 +165,13 @@ class TestEmwfFilterExportMixin(TestCase):
         self.assertEqual(self.filter_export._get_group_ids(group_ids_slug), group_ids)
 
     def test_get_selected_es_user_types(self):
+        from corehq.apps.reports.models import HQUserType
         self.filter_export = self.subject(self.domain, pytz.utc)
-        self.assertEqual(self.filter_export._get_selected_es_user_types(['t__0', 't__1']), ['ACTIVE', 'DEMO_USER'])
+        self.assertEqual(self.filter_export._get_selected_es_user_types(['t__0', 't__1']),
+                         [HQUserType.user_type(friendly_name=u'Mobile Worker', unfriendly_name=u'ACTIVE',
+                                               toggle_defaults=True, included_defaults=True, code=0),
+                          HQUserType.user_type(friendly_name=u'demo_user', unfriendly_name=u'DEMO_USER',
+                                               toggle_defaults=False, included_defaults=True, code=1)])
 
 
 class TestEmwfFilterFormExportFilters(TestCase):
