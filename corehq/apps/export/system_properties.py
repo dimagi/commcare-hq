@@ -15,7 +15,9 @@ from corehq.apps.export.const import (
     OWNER_ID_TRANSFORM,
     USERNAME_TRANSFORM,
     WORKFLOW_TRANSFORM,
-    PROPERTY_TAG_NONE
+    PROPERTY_TAG_NONE,
+    CASE_ID_TO_LINK,
+    FORM_ID_TO_LINK,
 )
 from corehq.apps.export.models import (
     ExportColumn,
@@ -48,7 +50,7 @@ TOP_MAIN_FORM_TABLE_PROPERTIES = [
         ]),
         help_text=_('Unique identifier of the form submission'),
         selected=True,
-    )
+    ),
 ]
 
 # System properties to be displayed below the form questions
@@ -199,6 +201,20 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         item=ExportItem(path=[PathNode(name="submit_ip")], datatype=DATA_TYPE_STRING),
         is_advanced=True,
         help_text=_("The IP address from which the form was submitted")
+    ),
+    ExportColumn(
+        tags=[PROPERTY_TAG_INFO],
+        label="form_link",
+        item=ExportItem(
+            path=[
+                PathNode(name='form'),
+                PathNode(name='meta'),
+                PathNode(name='instanceID')
+            ],
+            transform=FORM_ID_TO_LINK,
+        ),
+        help_text=_('Link to this form'),
+        selected=True,
     ),
 ]
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
@@ -364,6 +380,13 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
         label='state',
         item=ExportItem(path=[PathNode(name='doc_type')]),
         is_advanced=True,
+    ),
+    ExportColumn(
+        tags=[PROPERTY_TAG_INFO],
+        label='case_link',
+        item=ExportItem(path=[PathNode(name='_id')], transform=CASE_ID_TO_LINK),
+        help_text=_("Link to this case"),
+        selected=True
     ),
 ]
 MAIN_CASE_TABLE_PROPERTIES = TOP_MAIN_CASE_TABLE_PROPERTIES + BOTTOM_MAIN_CASE_TABLE_PROPERTIES
