@@ -1019,16 +1019,6 @@ class XForm(WrappedNode):
                     and cnode.node.find('{f}itemset').exists()):
                 continue
 
-            constraintMsg_ref = None
-            helpMsg_ref = None
-            hintMsg_ref = None
-            if cnode.constraint:
-                constraintMsg_ref = self._normalize_itext_id(cnode.bind_node.attrib.get('{jr}constraintMsg'))
-            if node.find('{f}help').exists():
-                helpMsg_ref = self._normalize_itext_id(node.find('{f}help').attrib.get('ref'))
-            if node.find('{f}hint').exists():
-                hintMsg_ref = self._normalize_itext_id(node.find('{f}hint').attrib.get('ref'))
-
             question = {
                 "label": self._get_label_text(node, langs),
                 "label_ref": self._get_label_ref(node),
@@ -1040,9 +1030,6 @@ class XForm(WrappedNode):
                 "relevant": cnode.relevant,
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
-                "constraintMsg_ref": constraintMsg_ref,
-                "helpMsg_ref": helpMsg_ref,
-                "hintMsg_ref": hintMsg_ref,
                 "comment": self._get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self._get_setvalue(path),
@@ -1053,6 +1040,15 @@ class XForm(WrappedNode):
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]
+
+            constraint_ref_xml = '{jr}constraintMsg'
+            if cnode.constraint and cnode.bind_node.attrib.get(constraint_ref_xml):
+                constraint_jr_itext = cnode.bind_node.attrib.get(constraint_ref_xml)
+                question['constraintMsg_ref'] = self._normalize_itext_id(constraint_jr_itext)
+            if node.find('{f}help').exists():
+                question['helpMsg_ref'] = self._normalize_itext_id(node.find('{f}help').attrib.get('ref'))
+            if node.find('{f}hint').exists():
+                question['hintMsg_ref'] = self._normalize_itext_id(node.find('{f}hint').attrib.get('ref'))
 
             questions.append(question)
 
