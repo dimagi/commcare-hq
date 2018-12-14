@@ -294,11 +294,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
             return module.CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
         }
 
-        var detailScreenConfig, screenModel, columnModel, sortRows;
+        var detailScreenConfig, screenModel, columnModel;
         var word = '[a-zA-Z][\\w_-]*';
 
         columnModel = (function () {
-            var columnModel = function (col, screen) {
+            var columnModelFunc = function (col, screen) {
                 /*
                     column properites: model, field, header, format
                     column extras: enum, late_flag
@@ -544,30 +544,30 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         self.filter_xpath_extra.ui.detach();
                         self.calc_xpath_extra.ui.detach();
                         self.time_ago_extra.ui.detach();
-                        if (self.val() === "enum" || self.val() === "enum-image" || self.val() === 'conditional-enum') {
-                            self.enum_extra.values_are_icons(self.val() === 'enum-image');
-                            self.enum_extra.values_are_conditions(self.val() === 'conditional-enum');
+                        if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
+                            self.enum_extra.values_are_icons(this.val() === 'enum-image');
+                            self.enum_extra.values_are_conditions(this.val() === 'conditional-enum');
                             self.format.ui.parent().append(self.enum_extra.ui);
-                        } else if (self.val() === "graph") {
+                        } else if (this.val() === "graph") {
                             // Replace format select with edit button
                             var parent = self.format.ui.parent();
                             parent.empty();
                             parent.append(self.graph_extra.ui);
-                        } else if (self.val() === 'late-flag') {
+                        } else if (this.val() === 'late-flag') {
                             self.format.ui.parent().append(self.late_flag_extra.ui);
                             var input = self.late_flag_extra.ui.find('input');
                             input.change(function () {
                                 self.late_flag_extra.value = input.val();
                                 fireChange();
                             });
-                        } else if (self.val() === 'filter') {
+                        } else if (this.val() === 'filter') {
                             self.format.ui.parent().append(self.filter_xpath_extra.ui);
                             var input = self.filter_xpath_extra.ui.find('input');
                             input.change(function () {
                                 self.filter_xpath_extra.value = input.val();
                                 fireChange();
                             });
-                        } else if (self.val() === 'time-ago') {
+                        } else if (this.val() === 'time-ago') {
                             self.format.ui.parent().append(self.time_ago_extra.ui);
                             var select = self.time_ago_extra.ui.find('select');
                             select.change(function () {
@@ -584,15 +584,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.format.$edit_view.on("change", function (event) {
                     hqImport('analytix/js/google').track.event('Case List Config', 'Display Format', event.target.value);
                 });
-
-                return self;
-            };
-
-            columnModel.init = function (col, screen) {
-                return columnModel(col, screen);
-            };
-            columnModel.prototype = {
-                serialize: function () {
+                self.serialize = function () {
                     var column = self.original;
                     column.field = self.field.val();
                     column.header[self.lang] = self.header.val();
@@ -615,20 +607,27 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));
                     }
                     return column;
-                },
-                setGrip: function (grip) {
+                };
+                self.setGrip = function (grip) {
                     self.grip = grip;
-                },
-                copyCallback: function () {
+                };
+                self.copyCallback = function () {
                     var column = self.serialize();
                     // add a marker self self is copied for self purpose
                     return JSON.stringify({
                         type: 'detail-screen-config:Column',
                         contents: column,
                     });
-                },
+                };
+
+                return self;
             };
-            return columnModel;
+
+            columnModelFunc.init = function (col, screen) {
+                return columnModelFunc(col, screen);
+            };
+
+            return columnModelFunc;
         }());
         screenModel = (function () {
             /**
@@ -642,7 +641,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
              * @param options
              * @constructor
              */
-            var screenModel = function(spec, config, options) {
+            var screenModelFunc = function(spec, config, options) {
                 var self = {};
                 var i, column, model, property, header, columns;
                 hqImport("hqwebapp/js/main").eventize(self);
@@ -711,7 +710,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
                     column.field.on('change', function () {
                         if (!column.useXpathExpression) {
-                            column.header.val(getPropertyTitle(self.val()));
+                            column.header.val(getPropertyTitle(this.val()));
                             column.header.fire("change");
                         }
                     });
@@ -790,18 +789,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     self.saveButton.fire('change');
                 });
 
-                return self;
-            };
-
-            screenModel.init = function (spec, config, options) {
-                return screenModel(spec, config, options);
-            };
-            screenModel.prototype = {
-                save: function () {
+                self.save = function () {
                     var i;
                     //Only save if property names are valid
                     var containsTab = false;
-                    var columns = this.columns();
+                    var columns = self.columns();
                     for (i = 0; i < columns.length; i++) {
                         var column = columns[i];
                         column.saveAttempted(true);
@@ -825,8 +817,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     }
 
-                    if (this.containsSortConfiguration) {
-                        var sortRows = this.config.sortRows.sortRows();
+                    if (self.containsSortConfiguration) {
+                        var sortRows = self.config.sortRows.sortRows();
                         for (i = 0; i < sortRows.length; i++) {
                             var row = sortRows[i];
                             if (!row.hasValidPropertyName()) {
@@ -834,11 +826,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             }
                         }
                     }
-                    if (this.validate()) {
-                        this.saveButton.ajax({
-                            url: this.saveUrl,
+                    if (self.validate()) {
+                        self.saveButton.ajax({
+                            url: self.saveUrl,
                             type: "POST",
-                            data: this.serialize(),
+                            data: self.serialize(),
                             dataType: 'json',
                             success: function (data) {
                                 var app_manager = hqImport('app_manager/js/app_manager');
@@ -846,21 +838,21 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             },
                         });
                     }
-                },
-                validate: function () {
-                    if (this.containsCaseListLookupConfiguration) {
-                        return this.config.caseListLookup.validate();
+                };
+                self.validate = function () {
+                    if (self.containsCaseListLookupConfiguration) {
+                        return self.config.caseListLookup.validate();
                     }
                     return true;
-                },
-                serialize: function () {
-                    var columns = this.columns();
+                };
+                self.serialize = function () {
+                    var columns = self.columns();
                     var data = {
-                        type: JSON.stringify(this.type),
+                        type: JSON.stringify(self.type),
                     };
 
                     // Add columns
-                    data[this.columnKey] = JSON.stringify(_.map(
+                    data[self.columnKey] = JSON.stringify(_.map(
                         _.filter(columns, function (c) {
                             return !c.isTab;
                         }),
@@ -889,41 +881,41 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     ));
 
-                    data.useCaseTiles = this.useCaseTiles() === "yes";
-                    data.persistCaseContext = this.persistCaseContext();
-                    data.persistentCaseContextXML = this.persistentCaseContextXML();
-                    data.persistTileOnForms = this.persistTileOnForms();
-                    data.persistentCaseTileFromModule = this.persistentCaseTileFromModule();
-                    data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
-                    data.sortNodesetColumns = this.sortNodesetColumns() ? this.sortNodesetColumns() : false;
+                    data.useCaseTiles = self.useCaseTiles() === "yes";
+                    data.persistCaseContext = self.persistCaseContext();
+                    data.persistentCaseContextXML = self.persistentCaseContextXML();
+                    data.persistTileOnForms = self.persistTileOnForms();
+                    data.persistentCaseTileFromModule = self.persistentCaseTileFromModule();
+                    data.enableTilePullDown = self.persistTileOnForms() ? self.enableTilePullDown() : false;
+                    data.sortNodesetColumns = self.sortNodesetColumns() ? self.sortNodesetColumns() : false;
 
-                    if (this.containsParentConfiguration) {
+                    if (self.containsParentConfiguration) {
                         var parentSelect;
-                        if (this.config.hasOwnProperty('parentSelect')) {
+                        if (self.config.hasOwnProperty('parentSelect')) {
                             parentSelect = {
-                                module_id: this.config.parentSelect.moduleId(),
+                                module_id: self.config.parentSelect.moduleId(),
                                 relationship: 'parent',
-                                active: this.config.parentSelect.active(),
+                                active: self.config.parentSelect.active(),
                             };
                         }
                         data.parent_select = JSON.stringify(parentSelect);
                     }
-                    if (this.containsFixtureConfiguration) {
+                    if (self.containsFixtureConfiguration) {
                         var fixtureSelect;
-                        if (this.config.hasOwnProperty('fixtureSelect')) {
+                        if (self.config.hasOwnProperty('fixtureSelect')) {
                             fixtureSelect = {
-                                active: this.config.fixtureSelect.active(),
-                                fixture_type: this.config.fixtureSelect.fixtureType(),
-                                display_column: this.config.fixtureSelect.displayColumn(),
-                                localize: this.config.fixtureSelect.localize(),
-                                variable_column: this.config.fixtureSelect.variableColumn(),
-                                xpath: this.config.fixtureSelect.xpath(),
+                                active: self.config.fixtureSelect.active(),
+                                fixture_type: self.config.fixtureSelect.fixtureType(),
+                                display_column: self.config.fixtureSelect.displayColumn(),
+                                localize: self.config.fixtureSelect.localize(),
+                                variable_column: self.config.fixtureSelect.variableColumn(),
+                                xpath: self.config.fixtureSelect.xpath(),
                             };
                         }
                         data.fixture_select = JSON.stringify(fixtureSelect);
                     }
-                    if (this.containsSortConfiguration) {
-                        data.sort_elements = JSON.stringify(_.map(this.config.sortRows.sortRows(), function (row) {
+                    if (self.containsSortConfiguration) {
+                        data.sort_elements = JSON.stringify(_.map(self.config.sortRows.sortRows(), function (row) {
                             return {
                                 field: row.textField.val(),
                                 type: row.type(),
@@ -934,33 +926,33 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             };
                         }));
                     }
-                    if (this.containsFilterConfiguration) {
-                        data.filter = JSON.stringify(this.config.filter.serialize());
+                    if (self.containsFilterConfiguration) {
+                        data.filter = JSON.stringify(self.config.filter.serialize());
                     }
-                    if (this.containsCaseListLookupConfiguration) {
-                        data.case_list_lookup = JSON.stringify(this.config.caseListLookup.serialize());
+                    if (self.containsCaseListLookupConfiguration) {
+                        data.case_list_lookup = JSON.stringify(self.config.caseListLookup.serialize());
                     }
-                    if (this.containsCustomXMLConfiguration) {
-                        data.custom_xml = this.config.customXMLViewModel.xml();
+                    if (self.containsCustomXMLConfiguration) {
+                        data.custom_xml = self.config.customXMLViewModel.xml();
                     }
-                    data[this.columnKey + '_custom_variables'] = this.customVariablesViewModel.xml();
-                    if (this.containsSearchConfiguration) {
-                        data.search_properties = JSON.stringify(this.config.search.serialize());
+                    data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
+                    if (self.containsSearchConfiguration) {
+                        data.search_properties = JSON.stringify(self.config.search.serialize());
                     }
                     return data;
-                },
-                addItem: function (columnConfiguration, index) {
-                    var column = this.initColumnAsColumn(
-                        columnModel.init(columnConfiguration, this)
+                };
+                self.addItem = function (columnConfiguration, index) {
+                    var column = self.initColumnAsColumn(
+                        columnModel.init(columnConfiguration, self)
                     );
                     if (index === undefined) {
-                        this.columns.push(column);
+                        self.columns.push(column);
                     } else {
-                        this.columns.splice(index, 0, column);
+                        self.columns.splice(index, 0, column);
                     }
                     column.useXpathExpression = !!columnConfiguration.useXpathExpression;
-                },
-                pasteCallback: function (data, index) {
+                };
+                self.pasteCallback = function (data, index) {
                     try {
                         data = JSON.parse(data);
                     } catch (e) {
@@ -968,33 +960,39 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         return;
                     }
                     if (data.type === 'detail-screen-config:Column' && data.contents) {
-                        this.addItem(data.contents, index);
+                        self.addItem(data.contents, index);
                     }
-                },
-                addProperty: function () {
-                    var type = this.columnKey === "short" ? "List" : "Detail";
+                };
+                self.addProperty = function () {
+                    var type = self.columnKey === "short" ? "List" : "Detail";
                     hqImport('analytix/js/google').track.event('Case Management', 'Module Level Case ' + type, 'Add Property');
-                    this.addItem({
+                    self.addItem({
                         hasAutocomplete: true,
                     });
-                },
-                addGraph: function () {
-                    this.addItem({
+                };
+                self.addGraph = function () {
+                    self.addItem({
                         hasAutocomplete: false,
                         format: 'graph',
                     });
-                },
-                addXpathExpression: function () {
-                    this.addItem({
+                };
+                self.addXpathExpression = function () {
+                    self.addItem({
                         hasAutocomplete: false,
                         useXpathExpression: true,
                     });
-                },
+                };
+
+                return self;
             };
-            return screenModel;
+
+            screenModelFunc.init = function (spec, config, options) {
+                return screenModelFunc(spec, config, options);
+            };
+            return screenModelFunc;
         }());
         detailScreenConfig = (function () {
-            var detailScreenConfig = function (spec) {
+            var detailScreenConfigFunc = function (spec) {
                 var self = {};
                 self.properties = spec.properties;
                 self.screens = [];
@@ -1133,10 +1131,10 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }
                 return self;
             };
-            detailScreenConfig.init = function (spec) {
-                return detailScreenConfig(spec);
+            detailScreenConfigFunc.init = function (spec) {
+                return detailScreenConfigFunc(spec);
             };
-            return detailScreenConfig;
+            return detailScreenConfigFunc;
         }());
 
         detailScreenConfig.TIME_AGO = {
