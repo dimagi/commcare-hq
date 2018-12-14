@@ -1,10 +1,10 @@
 hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
     'use strict';
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
-        CaseProperty = hqImport("app_manager/js/forms/advanced/case_properties").CaseProperty,
-        CasePreloadProperty = hqImport("app_manager/js/forms/advanced/case_properties").CasePreloadProperty,
-        LoadUpdateAction = hqImport("app_manager/js/forms/advanced/actions").LoadUpdateAction,
-        OpenCaseAction = hqImport("app_manager/js/forms/advanced/actions").OpenCaseAction;
+        caseProperty = hqImport("app_manager/js/forms/advanced/case_properties").caseProperty,
+        casePreloadProperty = hqImport("app_manager/js/forms/advanced/case_properties").casePreloadProperty,
+        loadUpdateAction = hqImport("app_manager/js/forms/advanced/actions").loadUpdateAction,
+        openCaseAction = hqImport("app_manager/js/forms/advanced/actions").openCaseAction;
 
     var DEFAULT_CONDITION = function (type) {
         return {
@@ -15,7 +15,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
         };
     };
 
-    var CaseConfig = function (params) {
+    var caseConfig = function (params) {
         var self = this;
         self.makePopover = function () {
             $('.property-description').closest('.read-only').popover({
@@ -173,7 +173,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             self.ensureBlankProperties();
         };
 
-        self.caseConfigViewModel = new CaseConfigViewModel(self, params);
+        self.caseConfigViewModel = new caseConfigViewModel(self, params);
 
         self.applyAccordion = function (type, index) {
             _.each(type ? [type] : ['open', 'load'], function (t) {
@@ -228,7 +228,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
         };
     };
 
-    var CaseConfigViewModel = function (caseConfig, params) {
+    var caseConfigViewModel = function (caseConfig, params) {
         var self = this;
 
         self.caseConfig = caseConfig;
@@ -287,14 +287,14 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
             a.preload = [];
             a.case_properties = [];
-            var action = LoadUpdateAction.wrap(a, caseConfig);
+            var action = loadUpdateAction.wrap(a, caseConfig);
             // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
             // before it is defined
             _(case_properties).each(function (p) {
-                action.case_properties.push(CaseProperty.wrap(p, action));
+                action.case_properties.push(caseProperty.wrap(p, action));
             });
             _(preload).each(function (p) {
-                action.preload.push(CasePreloadProperty.wrap(p, action));
+                action.preload.push(casePreloadProperty.wrap(p, action));
             });
             return action;
         }));
@@ -307,11 +307,11 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             }];
             var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, caseConfig);
             a.case_properties = [];
-            var action = OpenCaseAction.wrap(a, caseConfig);
+            var action = openCaseAction.wrap(a, caseConfig);
             // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
             // before it is defined
             _(case_properties).each(function (p) {
-                action.case_properties.push(CaseProperty.wrap(p, action));
+                action.case_properties.push(caseProperty.wrap(p, action));
             });
             return action;
         }));
@@ -433,11 +433,11 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         arbitrary_datum_function: '',
                     };
                 }
-                self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.caseConfig));
+                self.load_update_cases.push(loadUpdateAction.wrap(action_data, self.caseConfig));
                 self.caseConfig.applyAccordion('load', index);
             } else if (action.value === 'open') {
                 index = self.open_cases().length;
-                self.open_cases.push(OpenCaseAction.wrap({
+                self.open_cases.push(openCaseAction.wrap({
                     case_type: caseConfig.caseType,
                     name_path: '',
                     case_tag: 'open_' + caseConfig.caseType + '_' + index,
@@ -481,8 +481,8 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
         self.unwrap = function () {
             return {
-                load_update_cases: _(self.load_update_cases()).map(LoadUpdateAction.unwrap),
-                open_cases: _(self.open_cases()).map(OpenCaseAction.unwrap),
+                load_update_cases: _(self.load_update_cases()).map(loadUpdateAction.unwrap),
+                open_cases: _(self.open_cases()).map(openCaseAction.unwrap),
             };
         };
     };
@@ -490,7 +490,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
     $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         if (initial_page_data('has_form_source')) {
-            var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
+            var caseConfig = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
                 home: $('#case-config-ko'),
                 requires: ko.observable(initial_page_data("form_requires")),
             }));
@@ -498,7 +498,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
             if (initial_page_data("schedule_options")) {
                 var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
-                var visitScheduler = new VisitScheduler.Scheduler(_.extend({}, initial_page_data("schedule_options"), {
+                var visitScheduler = VisitScheduler.schedulerModel(_.extend({}, initial_page_data("schedule_options"), {
                     home: $('#visit-scheduler'),
                 }));
                 visitScheduler.init();
