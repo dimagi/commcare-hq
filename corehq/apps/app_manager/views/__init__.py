@@ -75,6 +75,7 @@ from corehq.apps.app_manager.views.forms import (
     view_form_legacy,
     view_form,
     get_form_questions,
+    FormHasSubmissionsView,
 )
 from corehq.apps.app_manager.views.modules import (
     delete_module,
