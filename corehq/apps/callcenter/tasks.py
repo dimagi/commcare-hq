@@ -38,7 +38,7 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
-@task(serializer='pickle')
+@task(serializer='pickle', queue='background_queue')
 def sync_user_cases(user):
     sync_call_center_user_case(user)
     sync_usercase(user)
