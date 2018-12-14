@@ -326,7 +326,7 @@ class AppTranslations(BaseTranslationsView):
                 return False
         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to pull for translations. '
-                                    'You should receive an email shortly'))
+                                    'You should receive an email shortly.'))
         return True
 
     def perform_backup_request(self, request, form_data):

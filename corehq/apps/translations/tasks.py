@@ -134,6 +134,6 @@ def backup_project_from_transifex(domain, data, email):
             to=[email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
-        filename = "%s-TransifexBackup" % project_details.get('name')
+        filename = "%s-TransifexBackup.zip" % project_details.get('name')
         email.attach(filename=filename, content=tmp.read())
         email.send()
