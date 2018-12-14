@@ -16,9 +16,10 @@
             {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
         </span>
         <span class="help-block" id="case_type_changed_warning" style="display: none;">
-            {% blocktrans %}
-            Changing a Case Type will create a new Case Type.
-            It will NOT update the existing or previously submitted data.
+            {% blocktrans with case_type=module.case_type %}
+            You have cases associated with the {{ case_type }} Case Type.
+            Making this change will NOT affect your existing cases.
+            Only new cases will be affected.
             {% endblocktrans %}
         </span>
     </div>
