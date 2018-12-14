@@ -8,6 +8,31 @@
     {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
 {% endblock page_title %}
 
+{% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+    {% block app_profiles %}
+        <h2>App Profiles</h2>
+        <table class="table table-condensed">
+            <tr>
+                <th class="col-sm-2">Name</th>
+                <th class="col-sm-2">Langs</th>
+                <th class="col-sm-2">Action</th>
+            </tr>
+            {% for build_profile_id, build_profile in app.build_profiles.items %}
+            <tr>
+                <td class="col-sm-2">{{ build_profile.name }}</td>
+                <td class="col-sm-2">{{ build_profile.langs|join:", " }}</td>
+                <td class="col-sm-2">
+                    {% if build_profile_id in enabled_build_profiles %}
+                        <a href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=disable'>Disable</a>
+                    {% else %}
+                        <a href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=enable'>Enable</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endblock %}
+{% endif %}
 {% block downloads %}
     <h2>Downloads</h2>
     <table class="table table-condensed">
