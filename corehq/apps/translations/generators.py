@@ -71,13 +71,13 @@ class AppTranslationsGenerator:
         def _labels_from_question(question):
             ret = {
                 question['label_ref'],
-                question['constraintMsg_ref'],
-                question['helpMsg_ref'],
-                question['hintMsg_ref'],
+                question.get('constraintMsg_ref'),
+                question.get('helpMsg_ref'),
+                question.get('hintMsg_ref'),
             }
             if question.get('options'):
                 for option in question['options']:
-                    ret.add(option['label_ref'])
+                    ret.add(option.get('label_ref'))
             return ret
 
         labels_to_skip = defaultdict(set)
