@@ -8,8 +8,8 @@
     {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
 {% endblock page_title %}
 
-{% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
-    {% block app_profiles %}
+{% block app_profiles %}
+    {% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
         <h2>App Profiles</h2>
         <table class="table table-condensed">
             <tr>
@@ -31,8 +31,9 @@
             </tr>
             {% endfor %}
         </table>
-    {% endblock %}
-{% endif %}
+    {% endif %}
+{% endblock %}
+
 {% block downloads %}
     <h2>Downloads</h2>
     <table class="table table-condensed">
