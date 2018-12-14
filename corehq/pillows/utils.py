@@ -1,6 +1,8 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
+from couchdbkit.exceptions import ResourceNotFound
+
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
@@ -76,7 +78,7 @@ def get_user_type(user_id):
                 return WEB_USER_TYPE
             elif user.is_commcare_user():
                 return MOBILE_USER_TYPE
-        except:
+        except ResourceNotFound:
             pass
     return UNKNOWN_USER_TYPE
 
