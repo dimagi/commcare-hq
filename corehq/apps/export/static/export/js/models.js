@@ -887,7 +887,7 @@ hqDefine('export/js/models', [
     };
 
     ExportItem.prototype.readablePath = function () {
-        return utils.readablePath(this.path());
+        return readablePath(this.path());
     };
 
     ExportItem.mapping = {
