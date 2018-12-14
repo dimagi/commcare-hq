@@ -246,12 +246,11 @@ def validate_multimedia_paths(request, domain, app_id):
     from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows
     app = get_app(domain, app_id)
     with get_spreadsheet(f) as spreadsheet:
-        (valid_count, errors, warnings) = validate_multimedia_paths_rows(app, spreadsheet.iter_rows())
+        (errors, warnings) = validate_multimedia_paths_rows(app, spreadsheet.iter_rows())
 
     return json_response({
         'success': 1,
         'file_id': file_id,
-        'valid_count': valid_count,
         'errors': errors,
         'warnings': warnings,
     })

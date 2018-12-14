@@ -84,9 +84,7 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
             (self._get_form_media('en'), 'jr://file/hyacinth.png'),   # 6. error & warning: dupe old and new paths
             (self._get_form_media('fra'), 'jr://file/hyacinth.png'),  # 7. warning: dupe new path
         )
-        (valid, errors, warnings) = validate_multimedia_paths_rows(app, rows)
-
-        self.assertEqual(valid, 4)
+        (errors, warnings) = validate_multimedia_paths_rows(app, rows)
 
         self.assertEqual(len(errors), 3)
         self.assertTrue(re.search(r'1.*columns', errors[0]))
