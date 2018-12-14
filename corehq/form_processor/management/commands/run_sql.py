@@ -404,7 +404,6 @@ WITH to_move AS (
 
 # use this when simple_move_form_attachments_to_blobmeta gets too slow
 delete_dup_form_attachments = RunUntilZero("""
-BEGIN;
 WITH dups AS (
     SELECT * FROM (
         SELECT
@@ -430,19 +429,19 @@ WITH dups AS (
         AND blob.parent_id = att.form_id
         AND blob.name = att.name
     )
-    LIMIT {chunk_size}
+    LIMIT 1000
 ), deleted AS (
     DELETE FROM form_processor_xformattachmentsql att
     USING dups WHERE att.id = dups.id
+    RETURNING 1
 ), updated AS (
-    -- fix create_on date
+    -- fix create_on and type_code
     UPDATE blobs_blobmeta_tbl
     SET created_on = xform.received_on, type_code = dups.type_code
     FROM dups
     INNER JOIN form_processor_xforminstancesql xform
         ON xform.form_id = dups.form_id
     WHERE blobs_blobmeta_tbl.key = dups.key
-    RETURNING blobs_blobmeta_tbl.*
 ) SELECT COUNT(*) FROM deleted;
 """)
 
