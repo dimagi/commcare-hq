@@ -69,10 +69,10 @@ def safe_cached_download(f):
             request.GET = request.GET.copy()
             request.GET.pop('username')
 
+        latest_enabled_build = None
+        if request.GET.get('profile') and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+            latest_enabled_build = get_latest_enabled_build_for_profile(request.GET.get('profile'))
         try:
-            latest_enabled_build = None
-            if request.GET.get('profile') and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-                latest_enabled_build = get_latest_enabled_build_for_profile(request.GET.get('profile'))
             if latest_enabled_build:
                 request.app = get_app(domain, latest_enabled_build)
             else:
