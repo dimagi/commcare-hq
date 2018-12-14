@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
+from django.conf import settings
 
 from corehq.apps.users.models import CommCareUser
 
@@ -43,5 +44,7 @@ def calculate_indicators():
 @task(serializer='pickle', queue='background_queue')
 def sync_user_cases(user_id):
     user = CommCareUser.get_by_user_id(user_id)
+    if settings.UNIT_TESTING and not user.project:
+        return
     sync_call_center_user_case(user)
     sync_usercase(user)
