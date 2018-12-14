@@ -688,3 +688,19 @@ def get_form_source_download_url(xform):
         xform.build_id,
         app.get_form_filename(module=form.get_module(), form=form),
     ])
+
+
+def get_latest_enabled_build_for_profile(profile_id):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    latest_enabled_build = (LatestEnabledBuildProfiles.objects.
+                            filter(build_profile_id=profile_id)
+                            .order_by('-version')
+                            .first())
+    if latest_enabled_build:
+        return latest_enabled_build.build_id
+
+
+def get_enabled_build_profiles_for_version(app_id, version):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    return list(LatestEnabledBuildProfiles.objects.filter(
+            app_id=app_id, version=version).values_list('build_profile_id', flat=True))
