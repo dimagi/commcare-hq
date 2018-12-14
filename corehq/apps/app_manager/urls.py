@@ -180,7 +180,7 @@ urlpatterns = [
     url(r'^api/list_apps/$', list_apps, name='list_apps'),
     url(r'^api/download_ccz/$', direct_ccz, name='direct_ccz'),
     url(r'^download/(?P<app_id>[\w-]+)/$', download_index, name='download_index'),
-    url(r'^build_profile/(?P<app_id>[\w-]+)/toggle/(?P<build_profile_id>[\w-]+)$', toggle_build_profile,
+    url(r'^build_profile/(?P<build_id>[\w-]+)/toggle/(?P<build_profile_id>[\w-]+)$', toggle_build_profile,
         name='toggle_build_profile'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
