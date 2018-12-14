@@ -498,6 +498,7 @@ hqDefine('export/js/models', [
         self.showDeleted = ko.observable(false);
         self.displayType = ko.observable("labels");
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
+        self.useLabels(self);
     };
 
     TableConfiguration.prototype.isVisible = function () {
