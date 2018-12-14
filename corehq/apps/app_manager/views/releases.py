@@ -19,7 +19,7 @@ from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.decorators.cache import cache_control
 
 import ghdiff
@@ -44,7 +44,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id, \
     get_latest_released_app_version, get_built_app_ids_for_app_id
-from corehq.apps.app_manager.models import BuildProfile
+from corehq.apps.app_manager.models import BuildProfile, LatestEnabledBuildProfiles
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
@@ -554,3 +554,47 @@ class LanguageProfilesView(View):
 
     def get(self, request, *args, **kwargs):
         return HttpResponse()
+
+
+def toggle_build_profile(request, domain, app_id, build_profile_id):
+    app = Application.get(app_id)
+    action = request.GET.get('action')
+    latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
+        app_id=app.copy_of,
+        build_profile_id=build_profile_id
+    ).order_by('-version').first()
+    if action == 'enable' and latest_enabled_build_profile:
+        if latest_enabled_build_profile.version > app.version:
+            messages.error(request, _(
+                "Latest version available for this profile is {}, which is "
+                "higher than this version. Disable any higher versions first.".format(
+                    latest_enabled_build_profile.version
+            )))
+            return HttpResponseRedirect(reverse('download_index', args=[domain, app_id]))
+    if action == 'enable':
+        LatestEnabledBuildProfiles.objects.create(
+            app_id=app.copy_of,
+            version=app.version,
+            build_profile_id=build_profile_id,
+            build_id=app_id
+        )
+    elif action == 'disable':
+        LatestEnabledBuildProfiles.objects.filter(
+            app_id=app.copy_of,
+            version=app.version,
+            build_profile_id=build_profile_id,
+            build_id=app_id
+        ).delete()
+    latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
+        app_id=app.copy_of,
+        build_profile_id=build_profile_id
+    ).order_by('-version').first()
+    if latest_enabled_build_profile:
+        messages.success(request, _("Latest version for profile {} is now {}").format(
+            app.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
+        ))
+    else:
+        messages.success(request, _("Latest release now available for profile {}").format(
+            app.build_profiles[build_profile_id].name
+        ))
+    return HttpResponseRedirect(reverse('download_index', args=[domain, app_id]))
