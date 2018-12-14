@@ -57,6 +57,5 @@ branches:
   - vellum-staging   # Nick Dec 10
   - form-has-submissions  # Nick Dec 10
   - mk-215 # MK Dec 13
-  - jls/update-font  # Jenny Dec 14
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
 submodules: {}
