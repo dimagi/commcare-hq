@@ -650,7 +650,7 @@ class RelatedLocationForm(forms.Form):
         super(RelatedLocationForm, self).__init__(*args, **kwargs)
 
         self.fields['related_locations'].widget = LocationSelectWidget(
-            domain, id='id_related_locations', multiselect=True, select2_version='v3'
+            domain, id='id_related_locations', multiselect=True, select2_version='v4'
         )
 
         locations = (
