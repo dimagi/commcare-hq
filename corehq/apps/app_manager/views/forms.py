@@ -12,8 +12,9 @@ import itertools
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
+from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -36,6 +37,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException, XFormValidationFailed)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans, clean_trans
+from corehq.apps.es import FormES
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
     save_xform,
@@ -59,7 +61,9 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
     login_or_digest, api_domain_view,
-    track_domain_request)
+    track_domain_request,
+    LoginAndDomainMixin,
+)
 from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.models import (
@@ -882,3 +886,15 @@ def _get_case_references(data):
         return references
     except Exception:
         raise ValueError("bad case references data: {!r}".format(refs))
+
+
+class FormHasSubmissionsView(LoginAndDomainMixin, View):
+    urlname = 'form_has_submissions'
+
+    def get(self, request, domain, app_id, form_unique_id):
+        app = get_app(domain, app_id)
+        form = app.get_form(form_unique_id)
+        form_has_submissions = FormES().domain(domain).app([app_id]).xmlns([form.xmlns]).count() != 0
+        return JsonResponse({
+            'form_has_submissions': form_has_submissions,
+        })
