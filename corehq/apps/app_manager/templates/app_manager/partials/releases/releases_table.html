@@ -53,6 +53,9 @@
             </button>
         {% endif %}
     </p>
+
+    <div id="build-errors-wrapper"></div>
+
     <div class="row">
         <div class="col-md-3 col-md-offset-9">
             <span class="input-group input-group-sm">
@@ -69,8 +72,6 @@
             </span>
         </div>
     </div>
-
-    <div id="build-errors-wrapper"></div>
 
     <div class="alert alert-danger hide"
          data-bind="visible: buildState() == 'error', css: {hide: false}">
