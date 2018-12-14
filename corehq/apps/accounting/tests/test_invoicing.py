@@ -51,7 +51,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         super(BaseInvoiceTestCase, cls).setUpClass()
 
         # TODO - only call for subclasses that actually need the test plans
-        generator.bootstrap_test_software_plan_versions()
+        # generator.bootstrap_test_software_plan_versions()
 
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
