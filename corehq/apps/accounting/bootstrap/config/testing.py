@@ -20,7 +20,7 @@ BOOTSTRAP_CONFIG_TESTING = {
     },
     (SoftwarePlanEdition.STANDARD, False, False): {
         'role': 'standard_plan_v0',
-        'product_rate_monthly_fee': Decimal('300.00'),
+        'product_rate_monthly_fee': Decimal('100.00'),
         'feature_rates': {
             FeatureType.USER: dict(monthly_limit=4, per_excess_fee=Decimal('1.00')),
             FeatureType.SMS: dict(monthly_limit=3),
