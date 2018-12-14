@@ -1656,7 +1656,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            sync_user_cases.delay(self)
+            sync_user_cases.delay(self._id)
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
