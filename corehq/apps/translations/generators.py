@@ -69,9 +69,12 @@ class AppTranslationsGenerator:
         skip string.
         """
         def _labels_from_question(question):
-            ret = set()
-            ret.add(question['label_ref'])
-            ret.add(question['constraintMsg_ref'])
+            ret = {
+                question['label_ref'],
+                question['constraintMsg_ref'],
+                question['helpMsg_ref'],
+                question['hintMsg_ref'],
+            }
             if question.get('options'):
                 for option in question['options']:
                     ret.add(option['label_ref'])

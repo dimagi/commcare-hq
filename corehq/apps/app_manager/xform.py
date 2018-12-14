@@ -1031,6 +1031,8 @@ class XForm(WrappedNode):
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
                 "constraintMsg_ref": self._normalize_itext_id(cnode.bind_node.attrib.get('{http://openrosa.org/javarosa}constraintMsg')) if cnode.constraint else None,
+                "helpMsg_ref": self._normalize_itext_id(node.find('{f}help').attrib.get('ref')) if node.find('{f}help').exists() else None,
+                "hintMsg_ref": self._normalize_itext_id(node.find('{f}hint').attrib.get('ref')) if node.find('{f}hint').exists()else None,
                 "comment": self._get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self._get_setvalue(path),
