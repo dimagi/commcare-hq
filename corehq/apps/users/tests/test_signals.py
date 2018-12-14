@@ -24,6 +24,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 @mock_out_couch()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
+@patch('corehq.apps.users.models.CommCareUser.project', new=MagicMock)
 class TestUserSignals(SimpleTestCase):
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2.delay')
