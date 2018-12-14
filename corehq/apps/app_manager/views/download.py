@@ -17,7 +17,7 @@ from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versio
 from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
-from corehq.apps.app_manager.models import Application, LatestEnabledBuildProfiles
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import add_odk_profile_after_build, get_enabled_build_profiles_for_version
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.app_manager.tasks import make_async_build
@@ -419,11 +419,11 @@ def download_index(request, domain, app_id):
         'files': OrderedDict(sorted(six.iteritems(files), key=lambda x: x[0])),
         'supports_j2me': request.app.build_spec.supports_j2me(),
         'built_versions': [{
-            'app_id': app_id,
+            'app_id': _app_id,
             'build_id': build_id,
             'version': version,
             'comment': comment,
-        } for app_id, build_id, version, comment in built_versions],
+        } for _app_id, build_id, version, comment in built_versions],
         'enabled_build_profiles': enabled_build_profiles
     })
 

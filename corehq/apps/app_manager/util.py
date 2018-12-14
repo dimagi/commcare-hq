@@ -703,4 +703,4 @@ def get_latest_enabled_build_for_profile(profile_id):
 def get_enabled_build_profiles_for_version(app_id, version):
     from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
     return list(LatestEnabledBuildProfiles.objects.filter(
-            app_id=app_id, version=version).values_list('build_profile_id', flat=True))
+        app_id=app_id, version=version).values_list('build_profile_id', flat=True))

@@ -569,7 +569,7 @@ def toggle_build_profile(request, domain, app_id, build_profile_id):
                 "Latest version available for this profile is {}, which is "
                 "higher than this version. Disable any higher versions first.".format(
                     latest_enabled_build_profile.version
-            )))
+                )))
             return HttpResponseRedirect(reverse('download_index', args=[domain, app_id]))
     if action == 'enable':
         LatestEnabledBuildProfiles.objects.create(
