@@ -648,12 +648,15 @@ def iter_media_files(media_objects):
 def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None, download_targeted_version=False):
     file_iterator = []
     errors = []
+    multimedia_file_count = 0
     if include_multimedia_files:
         app.remove_unused_mappings()
         languages = None
         if build_profile_id is not None:
             languages = app.build_profiles[build_profile_id].langs
-        file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
+        media_objects = list(app.get_media_objects(languages=languages))
+        multimedia_file_count = len(media_objects)
+        file_iterator, errors = iter_media_files(media_objects)
     if include_index_files:
         index_files, index_file_errors, index_file_count = iter_index_files(
             app, build_profile_id=build_profile_id, download_targeted_version=download_targeted_version
@@ -662,7 +665,7 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
 
-    return file_iterator, errors, index_file_count
+    return file_iterator, errors, (index_file_count + multimedia_file_count)
 
 
 class DownloadMultimediaZip(View, ApplicationViewMixin):
