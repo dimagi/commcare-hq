@@ -185,8 +185,9 @@ hqDefine('registration/js/new_user.ko', function () {
             });
 
 
-        // --- Optional for test ----
-        self.phoneNumber = ko.observable().extend({
+        self.phoneNumber = ko.observable(self.phone_number)
+            .extend(_rateLimit)
+            .extend({
                 phone_number_val: 2,
             });
 
@@ -288,7 +289,8 @@ hqDefine('registration/js/new_user.ko', function () {
                 && self.emailDelayed.isValid()
                 && !self.emailDelayed.isValidating()
                 && self.password.isValid()
-                && self.passwordDelayed.isValid();
+                && self.passwordDelayed.isValid()
+                && self.phoneNumber.isValid();
         });
 
         self.disableNextStepOne = ko.computed(function () {

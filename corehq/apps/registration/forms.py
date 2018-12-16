@@ -158,7 +158,10 @@ class RegisterWebUserForm(forms.Form):
                         'phone_number',
                         css_class="input-lg",
                         data_bind="value: phoneNumber, "
-                                  "valueUpdate: 'keyup'"
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: phoneNumber"
+                                  "}",
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
