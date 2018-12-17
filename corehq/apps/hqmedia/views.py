@@ -40,6 +40,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.media_utils import interpolate_media_path
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -270,10 +271,42 @@ def update_multimedia_paths(request, domain, app_id):
             'error': _("Could not find file. Please re-upload file.")
         })
 
-    # TODO: update paths
+    app = get_app(domain, app_id)
+    from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows
+    with get_spreadsheet(f) as spreadsheet:
+        rows = list(spreadsheet.iter_rows())
+        (errors, warnings) = validate_multimedia_paths_rows(app, rows)
+        if len(errors):
+            # TODO: return error
+            pass
+        paths = {row[0]: interpolate_media_path(row[1]) for row in rows}
+        for module in app.modules:
+            for lang in app.langs:
+                if module.icon_by_language(lang) in paths:
+                    # TODO: move into hqmedia.models?
+                    module.set_icon(lang, paths[module.icon_by_language(lang)])
+                # TODO: audio_by_language => set_audio(self, lang, icon_path)
+                # TODO: all the other non-menu module media
+            for form in module.forms:
+                # TODO: handle form (menu + questions)
+                pass
+
+        for old_path, new_path in six.iteritems(paths):
+            app.multimedia_map.update({
+                new_path: app.multimedia_map[old_path],
+            })
+
+        app.save()
+
+        # Force all_media to reset
+        app.all_media.reset_cache(app)
+        app.all_media_paths.reset_cache(app)
+
+        app.remove_unused_mappings()
+        # TODO: warn if any old paths remain in app? can test using one image for both app logo & menu media
 
     return json_response({
-        'success': 1,
+        'success': 1,   # TODO: Some kind of output
     })
 
 
