@@ -5,7 +5,7 @@ AppES
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from .es_query import HQESQuery
-from . import filters, queries
+from . import filters
 
 
 class AppES(HQESQuery):
@@ -23,10 +23,7 @@ class AppES(HQESQuery):
         ] + super(AppES, self).builtin_filters
 
     def build_comment(self, comment):
-        return self.add_query(
-            queries.match(comment, 'build_comment'),
-            queries.MUST,
-        )
+        return self.search_string_query(comment, default_fields=['build_comment'])
 
 
 def is_build(build=True):

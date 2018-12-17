@@ -51,10 +51,12 @@ name: autostaging
 branches:
   - sr-mutliprocessors   # Sravan Nov 13
   - np-export-links  # Nick Nov 25
-  - rn_migrate_multimedia # Rohit 3 Dec
+#  - rn_migrate_multimedia # Rohit 3 Dec
   - mk-transifex-improv # MK Dec 8
   - case-type-changes  # Nick Dec 7
   - vellum-staging   # Nick Dec 10
   - form-has-submissions  # Nick Dec 10
   - mk-215 # MK Dec 13
+  - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
+  - bmb/signup-ux  # Biyeun Dec 17
 submodules: {}

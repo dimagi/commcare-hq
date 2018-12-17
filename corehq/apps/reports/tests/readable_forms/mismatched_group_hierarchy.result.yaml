@@ -7,7 +7,8 @@
   label: You first need to log a facility before you can record information.
   label_ref: need_facility_trigger-label
   options:
-  - {label: Go back and exit form, value: exit_form}
+  - {label: Go back and exit form, label_ref: need_facility_trigger-exit_form-label,
+    value: exit_form}
   relevant: /data/fada_facility_id = ''
   repeat: null
   required: true
@@ -27,8 +28,8 @@
     label: 'Registering birth at facility: ____ (____)'
     label_ref: current_site_confirm-label
     options:
-    - {label: 'Yes', value: '1'}
-    - {label: 'No', value: '0'}
+    - {label: 'Yes', label_ref: current_site_confirm-1-label, value: '1'}
+    - {label: 'No', label_ref: current_site_confirm-0-label, value: '0'}
     relevant: null
     repeat: null
     required: true
@@ -55,8 +56,9 @@
       \ the entered information is correct?"
     label_ref: already_registered-label
     options:
-    - {label: 'Yes, Continue', value: '1'}
-    - {label: 'No, go back and change the values.', value: '0'}
+    - {label: 'Yes, Continue', label_ref: already_registered-1-label, value: '1'}
+    - {label: 'No, go back and change the values.', label_ref: already_registered-0-label,
+      value: '0'}
     relevant: count(instance('casedb')/casedb/case[@case_type='fada_patient'][@status='open'][case_name=
       /data/fada_patient_id]) > 0
     repeat: null
@@ -79,10 +81,10 @@
     label: 'Observation Points Observed:'
     label_ref: fada_observation_points_observed-label
     options:
-    - {label: '1', value: '1'}
-    - {label: '2', value: '2'}
-    - {label: '3', value: '3'}
-    - {label: '4', value: '4'}
+    - {label: '1', label_ref: fada_observation_points_observed-1-label, value: '1'}
+    - {label: '2', label_ref: fada_observation_points_observed-2-label, value: '2'}
+    - {label: '3', label_ref: fada_observation_points_observed-3-label, value: '3'}
+    - {label: '4', label_ref: fada_observation_points_observed-4-label, value: '4'}
     relevant: null
     repeat: null
     required: true
@@ -100,9 +102,9 @@
     label: Was the mother referred out at any point during your observation?
     label_ref: fada_mother_referred-label
     options:
-    - {label: Yes before delivery, value: '2'}
-    - {label: Yes after delivery, value: '1'}
-    - {label: No not referred, value: '0'}
+    - {label: Yes before delivery, label_ref: fada_mother_referred-2-label, value: '2'}
+    - {label: Yes after delivery, label_ref: fada_mother_referred-1-label, value: '1'}
+    - {label: No not referred, label_ref: fada_mother_referred-0-label, value: '0'}
     relevant: null
     repeat: null
     required: true
@@ -120,8 +122,8 @@
     label: Was there a maternal death at any point during your observation?
     label_ref: fada_maternal_death-label
     options:
-    - {label: 'Yes', value: '1'}
-    - {label: 'No', value: '0'}
+    - {label: 'Yes', label_ref: fada_maternal_death-1-label, value: '1'}
+    - {label: 'No', label_ref: fada_maternal_death-0-label, value: '0'}
     relevant: null
     repeat: null
     required: true
@@ -139,8 +141,9 @@
     label: 'Was there a stillbirth or neonatal death any point during your observation? '
     label_ref: fada_stillbirth_neonatal_death-label
     options:
-    - {label: 'Yes', value: '1'}
-    - {label: 'No', value: '0'}
+    - {label: 'Yes', label_ref: copy-1-of-fada_stillbirth_neonatal_death-1-label,
+      value: '1'}
+    - {label: 'No', label_ref: copy-1-of-fada_stillbirth_neonatal_death-0-label, value: '0'}
     relevant: null
     repeat: null
     required: true
@@ -158,8 +161,8 @@
     label: Was a cesarean section performed?
     label_ref: fada_csection-label
     options:
-    - {label: 'Yes', value: '1'}
-    - {label: 'No', value: '0'}
+    - {label: 'Yes', label_ref: fada_csection-1-label, value: '1'}
+    - {label: 'No', label_ref: fada_csection-0-label, value: '0'}
     relevant: null
     repeat: null
     required: true
@@ -177,8 +180,8 @@
     label: Did health care worker assent to observation?
     label_ref: fada_healthworker_assent-label
     options:
-    - {label: 'Yes', value: '1'}
-    - {label: 'No', value: '0'}
+    - {label: 'Yes', label_ref: fada_healthworker_assent-1-label, value: '1'}
+    - {label: 'No', label_ref: fada_healthworker_assent-0-label, value: '0'}
     relevant: null
     repeat: null
     required: true
@@ -198,10 +201,10 @@
       label: ' Assisted with woman''s care (check all that apply)'
       label_ref: fada_assisted_by_obv1-label
       options:
-      - {label: Doctor, value: '1'}
-      - {label: Nurse, value: '2'}
-      - {label: ANM, value: '3'}
-      - {label: Others, value: '4'}
+      - {label: Doctor, label_ref: attended_by-lmo-label, value: '1'}
+      - {label: Nurse, label_ref: attended_by-staff_nurse-label, value: '2'}
+      - {label: ANM, label_ref: attended_by-anm-label, value: '3'}
+      - {label: Others, label_ref: attended_by-dai-label, value: '4'}
       relevant: null
       repeat: null
       required: true
@@ -219,8 +222,8 @@
       label: Maternal temperature obtained?
       label_ref: fada_maternal_temp-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_maternal_temp-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_maternal_temp-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -238,8 +241,8 @@
       label: Maternal blood pressure obtained?
       label_ref: fada_maternal_bp-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_maternal_bp-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_maternal_bp-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -257,8 +260,8 @@
       label: Was partograph started?
       label_ref: fada_partograph-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_partograph-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_partograph-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -276,8 +279,8 @@
       label: Was the paper checklist picked up during care ?
       label_ref: fada_checklist_picked_up_obv1-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_checklist_picked_up_obv1-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_checklist_picked_up_obv1-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -295,8 +298,8 @@
       label: Was the paper checklist picked up after the care was given?
       label_ref: fada_checklist_used_after_care_obv1-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_checklist_used_after_care_obv1-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_checklist_used_after_care_obv1-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -314,8 +317,8 @@
       label: Was the checklist poster observed during care?
       label_ref: fada_checklist_poster_used_obv1-label
       options:
-      - {label: 'Yes', value: 'yes'}
-      - {label: 'No', value: 'no'}
+      - {label: 'Yes', label_ref: fada_checklist_poster_used_obv1-yes-label, value: 'yes'}
+      - {label: 'No', label_ref: fada_checklist_poster_used_obv1-no-label, value: 'no'}
       relevant: null
       repeat: null
       required: true
@@ -333,8 +336,8 @@
       label: Was a birth companion present?
       label_ref: fada_birth_companion_present_obv1-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: birth_companion_present-yes-label, value: '1'}
+      - {label: 'No', label_ref: birth_companion_present-no-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -369,10 +372,10 @@
       label: ' Assisted with woman''s care (check all that apply)'
       label_ref: fada_assisted_by_obv2-label
       options:
-      - {label: Doctor, value: '1'}
-      - {label: Nurse, value: '2'}
-      - {label: ANM, value: '3'}
-      - {label: Others, value: '4'}
+      - {label: Doctor, label_ref: copy-1-of-fada_attended_by_obv2-1-label, value: '1'}
+      - {label: Nurse, label_ref: copy-1-of-fada_attended_by_obv2-2-label, value: '2'}
+      - {label: ANM, label_ref: copy-1-of-fada_attended_by_obv2-3-label, value: '3'}
+      - {label: Others, label_ref: copy-1-of-fada_attended_by_obv2-4-label, value: '4'}
       relevant: null
       repeat: null
       required: true
@@ -390,8 +393,8 @@
       label: Was Oxytocin administered?
       label_ref: fada_oxycotin_administered_obv2-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_oxycotin_administered_obv2-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_oxycotin_administered_obv2-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -409,8 +412,10 @@
       label: Where was oxytocin administered?
       label_ref: fada_oxycotin_administration_location-label
       options:
-      - {label: Intramuscular (IM), value: '1'}
-      - {label: Intravenous (IV), value: '2'}
+      - {label: Intramuscular (IM), label_ref: f-fada_oxycotin_administration_location-1-label,
+        value: '1'}
+      - {label: Intravenous (IV), label_ref: fada_oxycotin_administration_location-2-label,
+        value: '2'}
       relevant: /data/fada_obv2/fada_oxycotin_administered_obv2 = '1'
       repeat: null
       required: true
@@ -428,8 +433,8 @@
       label: "Was water used to clean hands\_ just before delivery?"
       label_ref: fada_water_usage-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_water_usage-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_water_usage-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -447,8 +452,8 @@
       label: Was soap used to clean hands just before delivery?
       label_ref: fada_soap_usage-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_soap_usage-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_soap_usage-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -466,8 +471,8 @@
       label: Was alcohol rub used just before delivery?
       label_ref: fada_alcohol_rub-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_alcohol_rub-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_alcohol_rub-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -485,8 +490,8 @@
       label: Were clean gloves used at the time of delivery?
       label_ref: fada_clean_gloves-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_clean_gloves-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_clean_gloves-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -504,8 +509,8 @@
       label: Was clean towel available at the bedside?
       label_ref: fada_clean_towel-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_clean_towel-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_clean_towel-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -523,8 +528,8 @@
       label: Were sterile scissors/blade to cut cord available at the bedside?
       label_ref: fada_scissors_blade-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_scissors-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_scissors-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -542,8 +547,8 @@
       label: Was a cord ligature/tie available at the bedside?
       label_ref: fada_cord_tie-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_cord_tie-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_cord_tie-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -561,8 +566,8 @@
       label: Was an aspiration bulb or mucus extractor available at the bedside?
       label_ref: fada_mucus_extractor-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_mucus_extractor-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_mucus_extractor-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -580,8 +585,8 @@
       label: Was a neonatal bag and mask available at the bedside?
       label_ref: fada_neonatal_bag-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_neonatal_bag-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_neonatal_bag-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -599,8 +604,8 @@
       label: Were pads for the mother available at the bedside?
       label_ref: fada_pads-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_pads-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_pads-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -618,8 +623,8 @@
       label: Was the paper checklist picked up during care ?
       label_ref: fada_checklist_picked_up_obv2-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_checklist_picked_up_obv2-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_checklist_picked_up_obv2-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -637,8 +642,8 @@
       label: Was the paper checklist picked up after the care was given?
       label_ref: fada_checklist_used_after_care_obv2-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_checklist_used_after_care_obv2-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_checklist_used_after_care_obv2-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -656,8 +661,10 @@
       label: Was the checklist poster observed during care?
       label_ref: fada_checklist_poster_used_obv2-label
       options:
-      - {label: 'Yes', value: 'yes'}
-      - {label: 'No', value: 'no'}
+      - {label: 'Yes', label_ref: copy-1-of-fada_checklist_poster_used_obv1-yes-label,
+        value: 'yes'}
+      - {label: 'No', label_ref: copy-1-of-fada_checklist_poster_used_obv1-no-label,
+        value: 'no'}
       relevant: null
       repeat: null
       required: true
@@ -692,10 +699,10 @@
       label: Assisted with woman's care (check all that apply)
       label_ref: fada_assisted_by_obv3-label
       options:
-      - {label: Doctor, value: '1'}
-      - {label: Nurse, value: '2'}
-      - {label: ANM, value: '3'}
-      - {label: Others, value: '4'}
+      - {label: Doctor, label_ref: f-fada_assisted_by_obv3-1-label, value: '1'}
+      - {label: Nurse, label_ref: f-fada_assisted_by_obv3-2-label, value: '2'}
+      - {label: ANM, label_ref: f-fada_assisted_by_obv3-3-label, value: '3'}
+      - {label: Others, label_ref: f-fada_assisted_by_obv3-4-label, value: '4'}
       relevant: null
       repeat: null
       required: true
@@ -713,8 +720,8 @@
       label: Was Oxytocin administered?
       label_ref: fada_oxycotin_administered_obv3-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_oxycotin_administered_obv3-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_oxycotin_administered_obv3-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -732,8 +739,8 @@
       label: Was neonatal bag and mask used on baby?
       label_ref: baby_intervention-label2
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: baby_intervention-yes-label2, value: '1'}
+      - {label: 'No', label_ref: baby_intervention-no-label2, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -751,8 +758,8 @@
       label: Was a birth companion present?
       label_ref: fada_birth_companion_present_obv3-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_birth_companion_present_obv3-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_birth_companion_present_obv3-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -787,10 +794,10 @@
       label: Assisted with woman's care (check all that apply)
       label_ref: fada_assisted_by_obv4-label
       options:
-      - {label: Doctor, value: '1'}
-      - {label: Nurse, value: '2'}
-      - {label: ANM, value: '3'}
-      - {label: Others, value: '4'}
+      - {label: Doctor, label_ref: copy-1-of-fada_assisted_by_obv4-1-label, value: '1'}
+      - {label: Nurse, label_ref: copy-1-of-fada_assisted_by_obv4-2-label, value: '2'}
+      - {label: ANM, label_ref: copy-1-of-fada_assisted_by_obv4-3-label, value: '3'}
+      - {label: Others, label_ref: copy-1-of-fada_assisted_by_obv4-4-label, value: '4'}
       relevant: null
       repeat: null
       required: true
@@ -808,8 +815,8 @@
       label: Was newborn weight taken?
       label_ref: fada_baby_wt-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: baby_temp-yes-label, value: '1'}
+      - {label: 'No', label_ref: baby_temp-no-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -827,8 +834,8 @@
       label: Was newborn temperature taken?
       label_ref: fada_baby_temp-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_baby_temp-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_baby_temp-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -846,8 +853,8 @@
       label: Was baby placed skin-to-skin on mother's abdomen?
       label_ref: fada_baby_skin_to_skin-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_baby_abdomen-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_baby_abdomen-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -865,8 +872,8 @@
       label: Was the baby still skin-to-skin after 1 hour?
       label_ref: fada_baby_skin_to_skin_for_1_hour-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: copy-1-of-fada_skin_1_hour-1-label, value: '1'}
+      - {label: 'No', label_ref: copy-1-of-fada_skin_1_hour-0-label, value: '0'}
       relevant: /data/fada_obv4/fada_baby_skin_to_skin = '1'
       repeat: null
       required: true
@@ -884,8 +891,8 @@
       label: Was breastfeeding initiated?
       label_ref: fada_breastfeeding-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: copy-1-of-fada_breastfeeding-1-label, value: '1'}
+      - {label: 'No', label_ref: copy-1-of-fada_breastfeeding-0-label, value: '0'}
       relevant: /data/fada_obv4/fada_baby_skin_to_skin = '1'
       repeat: null
       required: true
@@ -903,8 +910,8 @@
       label: Was the paper checklist picked up during care ?
       label_ref: fada_checklist_picked_up_obv4-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_checklist_picked_up_obv4-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_checklist_picked_up_obv4-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -922,8 +929,8 @@
       label: Was the paper checklist picked up after the care was given?
       label_ref: fada_checklist_used_after_care_obv4-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_checklist_used_after_care_obv4-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_checklist_used_after_care_obv4-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -941,8 +948,8 @@
       label: Was the checklist poster observed during care?
       label_ref: fada_checklist_poster_used_obv4-label
       options:
-      - {label: 'Yes', value: 'yes'}
-      - {label: 'No', value: 'no'}
+      - {label: 'Yes', label_ref: f-fada_checklist_poster_used_obv2-yes-label, value: 'yes'}
+      - {label: 'No', label_ref: f-fada_checklist_poster_used_obv2-no-label, value: 'no'}
       relevant: null
       repeat: null
       required: true
@@ -977,8 +984,8 @@
       label: Was maternal temperature obtained at any time?
       label_ref: fada_maternal_temp_anytime-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: fada_maternal_temp_anytime-1-label, value: '1'}
+      - {label: 'No', label_ref: fada_maternal_temp_anytime-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -996,8 +1003,8 @@
       label: Was maternal blood pressure obtained at any time?
       label_ref: fada_maternal_bp_anytime-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_maternal_bp_anytime-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_maternal_bp_anytime-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -1015,8 +1022,8 @@
       label: Was magnesium Sulphate given to mother at any time?
       label_ref: fada_magnesium-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_magnesium-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_magnesium-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -1034,8 +1041,8 @@
       label: Was antibiotics given to mother at any time?
       label_ref: fada_ab_mother-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_ab_mother-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_ab_mother-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -1053,8 +1060,8 @@
       label: Was antibiotics given to baby at any time?
       label_ref: fada_ab_baby-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_ab_child-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_ab_child-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -1072,8 +1079,8 @@
       label: Was antiretroviral to mother at any time?
       label_ref: fada_arv_mother-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_arv_mother-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_arv_mother-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -1091,8 +1098,8 @@
       label: Was antiretroviral to baby at any time?
       label_ref: fada_arv_baby-label
       options:
-      - {label: 'Yes', value: '1'}
-      - {label: 'No', value: '0'}
+      - {label: 'Yes', label_ref: f-fada_arv_baby-1-label, value: '1'}
+      - {label: 'No', label_ref: f-fada_arv_baby-0-label, value: '0'}
       relevant: null
       repeat: null
       required: true
@@ -1125,8 +1132,8 @@
     label: Would you like to highlight this record for your team leader?
     label_ref: fada_highlight_record-label
     options:
-    - {label: 1. Yes, value: 'yes'}
-    - {label: 2. No, value: 'no'}
+    - {label: 1. Yes, label_ref: fada_highlight_record-yes-label, value: 'yes'}
+    - {label: 2. No, label_ref: fada_highlight_record-no-label, value: 'no'}
     relevant: null
     repeat: null
     required: true
