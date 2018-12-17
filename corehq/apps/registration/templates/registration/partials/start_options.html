@@ -1,0 +1,156 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div id="registration-start-container"
+     class="reg-form-container reg-start-container">
+  <div class="well form-bubble-purple">
+    <h2>
+      {% blocktrans %}
+        Get Started With CommCare
+      {% endblocktrans %}
+    </h2>
+
+    <div class="row">
+
+      <div class="col-xs-6 col-break-reg">
+        <a class="well tile start-trial"
+           id="js-start-trial"
+           href="#">
+          <h3>
+            {% blocktrans %}
+              Start a Trial
+            {% endblocktrans %}
+          </h3>
+          <div class="svg-icon">
+            {% include "registration/partials/icon/start_trial.html" %}
+          </div>
+
+          <div class="flip-card">
+            <div class="flipper">
+
+              <div class="front">
+                <p class="desc">
+                  {% blocktrans %}
+                    Explore sample CommCare data collection apps, build
+                    your own, and publish apps to mobile devices.
+                  {% endblocktrans %}
+                </p>
+              </div> {# .front #}
+
+              <div class="back">
+                <ul class="check-list">
+                  <li>
+                    <i class="fa fa-check"></i>
+                    {% blocktrans %}
+                      Trial CommCare's Advanced plan
+                    {% endblocktrans %}
+                  </li>
+                  <li>
+                    <i class="fa fa-check"></i>
+                    {% blocktrans %}
+                      Explore pre-build sample apps
+                    {% endblocktrans %}
+                  </li>
+                  <li>
+                    <i class="fa fa-check"></i>
+                    {% blocktrans %}
+                      Build your own applications
+                    {% endblocktrans %}
+                  </li>
+                  <li>
+                    <i class="fa fa-check"></i>
+                    {% blocktrans %}
+                      Deploy applications to mobile devices
+                    {% endblocktrans %}
+                  </li>
+                </ul>
+              </div> {# .back #}
+
+            </div> {# .fipper #}
+          </div> {# .flip-card #}
+
+          <p class="btn-wrapper">
+            <span class="btn btn-primary">
+              {% trans "Start Trial" %}
+            </span>
+          </p>
+        </a>{# .well #}
+      </div>{# .col-sm-6 #}
+      <div class="col-xs-6 col-break-reg">
+        <a class="well tile get-tour{% if demo_workflow_ab and demo_workflow_ab.version == 'drift' %} schedule-demo-drift-cta{% endif %}"
+           id="js-get-tour"
+           {% if demo_workflow_ab and demo_workflow_ab.version == 'drift' %}
+           href="#"
+           {% else %}
+           href="#cta-form-get-demo"
+           data-toggle="modal"
+          {% endif %}
+        >
+          <h3>
+            {% blocktrans %}
+              Get a Tour
+            {% endblocktrans %}
+          </h3>
+          <div class="svg-icon">
+            {% include "registration/partials/icon/get_tour.html" %}
+          </div>
+
+          <div class="flip-card">
+            <div class="flipper">
+
+              <div class="front">
+                <p class="desc">
+                  {% blocktrans %}
+                    Start with a 1:1 demo of data collection with CommCare,
+                    customized to your own project.
+                  {% endblocktrans %}
+                </p>
+              </div> {# .front #}
+
+              <div class="back">
+                <ul class="check-list">
+                  <li>
+                    <i class="fa fa-check"></i>
+                    {% blocktrans %}
+                      1:1 CommCare Introduction
+                    {% endblocktrans %}
+                  </li>
+                  <li>
+                    <i class="fa fa-check"></i>
+                    {% blocktrans %}
+                      Product experts on hand to answer any questions
+                    {% endblocktrans %}
+                  </li>
+                  <li>
+                    <i class="fa fa-check"></i>
+                    {% blocktrans %}
+                      Demo apps customized to your own project
+                    {% endblocktrans %}
+                  </li>
+                </ul>
+              </div> {# .back #}
+
+            </div> {# .fipper #}
+          </div> {# .flip-card #}
+
+          <p class="btn-wrapper">
+            <span class="btn btn-primary">
+              {% trans "Get Tour" %}
+            </span>
+          </p>
+        </a>{# .well #}
+      </div>{# .col-sm-6 #}
+    </div>{# .row #}
+
+    <p class="text-center chat-options">
+      {% blocktrans %}
+        Not sure which option is right for you?<br />
+        Chat with us now.<br /><br />
+      {% endblocktrans %}
+      <a href="#" class="btn btn-purple">
+        {% trans "Start Chat" %}
+      </a>
+    </p>
+
+  </div>{#  .start-wrapper #}
+</div>{# .reg-form-container #}

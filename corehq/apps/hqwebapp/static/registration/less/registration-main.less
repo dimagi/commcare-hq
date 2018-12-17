@@ -187,3 +187,246 @@ p.validation-message-block {
 .sign-up-bubble {
   margin: 10px 0;
 }
+
+.no-touch .reg-start-container {
+  margin-top: 6vh;
+
+  @media(max-height: 770px) {
+    margin-top: 0;
+  }
+}
+
+.touch .reg-start-container {
+  margin-top: 8vh;
+
+  @media(max-height: 950px) {
+    margin-top: 5vh;
+  }
+
+  @media(max-height: 870px) {
+    margin-top: 0;
+  }
+}
+
+.reg-start-container > .well {
+  margin-top: 20px;
+  padding: 20px;
+  .border-top-radius(5px);
+  .border-bottom-radius(5px);
+
+  h2 {
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+  }
+}
+
+.reg-start-container .check-list {
+  @_text-indent: 8px;
+  padding: 0;
+  padding-left: @_text-indent;
+  margin: 0;
+  list-style: none;
+
+  li {
+    text-indent: -@_text-indent;
+    margin-left: @_text-indent;
+    font-size: 12px;
+  }
+}
+
+.reg-start-container .tile {
+  transition: .4s border ease-in-out;
+  border: 4px solid transparent;
+  display: block;
+
+  .svg-icon {
+    text-align: center;
+  }
+
+  .svg-icon svg {
+    width: 90px;
+    height: 90px;
+
+    .st0 {
+      fill: none;
+      stroke: @cc-brand-mid;
+      stroke-miterlimit: 10;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      stroke-width: 2;
+    }
+
+    .commcare-flower path {
+      fill: @cc-brand-mid;
+    }
+  }
+
+  h3,
+  p {
+    text-align: center;
+  }
+
+  .desc {
+    font-size: 12px;
+  }
+
+  .btn-wrapper {
+    margin-top: 10px;
+  }
+
+  .btn {
+    transition: .4s background-color ease-in-out
+  }
+
+  &:hover {
+    text-decoration: none;
+    box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.5);
+  }
+}
+
+._make-btn-primary-choice (@color) {
+  .btn-primary {
+    background-color: @color;
+    border-color: @color;
+  }
+
+  &:focus {
+    .btn-primary {
+      background-color: darken(@color, 10%);
+      border-color: darken(@color, 25%);
+    }
+  }
+
+  &:hover {
+    .btn-primary {
+      background-color: darken(@color, 10%);
+      border-color: darken(@color, 12%);
+    }
+  }
+}
+
+.reg-start-container .tile {
+  height: 385px;
+
+  p,
+  ul {
+    color: @cc-text;
+  }
+
+}
+
+.reg-start-container .tile .flip-card {
+  margin-top: 5px;
+}
+
+.no-touch .reg-start-container .tile .flip-card {
+  height: 140px;
+
+  .front {
+    padding-top: 25px;
+  }
+}
+
+.no-touch .reg-start-container .tile.get-tour .flip-card .back {
+  padding-top: 10px;
+}
+
+.touch .reg-start-container .tile {
+  height: 480px;
+
+  .flip-card {
+    padding-top: 0;
+
+    .front {
+      height: 88px;
+    }
+
+    .back {
+      height: 150px;
+    }
+  }
+}
+
+.reg-start-container .start-trial {
+  h3,
+  .fa {
+    color: @cc-brand-mid;
+  }
+
+  &:hover,
+  &:focus {
+    border-color:  @cc-brand-mid;
+  }
+
+  ._make-btn-primary-choice(@call-to-action-mid);
+}
+
+.reg-start-container .get-tour {
+  h3,
+  .fa {
+    color: @cc-dark-cool-accent-mid;
+  }
+
+  .svg-icon svg {
+    .st0 {
+      stroke: @cc-dark-cool-accent-mid;
+    }
+
+    .commcare-flower path {
+      fill: @cc-dark-cool-accent-mid;
+    }
+  }
+
+  &:hover,
+  &:focus {
+    border-color:  @cc-dark-cool-accent-mid;
+  }
+  ._make-btn-primary-choice(@cc-dark-cool-accent-mid);
+}
+
+// this is the width when the reg-form-container starts to shrink
+@media (max-width: 489px) {
+  .col-break-reg {
+    float: none;
+    width: 100%;
+  }
+
+  .touch,
+  .no-touch {
+    .reg-start-container {
+      margin-top: 0;
+    }
+  }
+
+  .no-touch .reg-start-container .tile {
+    height: 340px;
+
+    .flip-card {
+      height: 80px;
+
+      .front {
+        padding-top: 10px;
+      }
+
+      .back {
+        padding-top: 0 !important;
+      }
+    }
+  }
+
+  .touch .reg-start-container .tile {
+    height: auto;
+
+    .flip-card .front,
+    .flip-card .back {
+      padding-top: 0;
+      padding-bottom: 5px;
+    }
+
+    .flip-card .front,
+    .flip-card .back {
+      height: auto;
+    }
+  }
+}

@@ -1,0 +1,61 @@
+
+.no-touch .tile:hover .flip-card .flipper {
+  -webkit-transform:rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+.no-touch .flip-card {
+  -webkit-perspective:1000px;
+  perspective: 1000px;
+
+  .flipper {
+    position: relative;
+    -webkit-transform-style:preserve-3d;
+    transform-style: preserve-3d;
+    -webkit-transition:.6s;
+    transition: .6s;
+  }
+
+  &:hover .flipper,
+  &.flipped .flipper {
+    -webkit-transform: rotateY(180deg);
+    transform: rotateY(180deg);
+  }
+
+  .front,
+  .back {
+    -webkit-backface-visibility:hidden;
+    backface-visibility: hidden;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+
+  .front {
+    -webkit-transform:rotateY(0deg);
+    transform: rotateY(0deg);
+    z-index: 2;
+  }
+
+  .back {
+    -webkit-transform: rotateY(180deg);
+    transform: rotateY(180deg);
+  }
+}
+
+.touch .flip-card {
+  -webkit-perspective: inherit;
+  perspective: inherit;
+
+  .front,
+  .back {
+    height: auto;
+    left: auto;
+    padding-bottom: 20px;
+    position: initial;
+    -webkit-transform: rotateY(0deg);
+    transform: rotateY(0deg);
+  }
+}

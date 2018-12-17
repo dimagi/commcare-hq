@@ -2,6 +2,25 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
 
+    $('#js-start-trial').click(function (e) {
+        e.preventDefault();
+        $('#registration-start-container').addClass('hide');
+        $('#registration-form-container').fadeIn();
+    });
+
+    var kissmetrics = hqImport('analytix/js/kissmetrix');
+    kissmetrics.whenReadyAlways(function () {
+
+        $('#js-start-trial').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked start trial");
+        });
+
+        $('#js-get-tour').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked get a tour");
+            kissmetrics.track.event("Demo Workflow - Get A Tour Button Clicked (new UX)");
+        });
+    });
+
     // Link up with registration form ko model
     var reg = hqImport('registration/js/new_user.ko');
     reg.onModuleLoad = function () {
