@@ -63,6 +63,16 @@ class BlobMeta(PartitionedModel, Model):
     properties = NullJsonField(default=dict)
     created_on = DateTimeField(default=datetime.utcnow)
     expires_on = DateTimeField(default=None, null=True)
+    deleted_on = DateTimeField(
+        default=None,
+        null=True,
+        help_text="""Timestamp when the blob was deleted.
+
+        This is used for blobs that do not expire but end up deleted for
+        some reason. It should help in researching blobs that are
+        missing at the content storage level.
+        """,
+    )
 
     class Meta:
         unique_together = [
