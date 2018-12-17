@@ -5,6 +5,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
 
         self.fileId = ko.observable('');
 
+        // Messaging
         self.genericErrorMessage = gettext("There was an error processing your file. Please try again or report an issue if the problem persists.");
         self.serverError = ko.observable('');
         self.errorMessages = ko.observableArray();
@@ -12,6 +13,9 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
         self.successMessage = ko.observable('');
         self.successMessages = ko.observableArray();
 
+        // Controls for disabling, etc in UI
+        self.isValidating = ko.observable(false);
+        self.isUpdating = ko.observable(false);
         self.allowUpdate = ko.computed(function () {
             return self.fileId() && !self.serverError() && !self.errorMessages().length;
         });
@@ -25,8 +29,8 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
         };
 
         self.validate = function (form) {
-            // TODO: spinner behavior
             self.clearMessages();
+            self.isValidating(true);
             $.ajax({
                 method: 'POST',
                 url: self.validateUrl,
@@ -34,6 +38,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                 processData: false,
                 contentType: false,
                 success: function (data) {
+                    self.isValidating(false);
                     if (data.success) {     // file was uploaded successfully, though its content may have errors
                         self.fileId(data.file_id);
                         self.errorMessages(data.errors);
@@ -46,6 +51,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                     }
                 },
                 error: function () {
+                    self.isValidating(false);
                     self.serverError(self.genericError);
                 },
             });
@@ -54,7 +60,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
         };
 
         self.update = function () {
-            // TODO: spinner behavior
+            self.isUpdating(true);
             self.clearMessages();
             $.ajax({
                 method: 'POST',
@@ -63,6 +69,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                     file_id: self.fileId(),
                 },
                 success: function (data) {
+                    self.isUpdating(false);
                     if (data.success) {
                         if (!_.isEmpty(data.errors)) {
                             self.errorMessages(data.errors);
@@ -84,6 +91,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                     }
                 },
                 error: function () {
+                    self.isUpdating(false);
                     self.serverError(self.genericError);
                 },
             });
