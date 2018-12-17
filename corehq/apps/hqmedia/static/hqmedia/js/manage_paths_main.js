@@ -10,6 +10,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
         self.errorMessages = ko.observableArray();
         self.warningMessages = ko.observableArray();
         self.successMessage = ko.observable('');
+        self.successMessages = ko.observableArray();
 
         self.allowUpdate = ko.computed(function () {
             return self.fileId() && !self.serverError() && !self.errorMessages().length;
@@ -20,6 +21,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
             self.errorMessages.removeAll();
             self.warningMessages.removeAll();
             self.successMessage('');
+            self.successMessages.removeAll();
         };
 
         self.validate = function (form) {
@@ -62,7 +64,21 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                 },
                 success: function (data) {
                     if (data.success) {
-                        alert("TODO: implement");
+                        if (!_.isEmpty(data.errors)) {
+                            self.errorMessages(data.errors);
+                        }
+
+                        if (_.isEmpty(data.success_counts)) {
+                            self.successMessage(gettext("No items were found to update."));
+                        } else {
+                            var messageTemplate = _.template(gettext("<%= count %> item(s) were updated in <%= link %>"));
+                            self.successMessages(_.map(data.success_counts, function (count, id) {
+                                return messageTemplate({
+                                    count: data.success_counts[id],
+                                    link: data.success_links[id],
+                                });
+                            }));
+                        }
                     } else {
                         self.serverError(data.error || self.genericError);
                     }
