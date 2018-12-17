@@ -4,8 +4,15 @@ $(function () {
 
     $('#js-start-trial').click(function (e) {
         e.preventDefault();
-        $('#registration-start-container').addClass('hide');
+        $('#registration-start-container').hide();
         $('#registration-form-container').fadeIn();
+
+        $('#back-to-start-btn').removeClass('hide');
+    });
+
+    $('#back-to-start-btn').click(function () {
+        $('#registration-form-container').hide();
+        $('#registration-start-container').fadeIn();
     });
 
     var kissmetrics = hqImport('analytix/js/kissmetrix');

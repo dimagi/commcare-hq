@@ -162,6 +162,11 @@ class RegisterWebUserForm(forms.Form):
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
+                        ugettext("Back"),
+                        css_id="back-to-start-btn",
+                        css_class="btn btn-default btn-lg hide",
+                    ),
+                    twbscrispy.StrictButton(
                         ugettext("Next"),
                         css_class="btn btn-primary btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
