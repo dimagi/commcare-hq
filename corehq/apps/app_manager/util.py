@@ -690,14 +690,15 @@ def get_form_source_download_url(xform):
     ])
 
 
-def get_latest_enabled_build_for_profile(profile_id):
+@quickcache(['domain', 'profile_id'], timeout=24 * 60 * 60)
+def get_latest_enabled_build_for_profile(domain, profile_id):
     from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
     latest_enabled_build = (LatestEnabledBuildProfiles.objects.
                             filter(build_profile_id=profile_id)
                             .order_by('-version')
                             .first())
     if latest_enabled_build:
-        return latest_enabled_build.build_id
+        return get_app(domain, latest_enabled_build.build_id)
 
 
 def get_enabled_build_profiles_for_version(app_id, version):
