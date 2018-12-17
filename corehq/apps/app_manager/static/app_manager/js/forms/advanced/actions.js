@@ -1,14 +1,14 @@
 hqDefine('app_manager/js/forms/advanced/actions', function () {
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
-        CaseProperty = hqImport('app_manager/js/forms/advanced/case_properties').CaseProperty,
-        CasePreloadProperty = hqImport('app_manager/js/forms/advanced/case_properties').CasePreloadProperty;
+        caseProperty = hqImport('app_manager/js/forms/advanced/case_properties').caseProperty,
+        casePreloadProperty = hqImport('app_manager/js/forms/advanced/case_properties').casePreloadProperty;
 
-    var CaseIndex = {
+    var caseIndex = {
         mapping: {
             include: ['tag', 'reference_id', 'relationship'],
         },
         wrap: function (data) {
-            var self = ko.mapping.fromJS(data, CaseIndex.mapping);
+            var self = ko.mapping.fromJS(data, caseIndex.mapping);
             self.relationship.subscribe(function (value) {
                 if (value === 'extension' && self.reference_id() === 'parent') {
                     self.reference_id('host');
@@ -20,7 +20,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
         },
     };
 
-    var ActionBase = {
+    var actionBase = {
         validate: function (self, case_type, case_tag) {
             if (!self.caseConfig.caseConfigViewModel) {
                 return;
@@ -137,7 +137,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
         relationshipTypes: ['child', 'extension'],
     };
 
-    var LoadUpdateAction = {
+    var loadUpdateAction = {
         mapping: function (self) {
             return {
                 include: [
@@ -150,18 +150,18 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 ],
                 preload: {
                     create: function (options) {
-                        return CasePreloadProperty.wrap(options.data, self);
+                        return casePreloadProperty.wrap(options.data, self);
                     },
                 },
                 case_properties: {
                     create: function (options) {
-                        return CaseProperty.wrap(options.data, self);
+                        return caseProperty.wrap(options.data, self);
                     },
                 },
                 auto_select: {
                     create: function (options) {
                         if (options.data) {
-                            return AutoSelect.wrap(options.data, self);
+                            return autoSelect.wrap(options.data, self);
                         } else {
                             return null;
                         }
@@ -170,7 +170,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 load_case_from_fixture: {
                     create: function (options) {
                         if (options.data) {
-                            return LoadCaseFromFixture.wrap(options.data, self);
+                            return loadCaseFromFixture.wrap(options.data, self);
                         } else {
                             return null;
                         }
@@ -178,7 +178,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 },
                 case_index: {
                     create: function (options) {
-                        return CaseIndex.wrap(options.data);
+                        return caseIndex.wrap(options.data);
                     },
                 },
             };
@@ -188,7 +188,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 caseConfig: caseConfig,
                 actionType: 'load',
             };
-            ko.mapping.fromJS(data, LoadUpdateAction.mapping(self), self);
+            ko.mapping.fromJS(data, loadUpdateAction.mapping(self), self);
 
             // for compatibility with common templates
             // template: case-config:condition
@@ -253,9 +253,9 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 },
             });
 
-            self.case_tag = ActionBase.case_tag(self);
+            self.case_tag = actionBase.case_tag(self);
 
-            self.close_case = ko.computed(ActionBase.close_case(self));
+            self.close_case = ko.computed(actionBase.close_case(self));
 
             self.validate = ko.computed(function () {
                 if (self.auto_select) {
@@ -278,7 +278,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                     }
                     return null;
                 } else {
-                    return ActionBase.validate(self, self.case_type(), self.case_tag());
+                    return actionBase.validate(self, self.case_type(), self.case_tag());
                 }
             });
 
@@ -287,7 +287,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 return self.preload();
             });
 
-            self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
+            self.propertyCounts = ko.computed(actionBase.propertyCounts(self));
 
             self.preloadCounts = ko.computed(function () {
                 var count = {};
@@ -302,11 +302,11 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             });
 
             self.suggestedProperties = ko.computed(function () {
-                return ActionBase.suggestedProperties(self, !self.subcase());
+                return actionBase.suggestedProperties(self, !self.subcase());
             });
 
             self.addProperty = function () {
-                self.case_properties.push(CaseProperty.wrap({
+                self.case_properties.push(caseProperty.wrap({
                     key: '',
                     path: '',
                     required: false,
@@ -319,7 +319,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
 
             self.addPreload = function () {
-                self.preload.push(CasePreloadProperty.wrap({
+                self.preload.push(casePreloadProperty.wrap({
                     key: '',
                     path: '',
                     required: false,
@@ -344,10 +344,10 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
 
             self.header = ko.computed(function () {
-                return ActionBase.header(self);
+                return actionBase.header(self);
             });
 
-            self.relationshipTypes = ActionBase.relationshipTypes;
+            self.relationshipTypes = actionBase.relationshipTypes;
 
             var add_circular = function () {
                 // hacky way to prevent trying to access caseConfigViewModel before it is defined
@@ -404,9 +404,9 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
             self.preload.remove(blank);
             self.case_properties.remove(blank);
-            ActionBase.clean_condition(self.close_condition);
+            actionBase.clean_condition(self.close_condition);
             self.show_product_stock(self.disable_tag());
-            var action = ko.mapping.toJS(self, LoadUpdateAction.mapping(self));
+            var action = ko.mapping.toJS(self, loadUpdateAction.mapping(self));
 
             action.preload = caseConfigUtils.preloadArrayToDict(action.preload);
             action.case_properties = caseConfigUtils.propertyArrayToDict([], action.case_properties)[0];
@@ -414,7 +414,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
         },
     };
 
-    var OpenCaseAction = {
+    var openCaseAction = {
         mapping: function (self) {
             return {
                 include: [
@@ -426,12 +426,12 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 ],
                 case_properties: {
                     create: function (options) {
-                        return CaseProperty.wrap(options.data, self);
+                        return caseProperty.wrap(options.data, self);
                     },
                 },
                 case_indices: {
                     create: function (options) {
-                        return CaseIndex.wrap(options.data, self);
+                        return caseIndex.wrap(options.data, self);
                     },
                 },
             };
@@ -441,7 +441,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 caseConfig: caseConfig,
                 actionType: 'open',
             };
-            ko.mapping.fromJS(data, OpenCaseAction.mapping(self), self);
+            ko.mapping.fromJS(data, openCaseAction.mapping(self), self);
 
             // for compatibility with common templates
             // template: case-config:condition
@@ -459,13 +459,13 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
             self.suggestedProperties = ko.computed(function () {
                 return caseConfigUtils.filteredSuggestedProperties(
-                    ActionBase.suggestedProperties(self, false),
+                    actionBase.suggestedProperties(self, false),
                     self.case_properties()
                 );
             });
 
             self.validate = ko.computed(function () {
-                return ActionBase.validate(self, self.case_type(), self.case_tag());
+                return actionBase.validate(self, self.case_type(), self.case_tag());
             });
 
             self.parent_tags = function () {
@@ -482,7 +482,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 },
                 write: function (value) {
                     if (value) {
-                        self.case_indices.push(CaseIndex.wrap({
+                        self.case_indices.push(caseIndex.wrap({
                             tag: gettext('Select parent'),
                             reference_id: 'parent',
                             relationship: 'child',
@@ -501,7 +501,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                  * we need to copy values to another instance, and then reset the
                  * values in the form.
                  */
-                self.case_indices.push(CaseIndex.wrap({
+                self.case_indices.push(caseIndex.wrap({
                     tag: '',
                     reference_id: 'parent',
                     relationship: 'child',
@@ -512,15 +512,15 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 self.case_indices.remove(viewModel);
             };
 
-            self.case_tag = ActionBase.case_tag(self);
+            self.case_tag = actionBase.case_tag(self);
 
-            self.close_case = ko.computed(ActionBase.close_case(self));
+            self.close_case = ko.computed(actionBase.close_case(self));
 
             self.header = ko.computed(function () {
-                return ActionBase.header(self);
+                return actionBase.header(self);
             });
 
-            self.propertyCounts = ko.computed(ActionBase.propertyCounts(self));
+            self.propertyCounts = ko.computed(actionBase.propertyCounts(self));
 
             self.name_path = ko.computed(function () {
                 try {
@@ -537,7 +537,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
 
             self.addProperty = function () {
-                self.case_properties.push(CaseProperty.wrap({
+                self.case_properties.push(caseProperty.wrap({
                     key: '',
                     path: '',
                     required: false,
@@ -549,7 +549,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 self.caseConfig.saveButton.fire('change');
             };
 
-            self.relationshipTypes = ActionBase.relationshipTypes;
+            self.relationshipTypes = actionBase.relationshipTypes;
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
@@ -598,9 +598,9 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             if (self.case_indices().length > 0 && !self.allow_subcase()) {
                 self.case_indices.removeAll();
             }
-            ActionBase.clean_condition(self.open_condition);
-            ActionBase.clean_condition(self.close_condition);
-            var action = ko.mapping.toJS(self, OpenCaseAction.mapping(self));
+            actionBase.clean_condition(self.open_condition);
+            actionBase.clean_condition(self.close_condition);
+            var action = ko.mapping.toJS(self, openCaseAction.mapping(self));
             var x = caseConfigUtils.propertyArrayToDict(['name'], action.case_properties);
             action.case_properties = x[0];
             action.name_path = x[1].name;
@@ -609,12 +609,12 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
         },
     };
 
-    var AutoSelect = {
+    var autoSelect = {
         mapping: {
             include: ['mode', 'value_source', 'value_key'],
         },
         wrap: function (data, action) {
-            var self = ko.mapping.fromJS(data, AutoSelect.mapping);
+            var self = ko.mapping.fromJS(data, autoSelect.mapping);
             self.action = action;
             self.isBlank = ko.computed(function () {
                 return !self.value_source() && !self.value_key();
@@ -628,7 +628,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
         },
     };
 
-    var LoadCaseFromFixture = {
+    var loadCaseFromFixture = {
         mapping: {
             include: [
                 'fixture_nodeset',
@@ -641,7 +641,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             ],
         },
         wrap: function (data, action) {
-            var self = _.extend({}, action, ko.mapping.fromJS(data, LoadCaseFromFixture.mapping));
+            var self = _.extend({}, action, ko.mapping.fromJS(data, loadCaseFromFixture.mapping));
             self.isBlank = ko.computed(function () {
                 return !self.fixture_nodeset() &&
                     !self.fixture_tag() &&
@@ -676,7 +676,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
     };
 
     return {
-        LoadUpdateAction: LoadUpdateAction,
-        OpenCaseAction: OpenCaseAction,
+        loadUpdateAction: loadUpdateAction,
+        openCaseAction: openCaseAction,
     };
 });
