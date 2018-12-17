@@ -27,7 +27,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_app
 )
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
-from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
+from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.soft_assert import soft_assert
@@ -36,7 +36,8 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
-    USERCASE_PREFIX)
+    USERCASE_PREFIX,
+)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
