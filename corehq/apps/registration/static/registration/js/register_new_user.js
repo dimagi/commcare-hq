@@ -19,6 +19,10 @@ $(function () {
             kissmetrics.track.event("Signup alt ux dec2018 - clicked get a tour");
             kissmetrics.track.event("Demo Workflow - Get A Tour Button Clicked (new UX)");
         });
+
+        $('#start-chat-cta-btn').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked start chat");
+        });
     });
 
     // Link up with registration form ko model
