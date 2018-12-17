@@ -523,17 +523,16 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                                 "Role '%s' does not exist"
                             ) % role)
 
-                    # following blocks require user doc id, so it needs to be saved if new user
-                    user.save()
                     if can_assign_locations:
                         locations_updated = set(user.assigned_location_ids) != set(location_ids)
                         primary_location_removed = (user.location_id and not location_ids or
                                                     user.location_id not in location_ids)
 
                         if primary_location_removed:
-                            user.unset_location()
+                            user.unset_location(commit=False)
                         if locations_updated:
-                            user.reset_locations(location_ids)
+                            user.reset_locations(location_ids, commit=False)
+                    user.save()
 
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
