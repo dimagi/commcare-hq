@@ -594,7 +594,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters):
+def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters, task, total_count):
 
     def _get_group_names(user):
         return sorted([group_memoizer.get(id).name for id in Group.by_user(user, wrap=False)], key=alphanumeric_sort_key)
@@ -646,13 +646,14 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for user in get_commcare_users_by_filters(domain, user_filters):
+    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
         unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
         user_groups_length = max(user_groups_length, len(group_names))
         max_location_length = max(max_location_length, len(user_dict["location_code"]))
+        DownloadBase.set_progress(task, n, total_count)
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
@@ -710,7 +711,14 @@ def parse_groups(groups):
     return group_headers, _get_group_rows()
 
 
-def dump_users_and_groups(domain, download_id, user_filters):
+def count_users_and_groups(domain, user_filters, group_memoizer):
+    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+    groups_count = len(group_memoizer.groups)
+
+    return users_count + groups_count
+
+
+def dump_users_and_groups(domain, download_id, user_filters, task):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
     def _load_memoizer(domain):
@@ -732,6 +740,9 @@ def dump_users_and_groups(domain, download_id, user_filters):
     group_memoizer = _load_memoizer(domain)
     location_cache = LocationIdToSiteCodeCache(domain)
 
+    users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
+    DownloadBase.set_progress(task, 0, users_groups_count)
+
     user_data_model = CustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
@@ -742,7 +753,9 @@ def dump_users_and_groups(domain, download_id, user_filters):
         domain,
         user_data_model,
         location_cache,
-        user_filters
+        user_filters,
+        task,
+        users_groups_count,
     )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
@@ -766,3 +779,4 @@ def dump_users_and_groups(domain, download_id, user_filters):
     writer.close()
 
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+    DownloadBase.set_progress(task, users_groups_count, users_groups_count)
