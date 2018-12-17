@@ -40,7 +40,7 @@ def expire_latest_enabled_build_profiles(sender, application, **kwargs):
     if application.copy_of:
         for build_profile_id in application.build_profiles:
             get_latest_enabled_build_for_profile.clear(application.domain, build_profile_id)
-        get_enabled_build_profiles_for_version(application.get_id, application.version)
+        get_enabled_build_profiles_for_version.clear(application.get_id, application.version)
 
 
 app_post_save = Signal(providing_args=['application'])
