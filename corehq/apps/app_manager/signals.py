@@ -34,9 +34,19 @@ def update_callcenter_config(sender, application, **kwargs):
         notify_exception(None, "Error updating CallCenter config for app build")
 
 
+def expire_latest_enabled_build_profiles(sender, application, **kwargs):
+    from corehq.apps.app_manager.util import get_latest_enabled_build_for_profile
+    from corehq.apps.app_manager.util import get_enabled_build_profiles_for_version
+    if application.copy_of:
+        for build_profile_id in application.build_profiles:
+            get_latest_enabled_build_for_profile.clear(application.domain, build_profile_id)
+        get_enabled_build_profiles_for_version(application.get_id, application.version)
+
+
 app_post_save = Signal(providing_args=['application'])
 
 app_post_save.connect(create_app_structure_repeat_records)
 app_post_save.connect(update_callcenter_config)
+app_post_save.connect(expire_latest_enabled_build_profiles)
 
 app_post_release = Signal(providing_args=['application'])

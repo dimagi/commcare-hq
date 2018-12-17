@@ -573,19 +573,22 @@ def toggle_build_profile(request, domain, build_id, build_profile_id):
                 )))
             return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
     if action == 'enable':
-        LatestEnabledBuildProfiles.objects.create(
+        build_profile = LatestEnabledBuildProfiles.objects.create(
             app_id=build.copy_of,
             version=build.version,
             build_profile_id=build_profile_id,
             build_id=build_id
         )
+        build_profile.expire_cache(domain)
     elif action == 'disable':
-        LatestEnabledBuildProfiles.objects.filter(
+        build_profile = LatestEnabledBuildProfiles.objects.filter(
             app_id=build.copy_of,
             version=build.version,
             build_profile_id=build_profile_id,
             build_id=build_id
-        ).delete()
+        ).first()
+        build_profile.delete()
+        build_profile.expire_cache(domain)
     latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
         app_id=build.copy_of,
         build_profile_id=build_profile_id
