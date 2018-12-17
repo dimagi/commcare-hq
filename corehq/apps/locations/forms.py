@@ -57,7 +57,7 @@ class LocationSelectWidget(forms.Widget):
             raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
         self.template = versioned_templates[select2_version]
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         location_ids = value.split(',') if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
@@ -75,7 +75,7 @@ class LocationSelectWidget(forms.Widget):
 
 class ParentLocWidget(forms.Widget):
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         return get_template(
             'locations/manage/partials/parent_loc_widget.html'
         ).render({
@@ -86,7 +86,7 @@ class ParentLocWidget(forms.Widget):
 
 class LocTypeWidget(forms.Widget):
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         return get_template(
             'locations/manage/partials/loc_type_widget.html'
         ).render({
