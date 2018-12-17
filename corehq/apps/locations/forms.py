@@ -48,6 +48,7 @@ class LocationSelectWidget(forms.Widget):
             self.query_url = query_url
         else:
             self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+        self.select2_version = select2_version
 
         versioned_templates = {
             'v3': 'locations/manage/partials/autocomplete_select_widget_v3.html',
@@ -71,6 +72,11 @@ class LocationSelectWidget(forms.Widget):
             'multiselect': self.multiselect,
             'initial_data': initial_data,
         })
+
+    def value_from_datadict(self, data, files, name):
+        if self.multiselect and self.select2_version == 'v4':
+            return data.getlist(name)
+        return super(LocationSelectWidget, self).value_from_datadict(data, files, name)
 
 
 class ParentLocWidget(forms.Widget):
@@ -638,7 +644,7 @@ class LocationFixtureForm(forms.ModelForm):
 
 
 class RelatedLocationForm(forms.Form):
-    related_locations = forms.CharField(
+    related_locations = forms.Field(
         label=ugettext_lazy("Related Locations"),
         required=False,
     )
@@ -681,10 +687,6 @@ class RelatedLocationForm(forms.Form):
         for name, value in cleaned_data.items():
             if name.startswith('relation_distance_') and value and value < 0:
                 raise forms.ValidationError("The distance cannot be a negative value")
-
-    def clean_related_locations(self):
-        # Django uses get by default, but related_locations is actually a list
-        return self.data.getlist('related_locations')
 
     def save(self):
         selected_location_ids = self.cleaned_data['related_locations']
