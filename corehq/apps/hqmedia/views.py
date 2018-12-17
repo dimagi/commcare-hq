@@ -311,13 +311,20 @@ def update_multimedia_paths(request, domain, app_id):
         app.all_media.reset_cache(app)
         app.all_media_paths.reset_cache(app)
 
+        # Warn if any old paths remain in app (because they're used in a place this function doesn't know about)
+        warnings = []
         app.remove_unused_mappings()
-        # TODO: warn if any old paths remain in app? can test using one image for both app logo & menu media
+        app_paths = {m.path: True for m in app.all_media()}
+        for old_path, new_path in six.iteritems(paths):
+            if old_path in app_paths:
+                warnings.append(_("Could not completely update path <code>{}</code>, "
+                                  "please check app for remaining references.").format(old_path))
 
     return json_response({
         'success': 1,
         'success_counts': success_counts,
         'success_links': success_links,
+        'warnings': warnings,
     })
 
 

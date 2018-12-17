@@ -71,10 +71,12 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                 success: function (data) {
                     self.isUpdating(false);
                     if (data.success) {
-                        if (!_.isEmpty(data.errors)) {
-                            self.errorMessages(data.errors);
+                        self.errorMessages(data.errors || []);
+                        if (self.errorMessages().length) {
+                            return;
                         }
 
+                        self.warningMessages(data.warnings);
                         if (_.isEmpty(data.success_counts)) {
                             self.successMessage(gettext("No items were found to update."));
                         } else {
