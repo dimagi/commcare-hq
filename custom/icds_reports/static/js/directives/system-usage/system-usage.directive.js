@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function SystemUsageController($rootScope, $scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations) {
+function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -101,7 +101,7 @@ function SystemUsageController($rootScope, $scope, $http, $log, $routeParams, $l
     };
 
     vm.getShowSystemUsageMessageCookie = function () {
-        if (!document.cookie.includes("showSystemUsageMessage=")) {
+        if (document.cookie.indexOf("showSystemUsageMessage=") === -1) {
             return void(0);
         }
         return document.cookie.split("showSystemUsageMessage=")[1].split(';')[0] !== 'false';
@@ -125,7 +125,7 @@ function SystemUsageController($rootScope, $scope, $http, $log, $routeParams, $l
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$rootScope', '$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {
