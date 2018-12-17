@@ -79,6 +79,15 @@
                         <li data-bind="html: $data"></li>
                     </ul>
                 </div>
+                <div class="alert alert-success" data-bind="visible: successMessages().length">
+                    {% blocktrans %}
+                        The following updates were made successfully.
+                    {% endblocktrans %}
+                    <br><br>
+                    <ul data-bind="foreach: successMessages">
+                        <li data-bind="html: $data"></li>
+                    </ul>
+                </div>
             </form>
         </div>
     </div>

@@ -277,17 +277,26 @@ def update_multimedia_paths(request, domain, app_id):
         rows = list(spreadsheet.iter_rows())
         (errors, warnings) = validate_multimedia_paths_rows(app, rows)
         if len(errors):
-            # TODO: return error
-            pass
+            return json_response({
+                'success': 1,
+                'errors': errors,
+            })
         paths = {row[0]: interpolate_media_path(row[1]) for row in rows}
+        success_counts = defaultdict(lambda: 0)
+        success_links = defaultdict(lambda: '')
         for module in app.modules:
+            success_links[module.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_module",
+                args=[domain, app.id, module.unique_id]), module.default_name())
             for lang in app.langs:
                 if module.icon_by_language(lang) in paths:
                     # TODO: move into hqmedia.models?
                     module.set_icon(lang, paths[module.icon_by_language(lang)])
+                    success_counts[module.unique_id] += 1
                 # TODO: audio_by_language => set_audio(self, lang, icon_path)
                 # TODO: all the other non-menu module media
             for form in module.forms:
+                success_links[module.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_form",
+                    args=[domain, app.id, form.unique_id]), form.default_name())
                 # TODO: handle form (menu + questions)
                 pass
 
@@ -306,7 +315,9 @@ def update_multimedia_paths(request, domain, app_id):
         # TODO: warn if any old paths remain in app? can test using one image for both app logo & menu media
 
     return json_response({
-        'success': 1,   # TODO: Some kind of output
+        'success': 1,
+        'success_counts': success_counts,
+        'success_links': success_links,
     })
 
 
