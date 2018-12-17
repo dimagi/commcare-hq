@@ -682,8 +682,12 @@ class RelatedLocationForm(forms.Form):
             if name.startswith('relation_distance_') and value and value < 0:
                 raise forms.ValidationError("The distance cannot be a negative value")
 
+    def clean_related_locations(self):
+        # Django uses get by default, but related_locations is actually a list
+        return self.data.getlist('related_locations')
+
     def save(self):
-        selected_location_ids = self.cleaned_data['related_locations'].split(',')
+        selected_location_ids = self.cleaned_data['related_locations']
         selected_location_ids = set(list(filter(None, selected_location_ids)))
 
         previous_location_ids = self.related_location_ids
