@@ -51,7 +51,7 @@ name: autostaging
 branches:
   - sr-mutliprocessors   # Sravan Nov 13
   - np-export-links  # Nick Nov 25
-  - rn_migrate_multimedia # Rohit 3 Dec
+#  - rn_migrate_multimedia # Rohit 3 Dec
   - mk-transifex-improv # MK Dec 8
   - case-type-changes  # Nick Dec 7
   - vellum-staging   # Nick Dec 10
