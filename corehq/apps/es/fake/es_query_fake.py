@@ -171,7 +171,9 @@ class ESQueryFake(object):
                 return {key: doc[key] for key in self._source_fields if key in doc}
             return doc
 
-        return ScanResult(total, (ESQuerySet.normalize_result(self, {'_source': _get_doc(r)}) for r in result_docs))
+        es_query_set = (ESQuerySet.normalize_result(self,
+                                                    {'_source': _get_doc(r)}) for r in result_docs)
+        return ScanResult(total, es_query_set)
 
     @check_deep_copy
     def term(self, field, value):
