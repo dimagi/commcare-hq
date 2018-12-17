@@ -71,7 +71,7 @@ def get_user_type(user_id):
         return DEMO_USER_TYPE
     elif user_id == COMMTRACK_USERNAME:
         return COMMCARE_SUPPLY_USER_TYPE
-    else:
+    elif user_id:
         try:
             user = CouchUser.get(user_id)
             if user.is_web_user():
