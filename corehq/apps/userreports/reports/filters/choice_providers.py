@@ -16,6 +16,7 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
+from corehq.apps.es.utils import values_list
 import six
 
 DATA_SOURCE_COLUMN = 'data_source_column'
@@ -347,7 +348,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
     @staticmethod
     def get_choices_from_es_query(group_es):
         return [Choice(group_id, name)
-                for group_id, name in group_es.values_list('_id', 'name')]
+                for group_id, name in values_list(group_es.scroll(), '_id', 'name')]
 
     def default_value(self, user):
         return None

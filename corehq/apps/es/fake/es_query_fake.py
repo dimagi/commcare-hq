@@ -8,6 +8,7 @@ import uuid
 from corehq.apps.es.es_query import ESQuerySet
 from corehq.apps.es.utils import values_list
 from six.moves import filter
+from corehq.elastic import ScanResult
 
 FILTER_TEMPLATE = """
     def {fn}(self, ...):
@@ -153,6 +154,24 @@ class ESQueryFake(object):
                 'total': total,
             },
         }, self)
+
+    def scroll(self):
+        result_docs = list(self._result_docs)
+        total = len(result_docs)
+        if self._sort_field:
+            result_docs.sort(key=lambda doc: doc[self._sort_field],
+                             reverse=self._sort_desc)
+        if self._size is not None:
+            result_docs = result_docs[self._start:self._start + self._size]
+        else:
+            result_docs = result_docs[self._start:]
+
+        def _get_doc(doc):
+            if self._source_fields:
+                return {key: doc[key] for key in self._source_fields if key in doc}
+            return doc
+
+        return ScanResult(total, (ESQuerySet.normalize_result(self, {'_source': _get_doc(r)}) for r in result_docs))
 
     @check_deep_copy
     def term(self, field, value):
