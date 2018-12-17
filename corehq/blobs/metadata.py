@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import chain
 
+import attr
 from django.db import connections
 
 from corehq.sql_db.routers import get_cursor
@@ -62,6 +63,9 @@ class MetaDB(object):
     def delete(self, key, content_length):
         """Delete blob metadata
 
+        Metadata for temporary blobs is deleted. Non-temporary metadata
+        is retained to make it easier to track down missing blobs.
+
         :param key: Blob key string.
         :returns: The number of metadata rows deleted.
         """
@@ -77,12 +81,22 @@ class MetaDB(object):
         """
         if any(meta.id is None for meta in metas):
             raise ValueError("cannot delete unsaved BlobMeta")
-        parents = defaultdict(list)
+        parents = defaultdict(IdLists)
         for meta in metas:
-            parents[meta.parent_id].append(meta.id)
+            data = parents[meta.parent_id]
+            if meta.expires_on is None:
+                data.keep.append(meta.id)
+            else:
+                data.temp.append(meta.id)
         for dbname, split_parent_ids in split_list_by_db_partition(parents):
-            ids = chain.from_iterable(parents[x] for x in split_parent_ids)
-            BlobMeta.objects.using(dbname).filter(id__in=list(ids)).delete()
+            temps = [m for p in split_parent_ids for m in parents[p].temp]
+            keeps = [m for p in split_parent_ids for m in parents[p].keep]
+            if temps:
+                BlobMeta.objects.using(dbname).filter(id__in=temps).delete()
+            if keeps:
+                BlobMeta.objects.using(dbname).filter(id__in=keeps).update(
+                    deleted_on=datetime.utcnow()
+                )
         deleted_bytes = sum(meta.content_length for m in metas)
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
         datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
@@ -161,6 +175,12 @@ class MetaDB(object):
                 "UPDATE blobs_blobmeta SET parent_id = %s WHERE parent_id = %s",
                 [new_parent_id, old_parent_id],
             )
+
+
+@attr.s
+class IdLists(object):
+    keep = attr.ib(factory=list)  # non-temporary ids
+    temp = attr.ib(factory=list)  # temporary/expired ids
 
 
 def _utcnow():
