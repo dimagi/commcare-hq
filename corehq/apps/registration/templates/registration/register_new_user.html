@@ -77,16 +77,27 @@
   {% if demo_workflow_ab %}
     {% analytics_ab_test 'kissmetrics.demo_workflow_ab' demo_workflow_ab %}
   {% endif %}
+{% if signup_ux_ab %}
+  {% analytics_ab_test 'kissmetrics.signup_ux_ab' signup_ux_ab %}
+{% endif %}
+
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
 
 {% registerurl 'process_registration' %}
+
 <div class="container">
   <div class="row">
     <div class="col-xs-12">
+
+      {% if is_saas_environment and signup_ux_ab and signup_ux_ab.version == 'on' %}
+        {% include 'registration/partials/start_options.html' %}
+      {% endif %}
+
       <div id="registration-form-container"
-           class="reg-form-container">
+           class="reg-form-container"
+           {% if is_saas_environment and signup_ux_ab and signup_ux_ab.version == 'on'  %}style="display: none;"{% endif %}>
         <ul class="form-step-progress">
           <li class="active">{% trans "Create Account" %}</li>
           <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
