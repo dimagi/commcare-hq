@@ -197,7 +197,7 @@ class RegisterWebUserForm(forms.Form):
                         data_bind="checked: eulaConfirmed"
                     ),
                     twbscrispy.StrictButton(
-                        ugettext("Previous"),
+                        ugettext("Back"),
                         css_class="btn btn-default btn-lg",
                         data_bind="click: previousStep"
                     ),
