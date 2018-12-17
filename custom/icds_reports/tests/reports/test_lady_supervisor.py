@@ -27,7 +27,7 @@ class TestDemographics(TestCase):
             'format': 'number',
             'percent': None,
             'value': 1,
-            'label': 'Number of AWCs visited/ Number of AWCs launched',
+            'label': 'Number of AWCs visited',
             'frequency': 'month',
             'help_text': lady_supervisor_number_of_awcs_visited_help_text()
         }
