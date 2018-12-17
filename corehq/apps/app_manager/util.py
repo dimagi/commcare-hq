@@ -701,7 +701,8 @@ def get_latest_enabled_build_for_profile(domain, profile_id):
         return get_app(domain, latest_enabled_build.build_id)
 
 
-def get_enabled_build_profiles_for_version(app_id, version):
+@quickcache(['build_id', 'version'], timeout=24 * 60 * 60)
+def get_enabled_build_profiles_for_version(build_id, version):
     from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
     return list(LatestEnabledBuildProfiles.objects.filter(
-        app_id=app_id, version=version).values_list('build_profile_id', flat=True))
+        build_id=build_id, version=version).values_list('build_profile_id', flat=True))

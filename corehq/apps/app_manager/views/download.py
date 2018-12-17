@@ -412,7 +412,7 @@ def download_index(request, domain, app_id):
     built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
     enabled_build_profiles = []
     if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-        enabled_build_profiles = get_enabled_build_profiles_for_version(request.app.copy_of, request.app.version)
+        enabled_build_profiles = get_enabled_build_profiles_for_version(request.app.get_id, request.app.version)
 
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
