@@ -69,21 +69,21 @@ hqDefine("app_manager/js/modules/module_view", function () {
         // Validation for case type
         var showCaseTypeError = function (message) {
             var $caseTypeError = $('#case_type_error');
-            $caseTypeError.css('display', 'block');
+            $caseTypeError.css('display', 'block').removeClass('hide');
             $caseTypeError.text(message);
         };
         var hideCaseTypeError = function () {
-            $('#case_type_error').css('display', 'none');
+            $('#case_type_error').addClass('hide');
         };
 
         var showCaseTypeChangedWarning = function () {
             if (casesExist) {
-                $('#case_type_changed_warning').css('display', 'block');
+                $('#case_type_changed_warning').css('display', 'block').removeClass('hide');
                 $('#case_type_form_group').addClass('has-error');
             }
         };
         var hideCaseTypeChangedWarning = function () {
-            $('#case_type_changed_warning').css('display', 'none');
+            $('#case_type_changed_warning').addClass('hide');
             $('#case_type_form_group').removeClass('has-error');
         };
 
