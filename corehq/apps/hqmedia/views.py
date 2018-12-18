@@ -285,17 +285,12 @@ def update_multimedia_paths(request, domain, app_id):
             })
         paths = {row[0]: interpolate_media_path(row[1]) for row in rows}
         success_counts = defaultdict(lambda: 0)
-        success_links = defaultdict(lambda: '')
         # TODO: make outer loop paths
         for module in app.modules:
-            success_links[module.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_module",
-                args=[domain, app.id, module.unique_id]), module.default_name())
             for old_path, new_path in six.iteritems(paths):
                 success_counts[module.unique_id] += module.rename_media(old_path, new_path)
             # TODO: all the other non-menu module media
             for form in module.forms:
-                success_links[form.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_form",
-                    args=[domain, app.id, form.unique_id]), form.default_name())
                 for old_path, new_path in six.iteritems(paths):
                     success_counts[form.unique_id] += form.rename_media(old_path, new_path)
                 # TODO: move somewhere like app_manager.xform?
@@ -314,6 +309,21 @@ def update_multimedia_paths(request, domain, app_id):
                 new_path: app.multimedia_map[old_path],
             })
 
+        # Put together success messages
+        successes = []
+        for module in app.modules:
+            if success_counts[module.unique_id]:
+                successes.append(_("{} item(s) updated in <a href='{}' target='_blank'>{}</a>").format(
+                                 success_counts[module.unique_id],
+                                 reverse("view_module", args=[domain, app.id, module.unique_id]),
+                                 module.default_name()))
+            for form in module.forms:
+                if success_counts[form.unique_id]:
+                    successes.append(_("{} item(s) updated in <a href='{}' target='_blank'>{}</a>").format(
+                                     success_counts[form.unique_id],
+                                     reverse("view_form", args=[domain, app.id, form.unique_id]),
+                                     "{} > {}".format(module.default_name(), form.default_name())))
+
         app.save()
 
         # Force all_media to reset
@@ -331,8 +341,7 @@ def update_multimedia_paths(request, domain, app_id):
 
     return json_response({
         'success': 1,
-        'success_counts': success_counts,
-        'success_links': success_links,
+        'successes': successes,
         'warnings': warnings,
     })
 

@@ -77,16 +77,9 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                         }
 
                         self.warningMessages(data.warnings);
-                        if (_.isEmpty(data.success_counts)) {
+                        self.successMessages(data.successes)
+                        if (!self.successMessages().length) {
                             self.successMessage(gettext("No items were found to update."));
-                        } else {
-                            var messageTemplate = _.template(gettext("<%= count %> item(s) were updated in <%= link %>"));
-                            self.successMessages(_.map(data.success_counts, function (count, id) {
-                                return messageTemplate({
-                                    count: data.success_counts[id],
-                                    link: data.success_links[id],
-                                });
-                            }));
                         }
                     } else {
                         self.serverError(data.error || self.genericError);
