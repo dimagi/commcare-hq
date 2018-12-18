@@ -690,6 +690,14 @@ class XForm(WrappedNode):
         expanded_audio = self.media_references_by_lang(lang=lang, form="expanded-audio")
         return images + video + audio + inline_video + expanded_audio
 
+    def rename_media(self, old_path, new_path):
+        update_count = 0
+        for node in self.itext_node.findall('{f}translation/{f}text/{f}value'):
+            if node.text == old_path:
+                node.xml.text = new_path
+                update_count += 1
+        return update_count
+
     def _get_instance_ids(self):
         def _get_instances():
             return itertools.chain(
