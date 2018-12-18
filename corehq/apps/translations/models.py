@@ -5,6 +5,11 @@ from dimagi.ext.couchdbkit import (Document, DictProperty,
     StringProperty, ListProperty)
 from dimagi.utils.couch import CouchDocLockableMixIn
 
+from django.db import models
+from django.contrib import admin
+from django.utils.functional import cached_property
+from corehq.motech.utils import b64_aes_decrypt
+
 
 class TranslationMixin(Document):
     translations = DictProperty()
@@ -92,3 +97,29 @@ class Translation(object):
                 return dict([(key, val[0]) for key, val in translations.items()])
             else:
                 return translations
+
+
+class TransifexOrganization(models.Model):
+    slug = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    api_token = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name + ' (' + self.slug + ')'
+
+    @cached_property
+    def get_api_token(self):
+        return b64_aes_decrypt(self.api_token)
+
+
+class TransifexProject(models.Model):
+    organization = models.ForeignKey(TransifexOrganization)
+    slug = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name + ' (' + self.slug + ')'
+
+
+admin.site.register(TransifexProject)
