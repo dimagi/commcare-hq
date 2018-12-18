@@ -1660,6 +1660,18 @@ class NavMenuItemMediaMixin(DocumentSchema):
             if old_value not in app.all_media_paths():
                 app.multimedia_map.pop(old_value, None)
 
+    def rename_media(self, old_path, new_path):
+        app = self.get_app()
+        update_count = 0
+        for lang in app.langs:
+            if self.icon_by_language(lang) == old_path:
+                self.set_icon(lang, new_path)
+                update_count += 1
+            if self.audio_by_language(lang) == old_path:
+                self.set_audio(lang, new_path)
+                update_count += 1
+        return update_count
+
     def set_icon(self, lang, icon_path):
         self._set_media('media_image', lang, icon_path)
 
