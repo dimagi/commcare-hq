@@ -1712,56 +1712,6 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     return FileWrapper(open(path, 'rb'))
 
 
-@requires_privilege_json_response(privileges.API_ACCESS)
-def download_cases(request, domain):
-    return download_cases_internal(request, domain)
-
-
-@login_or_digest
-@require_case_export_permission
-@require_GET
-def download_cases_internal(request, domain):
-    """
-    bypass api access checks to allow internal use
-    """
-    include_closed = json.loads(request.GET.get('include_closed', 'false'))
-    try:
-        format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
-    except URLError as e:
-        return HttpResponseBadRequest(e.reason)
-    group = request.GET.get('group', None)
-    user_filter, _ = UserTypeFilter.get_user_filter(request)
-
-    async = request.GET.get('async') == 'true'
-
-    kwargs = {
-        'domain': domain,
-        'include_closed': include_closed,
-        'format': format,
-        'group': group,
-        'user_filter': user_filter,
-    }
-    payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
-    content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
-    content_type = "%s" % format.mimetype
-
-    def generate_payload(payload_func):
-        if async:
-            download = DownloadBase()
-            a_task = prepare_download.delay(download.download_id, payload_func,
-                                            content_disposition, content_type)
-            download.set_task(a_task)
-            return download.get_start_response()
-        else:
-            payload = payload_func()
-            response = HttpResponse(payload)
-            response['Content-Type'] = content_type
-            response['Content-Disposition'] = content_disposition
-            return response
-
-    return generate_payload(payload_func)
-
-
 def _get_form_context(request, domain, instance):
     timezone = get_timezone_for_user(request.couch_user, domain)
     try:
