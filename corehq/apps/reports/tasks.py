@@ -94,6 +94,10 @@ def send_delayed_report(report_id):
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
+
+    # If the report's start date is later than today, return and do not send the email
+    if notification.start_date > datetime.today().date():
+        return
     try:
         notification.send()
     except UnsupportedScheduledReportError:
