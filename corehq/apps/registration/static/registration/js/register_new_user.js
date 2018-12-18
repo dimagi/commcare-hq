@@ -15,6 +15,12 @@ $(function () {
         $('#registration-start-container').fadeIn();
     });
 
+    $('.view-features').click(function (e) {
+        e.preventDefault();
+
+        $('.tile-wrapper').addClass('show-features');
+    });
+
     var kissmetrics = hqImport('analytix/js/kissmetrix');
     kissmetrics.whenReadyAlways(function () {
 
