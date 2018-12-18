@@ -62,7 +62,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             url: hqImport('hqwebapp/js/initial_page_data').reverse('existing_case_types'),
             success: function (data) {
                 casesExist = data.existing_case_types.includes(originalCaseType);
-            }
+            },
         });
 
         // Validation for case type
@@ -125,7 +125,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             }
         });
 
-        $('.save-button-holder').button().on('click', function() {
+        $('.save-button-holder').button().on('click', function () {
             hideCaseTypeChangedWarning();
         });
 
