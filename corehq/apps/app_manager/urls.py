@@ -12,6 +12,7 @@ from corehq.apps.app_manager.views import (
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
     DownloadAppSummaryView,
+    FormHasSubmissionsView,
     PromptSettingsUpdateView,
     view_app,
     multimedia_ajax, current_app_version, paginate_releases,
@@ -76,6 +77,8 @@ app_urls = [
         name='update_build_comment'),
     url(r'^copy/gzip$', export_gzip, name='gzip_app'),
     url(r'^update_prompts/$', PromptSettingsUpdateView.as_view(), name=PromptSettingsUpdateView.urlname),
+    url(r'^form_has_submissions/(?P<form_unique_id>[\w-]+)/$', FormHasSubmissionsView.as_view(),
+        name=FormHasSubmissionsView.urlname),
 ]
 
 

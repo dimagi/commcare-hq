@@ -16,6 +16,7 @@ from django.contrib import messages
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
 from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
+from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
 from corehq.apps.domain.decorators import track_domain_request
 
 from dimagi.utils.logging import notify_exception
@@ -250,6 +251,8 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
                                  'xform']),
         'patchUrl': reverse('patch_xform',
                             args=[domain, app.id, form.get_unique_id()]),
+        'hasSubmissionsUrl': reverse(FormHasSubmissionsView.urlname,
+                                     args=[domain, app.id, form.get_unique_id()]),
         'allowedDataNodeReferences': [
             "meta/deviceID",
             "meta/instanceID",
