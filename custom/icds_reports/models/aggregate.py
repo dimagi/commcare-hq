@@ -291,7 +291,7 @@ class ChildHealthMonthly(models.Model):
     muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
     mother_phone_number = models.TextField(blank=True, null=True)
     date_death = models.DateField(blank=True, null=True)
-    ccs_record_case_id = models.TextField(blank=True, null=True)
+    mother_case_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False

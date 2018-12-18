@@ -3,8 +3,12 @@ from __future__ import absolute_import, unicode_literals
 import tempfile
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.util import get_table_name
 
+from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import CcsRecordMonthly, ChildHealthMonthly, AggAwc
+
 
 class MBTHelper(object):
 
@@ -13,9 +17,14 @@ class MBTHelper(object):
         self.month = month
 
     @property
+    def domain(self):
+        # Currently its only possible for one domain to have access to the ICDS dashboard per env
+        return DASHBOARD_DOMAIN
+
+    @property
     def columns(self):
         raise NotImplementedError
-    
+
     @property
     def base_tablename(self):
         return self.base_class._meta.db_table
@@ -29,12 +38,13 @@ class MBTHelper(object):
     def output_file(self):
         temp_dir = tempfile.gettempdir()
         return '{}/{}_{}_{}.csv'.format(temp_dir, self.base_tablename, self.state_name, self.month)
+
     @property
     def location_columns(self):
         return ('awc.state_name', 'awc.district_name', 'awc.block_name', 'awc.awc_name', 'awc.awc_site_code')
-    
+
     def query(self):
-        return  """
+        return """
         COPY (SELECT {columns} FROM {table} t LEFT JOIN awc_location awc on t.awc_id=awc.doc_id WHERE awc.state_id='{state_id}' AND t.month='{month}') TO '{output}' WITH CSV HEADER;
         """.format(
             columns=','.join(self.columns + self.location_columns),
@@ -50,7 +60,7 @@ class CcsMbtHelper(MBTHelper):
 
     @property
     def columns(self):
-        return ('awc_id',
+        return ('t.awc_id',
                 'case_id',
                 'month',
                 'age_in_months',
@@ -144,80 +154,113 @@ class ChildHealthMbtHelper(MBTHelper):
     base_class = ChildHealthMonthly
 
     @property
+    def person_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
+    def ccs_record_monthly_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases_monthly_tableau_v2')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
     def columns(self):
-        return ('awc_id',
-                'case_id',
-                'month',
-                'age_in_months',
-                'open_in_month',
-                'alive_in_month',
-                'wer_eligible',
-                'nutrition_status_last_recorded',
-                'current_month_nutrition_status',
-                'nutrition_status_weighed',
-                'num_rations_distributed',
-                'pse_eligible',
-                'pse_days_attended',
-                'born_in_month',
-                'low_birth_weight_born_in_month',
-                'bf_at_birth_born_in_month',
-                'ebf_eligible',
-                'ebf_in_month',
-                'ebf_not_breastfeeding_reason',
-                'ebf_drinking_liquid',
-                'ebf_eating',
-                'ebf_no_bf_no_milk',
-                'ebf_no_bf_pregnant_again',
-                'ebf_no_bf_child_too_old',
-                'ebf_no_bf_mother_sick',
-                'cf_eligible',
-                'cf_in_month',
-                'cf_diet_diversity',
-                'cf_diet_quantity',
-                'cf_handwashing',
-                'cf_demo',
-                'fully_immunized_eligible',
-                'fully_immunized_on_time',
-                'fully_immunized_late',
-                'counsel_ebf',
-                'counsel_adequate_bf',
-                'counsel_pediatric_ifa',
-                'counsel_comp_feeding_vid',
-                'counsel_increase_food_bf',
-                'counsel_manage_breast_problems',
-                'counsel_skin_to_skin',
-                'counsel_immediate_breastfeeding',
-                'recorded_weight',
-                'recorded_height',
-                'has_aadhar_id',
-                'thr_eligible',
-                'pnc_eligible',
-                'cf_initiation_in_month',
-                'cf_initiation_eligible',
-                'height_measured_in_month',
-                'current_month_stunting',
-                'stunting_last_recorded',
-                'wasting_last_recorded',
-                'current_month_wasting',
-                'valid_in_month',
-                'valid_all_registered_in_month',
-                'ebf_no_info_recorded',
-                'dob',
-                'sex',
-                'age_tranche',
-                'caste',
-                'disabled',
-                'minority',
-                'resident',
-                'immunization_in_month',
-                'days_ration_given_child',
-                'zscore_grading_hfa',
-                'zscore_grading_hfa_recorded_in_month',
-                'zscore_grading_wfh',
-                'zscore_grading_wfh_recorded_in_month',
-                'muac_grading',
-                'ccs_record_case_id',
-                'date_death')
+        return ('t.awc_id',
+                't.case_id',
+                't.month',
+                't.age_in_months',
+                't.open_in_month',
+                't.alive_in_month',
+                't.wer_eligible',
+                't.nutrition_status_last_recorded',
+                't.current_month_nutrition_status',
+                't.nutrition_status_weighed',
+                't.num_rations_distributed',
+                't.pse_eligible',
+                't.pse_days_attended',
+                't.born_in_month',
+                't.low_birth_weight_born_in_month',
+                't.bf_at_birth_born_in_month',
+                't.ebf_eligible',
+                't.ebf_in_month',
+                't.ebf_not_breastfeeding_reason',
+                't.ebf_drinking_liquid',
+                't.ebf_eating',
+                't.ebf_no_bf_no_milk',
+                't.ebf_no_bf_pregnant_again',
+                't.ebf_no_bf_child_too_old',
+                't.ebf_no_bf_mother_sick',
+                't.cf_eligible',
+                't.cf_in_month',
+                't.cf_diet_diversity',
+                't.cf_diet_quantity',
+                't.cf_handwashing',
+                't.cf_demo',
+                't.fully_immunized_eligible',
+                't.fully_immunized_on_time',
+                't.fully_immunized_late',
+                't.counsel_ebf',
+                't.counsel_adequate_bf',
+                't.counsel_pediatric_ifa',
+                't.counsel_comp_feeding_vid',
+                't.counsel_increase_food_bf',
+                't.counsel_manage_breast_problems',
+                't.counsel_skin_to_skin',
+                't.counsel_immediate_breastfeeding',
+                't.recorded_weight',
+                't.recorded_height',
+                't.has_aadhar_id',
+                't.thr_eligible',
+                't.pnc_eligible',
+                't.cf_initiation_in_month',
+                't.cf_initiation_eligible',
+                't.height_measured_in_month',
+                't.current_month_stunting',
+                't.stunting_last_recorded',
+                't.wasting_last_recorded',
+                't.current_month_wasting',
+                't.valid_in_month',
+                't.valid_all_registered_in_month',
+                't.ebf_no_info_recorded',
+                't.dob',
+                't.sex',
+                't.age_tranche',
+                't.caste',
+                't.disabled',
+                't.minority',
+                't.resident',
+                't.immunization_in_month',
+                't.days_ration_given_child',
+                't.zscore_grading_hfa',
+                't.zscore_grading_hfa_recorded_in_month',
+                't.zscore_grading_wfh',
+                't.zscore_grading_wfh_recorded_in_month',
+                't.muac_grading',
+                'ccs.case_id as ccs_record_case_id',
+                't.date_death')
+
+    def query(self):
+        return """
+        COPY (SELECT {columns} FROM {table} t
+        LEFT JOIN awc_location awc on t.awc_id=awc.doc_id
+        LEFT JOIN "{person_cases_ucr}" mother on mother.doc_id=t.mother_case_id
+          AND awc.state_id = mother.state_id
+          AND lower(substring(mother.state_id, '.{{3}}$'::text)) = '{state_id_last_3}'
+        LEFT JOIN "{ccs_cases_monthly_ucr}" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob
+        WHERE awc.state_id='{state_id}' AND t.month='{month}')
+        TO '{output}' WITH CSV HEADER;
+        """.format(
+            columns=','.join(self.columns + self.location_columns),
+            table=self.base_tablename,
+            state_id=self.state_id,
+            month=self.month,
+            output=self.output_file,
+            person_cases_ucr=self.person_case_ucr_tablename,
+            ccs_cases_monthly_ucr=self.ccs_record_monthly_ucr_tablename,
+            state_id_last_3=self.state_id[-3:]
+        )
 
 
 class AwcMbtHelper(MBTHelper):
@@ -361,7 +404,7 @@ class AwcMbtHelper(MBTHelper):
                 'infra_infant_weighing_scale')
 
     def query(self):
-        return  """
+        return """
         COPY (SELECT {columns} FROM {table} t LEFT JOIN awc_location awc on t.awc_id=awc.doc_id WHERE awc.state_id='{state_id}' AND t.month='{month}' and t.aggregation_level=5) TO '{output}' WITH CSV HEADER;
         """.format(
             columns=','.join(self.columns + self.location_columns),

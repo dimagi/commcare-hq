@@ -44,7 +44,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
-    
+
     @property
     def tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))

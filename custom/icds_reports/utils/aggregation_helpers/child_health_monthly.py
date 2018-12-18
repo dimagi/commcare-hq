@@ -53,12 +53,6 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return get_table_name(self.domain, config.table_id)
 
     @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
-    @property
     def tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
@@ -288,7 +282,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             """),
             ("mother_phone_number", "child_health.mother_phone_number"),
             ("date_death", "child_health.date_death"),
-            ("ccs_record_case_id", "ccs.doc_id")
+            ("mother_case_id", "child_health.mother_case_id")
         )
         return """
         INSERT INTO "{tablename}" (
@@ -312,8 +306,6 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
               AND child_health.state_id = pnc.state_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
-            LEFT OUTER JOIN "{person_cases_ucr}" mother on mother.doc_id=child_health.mother_case_id
-            LEFT OUTER JOIN "{ccs_cases_monthly_ucr}" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=child_health.dob
             WHERE child_health.doc_id IS NOT NULL
               AND child_health.state_id = %(state_id)s
               AND lower(substring(child_health.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
@@ -330,8 +322,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
-            person_cases_ucr=self.person_case_ucr_tablename,
-            ccs_cases_monthly_ucr=self.ccs_record_monthly_ucr_tablename
+            person_cases_ucr=self.person_case_ucr_tablename
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),
