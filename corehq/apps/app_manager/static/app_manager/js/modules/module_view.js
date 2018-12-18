@@ -57,6 +57,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
 
         var originalCaseType = initial_page_data('case_type');
         var casesExist = false;
+        // If this async request is slow or fails, we will default to hiding the case type changed warning.
         $.ajax({
             method: 'GET',
             url: hqImport('hqwebapp/js/initial_page_data').reverse('existing_case_types'),
