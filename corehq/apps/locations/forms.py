@@ -48,6 +48,7 @@ class LocationSelectWidget(forms.Widget):
             self.query_url = query_url
         else:
             self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+        self.select2_version = select2_version
 
         versioned_templates = {
             'v3': 'locations/manage/partials/autocomplete_select_widget_v3.html',
@@ -57,7 +58,7 @@ class LocationSelectWidget(forms.Widget):
             raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
         self.template = versioned_templates[select2_version]
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         location_ids = value.split(',') if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
@@ -72,10 +73,15 @@ class LocationSelectWidget(forms.Widget):
             'initial_data': initial_data,
         })
 
+    def value_from_datadict(self, data, files, name):
+        if self.multiselect and self.select2_version == 'v4':
+            return data.getlist(name)
+        return super(LocationSelectWidget, self).value_from_datadict(data, files, name)
+
 
 class ParentLocWidget(forms.Widget):
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         return get_template(
             'locations/manage/partials/parent_loc_widget.html'
         ).render({
@@ -86,7 +92,7 @@ class ParentLocWidget(forms.Widget):
 
 class LocTypeWidget(forms.Widget):
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         return get_template(
             'locations/manage/partials/loc_type_widget.html'
         ).render({
@@ -638,7 +644,7 @@ class LocationFixtureForm(forms.ModelForm):
 
 
 class RelatedLocationForm(forms.Form):
-    related_locations = forms.CharField(
+    related_locations = forms.Field(
         label=ugettext_lazy("Related Locations"),
         required=False,
     )
@@ -681,10 +687,6 @@ class RelatedLocationForm(forms.Form):
         for name, value in cleaned_data.items():
             if name.startswith('relation_distance_') and value and value < 0:
                 raise forms.ValidationError("The distance cannot be a negative value")
-
-    def clean_related_locations(self):
-        # Django uses get by default, but related_locations is actually a list
-        return self.data.getlist('related_locations')
 
     def save(self):
         selected_location_ids = self.cleaned_data['related_locations']
