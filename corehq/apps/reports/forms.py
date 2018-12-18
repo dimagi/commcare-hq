@@ -120,6 +120,12 @@ class ScheduledReportForm(forms.Form):
         coerce=int,
         choices=ReportNotification.hour_choices())
 
+    start_date = forms.DateField(
+        label='Report Start Date',
+        widget=forms.DateInput(),
+        required=False
+    )
+
     send_to_owner = forms.BooleanField(
         label='Send to owner',
         required=False)
@@ -160,6 +166,7 @@ class ScheduledReportForm(forms.Form):
                     'interval',
                     'day',
                     'hour',
+                    'start_date',
                     B3MultiField(
                         ugettext("Send Options"),
                         'send_to_owner'
