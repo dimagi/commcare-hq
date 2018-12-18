@@ -66,7 +66,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
 
     $scope.$on('$routeChangeStart', function() {
         $scope.checkAccessToLocation();
-        var path = window.location.pathname + $location.$$url.substr(1);
+        var path = window.location.pathname + $location.path().substr(1);
         $window.ga('set', 'page', path);
         $window.ga('send', 'pageview', path);
     });
