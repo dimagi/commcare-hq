@@ -18,6 +18,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from lxml import etree
 
 from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
 
@@ -41,6 +42,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -295,10 +297,19 @@ def update_multimedia_paths(request, domain, app_id):
                 # TODO: audio_by_language => set_audio(self, lang, icon_path)
                 # TODO: all the other non-menu module media
             for form in module.forms:
-                success_links[module.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_form",
+                success_links[form.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_form",
                     args=[domain, app.id, form.unique_id]), form.default_name())
-                # TODO: handle form (menu + questions)
-                pass
+                # TODO: handle form menu
+                # TODO: move somewhere like app_manager.xform?
+                xform = XForm(form.source)
+                dirty = False
+                for node in xform.itext_node.findall('{f}translation/{f}text/{f}value'):
+                    if node.text in paths:
+                        node.xml.text = paths[node.text]
+                        success_counts[form.unique_id] += 1
+                        dirty = True
+                if dirty:
+                    form.source = etree.tostring(xform.xml).decode('utf-8')
 
         for old_path, new_path in six.iteritems(paths):
             app.multimedia_map.update({
