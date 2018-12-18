@@ -59,4 +59,5 @@ branches:
   - mk-215 # MK Dec 13
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
   - bmb/signup-ux  # Biyeun Dec 17
+  - reports-effective-start-date  # Gabriella Dec 18
 submodules: {}
