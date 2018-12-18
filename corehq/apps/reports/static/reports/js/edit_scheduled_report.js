@@ -5,6 +5,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/multiselect_utils",
     "hqwebapp/js/widgets_v4",  // autocomplete widget for email recipient list
+    "jquery-ui/ui/datepicker",
 ], function (
     $,
     _,
@@ -49,6 +50,7 @@ hqDefine("reports/js/edit_scheduled_report", [
                 $('[name="interval"]').change(function () {
                     update_day_input(self.weekly_options, self.monthly_options);
                 });
+                $("#id_start_date").datepicker({dateFormat: "yy-mm-dd",});
             });
         };
     };
