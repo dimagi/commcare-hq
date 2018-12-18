@@ -286,20 +286,18 @@ def update_multimedia_paths(request, domain, app_id):
         paths = {row[0]: interpolate_media_path(row[1]) for row in rows}
         success_counts = defaultdict(lambda: 0)
         success_links = defaultdict(lambda: '')
+        # TODO: make outer loop paths
         for module in app.modules:
             success_links[module.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_module",
                 args=[domain, app.id, module.unique_id]), module.default_name())
-            for lang in app.langs:
-                if module.icon_by_language(lang) in paths:
-                    # TODO: move into hqmedia.models?
-                    module.set_icon(lang, paths[module.icon_by_language(lang)])
-                    success_counts[module.unique_id] += 1
-                # TODO: audio_by_language => set_audio(self, lang, icon_path)
-                # TODO: all the other non-menu module media
+            for old_path, new_path in six.iteritems(paths):
+                success_counts[module.unique_id] += module.rename_media(old_path, new_path)
+            # TODO: all the other non-menu module media
             for form in module.forms:
                 success_links[form.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_form",
                     args=[domain, app.id, form.unique_id]), form.default_name())
-                # TODO: handle form menu
+                for old_path, new_path in six.iteritems(paths):
+                    success_counts[form.unique_id] += form.rename_media(old_path, new_path)
                 # TODO: move somewhere like app_manager.xform?
                 xform = XForm(form.source)
                 dirty = False
