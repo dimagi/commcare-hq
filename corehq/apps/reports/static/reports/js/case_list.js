@@ -7,7 +7,7 @@ hqDefine("reports/js/case_list", ['jquery', 'analytix/js/kissmetrix', 'hqwebapp/
                 });
                 var userTypes = initialPageData.get('user_types');
                 $(document).on('click', '#apply-filters', function () {
-                    kissAnalytics.track.event("Clicked Apply",
+                    kissAnalytics.track.event("[Case List Report] Clicked Apply",
                         {"filters": _.map($("#paramSelectorForm input[name='case_list_filter']").val().split(','),
                             function (item) {
                                 if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
