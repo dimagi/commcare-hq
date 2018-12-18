@@ -50,7 +50,7 @@ hqDefine("reports/js/edit_scheduled_report", [
                 $('[name="interval"]').change(function () {
                     update_day_input(self.weekly_options, self.monthly_options);
                 });
-                $("#id_start_date").datepicker({dateFormat: "yy-mm-dd",});
+                $("#id_start_date").datepicker({dateFormat: "yy-mm-dd"});
             });
         };
     };
