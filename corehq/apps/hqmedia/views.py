@@ -42,7 +42,6 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
-from corehq.apps.app_manager.xform import XForm
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -283,27 +282,34 @@ def update_multimedia_paths(request, domain, app_id):
                 'success': 1,
                 'errors': errors,
             })
-        paths = {row[0]: interpolate_media_path(row[1]) for row in rows}
-        success_counts = defaultdict(lambda: 0)
-        # TODO: make outer loop paths
-        for module in app.modules:
-            for old_path, new_path in six.iteritems(paths):
-                success_counts[module.unique_id] += module.rename_media(old_path, new_path)
-            # TODO: all the other non-menu module media
-            for form in module.forms:
-                for old_path, new_path in six.iteritems(paths):
-                    success_counts[form.unique_id] += form.rename_media(old_path, new_path)
-                # TODO: move somewhere like app_manager.xform?
-                xform = XForm(form.source)
-                dirty = False
-                for node in xform.itext_node.findall('{f}translation/{f}text/{f}value'):
-                    if node.text in paths:
-                        node.xml.text = paths[node.text]
-                        success_counts[form.unique_id] += 1
-                        dirty = True
-                if dirty:
-                    form.source = etree.tostring(xform.xml).decode('utf-8')
 
+        # Master list of old_path => new_path
+        paths = {row[0]: interpolate_media_path(row[1]) for row in rows}
+
+        # Update module and form references
+        success_counts = defaultdict(lambda: 0)
+        xforms_by_id = defaultdict(lambda: None)    # cache forms rather than parsing repeatedly
+        dirty_xform_ids = set()
+        for old_path, new_path in six.iteritems(paths):
+            for module in app.modules:
+                success_counts[module.unique_id] += module.rename_media(old_path, new_path)
+                # TODO: all the other non-menu module media
+                for form in module.forms:
+                    success_counts[form.unique_id] += form.rename_media(old_path, new_path)
+                    if not xforms_by_id[form.unique_id]:
+                        xforms_by_id[form.unique_id] = form.wrapped_xform()
+                    update_count = xforms_by_id[form.unique_id].rename_media(old_path, new_path)
+                    success_counts[form.unique_id] += update_count
+                    if update_count:
+                        dirty_xform_ids.add(form.unique_id)
+
+        # Update any form xml that changed
+        for module in app.modules:
+            for form in module.forms:
+                if form.unique_id in dirty_xform_ids:
+                    form.source = etree.tostring(xforms_by_id[form.unique_id].xml).decode('utf-8')
+
+        # Update app's master map of multimedia
         for old_path, new_path in six.iteritems(paths):
             app.multimedia_map.update({
                 new_path: app.multimedia_map[old_path],
