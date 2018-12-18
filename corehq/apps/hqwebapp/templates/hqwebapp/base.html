@@ -1,9 +1,4 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
-{# note: modernizr.js will add classes to <html> to trigger certain css behaviors. #}
-{# These classes are: #}
-{#     js, no-js, touch, no-touch, cssanimations, #}
-{#     csstransformations3d, csstransitions, video, audio, svg, inlinesvg #}
-{#     pointerevents, show-time #}
 {% get_current_language as LANGUAGE_CODE %}
 {% requirejs_main %}
 <!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
@@ -410,7 +405,6 @@
                 <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/main.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/modernizr.js' %}"></script>
             {% endcompress %}
         {% endif %}
 
