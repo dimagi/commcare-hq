@@ -1487,7 +1487,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
             if self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
-                django_user.save()
+                User.objects.update_or_create(username=django_user.username, defaults={
+                    attr: getattr(django_user, attr)
+                    for attr in self.ATTRS
+                })
 
             super(CouchUser, self).save(**params)
 
