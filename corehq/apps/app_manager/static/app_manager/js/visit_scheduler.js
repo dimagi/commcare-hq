@@ -3,9 +3,9 @@ hqDefine('app_manager/js/visit_scheduler', function () {
     'use strict';
     var app_manager = hqImport('app_manager/js/app_manager');
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
-    var ModuleScheduler = function (params) {
+    var moduleScheduler = function (params) {
         // Edits the schedule phases on the module setting page
-        var self = this;
+        var self = {};
         self.home = params.home;
 
         self.init = function () {
@@ -47,8 +47,8 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             },
         });
 
-        var Phase = function (id, anchor, forms) {
-            var self = this;
+        var phaseModel = function (id, anchor, forms) {
+            var self = {};
             self.id = id;
             self.anchor = hqImport('hqwebapp/js/ui-element').input().val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
@@ -63,13 +63,14 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                     return form === '' ? '(no abbreviation)' : form;
                 }).join(', ');
             });
+            return self;
         };
 
         self.hasSchedule = ko.observable(params.hasSchedule);
 
         self.phases = ko.observableArray(
             _.map(params.schedulePhases, function (phase) {
-                return new Phase(phase.id, phase.anchor, phase.forms);
+                return phaseModel(phase.id, phase.anchor, phase.forms);
             })
         );
         self.phases.subscribe(function (phase) {
@@ -83,7 +84,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
 
         self.addPhase = function () {
             var NEW_PHASE_ID = -1;
-            self.phases.push(new Phase(NEW_PHASE_ID, "", []));
+            self.phases.push(phaseModel(NEW_PHASE_ID, "", []));
         };
 
         self.removePhase = function (phase) {
@@ -98,10 +99,12 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                 };
             });
         };
+
+        return self;
     };
 
-    var Scheduler = function (params) {
-        var self = this;
+    var schedulerModel = function (params) {
+        var self = {};
 
         self.home = params.home;
         self.questions = params.questions;
@@ -112,7 +115,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             save: function () {
                 var isValid = self.validate();
                 if (isValid) {
-                    var schedule = JSON.stringify(FormSchedule.unwrap(self.formSchedule));
+                    var schedule = JSON.stringify(formSchedule.unwrap(self.formSchedule));
                     self.saveButton.ajax({
                         type: 'post',
                         url: self.save_url,
@@ -174,8 +177,8 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             }
         };
 
-        self.schedulePhase = SchedulePhase.wrap(params.phase, self);
-        self.formSchedule = FormSchedule.wrap(params, self, self.schedulePhase);
+        self.schedulePhase = schedulePhase.wrap(params.phase, self);
+        self.formSchedule = formSchedule.wrap(params, self, self.schedulePhase);
 
         self.init = function () {
             _.defer(function () {
@@ -195,9 +198,11 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             // textchange doesn't work with live event binding
             $('#visit-scheduler input').on('textchange', self.change);
         };
+
+        return self;
     };
 
-    var ScheduleRelevancy = {
+    var scheduleRelevancy = {
         mapping: function (self) {
             return {
                 include: [
@@ -208,7 +213,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         },
         wrap: function (data) {
             var self = {};
-            ko.mapping.fromJS(data, ScheduleRelevancy.mapping(self), self);
+            ko.mapping.fromJS(data, scheduleRelevancy.mapping(self), self);
             self.starts_type = ko.observable(self.starts() < 0 ? 'before' : 'after');
             self.expires_type = ko.observable(self.expires() < 0 ? 'before' : 'after');
             self.enableFormExpiry = ko.observable(self.expires() !== null);
@@ -217,11 +222,11 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             return self;
         },
         unwrap: function (self) {
-            return ko.mapping.toJS(self, ScheduleRelevancy.mapping(self));
+            return ko.mapping.toJS(self, scheduleRelevancy.mapping(self));
         },
     };
 
-    var ScheduleVisit = {
+    var scheduleVisit = {
         mapping: function (self) {
             return {
                 include: [
@@ -238,7 +243,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             var self = {
                 config: config,
             };
-            ko.mapping.fromJS(data, ScheduleVisit.mapping(self), self);
+            ko.mapping.fromJS(data, scheduleVisit.mapping(self), self);
             if (self.repeats()) {
                 self.due(self.increment());
                 self.type('repeats');
@@ -248,11 +253,11 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         },
 
         unwrap: function (self) {
-            return ko.mapping.toJS(self, ScheduleVisit.mapping(self));
+            return ko.mapping.toJS(self, scheduleVisit.mapping(self));
         },
     };
 
-    var SchedulePhase = {
+    var schedulePhase = {
         mapping: function (self) {
             return {
                 include: [
@@ -262,12 +267,12 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         },
         wrap: function (data, config) {
             var self = {};
-            ko.mapping.fromJS(data, SchedulePhase.mapping(self), self);
+            ko.mapping.fromJS(data, schedulePhase.mapping(self), self);
             return self;
         },
     };
 
-    var FormSchedule = {
+    var formSchedule = {
         mapping: function (self) {
             return {
                 include: [
@@ -281,7 +286,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                     create: function (options) {
                         options.data.type = options.data.due < 0 ? 'before' : 'after';
                         options.data.due = Math.abs(options.data.due);
-                        return ScheduleVisit.wrap(options.data, self);
+                        return scheduleVisit.wrap(options.data, self);
                     },
                 },
             };
@@ -292,7 +297,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                 all_schedule_phase_anchors: data.all_schedule_phase_anchors,
                 phase: phase,
             };
-            ko.mapping.fromJS(data.schedule, FormSchedule.mapping(self), self);
+            ko.mapping.fromJS(data.schedule, formSchedule.mapping(self), self);
 
             // for compatibility with common template: case-config:condition
             self.allow = {
@@ -302,8 +307,8 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             };
 
             self.scheduleEnabled = ko.observable(data.schedule.enabled);
-            self.transition = ko.computed(FormSchedule.conditionComputed(self.config, self.transition_condition));
-            self.terminate = ko.computed(FormSchedule.conditionComputed(self.config, self.termination_condition));
+            self.transition = ko.computed(formSchedule.conditionComputed(self.config, self.transition_condition));
+            self.terminate = ko.computed(formSchedule.conditionComputed(self.config, self.termination_condition));
 
             self.allowExpiry = ko.computed(function () {
                 return self.transition_condition.type() === 'never' &&
@@ -316,12 +321,12 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                 return self.visits().length > 0 && self.visits()[self.visits().length - 1].type() === 'repeats';
             });
 
-            self.relevancy = ScheduleRelevancy.wrap(data.schedule);
+            self.relevancy = scheduleRelevancy.wrap(data.schedule);
             var xmlRe = /\s+|<+|>+|&+|"+|'+/g;
             self.schedule_form_id = ko.observable(data.schedule_form_id).snakeCase(xmlRe);
 
             self.addVisit = function () {
-                self.visits.push(ScheduleVisit.wrap({
+                self.visits.push(scheduleVisit.wrap({
                     due: null,
                     type: 'after',
                     starts: null,
@@ -364,9 +369,9 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         },
 
         unwrap: function (self) {
-            FormSchedule.cleanCondition(self.transition_condition);
-            FormSchedule.cleanCondition(self.termination_condition);
-            var schedule = ko.mapping.toJS(self, FormSchedule.mapping(self));
+            formSchedule.cleanCondition(self.transition_condition);
+            formSchedule.cleanCondition(self.termination_condition);
+            var schedule = ko.mapping.toJS(self, formSchedule.mapping(self));
             schedule.enabled = self.scheduleEnabled();
             schedule.starts = self.relevancy.starts() * (self.relevancy.starts_type() === 'before' ? -1 : 1);
             if (self.relevancy.enableFormExpiry() && self.allowExpiry()) {
@@ -393,8 +398,8 @@ hqDefine('app_manager/js/visit_scheduler', function () {
     };
 
     return {
-        Scheduler: Scheduler,
-        ModuleScheduler: ModuleScheduler,
+        schedulerModel: schedulerModel,
+        moduleScheduler: moduleScheduler,
     };
 });
 
