@@ -1126,7 +1126,7 @@ class SMSExportInstance(ExportInstance):
             ))
 
         instance = cls(domain=schema.domain, tables=[main_table])
-        cls._insert_system_properties(instance.domain, schema.type, instance.tables[0])
+        instance._insert_system_properties(instance.domain, schema.type, instance.tables[0])
         return instance
 
 
