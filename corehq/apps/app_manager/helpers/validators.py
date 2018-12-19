@@ -6,12 +6,12 @@ import six
 from collections import defaultdict
 from django.conf import settings
 from django_prbac.exceptions import PermissionDenied
-from django.utils.translation import override, ugettext as _, ugettext
+from django.utils.translation import ugettext as _
 
 from dimagi.utils.logging import notify_exception
 
 from corehq import privileges
-from corehq.util.timer import TimingContext, time_method
+from corehq.util.timer import time_method
 from corehq.util import view_utils
 
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -25,6 +25,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormException,
     XFormValidationError,
 )
+from corehq.apps.app_manager.util import app_callout_templates
 
 
 class ApplicationBaseValidator(object):
@@ -150,7 +151,6 @@ class ApplicationBaseValidator(object):
         return errors
 
 
-
 class ApplicationValidator(ApplicationBaseValidator):
     @time_method()
     def _check_modules(self):
@@ -259,7 +259,7 @@ class ApplicationValidator(ApplicationBaseValidator):
             errors.append({'type': 'parent cycle'})
 
         errors.extend(self._child_module_errors(modules_dict))
-        errors.extend(self._check_subscription()) 
+        errors.extend(self._check_subscription())
 
         if not errors:
             errors = super(ApplicationValidator, self).validate_app()

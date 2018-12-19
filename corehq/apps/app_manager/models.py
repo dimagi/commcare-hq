@@ -119,7 +119,6 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     actions_use_usercase,
     update_form_unique_ids,
-    app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
     module_case_hierarchy_has_circular_reference,
