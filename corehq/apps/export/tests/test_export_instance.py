@@ -223,12 +223,12 @@ class TestCaseExportInstanceGeneration(SimpleTestCase):
         instance = self._generate_instance({self.app_id: 3}, self.schema)
 
         self.assertEqual(len(instance.tables), 1)
-        self.assertEqual(len(instance.tables[0].columns), 20)
+        self.assertEqual(len(instance.tables[0].columns), 21)
 
         # adding in 'name' shouldn't create any new columns
         instance = self._generate_instance({self.app_id: 3}, self.new_schema, instance)
         self.assertEqual(len(instance.tables), 1)
-        self.assertEqual(len(instance.tables[0].columns), 20)
+        self.assertEqual(len(instance.tables[0].columns), 21)
 
 
 @mock.patch(

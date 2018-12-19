@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from distutils.version import StrictVersion
 from django.test import SimpleTestCase
 from io import BytesIO
 from corehq.apps.app_manager.models import Application
@@ -8,6 +7,8 @@ from corehq.apps.app_manager.ui_translations import \
     process_ui_translation_upload, get_default_translations_for_download
 from couchexport.export import export_raw
 import six
+
+from corehq.util.files import TransientTempfile
 
 
 class BulkUiTranslation(SimpleTestCase):
@@ -35,7 +36,12 @@ class BulkUiTranslation(SimpleTestCase):
         headers = (('translations', ('property', 'en')),)
         f = self._build_translation_download_file(headers)
 
-        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
+        with TransientTempfile() as temp_path:
+            with open(temp_path, 'wb') as temp_file:
+                temp_file.write(f.getvalue())
+            with open(temp_path, 'rb') as temp_file:
+                translations, error_properties, warnings = process_ui_translation_upload(self.app, temp_file)
+
         self.assertEqual(
             dict(translations), dict()
         )
@@ -55,7 +61,11 @@ class BulkUiTranslation(SimpleTestCase):
                 ('unknown_string', 'Ding', 'Dong'))
 
         f = self._build_translation_download_file(headers, data)
-        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
+        with TransientTempfile() as temp_path:
+            with open(temp_path, 'wb') as temp_file:
+                temp_file.write(f.getvalue())
+            with open(temp_path, 'rb') as temp_file:
+                translations, error_properties, warnings = process_ui_translation_upload(self.app, temp_file)
 
         self.assertEqual(
             dict(translations),
@@ -82,6 +92,10 @@ class BulkUiTranslation(SimpleTestCase):
         # test existing translations get updated correctly
         data = (('home.start.demo', 'change_1', 'change_2'))
         f = self._build_translation_download_file(headers, data)
-        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
+        with TransientTempfile() as temp_path:
+            with open(temp_path, 'wb') as temp_file:
+                temp_file.write(f.getvalue())
+            with open(temp_path, 'rb') as temp_file:
+                translations, error_properties, warnings = process_ui_translation_upload(self.app, temp_file)
         self.assertEqual(translations["fra"]["home.start.demo"], "change_2")
         self.assertEqual(translations["en"]["home.start.demo"], "change_1")
