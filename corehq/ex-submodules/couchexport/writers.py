@@ -222,8 +222,8 @@ class ExportWriter(object):
         rows, write those rows to the resulting files.
         """
         assert self._isopen
-        for table_index, table in document_table:
-            for i, row in enumerate(table):
+        for table_config, table_data in document_table:
+            for i, row in enumerate(table_data):
                 if skip_first and i is 0:
                     continue
                 # update the primary component of the ID to match
@@ -235,7 +235,7 @@ class ExportWriter(object):
                 if row_has_id:
                     row.id = (self._current_primary_id,) + tuple(row.id[1:])
 
-                self.write_row(table_index, row, hyperlink_column_indices)
+                self.write_row(table_config, row, hyperlink_column_indices)
 
         self._current_primary_id += 1
 
@@ -387,9 +387,6 @@ class Excel2007ExportWriter(ExportWriter):
         self.table_indices[table_index] = 0
 
     def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
-        from corehq.apps.export.const import CASE_ID_TO_LINK, FORM_ID_TO_LINK
-        from corehq.apps.export.models import TableConfiguration
-        assert isinstance(sheet_index, TableConfiguration), sheet_index
         sheet = self.tables[sheet_index]
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
@@ -413,10 +410,7 @@ class Excel2007ExportWriter(ExportWriter):
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
-        for hyperlink_column_index in [
-            i for i, column in enumerate(sheet_index.columns)
-            if column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]
-        ]:
+        for hyperlink_column_index in row.get_hyperlink_column_indices():
             cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
             cells[hyperlink_column_index].style = 'Hyperlink'
         sheet.append(cells)

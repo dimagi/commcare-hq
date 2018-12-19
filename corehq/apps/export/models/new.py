@@ -96,7 +96,7 @@ from corehq.apps.export.const import (
     UNKNOWN_INFERRED_FROM,
     CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
     SharingOption,
-)
+    CASE_ID_TO_LINK, FORM_ID_TO_LINK)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -538,6 +538,13 @@ class TableConfiguration(DocumentSchema):
                     item_doc_type is None):
                 return index, column
         return None, None
+
+    @memoized
+    def get_hyperlink_column_indices(self):
+        return [
+            i for i, column in enumerate(self.columns)
+            if column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]
+        ]
 
     def _get_sub_documents(self, document, row_number, document_id=None):
         return self._get_sub_documents_helper(document_id, self.path,
