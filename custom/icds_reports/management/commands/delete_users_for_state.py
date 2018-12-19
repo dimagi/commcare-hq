@@ -3,54 +3,52 @@ from __future__ import unicode_literals
 
 from django.core.management.base import BaseCommand
 
-from custom.icds_reports.models.views import AwcLocationMonths
-from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 
 
 class Command(BaseCommand):
 
-    def get_location_ids(self, loaction_obj):
-        state_ids = set([location.state_id for location in loaction_obj])
-        district_ids = set([location.district_id for location in loaction_obj])
-        block_ids = set([location.block_id for location in loaction_obj])
-        supervisor_ids = set([location.supervisor_id for location in loaction_obj])
-        awc_ids = set([location.awc_id for location in loaction_obj])
-        return state_ids,district_ids,block_ids, supervisor_ids, awc_ids
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'user_list_file'
+        )
+        parser.add_argument(
+            'site_code'
+        )
 
-    def handle(self, *args, **kwargs):
-        telangana_locations = AwcLocationMonths.objects.filter(state_name='Telangana', aggregation_level=5)
-        state_ids, district_ids, block_ids, supervisor_ids, awc_ids = self.get_location_ids(telangana_locations)
+    def handle(self, user_list_file, site_code, *args, **kwargs):
 
-        all_locations = state_ids | district_ids | block_ids | supervisor_ids | awc_ids
+        with open(user_list_file) as fin:
+            users_to_delete = fin.readlines()
+            users_to_delete = [user.strip() for user in users_to_delete]
+            choice = raw_input('Total {} users will be deleted: (Y/N)'.format(len(users_to_delete)))
+            if not choice.startswith('y'):
+                print("Nice!!! Its good to be safe than to be sorry")
+                return
 
-        location_users = list()
-        user_submitted_forms = []
-        for loc in all_locations:
-            users_to_delete = get_users_by_location_id('icds-cas', loc).all()
-
+            print("Deleting users")
+            users_submitted_forms = list()
             for user in users_to_delete:
-                if user.reporting_metadata.sync_time is None:
-                    if (user.user_location_id and
-                            SQLLocation.objects.get_or_None(location_id=user.user_location_id,
-                                                            user_id=user._id)):
-                        location_users.append(user)
-                    else:
-                        if not user.reporting_metadata.last_submission_for_user.submission_date and\
-                                not user.reporting_metadata.last_sync_for_user.sync_date:
-                            user.retire()
-                        else:
-                            user_submitted_forms.append(user)
+                user_name = user + '@icds-cas.commcarehq.org'
+                mobile_user = CommCareUser.get_by_username(user_name)
+                if not mobile_user.reporting_metadata.last_submission_for_user.submission_date and\
+                                 not mobile_user.reporting_metadata.last_sync_for_user.sync_date:
+                    mobile_user.retire()
+                else:
+                    users_submitted_forms.append(mobile_user)
 
-        for loc in all_locations:
-            location = SQLLocation.objects.get_or_None(location_id=loc)
-            if location:
-                location.full_delete()
+            print("users submitted forms:")
+            print('\n'.join([user.username for user in users_submitted_forms]))
 
-        for user in location_users:
-            user.retire()
+            print('\n{} users deleted. '
+                  'Deleting Location with site_code {}'.format(len(users_to_delete)-len(users_submitted_forms),
+                                                               site_code))
 
-        print("These users submitted the forms")
-        print(user_submitted_forms)
+            location_to_delete = SQLLocation.objects.get(domain='icds-cas', site_code=site_code)
+
+            location_to_delete.delete()
+
+            print("Deleted Location as well. Thank you for Using our services")
 
 
