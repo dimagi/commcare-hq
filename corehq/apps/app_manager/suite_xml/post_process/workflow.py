@@ -6,7 +6,7 @@ from os.path import commonprefix
 import re
 from xml.sax.saxutils import unescape
 
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.helpers.make_build import id_strings
 from corehq.apps.app_manager.const import (
     RETURN_TO, )
 from corehq.apps.app_manager.exceptions import SuiteValidationError

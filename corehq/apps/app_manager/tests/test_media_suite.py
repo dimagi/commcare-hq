@@ -9,7 +9,7 @@ from django.test.utils import override_settings
 from lxml import etree
 from mock import patch
 
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.helpers.make_build import id_strings
 from corehq.apps.app_manager.models import Application, Module, GraphConfiguration, \
     GraphSeries, ReportModule, ReportAppConfig, CustomIcon, BuildProfile
 from corehq.apps.app_manager.tests.app_factory import AppFactory

@@ -23,7 +23,7 @@ from corehq.apps.app_manager.suite_xml.sections.resources import(
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper
 from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestContributor
 from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource, LocalizedMenu, Text
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.helpers.make_build import id_strings
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
 

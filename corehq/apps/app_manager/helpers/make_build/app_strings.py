@@ -5,7 +5,7 @@ from distutils.version import LooseVersion
 
 from django.utils.translation import ugettext
 
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.helpers.make_build import id_strings
 from memoized import memoized
 from corehq.apps.app_manager.util import module_offers_search,\
     create_temp_sort_column, get_sort_and_sort_only_columns

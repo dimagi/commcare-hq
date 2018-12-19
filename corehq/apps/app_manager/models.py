@@ -103,8 +103,8 @@ from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
-from corehq.apps.app_manager import current_builds, remote_app, id_strings, commcare_settings
-from corehq.apps.app_manager.helpers.make_build import app_strings
+from corehq.apps.app_manager import current_builds, remote_app, commcare_settings
+from corehq.apps.app_manager.helpers.make_build import app_strings, id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.dbaccessors import (
     get_app,

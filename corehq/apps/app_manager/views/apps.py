@@ -31,7 +31,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager import id_strings, add_ons
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
@@ -43,6 +43,7 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps, no_conflict
 from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
 from corehq.apps.app_manager.forms import CopyApplicationForm
+from corehq.apps.app_manager.helpers.make_build import id_strings
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,

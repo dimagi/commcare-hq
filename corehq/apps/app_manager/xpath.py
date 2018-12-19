@@ -428,7 +428,7 @@ class ScheduleFormXPath(object):
 
     @property
     def fixture_id(self):
-        from corehq.apps.app_manager import id_strings
+        from corehq.apps.app_manager.helpers.make_build import id_strings
         return id_strings.schedule_fixture(self.module, self.phase, self.form)
 
     @property

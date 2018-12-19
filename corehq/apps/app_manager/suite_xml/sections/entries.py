@@ -10,7 +10,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain_meta
 from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
     SuiteValidationError)
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.helpers.make_build import id_strings
 from corehq.apps.app_manager.const import (
     USERCASE_ID, USERCASE_TYPE, )
 from corehq.apps.app_manager.exceptions import FormNotFoundException

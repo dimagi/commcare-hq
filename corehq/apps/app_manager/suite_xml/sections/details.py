@@ -9,7 +9,6 @@ from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
 
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
@@ -39,7 +38,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, \
     get_sort_and_sort_only_columns
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.helpers.make_build import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from corehq import toggles
@@ -214,7 +213,8 @@ class DetailContributor(SectionContributor):
             field = Field(
                 header=Header(
                     width=None if detail.lookup_field_header else 0,
-                    text=Text(locale_id=callout_header_locale(module)) if detail.lookup_field_header else None,
+                    text=Text(locale_id=id_strings.callout_header_locale(module))
+                         if detail.lookup_field_header else None,
                 ),
                 template=Template(
                     text=Text(xpath_function=detail.lookup_field_template)
