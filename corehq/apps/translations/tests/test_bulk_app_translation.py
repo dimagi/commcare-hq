@@ -23,6 +23,7 @@ from corehq.apps.translations.app_translations import (
     read_uploaded_app_translation_file,
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.util.files import TransientTempfile
 from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 
@@ -59,11 +60,13 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         file = BytesIO()
         export_raw(excel_headers, excel_data, file, format=Format.XLS_2007)
 
-        with tempfile.TemporaryFile(suffix='.xlsx') as f:
-            f.write(file.getvalue())
-            workbook, messages = read_uploaded_app_translation_file(f)
-            assert workbook, messages
-            messages = process_bulk_app_translation_upload(self.app, workbook)
+        with TransientTempfile() as temp_path:
+            with open(temp_path, 'wb') as temp_file:
+                temp_file.write(file.getvalue())
+            with open(temp_path, 'rb') as temp_file:
+                workbook, messages = read_uploaded_app_translation_file(temp_file)
+        assert workbook, messages
+        messages = process_bulk_app_translation_upload(self.app, workbook)
 
         self.assertListEqual(
             [m[1] for m in messages], expected_messages
@@ -570,11 +573,13 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         file = BytesIO()
         export_raw(cls.excel_headers, cls.excel_data, file, format=Format.XLS_2007)
 
-        with tempfile.TemporaryFile(suffix='.xlsx') as f:
-            f.write(file.getvalue())
-            wb_reader = WorkbookJSONReader(f)
-            cls.expected_workbook = [{'name': ws.title, 'rows': list(ws)}
-                                     for ws in wb_reader.worksheets]
+        with TransientTempfile() as temp_path:
+            with open(temp_path, 'wb') as temp_file:
+                temp_file.write(file.getvalue())
+            with open(temp_path, 'rb') as temp_file:
+                wb_reader = WorkbookJSONReader(temp_file)
+        cls.expected_workbook = [{'name': ws.title, 'rows': list(ws)}
+                                 for ws in wb_reader.worksheets]
 
     def test_download(self):
         actual_headers = expected_bulk_app_sheet_headers(self.app)
@@ -664,10 +669,11 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
            '', '', '', '', '', '', '', '', ''))))
 
     def get_worksheet(self, title):
-        string_io = BytesIO()
-        export_raw(self.headers, self.data, string_io, format=Format.XLS_2007)
-        string_io.seek(0)
-        workbook = WorkbookJSONReader(string_io)  # __init__ will read string_io
+        with TransientTempfile() as temp_path:
+            with open(temp_path, 'wb') as temp_file:
+                export_raw(self.headers, self.data, temp_file, format=Format.XLS_2007)
+            with open(temp_path, 'rb') as temp_file:
+                workbook = WorkbookJSONReader(temp_file)  # __init__ will read string_io
         return workbook.worksheets_by_title[title]
 
     def setUp(self):
