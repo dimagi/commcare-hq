@@ -38,6 +38,47 @@ class ApplicationBaseValidator(object):
     def timing_context(self):
         return self.app.timing_context
 
+    def validate_app(self):
+        errors = []
+
+        errors.extend(self._check_password_charset())
+
+        try:
+            self._validate_fixtures()
+            self._validate_intents()
+            self._validate_practice_users()
+            self.app.create_all_files()
+        except CaseXPathValidationError as cve:
+            errors.append({
+                'type': 'invalid case xpath reference',
+                'module': cve.module,
+                'form': cve.form,
+            })
+        except UserCaseXPathValidationError as ucve:
+            errors.append({
+                'type': 'invalid user property xpath reference',
+                'module': ucve.module,
+                'form': ucve.form,
+            })
+        except PracticeUserException as pue:
+            errors.append({
+                'type': 'practice user config error',
+                'message': six.text_type(pue),
+                'build_profile_id': pue.build_profile_id,
+            })
+        except (AppEditingError, XFormValidationError, XFormException,
+                PermissionDenied, SuiteValidationError) as e:
+            errors.append({'type': 'error', 'message': six.text_type(e)})
+        except Exception as e:
+            if settings.DEBUG:
+                raise
+
+            # this is much less useful/actionable without a URL
+            # so make sure to include the request
+            notify_exception(view_utils.get_request(), "Unexpected error building app")
+            errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
+        return errors
+
     @time_method()
     def _validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
@@ -109,49 +150,37 @@ class ApplicationBaseValidator(object):
                                'message': message.format('alphanumeric')})
         return errors
 
+
+class ApplicationValidator(ApplicationBaseValidator):
+    @time_method()
     def validate_app(self):
         errors = []
 
-        errors.extend(self._check_password_charset())
+        for lang in self.app.langs:
+            if not lang:
+                errors.append({'type': 'empty lang'})
 
-        try:
-            self._validate_fixtures()
-            self._validate_intents()
-            self._validate_practice_users()
-            self.app.create_all_files()
-        except CaseXPathValidationError as cve:
-            errors.append({
-                'type': 'invalid case xpath reference',
-                'module': cve.module,
-                'form': cve.form,
-            })
-        except UserCaseXPathValidationError as ucve:
-            errors.append({
-                'type': 'invalid user property xpath reference',
-                'module': ucve.module,
-                'form': ucve.form,
-            })
-        except PracticeUserException as pue:
-            errors.append({
-                'type': 'practice user config error',
-                'message': six.text_type(pue),
-                'build_profile_id': pue.build_profile_id,
-            })
-        except (AppEditingError, XFormValidationError, XFormException,
-                PermissionDenied, SuiteValidationError) as e:
-            errors.append({'type': 'error', 'message': six.text_type(e)})
-        except Exception as e:
-            if settings.DEBUG:
-                raise
+        errors.extend(self._check_modules())
+        errors.extend(self._check_forms())
 
-            # this is much less useful/actionable without a URL
-            # so make sure to include the request
-            notify_exception(view_utils.get_request(), "Unexpected error building app")
-            errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
+        if any(not module.unique_id for module in self.app.get_modules()):
+            raise ModuleIdMissingException
+        modules_dict = {m.unique_id: m for m in self.app.get_modules()}
+
+        def _parent_select_fn(module):
+            if hasattr(module, 'parent_select') and module.parent_select.active:
+                return module.parent_select.module_id
+
+        if self._has_dependency_cycle(modules_dict, _parent_select_fn):
+            errors.append({'type': 'parent cycle'})
+
+        errors.extend(self._child_module_errors(modules_dict))
+        errors.extend(self._check_subscription())
+
+        if not errors:
+            errors = super(ApplicationValidator, self).validate_app()
         return errors
 
-
-class ApplicationValidator(ApplicationBaseValidator):
     @time_method()
     def _check_modules(self):
         errors = []
@@ -234,33 +263,4 @@ class ApplicationValidator(ApplicationBaseValidator):
                              'support that. You can remove User Properties functionality by opening the User '
                              'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
             })
-        return errors
-
-    @time_method()
-    def validate_app(self):
-        errors = []
-
-        for lang in self.app.langs:
-            if not lang:
-                errors.append({'type': 'empty lang'})
-
-        errors.extend(self._check_modules())
-        errors.extend(self._check_forms())
-
-        if any(not module.unique_id for module in self.app.get_modules()):
-            raise ModuleIdMissingException
-        modules_dict = {m.unique_id: m for m in self.app.get_modules()}
-
-        def _parent_select_fn(module):
-            if hasattr(module, 'parent_select') and module.parent_select.active:
-                return module.parent_select.module_id
-
-        if self._has_dependency_cycle(modules_dict, _parent_select_fn):
-            errors.append({'type': 'parent cycle'})
-
-        errors.extend(self._child_module_errors(modules_dict))
-        errors.extend(self._check_subscription())
-
-        if not errors:
-            errors = super(ApplicationValidator, self).validate_app()
         return errors
