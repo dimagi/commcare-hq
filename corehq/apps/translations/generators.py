@@ -87,7 +87,7 @@ class AppTranslationsGenerator:
         for module in module_data:
             for form in module['forms']:
                 for question in form['questions']:
-                    if not question['label_ref']:
+                    if not question.get('label_ref'):
                         continue
                     if question['comment'] and SKIP_TRANSFEX_STRING in question['comment']:
                         labels_to_skip[form['id']] |= _labels_from_question(question)
