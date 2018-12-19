@@ -50,7 +50,7 @@ trunk: master
 name: autostaging
 branches:
   - sr-mutliprocessors   # Sravan Nov 13
-  - np-export-links-new  # Nick Nov 25
+  - np-export-links-test  # Nick Nov 25
 #  - rn_migrate_multimedia # Rohit 3 Dec
   - mk-transifex-improv # MK Dec 8
   - case-type-changes  # Nick Dec 7
