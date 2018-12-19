@@ -293,7 +293,25 @@ def update_multimedia_paths(request, domain, app_id):
         for old_path, new_path in six.iteritems(paths):
             for module in app.modules:
                 success_counts[module.unique_id] += module.rename_media(old_path, new_path)
-                # TODO: all the other non-menu module media
+                if module.case_list_form.form_id:
+                    success_counts[module.unique_id] += module.case_list_form.rename_media(old_path, new_path)
+                if hasattr(module, 'case_list') and module.case_list.show:
+                    success_counts[module.unique_id] += module.case_list.rename_media(old_path, new_path)
+                for name, details, display in module.get_details():
+                    # Case list lookup
+                    if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                        if details.lookup_image == old_path:
+                            details.lookup_image = new_path
+                            success_counts[module.unique_id] += 1
+
+                    # Icons in case details
+                    for column in details.get_columns():
+                        if column.format == 'enum-image':
+                            for map_item in column.enum:
+                                for lang, icon in six.iteritems(map_item.value):
+                                    if icon == old_path:
+                                        map_item.value[lang] = new_path
+                                        success_counts[module.unique_id] += 1
                 for form in module.forms:
                     success_counts[form.unique_id] += form.rename_media(old_path, new_path)
                     if not xforms_by_id[form.unique_id]:
