@@ -47,7 +47,8 @@ class ApplicationBaseValidator(object):
             self._validate_fixtures()
             self._validate_intents()
             self._validate_practice_users()
-            self.app.create_all_files()
+            if not errors:
+                self.app.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({
                 'type': 'invalid case xpath reference',
@@ -177,8 +178,9 @@ class ApplicationValidator(ApplicationBaseValidator):
         errors.extend(self._child_module_errors(modules_dict))
         errors.extend(self._check_subscription())
 
-        if not errors:
-            errors = super(ApplicationValidator, self).validate_app()
+        # Call super's validation last because it involves calling create_all_files
+        errors.extend(super(ApplicationValidator, self).validate_app())
+
         return errors
 
     @time_method()
