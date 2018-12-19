@@ -7,18 +7,19 @@ hqDefine("sms/js/chat", function () {
             chat_footer_height = $("#chat_footer").height();
             $("#chat_messages").height(body_height - chat_header_height - chat_footer_height);
         }
-        function MessageHistoryChoice(description, utc_timestamp) {
-            var self = this;
+        function messageHistoryChoice(description, utcTimestamp) {
+            var self = {};
             self.description = description;
-            self.utc_timestamp = Date.parse(utc_timestamp); // The number of milliseconds since the Unix epoch
+            self.utc_timestamp = Date.parse(utcTimestamp); // The number of milliseconds since the Unix epoch
             self.selected = ko.observable(false);
+            return self;
         }
-        function ChatMessage(sender, text, timestamp, utc_timestamp, seen) {
-            var self = this;
+        function chatMessage(sender, text, timestamp, utcTimestamp, seen) {
+            var self = {};
             self.sender = sender;
             self.text = text;
             self.timestamp = timestamp;
-            self.utc_timestamp = Date.parse(utc_timestamp); // The number of milliseconds since the Unix epoch
+            self.utc_timestamp = Date.parse(utcTimestamp); // The number of milliseconds since the Unix epoch
             self.seen_text = ko.observable("");
             // only pertains to messages that have not been read yet upon opening the window
             self.unread_message = false;
@@ -30,9 +31,10 @@ hqDefine("sms/js/chat", function () {
                 }
             };
             self.set_seen_text(seen);
+            return self;
         }
-        function ChatWindowViewModel() {
-            var self = this;
+        function chatWindowViewModel() {
+            var self = {};
             self.original_title = document.title;
             self.message_length = ko.observable("0 / 160");
             self.messages = ko.observableArray([]);
@@ -64,7 +66,7 @@ hqDefine("sms/js/chat", function () {
 
             self.history_choices = ko.observableArray([]);
             _.each(initialPageData.get('history_choices'), function (choice) {
-                self.history_choices.push(new MessageHistoryChoice(choice[0], choice[1]));
+                self.history_choices.push(messageHistoryChoice(choice[0], choice[1]));
             });
             self.selected_history_choice = ko.observable();
             // false until the user selects one of the history choices
@@ -85,7 +87,7 @@ hqDefine("sms/js/chat", function () {
             };
             self.update_history_choice(0, false);
 
-            self.update_messages = function (set_next_timeout) {
+            self.update_messages = function (setNextTimeout) {
                 self.update_in_progress = true;
                 payload = {
                     contact_id: initialPageData.get("contact_id"),
@@ -102,7 +104,7 @@ hqDefine("sms/js/chat", function () {
                         var chat_message = null;
                         var requires_notification = false;
                         for (i = 0; i < data.length; i++) {
-                            chat_message = new ChatMessage(
+                            chat_message = chatMessage(
                                 data[i].sender,
                                 data[i].text,
                                 data[i].timestamp,
@@ -142,7 +144,7 @@ hqDefine("sms/js/chat", function () {
                         }
                     },
                     complete: function (jqXHR, textStatus) {
-                        if (set_next_timeout) {
+                        if (setNextTimeout) {
                             var time_to_wait = self.regular_update_interval;
                             if (self.quick_update_countdown > 0) {
                                 self.quick_update_countdown--;
@@ -208,7 +210,7 @@ hqDefine("sms/js/chat", function () {
                     }
                 }, 250);
             };
-            self.start_new_message_notification = function (num_seconds) {
+            self.start_new_message_notification = function (numSeconds) {
                 //num_seconds should be null to flash the window until it receives focus again
                 //otherwise num_seconds is the number of seconds to flash the window
                 self.stop_new_message_notification();
@@ -222,10 +224,10 @@ hqDefine("sms/js/chat", function () {
                         self.flash_on();
                     }
                 }, 1000);
-                if (typeof(num_seconds) === typeof(1)) {
+                if (typeof(numSeconds) === typeof(1)) {
                     setTimeout(function () {
                         self.stop_new_message_notification();
-                    }, num_seconds * 1000);
+                    }, numSeconds * 1000);
                 }
             };
             self.stop_new_message_notification = function () {
@@ -286,8 +288,10 @@ hqDefine("sms/js/chat", function () {
             setTimeout(function () {
                 self.allow_highlights_to_disappear = true;
             }, 60000);
+
+            return self;
         }
-        chat_window_view_model = new ChatWindowViewModel();
+        chat_window_view_model = chatWindowViewModel();
         ko.applyBindings(chat_window_view_model);
         $(window).resize(resize_messages);
         $(window).focus(chat_window_view_model.enter_focus);
