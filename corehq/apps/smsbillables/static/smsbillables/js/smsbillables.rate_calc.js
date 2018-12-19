@@ -10,7 +10,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
     _,
     select2Handler
 ) {
-    var SMSRateCalculator = function (formData) {
+    var smsRateCalculator = function (formData) {
         'use strict';
         var self = {};
 
@@ -77,7 +77,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
         return self;
     };
 
-    var PublicSMSRateCalculator = function () {
+    var publicSMSRateCalculator = function () {
         'use strict';
         var self = {};
 
@@ -147,7 +147,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
 
     $(function () {
         _.each($(".ko-sms-rate-calculator"), function (element) {
-            var smsRateCalculator = SMSRateCalculator({
+            var smsRateCalculator = smsRateCalculator({
                 country_code: {
                     fieldName: 'country_code',
                     currentValue: '',
@@ -159,7 +159,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
         });
 
         _.each($(".ko-public-sms-rate-calculator"), function (element) {
-            var smsRateCalculator = PublicSMSRateCalculator({
+            var smsRateCalculator = publicSMSRateCalculator({
                 country_code: {
                     fieldName: 'country_code',
                     currentValue: '',
