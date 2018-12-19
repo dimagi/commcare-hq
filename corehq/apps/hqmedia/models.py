@@ -589,6 +589,7 @@ class HQMediaMixin(Document):
                     media.append(ApplicationMediaReference(
                         details.lookup_image,
                         media_class=CommCareImage,
+                        is_menu_media=True,
                         **media_kwargs)
                     )
                 # Icons in case-details
