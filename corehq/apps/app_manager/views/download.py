@@ -475,6 +475,10 @@ def download_index_files(app, build_profile_id=None):
                  for path in app.blobs if needed_for_CCZ(path)]
     else:
         files = list(app.create_all_files().items())
+    files = [
+        (name, build_file if isinstance(build_file, six.text_type) else build_file.decode('utf-8'))
+        for (name, build_file) in files
+    ]
     return sorted(files)
 
 
@@ -487,9 +491,12 @@ def source_files(app):
     if not app.copy_of:
         app.set_media_versions(None)
     files = download_index_files(app)
+    app_json = json.dumps(
+        app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+    )
+    if six.PY2:
+        app_json = app_json.decode('utf-8')
     files.append(
-        ("app.json", json.dumps(
-            app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-        ))
+        ("app.json", app_json)
     )
     return sorted(files)
