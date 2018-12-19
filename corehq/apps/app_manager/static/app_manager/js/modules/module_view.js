@@ -126,7 +126,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             }
         });
 
-        $('.save-button-holder').button().on('click', function () {
+        $('#module-settings-form').on('saved-app-manager-form', function () {
             hideCaseTypeChangedWarning();
         });
 
