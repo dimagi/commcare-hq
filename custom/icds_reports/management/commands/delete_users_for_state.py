@@ -33,8 +33,10 @@ class Command(BaseCommand):
             for user in users_to_delete:
                 user_name = user + '@icds-cas.commcarehq.org'
                 mobile_user = CommCareUser.get_by_username(user_name)
+                if not mobile_user:
+                    continue
                 if not mobile_user.reporting_metadata.last_submission_for_user.submission_date and\
-                                 not mobile_user.reporting_metadata.last_sync_for_user.sync_date:
+                        not mobile_user.reporting_metadata.last_sync_for_user.sync_date:
                     mobile_user.retire()
                 else:
                     users_submitted_forms.append(mobile_user)
