@@ -38,8 +38,8 @@ class ApplicationBaseValidator(object):
     def timing_context(self):
         return self.app.timing_context
 
-    def validate_app(self):
-        errors = []
+    def validate_app(self, existing_errors=None):
+        errors = existing_errors or []
 
         errors.extend(self._check_password_charset())
         errors.extend(self._validate_fixtures())
@@ -164,8 +164,8 @@ class ApplicationBaseValidator(object):
 
 class ApplicationValidator(ApplicationBaseValidator):
     @time_method()
-    def validate_app(self):
-        errors = []
+    def validate_app(self, existing_errors=None):
+        errors = existing_errors or []
 
         for lang in self.app.langs:
             if not lang:
@@ -189,7 +189,7 @@ class ApplicationValidator(ApplicationBaseValidator):
         errors.extend(self._check_subscription())
 
         # Call super's validation last because it involves calling create_all_files
-        errors.extend(super(ApplicationValidator, self).validate_app())
+        errors.extend(super(ApplicationValidator, self).validate_app(existing_errors))
 
         return errors
 
