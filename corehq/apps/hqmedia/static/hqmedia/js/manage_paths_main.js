@@ -77,7 +77,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                         }
 
                         self.warningMessages(data.warnings);
-                        self.successMessages(data.successes)
+                        self.successMessages(data.successes);
                         if (!self.successMessages().length) {
                             self.successMessage(gettext("No items were found to update."));
                         }
