@@ -66,7 +66,6 @@ from dimagi.ext.couchdbkit import (
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
-from django.template.loader import render_to_string
 from couchdbkit import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin, CODES
@@ -81,7 +80,6 @@ from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
-from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.xpath import (
@@ -101,10 +99,10 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
-from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, remote_app, commcare_settings
 from corehq.apps.app_manager.helpers.make_build import app_strings, id_strings
+from corehq.apps.app_manager.helpers.make_build.profile import ProfileGenerator
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -185,11 +183,6 @@ DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
-
-ANDROID_LOGO_PROPERTY_MAPPING = {
-    'hq_logo_android_home': 'brand-banner-home',
-    'hq_logo_android_login': 'brand-banner-login',
-}
 
 
 LATEST_APK_VALUE = 'latest'
@@ -5808,78 +5801,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False, build_profile_id=None, target_commcare_flavor=None):
-        self__profile = self.profile
-        app_profile = defaultdict(dict)
-
-        for setting in commcare_settings.get_custom_commcare_settings():
-            setting_type = setting['type']
-            setting_id = setting['id']
-
-            if setting_type not in ('properties', 'features'):
-                setting_value = None
-            elif setting_id not in self__profile.get(setting_type, {}):
-                if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
-                    setting_value = setting['default']
-                else:
-                    setting_value = None
-            else:
-                setting_value = self__profile[setting_type][setting_id]
-            if setting_value:
-                app_profile[setting_type][setting_id] = {
-                    'value': setting_value,
-                    'force': setting.get('force', False)
-                }
-            # assert that it gets explicitly set once per loop
-            del setting_value
-
-        if self.case_sharing:
-            app_profile['properties']['server-tether'] = {
-                'force': True,
-                'value': 'sync',
-            }
-
-        logo_refs = [logo_name for logo_name in self.logo_refs if logo_name in ANDROID_LOGO_PROPERTY_MAPPING]
-        if logo_refs and domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):
-            for logo_name in logo_refs:
-                app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
-                    'value': self.logo_refs[logo_name]['path'],
-                }
-
-        if toggles.MOBILE_RECOVERY_MEASURES.enabled(self.domain):
-            app_profile['properties']['recovery-measures-url'] = {
-                'force': True,
-                'value': self.recovery_measures_url,
-            }
-
-        if with_media:
-            profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
-        else:
-            profile_url = self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true')
-
-        if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
-            app_profile['custom_properties'].update(self__profile['custom_properties'])
-
-        apk_heartbeat_url = self.heartbeat_url
-        locale = self.get_build_langs(build_profile_id)[0]
-        target_package_id = {
-            TARGET_COMMCARE: 'org.commcare.dalvik',
-            TARGET_COMMCARE_LTS: 'org.commcare.lts',
-        }.get(target_commcare_flavor)
-        return render_to_string('app_manager/profile.xml', {
-            'is_odk': is_odk,
-            'app': self,
-            'profile_url': profile_url,
-            'app_profile': app_profile,
-            'cc_user_domain': cc_user_domain(self.domain),
-            'include_media_suite': with_media,
-            'uniqueid': self.master_id,
-            'name': self.name,
-            'descriptor': "Profile File",
-            'build_profile_id': build_profile_id,
-            'locale': locale,
-            'apk_heartbeat_url': apk_heartbeat_url,
-            'target_package_id': target_package_id,
-        }).encode('utf-8')
+        return ProfileGenerator(self).create(is_odk, with_media, build_profile_id, target_commcare_flavor)
 
     @property
     def custom_suite(self):
@@ -6430,7 +6352,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return setting
         yaml_setting = commcare_settings.get_commcare_settings_lookup()[s_type][s_id]
         for contingent in yaml_setting.get("contingent_default", []):
-            if check_condition(self, contingent["condition"]):
+            if commcare_settings.check_condition(self, contingent["condition"]):
                 setting = contingent["value"]
         if setting is not None:
             return setting

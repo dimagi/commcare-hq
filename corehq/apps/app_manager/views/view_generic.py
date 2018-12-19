@@ -39,8 +39,8 @@ from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.helpers.make_build.profile import ANDROID_LOGO_PROPERTY_MAPPING
 from corehq.apps.app_manager.models import (
-    ANDROID_LOGO_PROPERTY_MAPPING,
     ModuleNotFoundException,
     ReportModule,
     CustomIcon)
