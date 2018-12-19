@@ -116,7 +116,7 @@ hqDefine("sms/js/chat", function () {
                             }
                             self.latest_message_utc_timestamp = data[i].utc_timestamp;
                             if (self.first_update) {
-                                if ((self.last_read_message_utc_timestamp == null) || (chatMessageModel.utc_timestamp > self.last_read_message_utc_timestamp)) {
+                                if ((self.last_read_message_utc_timestamp === null) || (chatMessageModel.utc_timestamp > self.last_read_message_utc_timestamp)) {
                                     chatMessageModel.set_seen_text(false);
                                     chatMessageModel.unread_message = true;
                                 }
