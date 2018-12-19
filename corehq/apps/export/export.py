@@ -31,7 +31,7 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
     SMSExportInstance,
 )
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS, CASE_ID_TO_LINK, FORM_ID_TO_LINK
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 import six
 from io import open
 
