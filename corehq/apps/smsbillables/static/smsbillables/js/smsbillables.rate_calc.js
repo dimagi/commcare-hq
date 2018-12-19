@@ -10,142 +10,143 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
     _,
     select2Handler
 ) {
-    var smsRateCalculator = function (formData) {
-        'use strict';
-        var self = {};
+    $(function () {
+        var smsRateCalculator = function (formData) {
+            'use strict';
+            var self = {};
 
-        self.gateway = ko.observable();
-        self.direction = ko.observable();
-        self.select2CountryCode = select2SmsRateHandler(formData.country_code);
-        self.rate = ko.observable();
-        self.hasError = ko.observable(false);
-        self.noError = ko.computed(function () {
-            return ! self.hasError();
-        });
-        self.calculatingRate = ko.observable(false);
-        self.showRateInfo = ko.computed(function () {
-            return self.rate() && ! self.calculatingRate();
-        });
+            self.gateway = ko.observable();
+            self.direction = ko.observable();
+            self.select2CountryCode = select2SmsRateHandler(formData.country_code);
+            self.rate = ko.observable();
+            self.hasError = ko.observable(false);
+            self.noError = ko.computed(function () {
+                return ! self.hasError();
+            });
+            self.calculatingRate = ko.observable(false);
+            self.showRateInfo = ko.computed(function () {
+                return self.rate() && ! self.calculatingRate();
+            });
 
-        self.init = function () {
-            self.select2CountryCode.getExtraData = function () {
-                return {
-                    'gateway': self.gateway(),
-                    'direction': self.direction(),
+            self.init = function () {
+                self.select2CountryCode.getExtraData = function () {
+                    return {
+                        'gateway': self.gateway(),
+                        'direction': self.direction(),
+                    };
                 };
+                self.select2CountryCode.init();
             };
-            self.select2CountryCode.init();
+
+            self.clearSelect2 = function () {
+                self.select2CountryCode.clear();
+                self.rate('');
+            };
+
+            self.updateRate = function () {
+                if (self.select2CountryCode.value()) {
+                    self.calculatingRate(true);
+                    $.ajax({
+                        url: '',
+                        dataType: 'json',
+                        type: 'POST',
+                        data: {
+                            gateway: self.gateway(),
+                            direction: self.direction(),
+                            country_code: self.select2CountryCode.value(),
+                            handler: 'sms_get_rate',
+                            action: 'get_rate',
+                        },
+                        success: function (response) {
+                            self.calculatingRate(false);
+                            if (response.success) {
+                                self.rate(response.data.rate);
+                                self.hasError(false);
+                            } else {
+                                self.rate(response.error);
+                                self.hasError(true);
+                            }
+                        },
+                        error: function () {
+                            self.calculatingRate(false);
+                            self.rate(gettext("There was an error fetching the SMS rate."));
+                        },
+                    });
+                }
+            };
+
+            return self;
         };
 
-        self.clearSelect2 = function () {
-            self.select2CountryCode.clear();
-            self.rate('');
-        };
+        var publicSMSRateCalculator = function () {
+            'use strict';
+            var self = {};
 
-        self.updateRate = function () {
-            if (self.select2CountryCode.value()) {
+            var rates = [];
+            self.country_code = ko.observable();
+            self.rate_table = ko.observableArray(rates);
+            self.hasError = ko.observable(false);
+            self.rateErrorText = ko.observable();
+            self.noError = ko.computed(function () {
+                return ! self.hasError();
+            });
+            self.calculatingRate = ko.observable(false);
+            self.showTable = ko.computed(function () {
+                return !self.hasError() && !self.calculatingRate();
+            });
+            self.showRateInfo = ko.computed(function () {
+                return self.rateErrorText() && ! self.calculatingRate();
+            });
+
+            var updateRate = function () {
                 self.calculatingRate(true);
                 $.ajax({
                     url: '',
                     dataType: 'json',
                     type: 'POST',
                     data: {
-                        gateway: self.gateway(),
-                        direction: self.direction(),
-                        country_code: self.select2CountryCode.value(),
-                        handler: 'sms_get_rate',
-                        action: 'get_rate',
+                        country_code: self.country_code,
+                        handler: 'public_sms_rate_calc',
+                        action: 'public_rate',
                     },
                     success: function (response) {
                         self.calculatingRate(false);
-                        if (response.success) {
-                            self.rate(response.data.rate);
-                            self.hasError(false);
-                        } else {
-                            self.rate(response.error);
-                            self.hasError(true);
-                        }
+                        self.rate_table(response.data);
+                        self.hasError(false);
+                        self.rateErrorText(false);
                     },
                     error: function () {
                         self.calculatingRate(false);
-                        self.rate(gettext("There was an error fetching the SMS rate."));
+                        self.hasError(true);
+                        self.rateErrorText(gettext("There was an error fetching the SMS rate."));
                     },
                 });
-            }
+            };
+            self.country_code.subscribe(updateRate);
+
+            return self;
         };
 
-        return self;
-    };
+        var select2SmsRateHandler = function (options) {
+            'use strict';
+            var self = select2Handler.baseSelect2Handler(options);
 
-    var publicSMSRateCalculator = function () {
-        'use strict';
-        var self = {};
+            self.getHandlerSlug = function () {
+                return 'sms_rate_calc';
+            };
 
-        var rates = [];
-        self.country_code = ko.observable();
-        self.rate_table = ko.observableArray(rates);
-        self.hasError = ko.observable(false);
-        self.rateErrorText = ko.observable();
-        self.noError = ko.computed(function () {
-            return ! self.hasError();
-        });
-        self.calculatingRate = ko.observable(false);
-        self.showTable = ko.computed(function () {
-            return !self.hasError() && !self.calculatingRate();
-        });
-        self.showRateInfo = ko.computed(function () {
-            return self.rateErrorText() && ! self.calculatingRate();
-        });
+            self.templateSelection = function (result) {
+                return result.text || (result.name + ' [' + result.rate_type + ']');
+            };
 
-        var updateRate = function () {
-            self.calculatingRate(true);
-            $.ajax({
-                url: '',
-                dataType: 'json',
-                type: 'POST',
-                data: {
-                    country_code: self.country_code,
-                    handler: 'public_sms_rate_calc',
-                    action: 'public_rate',
-                },
-                success: function (response) {
-                    self.calculatingRate(false);
-                    self.rate_table(response.data);
-                    self.hasError(false);
-                    self.rateErrorText(false);
-                },
-                error: function () {
-                    self.calculatingRate(false);
-                    self.hasError(true);
-                    self.rateErrorText(gettext("There was an error fetching the SMS rate."));
-                },
-            });
-        };
-        self.country_code.subscribe(updateRate);
+            self.getInitialData = function (element) {
+                return {id: element.val(), text: element.val()};
+            };
 
-        return self;
-    };
-
-    var select2SmsRateHandler = function (options) {
-        'use strict';
-        var self = select2Handler.baseSelect2Handler(options);
-
-        self.getHandlerSlug = function () {
-            return 'sms_rate_calc';
+            return self;
         };
 
-        self.templateSelection = function (result) {
-            return result.text || (result.name + ' [' + result.rate_type + ']');
-        };
 
-        self.getInitialData = function (element) {
-            return {id: element.val(), text: element.val()};
-        };
-
-        return self;
-    };
-
-    $(function () {
         _.each($(".ko-sms-rate-calculator"), function (element) {
             var smsRateCalculator = smsRateCalculator({
                 country_code: {

@@ -101,10 +101,10 @@ hqDefine("sms/js/chat", function () {
                     async: true,
                     dataType: "json",
                     success: function (data, textStatus, jqXHR) {
-                        var chat_message = null;
+                        var chatMessageModel = null;
                         var requires_notification = false;
                         for (i = 0; i < data.length; i++) {
-                            chat_message = chatMessage(
+                            chatMessageModel = chatMessage(
                                 data[i].sender,
                                 data[i].text,
                                 data[i].timestamp,
@@ -116,12 +116,12 @@ hqDefine("sms/js/chat", function () {
                             }
                             self.latest_message_utc_timestamp = data[i].utc_timestamp;
                             if (self.first_update) {
-                                if ((self.last_read_message_utc_timestamp == null) || (chat_message.utc_timestamp > self.last_read_message_utc_timestamp)) {
-                                    chat_message.set_seen_text(false);
-                                    chat_message.unread_message = true;
+                                if ((self.last_read_message_utc_timestamp == null) || (chatMessageModel.utc_timestamp > self.last_read_message_utc_timestamp)) {
+                                    chatMessageModel.set_seen_text(false);
+                                    chatMessageModel.unread_message = true;
                                 }
                             }
-                            self.messages.push(chat_message);
+                            self.messages.push(chatMessageModel);
                         }
                         if (!self.first_update && data.length > 0 && requires_notification) {
                             if (self.is_focused) {
@@ -291,15 +291,15 @@ hqDefine("sms/js/chat", function () {
 
             return self;
         }
-        chat_window_view_model = chatWindowViewModel();
-        ko.applyBindings(chat_window_view_model);
+        var chatWindowView = chatWindowViewModel();
+        ko.applyBindings(chatWindowView);
         $(window).resize(resize_messages);
-        $(window).focus(chat_window_view_model.enter_focus);
-        $(window).blur(chat_window_view_model.leave_focus);
-        chat_window_view_model.update_last_read_message();
-        chat_window_view_model.update_messages_timeout();
-        $("#text_box").on("paste", chat_window_view_model.update_message_length);
-        $("#text_box").keyup(chat_window_view_model.update_message_length);
+        $(window).focus(chatWindowView.enter_focus);
+        $(window).blur(chatWindowView.leave_focus);
+        chatWindowView.update_last_read_message();
+        chatWindowView.update_messages_timeout();
+        $("#text_box").on("paste", chatWindowView.update_message_length);
+        $("#text_box").keyup(chatWindowView.update_message_length);
         resize_messages();
     });
 });

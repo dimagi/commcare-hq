@@ -9,7 +9,7 @@ hqDefine("sms/js/settings", [
     initialPageData,
     select2Handler
 ) {
-    $(function() {
+    $(function () {
         function dayTimeWindow(day, startTime, endTime, timeInputRelationship) {
             'use strict';
             var self = {};
@@ -17,8 +17,8 @@ hqDefine("sms/js/settings", [
             self.start_time = ko.observable(startTime);
             self.end_time = ko.observable(endTime);
 
-            self.time_input_relationship_initial = function() {
-                if(self.start_time() === null) {
+            self.time_input_relationship_initial = function () {
+                if (self.start_time() === null) {
                     return "BEFORE";
                 } else if(self.end_time() === null) {
                     return "AFTER";
@@ -132,9 +132,10 @@ hqDefine("sms/js/settings", [
                 self.sms_case_registration_enabled(initial.sms_case_registration_enabled);
                 self.override_daily_outbound_sms_limit(initial.override_daily_outbound_sms_limit);
 
-                if(initial.restricted_sms_times_json.length > 0) {
-                    for(var i = 0; i < initial.restricted_sms_times_json.length; i++) {
-                        var window = initial.restricted_sms_times_json[i];
+                var i, window;
+                if (initial.restricted_sms_times_json.length > 0) {
+                    for (i = 0; i < initial.restricted_sms_times_json.length; i++) {
+                        window = initial.restricted_sms_times_json[i];
                         self.restricted_sms_times.push(
                             dayTimeWindow(
                                 window.day,
@@ -148,9 +149,9 @@ hqDefine("sms/js/settings", [
                     self.addRestrictedSMSTime();
                 }
 
-                if(initial.sms_conversation_times_json.length > 0) {
-                    for(var i = 0; i < initial.sms_conversation_times_json.length; i++) {
-                        var window = initial.sms_conversation_times_json[i];
+                if (initial.sms_conversation_times_json.length > 0) {
+                    for (i = 0; i < initial.sms_conversation_times_json.length; i++) {
+                        window = initial.sms_conversation_times_json[i];
                         self.sms_conversation_times.push(
                             dayTimeWindow(
                                 window.day,
