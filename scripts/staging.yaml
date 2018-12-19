@@ -53,7 +53,6 @@ branches:
   - np-export-links-test  # Nick Nov 25
 #  - rn_migrate_multimedia # Rohit 3 Dec
   - mk-transifex-improv # MK Dec 8
-  - case-type-changes  # Nick Dec 7
   - vellum-staging   # Nick Dec 10
   - form-has-submissions  # Nick Dec 10
   - mk-215 # MK Dec 13
