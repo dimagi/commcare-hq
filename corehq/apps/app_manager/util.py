@@ -283,19 +283,6 @@ def get_correct_app_class(doc):
         raise DocTypeError(doc['doc_type'])
 
 
-def all_apps_by_domain(domain):
-    from corehq.apps.app_manager.models import ApplicationBase
-    rows = ApplicationBase.get_db().view(
-        'app_manager/applications',
-        startkey=[domain, None],
-        endkey=[domain, None, {}],
-        include_docs=True,
-    ).all()
-    for row in rows:
-        doc = row['doc']
-        yield get_correct_app_class(doc).wrap(doc)
-
-
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:
