@@ -30,13 +30,16 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
     var $profilesTab = $('#profiles-tab');
     if ($profilesTab.length) {
         var profiles = hqImport('app_manager/js/releases/language_profiles');
+        var latest_enabled_versions = hqImport("hqwebapp/js/initial_page_data").get(
+                                               'latest_version_for_build_profiles');
         profiles.setProfileUrl(initial_page_data('application_profile_url'));
         var profileManagerModel = profiles.profileManager;
         var app_langs = initial_page_data("langs");
         var app_profiles = initial_page_data('build_profiles');
         var enable_practice_users = initial_page_data('enable_practice_users');
         var practice_users = initial_page_data('practice_users');
-        var profileManager = profileManagerModel(app_profiles, app_langs, enable_practice_users, practice_users);
+        var profileManager = profileManagerModel(app_profiles, app_langs, enable_practice_users, practice_users,
+                                                 latest_enabled_versions);
         $profilesTab.koApplyBindings(profileManager);
     }
 

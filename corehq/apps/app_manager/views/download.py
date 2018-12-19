@@ -18,7 +18,10 @@ from corehq.apps.app_manager.decorators import safe_download, safe_cached_downlo
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import add_odk_profile_after_build, get_enabled_build_profiles_for_version
+from corehq.apps.app_manager.util import (
+    add_odk_profile_after_build,
+    get_enabled_build_profiles_for_version,
+)
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
