@@ -1045,9 +1045,9 @@ class XForm(WrappedNode):
             if cnode.constraint and cnode.bind_node.attrib.get(constraint_ref_xml):
                 constraint_jr_itext = cnode.bind_node.attrib.get(constraint_ref_xml)
                 question['constraintMsg_ref'] = self._normalize_itext_id(constraint_jr_itext)
-            if node.find('{f}help').exists():
+            if node.find('{f}help').exists() and node.find('{f}help').attrib.get('ref'):
                 question['helpMsg_ref'] = self._normalize_itext_id(node.find('{f}help').attrib.get('ref'))
-            if node.find('{f}hint').exists():
+            if node.find('{f}hint').exists() and node.find('{f}hint').attrib.get('ref'):
                 question['hintMsg_ref'] = self._normalize_itext_id(node.find('{f}hint').attrib.get('ref'))
 
             questions.append(question)
