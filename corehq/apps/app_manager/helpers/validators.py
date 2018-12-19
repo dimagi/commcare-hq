@@ -42,11 +42,11 @@ class ApplicationBaseValidator(object):
         errors = []
 
         errors.extend(self._check_password_charset())
+        errors.extend(self._validate_fixtures())
+        errors.extend(self._validate_intents())
+        errors.extend(self._validate_practice_users())
 
         try:
-            self._validate_fixtures()
-            self._validate_intents()
-            self._validate_practice_users()
             if not errors:
                 self.app.create_all_files()
         except CaseXPathValidationError as cve:
@@ -60,12 +60,6 @@ class ApplicationBaseValidator(object):
                 'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
-            })
-        except PracticeUserException as pue:
-            errors.append({
-                'type': 'practice user config error',
-                'message': six.text_type(pue),
-                'build_profile_id': pue.build_profile_id,
             })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
@@ -88,49 +82,65 @@ class ApplicationBaseValidator(object):
             if hasattr(self.app, 'get_forms'):
                 for form in self.app.get_forms():
                     if form.has_fixtures:
-                        raise PermissionDenied(_(
-                            "Usage of lookup tables is not supported by your "
-                            "current subscription. Please upgrade your "
-                            "subscription before using this feature."
-                        ))
+                        return [{
+                            'type': 'error',
+                            'message': _(
+                                "Usage of lookup tables is not supported by your "
+                                "current subscription. Please upgrade your "
+                                "subscription before using this feature."
+                            ),
+                        }]
+        return []
 
     @time_method()
     def _validate_intents(self):
         if domain_has_privilege(self.domain, privileges.CUSTOM_INTENTS):
-            return
+            return []
 
         if hasattr(self.app, 'get_forms'):
             for form in self.app.get_forms():
                 intents = form.wrapped_xform().odk_intents
                 if intents:
                     if not domain_has_privilege(self.domain, privileges.TEMPLATED_INTENTS):
-                        raise PermissionDenied(_(
-                            "Usage of integrations is not supported by your "
-                            "current subscription. Please upgrade your "
-                            "subscription before using this feature."
-                        ))
+                        return [{
+                            'type': 'error',
+                            'message': _(
+                                "Usage of integrations is not supported by your "
+                                "current subscription. Please upgrade your "
+                                "subscription before using this feature."
+                            ),
+                        }]
                     else:
                         templates = next(app_callout_templates)
                         if len(set(intents) - set(t['id'] for t in templates)):
-                            raise PermissionDenied(_(
-                                "Usage of external integration is not supported by your "
-                                "current subscription. Please upgrade your "
-                                "subscription before using this feature."
-                            ))
+                            return [{
+                                'type': 'error',
+                                'message': _(
+                                    "Usage of external integration is not supported by your "
+                                    "current subscription. Please upgrade your "
+                                    "subscription before using this feature."
+                                ),
+                            }]
+            return []
 
     @time_method()
     def _validate_practice_users(self):
         # validate practice_mobile_worker of app and all app profiles
         # raises PracticeUserException in case of misconfiguration
         if not self.app.enable_practice_users:
-            return
+            return []
         self.app.get_practice_user()
         try:
             for build_profile_id in self.app.build_profiles:
                 self.app.get_practice_user(build_profile_id)
         except PracticeUserException as e:
             e.build_profile_id = build_profile_id
-            raise e
+            return [{
+                'type': 'practice user config error',
+                'message': six.text_type(pue),
+                'build_profile_id': pue.build_profile_id,
+            }]
+        return []
 
     def _check_password_charset(self):
         errors = []
