@@ -105,14 +105,16 @@ class _ExportWriter(object):
             finally:
                 self.writer.close()
 
-    def write(self, table, row, hyperlink_column_indices):
+    def write(self, table, row):
         """
         Write the given row to the given table of the export.
         _Writer must be opened first.
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        return self.writer.write([(table, [FormattedRow(data=row.data)])], hyperlink_column_indices)
+        return self.writer.write([
+            (table, [FormattedRow(data=row.data, hyperlink_column_indices=row.hyperlink_column_indices)])
+        ])
 
     def get_preview(self):
         return self.writer.get_preview()
@@ -368,14 +370,10 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
             compute_total += _time_in_milliseconds() - compute_start
 
             write_start = _time_in_milliseconds()
-            hyperlink_column_indices = [
-                i for i, column in enumerate(table.columns)
-                if column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]
-            ]
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.
-                writer.write(table, row, hyperlink_column_indices)
+                writer.write(table, row)
             write_total += _time_in_milliseconds() - write_start
 
             total_rows += len(rows)

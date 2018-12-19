@@ -96,6 +96,8 @@ from corehq.apps.export.const import (
     UNKNOWN_INFERRED_FROM,
     CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
     SharingOption,
+    CASE_ID_TO_LINK,
+    FORM_ID_TO_LINK,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -513,7 +515,7 @@ class TableConfiguration(DocumentSchema):
                     row_data.extend(val)
                 else:
                     row_data.append(val)
-            rows.append(ExportRow(data=row_data))
+            rows.append(ExportRow(data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices()))
         return rows
 
     def get_column(self, item_path, item_doc_type, column_transform):
@@ -538,6 +540,13 @@ class TableConfiguration(DocumentSchema):
                     item_doc_type is None):
                 return index, column
         return None, None
+
+    @memoized
+    def get_hyperlink_column_indices(self):
+        return [
+            i for i, column in enumerate(self.columns)
+            if column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]
+        ]
 
     def _get_sub_documents(self, document, row_number, document_id=None):
         return self._get_sub_documents_helper(document_id, self.path,
@@ -1201,8 +1210,9 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
 class ExportRow(object):
 
-    def __init__(self, data):
+    def __init__(self, data, hyperlink_column_indices=()):
         self.data = data
+        self.hyperlink_column_indices = hyperlink_column_indices
 
 
 class ScalarItem(ExportItem):
