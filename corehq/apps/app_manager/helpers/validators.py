@@ -137,8 +137,8 @@ class ApplicationBaseValidator(object):
             e.build_profile_id = build_profile_id
             return [{
                 'type': 'practice user config error',
-                'message': six.text_type(pue),
-                'build_profile_id': pue.build_profile_id,
+                'message': six.text_type(e),
+                'build_profile_id': e.build_profile_id,
             }]
         return []
 
