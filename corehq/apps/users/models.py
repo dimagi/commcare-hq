@@ -618,7 +618,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.delete_domain_membership(domain, create_record=create_record)
 
     @memoized
-    def is_domain_admin(self, domain=None, restrict_global_admin=False):
+    def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template
             if hasattr(self, 'current_domain'):
@@ -626,8 +626,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if (not restrict_global_admin and self.is_global_admin() and
-                (domain is None or not domain_restricts_superusers(domain))):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -644,15 +643,18 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     @memoized
     def has_permission(self, domain, permission, data=None, restrict_global_admin=False):
-        # is_admin is the same as having all the permissions set
-        if (not restrict_global_admin and self.is_global_admin() and
-                (domain is None or not domain_restricts_superusers(domain))):
-            return True
-        elif self.is_domain_admin(domain, restrict_global_admin):
-            return True
+        if not restrict_global_admin:
+            # is_admin is the same as having all the permissions set
+            if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+                return True
+            elif self.is_domain_admin(domain):
+                return True
 
         dm = self.get_domain_membership(domain)
         if dm:
+            # an admin has access to all features by default, restrict that if needed
+            if dm.is_admin and restrict_global_admin:
+                return False
             return dm.has_permission(permission, data)
         else:
             return False
@@ -1673,7 +1675,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    def is_domain_admin(self, domain=None, restrict_global_admin=False):
+    def is_domain_admin(self, domain=None):
         # cloudcare workaround
         return False
 
