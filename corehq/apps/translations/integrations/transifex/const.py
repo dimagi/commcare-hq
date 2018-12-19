@@ -18,4 +18,5 @@ SOURCE_LANGUAGE_MAPPING = {
     'lug': 'lg',  # ganda
     'tel': 'te',  # telugu
     'urd': 'ur',  # urdu
+    'kan': 'kn',  # kannada
 }
