@@ -387,6 +387,8 @@ class Excel2007ExportWriter(ExportWriter):
         self.table_indices[table_index] = 0
 
     def _write_row(self, sheet_index, row, hyperlink_column_indices=None):
+        from corehq.apps.export.models import TableConfiguration
+        assert isinstance(sheet_index, TableConfiguration), sheet_index
         sheet = self.tables[sheet_index]
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
