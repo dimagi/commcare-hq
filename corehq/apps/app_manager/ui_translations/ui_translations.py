@@ -7,7 +7,7 @@ from distutils.version import StrictVersion
 import re
 from django.utils.translation import ugettext as _
 from commcare_translations import load_translations
-from corehq.apps.app_manager import app_strings
+from corehq.apps.app_manager.helpers.make_build import app_strings
 from corehq.apps.app_manager.ui_translations.commcare_versioning import \
     get_commcare_version_from_workbook, set_commcare_version_in_workbook
 from corehq.util.workbook_json.excel import WorkbookJSONReader, WorksheetNotFound
