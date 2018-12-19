@@ -63,4 +63,5 @@ def unfinished_archive(instance, user_id, archive):
         )
     tracker = ArchiveProcessTracker(unfinished_archive_stub)
     yield tracker
-    unfinished_archive_stub.delete()
+    if unfinished_archive_stub:
+        unfinished_archive_stub.delete()
