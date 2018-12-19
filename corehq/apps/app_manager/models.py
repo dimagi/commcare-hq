@@ -5318,7 +5318,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_fixtures()
             self.validate_intents()
             self.validate_practice_users()
-            self._all_files = self.create_all_files(previous_version)
+            self._all_files = self.create_all_files(previous_version=previous_version)
         except CaseXPathValidationError as cve:
             errors.append({
                 'type': 'invalid case xpath reference',
