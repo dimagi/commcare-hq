@@ -88,7 +88,6 @@ from corehq.blobs.migrate_metadata import migrate_metadata
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMeta, BlobMigrationState
-from corehq.blobs.zipdb import get_export_filename
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
 from corehq.util.doc_processor.couch import (
     CouchDocumentProvider, doc_type_tuples_to_dict
@@ -303,36 +302,6 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                 print(self.filename)
 
 
-class BlobDbBackendExporter(object):
-
-    def __init__(self, slug, domain):
-        from corehq.blobs.zipdb import ZipBlobDB
-        self.slug = slug
-        self.db = ZipBlobDB(self.slug, domain)
-        self.total_blobs = 0
-        self.not_found = 0
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.db.close()
-        if self.not_found:
-            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
-
-    def process_object(self, meta):
-        from_db = get_blob_db()
-        self.total_blobs += 1
-        try:
-            content = from_db.get(key=meta.key)
-        except NotFound:
-            self.not_found += 1
-        else:
-            with content:
-                self.db.copy_blob(content, key=meta.key)
-        return True
-
-
 class BlobMetaReindexAccessor(ReindexAccessor):
 
     model_class = BlobMeta
@@ -405,42 +374,6 @@ class BackendMigrator(Migrator):
         return SqlDocumentProvider(self.iteration_key, self.reindexer)
 
 
-class ExportByDomain(object):
-
-    def __init__(self, slug):
-        self.slug = slug
-        self.domain = None
-
-    def by_domain(self, domain):
-        self.domain = domain
-
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, limit_to_db=None):
-        from corehq.apps.dump_reload.sql.dump import get_all_model_iterators_builders_for_domain
-
-        if not self.domain:
-            raise MigrationError("Must specify domain")
-
-        if os.path.exists(get_export_filename(self.slug, self.domain)):
-            raise MigrationError(
-                "{} exporter doesn't support resume. "
-                "To re-run the export use 'reset'".format(self.slug)
-            )
-
-        migrator = BlobDbBackendExporter(self.slug, self.domain)
-
-        with migrator:
-            builders = get_all_model_iterators_builders_for_domain(
-                BlobMeta, self.domain, limit_to_db)
-            for model_class, builder in builders:
-                for iterator in builder.iterators():
-                    for obj in iterator:
-                        migrator.process_object(obj)
-                        if migrator.total_blobs % chunk_size == 0:
-                            print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
-
-        return migrator.total_blobs, 0
-
-
 MIGRATIONS = {m.slug: m for m in [
     BackendMigrator("migrate_backend"),
     migrate_metadata,
@@ -451,10 +384,6 @@ MIGRATIONS = {m.slug: m for m in [
     #    ("Application-Deleted", apps.Application),
     #    ("RemoteApp-Deleted", apps.RemoteApp),
     # ], CouchAttachmentMigrator),
-]}
-
-EXPORTERS = {m.slug: m for m in [
-    ExportByDomain("all_blobs"),
 ]}
 
 
