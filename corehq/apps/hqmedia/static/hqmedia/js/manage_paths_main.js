@@ -39,7 +39,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                 contentType: false,
                 success: function (data) {
                     self.isValidating(false);
-                    if (data.success) {     // file was uploaded successfully, though its content may have errors
+                    if (data.complete) {     // file was uploaded successfully, though its content may have errors
                         self.fileId(data.file_id);
                         self.errorMessages(data.errors);
                         self.warningMessages(data.warnings);
@@ -70,7 +70,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                 },
                 success: function (data) {
                     self.isUpdating(false);
-                    if (data.success) {
+                    if (data.complete) {
                         self.errorMessages(data.errors || []);
                         if (self.errorMessages().length) {
                             return;

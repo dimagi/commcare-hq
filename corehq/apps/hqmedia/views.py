@@ -252,7 +252,7 @@ def validate_multimedia_paths(request, domain, app_id):
         (errors, warnings) = validate_multimedia_paths_rows(app, spreadsheet.iter_rows())
 
     return json_response({
-        'success': 1,
+        'complete': 1,
         'file_id': file_id,
         'errors': errors,
         'warnings': warnings,
@@ -279,7 +279,7 @@ def update_multimedia_paths(request, domain, app_id):
         (errors, warnings) = validate_multimedia_paths_rows(app, rows)
         if len(errors):
             return json_response({
-                'success': 1,
+                'complete': 1,
                 'errors': errors,
             })
 
@@ -364,7 +364,7 @@ def update_multimedia_paths(request, domain, app_id):
                                   "please check app for remaining references.").format(old_path))
 
     return json_response({
-        'success': 1,
+        'complete': 1,
         'successes': successes,
         'warnings': warnings,
     })
