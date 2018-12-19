@@ -185,7 +185,7 @@ def export_raw_to_writer(headers, data, file, format=Format.XLS_2007,
 
     # do the same for the data
     data = FormattedRow.wrap_all_rows(data)
-    writer.write(data)
+    writer.write(data, [])
     yield writer
     writer.close()
 
