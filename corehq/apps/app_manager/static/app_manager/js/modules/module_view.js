@@ -56,6 +56,14 @@ hqDefine("app_manager/js/modules/module_view", function () {
         }
 
         var originalCaseType = initial_page_data('case_type');
+        var casesExist = false;
+        $.ajax({
+            method: 'GET',
+            url: hqImport('hqwebapp/js/initial_page_data').reverse('existing_case_types'),
+            success: function (data) {
+                casesExist = data.existing_case_types.includes(originalCaseType);
+            },
+        });
 
         // Validation for case type
         var showCaseTypeError = function (message) {
@@ -68,8 +76,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
         };
 
         var showCaseTypeChangedWarning = function () {
-            $('#case_type_changed_warning').css('display', 'block');
-            $('#case_type_form_group').addClass('has-error');
+            if (casesExist) {
+                $('#case_type_changed_warning').css('display', 'block');
+                $('#case_type_form_group').addClass('has-error');
+            }
         };
         var hideCaseTypeChangedWarning = function () {
             $('#case_type_changed_warning').css('display', 'none');
@@ -113,6 +123,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     hideCaseTypeChangedWarning();
                 }
             }
+        });
+
+        $('.save-button-holder').button().on('click', function () {
+            hideCaseTypeChangedWarning();
         });
 
         // Module filter
