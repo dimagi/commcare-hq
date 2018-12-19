@@ -513,7 +513,7 @@ class TableConfiguration(DocumentSchema):
                     row_data.extend(val)
                 else:
                     row_data.append(val)
-            rows.append(ExportRow(data=row_data))
+            rows.append(ExportRow(data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices()))
         return rows
 
     def get_column(self, item_path, item_doc_type, column_transform):
@@ -1208,8 +1208,9 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
 class ExportRow(object):
 
-    def __init__(self, data):
+    def __init__(self, data, hyperlink_column_indices=()):
         self.data = data
+        self.hyperlink_column_indices = hyperlink_column_indices
 
 
 class ScalarItem(ExportItem):

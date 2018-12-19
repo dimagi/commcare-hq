@@ -133,7 +133,7 @@ def export_from_tables(tables, file, format, max_column_size=2000):
     tables = FormattedRow.wrap_all_rows(tables)
     writer = get_writer(format)
     writer.open(tables, file, max_column_size=max_column_size)
-    writer.write(tables, [], skip_first=True)
+    writer.write(tables, skip_first=True)
     writer.close()
 
 
@@ -185,7 +185,7 @@ def export_raw_to_writer(headers, data, file, format=Format.XLS_2007,
 
     # do the same for the data
     data = FormattedRow.wrap_all_rows(data)
-    writer.write(data, [])
+    writer.write(data)
     yield writer
     writer.close()
 
