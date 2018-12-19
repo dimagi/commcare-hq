@@ -5,7 +5,7 @@ import six
 
 class BaseSuiteContributor(six.with_metaclass(ABCMeta, object)):
     def __init__(self, suite, app, modules):
-        from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.sections.entries import EntriesHelper
         self.suite = suite
         self.app = app
         self.modules = modules

@@ -6,8 +6,8 @@ from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
-from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
-from corehq.apps.app_manager.suite_xml.xml_models import Instance
+from corehq.apps.app_manager.helpers.make_build.suite_xml.contributors import PostProcessor
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import Instance
 from memoized import memoized
 import six
 
@@ -153,7 +153,7 @@ def commcare_fixture_instances(domain, instance_name):
 
 
 def _commcare_reports_instances(domain, instance_name, prefix):
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+    from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
     if instance_name.startswith(prefix) and toggles.MOBILE_UCR.enabled(domain):
         instance_id = instance_name[len(prefix):]
         uuid = get_uuids_by_instance_id(domain).get(instance_id, [instance_id])[0]

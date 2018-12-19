@@ -7,9 +7,9 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE
 )
 from corehq.apps.app_manager.exceptions import ScheduleError
-from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_SCHEDULE
-from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.xml_models import (
+from corehq.apps.app_manager.helpers.make_build.suite_xml.const import FIELD_TYPE_SCHEDULE
+from corehq.apps.app_manager.helpers.make_build.suite_xml.contributors import SectionContributor
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import (
     DetailVariable, ScheduleFixtureVisit,
     ScheduleFixture, Schedule
 )

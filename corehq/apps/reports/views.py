@@ -11,7 +11,7 @@ import csv
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
 from corehq.apps.reports.tasks import send_email_report
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.helpers.make_build.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo

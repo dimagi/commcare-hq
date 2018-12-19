@@ -9,7 +9,7 @@ from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import check_lockout
 from corehq.apps.users.models import CouchUser
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_latest_released_app_doc, wrap_app
-from corehq.apps.app_manager.suite_xml.xml_models import (
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import (
     StringField,
     IntegerField,
     NodeListField,

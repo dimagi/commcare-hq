@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.app_manager.helpers.make_build import id_strings
-from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
+from corehq.apps.app_manager.helpers.make_build.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
-from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper, get_instances_for_module
-from corehq.apps.app_manager.suite_xml.xml_models import (
+from corehq.apps.app_manager.helpers.make_build.suite_xml.sections.details import (
+    DetailsHelper,
+    get_instances_for_module,
+)
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import (
     Command,
     Display,
     PushFrame,
@@ -18,7 +21,9 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestSession,
     Text,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+from corehq.apps.app_manager.helpers.make_build.suite_xml.post_process.instances import (
+    get_all_instances_referenced_in_xpaths,
+)
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
 from corehq.util.view_utils import absolute_reverse

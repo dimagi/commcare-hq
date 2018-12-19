@@ -71,7 +71,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
-from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
 from six.moves import map
 
 logger = logging.getLogger(__name__)
@@ -242,7 +242,10 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_column_xpath_client_template, get_data_path
+    from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import (
+        get_column_xpath_client_template,
+        get_data_path,
+    )
     data_path_placeholders = {}
     for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}

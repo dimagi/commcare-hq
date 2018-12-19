@@ -4,9 +4,9 @@ from collections import namedtuple, defaultdict
 from six.moves import zip_longest
 
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
+from corehq.apps.app_manager.helpers.make_build.suite_xml.contributors import SuiteContributorByModule
 
-from corehq.apps.app_manager.suite_xml.utils import get_select_chain_meta
+from corehq.apps.app_manager.helpers.make_build.suite_xml.utils import get_select_chain_meta
 from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
     SuiteValidationError)
@@ -20,7 +20,7 @@ from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
     ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
     interpolate_xpath
-from corehq.apps.app_manager.suite_xml.xml_models import *
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import *
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):
@@ -53,7 +53,7 @@ class EntriesContributor(SuiteContributorByModule):
 class EntriesHelper(object):
 
     def __init__(self, app, modules=None):
-        from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.sections.details import DetailsHelper
         self.app = app
         self.modules = modules or list(app.get_modules())
         self.details_helper = DetailsHelper(self.app, self.modules)

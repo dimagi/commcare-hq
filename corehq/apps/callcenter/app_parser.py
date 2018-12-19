@@ -87,7 +87,7 @@ def _get_indicators_used_in_forms(app):
 
 
 def _get_indicators_in_detail(detail):
-    from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_INDICATOR
+    from corehq.apps.app_manager.helpers.make_build.suite_xml.const import FIELD_TYPE_INDICATOR
     for column in detail.columns:
         if FIELD_TYPE_INDICATOR == column.field_type:
             _, indicator = column.field_property.split('/', 1)

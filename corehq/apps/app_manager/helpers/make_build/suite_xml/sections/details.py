@@ -9,11 +9,13 @@ from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
 
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
-from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from corehq.apps.app_manager.suite_xml.xml_models import (
+from corehq.apps.app_manager.helpers.make_build.suite_xml.const import FIELD_TYPE_LEDGER
+from corehq.apps.app_manager.helpers.make_build.suite_xml.contributors import SectionContributor
+from corehq.apps.app_manager.helpers.make_build.suite_xml.post_process.instances import (
+    get_all_instances_referenced_in_xpaths,
+)
+from corehq.apps.app_manager.helpers.make_build.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import (
     Action,
     Detail,
     DetailVariable,
@@ -35,7 +37,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
     XpathVariable,
 )
-from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
+from corehq.apps.app_manager.helpers.make_build.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, \
     get_sort_and_sort_only_columns
 from corehq.apps.app_manager.helpers.make_build import id_strings

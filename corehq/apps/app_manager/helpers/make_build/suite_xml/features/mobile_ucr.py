@@ -6,7 +6,7 @@ from corehq.apps.app_manager import models
 from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
-from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, GraphTemplate, Xpath, XpathVariable
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError

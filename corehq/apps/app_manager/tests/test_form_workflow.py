@@ -11,8 +11,11 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_ROOT,
     WORKFLOW_PARENT_MODULE,
     FormDatum)
-from corehq.apps.app_manager.suite_xml.post_process.workflow import _replace_session_references_in_stack, CommandId
-from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
+from corehq.apps.app_manager.helpers.make_build.suite_xml.post_process.workflow import (
+    _replace_session_references_in_stack,
+    CommandId,
+)
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xpath import session_var
@@ -198,7 +201,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         # To fix this we need to replace any references to previous variables with the full xpath which
         # that session variable references.
         #
-        # See corehq.apps.app_manager.suite_xml.post_process.workflow._replace_session_references_in_stack
+        # See corehq.apps.app_manager.helpers.make_build.suite_xml.post_process.workflow._replace_session_references_in_stack
 
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('person registration', 'person')

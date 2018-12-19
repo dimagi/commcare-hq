@@ -804,7 +804,9 @@ class XForm(WrappedNode):
                     del node.attrib[key]
 
     def add_missing_instances(self, domain):
-        from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.post_process.instances import (
+            get_all_instances_referenced_in_xpaths,
+        )
         instance_declarations = self._get_instance_ids()
         missing_unknown_instances = set()
         instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(
@@ -1798,7 +1800,7 @@ class XForm(WrappedNode):
         if module.root_module:
             # for child modules the session variable for a case may have been
             # changed to match the parent module.
-            from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+            from corehq.apps.app_manager.helpers.make_build.suite_xml.sections.entries import EntriesHelper
             gen = EntriesHelper(form.get_app())
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
             # TODO: this dict needs to be keyed by something unique to the action

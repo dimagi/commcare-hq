@@ -814,7 +814,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
 
 @require_can_edit_apps
 def get_form_datums(request, domain, app_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+    from corehq.apps.app_manager.helpers.make_build.suite_xml.sections.entries import EntriesHelper
     form_id = request.GET.get('form_id')
     app = get_app(domain, app_id)
     form = app.get_form(form_id)

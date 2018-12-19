@@ -205,7 +205,7 @@ def is_valid_case_type(case_type, module):
 
 
 def module_case_hierarchy_has_circular_reference(module):
-    from corehq.apps.app_manager.suite_xml.utils import get_select_chain
+    from corehq.apps.app_manager.helpers.make_build.suite_xml.utils import get_select_chain
     try:
         get_select_chain(module.get_app(), module)
         return False
@@ -387,7 +387,7 @@ def module_offers_search(module):
 
 
 def get_cloudcare_session_data(domain_name, form, couch_user):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+    from corehq.apps.app_manager.helpers.make_build.suite_xml.sections.entries import EntriesHelper
 
     datums = EntriesHelper.get_new_case_id_datums_meta(form)
     session_data = {datum.datum.id: uuid.uuid4().hex for datum in datums}

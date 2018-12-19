@@ -38,8 +38,8 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
-from corehq.apps.app_manager.suite_xml.utils import get_select_chain
-from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
+from corehq.apps.app_manager.helpers.make_build.suite_xml.utils import get_select_chain
+from corehq.apps.app_manager.helpers.make_build.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
@@ -103,7 +103,7 @@ from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, remote_app, commcare_settings
 from corehq.apps.app_manager.helpers.make_build import app_strings, id_strings
 from corehq.apps.app_manager.helpers.make_build.profile import ProfileGenerator
-from corehq.apps.app_manager.suite_xml import xml_models as suite_models
+from corehq.apps.app_manager.helpers.make_build.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
@@ -2597,7 +2597,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             detail.rename_lang(old_lang, new_lang)
 
     def validate_detail_columns(self, columns):
-        from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LOCATION
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.const import FIELD_TYPE_LOCATION
         from corehq.apps.locations.util import parent_child
         from corehq.apps.locations.fixtures import should_sync_hierarchical_fixture
 
@@ -4336,11 +4336,11 @@ class ReportModule(ModuleBase):
         return module
 
     def get_details(self):
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_details()
 
     def get_custom_entries(self):
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, supports_module_filter=False):
@@ -4386,7 +4386,9 @@ class ReportModule(ModuleBase):
         )
 
     def has_duplicate_instance_ids(self):
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import (
+            get_uuids_by_instance_id,
+        )
         duplicate_instance_ids = {
             instance_id
             for instance_id, uuids in get_uuids_by_instance_id(self.get_app().domain).items()

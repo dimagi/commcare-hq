@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.test.testcases import TestCase, SimpleTestCase
 from mock import patch
 
-from corehq.apps.app_manager.suite_xml import xml_models as suite_models
+from corehq.apps.app_manager.helpers.make_build.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.models import Application, Module, Form, import_app, FormLink
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.builds.models import BuildSpec

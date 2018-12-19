@@ -18,7 +18,9 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_2,
 )
 from corehq.apps.app_manager.models import ReportModule
-from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
+from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import (
+    is_valid_mobile_select_filter_type,
+)
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user

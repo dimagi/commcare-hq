@@ -10,8 +10,8 @@ from corehq.apps.app_manager.helpers.make_build import id_strings
 from corehq.apps.app_manager.const import (
     RETURN_TO, )
 from corehq.apps.app_manager.exceptions import SuiteValidationError
-from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
-from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
+from corehq.apps.app_manager.helpers.make_build.suite_xml.contributors import PostProcessor
+from corehq.apps.app_manager.helpers.make_build.suite_xml.xml_models import StackDatum, Stack, CreateFrame
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
     XPath
 from memoized import memoized
