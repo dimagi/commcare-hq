@@ -716,5 +716,6 @@ def get_latest_enabled_versions_per_profile(app_id):
     return {
         build_profile['build_profile_id']: build_profile['version__max']
         for build_profile in
-        LatestEnabledBuildProfiles.objects.filter(app_id=app_id).values('build_profile_id').annotate(Max('version'))
+        LatestEnabledBuildProfiles.objects.filter(app_id=app_id).values('build_profile_id').annotate(
+            Max('version'))
     }

@@ -18,9 +18,9 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         _p.profileUrl = url;
     }
 
-    var profileManager = function (appProfiles, appLangs, enablePracticeUsers, practiceUsers, latest_enabled_versions) {
+    var profileManager = function (appProfiles, appLangs, enablePracticeUsers, practiceUsers, latestEnabledVersions) {
         var self = {};
-        self.latest_enabled_versions = latest_enabled_versions;
+        self.latestEnabledVersions = latestEnabledVersions;
         self.app_profiles = ko.observableArray([]);
         self.app_langs = appLangs;
         self.enable_practice_users = enablePracticeUsers;
@@ -60,7 +60,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
             'placeholder': gettext(practiceUsers.length > 0 ? 'Select a user' : 'No practice mode mobile workers available'),
         };
         self.addProfile = function (langs, name, id, practiceUser) {
-            var profile = profileModel(langs, name, id, practiceUser, self.latest_enabled_versions);
+            var profile = profileModel(langs, name, id, practiceUser, self.latestEnabledVersions);
             profile.name.subscribe(changeSaveButton);
             profile.langs.subscribe(changeSaveButton);
             profile.defaultLang.subscribe(changeSaveButton);
