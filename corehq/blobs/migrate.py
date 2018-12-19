@@ -303,7 +303,7 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                 print(self.filename)
 
 
-class BlobDbBackendExporter(BaseDocProcessor):
+class BlobDbBackendExporter(object):
 
     def __init__(self, slug, domain):
         from corehq.blobs.zipdb import ZipBlobDB
@@ -312,9 +312,13 @@ class BlobDbBackendExporter(BaseDocProcessor):
         self.total_blobs = 0
         self.not_found = 0
 
+    def __enter__(self):
+        pass
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.db.close()
-        self.processing_complete()
+        if self.not_found:
+            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
     def process_object(self, meta):
         from_db = get_blob_db()
@@ -327,10 +331,6 @@ class BlobDbBackendExporter(BaseDocProcessor):
             with content:
                 self.db.copy_blob(content, key=meta.key)
         return True
-
-    def processing_complete(self):
-        if self.not_found:
-            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
 
 class BlobMetaReindexAccessor(ReindexAccessor):
