@@ -560,6 +560,9 @@ class LanguageProfilesView(View):
 def toggle_build_profile(request, domain, build_id, build_profile_id):
     build = Application.get(build_id)
     action = request.GET.get('action')
+    if action and action == 'enable' and not build.is_released:
+        messages.error(request, _("Release the build first. Can not enable profiles for unreleased versions"))
+        return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
     latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
         app_id=build.copy_of,
         build_profile_id=build_profile_id
