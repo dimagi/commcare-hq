@@ -50,17 +50,15 @@ def unfinished_submission(instance):
 
 @contextlib.contextmanager
 def unfinished_archive(instance, user_id, archive):
-    unfinished_archive_stub = None
-    if not getattr(instance, 'deprecated_form_id', None):
-        unfinished_archive_stub = UnfinishedArchiveStub.objects.create(
-            user_id=user_id,
-            xform_id=instance.form_id,
-            timestamp=datetime.datetime.utcnow(),
-            history_updated=False,
-            # if archive is False, this is an unarchive stub.
-            archive=archive,
-            domain=instance.domain,
-        )
+    unfinished_archive_stub = UnfinishedArchiveStub.objects.create(
+        user_id=user_id,
+        xform_id=instance.form_id,
+        timestamp=datetime.datetime.utcnow(),
+        history_updated=False,
+        # if archive is False, this is an unarchive stub.
+        archive=archive,
+        domain=instance.domain,
+    )
     tracker = ArchiveProcessTracker(unfinished_archive_stub)
     yield tracker
     unfinished_archive_stub.delete()
