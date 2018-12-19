@@ -222,8 +222,8 @@ class ExportWriter(object):
         rows, write those rows to the resulting files.
         """
         assert self._isopen
-        for table_index, table in document_table:
-            for i, row in enumerate(table):
+        for table_config, table_data in document_table:
+            for i, row in enumerate(table_data):
                 if skip_first and i is 0:
                     continue
                 # update the primary component of the ID to match
@@ -235,17 +235,17 @@ class ExportWriter(object):
                 if row_has_id:
                     row.id = (self._current_primary_id,) + tuple(row.id[1:])
 
-                self.write_row(table_index, row)
+                self.write_row(table_config, row)
 
         self._current_primary_id += 1
 
-    def write_row(self, table_index, headers):
+    def write_row(self, table_index, row):
         """
         Currently just calls the subclass's implementation
         but if we were to add a universal validation step,
         such a thing would happen here.
         """
-        return self._write_row(table_index, headers)
+        return self._write_row(table_index, row)
 
     def close(self):
         """
@@ -387,6 +387,7 @@ class Excel2007ExportWriter(ExportWriter):
         self.table_indices[table_index] = 0
 
     def _write_row(self, sheet_index, row):
+        from couchexport.export import FormattedRow
         sheet = self.tables[sheet_index]
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
@@ -405,10 +406,15 @@ class Excel2007ExportWriter(ExportWriter):
                 value = ''
             return dirty_chars.sub('?', value)
 
-        cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        write_values = [get_write_value(val) for val in row]
+        cells = [WriteOnlyCell(sheet, val) for val in write_values]
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
+        if isinstance(row, FormattedRow):
+            for hyperlink_column_index in row.get_hyperlink_column_indices():
+                cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
+                cells[hyperlink_column_index].style = 'Hyperlink'
         sheet.append(cells)
 
     def _close(self):
