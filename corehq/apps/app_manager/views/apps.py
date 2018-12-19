@@ -65,6 +65,7 @@ from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_and_assert_practice_user_in_domain,
+    get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, update_linked_app, clear_xmlns_app_id_cache
@@ -342,6 +343,10 @@ def get_apps_base_context(request, domain, app):
             except ESError:
                 notify_exception(request, 'Error getting practice mode mobile workers')
 
+        latest_version_for_build_profiles = {}
+        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+            latest_version_for_build_profiles = get_latest_enabled_versions_per_profile(app.get_id)
+
         context.update({
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
@@ -350,6 +355,7 @@ def get_apps_base_context(request, domain, app):
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
+            'latest_version_for_build_profiles': latest_version_for_build_profiles,
         })
 
     return context
