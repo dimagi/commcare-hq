@@ -31,7 +31,7 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
     SMSExportInstance,
 )
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS, CASE_ID_TO_LINK, FORM_ID_TO_LINK
 import six
 from io import open
 
@@ -112,7 +112,9 @@ class _ExportWriter(object):
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        return self.writer.write([(table, [FormattedRow(data=row.data)])])
+        return self.writer.write([
+            (table, [FormattedRow(data=row.data, hyperlink_column_indices=row.hyperlink_column_indices)])
+        ])
 
     def get_preview(self):
         return self.writer.get_preview()
