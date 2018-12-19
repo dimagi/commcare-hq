@@ -4336,11 +4336,15 @@ class ReportModule(ModuleBase):
         return module
 
     def get_details(self):
-        from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import (
+            ReportModuleSuiteHelper,
+        )
         return ReportModuleSuiteHelper(self).get_details()
 
     def get_custom_entries(self):
-        from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.helpers.make_build.suite_xml.features.mobile_ucr import (
+            ReportModuleSuiteHelper,
+        )
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, supports_module_filter=False):

@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
-from corehq.apps.app_manager.const import *
+from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
 from corehq.apps.users.util import cc_user_domain
 
 
@@ -67,7 +67,10 @@ class ProfileGenerator(object):
             }
 
         if with_media:
-            profile_url = self.app.media_profile_url if not is_odk else (self.app.odk_media_profile_url + '?latest=true')
+            if is_odk:
+                profile_url = self.app.odk_media_profile_url + '?latest=true'
+            else:
+                profile_url = self.app.media_profile_url
         else:
             profile_url = self.app.profile_url if not is_odk else (self.app.odk_profile_url + '?latest=true')
 
