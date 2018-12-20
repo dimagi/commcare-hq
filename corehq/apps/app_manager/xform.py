@@ -15,6 +15,7 @@ from corehq.apps.app_manager.const import (
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
 )
+from corehq.apps.app_manager.xpath import XPath
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
@@ -525,12 +526,18 @@ class CaseBlock(object):
         if index_node is None:
             index_node = make_case_elem('index')
             self.elem.append(index_node)
-        if relationship not in ('child', 'extension'):
-            raise CaseError('Valid values for an index relationship are "child" and "extension"')
+
+        valid_relationships = ['child', 'extension', 'question']
+        if relationship not in valid_relationships:
+            raise CaseError('Valid values for an index relationship are: {}').format(
+                ', '.join(['"{}"'.format(r) for r in valid_relationships]))
         if relationship == 'child':
             case_index = make_case_elem(reference_id, {'case_type': case_type})
-        else:
+        elif relationship == 'extension':
             case_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
+        elif relationship == 'question':
+            case_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': '@relationship'})
+
         index_node.append(case_index)
 
         self.xform.add_bind(
@@ -562,12 +569,16 @@ def autoset_owner_id_for_advanced_action(action):
     if not len(action.case_indices):
         return True
 
-    for index in action.case_indices:
-        if index.relationship == 'child':
-            # if there is a child relationship, autoset
-            return True
+    relationships = [i.relationship for i in action.case_indices]
+    if 'question' in relationships:
+        # if there is a dynamically-determined relationship, don't autoset, the owner_id
+        # bind will be added when the index is created rather than in add_create_block
+        return False
+    if 'child' in relationships:
+        # if there is a child relationship, autoset
+        return True
     # if there are only extension indices, don't autoset
-    return False
+    return True
 
 
 def validate_xform(domain, source):
@@ -1895,6 +1906,17 @@ class XForm(WrappedNode):
                     ref,
                     case_index.relationship,
                 )
+
+                if case_index.relationship == 'question':
+                    self.add_bind(
+                        nodeset="{path}case/index/{ref}/@relationship".format(path=path, ref=reference_id),
+                        calculate=self.resolve_path(case_index.relationship_question),
+                    )
+                    self.add_bind(
+                        nodeset="%scase/create/owner_id" % path,
+                        calculate=XPath.if_(XPath(case_index.relationship_question).eq(XPath.string('extension')),
+                                            XPath.string('-'), self.resolve_path("meta/userID")),
+                    )
 
             if action.close_condition.type != 'never':
                 open_case_block.add_close_block(self.action_relevance(action.close_condition))
