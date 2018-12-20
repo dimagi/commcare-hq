@@ -5,7 +5,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
     var CaseIndex = {
         mapping: {
-            include: ['tag', 'reference_id', 'relationship'],
+            include: ['tag', 'reference_id', 'relationship', 'relationship_question'],
         },
         wrap: function (data) {
             var self = ko.mapping.fromJS(data, CaseIndex.mapping);
@@ -134,7 +134,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             }
             return properties;
         },
-        relationshipTypes: ['child', 'extension'],
+        relationshipTypes: ['child', 'extension', 'question'],
     };
 
     var LoadUpdateAction = {
@@ -486,6 +486,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                             tag: gettext('Select parent'),
                             reference_id: 'parent',
                             relationship: 'child',
+                            relationship_question: '',
                         }));
                     } else {
                         self.case_indices.removeAll();
@@ -505,6 +506,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                     tag: '',
                     reference_id: 'parent',
                     relationship: 'child',
+                    relationship_question: '',
                 }));
             };
 
