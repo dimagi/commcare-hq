@@ -197,19 +197,16 @@ class TestMigrateBackend(TestCase):
             self.assertEqual(blobmeta.content_length, doc.content_length, doc)
 
     def test_resume_migration(self):
-
-        class IncompleteDPC(migrate.DocumentProcessorController):
-
-            def _processing_complete(self):
-                self.document_iterator.discard_state()
-
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
-            with replattr(migrate, "DocumentProcessorController", IncompleteDPC):
-                # interrupted migration
-                migrated1, skipped = MIGRATIONS[self.slug].migrate(filename)
-                self.assertGreaterEqual(migrated1, self.test_size)
-                self.assertFalse(skipped)
+            migrator = MIGRATIONS[self.slug]
+            migrated1, skipped = migrator.migrate(filename)
+            self.assertGreaterEqual(migrated1, self.test_size)
+            self.assertFalse(skipped)
+
+            # discard state to simulate interrupted migration
+            for mig in migrator.iter_migrators():
+                mig.get_document_provider().get_document_iterator(1).discard_state()
 
             # resumed migration: all docs already migrated, so BlobMeta records
             # exist, but should not cause errors on attempting to insert them

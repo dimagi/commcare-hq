@@ -73,7 +73,6 @@ from __future__ import unicode_literals
 import json
 import os
 import traceback
-from abc import abstractmethod
 from base64 import b64encode
 from tempfile import mkdtemp
 from io import open
@@ -94,10 +93,8 @@ from corehq.util.doc_processor.couch import (
 )
 from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from corehq.util.doc_processor.interface import (
-    BaseDocProcessor, DOCS_SKIPPED_WARNING,
-    DocumentProcessorController
-)
+from corehq.util.doc_processor.progress import DOCS_SKIPPED_WARNING, ProgressManager
+from corehq.util.pagination import TooManyRetries
 from couchdbkit import ResourceConflict
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
 
@@ -141,12 +138,11 @@ def encode_content(data):
     return b64encode(data)
 
 
-class BaseDocMigrator(BaseDocProcessor):
+class BaseDocMigrator(object):
 
-    def __init__(self, slug, couchdb, filename=None, blob_helper=BlobHelper,
+    def __init__(self, couchdb, filename=None, blob_helper=BlobHelper,
                  get_type_code=lambda doc: None):
         super(BaseDocMigrator, self).__init__()
-        self.slug = slug
         self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
@@ -159,49 +155,39 @@ class BaseDocMigrator(BaseDocProcessor):
     def __enter__(self):
         print("Migration log: {}".format(self.filename))
         self.backup_file = open(self.filename, 'wb')
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.backup_file.close()
+        self.processing_complete()
 
-    def handle_skip(self, doc):
-        return True  # ignore
-
-    def _prepare_doc(self, doc):
-        pass
-
-    def _backup_doc(self, doc):
+    def write_backup(self, doc):
         self.backup_file.write('{}\n'.format(json.dumps(doc)).encode('utf-8'))
         self.backup_file.flush()
 
-    def process_doc(self, doc):
+    def migrate(self, doc):
         """Migrate a single document
 
         :param doc: The document dict to be migrated.
         :returns: True if doc was migrated else False. If this returns False
         the document migration will be retried later.
         """
-        self._prepare_doc(doc)
-        self._backup_doc(doc)
-        return self._do_migration(doc)
-
-    @abstractmethod
-    def _do_migration(self, doc):
         raise NotImplementedError
 
-    def processing_complete(self, skipped):
+    def processing_complete(self):
         if self.dirpath is not None:
             os.remove(self.filename)
             os.rmdir(self.dirpath)
-
-        if not skipped:
-            BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
 
 
 class CouchAttachmentMigrator(BaseDocMigrator):
 
     shared_domain = False
 
-    def _do_migration(self, doc):
+    def migrate(self, doc):
+        self._prepare_doc(doc)
+        self._backup_doc(doc)
+
         attachments = doc.pop("_attachments")
         external_blobs = doc.setdefault("external_blobs", {})
         obj = self.blob_helper(doc, self.couchdb, self.get_type_code(doc))
@@ -245,7 +231,7 @@ class CouchAttachmentMigrator(BaseDocMigrator):
             }
             for name, meta in doc["_attachments"].items()
         }
-        super(CouchAttachmentMigrator, self)._backup_doc(backup_doc)
+        self.write_backup(backup_doc)
 
 
 class SharedCouchAttachmentMigrator(CouchAttachmentMigrator):
@@ -269,32 +255,33 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
 
-    def _backup_doc(self, doc):
-        pass
-
-    def _do_migration(self, doc):
+    def migrate(self, doc):
         meta = doc["_obj_not_json"]
         self.total_blobs += 1
         try:
             content = self.db.old_db.get(key=meta.key)
         except NotFound:
             if not self.db.new_db.exists(key=meta.key):
-                super(BlobDbBackendMigrator, self)._backup_doc({
-                    "blobmeta_id": meta.id,
-                    "domain": meta.domain,
-                    "type_code": meta.type_code,
-                    "parent_id": meta.parent_id,
-                    "blob_key": meta.key,
-                    "error": "not found",
-                })
-                self.not_found += 1
+                self.save_backup(doc)
         else:
             with content:
                 self.db.copy_blob(content, key=meta.key)
         return True
 
-    def processing_complete(self, skipped):
-        super(BlobDbBackendMigrator, self).processing_complete(skipped)
+    def save_backup(self, doc, error="not found"):
+        meta = doc["_obj_not_json"]
+        self.write_backup({
+            "blobmeta_id": meta.id,
+            "domain": meta.domain,
+            "type_code": meta.type_code,
+            "parent_id": meta.parent_id,
+            "blob_key": meta.key,
+            "error": error,
+        })
+        self.not_found += 1
+
+    def processing_complete(self):
+        super(BlobDbBackendMigrator, self).processing_complete()
         if self.not_found:
             print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
             if self.dirpath is None:
@@ -336,29 +323,44 @@ class Migrator(object):
         self.get_type_code = get_type_code
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
-        processor = DocumentProcessorController(
-            self._get_document_provider(),
-            self._get_doc_migrator(filename),
-            reset,
-            max_retry,
-            chunk_size,
-            progress_logger=self._get_progress_logger()
+        doc_provider = self.get_document_provider()
+        iterable = doc_provider.get_document_iterator(chunk_size)
+        progress = ProgressManager(
+            iterable,
+            total=doc_provider.get_total_document_count(),
+            reset=reset,
+            chunk_size=chunk_size,
+            logger=CouchProcessorProgressLogger(self.doc_types),
         )
-        return processor.run()
 
-    def _get_doc_migrator(self, filename):
+        with self.get_doc_migrator(filename) as migrator, progress:
+            for doc in iterable:
+                success = migrator.migrate(doc)
+                if success:
+                    progress.add()
+                else:
+                    try:
+                        iterable.retry(doc, max_retry)
+                    except TooManyRetries:
+                        progress.skip(doc)
+
+        if not progress.skipped:
+            self.write_migration_completed_state()
+
+        return progress.total, progress.skipped
+
+    def write_migration_completed_state(self):
+        BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
+
+    def get_doc_migrator(self, filename):
         return self.doc_migrator_class(
-            self.slug,
             self.couchdb,
             filename,
             get_type_code=self.get_type_code,
         )
 
-    def _get_document_provider(self):
+    def get_document_provider(self):
         return CouchDocumentProvider(self.iteration_key, self.doc_types)
-
-    def _get_progress_logger(self):
-        return CouchProcessorProgressLogger(self.doc_types)
 
 
 class BackendMigrator(Migrator):
@@ -370,7 +372,7 @@ class BackendMigrator(Migrator):
         super(BackendMigrator, self).__init__(slug, types, BlobDbBackendMigrator)
         self.reindexer = reindexer
 
-    def _get_document_provider(self):
+    def get_document_provider(self):
         return SqlDocumentProvider(self.iteration_key, self.reindexer)
 
 
