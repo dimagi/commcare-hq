@@ -49,7 +49,7 @@ class ProgressManager(object):
     def timing(self):
         """Returns a tuple of (elapsed, remaining)"""
         elapsed = datetime.now() - self.start
-        if self.processed > self._session_total:
+        if self.processed >= self._session_total or not self.processed:
             remaining = "?"
         else:
             session_remaining = self._session_total - self.processed
