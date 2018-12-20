@@ -262,9 +262,15 @@ PhoneEntry.prototype.constructor = FreeTextEntry;
 function FloatEntry(question, options) {
     IntEntry.call(this, question, options);
     this.templateType = 'str';
+    this.lengthLimit = options.lengthLimit || 15;
+    var valueLimit = options.valueLimit || +("9".repeat(14));
 
     this.getErrorMessage = function (rawAnswer) {
-        return (isNaN(+rawAnswer) ? "Not a valid number" : null);
+        if (isNaN(+rawAnswer))
+            return "Not a valid number";
+        if (+rawAnswer > valueLimit)
+            return "Number is too large";
+        return null;
     };
 
     this.helpText = function () {
