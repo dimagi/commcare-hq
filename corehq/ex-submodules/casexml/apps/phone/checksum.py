@@ -75,5 +75,5 @@ class Checksum(object):
         x = copy(self._list)
         x = list(map(Checksum.hash, x))
         x = reduce(Checksum.xor, x)
-        x = binascii.hexlify(bytes(x))
+        x = binascii.hexlify(bytes(x)).decode('utf-8')
         return x

@@ -25,6 +25,7 @@ class StateHashTest(TestCase):
         cls.user = create_restore_user(domain=cls.project.name)
 
     def setUp(self):
+        super(StateHashTest, self).setUp()
         delete_all_cases()
         delete_all_xforms()
         delete_all_sync_logs()
