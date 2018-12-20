@@ -1,1 +1,1 @@
-As per the latest records of your AWC, the weight of your child {{ child_name }} has reduced in the last month. Please consult your AWW for necessary advice.
+Nang·ni AWC record-ni gita {{ child_name }}-ni jrimani re·anggipa ja-na bate komibataha. Ka·sapae nang·ni AWW-ni nangchongmotgipa ku·pattianiko ra·bo.
