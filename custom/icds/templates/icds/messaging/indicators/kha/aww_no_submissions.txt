@@ -1,7 +1,7 @@
 {% if more_than_one_week %}
-AWC {{ awc }} has not submitted any form or done any activity in ICDS CAS application in more than one week. Please follow up with Block Level Helpdesk or Supervisor for assistance
+Ka AWC {{ awc }} ka khlem ai kano kano ka phorm ne leh kano kano ka jing treikam/ activity ha ka ICDS CAS application palat ia ka shi taiew. Sngewbha buddien bad ka Block Level Helpdesk lane Supervisor ban ioh jingiarap
 {% endif %}
 
 {% if more_than_one_month %}
-AWC {{ awc }} has not submitted any form or done any activity in ICDS CAS application in more than one month. Please follow up with Block Level Helpdesk or Supervisor for assistance
+Ka AWC {{ awc }} ka khlem ai kano kano ka phorm ne leh kano kano ka jigtreikam/ activity ha ka ICDS CAS application palat ia ka shi bnai. Sngewbha buddien bad ka Block Level Helpdesk lane Supervisor ban ioh jingiarap
 {% endif %}
