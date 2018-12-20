@@ -5045,9 +5045,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def is_remote_app(self):
         return False
 
-    def get_latest_release(self):
-        return get_app(self.domain, self.get_id, latest=True)
-
     def get_previous_version(self):
         return self.view('app_manager/applications',
             startkey=[self.domain, self.get_id, {}],
