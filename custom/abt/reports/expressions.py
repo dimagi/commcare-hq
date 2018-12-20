@@ -189,6 +189,10 @@ class AbtExpressionSpec(JsonObject):
         name = spec.get(flag_name_key_map[lang], None)
         return name if name else default
 
+    @classmethod
+    def _get_responsible_follow_up(self, spec):
+        return spec.get('responsible_follow_up', "")
+
     def __call__(self, item, context=None):
         """
         Given a document (item), return a list of documents representing each
@@ -238,7 +242,8 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
-                            'form_name': self._get_form_name(item)
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
 
                 elif warning_type == "q3_special" and form_value:
@@ -260,7 +265,8 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
-                            'form_name': self._get_form_name(item)
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
                 elif warning_type == "not_selected" and form_value:
                     value = spec.get("velue", "")
@@ -276,7 +282,8 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
-                            'form_name': self._get_form_name(item)
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
 
                 else:
@@ -296,7 +303,8 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
-                            'form_name': self._get_form_name(item)
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
 
         return docs
@@ -334,6 +342,20 @@ class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
             return yaml.load(f)
 
 
+class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor_v2019')
+    comment_from_root = True
+
+    @cached_property
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2019.yaml')
+        with open(path, encoding='utf-8') as f:
+            return yaml.load(f)
+
+
 def abt_supervisor_expression(spec, context):
     wrapped = AbtSupervisorExpressionSpec.wrap(spec)
     return wrapped
@@ -341,4 +363,9 @@ def abt_supervisor_expression(spec, context):
 
 def abt_supervisor_v2_expression(spec, context):
     wrapped = AbtSupervisorV2ExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def abt_supervisor_v2019_expression(spec, context):
+    wrapped = AbtSupervisorV2019ExpressionSpec.wrap(spec)
     return wrapped

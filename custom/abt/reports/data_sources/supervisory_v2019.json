@@ -32,7 +32,7 @@
     "config": {
         "engine_id": "default",
         "base_item_expression": {
-            "type": "abt_supervisor_v2"
+            "type": "abt_supervisor_v2019"
         },
         "configured_filter": {
             "filters": [
@@ -409,6 +409,20 @@
                 "expression": {
                     "datatype": null,
                     "property_name": "comments",
+                    "type": "property_name"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "responsible_follow_up",
+                "datatype": "string",
+                "display_name": "responsible_follow_up",
+                "expression": {
+                    "datatype": null,
+                    "property_name": "responsible_follow_up",
                     "type": "property_name"
                 },
                 "is_nullable": true,
