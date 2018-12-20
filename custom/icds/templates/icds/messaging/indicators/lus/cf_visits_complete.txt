@@ -1,1 +1,1 @@
-Congratulations! You've done all the Complementary Feeding  Visits for {{ beneficiary }}
+A lawmawm e!  Complementary Feeding Visits hemi tan hian i ti vek tawh e {{ beneficiary }}
