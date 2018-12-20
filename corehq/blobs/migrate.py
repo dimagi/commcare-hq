@@ -74,11 +74,15 @@ import json
 import os
 import traceback
 from base64 import b64encode
+from contextlib import contextmanager
 from tempfile import mkdtemp
 from io import open
 
+import gevent
 import six
 from django.conf import settings
+from gevent.pool import Pool
+from gevent.queue import LifoQueue
 
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import get_blob_db
@@ -88,6 +92,7 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMeta, BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.doc_processor.couch import (
     CouchDocumentProvider, doc_type_tuples_to_dict
 )
@@ -301,8 +306,22 @@ class BlobMetaReindexAccessor(ReindexAccessor):
     def doc_to_json(self, obj):
         return {"_id": obj.id, "_obj_not_json": obj}
 
+    def get_key(self, doc):
+        obj = doc["_obj_not_json"]
+        assert isinstance(obj.id, six.integer_types), (type(obj.id), obj.id)
+        # would use a tuple, but JsonObject.to_string requires dict keys to be strings
+        return "%s %s" % (obj.parent_id, obj.id)
+
+    def load(self, key):
+        parent_id, doc_id = key.rsplit(" ", 1)
+        dbname = get_db_alias_for_partitioned_doc(parent_id)
+        obj = self.model_class.objects.using(dbname).get(id=int(doc_id))
+        return self.doc_to_json(obj)
+
 
 class Migrator(object):
+
+    has_worker_pool = False
 
     def __init__(self, slug, doc_types, doc_migrator_class):
         self.slug = slug
@@ -322,7 +341,7 @@ class Migrator(object):
             return None
         self.get_type_code = get_type_code
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **kw):
         doc_provider = self.get_document_provider()
         iterable = doc_provider.get_document_iterator(chunk_size)
         progress = ProgressManager(
@@ -332,8 +351,11 @@ class Migrator(object):
             chunk_size=chunk_size,
             logger=CouchProcessorProgressLogger(self.doc_types),
         )
+        if self.has_worker_pool:
+            assert "iterable" not in kw, kw
+            kw.update(iterable=iterable, max_retry=max_retry)
 
-        with self.get_doc_migrator(filename) as migrator, progress:
+        with self.get_doc_migrator(filename, **kw) as migrator, progress:
             for doc in iterable:
                 success = migrator.migrate(doc)
                 if success:
@@ -365,6 +387,8 @@ class Migrator(object):
 
 class BackendMigrator(Migrator):
 
+    has_worker_pool = True
+
     def __init__(self, slug):
         reindexer = BlobMetaReindexAccessor()
         types = [reindexer.model_class]
@@ -372,8 +396,78 @@ class BackendMigrator(Migrator):
         super(BackendMigrator, self).__init__(slug, types, BlobDbBackendMigrator)
         self.reindexer = reindexer
 
+    def get_doc_migrator(self, filename, **kw):
+        migrator = super(BackendMigrator, self).get_doc_migrator(filename)
+        return _migrator_with_worker_pool(migrator, self.reindexer, **kw)
+
     def get_document_provider(self):
         return SqlDocumentProvider(self.iteration_key, self.reindexer)
+
+
+@contextmanager
+def _migrator_with_worker_pool(migrator, reindexer, iterable, max_retry, num_workers):
+    """Migrate in parallel with worker pool
+
+    When running in steady state, failed doc will be retried up to the
+    max retry limit. Documents awaiting retry and all documents that
+    started the migration process but did not finish will be saved and
+    retried on the next run if the migration is stopped before it
+    completes.
+    """
+    def work_on(doc, key, retry_count):
+        try:
+            ok = migrator.migrate(doc)
+            assert ok, "run_with_worker_pool expects success!"
+        except Exception:
+            err = traceback.format_exc().strip()
+            print("Error processing blob:\n{}".format(err))
+            if retry_count < max_retry:
+                print("will retry {}".format(key))
+                retry_blobs[key] += 1
+                queue.put(doc)
+                return
+            migrator.save_backup(doc, "too many retries")
+            print("too many retries {}".format(key))
+        retry_blobs.pop(key, None)
+
+    def retry_loop():
+        for doc in queue:
+            enqueue_doc(doc)
+
+    def enqueue_doc(doc):
+        key = reindexer.get_key(doc)
+        retry_count = retry_blobs.setdefault(key, 0)
+        # pool.spawn will block until a worker is available
+        pool.spawn(work_on, doc, key, retry_count)
+        # Returning True here means the underlying iterator will think
+        # this doc has been processed successfully. Therefore we must
+        # process this doc before the process exits or save it to be
+        # processed on the next run.
+        return True
+
+    queue = LifoQueue()
+    loop = gevent.spawn(retry_loop)
+    pool = Pool(size=num_workers)
+
+    class gmigrator:
+        migrate = staticmethod(enqueue_doc)
+
+    with migrator:
+        retry_blobs = iterable.get_iterator_detail("retry_blobs") or {}
+        for key in retry_blobs:
+            queue.put(reindexer.load(key))
+        try:
+            yield gmigrator
+        finally:
+            try:
+                print("waiting for workers to stop... (Ctrl+C to abort)")
+                queue.put(StopIteration)
+                loop.join()
+                while not pool.join(timeout=10):
+                    print("waiting for {} workers to stop...".format(len(pool)))
+            finally:
+                iterable.set_iterator_detail("retry_blobs", retry_blobs)
+                print("done.")
 
 
 MIGRATIONS = {m.slug: m for m in [

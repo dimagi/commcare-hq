@@ -68,7 +68,7 @@ class TestMigrateBackend(TestCase):
             filename = join(tmp, "file.txt")
 
             # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename)
+            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename, num_workers=2)
             self.assertGreaterEqual(migrated, self.test_size)
 
             # verify: migration state recorded
