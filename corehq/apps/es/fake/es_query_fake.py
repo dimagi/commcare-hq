@@ -93,6 +93,11 @@ class ESQueryFake(object):
             raise AttributeError('{} must define attribute _all_docs'.format(cls_name))
 
     def values_list(self, *fields, **kwargs):
+        if kwargs.pop('scroll', False):
+            hits = self.scroll()
+        else:
+            hits = self.run().hits
+
         return values_list(self.run().hits, *fields, **kwargs)
 
     @check_deep_copy

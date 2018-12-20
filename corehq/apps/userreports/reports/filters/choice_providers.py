@@ -348,7 +348,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
     @staticmethod
     def get_choices_from_es_query(group_es):
         return [Choice(group_id, name)
-                for group_id, name in values_list(group_es.scroll(), '_id', 'name')]
+                for group_id, name in group_es.values_list('_id', 'name', scroll=True)]
 
     def default_value(self, user):
         return None
