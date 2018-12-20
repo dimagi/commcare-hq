@@ -190,7 +190,7 @@ class WorksheetJSONReader(IteratorJSONReader):
 class WorkbookJSONReader(object):
 
     def __init__(self, file_or_filename):
-        if isinstance(file_or_filename, InMemoryUploadedFile):
+        if isinstance(file_or_filename, (InMemoryUploadedFile, file)):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
             tmp.write(file_or_filename.read())
             tmp.close()
