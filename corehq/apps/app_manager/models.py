@@ -5710,7 +5710,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform(build_profile_id).encode('utf-8')
 
-    def set_form_versions(self, force_new_version=False):
+    def set_form_versions(self):
         """
         Set the 'version' property on each form as follows to the current app version if the form is new
         or has changed since the last build. Otherwise set it to the version from the last build.
@@ -5720,6 +5720,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         previous_version = self.get_previous_version()
         if previous_version:
+            force_new_version = self.build_profiles != previous_version.build_profiles
             for form_stuff in self.get_forms(bare=False):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
@@ -6002,18 +6003,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
         return files
 
-    def _set_versions(self):
-        force_new_forms = False
-        previous_version = self.get_previous_version()
-        if previous_version and self.build_profiles != previous_version.build_profiles:
-            force_new_forms = True
-        self.set_form_versions(force_new_forms)
-        self.set_media_versions()
-
     @time_method()
     @memoized
     def create_all_files(self, build_profile_id=None):
-        self._set_versions()
+        self.set_form_versions()
+        self.set_media_versions()
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
             '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
