@@ -250,6 +250,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['doc_type'] += DELETED
         if DELETED not in self['base_doc']:
             self['base_doc'] += DELETED
+        self.paused = False
         self.save()
 
     def pause(self):

@@ -22,7 +22,6 @@ from corehq.pillows.user import get_user_pillow_old
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq.util.test_utils import get_form_ready_to_save
 from pillowtop.es_utils import initialize_index
 
@@ -57,8 +56,7 @@ class UserPillowTest(UserPillowTestBase):
     def test_kafka_user_pillow_deletion(self):
         user = self._make_and_test_user_kafka_pillow('test-kafka-user_deletion')
         # soft delete
-        user.doc_type = '{}{}'.format(user.doc_type, DELETED_SUFFIX)
-        user.save()
+        user.retire()
 
         # send to kafka
         since = get_topic_offset(topics.COMMCARE_USER)

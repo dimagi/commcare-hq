@@ -583,7 +583,6 @@ def zip_folder(pdf_files):
     return zip_hash
 
 
-# todo use it
 def create_excel_file(excel_data, data_type, file_format):
     file_hash = uuid.uuid4().hex
     export_file = BytesIO()
@@ -796,6 +795,8 @@ def custom_strftime(format_to_use, date_to_format):
 
 
 def create_aww_performance_excel_file(excel_data, data_type, month, state, district, block):
+    export_info = excel_data[1][1]
+    excel_data = [line[3:] for line in excel_data[0][1]]
     thin_border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -809,6 +810,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
 
     workbook = Workbook()
     worksheet = workbook.active
+    worksheet.title = "AWW Performance Report"
     worksheet.sheet_view.showGridLines = False
     # sheet title
     worksheet.merge_cells('B2:J2')
@@ -858,17 +860,15 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
 
     # table contents
     row_position = table_header_position_row + 1
-    if len(excel_data) >= 2:
-        supervisors = list(set(row[0] for row in excel_data[1:]))
 
-    for row in excel_data[1:]:
+    for enum, row in enumerate(excel_data[1:], start=1):
         columns = ["B", "C", "D", "E", "F", "G", "H", "I", "J"]
         for column_index in range(len(columns)):
             column = columns[column_index]
             cell = "{}{}".format(column, row_position)
             worksheet[cell].border = thin_border
             if column_index == 0:
-                worksheet[cell].value = supervisors.index(row[0]) + 1
+                worksheet[cell].value = enum
             else:
                 worksheet[cell].value = row[column_index - 1]
         row_position += 1
@@ -876,7 +876,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     # sheet dimensions
     title_row = worksheet.row_dimensions[2]
     title_row.height = 23
-    worksheet.row_dimensions[5].height = 46
+    worksheet.row_dimensions[table_header_position_row].height = 46
     widths = {
         'A': 4,
         'B': 7,
@@ -894,11 +894,25 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     for column_index in range(len(columns)):
         widths[columns[column_index]] = max(
             widths[columns[column_index]],
-            max(len(str(row[column_index])) for row in excel_data[1:]) * 4 // 3
+            max(len(str(row[column_index])) for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
         )
 
     for column, width in widths.items():
         worksheet.column_dimensions[column].width = width
+
+    # export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    worksheet2['A1'].value = export_info[0][0]
+    worksheet2['B1'].value = export_info[0][1]
+    worksheet2['A2'].value = export_info[1][0]
+    worksheet2['B2'].value = export_info[1][1]
+    worksheet2['A3'].value = export_info[2][0]
+    worksheet2['B3'].value = export_info[2][1]
+    worksheet2['A4'].value = export_info[3][0]
+    worksheet2['B4'].value = export_info[3][1]
+    worksheet2['A4'].value = export_info[4][0]
+    worksheet2['B4'].value = export_info[4][1]
 
     # saving file
     file_hash = uuid.uuid4().hex

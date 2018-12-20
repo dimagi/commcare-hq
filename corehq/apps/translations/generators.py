@@ -61,42 +61,14 @@ class AppTranslationsGenerator:
 
     @cached_property
     def _get_labels_to_skip(self):
-        """Returns the labels of questions that have the skip string in the comment,
-        so that those labels are not sent to transifex later.
-
-        If there are questions that share the same label reference (and thus the
-        same translation), they will be included if any question does not have the
-        skip string.
-        """
-        def _labels_from_question(question):
-            ret = {
-                question['label_ref'],
-                question.get('constraintMsg_ref'),
-                question.get('helpMsg_ref'),
-                question.get('hintMsg_ref'),
-            }
-            if question.get('options'):
-                for option in question['options']:
-                    ret.add(option.get('label_ref'))
-            return ret
-
-        labels_to_skip = defaultdict(set)
-        necessary_labels = defaultdict(set)
+        labels_to_skip = defaultdict(list)
         module_data, errors = get_form_data(self.domain, self.app)
-
         for module in module_data:
             for form in module['forms']:
                 for question in form['questions']:
-                    if not question['label_ref']:
-                        continue
-                    if question['comment'] and SKIP_TRANSFEX_STRING in question['comment']:
-                        labels_to_skip[form['id']] |= _labels_from_question(question)
-                    else:
-                        necessary_labels[form['id']] |= _labels_from_question(question)
-
-        for form_id in labels_to_skip.keys():
-            labels_to_skip[form_id] = labels_to_skip[form_id] - necessary_labels[form_id]
-
+                    if (question['comment'] and SKIP_TRANSFEX_STRING in question['comment']
+                            and 'label_ref' in question):
+                        labels_to_skip[form['id']].append(question['label_ref'])
         return labels_to_skip
 
     def _translation_data(self, app):

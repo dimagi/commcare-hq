@@ -1532,13 +1532,13 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
 
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
-    'Allow linking domains (successor to linked apps)',
-    TAG_INTERNAL,
+    'Allow linking project spaces (successor to linked apps)',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
-    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
+    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(

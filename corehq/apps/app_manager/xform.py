@@ -587,10 +587,8 @@ def validate_xform(domain, source):
         )
 
 
-ControlNode = collections.namedtuple('ControlNode', ['node', 'bind_node', 'path', 'repeat', 'group', 'items',
+ControlNode = collections.namedtuple('ControlNode', ['node', 'path', 'repeat', 'group', 'items',
                                      'is_leaf', 'data_type', 'relevant', 'required', 'constraint'])
-
-
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -985,8 +983,7 @@ class XForm(WrappedNode):
                 raise XFormException(_("<item> ({}) has no <value>").format(translation))
             option = {
                 'label': translation,
-                'label_ref': self._get_label_ref(item),
-                'value': value,
+                'value': value
             }
             if include_translations:
                 option['translations'] = self._get_label_translations(item, langs)
@@ -1040,15 +1037,6 @@ class XForm(WrappedNode):
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]
-
-            constraint_ref_xml = '{jr}constraintMsg'
-            if cnode.constraint and cnode.bind_node.attrib.get(constraint_ref_xml):
-                constraint_jr_itext = cnode.bind_node.attrib.get(constraint_ref_xml)
-                question['constraintMsg_ref'] = self._normalize_itext_id(constraint_jr_itext)
-            if node.find('{f}help').exists():
-                question['helpMsg_ref'] = self._normalize_itext_id(node.find('{f}help').attrib.get('ref'))
-            if node.find('{f}hint').exists():
-                question['hintMsg_ref'] = self._normalize_itext_id(node.find('{f}hint').attrib.get('ref'))
 
             questions.append(question)
 
@@ -1222,7 +1210,6 @@ class XForm(WrappedNode):
                     if not skip:
                         control_nodes.append(ControlNode(
                             node=node,
-                            bind_node=bind,
                             path=path,
                             repeat=repeat_context,
                             group=group_context,
@@ -1231,7 +1218,7 @@ class XForm(WrappedNode):
                             data_type=data_type,
                             relevant=relevant,
                             required=required,
-                            constraint=constraint,
+                            constraint=constraint
                         ))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)

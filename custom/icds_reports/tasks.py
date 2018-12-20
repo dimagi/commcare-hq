@@ -671,14 +671,17 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             block_id=location,
             aggregation_level=3
         ).first()
-        cache_key = create_aww_performance_excel_file(
-            excel_data,
-            data_type,
-            config['month'].strftime("%B %Y"),
-            location_object.state_name,
-            location_object.district_name,
-            location_object.block_name,
-        )
+        if file_format == 'xlsx':
+            cache_key = create_aww_performance_excel_file(
+                excel_data,
+                data_type,
+                config['month'].strftime("%B %Y"),
+                location_object.state_name,
+                location_object.district_name,
+                location_object.block_name,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
     if indicator != AWW_INCENTIVE_REPORT:
         cache_key = create_excel_file(excel_data, data_type, file_format)
     params = {

@@ -290,9 +290,17 @@
     </script>
 </div>
 
-<div class="commcarehq-urls" class="hide">
+<div class="commcarehq-urls hide">
 {% block registered_urls %}
     {# do not override this block, use registerurl template tag to populate #}
+{% endblock %}
+</div>
+
+{% include 'analytics/initial/global.html' %}
+{% include 'analytics/initial/google.html' %}
+<div class="initial-analytics-data hide">
+{% block initial_analytics_data %}
+     do not override this block, use initial_analytics_data template tag to populate
 {% endblock %}
 </div>
 

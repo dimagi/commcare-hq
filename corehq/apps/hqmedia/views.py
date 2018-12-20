@@ -648,6 +648,7 @@ def iter_media_files(media_objects):
 def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None, download_targeted_version=False):
     file_iterator = []
     errors = []
+    index_file_count = 0
     multimedia_file_count = 0
     if include_multimedia_files:
         app.remove_unused_mappings()
