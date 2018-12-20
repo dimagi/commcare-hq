@@ -394,7 +394,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
-    relationship = StringProperty(choices=['child', 'extension'], default='child')
+    relationship = StringProperty(choices=['child', 'extension', 'question'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -438,7 +438,8 @@ class FormActions(DocumentSchema):
 class CaseIndex(DocumentSchema):
     tag = StringProperty()
     reference_id = StringProperty(default='parent')
-    relationship = StringProperty(choices=['child', 'extension'], default='child')
+    relationship = StringProperty(choices=['child', 'extension', 'question'], default='child')
+    relationship_question = StringProperty(default='')  # if relationship is 'question', this is the question path
 
 
 class AdvancedAction(IndexedSchema):
