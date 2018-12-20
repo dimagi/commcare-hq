@@ -122,7 +122,7 @@ class DocumentProcessorController(object):
         self.progress.total = self.document_provider.get_total_document_count()
 
         with self.doc_processor, self.progress:
-            for doc in self.progress.items:
+            for doc in self.document_iterator:
                 self._process_doc(doc)
 
         self.doc_processor.processing_complete(self.progress.skipped)
