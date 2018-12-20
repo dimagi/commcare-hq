@@ -4983,8 +4983,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         required=False
     )
 
-    _all_files = None
-
     @staticmethod
     def _scrap_old_conventions(data):
         should_save = False
@@ -5268,7 +5266,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return settings
 
     def create_build_files(self, build_profile_id=None, previous_version=None):
-        all_files = self._all_files or self.create_all_files(build_profile_id, previous_version)
+        all_files = self.create_all_files(build_profile_id, previous_version)
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
@@ -5318,7 +5316,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_fixtures()
             self.validate_intents()
             self.validate_practice_users()
-            self._all_files = self.create_all_files(previous_version=previous_version)
+            self.create_all_files(previous_version=previous_version)
         except CaseXPathValidationError as cve:
             errors.append({
                 'type': 'invalid case xpath reference',
@@ -5438,7 +5436,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @time_method()
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
-        copy._all_files = self._all_files
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
@@ -6013,6 +6010,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.set_media_versions(previous_version)
 
     @time_method()
+    @memoized
     def create_all_files(self, build_profile_id=None, previous_version=None):
         self._set_versions(previous_version)
         prefix = '' if not build_profile_id else build_profile_id + '/'
