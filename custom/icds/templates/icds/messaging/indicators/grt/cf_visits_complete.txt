@@ -1,1 +1,1 @@
-Congratulations! You've done all the Complementary Feeding  Visits for {{ beneficiary }}
+Nambeaha!  Na·a {{ beneficiary }}-na gimik Complementary Feeding Visit-ko dakmanaha
