@@ -9,13 +9,17 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
         },
         wrap: function (data) {
             var self = ko.mapping.fromJS(data, CaseIndex.mapping);
+
             self.relationship.subscribe(function (value) {
-                if (value === 'extension' && self.reference_id() === 'parent') {
+                if (value === 'extension' && self.reference_id() !== 'host') {
                     self.reference_id('host');
-                } else if (value === 'child' && self.reference_id() === 'host') {
+                } else if (value === 'child' && self.reference_id() !== 'parent') {
                     self.reference_id('parent');
+                } else if (value === 'question') {
+                    self.reference_id('');
                 }
             });
+
             return self;
         },
     };
