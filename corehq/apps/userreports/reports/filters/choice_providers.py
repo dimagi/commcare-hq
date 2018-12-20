@@ -16,7 +16,6 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
-from corehq.apps.es.utils import values_list
 import six
 
 DATA_SOURCE_COLUMN = 'data_source_column'
