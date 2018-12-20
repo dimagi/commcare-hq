@@ -299,7 +299,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_submission_error_log_migration(self):
         try:
-            submit_form_locally("To be an XForm or NOT to be an xform/>", self.domain_name)
+            submit_form_locally(b"To be an XForm or NOT to be an xform/>", self.domain_name)
         except LocalSubmissionError:
             pass
 
