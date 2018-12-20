@@ -204,10 +204,15 @@ function IntEntry(question, options) {
     var self = this;
     FreeTextEntry.call(self, question, options);
     self.templateType = 'str';
-    self.lengthLimit = options.lengthLimit || 9;
+    self.lengthLimit = options.lengthLimit || 10;
+    var valueLimit = options.valueLimit || Math.pow(2, 31) - 1;
 
     self.getErrorMessage = function (rawAnswer) {
-        return (isNaN(+rawAnswer) || +rawAnswer != Math.floor(+rawAnswer) ? "Not a valid whole number" : null);
+        if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer))
+            return "Not a valid whole number";
+        if (+rawAnswer > valueLimit)
+            return "Number is too large";
+        return null;
     };
 
     self.helpText = function () {
