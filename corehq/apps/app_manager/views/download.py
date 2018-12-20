@@ -143,7 +143,6 @@ def download_jad(request, domain, app_id):
     """
     app = request.app
     if not app.copy_of:
-        app.set_form_versions(None)
         app.set_media_versions(None)
     jad, _ = app.create_jadjar_from_build_files()
     try:
@@ -170,7 +169,6 @@ def download_jar(request, domain, app_id):
     response = HttpResponse(content_type="application/java-archive")
     app = request.app
     if not app.copy_of:
-        app.set_form_versions(None)
         app.set_media_versions(None)
     _, jar = app.create_jadjar_from_build_files()
     set_file_download(response, 'CommCare.jar')
