@@ -68,7 +68,7 @@ class TestMigrateBackend(TestCase):
             filename = join(tmp, "file.txt")
 
             # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename)
+            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename, num_workers=2)
             self.assertGreaterEqual(migrated, self.test_size)
 
             # verify: migration state recorded
@@ -110,7 +110,7 @@ def discard_migration_state(slug):
         migrators = migrator.iter_migrators()
     else:
         migrators = [migrator]
-    for provider in (m._get_document_provider() for m in migrators):
+    for provider in (m.get_document_provider() for m in migrators):
         provider.get_document_iterator(1).discard_state()
     mod.BlobMigrationState.objects.filter(slug=slug).delete()
 

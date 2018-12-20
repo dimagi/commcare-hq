@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import unicode_literals
 import logging
 import os
@@ -9,9 +10,9 @@ from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
 from corehq.util.decorators import change_log_level
 from corehq.util.teeout import tee_output
-from io import open
 
 
+DEFAULT_WORKER_POOL_SIZE = 10
 USAGE = """Usage: ./manage.py run_blob_migration [options] <slug>
 
 Slugs:
@@ -45,19 +46,33 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--chunk-size',
+            dest="chunk_size",  # redundant arg for grep
             type=int,
             default=100,
             help="Maximum number of records to read from couch at once.",
         )
+        parser.add_argument(
+            '--num-workers',
+            type=int,
+            default=DEFAULT_WORKER_POOL_SIZE,
+            help=(
+                "Worker pool size for parallel processing. This option is "
+                "ignored by migration types that do not support it."
+            ),
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, slug=None, log_dir=None, reset=False, chunk_size=100,
-               **options):
+    def handle(self, slug, log_dir=None, **options):
         try:
             migrator = MIGRATIONS[slug]
         except KeyError:
             raise CommandError(USAGE)
+        if not migrator.has_worker_pool:
+            num_workers = options.pop("num_workers")
+            if num_workers != DEFAULT_WORKER_POOL_SIZE:
+                print("--num-workers={} ignored because this migration "
+                      "does not use a worker pool".format(num_workers))
 
         if log_dir is None:
             summary_file = log_file = None
@@ -71,10 +86,10 @@ class Command(BaseCommand):
             assert not os.path.exists(log_file), log_file
 
         with tee_output(summary_file):
-            total, skips = migrator.migrate(
-                log_file,
-                reset=reset,
-                chunk_size=chunk_size,
-            )
-            if skips:
-                sys.exit(skips)
+            try:
+                total, skips = migrator.migrate(log_file, **options)
+                if skips:
+                    sys.exit(skips)
+            except KeyboardInterrupt:
+                print("stopped by operator")
+                sys.exit(1)
