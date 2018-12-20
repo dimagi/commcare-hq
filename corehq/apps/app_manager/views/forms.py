@@ -29,7 +29,7 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits, clear_xmlns_app_id_cache
+    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits, clear_xmlns_app_id_cache, form_has_submissions
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
@@ -894,7 +894,6 @@ class FormHasSubmissionsView(LoginAndDomainMixin, View):
     def get(self, request, domain, app_id, form_unique_id):
         app = get_app(domain, app_id)
         form = app.get_form(form_unique_id)
-        form_has_submissions = FormES().domain(domain).app([app_id]).xmlns([form.xmlns]).count() != 0
         return JsonResponse({
-            'form_has_submissions': form_has_submissions,
+            'form_has_submissions': form_has_submissions(domain, app_id, form.xmlns),
         })
