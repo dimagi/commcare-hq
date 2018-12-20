@@ -96,6 +96,8 @@ from corehq.apps.export.const import (
     UNKNOWN_INFERRED_FROM,
     CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
     SharingOption,
+    CASE_ID_TO_LINK,
+    FORM_ID_TO_LINK,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -513,7 +515,7 @@ class TableConfiguration(DocumentSchema):
                     row_data.extend(val)
                 else:
                     row_data.append(val)
-            rows.append(ExportRow(data=row_data))
+            rows.append(ExportRow(data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices()))
         return rows
 
     def get_column(self, item_path, item_doc_type, column_transform):
@@ -538,6 +540,13 @@ class TableConfiguration(DocumentSchema):
                     item_doc_type is None):
                 return index, column
         return None, None
+
+    @memoized
+    def get_hyperlink_column_indices(self):
+        return [
+            i for i, column in enumerate(self.columns)
+            if column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]
+        ]
 
     def _get_sub_documents(self, document, row_number, document_id=None):
         return self._get_sub_documents_helper(document_id, self.path,
@@ -787,7 +796,7 @@ class ExportInstance(BlobMixin, Document):
                 column.update_properties_from_app_ids_and_versions(latest_app_ids_and_versions)
                 prev_index = index
 
-            cls._insert_system_properties(instance.domain, schema.type, table)
+            instance._insert_system_properties(instance.domain, schema.type, table)
             table.columns = cls._move_selected_columns_to_top(table.columns)
 
             if not instance.get_table(group_schema.path):
@@ -811,8 +820,7 @@ class ExportInstance(BlobMixin, Document):
         ordered_columns.extend([column for column in columns if not column.selected])
         return ordered_columns
 
-    @classmethod
-    def _insert_system_properties(cls, domain, export_type, table):
+    def _insert_system_properties(self, domain, export_type, table):
         from corehq.apps.export.system_properties import (
             ROW_NUMBER_COLUMN,
             TOP_MAIN_FORM_TABLE_PROPERTIES,
@@ -832,48 +840,47 @@ class ExportInstance(BlobMixin, Document):
         }
         if export_type == FORM_EXPORT:
             if table.path == MAIN_TABLE:
-                cls.__insert_system_properties(
+                self.__insert_system_properties(
                     table,
                     TOP_MAIN_FORM_TABLE_PROPERTIES,
                     **column_initialization_data
                 )
-                cls.__insert_system_properties(
+                self.__insert_system_properties(
                     table,
                     BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
                     top=False,
                     **column_initialization_data
                 )
-                cls.__insert_case_name(table, top=False)
+                self.__insert_case_name(table, top=False)
             else:
-                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
+                self.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
         elif export_type == CASE_EXPORT:
             if table.path == MAIN_TABLE:
                 if Domain.get_by_name(domain).commtrack_enabled:
                     top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES + [STOCK_COLUMN]
                 else:
                     top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES
-                cls.__insert_system_properties(
+                self.__insert_system_properties(
                     table,
                     top_properties,
                     **column_initialization_data
                 )
-                cls.__insert_system_properties(
+                self.__insert_system_properties(
                     table,
                     BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
                     top=False,
                     **column_initialization_data
                 )
             elif table.path == CASE_HISTORY_TABLE:
-                cls.__insert_system_properties(table, CASE_HISTORY_PROPERTIES, **column_initialization_data)
+                self.__insert_system_properties(table, CASE_HISTORY_PROPERTIES, **column_initialization_data)
             elif table.path == PARENT_CASE_TABLE:
-                cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES,
+                self.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES,
                         **column_initialization_data)
         elif export_type == SMS_EXPORT:
             if table.path == MAIN_TABLE:
-                cls.__insert_system_properties(table, SMS_TABLE_PROPERTIES, **column_initialization_data)
+                self.__insert_system_properties(table, SMS_TABLE_PROPERTIES, **column_initialization_data)
 
-    @classmethod
-    def __insert_system_properties(cls, table, properties, top=True, **column_initialization_data):
+    def __insert_system_properties(self, table, properties, top=True, **column_initialization_data):
         """
         Inserts system properties into the table configuration
 
@@ -886,7 +893,7 @@ class ExportInstance(BlobMixin, Document):
         if top:
             properties = reversed(properties)
 
-        insert_fn = cls._get_insert_fn(table, top)
+        insert_fn = self._get_insert_fn(table, top)
 
         for static_column in properties:
             index, existing_column = table.get_column(
@@ -901,6 +908,8 @@ class ExportInstance(BlobMixin, Document):
                 column.update_domain(column_initialization_data.get('domain'))
 
             if not existing_column:
+                if static_column.label in ['case_link', 'form_link'] and self.get_id:
+                    static_column.selected = False
                 insert_fn(static_column)
 
     @classmethod
@@ -1117,7 +1126,7 @@ class SMSExportInstance(ExportInstance):
             ))
 
         instance = cls(domain=schema.domain, tables=[main_table])
-        cls._insert_system_properties(instance.domain, schema.type, instance.tables[0])
+        instance._insert_system_properties(instance.domain, schema.type, instance.tables[0])
         return instance
 
 
@@ -1201,8 +1210,9 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
 class ExportRow(object):
 
-    def __init__(self, data):
+    def __init__(self, data, hyperlink_column_indices=()):
         self.data = data
+        self.hyperlink_column_indices = hyperlink_column_indices
 
 
 class ScalarItem(ExportItem):
