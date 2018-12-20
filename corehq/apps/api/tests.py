@@ -1818,8 +1818,8 @@ class TestConfigurableReportDataResource(APIResourceTest):
         return endpoint
 
     def setUp(self):
-        credentials = base64.b64encode("{}:{}".format(self.username, self.password).encode('utf-8'))
-        self.client.defaults['HTTP_AUTHORIZATION'] = b'Basic ' + credentials
+        credentials = base64.b64encode("{}:{}".format(self.username, self.password).encode('utf-8')).decode('utf-8')
+        self.client.defaults['HTTP_AUTHORIZATION'] = 'Basic ' + credentials
 
     @classmethod
     def setUpClass(cls):
