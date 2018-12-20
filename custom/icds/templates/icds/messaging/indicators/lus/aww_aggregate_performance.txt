@@ -1,10 +1,10 @@
-Aggregate Performance Report over the last 30 days for your AWC
+Ni 30 kalta chhunga a tlangpui a  AWC  a hmalak na te
 
-1. Number of visits / Number of desired visits: {{ visits }} / 65
-2. Number of visits on time / Number of visits: {{ on_time_visits }} / {{ visits }}
+1. Vawi engzat nge tlawh / Vawi engzat tlawh nge duhthusam: {{ visits }} / 65
+2. A hun taka tlawh / Vawi engzat nge ni: {{ on_time_visits }} / {{ visits }}
 
-THR Distribution: {{ thr_distribution }}
+THR Sem chungchang: {{ thr_distribution }}
 
-Number of children weighed: {{ children_weighed }}
+Naupang engzat nge buk an nih: {{ children_weighed }}
 
-Days AWC open / Goal: {{ days_open }} / 25
+Ni engzat nge AWC hawn anih / ni eng zat nge hawng tur a beisei: {{ days_open }} / 25
