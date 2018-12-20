@@ -70,13 +70,13 @@ class ProgressManager(object):
             self.previously_visited = self.visited
         self.logger.progress_starting(self.total, self.previously_visited)
 
-    def add(self):
+    def add(self, num=1):
         """Increment progress by one
 
         Call for each item after it is successfully processed.
         """
-        self.processed += 1
-        self._update()
+        self.processed += num
+        self._update(num)
 
     def skip(self, doc):
         """Record skipped item
@@ -91,8 +91,8 @@ class ProgressManager(object):
     def _state(self):
         return {"visited": self.visited, "total": self.total}
 
-    def _update(self):
-        self.visited += 1
+    def _update(self, num=1):
+        self.visited += num
         if self.visited > self.total:
             self.total = self.visited
 

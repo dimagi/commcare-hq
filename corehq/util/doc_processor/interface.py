@@ -200,7 +200,7 @@ class BulkDocProcessor(DocumentProcessorController):
         """Called by the BulkDocProcessorLogHandler"""
         ok = self.doc_processor.process_bulk_docs(self.changes)
         if ok:
-            self.processed += len(self.changes)
+            self.progress.add(len(self.changes))
             self.changes = []
         else:
             raise BulkProcessingFailed("Processing batch failed")
