@@ -1,1 +1,1 @@
-Congratulations! You've done all the Complementary Feeding  Visits for {{ beneficiary }}
+শুভেচ্ছা থাকিল। আপুনি {{ beneficiary }} পৰিপূৰক আহাৰৰ গোটেইকেইটা ভ্ৰমণ সম্পূৰ্ণ কৰিলে
