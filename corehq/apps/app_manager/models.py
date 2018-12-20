@@ -3176,6 +3176,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             for case_index in action.case_indices:
                 if case_index.tag not in case_tags:
                     errors.append({'type': 'missing parent tag', 'case_tag': case_index.tag})
+                if case_index.relationship == 'question' and not case_index.relationship_question:
+                    errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
                 if not action.name_path:
