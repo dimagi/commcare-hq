@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from io import BytesIO
 from zipfile import BadZipfile
 from tempfile import NamedTemporaryFile
+from types import FileType
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 import six
@@ -192,13 +193,10 @@ class WorksheetJSONReader(IteratorJSONReader):
 class WorkbookJSONReader(object):
 
     def __init__(self, file_or_filename):
-        if isinstance(file_or_filename, (InMemoryUploadedFile, file, BytesIO)):
+        if isinstance(file_or_filename, (InMemoryUploadedFile, FileType, BytesIO)):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
-            if isinstance(file_or_filename, (InMemoryUploadedFile, file)):
-                value = file_or_filename.read()
-            else:
-                value = file_or_filename.getvalue()
-            tmp.write(value)
+            file_or_filename.seek(0)
+            tmp.write(file_or_filename.read())
             tmp.close()
             file_or_filename = tmp.name
         try:
