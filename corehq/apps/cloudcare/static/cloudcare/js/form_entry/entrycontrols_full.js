@@ -753,6 +753,7 @@ function getEntry(question) {
         case Formplayer.Const.LONGINT:
             entry = new IntEntry(question, {
                 lengthLimit: 15,
+                valueLimit: Math.pow(2, 63) - 1,
                 enableAutoUpdate: isPhoneMode,
             });
             break;
