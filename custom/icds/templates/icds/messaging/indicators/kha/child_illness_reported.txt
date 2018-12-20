@@ -1,1 +1,1 @@
-AWC {{ awc }} has reported illness for the child {{ child }}. Please ensure that AWW follows up with mother immediately
+Ka AWC {{ awc }} ka lah pyntip shaphang ka jingpang jong i khyllung {{ child }}. Sngewbha pyntikna ba ka AWW kan buddien bad ka longkmie khlem pynslem shuh
