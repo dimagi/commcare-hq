@@ -80,7 +80,7 @@ def download_suite(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        previous_version = request.app.get_latest_app(released_only=False)
+        previous_version = request.app.get_previous_version()
         request.app.set_form_versions(previous_version)
     profile = _get_profile(request)
     return HttpResponse(
@@ -95,7 +95,7 @@ def download_media_suite(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        previous_version = request.app.get_latest_app(released_only=False)
+        previous_version = request.app.get_previous_version()
         request.app.set_media_versions(previous_version)
     profile = _get_profile(request)
     return HttpResponse(

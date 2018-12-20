@@ -5045,17 +5045,17 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def is_remote_app(self):
         return False
 
-    def get_latest_app(self, released_only=True):
-        if released_only:
-            return get_app(self.domain, self.get_id, latest=True)
-        else:
-            return self.view('app_manager/applications',
-                startkey=[self.domain, self.get_id, {}],
-                endkey=[self.domain, self.get_id],
-                include_docs=True,
-                limit=1,
-                descending=True,
-            ).first()
+    def get_latest_release(self):
+        return get_app(self.domain, self.get_id, latest=True)
+
+    def get_previous_version(self):
+        return self.view('app_manager/applications',
+            startkey=[self.domain, self.get_id, {}],
+            endkey=[self.domain, self.get_id],
+            include_docs=True,
+            limit=1,
+            descending=True,
+        ).first()
 
     @memoized
     def get_latest_saved(self):

@@ -255,7 +255,7 @@ def save_copy(request, domain, app_id):
     track_built_app_on_hubspot_v2.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
-    previous_version = app.get_latest_app(released_only=False)
+    previous_version = app.get_previous_version()
     try:
         errors = app.validate_app(previous_version=previous_version)
     except ModuleIdMissingException:
@@ -340,7 +340,7 @@ def revert_to_copy(request, domain, app_id):
     copy = app.make_build(
         comment=new_build_comment,
         user_id=request.couch_user.get_id,
-        previous_version=app.get_latest_app(released_only=False)
+        previous_version=app.get_previous_version()
     )
     copy.save(increment_version=False)
     return back_to_main(request, domain, app_id=app_id)

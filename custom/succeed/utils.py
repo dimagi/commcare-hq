@@ -61,7 +61,7 @@ def has_any_role(user):
 def get_app_build(app_dict):
     domain = Domain.get_by_name(app_dict['domain'])
     if domain.use_cloudcare_releases:
-        return ApplicationBase.get(app_dict['_id']).get_latest_app()['_id']
+        return ApplicationBase.get(app_dict['_id']).get_latest_release()['_id']
     else:
         return get_latest_build_id(app_dict['domain'], app_dict['_id'])
     return None
