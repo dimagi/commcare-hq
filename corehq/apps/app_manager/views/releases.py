@@ -255,13 +255,12 @@ def save_copy(request, domain, app_id):
     track_built_app_on_hubspot_v2.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
-    previous_version = app.get_previous_version()
     try:
-        errors = app.validate_app(previous_version=previous_version)
+        errors = app.validate_app()
     except ModuleIdMissingException:
         # For apps (mainly Exchange apps) that lost unique_id attributes on Module
         app.ensure_module_unique_ids(should_save=True)
-        errors = app.validate_app(previous_version=previous_version)
+        errors = app.validate_app()
 
     if not errors:
         try:
@@ -272,7 +271,6 @@ def save_copy(request, domain, app_id):
                 copy = app.make_build(
                     comment=comment,
                     user_id=user_id,
-                    previous_version=previous_version,
                 )
                 copy.save(increment_version=False)
             CouchUser.get(user_id).set_has_built_app()
@@ -340,7 +338,6 @@ def revert_to_copy(request, domain, app_id):
     copy = app.make_build(
         comment=new_build_comment,
         user_id=request.couch_user.get_id,
-        previous_version=app.get_previous_version()
     )
     copy.save(increment_version=False)
     return back_to_main(request, domain, app_id=app_id)

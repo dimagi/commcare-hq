@@ -48,7 +48,6 @@ def _code_to_benchmark(domain, app_id, comment, user_id):
     copy = app.make_build(
         comment=comment,
         user_id=user_id,
-        previous_version=app.get_previous_version(),
     )
     copy.save(increment_version=False)
     return copy

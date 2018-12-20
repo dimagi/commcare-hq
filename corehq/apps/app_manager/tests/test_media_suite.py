@@ -93,7 +93,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
         app.create_mapping(CommCareAudio(_id='456'), audo_path, save=False)
 
-        app.set_media_versions(previous_version=None)
+        app.set_media_versions()
 
         self.assertXmlEqual(self.get_xml('case_list_media_suite'), app.create_media_suite())
 
@@ -129,7 +129,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         for i, path in enumerate(xform.media_references(form="image")):
             app.create_mapping(CommCareImage(_id='form_image_{}'.format(i)), path, save=False)
 
-        app.set_media_versions(previous_version=None)
+        app.set_media_versions()
         app.update_mm_map()
         app.remove_unused_mappings()
 
@@ -149,12 +149,12 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         app.version = 1
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
-        app.set_media_versions(previous_version=None)
+        app.set_media_versions()
         old_app = deepcopy(app)
 
         app.version = 2
         app.create_mapping(CommCareImage(_id='456'), image_path, save=False)
-        app.set_media_versions(previous_version=old_app)
+        app.set_media_versions()
 
         old_image = old_app.multimedia_map[image_path]
         new_image = app.multimedia_map[image_path]

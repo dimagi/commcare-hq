@@ -80,8 +80,7 @@ def download_suite(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        previous_version = request.app.get_previous_version()
-        request.app.set_form_versions(previous_version)
+        request.app.set_form_versions()
     profile = _get_profile(request)
     return HttpResponse(
         request.app.create_suite(build_profile_id=profile)
@@ -95,8 +94,7 @@ def download_media_suite(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        previous_version = request.app.get_previous_version()
-        request.app.set_media_versions(previous_version)
+        request.app.set_media_versions()
     profile = _get_profile(request)
     return HttpResponse(
         request.app.create_media_suite(build_profile_id=profile)
@@ -143,7 +141,7 @@ def download_jad(request, domain, app_id):
     """
     app = request.app
     if not app.copy_of:
-        app.set_media_versions(None)
+        app.set_media_versions()
     jad, _ = app.create_jadjar_from_build_files()
     try:
         response = HttpResponse(jad)
@@ -169,7 +167,7 @@ def download_jar(request, domain, app_id):
     response = HttpResponse(content_type="application/java-archive")
     app = request.app
     if not app.copy_of:
-        app.set_media_versions(None)
+        app.set_media_versions()
     _, jar = app.create_jadjar_from_build_files()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)
@@ -487,7 +485,7 @@ def source_files(app):
     file name and the second is the file contents.
     """
     if not app.copy_of:
-        app.set_media_versions(None)
+        app.set_media_versions()
     files = download_index_files(app)
     app_json = json.dumps(
         app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')

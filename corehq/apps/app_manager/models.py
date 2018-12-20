@@ -5045,6 +5045,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def is_remote_app(self):
         return False
 
+    @memoized
     def get_previous_version(self):
         return self.view('app_manager/applications',
             startkey=[self.domain, self.get_id, {}],
@@ -5262,8 +5263,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, build_profile_id=None, previous_version=None):
-        all_files = self.create_all_files(build_profile_id, previous_version)
+    def create_build_files(self, build_profile_id=None):
+        all_files = self.create_all_files(build_profile_id)
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
@@ -5304,7 +5305,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def timing_context(self):
         return TimingContext(self.name)
 
-    def validate_app(self, previous_version=None):
+    def validate_app(self):
         errors = []
 
         errors.extend(self.check_password_charset())
@@ -5313,7 +5314,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_fixtures()
             self.validate_intents()
             self.validate_practice_users()
-            self.create_all_files(previous_version=previous_version)
+            self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({
                 'type': 'invalid case xpath reference',
@@ -5431,14 +5432,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.get_jadjar().fetch_jar()
 
     @time_method()
-    def make_build(self, comment=None, user_id=None, previous_version=None):
+    def make_build(self, comment=None, user_id=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        copy.create_build_files(previous_version=previous_version)
+        copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -5503,11 +5504,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     bulk_save = save_docs
 
-    def set_form_versions(self, previous_version, force_new_version=False):
+    def set_form_versions(self):
         # by default doing nothing here is fine.
         pass
 
-    def set_media_versions(self, previous_version):
+    def set_media_versions(self):
         pass
 
     def update_mm_map(self):
@@ -5709,7 +5710,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform(build_profile_id).encode('utf-8')
 
-    def set_form_versions(self, previous_version, force_new_version=False):
+    def set_form_versions(self, force_new_version=False):
         """
         Set the 'version' property on each form as follows to the current app version if the form is new
         or has changed since the last build. Otherwise set it to the version from the last build.
@@ -5717,6 +5718,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
+        previous_version = self.get_previous_version()
         if previous_version:
             for form_stuff in self.get_forms(bare=False):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
@@ -5742,7 +5744,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 else:
                     form.version = None
 
-    def set_media_versions(self, previous_version):
+    def set_media_versions(self):
         """
         Set the media version numbers for all media in the app to the current app version
         if the media is new or has changed since the last build. Otherwise set it to the
@@ -5750,6 +5752,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
 
         # access to .multimedia_map is slow
+        previous_version = self.get_previous_version()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
@@ -5999,17 +6002,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
         return files
 
-    def _set_versions(self, previous_version=None):
+    def _set_versions(self):
         force_new_forms = False
+        previous_version = self.get_previous_version()
         if previous_version and self.build_profiles != previous_version.build_profiles:
             force_new_forms = True
-        self.set_form_versions(previous_version, force_new_forms)
-        self.set_media_versions(previous_version)
+        self.set_form_versions(force_new_forms)
+        self.set_media_versions()
 
     @time_method()
     @memoized
-    def create_all_files(self, build_profile_id=None, previous_version=None):
-        self._set_versions(previous_version)
+    def create_all_files(self, build_profile_id=None):
+        self._set_versions()
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
             '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
@@ -6355,7 +6359,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return errors
 
     @time_method()
-    def validate_app(self, previous_version=None):
+    def validate_app(self):
         errors = []
 
         for lang in self.langs:
@@ -6380,7 +6384,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         errors.extend(self.check_subscription())
 
         if not errors:
-            errors = super(Application, self).validate_app(previous_version=previous_version)
+            errors = super(Application, self).validate_app()
         return errors
 
     def _has_dependency_cycle(self, modules, neighbour_id_fn):
@@ -6561,7 +6565,7 @@ class RemoteApp(ApplicationBase):
     def SUITE_XPATH(self):
         return 'suite/resource/location[@authority="local"]'
 
-    def create_all_files(self, build_profile_id=None, previous_version=None):
+    def create_all_files(self, build_profile_id=None):
         langs_for_build = self.get_build_langs()
         files = {
             'profile.xml': self.create_profile(langs=langs_for_build),
