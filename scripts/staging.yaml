@@ -49,7 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  - np-export-links-test  # Nick Nov 25
 #  - rn_migrate_multimedia # Rohit 3 Dec
   - mk-transifex-improv # MK Dec 8
   - mk-215 # MK Dec 13
