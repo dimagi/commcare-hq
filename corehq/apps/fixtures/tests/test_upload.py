@@ -14,7 +14,6 @@ from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.run_upload import _run_fixture_upload
 from corehq.apps.fixtures.upload.workbook import get_workbook
-from corehq.util.files import TransientTempfile
 from corehq.util.test_utils import make_make_path
 from corehq.util.test_utils import generate_cases
 
@@ -186,13 +185,11 @@ class TestFixtureUpload(TestCase):
         return get_workbook(_make_path('test_upload', '{}.xlsx'.format(filename)))
 
     def _get_workbook_from_data(self, headers, rows):
-        f = BytesIO()
-        export_raw(headers, rows, f, format=Format.XLS_2007)
-        with TransientTempfile() as temp_path:
-            with open(temp_path, 'wb') as temp_file:
-                temp_file.write(f.getvalue())
-            with open(temp_path, 'rb') as temp_file:
-                return get_workbook(temp_file)
+        file = BytesIO()
+        export_raw(headers, rows, file, format=Format.XLS_2007)
+        with tempfile.TemporaryFile(suffix='.xlsx') as f:
+            f.write(file.getvalue())
+            return get_workbook(f)
 
     def get_fixture_items(self, attribute):
         # return list of 'attribute' values of fixture table 'things'
