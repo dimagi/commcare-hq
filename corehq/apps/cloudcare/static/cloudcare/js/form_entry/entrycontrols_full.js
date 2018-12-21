@@ -204,8 +204,8 @@ function IntEntry(question, options) {
     var self = this;
     FreeTextEntry.call(self, question, options);
     self.templateType = 'str';
-    self.lengthLimit = options.lengthLimit || 10;
-    var valueLimit = options.valueLimit || Math.pow(2, 31) - 1;
+    self.lengthLimit = options.lengthLimit || Formplayer.Const.INT_LENGTH_LIMIT;
+    var valueLimit = options.valueLimit || Formplayer.Const.INT_VALUE_LIMIT;
 
     self.getErrorMessage = function (rawAnswer) {
         if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer))
@@ -262,8 +262,8 @@ PhoneEntry.prototype.constructor = FreeTextEntry;
 function FloatEntry(question, options) {
     IntEntry.call(this, question, options);
     this.templateType = 'str';
-    this.lengthLimit = options.lengthLimit || 15;
-    var valueLimit = options.valueLimit || +("9".repeat(14));
+    this.lengthLimit = options.lengthLimit || Formplayer.Const.FLOAT_LENGTH_LIMIT;
+    var valueLimit = options.valueLimit || Formplayer.Const.FLOAT_VALUE_LIMIT;
 
     this.getErrorMessage = function (rawAnswer) {
         if (isNaN(+rawAnswer))
@@ -752,8 +752,8 @@ function getEntry(question) {
             break;
         case Formplayer.Const.LONGINT:
             entry = new IntEntry(question, {
-                lengthLimit: 15,
-                valueLimit: Math.pow(2, 63) - 1,
+                lengthLimit: Formplayer.Const.LONGINT_LENGTH_LIMIT,
+                valueLimit: Formplayer.Const.LONGINT_VALUE_LIMIT,
                 enableAutoUpdate: isPhoneMode,
             });
             break;
