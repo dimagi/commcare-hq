@@ -291,16 +291,20 @@ def handle_custom_icon_edits(request, form_or_module, lang):
 
 def update_linked_app_and_notify(domain, app_id, user_id, email):
     app = get_current_app(domain, app_id)
+    subject = _("Update Status for linked app %s") % app.name
     try:
         update_linked_app(app, user_id)
     except AppLinkError as e:
         message = six.text_type(e)
     except Exception:
-        message = _("Something went wrong! There was an error. Please try again. "
-                    "If you see this error repeatedly please report it as issue.")
+        # Send an email but then crash the process
+        # so we know what the error was
+        send_html_email_async.delay(subject, email, _(
+            "Something went wrong! There was an error. Please try again. "
+            "If you see this error repeatedly please report it as issue."))
+        raise
     else:
         message = _("Your linked application was successfully updated to the latest version.")
-    subject = _("Update Status for linked app %s") % app.name
     send_html_email_async.delay(subject, email, message)
 
 
