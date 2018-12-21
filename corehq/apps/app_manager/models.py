@@ -394,7 +394,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
-    relationship = StringProperty(choices=['child', 'extension'], default='child')
+    relationship = StringProperty(choices=['child', 'extension', 'question'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -438,7 +438,8 @@ class FormActions(DocumentSchema):
 class CaseIndex(DocumentSchema):
     tag = StringProperty()
     reference_id = StringProperty(default='parent')
-    relationship = StringProperty(choices=['child', 'extension'], default='child')
+    relationship = StringProperty(choices=['child', 'extension', 'question'], default='child')
+    relationship_question = StringProperty(default='')  # if relationship is 'question', this is the question path
 
 
 class AdvancedAction(IndexedSchema):
@@ -3175,6 +3176,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             for case_index in action.case_indices:
                 if case_index.tag not in case_tags:
                     errors.append({'type': 'missing parent tag', 'case_tag': case_index.tag})
+                if case_index.relationship == 'question' and not case_index.relationship_question:
+                    errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
                 if not action.name_path:
