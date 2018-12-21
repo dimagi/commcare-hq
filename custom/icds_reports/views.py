@@ -1689,7 +1689,8 @@ class DishaAPIView(View):
             "missing_date": "Please specify valid month and year",
             "invalid_month": "Please specify a month that's older than a month and 5 days",
             "invalid_state": "Please specify one of {} as state_name".format(state_names),
-            "invalid_level": "Please specify level 1 for state, 2 for district and 3 for block"
+            "invalid_level": "Please specify level 1 for state, 2 for district and 3 for block",
+            "rebuild_request_initiated": "Rebuild request initiated"
         }
         return {"message": error_messages[message_name]}
 
@@ -1717,6 +1718,9 @@ class DishaAPIView(View):
             return JsonResponse(self.message('invalid_state'), status=400)
 
         dump = DishaDump(state_name, query_month, till_level)
+        if not request.user.is_superuser and request.GET.get('rebuild', '') == 'true':
+            dump.initiate_rebuild()
+            return JsonResponse(self.message('rebuild_request_initiated'), status=200)
         return dump.get_export_as_http_response(request)
 
     @cached_property

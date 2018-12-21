@@ -16,6 +16,7 @@ from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.views import DishaIndicatorView
 from custom.icds_reports.models.helper import IcdsFile
 from memoized import memoized
+from celery.task import task
 
 
 logger = logging.getLogger(__name__)
@@ -120,9 +121,16 @@ class DishaDump(object):
                 blob_ref.store_file_in_blobdb(f, expired=1)
                 blob_ref.save()
 
+    def initiate_rebuild(self):
+        build_dumps_for_month.delay(self.month, rebuild=True, level=self.level, state_name=self.state_name)
 
-def build_dumps_for_month(month, rebuild=False, level=None):
-    states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
+
+@task(serializer='pickle', queue='background_queue')
+def build_dumps_for_month(month, rebuild=False, level=None, state_name=None):
+    if state_name:
+        states = [state_name]
+    else:
+        states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
     for state_name in states:
         dump = DishaDump(state_name, month, level)
         if dump.export_exists() and not rebuild:
