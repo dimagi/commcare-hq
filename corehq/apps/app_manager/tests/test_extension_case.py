@@ -146,14 +146,19 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         self.app = Application.new_app('domain', 'New App')
         self.module = self.app.add_module(AdvancedModule.new_module('Fish Module', None))
         self.module.case_type = 'fish'
-        self.form = self.module.new_form('New Form', None)
+        self.form = self.module.new_form('Form', 'en', self.get_xml('original').decode('utf-8'))
+        self.other_module = self.app.add_module(AdvancedModule.new_module('Freshwater Module', lang='en'))
+        self.other_module.case_type = 'freshwater'
+        self.other_form = self.module.new_form('Other Form', 'en', self.get_xml('original').decode('utf-8'))
         self.case_index = CaseIndex(
             reference_id='host',
             relationship='extension',
         )
         self.subcase = AdvancedOpenCaseAction(
+            case_tag='open_freshwater_0',
             case_type='freshwater',
             case_name='Wanda',
+            name_path='/data/question1',
             open_condition=FormActionCondition(type='always'),
             case_properties={'name': '/data/question1'},
             case_indices=[self.case_index],
@@ -194,6 +199,15 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
             self.subcase.case_indices[0].relationship,
         )
         self.assertXmlEqual(self.get_xml('open_subcase'), str(self.xform))
+
+    def test_xform_case_block_index_supports_dynamic_relationship(self):
+        self.subcase.case_indices = [CaseIndex(
+            tag='open_freshwater_0',
+            reference_id='node',
+            relationship='question',
+            relationship_question='/data/question2',
+        )]
+        self.assertXmlEqual(self.get_xml('case_index_relationship_question'), self.form.render_xform())
 
     def test_xform_case_block_index_default_relationship(self):
         """
@@ -346,6 +360,7 @@ class CaseIndexTests(SimpleTestCase):
         """
         CaseIndex(tag='mother', relationship='child')
         CaseIndex(tag='mother', relationship='extension')
+        CaseIndex(tag='mother', relationship='question')
         with self.assertRaises(BadValueError):
             CaseIndex(tag='mother', relationship='parent')
         with self.assertRaises(BadValueError):
