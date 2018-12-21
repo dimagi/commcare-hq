@@ -209,9 +209,9 @@ function IntEntry(question, options) {
 
     self.getErrorMessage = function (rawAnswer) {
         if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer))
-            return "Not a valid whole number";
+            return gettext("Not a valid whole number");
         if (+rawAnswer > valueLimit)
-            return "Number is too large";
+            return gettext("Number is too large");
         return null;
     };
 
@@ -267,9 +267,9 @@ function FloatEntry(question, options) {
 
     this.getErrorMessage = function (rawAnswer) {
         if (isNaN(+rawAnswer))
-            return "Not a valid number";
+            return gettext("Not a valid number");
         if (+rawAnswer > valueLimit)
-            return "Number is too large";
+            return gettext("Number is too large");
         return null;
     };
 
