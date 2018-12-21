@@ -667,18 +667,19 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             block=location,
             month=config['month']
         ).get_excel_data()
-        location_object = AwcLocationMonths.objects.filter(
-            block_id=location,
-            aggregation_level=3
-        ).first()
+
+        block = SQLLocation.objects.filter(location_id=location).first()
+        district = block.parent
+        state = district.parent
+
         if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
-                location_object.state_name,
-                location_object.district_name,
-                location_object.block_name,
+                state.name,
+                district.name,
+                block.name,
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
