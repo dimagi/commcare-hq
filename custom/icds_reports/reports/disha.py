@@ -22,7 +22,7 @@ from celery.task import task
 logger = logging.getLogger(__name__)
 logger.setLevel('DEBUG')
 
-DISHA_DUMP_EXPIRY = 60 * 60 * 24 * 360  # 1 year
+DISHA_DUMP_EXPIRY = 60 * 60 * 24 * 31  # 1 month
 
 
 class DishaDump(object):
@@ -118,7 +118,7 @@ class DishaDump(object):
                 self._write_data_in_chunks(f)
                 f.seek(0)
                 blob_ref, _ = IcdsFile.objects.get_or_create(blob_id=self._blob_id(), data_type='disha_dumps')
-                blob_ref.store_file_in_blobdb(f, expired=1)
+                blob_ref.store_file_in_blobdb(f, expired=DISHA_DUMP_EXPIRY)
                 blob_ref.save()
 
     def initiate_rebuild(self):
