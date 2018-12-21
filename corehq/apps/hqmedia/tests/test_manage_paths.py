@@ -125,7 +125,7 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
             app = Application.wrap(source)
             update_multimedia_paths(app, paths)
 
-            self.assertEquals(len(app.all_media()), len(paths));
+            self.assertEquals(len(app.all_media()), len(paths))
             self.assertEquals(app.modules[0].forms[0].icon_by_language('en'), 'jr://file/commcare/aff/pines.jpg')
             self.assertEquals(app.modules[0].forms[0].icon_by_language('fra'), 'jr://file/commcare/aff/one_cell.jpg')
             self.assertTrue('jr://file/commcare/nin/ghosts.jpg' in app.modules[1].forms[0].wrapped_xform().image_references)

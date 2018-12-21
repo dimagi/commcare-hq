@@ -130,3 +130,5 @@ def update_multimedia_paths(app, paths):
                                  success_counts[form.unique_id],
                                  reverse("view_form", args=[app.domain, app.id, form.unique_id]),
                                  "{} > {}".format(module.default_name(), form.default_name())))
+
+    return successes

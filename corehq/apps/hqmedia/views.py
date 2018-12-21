@@ -282,9 +282,10 @@ def update_multimedia_paths(request, domain, app_id):
                 'errors': errors,
             })
 
-        update_multimedia_paths(app, {
+        paths = {
             row[0]: interpolate_media_path(row[1]) for row in rows
-        })
+        }
+        successes = update_multimedia_paths(app, paths)
         app.save()
 
         # Force all_media to reset
