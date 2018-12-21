@@ -529,8 +529,8 @@ class CaseBlock(object):
 
         valid_relationships = ['child', 'extension', 'question']
         if relationship not in valid_relationships:
-            raise CaseError('Valid values for an index relationship are: {}').format(
-                ', '.join(['"{}"'.format(r) for r in valid_relationships]))
+            raise CaseError('Valid values for an index relationship are: {}'.format(
+                ', '.join(['"{}"'.format(r) for r in valid_relationships])))
         if relationship == 'child':
             case_index = make_case_elem(reference_id, {'case_type': case_type})
         elif relationship == 'extension':
@@ -578,7 +578,7 @@ def autoset_owner_id_for_advanced_action(action):
         # if there is a child relationship, autoset
         return True
     # if there are only extension indices, don't autoset
-    return True
+    return False
 
 
 def validate_xform(domain, source):

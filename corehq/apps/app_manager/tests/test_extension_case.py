@@ -216,7 +216,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         CaseBlock index relationship should only allow valid values
         """
         with self.assertRaisesRegexp(CaseError,
-                                     'Valid values for an index relationship are "child" and "extension"'):
+                                     'Valid values for an index relationship are'):
             self.subcase_block.add_index_ref(
                 'host',
                 self.form.get_case_type(),
