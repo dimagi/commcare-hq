@@ -1718,7 +1718,7 @@ class DishaAPIView(View):
             return JsonResponse(self.message('invalid_state'), status=400)
 
         dump = DishaDump(state_name, query_month, till_level)
-        if not request.user.is_superuser and request.GET.get('rebuild', '') == 'true':
+        if request.user.is_superuser and request.GET.get('rebuild', '') == 'true':
             dump.initiate_rebuild()
             return JsonResponse(self.message('rebuild_request_initiated'), status=200)
         return dump.get_export_as_http_response(request)
