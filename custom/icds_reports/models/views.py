@@ -844,7 +844,7 @@ class DishaIndicatorView(models.Model):
     district_name = models.TextField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
-    aggregation_level = models.IntegerField(blank=True, null=True)
+    aggregation_level = models.IntegerField(blank=True, null=True, db_index=True)
     month = models.DateField(blank=True, null=True)
     # agg_awc Indicator
     cases_household = models.IntegerField(blank=True, null=True)
