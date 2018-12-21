@@ -544,7 +544,7 @@ class TableConfiguration(DocumentSchema):
     @memoized
     def get_hyperlink_column_indices(self):
         return [
-            i for i, column in enumerate(self.columns)
+            i for i, column in enumerate(self.selected_columns)
             if column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]
         ]
 
