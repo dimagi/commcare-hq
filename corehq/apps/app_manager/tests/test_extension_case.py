@@ -18,6 +18,7 @@ from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem, autoset_
 from corehq.apps.app_manager.xpath import session_var
 from couchdbkit import BadValueError
 from django.test import SimpleTestCase
+import random
 from mock import patch
 
 
@@ -227,46 +228,32 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
 
 class ExtensionCasesCreateOwnerID(SimpleTestCase):
 
-    def test_advanced_xform_create_owner_id_with_without_extensions(self):
-        """ Owner id should be automatically set if there are any non-extension indices"""
+    def test_advanced_xform_autoset_owner_id(self):
+        """
+            Owner id should be automatically set if there are any non-extension indices.
+            It should never be set if there are any dynamically-specified indices.
+        """
+
+        def _test_relationships(relationships, expected):
+            advanced_open_action = AdvancedOpenCaseAction.wrap({'case_indices': [{
+                'tag': 'tag{}'.format(int(random.random() * 10000)),
+                'reference_id': 'case',
+                'relationship': r,
+            } for r in relationships]})
+            self.assertEquals(autoset_owner_id_for_advanced_action(advanced_open_action), expected)
 
         # Only extensions
-        advanced_open_action = AdvancedOpenCaseAction.wrap({
-            'case_indices': [
-                {
-                    'tag': 'mother',
-                    'reference_id': 'case',
-                    'relationship': 'extension',
-                },
-                {
-                    'tag': 'father',
-                    'reference_id': 'case',
-                    'relationship': 'extension',
-                }
-            ]
-        })
-        self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
+        _test_relationships(['extension', 'extension'], False)
 
         # Extension and children
-        advanced_open_action = AdvancedOpenCaseAction.wrap({
-            'case_indices': [
-                {
-                    'tag': 'mother',
-                    'reference_id': 'case',
-                    'relationship': 'extension',
-                },
-                {
-                    'tag': 'father',
-                    'reference_id': 'case',
-                    'relationship': 'child',
-                }
-            ]
-        })
-        self.assertTrue(autoset_owner_id_for_advanced_action(advanced_open_action))
+        _test_relationships(['extension', 'child'], True)
+
+        # Dynamically-determined relationship
+        _test_relationships(['extension', 'question'], False)
+        _test_relationships(['child', 'question'], False)
 
         # No indices
-        advanced_open_action = AdvancedOpenCaseAction()
-        self.assertTrue(autoset_owner_id_for_advanced_action(advanced_open_action))
+        _test_relationships([], True)
 
     def test_advanced_xform_create_owner_id_explicitly_set(self):
         """When owner_id is explicitly set, don't autoset"""
