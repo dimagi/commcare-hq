@@ -1120,6 +1120,7 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
             trimester=row_data['trimester'],
             anemic=get_anamic_status(row_data),
             num_anc_complete=row_data['num_anc_complete'],
+            beneficiary='Yes' if row_data['pregnant_all'] else 'No',
             number_of_thrs_given=row_data['num_rations_distributed'],
             last_date_thr=row_data['last_date_thr'],
         )
