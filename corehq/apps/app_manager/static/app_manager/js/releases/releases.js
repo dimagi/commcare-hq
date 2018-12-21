@@ -352,7 +352,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                         }
                     },
                     success: function (data) {
-                        if(data.error){
+                        if (data.error) {
                             alert(data.error);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                             savedApp.is_released(isReleased);
