@@ -19,6 +19,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
+from django.utils.functional import cached_property
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
@@ -37,7 +38,6 @@ from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
-from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
@@ -1712,7 +1712,6 @@ class DishaAPIView(View):
         dump = DishaDump(state_name, query_month)
         return dump.get_export_as_http_response(request)
 
-    @property
-    @quickcache([])
+    @cached_property
     def valid_state_names(self):
         return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())
