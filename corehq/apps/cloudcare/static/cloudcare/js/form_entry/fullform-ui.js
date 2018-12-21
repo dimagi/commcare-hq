@@ -629,7 +629,7 @@ Formplayer.Const = {
     LONGINT_LENGTH_LIMIT: 15,
     LONGINT_VALUE_LIMIT: Math.pow(2, 63) - 1,
     FLOAT_LENGTH_LIMIT: 15,
-    FLOAT_VALUE_LIMIT: +("9".repeat(14))
+    FLOAT_VALUE_LIMIT: +("9".repeat(14)),
 };
 
 Formplayer.Errors = {
