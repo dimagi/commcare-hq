@@ -454,7 +454,7 @@ def _migrator_with_worker_pool(migrator, reindexer, iterable, max_retry, num_wor
 
     with migrator:
         retry_blobs = iterable.get_iterator_detail("retry_blobs") or {}
-        for key in retry_blobs:
+        for key in list(retry_blobs):
             queue.put(reindexer.load(key))
         try:
             yield gmigrator
