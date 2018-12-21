@@ -18,7 +18,6 @@ from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem, autoset_
 from corehq.apps.app_manager.xpath import session_var
 from couchdbkit import BadValueError
 from django.test import SimpleTestCase
-import random
 from mock import patch
 
 
@@ -250,10 +249,10 @@ class ExtensionCasesCreateOwnerID(SimpleTestCase):
 
         def _test_relationships(relationships, expected):
             advanced_open_action = AdvancedOpenCaseAction.wrap({'case_indices': [{
-                'tag': 'tag{}'.format(int(random.random() * 10000)),
+                'tag': 'tag{}'.format(i),
                 'reference_id': 'case',
                 'relationship': r,
-            } for r in relationships]})
+            } for i, r in enumerate(relationships)]})
             self.assertEquals(autoset_owner_id_for_advanced_action(advanced_open_action), expected)
 
         # Only extensions
