@@ -1128,7 +1128,18 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     for row in data:
         config['data'].append(base_data(row))
 
-    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    def ordering_format(record):
+        if record[order]:
+            return record[order]
+        numeric_fields = ['age', 'closed', 'trimester', 'num_anc_complete', 'number_of_thrs_given']
+        if any([field in order for field in numeric_fields]):
+            return 0
+        date_fields = ['opened_on', 'edd', 'last_date_thr']
+        if any([field in order for field in date_fields]):
+            return date.today()
+        return ""
+
+    config['data'].sort(key=ordering_format, reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
@@ -1235,7 +1246,18 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     for row in data:
         config['data'].append(base_data(row))
 
-    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    def ordering_format(record):
+        if record[order]:
+            return record[order]
+        numeric_fields = ['age', 'delivery_nature', 'num_pnc_visits', 'num_rations_distributed']
+        if any([field in order for field in numeric_fields]):
+            return 0
+        date_fields = ['add']
+        if any([field in order for field in date_fields]):
+            return date.today()
+        return ""
+
+    config['data'].sort(key=ordering_format, reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
