@@ -75,7 +75,7 @@ class DishaDump(object):
             # batch_qs requires ordered queryset
         )
         if self.level:
-            rows = rows.filter(aggregation_level__in=range(1, self.level + 1))
+            rows = rows.filter(aggregation_level__in=list(range(1, self.level + 1)))
         return rows.order_by('pk').values_list(*self._get_columns())
 
     def _write_data_in_chunks(self, file_obj):
