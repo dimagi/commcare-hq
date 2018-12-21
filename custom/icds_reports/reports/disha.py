@@ -26,14 +26,22 @@ DISHA_DUMP_EXPIRY = 60 * 60 * 24 * 360  # 1 year
 
 class DishaDump(object):
 
-    def __init__(self, state_name, month):
+    def __init__(self, state_name, month, level=None):
+        """
+        :param state_name: data for state
+        :param month: data for month
+        :param level: get data till level, valid values in const VALID_LEVELS_FOR_DUMP
+        """
         self.state_name = state_name
         self.month = month
+        self.level = int(level) if level else level
 
     def _blob_id(self):
         # strip all non-alphanumeric chars
         safe_state_name = re.sub('[^0-9a-zA-Z]+', '', self.state_name)
-        return 'disha_dump-{}-{}.json'.format(safe_state_name, self.month.strftime('%Y-%m-%d'))
+        return 'disha_dump-{}-{}-level{}.json'.format(
+            safe_state_name, self.month.strftime('%Y-%m-%d'), self.level
+        )
 
     @memoized
     def _get_file_ref(self):
@@ -60,11 +68,14 @@ class DishaDump(object):
         return columns
 
     def _get_rows(self):
-        return DishaIndicatorView.objects.filter(
+        rows = DishaIndicatorView.objects.filter(
             month=self.month,
             state_name__iexact=self.state_name
             # batch_qs requires ordered queryset
-        ).order_by('pk').values_list(*self._get_columns())
+        )
+        if self.level:
+            rows = rows.filter(aggregation_level__in=range(1, self.level + 1))
+        return rows.order_by('pk').values_list(*self._get_columns())
 
     def _write_data_in_chunks(self, file_obj):
         # Writes indicators in json format to the file at temp_path
@@ -110,11 +121,10 @@ class DishaDump(object):
                 blob_ref.save()
 
 
-def build_dumps_for_month(month, rebuild=False):
+def build_dumps_for_month(month, rebuild=False, level=None):
     states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
-
     for state_name in states:
-        dump = DishaDump(state_name, month)
+        dump = DishaDump(state_name, month, level)
         if dump.export_exists() and not rebuild:
             logger.info("Skipping, export is already generated for state {}".format(state_name))
         else:
