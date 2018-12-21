@@ -5048,8 +5048,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @memoized
     def get_previous_version(self):
         return self.view('app_manager/applications',
-            startkey=[self.domain, self.get_id, {}],
-            endkey=[self.domain, self.get_id],
+            startkey=[self.domain, self.master_id, {}],
+            endkey=[self.domain, self.master_id],
             include_docs=True,
             limit=1,
             descending=True,
