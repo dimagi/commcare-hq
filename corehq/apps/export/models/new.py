@@ -515,7 +515,9 @@ class TableConfiguration(DocumentSchema):
                     row_data.extend(val)
                 else:
                     row_data.append(val)
-            rows.append(ExportRow(data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices()))
+            rows.append(ExportRow(
+                data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
+            ))
         return rows
 
     def get_column(self, item_path, item_doc_type, column_transform):
@@ -542,11 +544,17 @@ class TableConfiguration(DocumentSchema):
         return None, None
 
     @memoized
-    def get_hyperlink_column_indices(self):
-        return [
-            i for i, column in enumerate(self.selected_columns)
-            if column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]
-        ]
+    def get_hyperlink_column_indices(self, split_columns):
+        export_column_index = 0
+        hyperlink_column_indices = []
+        for selected_column in self.selected_columns:
+            if selected_column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]:
+                hyperlink_column_indices.append(export_column_index)
+            if isinstance(selected_column, SplitExportColumn) and split_columns:
+                export_column_index += len(selected_column.item.options)
+            else:
+                export_column_index += 1
+        return hyperlink_column_indices
 
     def _get_sub_documents(self, document, row_number, document_id=None):
         return self._get_sub_documents_helper(document_id, self.path,
