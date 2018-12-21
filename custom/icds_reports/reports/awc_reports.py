@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
@@ -1094,21 +1094,16 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
-    ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
+    this_month = date.today() - relativedelta(day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
-        month__gte=ten_months_ago,
-    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'pregnant', 'open_in_month').filter(
-        pregnant=1).exclude(open_in_month=False)
-    data = CcsRecordMonthlyView.objects.filter(
-        awc_id=awc_id,
-        month__gte=ten_months_ago,
-        case_id__in=[case['case_id'] for case in data],
+        month=this_month,
+        pregnant_all=1,
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
-        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
-        'num_rations_distributed', 'last_date_thr', 'month', 'closed'
-    )
+        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant_all',
+        'num_rations_distributed', 'last_date_thr', 'month', 'closed', 'open_in_month', 'pregnant'
+    ).exclude(open_in_month=False)
     data_count = data.count()
     config = {
         'data': [],
