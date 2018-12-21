@@ -13,6 +13,7 @@ from corehq.util.teeout import tee_output
 
 
 DEFAULT_WORKER_POOL_SIZE = 10
+DEFAULT_BOTOCORE_MAX_POOL_CONNECTIONS = 10
 USAGE = """Usage: ./manage.py run_blob_migration [options] <slug>
 
 Slugs:
@@ -82,6 +83,8 @@ class Command(BaseCommand):
             if num_workers != DEFAULT_WORKER_POOL_SIZE:
                 print("--num-workers={} ignored because this migration "
                       "does not use a worker pool".format(num_workers))
+        elif options["num_workers"] > DEFAULT_BOTOCORE_MAX_POOL_CONNECTIONS:
+            set_max_connections(options["num_workers"])
 
         if log_dir is None:
             summary_file = log_file = None
@@ -102,3 +105,19 @@ class Command(BaseCommand):
             except KeyboardInterrupt:
                 print("stopped by operator")
                 sys.exit(1)
+
+
+def set_max_connections(num_workers):
+    # see botocore.config.Config max_pool_connections
+    # https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
+    from django.conf import settings
+    from corehq.blobs import _db
+
+    def update_config(name):
+        config = getattr(settings, name)["config"]
+        config["max_pool_connections"] = num_workers
+
+    assert not _db, "get_blob_db() has been called"
+    for name in ["S3_BLOB_DB_SETTINGS", "OLD_S3_BLOB_DB_SETTINGS"]:
+        if getattr(settings, name, False):
+            update_config(name)
