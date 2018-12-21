@@ -126,18 +126,67 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
             update_multimedia_paths(app, paths)
 
             self.assertEquals(len(app.all_media()), len(paths))
-            self.assertEquals(app.modules[0].forms[0].icon_by_language('en'), 'jr://file/commcare/aff/pines.jpg')
-            self.assertEquals(app.modules[0].forms[0].icon_by_language('fra'), 'jr://file/commcare/aff/one_cell.jpg')
-            self.assertTrue('jr://file/commcare/nin/ghosts.jpg' in app.modules[1].forms[0].wrapped_xform().image_references)
-            self.assertTrue('jr://file/commcare/nin/sin.jpg' in app.modules[1].forms[0].wrapped_xform().image_references)
-            self.assertEquals(app.modules[1].case_list.icon_by_language('en'), 'jr://file/commcare/image/lemonade.jpg')
-            self.assertEquals(app.modules[1].case_list.icon_by_language('fra'), 'jr://file/commcare/image/lemonade.jpg')
-            self.assertEquals(app.modules[1].case_list_form.icon_by_language('en'), 'jr://file/commcare/image/trip.jpg')
-            self.assertEquals(app.modules[1].case_list_form.icon_by_language('fra'), 'jr://file/commcare/image/trip.jpg')
-            self.assertEquals(app.modules[0].icon_by_language('en'), 'jr://file/commcare/image/chime.jpg')
-            self.assertEquals(app.modules[0].audio_by_language('en'), 'jr://file/commcare/en/audio/dream.mp3')
-            self.assertEquals(app.modules[0].forms[0].audio_by_language('en'), 'jr://file/commcare/fra/audio/souled.mp3')
-            self.assertEquals(app.modules[0].forms[0].audio_by_language('fra'), 'jr://file/commcare/en/audio/laundry.mp3')
-            self.assertEquals(app.modules[0].forms[0].audio_by_language('en'), 'jr://file/commcare/fra/audio/souled.mp3')
-            self.assertEquals(app.modules[1].get_details()[0][1].lookup_image, 'jr://file/commcare/debut.jpg')
+
+            # Module and form menu media
+            self.assertEquals(
+                app.modules[0].forms[0].icon_by_language('en'),
+                'jr://file/commcare/aff/pines.jpg'
+            )
+            self.assertEquals(
+                app.modules[0].forms[0].icon_by_language('fra'),
+                'jr://file/commcare/aff/one_cell.jpg'
+            )
+            self.assertEquals(
+                app.modules[0].icon_by_language('en'),
+                'jr://file/commcare/image/chime.jpg'
+            )
+            self.assertEquals(
+                app.modules[0].audio_by_language('en'),
+                'jr://file/commcare/en/audio/dream.mp3'
+            )
+            self.assertEquals(
+                app.modules[0].forms[0].audio_by_language('en'),
+                'jr://file/commcare/fra/audio/souled.mp3'
+            )
+            self.assertEquals(
+                app.modules[0].forms[0].audio_by_language('fra'),
+                'jr://file/commcare/en/audio/laundry.mp3'
+            )
+            self.assertEquals(
+                app.modules[0].forms[0].audio_by_language('en'),
+                'jr://file/commcare/fra/audio/souled.mp3'
+            )
+
+            # Form media
+            form_images = app.modules[1].forms[0].wrapped_xform().image_references
+            self.assertTrue('jr://file/commcare/nin/ghosts.jpg' in form_images)
+            self.assertTrue('jr://file/commcare/nin/sin.jpg' in form_images)
+
+            # Case list lookup
+            self.assertEquals(
+                app.modules[1].get_details()[0][1].lookup_image,
+                'jr://file/commcare/debut.jpg'
+            )
+
+            # Case list icons
             self.assertEquals(app.modules[1].get_details()[0][1].columns[2].enum[0].value['en'], 'jr://file/commcare/image/le_monde.jpg')
+
+            # Case list menu item
+            self.assertEquals(
+                app.modules[1].case_list.icon_by_language('en'),
+                'jr://file/commcare/image/lemonade.jpg'
+            )
+            self.assertEquals(
+                app.modules[1].case_list.icon_by_language('fra'),
+                'jr://file/commcare/image/lemonade.jpg'
+            )
+
+            # Reg from cast list
+            self.assertEquals(
+                app.modules[1].case_list_form.icon_by_language('en'),
+                'jr://file/commcare/image/trip.jpg'
+            )
+            self.assertEquals(
+                app.modules[1].case_list_form.icon_by_language('fra'),
+                'jr://file/commcare/image/trip.jpg'
+            )
