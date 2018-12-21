@@ -1102,7 +1102,7 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
         'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant_all',
-        'num_rations_distributed', 'last_date_thr', 'month', 'closed', 'open_in_month'
+        'num_rations_distributed', 'last_date_thr', 'month', 'closed', 'open_in_month', 'pregnant'
     ).exclude(open_in_month=False)
     data_count = data.count()
     config = {
@@ -1120,7 +1120,7 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
             trimester=row_data['trimester'],
             anemic=get_anamic_status(row_data),
             num_anc_complete=row_data['num_anc_complete'],
-            beneficiary='Yes' if row_data['pregnant_all'] else 'No',
+            beneficiary='Yes' if row_data['pregnant'] else 'No',
             number_of_thrs_given=row_data['num_rations_distributed'],
             last_date_thr=row_data['last_date_thr'],
         )
