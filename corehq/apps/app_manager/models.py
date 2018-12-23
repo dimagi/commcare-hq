@@ -29,6 +29,7 @@ from lxml import etree
 from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
+from django.db import models
 from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -127,6 +128,8 @@ from corehq.apps.app_manager.util import (
     LatestAppInfo,
     update_report_module_ids,
     module_offers_search,
+    get_latest_enabled_build_for_profile,
+    get_enabled_build_profiles_for_version,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -6836,6 +6839,16 @@ class GlobalAppConfig(Document):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
+
+class LatestEnabledBuildProfiles(models.Model):
+    app_id = models.CharField(max_length=255)
+    build_profile_id = models.CharField(max_length=255)
+    version = models.IntegerField()
+    build_id = models.CharField(max_length=255)
+
+    def expire_cache(self, domain):
+        get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
+        get_enabled_build_profiles_for_version.clear(self.build_id, self.version)
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

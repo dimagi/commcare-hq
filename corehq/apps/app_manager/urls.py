@@ -28,7 +28,7 @@ from corehq.apps.app_manager.views import (
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
-    update_linked_whitelist, overwrite_module_case_list, app_settings
+    update_linked_whitelist, overwrite_module_case_list, app_settings, toggle_build_profile,
 )
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
 from corehq.apps.translations.views import (
@@ -184,6 +184,8 @@ urlpatterns = [
     url(r'^api/list_apps/$', list_apps, name='list_apps'),
     url(r'^api/download_ccz/$', direct_ccz, name='direct_ccz'),
     url(r'^download/(?P<app_id>[\w-]+)/$', download_index, name='download_index'),
+    url(r'^build_profile/(?P<build_id>[\w-]+)/toggle/(?P<build_profile_id>[\w-]+)$', toggle_build_profile,
+        name='toggle_build_profile'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),
