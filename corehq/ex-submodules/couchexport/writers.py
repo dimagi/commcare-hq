@@ -412,6 +412,8 @@ class Excel2007ExportWriter(ExportWriter):
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
         if isinstance(row, FormattedRow):
+            print(write_values)
+            print(row.hyperlink_column_indices)
             for hyperlink_column_index in row.hyperlink_column_indices:
                 cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
                 cells[hyperlink_column_index].style = 'Hyperlink'
