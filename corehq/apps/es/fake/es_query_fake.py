@@ -98,7 +98,7 @@ class ESQueryFake(object):
         else:
             hits = self.run().hits
 
-        return values_list(self.run().hits, *fields, **kwargs)
+        return values_list(hits, *fields, **kwargs)
 
     @check_deep_copy
     def search_string_query(self, search_string, default_fields=None):
