@@ -17,6 +17,7 @@ from custom.icds_reports.models.views import DishaIndicatorView
 from custom.icds_reports.models.helper import IcdsFile
 from memoized import memoized
 from celery.task import task
+from six.moves import range
 
 
 logger = logging.getLogger(__name__)
