@@ -169,7 +169,10 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
             )
 
             # Case list icons
-            self.assertEquals(app.modules[1].get_details()[0][1].columns[2].enum[0].value['en'], 'jr://file/commcare/image/le_monde.jpg')
+            self.assertEquals(
+                app.modules[1].get_details()[0][1].columns[2].enum[0].value['en'],
+                'jr://file/commcare/image/le_monde.jpg'
+            )
 
             # Case list menu item
             self.assertEquals(
