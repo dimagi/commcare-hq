@@ -291,11 +291,10 @@ def get_case_history(case):
     from corehq.apps.reports.display import xmlns_to_name
 
     changes = defaultdict(dict)
-    for form in FormAccessors(case.domain).get_forms(case.xform_ids, ordered=True):
+    for form in FormAccessors(case.domain).get_forms(case.xform_ids):
         case_blocks = extract_case_blocks(form)
         for block in case_blocks:
             if block.get('@case_id') == case.case_id:
-                form = form
                 property_changes = {
                     'Form ID': form.form_id,
                     'Form Name': xmlns_to_name(case.domain, form.xmlns, form.app_id),
