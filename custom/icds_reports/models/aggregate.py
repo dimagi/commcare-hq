@@ -146,6 +146,7 @@ class CcsRecordMonthly(models.Model):
     dob = models.DateField(blank=True, null=True)
     closed = models.SmallIntegerField(blank=True, null=True)
     date_death = models.DateField(blank=True, null=True)
+    person_case_id = models.TextField(blank=True, null=True)
 
     class Meta(object):
         managed = False

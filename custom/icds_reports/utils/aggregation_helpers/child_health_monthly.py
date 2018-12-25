@@ -347,4 +347,5 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return [
             'CREATE INDEX ON "{}" (case_id)'.format(self.tablename),
             'CREATE INDEX ON "{}" (awc_id)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (mother_case_id, dob)'.format(self.tablename),
         ]

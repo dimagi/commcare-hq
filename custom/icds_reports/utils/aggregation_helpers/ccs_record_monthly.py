@@ -155,7 +155,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('opened_on', 'case_list.opened_on'),
             ('dob', 'case_list.dob'),
             ('closed', 'case_list.closed'),
-            ('date_death', 'person.date_death')
+            ('date_death', 'person.date_death'),
+            ('person_case_id', 'ucr.person_case_id')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -195,4 +196,5 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def indexes(self):
         return [
             'CREATE INDEX ON "{}" (awc_id, case_id)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (person_case_id, add, case_id)'.format(self.tablename)
         ]

@@ -247,7 +247,7 @@ class ChildHealthMbtHelper(MBTHelper):
         LEFT JOIN "{person_cases_ucr}" mother on mother.doc_id=t.mother_case_id
           AND awc.state_id = mother.state_id
           AND lower(substring(mother.state_id, '.{{3}}$'::text)) = '{state_id_last_3}'
-        LEFT JOIN "{ccs_cases_monthly_ucr}" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob
+        LEFT JOIN "ccs_record_monthly_{month}" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob
         WHERE awc.state_id='{state_id}' AND t.month='{month}')
         TO STDOUT WITH CSV HEADER;
         """.format(
@@ -256,7 +256,7 @@ class ChildHealthMbtHelper(MBTHelper):
             state_id=self.state_id,
             month=self.month,
             person_cases_ucr=self.person_case_ucr_tablename,
-            ccs_cases_monthly_ucr=self.ccs_record_monthly_ucr_tablename,
+            ccs_record_monthly=self.ccs_record_monthly_ucr_tablename,
             state_id_last_3=self.state_id[-3:]
         )
 
