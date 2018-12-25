@@ -103,3 +103,9 @@ DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'softlayer' else 'icds-cas'
 
 THREE_MONTHS = 60 * 60 * 24 * 95
+
+VALID_LEVELS_FOR_DUMP = [
+    '1',  # state
+    '2',  # district
+    '3',  # block
+]

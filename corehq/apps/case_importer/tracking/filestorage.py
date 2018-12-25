@@ -28,12 +28,11 @@ class PersistentFileStore(object):
         :meta_model is a django model used to store meta info
             must contain columns identifier, filename, length
         """
-        self._db = get_blob_db()
         self._meta_model = meta_model
 
     def write_file(self, f, filename, domain):
         identifier = random_url_id(16)
-        meta = self._db.put(
+        meta = get_blob_db().put(
             f,
             domain=domain,
             parent_id=domain,
@@ -50,7 +49,7 @@ class PersistentFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         filename = self.get_filename(identifier)
         suffix = file_extention_from_filename(filename)
-        content = self._db.get(key=identifier).read()
+        content = get_blob_db().get(key=identifier).read()
         return make_temp_file(content, suffix)
 
     @memoized

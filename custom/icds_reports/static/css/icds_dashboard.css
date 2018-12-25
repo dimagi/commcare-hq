@@ -291,6 +291,11 @@ nvd3#sectorChart > div.title.h4 {
     padding: 20px 20px 80px;
 }
 
+.report-content-with-message {
+    color: #ffffff !important;
+    padding: 20px 20px 160px;
+}
+
 .ls-dashboard-report-content {
     color: #ffffff !important;
     padding: 20px;
@@ -849,5 +854,5 @@ hr {
     font-size: 13px;
     font-style: italic;
     text-align: center;
-    padding: 20px 50px 0;
+    padding: 20px 50px;
 }

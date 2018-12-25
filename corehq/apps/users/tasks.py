@@ -49,13 +49,13 @@ def bulk_upload_async(domain, user_specs, group_specs):
 @task(serializer='pickle', )
 def bulk_download_users_async(domain, download_id, user_filters):
     from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
-    DownloadBase.set_progress(bulk_download_users_async, 0, 100)
     errors = []
     try:
         dump_users_and_groups(
             domain,
             download_id,
-            user_filters
+            user_filters,
+            bulk_download_users_async,
         )
     except GroupNameError as e:
         group_urls = [
@@ -84,7 +84,6 @@ def bulk_download_users_async(domain, download_id, user_filters):
     except BulkFetchException:
         errors.append(_('Error exporting data. Please try again later.'))
 
-    DownloadBase.set_progress(bulk_download_users_async, 100, 100)
     return {
         'errors': errors
     }

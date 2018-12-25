@@ -132,7 +132,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
         with attachment_meta.open() as content:
-            self.assertEqual(form_xml, content.read())
+            self.assertEqual(form_xml, content.read().decode('utf-8'))
 
     def test_get_form_operations(self):
         form = create_form_for_test(DOMAIN)
@@ -433,8 +433,8 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         self.assertIn("image", form.attachments)
         self.assertEqual(form.get_attachment("image"), b"fake")
         self.assertXmlEqual(
-            form.get_attachment("form.xml"),
-            formxml.replace(b"toast", b"fruit"),
+            form.get_attachment("form.xml").decode('utf-8'),
+            formxml.replace("toast", "fruit"),
         )
 
     def test_update_responses_error(self):
@@ -487,7 +487,7 @@ class FormAccessorsTestsSQL(FormAccessorsTests):
         ).save(using=db)
         xform = acc.get_form(xform.form_id)
         self.assertLess(xform.get_attachments()[0].id, 0)
-        self.assertEqual(xform.get_xml(), formxml)
+        self.assertEqual(xform.get_xml().decode('utf-8'), formxml)
 
         updates = {'breakfast': 'fruit'}
         FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
@@ -495,8 +495,8 @@ class FormAccessorsTestsSQL(FormAccessorsTests):
         new_xml = new_form.get_xml()
         old_xml = acc.get_form(new_form.deprecated_form_id).get_xml()
         self.assertNotEqual(old_xml, new_xml)
-        self.assertNotIn("fruit", old_xml)
-        self.assertIn("fruit", new_xml)
+        self.assertNotIn("fruit", old_xml.decode('utf-8'))
+        self.assertIn("fruit", new_xml.decode('utf-8'))
 
 
 class DeleteAttachmentsFSDBTests(TestCase):

@@ -3,13 +3,14 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
     var _p = {};
     _p.profileUrl = 'profiles/';
 
-    var profileModel = function (profileLangs, name, id, practiceUser) {
+    var profileModel = function (profileLangs, name, id, practiceUser, latestEnabledVersions) {
         var self = {};
         self.id = id;
         self.langs = ko.observableArray(profileLangs);
         self.name = ko.observable(name);
         self.defaultLang = ko.observable(profileLangs[0]);
         self.practiceUser = ko.observable(practiceUser);
+        self.latestEnabledVersion = ko.observable(latestEnabledVersions[self.id]);
         return self;
     };
 
@@ -17,8 +18,9 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         _p.profileUrl = url;
     }
 
-    var profileManager = function (appProfiles, appLangs, enablePracticeUsers, practiceUsers) {
+    var profileManager = function (appProfiles, appLangs, enablePracticeUsers, practiceUsers, latestEnabledVersions) {
         var self = {};
+        self.latestEnabledVersions = latestEnabledVersions;
         self.app_profiles = ko.observableArray([]);
         self.app_langs = appLangs;
         self.enable_practice_users = enablePracticeUsers;
@@ -58,7 +60,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
             'placeholder': gettext(practiceUsers.length > 0 ? 'Select a user' : 'No practice mode mobile workers available'),
         };
         self.addProfile = function (langs, name, id, practiceUser) {
-            var profile = profileModel(langs, name, id, practiceUser);
+            var profile = profileModel(langs, name, id, practiceUser, self.latestEnabledVersions);
             profile.name.subscribe(changeSaveButton);
             profile.langs.subscribe(changeSaveButton);
             profile.defaultLang.subscribe(changeSaveButton);

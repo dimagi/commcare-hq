@@ -163,8 +163,7 @@ def awcs_reported_medicine_kit_help_text():
 
 def lady_supervisor_number_of_awcs_visited_help_text():
     return _(
-        'Number of AWCs visited/Number of AWCs launched: Out of the total number of Aanganwadi centres launched '
-        'in the sector, the number of unique Aanganwadi Centres visited by LS in the current month'
+        'Number of AWCs visited: Number of AWC visit forms submitted by LS in current month'
     )
 
 

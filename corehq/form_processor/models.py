@@ -84,6 +84,7 @@ class Attachment(IsImageMixin):
     name = attr.ib()
     raw_content = attr.ib(repr=False)
     content_type = attr.ib()
+    properties = attr.ib(default=None)
 
     def __attrs_post_init__(self):
         """This is necessary for case attachments
@@ -94,13 +95,14 @@ class Attachment(IsImageMixin):
         `write()` when case attachments are removed.
         """
         self.key = uuid.uuid4().hex
-        self.properties = {}
-        if self.is_image:
-            try:
-                img_size = Image.open(self.open()).size
-                self.properties.update(width=img_size[0], height=img_size[1])
-            except IOError:
-                self.content_type = 'application/octet-stream'
+        if self.properties is None:
+            self.properties = {}
+            if self.is_image:
+                try:
+                    img_size = Image.open(self.open()).size
+                    self.properties.update(width=img_size[0], height=img_size[1])
+                except IOError:
+                    self.content_type = 'application/octet-stream'
 
     @property
     @memoized
@@ -228,7 +230,7 @@ class AttachmentMixin(SaveStateMixin):
         """Copy attachments from the given xform"""
         existing_names = {a.name for a in self.attachments_list}
         self.attachments_list.extend(
-            Attachment(meta.name, meta, meta.content_type)
+            Attachment(meta.name, meta, meta.content_type, meta.properties)
             for meta in six.itervalues(xform.attachments)
             if meta.name not in existing_names
         )
