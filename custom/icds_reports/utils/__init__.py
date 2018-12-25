@@ -892,7 +892,8 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     for column_index in range(len(columns)):
         widths[columns[column_index]] = max(
             widths[columns[column_index]],
-            max(len(six.text_type(row[column_index])) for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+            max(len(six.text_type(row[column_index]))
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
         )
 
     for column, width in widths.items():
