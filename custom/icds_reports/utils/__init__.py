@@ -6,7 +6,7 @@ import time
 import zipfile
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import wraps
 
 import operator
@@ -435,9 +435,11 @@ def get_counseling(value):
 
 def get_tt_dates(value):
     tt_dates = []
-    if value['tt_1']:
+    # ignore 1970-01-01 as that is default date for ledger dates
+    default = date(1970, 1, 1)
+    if value['tt_1'] != default:
         tt_dates.append(str(value['tt_1']))
-    if value['tt_2']:
+    if value['tt_2'] != default:
         tt_dates.append(str(value['tt_2']))
     if tt_dates:
         return '; '.join(tt_dates)
