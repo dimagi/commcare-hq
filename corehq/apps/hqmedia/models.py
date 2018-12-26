@@ -612,6 +612,23 @@ class FormMediaMixin(MediaMixin):
         media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
                       for audio in self.all_audio_paths() if audio])
 
+        # Form questions
+        parsed = self.wrapped_xform()
+        if parsed.exists():
+            self.validate_form()
+            for image in parsed.image_references:
+                if image:
+                    media.append(ApplicationMediaReference(image, media_class=CommCareImage, **kwargs))
+            for audio in parsed.audio_references:
+                if audio:
+                    media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **kwargs))
+            for video in parsed.video_references:
+                if video:
+                    media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **kwargs))
+            for text in parsed.text_references:
+                if text:
+                    media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **kwargs))
+
         return media
 
 
@@ -682,28 +699,9 @@ class MediaControllerMixin(Document, MediaMixin):
             if hasattr(module, 'case_list') and module.case_list.show:
                 _add_menu_media(module.case_list, **media_kwargs)
 
-            for f_order, f in enumerate(module.get_forms()):
-                media_kwargs['form_name'] = f.name
-                media_kwargs['form_id'] = f.unique_id
-                media_kwargs['form_order'] = f_order
-                media.extend(f.all_media())
+            for form in module.get_forms():
                 try:
-                    parsed = f.wrapped_xform()
-                    if not parsed.exists():
-                        continue
-                    f.validate_form()
-                    for image in parsed.image_references:
-                        if image:
-                            media.append(ApplicationMediaReference(image, media_class=CommCareImage, **media_kwargs))
-                    for audio in parsed.audio_references:
-                        if audio:
-                            media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **media_kwargs))
-                    for video in parsed.video_references:
-                        if video:
-                            media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
-                    for text in parsed.text_references:
-                        if text:
-                            media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **media_kwargs))
+                    media.extend(form.all_media())
                 except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media
