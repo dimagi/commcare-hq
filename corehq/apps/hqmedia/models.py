@@ -13,7 +13,19 @@ from django.template.defaultfilters import filesizeformat
 
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.soft_assert import soft_assert
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SafeSaveDocument,
+    SchemaDictProperty,
+    SchemaListProperty,
+    StringListProperty,
+    StringProperty,
+)
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
@@ -241,7 +253,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     def get_base_mime_type(cls, data, filename=None):
         mime_type = cls.get_mime_type(data, filename=filename)
         return mime_type.split('/')[0] if mime_type else None
-        
+
     @classmethod
     def generate_hash(cls, data):
         return hashlib.md5(data).hexdigest()
@@ -622,7 +634,7 @@ class ModuleMediaMixin(MediaMixin):
         if hasattr(self, 'case_list') and self.case_list.show:
             media.extend(self.menu_media(self.case_list))
 
-        for _, details, display in self.get_details():
+        for name, details, display in self.get_details():
             # Case list lookup
             if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
                 media.append(ApplicationMediaReference(details.lookup_image, media_class=CommCareImage,
@@ -655,7 +667,7 @@ class ModuleMediaMixin(MediaMixin):
         if hasattr(self, 'case_list') and self.case_list.show:
             count += self.rename_menu_media(self.case_list, old_path, new_path)
 
-        for _, details, display in self.get_details():
+        for name, details, display in self.get_details():
             # Case list lookup
             if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
                 if details.lookup_image == old_path:
@@ -678,6 +690,7 @@ class ModuleMediaMixin(MediaMixin):
 
         return count
 
+
 class FormMediaMixin(MediaMixin):
     def get_media_ref_kwargs(self):
         module = self.get_module()
@@ -689,7 +702,6 @@ class FormMediaMixin(MediaMixin):
             'form_id': self.unique_id,
             'form_order': self.id,
         }
-
 
     @memoized
     def memoized_xform(self):
