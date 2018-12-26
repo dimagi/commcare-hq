@@ -2543,7 +2543,7 @@ class TestAWCReport(TestCase):
                 [
                     {
                         'age': 23,
-                        'anc_abnormalities': None,
+                        'anc_abnormalities': 'None',
                         'anc_hemoglobin': '--',
                         'anc_weight': '--',
                         'anemic': 'Data Not Entered',

@@ -437,9 +437,9 @@ def get_tt_dates(value):
     tt_dates = []
     # ignore 1970-01-01 as that is default date for ledger dates
     default = date(1970, 1, 1)
-    if value['tt_1'] != default:
+    if value['tt_1'] and value['tt_1'] != default:
         tt_dates.append(str(value['tt_1']))
-    if value['tt_2'] != default:
+    if value['tt_2'] and value['tt_2'] != default:
         tt_dates.append(str(value['tt_2']))
     if tt_dates:
         return '; '.join(tt_dates)

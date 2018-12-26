@@ -145,6 +145,7 @@ class CcsRecordMonthly(models.Model):
     valid_visits = models.SmallIntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
     closed = models.SmallIntegerField(blank=True, null=True)
+    anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False

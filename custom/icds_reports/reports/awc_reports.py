@@ -1160,7 +1160,7 @@ def get_pregnant_details(case_id, awc_id):
         'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
         'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
         'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
-        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month'
+        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month', 'anc_abnormalities'
     )
 
     config = {
@@ -1172,6 +1172,8 @@ def get_pregnant_details(case_id, awc_id):
     }
     current_trimester = 1
     current_record = 0
+    import ipdb; ipdb.set_trace()
+
     for row_data in data:
         if row_data['trimester'] >= current_trimester:
             config['data'][row_data['trimester'] - 1].append(dict(
@@ -1190,7 +1192,7 @@ def get_pregnant_details(case_id, awc_id):
                 ),
                 anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else '--',
                 anc_hemoglobin=row_data['anc_hemoglobin'] if row_data['anc_hemoglobin'] else '--',
-                anc_abnormalities=None,  # todo change to num_anc_complete when available in Model
+                anc_abnormalities='Yes' if row_data['anc_abnormalities'] else 'None',
                 anemic=get_anemic_status(row_data),
                 symptoms=get_symptoms(row_data),
                 counseling=get_counseling(row_data),
