@@ -375,13 +375,23 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
     return status if not exportable else status['value']
 
 
-def get_anamic_status(value):
+def is_anemic(value):
     if value['anemic_severe']:
         return 'Y'
     elif value['anemic_moderate']:
         return 'Y'
     elif value['anemic_normal']:
         return 'N'
+    else:
+        return DATA_NOT_ENTERED
+
+def get_anemic_status(value):
+    if value['anemic_severe']:
+        return 'Severe'
+    elif value['anemic_moderate']:
+        return 'Moderate'
+    elif value['anemic_normal']:
+        return 'Normal'
     else:
         return DATA_NOT_ENTERED
 
