@@ -540,12 +540,48 @@ def _log_media_deletion(app, deleted_media):
     )
 
 
-class MediaMixin(Document):
+class MediaMixin(object):
     """
         An object that has multimedia associated with it.
         Used by apps, modules, forms.
     """
-    pass
+    def get_media_ref_kwargs():
+        raise NotImplementedError
+
+    def all_media(self):
+        """
+            Finds all the multimedia IMAGES and AUDIO referenced in this object
+            Returns list of ApplicationMediaReference
+        """
+        raise NotImplementedError
+
+
+class ModuleMediaMixin(MediaMixin):
+    def get_media_ref_kwargs(self):
+        return {
+            'app_lang': self.get_app().default_language,
+            'module_name': self.name,
+            'module_id': self.id,
+            'form_name': None,
+            'form_id': None,
+            'form_order': None,
+        }
+
+    def all_media(self):
+        kwargs = self.get_media_ref_kwargs()
+        media = []
+
+        for _, details, _ in self.get_details():
+            # Icons in case details
+            for column in details.get_columns():
+                if column.format == 'enum-image':
+                    for map_item in column.enum:
+                        icons = list(map_item.value.values())
+                        media.extend([ApplicationMediaReference(icon, media_class=CommCareImage,
+                                                                is_menu_media=True, **kwargs)
+                                      for icon in icons if icon])
+
+        return media
 
 
 class MediaControllerMixin(Document, MediaMixin):
@@ -592,6 +628,8 @@ class MediaControllerMixin(Document, MediaMixin):
             }
             _add_menu_media(module, **media_kwargs)
 
+            media.extend(module.all_media())
+
             for name, details, display in module.get_details():
                 if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
                     media.append(ApplicationMediaReference(
@@ -600,20 +638,6 @@ class MediaControllerMixin(Document, MediaMixin):
                         is_menu_media=True,
                         **media_kwargs)
                     )
-                # Icons in case-details
-                for column in details.get_columns():
-                    if column.format == 'enum-image':
-                        for map_item in column.enum:
-                            # iterate over icons of each lang
-                            icons = list(map_item.value.values())
-                            media.extend([ApplicationMediaReference(
-                                icon,
-                                media_class=CommCareImage,
-                                is_menu_media=True,
-                                **media_kwargs)
-                                for icon in icons
-                                if icon]
-                            )
                 # Print template
                 if display and details.display == 'long' and details.print_template:
                     media.append(ApplicationMediaReference(

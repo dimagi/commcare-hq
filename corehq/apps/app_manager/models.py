@@ -99,7 +99,7 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import MediaControllerMixin, CommCareMultimedia
+from corehq.apps.hqmedia.models import MediaControllerMixin, MediaMixin, ModuleMediaMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -2490,7 +2490,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
-class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
+class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(six.text_type)
     unique_id = StringProperty()
     case_type = StringProperty()
