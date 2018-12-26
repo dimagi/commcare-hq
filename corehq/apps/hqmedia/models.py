@@ -577,8 +577,18 @@ class ModuleMediaMixin(MediaMixin):
         media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
                       for audio in self.all_audio_paths() if audio])
 
-        for _, details, _ in self.get_details():
-            # Icons in case details
+        for _, details, display in self.get_details():
+            # Case list lookup
+            if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                media.append(ApplicationMediaReference(details.lookup_image, media_class=CommCareImage,
+                                                       is_menu_media=True, **kwargs))
+
+            # Print template
+            if display and details.display == 'long' and details.print_template:
+                media.append(ApplicationMediaReference(details.print_template['path'],
+                                                       media_class=CommCareMultimedia, **kwargs))
+
+            # Icon-formatted columns
             for column in details.get_columns():
                 if column.format == 'enum-image':
                     for map_item in column.enum:
@@ -676,22 +686,6 @@ class MediaControllerMixin(Document, MediaMixin):
             }
 
             media.extend(module.all_media())
-
-            for name, details, display in module.get_details():
-                if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
-                    media.append(ApplicationMediaReference(
-                        details.lookup_image,
-                        media_class=CommCareImage,
-                        is_menu_media=True,
-                        **media_kwargs)
-                    )
-                # Print template
-                if display and details.display == 'long' and details.print_template:
-                    media.append(ApplicationMediaReference(
-                        details.print_template['path'],
-                        media_class=CommCareMultimedia,
-                        **media_kwargs)
-                    )
 
             if module.case_list_form.form_id:
                 _add_menu_media(module.case_list_form, **media_kwargs)
