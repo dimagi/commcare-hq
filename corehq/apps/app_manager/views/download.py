@@ -12,12 +12,16 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
 from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import add_odk_profile_after_build
+from corehq.apps.app_manager.util import (
+    add_odk_profile_after_build,
+    get_enabled_build_profiles_for_version,
+)
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
@@ -409,16 +413,21 @@ def download_index(request, domain, app_id):
             extra_tags='html'
         )
     built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
+    enabled_build_profiles = []
+    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+        enabled_build_profiles = get_enabled_build_profiles_for_version(request.app.get_id, request.app.version)
+
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
         'files': OrderedDict(sorted(six.iteritems(files), key=lambda x: x[0])),
         'supports_j2me': request.app.build_spec.supports_j2me(),
         'built_versions': [{
-            'app_id': app_id,
+            'app_id': _app_id,
             'build_id': build_id,
             'version': version,
             'comment': comment,
-        } for app_id, build_id, version, comment in built_versions]
+        } for _app_id, build_id, version, comment in built_versions],
+        'enabled_build_profiles': enabled_build_profiles
     })
 
 
@@ -475,6 +484,10 @@ def download_index_files(app, build_profile_id=None):
                  for path in app.blobs if needed_for_CCZ(path)]
     else:
         files = list(app.create_all_files().items())
+    files = [
+        (name, build_file if isinstance(build_file, six.text_type) else build_file.decode('utf-8'))
+        for (name, build_file) in files
+    ]
     return sorted(files)
 
 
@@ -487,9 +500,12 @@ def source_files(app):
     if not app.copy_of:
         app.set_media_versions(None)
     files = download_index_files(app)
+    app_json = json.dumps(
+        app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+    )
+    if six.PY2:
+        app_json = app_json.decode('utf-8')
     files.append(
-        ("app.json", json.dumps(
-            app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-        ))
+        ("app.json", app_json)
     )
     return sorted(files)

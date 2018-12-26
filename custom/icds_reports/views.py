@@ -39,9 +39,12 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
-from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
-    PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
+from custom.icds_reports.const import (
+    LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT,
+    PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE,
+    VALID_LEVELS_FOR_DUMP,
+)
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AwcLocationMonths
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
@@ -319,6 +322,7 @@ class LadySupervisorView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+        config['aggregation_level'] = 4
 
         data = get_lady_supervisor_data(
             domain, config, include_test
@@ -1685,6 +1689,8 @@ class DishaAPIView(View):
             "missing_date": "Please specify valid month and year",
             "invalid_month": "Please specify a month that's older than a month and 5 days",
             "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "invalid_level": "Please specify level 1 for state, 2 for district and 3 for block",
+            "rebuild_request_initiated": "Rebuild request initiated"
         }
         return {"message": error_messages[message_name]}
 
@@ -1695,6 +1701,9 @@ class DishaAPIView(View):
             year = int(request.GET.get('year'))
         except (ValueError, TypeError):
             return JsonResponse(self.message('missing_date'), status=400)
+        till_level = request.GET.get('level')
+        if till_level and till_level not in VALID_LEVELS_FOR_DUMP:
+            return JsonResponse(self.message('invalid_level'), status=400)
 
         # Can return only one month old data if today is after 5th, otherwise
         #   can return two month's old data
@@ -1708,7 +1717,10 @@ class DishaAPIView(View):
         if state_name not in self.valid_state_names:
             return JsonResponse(self.message('invalid_state'), status=400)
 
-        dump = DishaDump(state_name, query_month)
+        dump = DishaDump(state_name, query_month, till_level)
+        if request.user.is_superuser and request.GET.get('rebuild', '') == 'true':
+            dump.initiate_rebuild()
+            return JsonResponse(self.message('rebuild_request_initiated'), status=200)
         return dump.get_export_as_http_response(request)
 
     @property

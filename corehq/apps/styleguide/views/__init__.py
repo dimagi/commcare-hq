@@ -70,6 +70,19 @@ class BaseStyleGuideArticleView(TemplateView):
             context, **response_kwargs)
 
 
+class AccessibilityStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_accessibility'
+    navigation_name = 'accessibility'
+
+    @property
+    def sections(self):
+        return [
+            'accessibility/intro',
+            'accessibility/background',
+            'accessibility/design',
+        ]
+
+
 class ClassBasedViewStyleGuideView(BaseStyleGuideArticleView):
     urlname = 'styleguide_views'
     navigation_name = 'cb_views'
@@ -145,7 +158,7 @@ class ColorsStyleGuide(BaseStyleGuideArticleView):
 
     @property
     def palette(self):
-        text_color = PaletteColor('181715',)
+        text_color = PaletteColor('1c2126',)
         bg_color = PaletteColor('f2f2f1',)
 
         neutrals = PaletteColorGroup(
@@ -183,25 +196,25 @@ class ColorsStyleGuide(BaseStyleGuideArticleView):
         light_warm_accent = PaletteColorGroup(
             "Light Warm Accent",
             'light-warm-accent',
-            PaletteColor('f9c700',),
-            PaletteColor('f8ecbd', name="Light"),
-            PaletteColor('685300', name="Dark"),
+            PaletteColor('eec200',),
+            PaletteColor('ffea8a', name="Light"),
+            PaletteColor('9c6f19', name="Dark"),
         )
 
         attention_positive = PaletteColorGroup(
             "Attention Positive",
             'att-pos',
-            PaletteColor('47b700',),
-            PaletteColor('d5eaca', name="Light"),
-            PaletteColor('216f00', name="Dark"),
+            PaletteColor('4aba32',),
+            PaletteColor('bbe5b3', name="Light"),
+            PaletteColor('118043', name="Dark"),
         )
 
         attention_negative = PaletteColorGroup(
             "Attention Negative",
             'att-neg',
-            PaletteColor('e53e30',),
-            PaletteColor('efcfcb', name="Light"),
-            PaletteColor('812627', name="Dark"),
+            PaletteColor('e73c27',),
+            PaletteColor('fead9a', name="Light"),
+            PaletteColor('bf0712', name="Dark"),
         )
 
         dark_cool_accent = PaletteColorGroup(

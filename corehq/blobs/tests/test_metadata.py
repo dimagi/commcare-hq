@@ -112,10 +112,23 @@ class TestMetaDB(TestCase):
         )
         self.assertEqual(copy.key, meta.key)
 
+    def test_get_by_key(self):
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta())
+        copy = self.db.metadb.get(
+            parent_id=meta.parent_id,
+            key=meta.key
+        )
+        self.assertEqual(copy.key, meta.key)
+
     def test_get_missing_blobmeta(self):
         xid = uuid4().hex
         with self.assertRaises(BlobMeta.DoesNotExist):
             self.db.metadb.get(parent_id=xid, type_code=CODES.form_xml, name=xid)
+
+    def test_get_missing_blobmeta_by_key(self):
+        xid = uuid4().hex
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            self.db.metadb.get(parent_id=xid, key=xid)
 
     def create_blobs(self):
         def put(parent_id, code):

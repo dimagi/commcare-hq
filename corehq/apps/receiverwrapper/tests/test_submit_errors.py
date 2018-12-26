@@ -137,7 +137,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)
-        self.assertEqual("this isn't even close to xml", log.get_xml())
+        self.assertEqual("this isn't even close to xml", log.get_xml().decode('utf-8'))
         self.assertEqual(log.form_data, {})
 
     def test_missing_xmlns(self):

@@ -37,7 +37,7 @@ def get_lady_supervisor_data(domain, config, show_test=False):
         'records': [
             [
                 {
-                    'label': _('Number of AWCs visited/ Number of AWCs launched'),
+                    'label': _('Number of AWCs visited'),
                     'help_text': lady_supervisor_number_of_awcs_visited_help_text(),
                     'percent': None,
                     'value': get_value(data, 'awc_visits'),

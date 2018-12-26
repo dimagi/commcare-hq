@@ -82,7 +82,7 @@ hqDefine('hqwebapp/js/hq-bug-report', [
 
         function hqwebappBugReportSucccess() {
             isBugReportSubmitting = false;
-            $hqwebappBugReportForm.find("button[type='submit']").button('success').removeClass('btn-primary btn-danger').addClass('btn-success');
+            $hqwebappBugReportForm.find("button[type='submit']").button('success').removeClass('btn-danger').addClass('btn-primary');
             $hqwebappBugReportModal.one('hidden.bs.modal', function () {
                 resetForm();
             });
@@ -90,7 +90,7 @@ hqDefine('hqwebapp/js/hq-bug-report', [
 
         function hqwebappBugReportError() {
             isBugReportSubmitting = false;
-            $hqwebappBugReportForm.find("button[type='submit']").button('error').removeClass('btn-primary btn-success').addClass('btn-danger');
+            $hqwebappBugReportForm.find("button[type='submit']").button('error').removeClass('btn-primary').addClass('btn-danger');
             $hqwebappBugReportCancel.enableButton();
         }
 

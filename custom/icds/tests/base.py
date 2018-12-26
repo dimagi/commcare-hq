@@ -50,7 +50,7 @@ class BaseICDSTest(TestCase):
             update=update,
             **kwargs
         )
-        case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()), cls.domain)[1][0]
+        case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()).decode('utf-8'), cls.domain)[1][0]
         cls.created_case_ids.append(case.case_id)
         return case
 

@@ -605,6 +605,7 @@ class CcsRecordMonthlyView(models.Model):
     person_name = models.TextField(blank=True, null=True)
     preg_order = models.SmallIntegerField(blank=True, null=True)
     pregnant = models.IntegerField(blank=True, null=True)
+    pregnant_all = models.IntegerField(blank=True, null=True)
     rupture = models.SmallIntegerField(blank=True, null=True)
     swelling = models.SmallIntegerField(blank=True, null=True)
     trimester = models.IntegerField(blank=True, null=True)
