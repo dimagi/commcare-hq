@@ -47,12 +47,12 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                             self.successMessage(gettext("File validated with no errors or warnings."));
                         }
                     } else {
-                        self.serverError(data.error || self.genericError);
+                        self.serverError(data.error || self.genericErrorMessage);
                     }
                 },
                 error: function () {
                     self.isValidating(false);
-                    self.serverError(self.genericError);
+                    self.serverError(self.genericErrorMessage);
                 },
             });
 
@@ -82,12 +82,12 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                             self.successMessage(gettext("No items were found to update."));
                         }
                     } else {
-                        self.serverError(data.error || self.genericError);
+                        self.serverError(data.error || self.genericErrorMessage);
                     }
                 },
                 error: function () {
                     self.isUpdating(false);
-                    self.serverError(self.genericError);
+                    self.serverError(self.genericErrorMessage);
                 },
             });
         };
