@@ -100,6 +100,7 @@ from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import (
+    ApplicationMediaMixin,
     CommCareMultimedia,
     FormMediaMixin,
     MediaControllerMixin,
@@ -5629,7 +5630,7 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, MediaControllerMixin):
+class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin, MediaControllerMixin):
     """
     An Application that can be created entirely through the online interface
 

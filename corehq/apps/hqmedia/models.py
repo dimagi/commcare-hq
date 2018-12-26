@@ -569,6 +569,22 @@ class MediaMixin(object):
         return media
 
 
+class ApplicationMediaMixin(MediaMixin):
+    @memoized
+    def all_media(self):
+        media = []
+        self.media_form_errors = False
+
+        for module in [m for m in self.get_modules() if m.uses_media()]:
+            media.extend(module.all_media())
+            for form in module.get_forms():
+                try:
+                    media.extend(form.all_media())
+                except (XFormValidationError, XFormException):
+                    self.media_form_errors = True
+        return media
+
+
 class ModuleMediaMixin(MediaMixin):
     def get_media_ref_kwargs(self):
         return {
@@ -666,44 +682,6 @@ class MediaControllerMixin(Document, MediaMixin):
     logo_refs = DictProperty()
 
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
-
-    @memoized
-    def all_media(self):
-        """
-            Get all the paths of multimedia IMAGES and AUDIO referenced in this application.
-            (Video and anything else is currently not supported...)
-        """
-        media = []
-        self.media_form_errors = False
-
-        def _add_menu_media(item, **kwargs):
-            media.extend([ApplicationMediaReference(image,
-                                                    media_class=CommCareImage,
-                                                    is_menu_media=True, **kwargs)
-                          for image in item.all_image_paths()
-                          if image])
-
-            media.extend([ApplicationMediaReference(audio,
-                                                    media_class=CommCareAudio,
-                                                    is_menu_media=True, **kwargs)
-                          for audio in item.all_audio_paths()
-                          if audio])
-
-        for m, module in enumerate([m for m in self.get_modules() if m.uses_media()]):
-            media_kwargs = {
-                'module_name': module.name,
-                'module_id': m,
-                'app_lang': self.default_language,
-            }
-
-            media.extend(module.all_media())
-
-            for form in module.get_forms():
-                try:
-                    media.extend(form.all_media())
-                except (XFormValidationError, XFormException):
-                    self.media_form_errors = True
-        return media
 
     def get_menu_media(self, module, module_index, form=None, form_index=None, to_language=None):
         if not module:
