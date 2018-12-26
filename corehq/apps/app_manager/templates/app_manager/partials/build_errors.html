@@ -264,6 +264,10 @@
                         {% case "missing parent tag" %}
                             A subcase is referencing a parent case tag that does not exist: "{{ error.case_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% case "missing relationship question" %}
+                            A subcase's index relationship with parent case tag "{{ error.case_tag }}" is determined by a question,
+                            but no question is specified.
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% case "subcase repeat context" %}
                             The subcase "{{ error.case_tag }}" is in a different repeat context to its parent "{{ error.parent_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}

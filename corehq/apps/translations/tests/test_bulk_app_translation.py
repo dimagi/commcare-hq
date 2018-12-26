@@ -61,6 +61,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
+            f.seek(0)
             workbook, messages = read_uploaded_app_translation_file(f)
             assert workbook, messages
             messages = process_bulk_app_translation_upload(self.app, workbook)
@@ -572,6 +573,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
+            f.seek(0)
             wb_reader = WorkbookJSONReader(f)
             cls.expected_workbook = [{'name': ws.title, 'rows': list(ws)}
                                      for ws in wb_reader.worksheets]

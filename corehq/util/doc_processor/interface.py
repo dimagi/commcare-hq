@@ -4,24 +4,15 @@ from __future__ import division
 from __future__ import unicode_literals
 import weakref
 from abc import ABCMeta, abstractmethod
-from datetime import datetime, timedelta
 
 import six
 
-from corehq.util.pagination import PaginationEventHandler, TooManyRetries
+from .progress import ProgressManager, ProcessorProgressLogger
+from ..pagination import PaginationEventHandler, TooManyRetries
 
 
 class BulkProcessingFailed(Exception):
     pass
-
-
-DOCS_SKIPPED_WARNING = """
-        WARNING {} documents were not processed due to concurrent modification
-        during migration. Run the migration again until you do not see this
-        message.
-        """
-
-MIN_PROGRESS_INTERVAL = timedelta(minutes=5)
 
 
 class BaseDocProcessor(six.with_metaclass(ABCMeta)):
@@ -72,30 +63,6 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
         return True
 
 
-class ProcessorProgressLogger(object):
-    def progress_starting(self, total, previously_visited):
-        print("Processing {} documents{}: ...".format(
-            total,
-            " (~{} already processed)".format(previously_visited) if previously_visited else ""
-        ))
-
-    def document_skipped(self, doc_dict):
-        print("Skip: {doc_type} {_id}".format(**doc_dict))
-
-    def progress(self, processed, visited, total, time_elapsed, time_remaining):
-        print("Processed {}/{} of {} documents in {} ({} remaining)"
-              .format(processed, visited, total, time_elapsed, time_remaining))
-
-    def progress_complete(self, processed, visited, total, previously_visited, filtered):
-        print("Processed {}/{} of {} documents ({} previously processed, {} filtered out).".format(
-            processed,
-            visited,
-            total,
-            previously_visited,
-            filtered
-        ))
-
-
 class DocumentProvider(six.with_metaclass(ABCMeta)):
     @abstractmethod
     def get_document_iterator(self, chunk_size, event_handler=None):
@@ -135,77 +102,32 @@ class DocumentProcessorController(object):
         self.reset = reset
         self.max_retry = max_retry
         self.chunk_size = chunk_size
-        self.progress_logger = progress_logger or ProcessorProgressLogger()
-
         self.document_provider = document_provider
 
         self.document_iterator = self.document_provider.get_document_iterator(chunk_size, event_handler)
-
-        self.visited = 0
-        self.previously_visited = 0
-        self.total = 0
-
-        self.processed = 0
-        self.skipped = 0
-
-        self.start = None
+        self.progress = ProgressManager(
+            self.document_iterator,
+            reset=reset,
+            chunk_size=chunk_size,
+            logger=progress_logger or ProcessorProgressLogger(),
+        )
 
     def has_started(self):
         return bool(self.document_iterator.get_iterator_detail('progress'))
-
-    @property
-    def session_visited(self):
-        return self.visited - self.previously_visited
-
-    @property
-    def session_total(self):
-        return self.total - self.previously_visited
-
-    @property
-    def attempted(self):
-        return self.processed + self.skipped
-
-    @property
-    def timing(self):
-        """Returns a tuple of (elapsed, remaining)"""
-        elapsed = datetime.now() - self.start
-        if self.session_visited > self.session_total:
-            remaining = "?"
-        else:
-            session_remaining = self.session_total - self.session_visited
-            remaining = elapsed // self.session_visited * session_remaining
-        return elapsed, remaining
-
-    def _setup(self):
-        self.total = self.document_provider.get_total_document_count()
-
-        if self.reset:
-            self.document_iterator.discard_state()
-        elif self.document_iterator.get_iterator_detail('progress'):
-            info = self.document_iterator.get_iterator_detail('progress')
-            old_total = info["total"]
-            # Estimate already visited based on difference of old/new
-            # totals. The theory is that new or deleted records will be
-            # evenly distributed across the entire set.
-            self.visited = int(round(float(self.total) / old_total * info["visited"]))
-            self.previously_visited = self.visited
-        self.progress_logger.progress_starting(self.total, self.previously_visited)
-
-        self.start = datetime.now()
 
     def run(self):
         """
         :returns: A tuple `(<num processed>, <num skipped>)`
         """
-        self._setup()
-        with self.doc_processor:
+        self.progress.total = self.document_provider.get_total_document_count()
+
+        with self.doc_processor, self.progress:
             for doc in self.document_iterator:
                 self._process_doc(doc)
-                self._update_progress()
 
-        self._processing_complete()
+        self.doc_processor.processing_complete(self.progress.skipped)
 
-        return self.processed, self.skipped
+        return self.progress.processed, self.progress.skipped
 
     def _process_doc(self, doc):
         if not self.doc_processor.should_process(doc):
@@ -213,7 +135,7 @@ class DocumentProcessorController(object):
 
         ok = self.doc_processor.process_doc(doc)
         if ok:
-            self.processed += 1
+            self.progress.add()
         else:
             try:
                 self.document_iterator.retry(doc['_id'], self.max_retry)
@@ -221,43 +143,7 @@ class DocumentProcessorController(object):
                 if not self.doc_processor.handle_skip(doc):
                     raise
                 else:
-                    self.progress_logger.document_skipped(doc)
-                    self.skipped += 1
-
-    def _update_progress(self):
-        self.visited += 1
-        if self.visited > self.total:
-            self.total = self.visited
-        if self.visited % self.chunk_size == 0:
-            self.document_iterator.set_iterator_detail('progress',
-                {"visited": self.visited, "total": self.total})
-
-        now = datetime.now()
-        attempted = self.attempted
-        last_attempted = getattr(self, "_last_attempted", None)
-        if ((attempted % self.chunk_size == 0 and attempted != last_attempted)
-                or now >= getattr(self, "_next_progress_update", now)):
-            elapsed, remaining = self.timing
-            self.progress_logger.progress(
-                self.processed, self.visited, self.total, elapsed, remaining
-            )
-            self._last_attempted = attempted
-            self._next_progress_update = now + MIN_PROGRESS_INTERVAL
-
-    def _processing_complete(self):
-        if self.session_visited:
-            self.document_iterator.set_iterator_detail('progress',
-                {"visited": self.visited, "total": self.total})
-        self.doc_processor.processing_complete(self.skipped)
-        self.progress_logger.progress_complete(
-            self.processed,
-            self.visited,
-            self.total,
-            self.previously_visited,
-            self.session_visited - self.attempted
-        )
-        if self.skipped:
-            print(DOCS_SKIPPED_WARNING.format(self.skipped))
+                    self.progress.skip(doc)
 
 
 class BulkDocProcessorEventHandler(PaginationEventHandler):
@@ -314,17 +200,7 @@ class BulkDocProcessor(DocumentProcessorController):
         """Called by the BulkDocProcessorLogHandler"""
         ok = self.doc_processor.process_bulk_docs(self.changes)
         if ok:
-            self.processed += len(self.changes)
+            self.progress.add(len(self.changes))
             self.changes = []
         else:
             raise BulkProcessingFailed("Processing batch failed")
-
-    def _update_progress(self):
-        self.visited += 1
-        if self.visited % self.chunk_size == 0:
-            self.document_iterator.set_iterator_detail('progress', {"visited": self.visited, "total": self.total})
-
-            elapsed, remaining = self.timing
-            self.progress_logger.progress(
-                self.processed, self.visited, self.total, elapsed, remaining
-            )

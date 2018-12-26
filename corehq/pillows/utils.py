@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from couchdbkit.exceptions import ResourceNotFound
+from jsonobject.exceptions import WrappingAttributeError
 
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser
@@ -78,7 +79,7 @@ def get_user_type(user_id):
                 return WEB_USER_TYPE
             elif user.is_commcare_user():
                 return MOBILE_USER_TYPE
-        except ResourceNotFound:
+        except (ResourceNotFound, WrappingAttributeError):
             pass
     return UNKNOWN_USER_TYPE
 

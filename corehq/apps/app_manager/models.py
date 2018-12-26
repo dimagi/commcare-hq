@@ -29,6 +29,7 @@ from lxml import etree
 from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
+from django.db import models
 from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -127,6 +128,8 @@ from corehq.apps.app_manager.util import (
     LatestAppInfo,
     update_report_module_ids,
     module_offers_search,
+    get_latest_enabled_build_for_profile,
+    get_enabled_build_profiles_for_version,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -394,7 +397,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     repeat_context = StringProperty()
     # relationship = "child" for index to a parent case (default)
     # relationship = "extension" for index to a host case
-    relationship = StringProperty(choices=['child', 'extension'], default='child')
+    relationship = StringProperty(choices=['child', 'extension', 'question'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
 
@@ -438,7 +441,8 @@ class FormActions(DocumentSchema):
 class CaseIndex(DocumentSchema):
     tag = StringProperty()
     reference_id = StringProperty(default='parent')
-    relationship = StringProperty(choices=['child', 'extension'], default='child')
+    relationship = StringProperty(choices=['child', 'extension', 'question'], default='child')
+    relationship_question = StringProperty(default='')  # if relationship is 'question', this is the question path
 
 
 class AdvancedAction(IndexedSchema):
@@ -3175,6 +3179,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             for case_index in action.case_indices:
                 if case_index.tag not in case_tags:
                     errors.append({'type': 'missing parent tag', 'case_tag': case_index.tag})
+                if case_index.relationship == 'question' and not case_index.relationship_question:
+                    errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
                 if not action.name_path:
@@ -6833,6 +6839,16 @@ class GlobalAppConfig(Document):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
+
+class LatestEnabledBuildProfiles(models.Model):
+    app_id = models.CharField(max_length=255)
+    build_profile_id = models.CharField(max_length=255)
+    version = models.IntegerField()
+    build_id = models.CharField(max_length=255)
+
+    def expire_cache(self, domain):
+        get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
+        get_enabled_build_profiles_for_version.clear(self.build_id, self.version)
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

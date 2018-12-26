@@ -382,8 +382,6 @@ def get_anamic_status(value):
         return 'Y'
     elif value['anemic_normal']:
         return 'N'
-    elif value['anemic_unknown']:
-        return 'Unknown'
     else:
         return DATA_NOT_ENTERED
 

@@ -68,7 +68,10 @@ def get_form_data_source(app, form):
         xform.data_node.tag_xmlns,
         only_process_current_builds=True,
     )
-    meta_properties = [_export_column_to_ucr_indicator(c) for c in BOTTOM_MAIN_FORM_TABLE_PROPERTIES]
+    meta_properties = [
+        _export_column_to_ucr_indicator(c) for c in BOTTOM_MAIN_FORM_TABLE_PROPERTIES
+        if c.label != 'form_link'
+    ]
     dynamic_properties = _get_dynamic_indicators_from_export_schema(schema)
     form_name = form.default_name()
     return DataSourceConfiguration(

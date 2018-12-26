@@ -57,6 +57,7 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."person_name" AS "person_name",
         "ccs_record_monthly"."preg_order" AS "preg_order",
         "ccs_record_monthly"."pregnant" AS "pregnant",
+        "ccs_record_monthly"."pregnant_all" AS "pregnant_all",
         "ccs_record_monthly"."rupture" AS "rupture",
         "ccs_record_monthly"."swelling" AS "swelling",
         "ccs_record_monthly"."trimester" AS "trimester",
