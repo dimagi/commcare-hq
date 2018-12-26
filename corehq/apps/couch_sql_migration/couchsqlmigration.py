@@ -376,10 +376,10 @@ class CouchSqlDomainMigrator(object):
                     couch_case['doc_type'], sql_case.case_id,
                     diffs
                 )
+            self.processed_docs += 1
 
         self._diff_ledgers(case_ids)
 
-        self.processed_docs += 1
         self._log_case_diff_count(throttled=True)
 
     def _rebuild_couch_case_and_re_diff(self, couch_case, sql_case_json):
