@@ -555,6 +555,13 @@ class MediaMixin(object):
         """
         raise NotImplementedError
 
+    def rename_media(self, old_path, new_path):
+        """
+            Returns a count of number of changes made.
+            Should rename each item returned by all_media.
+        """
+        raise NotImplementedError
+
     @memoized
     def all_media_paths(self):
         return set([m.path for m in self.all_media()])
@@ -575,6 +582,21 @@ class MediaMixin(object):
         media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
                       for audio in menu.all_audio_paths() if audio])
         return media
+
+    def rename_menu_media(self, menu, old_path, new_path):
+        """
+            Convenience method, similar to menu_media.
+        """
+        app = self.get_app()
+        update_count = 0
+        for lang in app.langs:
+            if menu.icon_by_language(lang) == old_path:
+                menu.set_icon(lang, new_path)
+                update_count += 1
+            if menu.audio_by_language(lang) == old_path:
+                menu.set_audio(lang, new_path)
+                update_count += 1
+        return update_count
 
 
 class ModuleMediaMixin(MediaMixin):
@@ -622,6 +644,39 @@ class ModuleMediaMixin(MediaMixin):
 
         return media
 
+    def rename_media(self, old_path, new_path):
+        count = 0
+
+        count += self.rename_menu_media(self, old_path, new_path)
+
+        if self.case_list_form.form_id:
+            count += self.rename_menu_media(self.case_list_form, old_path, new_path)
+
+        if hasattr(self, 'case_list') and self.case_list.show:
+            count += self.rename_menu_media(self.case_list, old_path, new_path)
+
+        for _, details, display in self.get_details():
+            # Case list lookup
+            if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                if details.lookup_image == old_path:
+                    details.lookup_image = new_path
+                    count += 1
+
+            # Print template
+            if display and details.display == 'long' and details.print_template:
+                details.print_template['path'] = new_path
+                count += 1
+
+            # Icon-formatted columns
+            for column in details.get_columns():
+                if column.format == 'enum-image':
+                    for map_item in column.enum:
+                        for lang, icon in six.iteritems(map_item.value):
+                            if icon == old_path:
+                                map_item.value[lang] = new_path
+                                count += 1
+
+        return count
 
 class FormMediaMixin(MediaMixin):
     def get_media_ref_kwargs(self):
@@ -634,6 +689,11 @@ class FormMediaMixin(MediaMixin):
             'form_id': self.unique_id,
             'form_order': self.id,
         }
+
+
+    @memoized
+    def memoized_xform(self):
+        return self.wrapped_xform()
 
     def all_media(self):
         kwargs = self.get_media_ref_kwargs()
@@ -659,6 +719,14 @@ class FormMediaMixin(MediaMixin):
                     media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **kwargs))
 
         return media
+
+    def rename_media(self, old_path, new_path):
+        count = 0
+
+        count += self.rename_menu_media(self, old_path, new_path)
+        count += self.memoized_xform().rename_media(old_path, new_path)
+
+        return count
 
 
 class ApplicationMediaMixin(Document, MediaMixin):
