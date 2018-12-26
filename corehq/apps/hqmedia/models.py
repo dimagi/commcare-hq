@@ -59,7 +59,7 @@ class HQMediaLicense(DocumentSchema):
         if properties and properties.get('type', '') == 'public':
             properties['type'] = 'cc'
         super(HQMediaLicense, self).__init__(_d, **properties)
-    
+
     @property
     def display_name(self):
         return LICENSES.get(self.type, "Improper License")
@@ -400,7 +400,7 @@ class CommCareImage(CommCareMultimedia):
     def get_icon_class(cls):
         return "fa fa-picture-o"
 
-        
+
 class CommCareAudio(CommCareMultimedia):
 
     class Config(object):
@@ -551,9 +551,22 @@ class MediaMixin(object):
     def all_media(self):
         """
             Finds all the multimedia IMAGES and AUDIO referenced in this object
-            Returns list of ApplicationMediaReference
+            Returns list of ApplicationMediaReference objects
         """
         raise NotImplementedError
+
+    def menu_media(self, menu):
+        """
+            Convenience method. Gets the ApplicationMediaReference for a menu that's
+            associated with this MediaMixin (which may be self or a different attribute)
+        """
+        kwargs = self.get_media_ref_kwargs()
+        media = []
+        media.extend([ApplicationMediaReference(image, media_class=CommCareImage, is_menu_media=True, **kwargs)
+                      for image in menu.all_image_paths() if image])
+        media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
+                      for audio in menu.all_audio_paths() if audio])
+        return media
 
 
 class ModuleMediaMixin(MediaMixin):
@@ -571,11 +584,13 @@ class ModuleMediaMixin(MediaMixin):
         kwargs = self.get_media_ref_kwargs()
         media = []
 
-        # Menu
-        media.extend([ApplicationMediaReference(image, media_class=CommCareImage, is_menu_media=True, **kwargs)
-                      for image in self.all_image_paths() if image])
-        media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
-                      for audio in self.all_audio_paths() if audio])
+        media.extend(self.menu_media(self))
+
+        if self.case_list_form.form_id:
+            media.extend(self.menu_media(self.case_list_form))
+
+        if hasattr(self, 'case_list') and self.case_list.show:
+            media.extend(self.menu_media(self.case_list))
 
         for _, details, display in self.get_details():
             # Case list lookup
@@ -616,11 +631,7 @@ class FormMediaMixin(MediaMixin):
         kwargs = self.get_media_ref_kwargs()
         media = []
 
-        # Menu
-        media.extend([ApplicationMediaReference(image, media_class=CommCareImage, is_menu_media=True, **kwargs)
-                      for image in self.all_image_paths() if image])
-        media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
-                      for audio in self.all_audio_paths() if audio])
+        media.extend(self.menu_media(self))
 
         # Form questions
         parsed = self.wrapped_xform()
@@ -686,12 +697,6 @@ class MediaControllerMixin(Document, MediaMixin):
             }
 
             media.extend(module.all_media())
-
-            if module.case_list_form.form_id:
-                _add_menu_media(module.case_list_form, **media_kwargs)
-
-            if hasattr(module, 'case_list') and module.case_list.show:
-                _add_menu_media(module.case_list, **media_kwargs)
 
             for form in module.get_forms():
                 try:
