@@ -777,6 +777,8 @@ def percent_num(x, y):
 def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
 
+def format_decimal(num):
+    return "%.2f" % num
 
 def percent_or_not_entered(x, y):
     return percent(x, y) if y and x is not None else DATA_NOT_ENTERED

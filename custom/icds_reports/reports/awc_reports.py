@@ -23,7 +23,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
-    chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, get_tt_dates, is_anemic
+    chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, get_tt_dates, is_anemic, format_decimal
 from custom.icds_reports.const import MapColors
 import six
 
@@ -1191,7 +1191,7 @@ def get_pregnant_details(case_id, awc_id):
                     row_data['bp_dia'] if row_data['bp_dia'] else '--',
                 ),
                 anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else '--',
-                anc_hemoglobin=row_data['anc_hemoglobin'] if row_data['anc_hemoglobin'] else '--',
+                anc_hemoglobin=format_decimal(row_data['anc_hemoglobin']) if row_data['anc_hemoglobin'] else '--',
                 anc_abnormalities='Yes' if row_data['anc_abnormalities'] else 'None',
                 anemic=get_anemic_status(row_data),
                 symptoms=get_symptoms(row_data),
