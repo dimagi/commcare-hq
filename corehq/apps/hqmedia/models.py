@@ -555,6 +555,14 @@ class MediaMixin(object):
         """
         raise NotImplementedError
 
+    @memoized
+    def all_media_paths(self):
+        return set([m.path for m in self.all_media()])
+
+    @memoized
+    def get_all_paths_of_type(self, media_class_name):
+        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_class_name])
+
     def menu_media(self, menu):
         """
             Convenience method. Gets the ApplicationMediaReference for a menu that's
@@ -748,14 +756,6 @@ class MediaControllerMixin(Document, MediaMixin):
         audio_ref = audio_ref.as_dict()
         menu_media['audio'] = audio_ref
         return menu_media
-
-    @memoized
-    def all_media_paths(self):
-        return set([m.path for m in self.all_media()])
-
-    @memoized
-    def get_all_paths_of_type(self, media_class_name):
-        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_class_name])
 
     def get_media_ref_kwargs(self, module, module_index, form=None,
                              form_index=None, is_menu_media=False):
