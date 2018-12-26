@@ -1172,8 +1172,6 @@ def get_pregnant_details(case_id, awc_id):
     }
     current_trimester = 1
     current_record = 0
-    import ipdb; ipdb.set_trace()
-
     for row_data in data:
         if row_data['trimester'] >= current_trimester:
             config['data'][row_data['trimester'] - 1].append(dict(
