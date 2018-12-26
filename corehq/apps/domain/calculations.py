@@ -35,7 +35,7 @@ from corehq.motech.repeaters.models import Repeater
 from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain, \
     get_export_count_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.models import MediaControllerMixin
+from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.messaging.scheduling.util import domain_has_reminders
 
 def num_web_users(domain, *args):
@@ -491,7 +491,7 @@ def has_domain_icon(domain):
 
 def num_apps_with_icon(domain):
     apps = _get_domain_apps(domain)
-    return len([a for a in apps if isinstance(a, MediaControllerMixin) and a.logo_refs])
+    return len([a for a in apps if isinstance(a, ApplicationMediaMixin) and a.logo_refs])
 
 
 def num_apps_with_profile(domain):

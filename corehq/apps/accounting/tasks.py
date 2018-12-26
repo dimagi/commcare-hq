@@ -64,7 +64,7 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.models import MediaControllerMixin
+from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
@@ -819,7 +819,7 @@ def _create_overdue_notification(invoice, context):
 def archive_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
-            if isinstance(app, MediaControllerMixin):
+            if isinstance(app, ApplicationMediaMixin):
                 has_archived = app.archive_logos()
                 if has_archived:
                     app.save()
@@ -838,7 +838,7 @@ def archive_logos(self, domain_name):
 def restore_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
-            if isinstance(app, MediaControllerMixin):
+            if isinstance(app, ApplicationMediaMixin):
                 has_restored = app.restore_logos()
                 if has_restored:
                     app.save()

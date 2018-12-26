@@ -577,22 +577,6 @@ class MediaMixin(object):
         return media
 
 
-class ApplicationMediaMixin(MediaMixin):
-    @memoized
-    def all_media(self):
-        media = []
-        self.media_form_errors = False
-
-        for module in [m for m in self.get_modules() if m.uses_media()]:
-            media.extend(module.all_media())
-            for form in module.get_forms():
-                try:
-                    media.extend(form.all_media())
-                except (XFormValidationError, XFormException):
-                    self.media_form_errors = True
-        return media
-
-
 class ModuleMediaMixin(MediaMixin):
     def get_media_ref_kwargs(self):
         return {
@@ -677,10 +661,9 @@ class FormMediaMixin(MediaMixin):
         return media
 
 
-class MediaControllerMixin(Document, MediaMixin):
+class ApplicationMediaMixin(Document, MediaMixin):
     """
-        An object that manages multimedia for itself and sub-objects.
-        Used by apps.
+        Manages multimedia for itself and sub-objects.
     """
 
     # keys are the paths to each file in the final application media zip
@@ -691,6 +674,27 @@ class MediaControllerMixin(Document, MediaMixin):
 
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
+    @memoized
+    def all_media(self):
+        """
+            Somewhat counterituitively, this contains all media in the app EXCEPT app-level media (logos).
+        """
+        media = []
+        self.media_form_errors = False
+
+        for module in [m for m in self.get_modules() if m.uses_media()]:
+            media.extend(module.all_media())
+            for form in module.get_forms():
+                try:
+                    media.extend(form.all_media())
+                except (XFormValidationError, XFormException):
+                    self.media_form_errors = True
+        return media
+
+    # The following functions (get_menu_media, get_case_list_form_media, get_case_list_menu_item_media,
+    # get_case_list_lookup_image, _get_item_media, and get_media_ref_kwargs) are used to set up context
+    # for app manager settings pages. Ideally, they'd be moved into ModuleMediaMixin and FormMediaMixin
+    # and perhaps share logic with those mixins' versions of all_media.
     def get_menu_media(self, module, module_index, form=None, form_index=None, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance

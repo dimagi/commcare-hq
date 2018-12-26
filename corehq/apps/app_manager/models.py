@@ -103,8 +103,6 @@ from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
     CommCareMultimedia,
     FormMediaMixin,
-    MediaControllerMixin,
-    MediaMixin,
     ModuleMediaMixin,
 )
 from corehq.apps.translations.models import TranslationMixin
@@ -5630,7 +5628,7 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin, MediaControllerMixin):
+class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     """
     An Application that can be created entirely through the online interface
 
