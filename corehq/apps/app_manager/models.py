@@ -99,7 +99,7 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
+from corehq.apps.hqmedia.models import MediaControllerMixin, CommCareMultimedia
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -5623,7 +5623,7 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
+class Application(ApplicationBase, TranslationMixin, MediaControllerMixin):
     """
     An Application that can be created entirely through the online interface
 

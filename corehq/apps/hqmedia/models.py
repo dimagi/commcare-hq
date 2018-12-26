@@ -540,10 +540,18 @@ def _log_media_deletion(app, deleted_media):
     )
 
 
-class HQMediaMixin(Document):
+class MediaMixin(Document):
     """
-        Mix this guy in with Application to support multimedia.
-        Anything multimedia related happens here.
+        An object that has multimedia associated with it.
+        Used by apps, modules, forms.
+    """
+    pass
+
+
+class MediaControllerMixin(Document, MediaMixin):
+    """
+        An object that manages multimedia for itself and sub-objects.
+        Used by apps.
     """
 
     # keys are the paths to each file in the final application media zip
