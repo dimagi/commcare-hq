@@ -99,7 +99,13 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import MediaControllerMixin, MediaMixin, ModuleMediaMixin, CommCareMultimedia
+from corehq.apps.hqmedia.models import (
+    CommCareMultimedia,
+    FormMediaMixin,
+    MediaControllerMixin,
+    MediaMixin,
+    ModuleMediaMixin,
+)
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -1722,7 +1728,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return self.custom_icons[0]
 
 
-class Form(IndexedFormBase, NavMenuItemMediaMixin):
+class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'module_form'
 
     form_filter = StringProperty()
@@ -3033,7 +3039,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 pass
 
 
-class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
+class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)

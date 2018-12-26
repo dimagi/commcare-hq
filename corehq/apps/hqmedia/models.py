@@ -571,6 +571,12 @@ class ModuleMediaMixin(MediaMixin):
         kwargs = self.get_media_ref_kwargs()
         media = []
 
+        # Menu
+        media.extend([ApplicationMediaReference(image, media_class=CommCareImage, is_menu_media=True, **kwargs)
+                      for image in self.all_image_paths() if image])
+        media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
+                      for audio in self.all_audio_paths() if audio])
+
         for _, details, _ in self.get_details():
             # Icons in case details
             for column in details.get_columns():
@@ -580,6 +586,31 @@ class ModuleMediaMixin(MediaMixin):
                         media.extend([ApplicationMediaReference(icon, media_class=CommCareImage,
                                                                 is_menu_media=True, **kwargs)
                                       for icon in icons if icon])
+
+        return media
+
+
+class FormMediaMixin(MediaMixin):
+    def get_media_ref_kwargs(self):
+        module = self.get_module()
+        return {
+            'app_lang': module.get_app().default_language,
+            'module_name': module.name,
+            'module_id': module.id,
+            'form_name': self.name,
+            'form_id': self.unique_id,
+            'form_order': self.id,
+        }
+
+    def all_media(self):
+        kwargs = self.get_media_ref_kwargs()
+        media = []
+
+        # Menu
+        media.extend([ApplicationMediaReference(image, media_class=CommCareImage, is_menu_media=True, **kwargs)
+                      for image in self.all_image_paths() if image])
+        media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
+                      for audio in self.all_audio_paths() if audio])
 
         return media
 
@@ -626,7 +657,6 @@ class MediaControllerMixin(Document, MediaMixin):
                 'module_id': m,
                 'app_lang': self.default_language,
             }
-            _add_menu_media(module, **media_kwargs)
 
             media.extend(module.all_media())
 
@@ -656,7 +686,7 @@ class MediaControllerMixin(Document, MediaMixin):
                 media_kwargs['form_name'] = f.name
                 media_kwargs['form_id'] = f.unique_id
                 media_kwargs['form_order'] = f_order
-                _add_menu_media(f, **media_kwargs)
+                media.extend(f.all_media())
                 try:
                     parsed = f.wrapped_xform()
                     if not parsed.exists():
