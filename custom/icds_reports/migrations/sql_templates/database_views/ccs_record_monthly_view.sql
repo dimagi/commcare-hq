@@ -67,7 +67,8 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."lactating" AS "lactating",
         "ccs_record_monthly"."dob" AS "dob",
         "ccs_record_monthly"."open_in_month" AS "open_in_month",
-        "ccs_record_monthly"."closed" AS "closed"
+        "ccs_record_monthly"."closed" AS "closed",
+        "ccs_record_monthly"."anc_abnormalities" AS "anc_abnormalities"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."ccs_record_monthly" "ccs_record_monthly" ON (
         ("awc_location_months"."month" = "ccs_record_monthly"."month") AND
