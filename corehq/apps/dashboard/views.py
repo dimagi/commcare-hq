@@ -165,6 +165,8 @@ def _get_default_tiles(request):
             paginator_class=AppsPaginator,
             visibility_check=can_edit_apps,
             urlname='default_new_app',
+            url_generator=lambda urlname, req: reverse(urlname, args=[request.domain])
+                                                       if not domain_has_apps(request.domain) else '',
             help_text=_('Build, update, and deploy applications'),
         ),
         Tile(
