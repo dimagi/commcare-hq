@@ -23,7 +23,7 @@ class BuildErrorsTest(SimpleTestCase):
             if 'module' in error and 'unique_id' in error['module']:
                 del error['module']['unique_id']
 
-    def test_subcase_errors(self, mock1, mock2):
+    def test_subcase_errors(self, *args):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json'), encoding='utf-8') as f:
             source = json.load(f)
 
@@ -53,7 +53,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
 
-    def test_empty_module_errors(self, mock1, mock2):
+    def test_empty_module_errors(self, *args):
         factory = AppFactory(build_version='2.24.0')
         app = factory.app
         m1 = factory.new_basic_module('register', 'case', with_form=False)
@@ -78,7 +78,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(standard_module_error, errors)
         self.assertIn(advanced_module_error, errors)
 
-    def test_parent_cycle_in_app(self, mock1, mock2):
+    def test_parent_cycle_in_app(self, *args):
         cycle_error = {
             'type': 'parent cycle',
         }
@@ -91,7 +91,7 @@ class BuildErrorsTest(SimpleTestCase):
             self._clean_unique_id(errors)
             self.assertIn(cycle_error, errors)
 
-    def test_case_tile_configuration_errors(self, mock1, mock2):
+    def test_case_tile_configuration_errors(self, *args):
         case_tile_error = {
             'type': "invalid tile configuration",
             'module': {'id': 0, 'name': {'en': 'View'}},
@@ -106,7 +106,7 @@ class BuildErrorsTest(SimpleTestCase):
             self._clean_unique_id(errors)
             self.assertIn(case_tile_error, errors)
 
-    def test_case_list_form_advanced_module_different_case_config(self, mock1, mock2):
+    def test_case_list_form_advanced_module_different_case_config(self, *args):
         case_tile_error = {
             'type': "all forms in case list module must load the same cases",
             'module': {'id': 1, 'name': {'en': 'update module'}},
@@ -129,7 +129,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(case_tile_error, errors)
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
-    def test_training_module_as_parent(self, mock1, mock2, mock3):
+    def test_training_module_as_parent(self, *args):
         factory = AppFactory(build_version='2.43.0')
         app = factory.app
 
@@ -144,7 +144,7 @@ class BuildErrorsTest(SimpleTestCase):
         }, app.validate_app())
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
-    def test_training_module_as_child(self, mock1, mock2, mock3):
+    def test_training_module_as_child(self, *args):
         factory = AppFactory(build_version='2.43.0')
         app = factory.app
 
