@@ -160,7 +160,7 @@ def _translate_name(names, language):
     if not names:
         return "[{}]".format(_("Unknown"))
     try:
-        return names[language]
+        return str(names[language])
     except KeyError:
         first_name = next(six.iteritems(names))
         return "{} [{}]".format(first_name[1], first_name[0])
