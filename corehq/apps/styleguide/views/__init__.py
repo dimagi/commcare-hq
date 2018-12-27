@@ -78,109 +78,10 @@ class AtomsStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'atoms/intro',
-        ]
-
-
-class MoleculesStyleGuideView(BaseStyleGuideArticleView):
-    urlname = 'styleguide_molecules'
-    navigation_name = 'molecules'
-
-    @property
-    def sections(self):
-        return [
-            'molecules/intro',
-        ]
-
-
-class OrganismsStyleGuideView(BaseStyleGuideArticleView):
-    urlname = 'styleguide_organisms'
-    navigation_name = 'organisms'
-
-    @property
-    def sections(self):
-        return [
-            'organisms/intro',
-        ]
-
-
-class AccessibilityStyleGuideView(BaseStyleGuideArticleView):
-    urlname = 'styleguide_accessibility'
-    navigation_name = 'accessibility'
-
-    @property
-    def sections(self):
-        return [
-            'accessibility/intro',
-            'accessibility/background',
-            'accessibility/design',
-        ]
-
-
-class ClassBasedViewStyleGuideView(BaseStyleGuideArticleView):
-    urlname = 'styleguide_views'
-    navigation_name = 'cb_views'
-
-    @property
-    def sections(self):
-        return [
-            'views/intro',
-            'views/base_classes',
-        ]
-
-
-class CSSStyleGuideView(BaseStyleGuideArticleView):
-    urlname = 'styleguide_css'
-    navigation_name = 'css'
-
-    @property
-    def sections(self):
-        return [
-            'css/overview',
-            'css/hierarchy',
-            'css/z_index',
-        ]
-
-
-class FormsStyleGuideView(BaseStyleGuideArticleView):
-    urlname = 'styleguide_forms'
-    navigation_name = 'forms'
-
-    @property
-    def sections(self):
-        return [
-            'forms/intro',
-            'forms/anatomy',
-        ]
-
-    @property
-    def page_context(self):
-        return {
-            'basic_crispy_form': BasicCrispyForm(),
-        }
-
-
-class IconsStyleGuideView(BaseStyleGuideArticleView):
-    urlname = 'styleguide_icons'
-    navigation_name = 'icons'
-
-    @property
-    def sections(self):
-        return [
-            'icons/overview',
-            'icons/sources',
-            'icons/new_icons',
-        ]
-
-
-class ColorsStyleGuide(BaseStyleGuideArticleView):
-    urlname = 'styleguide_colors'
-    navigation_name = 'colors'
-
-    @property
-    def sections(self):
-        return [
-            'colors/overview',
-            'colors/palette',
+            'atoms/accessibility',
+            'atoms/colors',
+            'atoms/icons',
+            'atoms/css',
         ]
 
     @property
@@ -272,3 +173,33 @@ class ColorsStyleGuide(BaseStyleGuideArticleView):
             text_color,
             bg_color,
         )
+
+
+class MoleculesStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_molecules'
+    navigation_name = 'molecules'
+
+    @property
+    def sections(self):
+        return [
+            'molecules/intro',
+            'molecules/forms',
+        ]
+
+    @property
+    def page_context(self):
+        return {
+            'basic_crispy_form': BasicCrispyForm(),
+        }
+
+
+class OrganismsStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_organisms'
+    navigation_name = 'organisms'
+
+    @property
+    def sections(self):
+        return [
+            'organisms/intro',
+            'organisms/views',
+        ]
