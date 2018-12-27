@@ -1,7 +1,7 @@
 
 <p>Located in <code>corehq.apps.styleguide.example_forms</code></p>
 
-<pre><code class="python">class BasicCrispyForm(forms.Form):
+<pre>class BasicCrispyForm(forms.Form):
     first_name = forms.CharField(
         label=ugettext_lazy("First Name"),
     )
@@ -45,20 +45,20 @@
                 ),
             ),
         )
-</code></pre>
+</pre>
 <h4>Some Notes</h4>
 <p>
     The following is key for how the form is submitted and where.
-    <pre><code>self.helper.form_method = 'POST'
+    <pre>self.helper.form_method = 'POST'
 self.helper.form_class = 'form-horizontal'
-self.helper.form_action = '#'</code></pre>
+self.helper.form_action = '#'</pre>
 </p>
 
 <p>
     This sets up the label and field widths:
 </p>
-<pre><code>self.helper.label_class = 'col-sm-3 col-md-2'
-self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'</code></pre>
+<pre>self.helper.label_class = 'col-sm-3 col-md-2'
+self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'</pre>
 <ul>
     <li>All the <strong>labels</strong> are 3 columns wide on a small screen and 2 columns wide
         on a medium screen and larger. </li>
@@ -74,20 +74,20 @@ self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'</code></pre>
     All layout objects take the attribute <code>css_class</code> to specify
     custom css-classes to the field.
 </p>
-<pre><code>hqcrispy.LinkButton(
+<pre>hqcrispy.LinkButton(
     _("Cancel"),
     '#',
     css_class="btn btn-default",
-)</code></pre>
+)</pre>
 <p>
     If you want to specify another attribute, say a <code>data-bind=""</code> or
     <code>ng-model=""</code>, you would add it to a field like so:
 </p>
-<pre><code>crispy.Field(
+<pre>crispy.Field(
     'first_name',
     ng_model="firstName",
 )
-</code></pre>
+</pre>
 <p>
     All underscores (<code>_</code>) in the attributes in Python, turn into
     hyphens (<code>-</code>) in HTML. e.g. <code>data_bind="foo"</code> becomes
