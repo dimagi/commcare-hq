@@ -1875,7 +1875,7 @@ class FormExportDataSchema(ExportDataSchema):
         if case_indices:
             for index in case_indices:
                 props = ('#text', '@case_type',)
-                if index.relationship == 'extension':
+                if index.relationship != 'child':
                     props = props + ('@relationship',)
                 for prop in props:
                     identifier = index.reference_id or 'parent'
