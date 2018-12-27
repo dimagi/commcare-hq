@@ -55,18 +55,14 @@ LEFT JOIN "agg_ccs_record_monthly" "ccs_record" ON (
         ("awc_monthly"."aggregation_level" = "ccs_record"."aggregation_level") AND
         ("awc_monthly"."state_id" = "ccs_record"."state_id") AND
         ("awc_monthly"."district_id" = "ccs_record"."district_id") AND
-        ("awc_monthly"."block_id" = "ccs_record"."block_id") AND
-        ("awc_monthly"."supervisor_id" = "ccs_record"."supervisor_id") AND
-        ("awc_monthly"."awc_id" = "ccs_record"."awc_id")
+        ("awc_monthly"."block_id" = "ccs_record"."block_id")
     )
 LEFT JOIN "agg_child_health_monthly" "child_health" ON (
         ("awc_monthly"."month" = "child_health"."month") AND
         ("awc_monthly"."aggregation_level" = "child_health"."aggregation_level") AND
         ("awc_monthly"."state_id" = "child_health"."state_id") AND
         ("awc_monthly"."district_id" = "child_health"."district_id") AND
-        ("awc_monthly"."block_id" = "child_health"."block_id") AND
-        ("awc_monthly"."supervisor_id" = "child_health"."supervisor_id") AND
-        ("awc_monthly"."awc_id" = "child_health"."awc_id")
+        ("awc_monthly"."block_id" = "child_health"."block_id")
     )
 WHERE
     "awc_monthly"."aggregation_level" in (1, 2, 3);
