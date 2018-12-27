@@ -70,6 +70,39 @@ class BaseStyleGuideArticleView(TemplateView):
             context, **response_kwargs)
 
 
+class AtomsStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_atoms'
+    navigation_name = 'atoms'
+
+    @property
+    def sections(self):
+        return [
+            'atoms/intro',
+        ]
+
+
+class MoleculesStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_molecules'
+    navigation_name = 'molecules'
+
+    @property
+    def sections(self):
+        return [
+            'molecules/intro',
+        ]
+
+
+class OrganismsStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_organisms'
+    navigation_name = 'organisms'
+
+    @property
+    def sections(self):
+        return [
+            'organisms/intro',
+        ]
+
+
 class AccessibilityStyleGuideView(BaseStyleGuideArticleView):
     urlname = 'styleguide_accessibility'
     navigation_name = 'accessibility'

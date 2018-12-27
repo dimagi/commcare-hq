@@ -4,12 +4,15 @@ from django.conf.urls import include, url
 
 from corehq.apps.styleguide.views import (
     AccessibilityStyleGuideView,
+    AtomsStyleGuideView,
     ClassBasedViewStyleGuideView,
     ColorsStyleGuide,
     CSSStyleGuideView,
     FormsStyleGuideView,
     IconsStyleGuideView,
     MainStyleGuideView,
+    MoleculesStyleGuideView,
+    OrganismsStyleGuideView,
 )
 from corehq.apps.styleguide.views.docs import default
 
@@ -23,6 +26,8 @@ urlpatterns = [
     url(r'^$', MainStyleGuideView.as_view(), name=MainStyleGuideView.urlname),
     url(r'^accessibility/$', AccessibilityStyleGuideView.as_view(),
         name=AccessibilityStyleGuideView.urlname),
+    url(r'^atoms/$', AtomsStyleGuideView.as_view(),
+        name=AtomsStyleGuideView.urlname),
     url(r'^forms/$', FormsStyleGuideView.as_view(),
         name=FormsStyleGuideView.urlname),
     url(r'^icons/$', IconsStyleGuideView.as_view(),
@@ -33,6 +38,10 @@ urlpatterns = [
         name=CSSStyleGuideView.urlname),
     url(r'^views/$', ClassBasedViewStyleGuideView.as_view(),
         name=ClassBasedViewStyleGuideView.urlname),
+    url(r'^molecules/$', MoleculesStyleGuideView.as_view(),
+        name=MoleculesStyleGuideView.urlname),
+    url(r'^organisms/$', OrganismsStyleGuideView.as_view(),
+        name=OrganismsStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
 ]
 
