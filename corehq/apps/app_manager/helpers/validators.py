@@ -129,16 +129,16 @@ class ApplicationBaseValidator(object):
         # raises PracticeUserException in case of misconfiguration
         if not self.app.enable_practice_users:
             return []
-        self.app.get_practice_user()
         try:
+            build_profile_id = None
+            self.app.get_practice_user()
             for build_profile_id in self.app.build_profiles:
                 self.app.get_practice_user(build_profile_id)
         except PracticeUserException as e:
-            e.build_profile_id = build_profile_id
             return [{
                 'type': 'practice user config error',
                 'message': six.text_type(e),
-                'build_profile_id': e.build_profile_id,
+                'build_profile_id': build_profile_id,
             }]
         return []
 
