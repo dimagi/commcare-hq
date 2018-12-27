@@ -892,11 +892,15 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='20'), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(day_of_week=7, hour=0, minute=0), acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
+    # Weekly refresh of disha dumps for current and last month
     month = date.today().replace(day=1)
+    last_month = month - timedelta(days=1)
+    last_month = last_month.replace(day=1)
     celery_task_logger.info("Started dumping DISHA data")
-    build_dumps_for_month(month)
+    build_dumps_for_month(month, rebuild=True)
+    build_dumps_for_month(last_month, rebuild=True)
     celery_task_logger.info("Finished dumping DISHA data")
 
 
