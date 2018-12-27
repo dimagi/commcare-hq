@@ -246,6 +246,39 @@ class AbtExpressionSpec(JsonObject):
                             'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
 
+                elif warning_type == "unchecked_special" and form_value:
+                    # Don't raise flag if no answer given
+                    ignore = spec.get("ignore", [])
+                    section = spec.get("section", "data")
+                    master_value = self._get_val(['insecticide_prep_grp', 'Q10'], 'sop_full_ppe')
+                    master_unchecked = self._get_unchecked(
+                        item,
+                        ['insecticide_prep_grp', 'Q10', 'sop_full_ppe'],
+                        master_value,
+                        ignore,
+                        section
+                    )
+                    second_unchecked = self._get_unchecked(
+                        item,
+                        spec.get('base_path', []) + spec['question'],
+                        form_value,
+                        ignore,
+                        section
+                    )
+                    if not master_unchecked:
+                        # Raise a flag because there are unchecked answers.
+                        docs.append({
+                            'flag': self._get_flag_name(item, spec),
+                            'warning': self._get_warning(spec, item).format(msg=", ".join(second_unchecked)),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
+                            'names': names,
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
+                        })
+
                 elif warning_type == "q3_special" and form_value:
                     # One of the questions doesn't follow the same format as the
                     # others, hence this special case.

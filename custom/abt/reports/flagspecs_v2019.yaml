@@ -1197,14 +1197,13 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     flag_name: "10. Is the spray operator in full PPE?"
     flag_name_fr: "10. L'opérateur de pulvérisation est-il en EPI complet?"
     flag_name_por: "10. O roceador esta completamente  equipado do EPI?"
-    warning_type: unchecked
+    warning_type: unchecked_special
     ignore: ["none"]
     section: 'Homeowner_Prep_and_SOP_2018'
     warning: "Problem reported: Spray operator not wearing full PPE."
     warning_fr: "Problème signalé: l'opérateur n'a pas porté l'EPI au complet"
     warning_por: "Problema reportado:  roceador não esta completamente equipado com EPI."
     responsible_follow_up: "District Coordinator"
-    show_when: [insecticide_prep_grp, Q10, sop_full_ppe]
   - question: [sop_eating_during_spray]
     comment: [sop_eating_during_spray_comments]
     base_path: [spray_observe_grp, Q11]
