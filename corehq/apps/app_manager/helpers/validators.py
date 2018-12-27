@@ -189,7 +189,7 @@ class ApplicationValidator(ApplicationBaseValidator):
         errors.extend(self._check_subscription())
 
         # Call super's validation last because it involves calling create_all_files
-        errors.extend(super(ApplicationValidator, self).validate_app(existing_errors))
+        errors = super(ApplicationValidator, self).validate_app(errors)
 
         return errors
 
