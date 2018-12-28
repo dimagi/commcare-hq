@@ -39,7 +39,7 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
             reduce=False,
             include_docs=True
         ),
-        key=lambda config: config.display_name)
+        key=lambda config: config.display_name or '')
 
     if include_static:
         static_ds = StaticDataSourceConfiguration.by_domain(domain)
