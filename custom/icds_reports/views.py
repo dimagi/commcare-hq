@@ -1730,7 +1730,13 @@ class CasDataExport(View):
         data_type = int(request.POST.get('indicator', None))
         state_id = request.POST.get('location', None)
         month = request.POST.get('month', None)
-        blob_id = "{}-{}-{}".format(indicators[data_type], state_id, month)
+        year = request.POST.get('year', None)
+        date = '{}-{}-01'.format(year, month)
+        blob_id = "{}-{}-{}".format(
+            indicators[data_type],
+            state_id,
+            date
+        )
 
         sync = IcdsFile.objects.get(blob_id=blob_id)
 

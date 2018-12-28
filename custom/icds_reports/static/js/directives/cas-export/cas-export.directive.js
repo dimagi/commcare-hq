@@ -5,10 +5,51 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
 
     $rootScope.report_link = '';
 
+    vm.months = [];
+    vm.monthsCopy = [];
+    vm.years = [];
+    vm.yearsCopy = [];
+
+    vm.selectedLocation = userLocationId;
+    vm.selectedIndicator = null;
+
     locationsService.getRootLocations().then(function (data) {
         vm.locations = data.locations;
     });
+    var now = moment();
+    if (now.date() <= 15) {
+        now.subtract(1, 'months')
+    }
 
+    vm.selectedMonth = now.month() + 1;
+    vm.selectedYear = now.year();
+
+    window.angular.forEach(moment.months(), function(key, value) {
+        vm.monthsCopy.push({
+            name: key,
+            id: value + 1,
+        });
+    });
+
+    if (vm.selectedYear === new Date().getFullYear()) {
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id < new Date().getMonth() + 1 || (month.id === new Date().getMonth() + 1 && moment().date() > 15);
+        });
+    } else if (vm.selectedYear === 2017) {
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id >= 3;
+        });
+    } else {
+        vm.months = vm.monthsCopy;
+    }
+
+    for (var year=2017; year <= new Date().getFullYear(); year++ ) {
+        vm.yearsCopy.push({
+            name: year,
+            id: year,
+        });
+    }
+    vm.years = vm.yearsCopy;
     vm.filterOptions = [
         {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
         {label: 'Data not Entered for height (Unmeasured)', id: 'umeasured'},
@@ -23,29 +64,6 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
         {label: 'Normal (weight-for-height)', id: 'normal_wfh'},
     ];
 
-
-    vm.userLocationId = userLocationId;
-
-    var currentDay = moment().date(); //in  moment date() function returns number of day in month
-    var startByMonth = 0;
-    if (currentDay <= 15) {
-        startByMonth = 1;
-    }
-
-    var twoAgoMonth = moment().subtract(startByMonth + 2,'months');
-    var prevMonth = moment().subtract(startByMonth + 1 ,'months');
-    var currentMonth = moment().subtract(startByMonth ,'months');
-
-    vm.months = [
-        {id: currentMonth.format('YYYY-MM-01'), name: currentMonth.format('MMMM YYYY')},
-        {id: prevMonth.format('YYYY-MM-01'), name: prevMonth.format('MMMM YYYY')},
-        {id: twoAgoMonth.format('YYYY-MM-01'), name: twoAgoMonth.format('MMMM YYYY')},
-    ];
-
-    vm.selectedLocation = userLocationId;
-    vm.selectedMonth = currentMonth.format('YYYY-MM-01');
-    vm.selectedIndicator = null;
-
     vm.indicators = [
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant and Lactating Women'},
@@ -53,7 +71,32 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
     ];
 
     vm.allFiltersSelected = function () {
-        return vm.selectedLocation !== null && vm.selectedMonth !== null && vm.selectedIndicator !== null;
+        return vm.selectedLocation !== null && vm.selectedMonth !== null && vm.selectedYear !== null && vm.selectedIndicator !== null;
+    };
+
+    vm.onSelectYear = function (year) {
+        var date = new Date();
+        var latest = date;
+        if (year.id > latest.getFullYear()) {
+            vm.years =  _.filter(vm.yearsCopy, function (y) {
+                return y.id <= latest.getFullYear();
+            });
+            vm.selectedYear = latest.getFullYear();
+            vm.selectedMonth = 12;
+        }
+        if (year.id === latest.getFullYear()) {
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                return month.id <= latest.getMonth() + 1;
+            });
+            vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
+        } else if (year.id === 2017) {
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                return month.id >= 3;
+            });
+            vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
+        } else {
+            vm.months = vm.monthsCopy;
+        }
     };
 
 }
