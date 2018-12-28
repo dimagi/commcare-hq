@@ -172,7 +172,7 @@ def _export_item_to_ucr_indicator(export_item):
     return {
         "type": "expression",
         "column_id": get_column_name(export_item.readable_path, add_hash=False),
-        "display_name": export_item.path[-1].name,
+        "display_name": export_item.readable_path,
         "datatype": export_item.datatype or 'string',
         "expression": inner_expression,
     }
