@@ -88,23 +88,46 @@ class AtomsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def page_context(self):
         return {
-            'icons': {
-                'HQ General Icons': [
-                    'fcc-flower', 'fcc-applications', 'fcc-commtrack', 'fcc-reports', 'fcc-data', 'fcc-users',
-                    'fcc-settings', 'fcc-help', 'fcc-exchange', 'fcc-messaging', 'fcc-chart-report',
-                    'fcc-form-report', 'fcc-datatable-report', 'fcc-piegraph-report', 'fcc-survey', 'fcc-casemgt',
-                    'fcc-blankapp', 'fcc-globe', 'fcc-app-createform', 'fcc-app-updateform',
-                    'fcc-app-completeform',
-                ],
-                'Form Builder Icons': [
-                    'fcc-fd-text', 'fcc-fd-numeric', 'fcc-fd-data', 'fcc-fd-variable', 'fcc-fd-single-select',
-                    'fcc-fd-single-circle', 'fcc-fd-multi-select', 'fcc-fd-multi-box', 'fcc-fd-decimal',
-                    'fcc-fd-long', 'fcc-fd-datetime', 'fcc-fd-audio-capture', 'fcc-fd-android-intent',
-                    'fcc-fd-signature', 'fcc-fd-multi-box', 'fcc-fd-single-circle', 'fcc-fd-hash',
-                    'fcc-fd-external-case', 'fcc-fd-external-case-data', 'fcc-fd-expand', 'fcc-fd-collapse',
-                    'fcc-fd-case-property', 'fcc-fd-edit-form',
-                ],
-            },
+            'common_icons': [
+                {
+                    'name': 'Common FontAwesome primary icons',
+                    'icons': [
+                        'fa-plus', 'fa-trash', 'fa-remove', 'fa-search',
+                        'fa-angle-double-right', 'fa-angle-double-down',
+                    ],
+                },
+                {
+                    'name': 'Common FontAwesome secondary icons',
+                    'icons': [
+                        'fa-cloud-download', 'fa-cloud-upload',
+                        'fa-warning', 'fa-info-circle', 'fa-question-circle', 'fa-check',
+                        'fa-external-link',
+                    ],
+                }
+            ],
+            'custom_icons': [
+                {
+                    'name': 'Custom HQ icons',
+                    'icons': [
+                        'fcc-flower', 'fcc-applications', 'fcc-commtrack', 'fcc-reports', 'fcc-data', 'fcc-users',
+                        'fcc-settings', 'fcc-help', 'fcc-exchange', 'fcc-messaging', 'fcc-chart-report',
+                        'fcc-form-report', 'fcc-datatable-report', 'fcc-piegraph-report', 'fcc-survey',
+                        'fcc-casemgt', 'fcc-blankapp', 'fcc-globe', 'fcc-app-createform', 'fcc-app-updateform',
+                        'fcc-app-completeform',
+                    ],
+                },
+                {
+                    'name': 'Custom HQ icons specific to form builder',
+                    'icons': [
+                        'fcc-fd-text', 'fcc-fd-numeric', 'fcc-fd-data', 'fcc-fd-variable', 'fcc-fd-single-select',
+                        'fcc-fd-single-circle', 'fcc-fd-multi-select', 'fcc-fd-multi-box', 'fcc-fd-decimal',
+                        'fcc-fd-long', 'fcc-fd-datetime', 'fcc-fd-audio-capture', 'fcc-fd-android-intent',
+                        'fcc-fd-signature', 'fcc-fd-multi-box', 'fcc-fd-single-circle', 'fcc-fd-hash',
+                        'fcc-fd-external-case', 'fcc-fd-external-case-data', 'fcc-fd-expand', 'fcc-fd-collapse',
+                        'fcc-fd-case-property', 'fcc-fd-edit-form',
+                    ],
+                },
+            ],
             'palette': self.palette,
         }
 

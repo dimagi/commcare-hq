@@ -2,67 +2,44 @@
 <section class="hq-styleguide-article">
     <h1 id="atoms-icons">Iconography in HQ</h1>
     <p class="lead">
+        Visual communication can be essential in scanning and understanding for populations whose first language
+        may not be English.  Please be sympathetic with the goal of cohesion and don’t use an icon for a purpose it
+        was not intended for.
+    </p>
+    <p>
         Consistent iconography in any user interface is critical to creating
         a product that is highly accessible across all different levels of
-        literacy.
+        literacy. Icons may need to be localized for different cultures and languages.
     </p>
     <p>
-        Characteristics of good icons include:
-    </p>
-    <ul>
-        <li>Simple, graphic shape&mdash;easily understandable when viewed at
-        a large or small size. Not a lot of detail.</li>
-        <li>Universal language&mdash;try to pick icons that are similar to ones
-        used across many platforms.</li>
-    </ul>
-    <h2 id="sources-font-awesome">Font Awesome</h2>
-    <p>
-        The first place you should go to for icons is
-        <a href="https://fontawesome.com/v4.7.0/cheatsheet/">FontAwesome</a>. These icons are already
-        built into HQ.
-    </p>
-    <h2 id="sources-hq-font">CommCare HQ Icons</h2>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">Available Icons</h3>
-        </div>
-        <div class="panel-body styleguide-icon-panel">
-            <div class="row">
-                {% for name, icons in icons.items %}
-                    <div class="col-sm-6">
-                        <h4>{{ name }}</h4>
-                            {% for icon in icons %}
-                                <div class="row">
-                                    <div class="col-sm-1">
-                                        <i class="fcc {{ icon }}"></i>
-                                    </div>
-                                    <div class="col-sm-11" style="padding-top: 8px;">
-                                        <code>&lt;i class="fcc {{ icon }}"&gt;&lt;/i&gt;</code>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    <h2 id="sources-noun-project">Noun Project</h2>
-    <p>
-        Another great resource for icons is the
-        <a href="http://thenounproject.com/">Noun Project</a>. Often a project
-        manager writing the spec for a feature will draw icons from this source.
-    </p>
-    <p>
-        These are great starter icons, and you can download the .svg and modify
-        from there as necessary to make the icons stylistically fit the rest of
-        the icons in HQ using a vector graphics program like
-        <a href="http://www.adobe.com/products/illustrator.html">Adobe Illustrator</a>
-        or <a href="https://inkscape.org/en/">Inkscape</a>.
+        Good icons use <strong>simple, graphic shapes</strong> so they can be understood even at a small size.
+        They have little detail. They are as <strong>universal</strong> as possible, consistent with other
+        platforms.
     </p>
 
-    <h2>Creating New Icons</h1>
+    <h2>Primary vs Secondary Icons</h2>
+    <p>
+        Primary icons are used for <strong>navigation</strong> or <strong>interaction</strong>.
+        Primary icons are interactive, they change the surround environment or data. They likely don’t need to be coupled with text. 
+    </p>
+    <p>
+        Secondary icons <strong>provide clarity</strong>.
+        Secondary icons are used <strong>before</strong> text to communicate topical information.
+    </p>
+    <p>
+        Most of HQ's icons come from
+        <a href="https://fontawesome.com/v4.7.0/cheatsheet/">FontAwesome</a>.
+        All icons in FontAwesome are already built into HQ.
+        Other icons have been custom created for HQ.
+    </p>
+    {% include 'styleguide/_includes/atoms/icons/panel.html' with prefix="fa" icons=common_icons %}
+    {% include 'styleguide/_includes/atoms/icons/panel.html' with prefix="fcc" icons=custom_icons %}
 
-    <p class="lead">
+    <h2>New Icons</h2>
+    <p>
+        If a suitable icon doesn't exist in FontAwesome or HQ's custom set,
+        another great resource for icons is the
+        <a href="http://thenounproject.com/">Noun Project</a>.
         Typically, once a Noun Project icon is chosen,
         it is best practice to add that icon as a glyph in the CommCare HQ font.
     </p>
