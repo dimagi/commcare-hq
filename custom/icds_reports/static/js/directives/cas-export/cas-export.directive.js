@@ -37,14 +37,14 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
     var currentMonth = moment().subtract(startByMonth ,'months');
 
     vm.months = [
-        {id: currentMonth.month() + 1, name: currentMonth.format('MMMM YYYY')},
-        {id: prevMonth.month() + 1, name: prevMonth.format('MMMM YYYY')},
-        {id: twoAgoMonth.month() + 1, name: twoAgoMonth.format('MMMM YYYY')},
+        {id: currentMonth.format('YYYY-MM-01'), name: currentMonth.format('MMMM YYYY')},
+        {id: prevMonth.format('YYYY-MM-01'), name: prevMonth.format('MMMM YYYY')},
+        {id: twoAgoMonth.format('YYYY-MM-01'), name: twoAgoMonth.format('MMMM YYYY')},
     ];
 
     vm.selectedLocation = userLocationId;
-    vm.selectedMonth = currentMonth.month() + 1;
-    vm.selectedIndicator = void(0);
+    vm.selectedMonth = currentMonth.format('YYYY-MM-01');
+    vm.selectedIndicator = null;
 
     vm.indicators = [
         {id: 1, name: 'Child'},
