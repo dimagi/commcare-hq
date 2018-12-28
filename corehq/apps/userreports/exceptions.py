@@ -31,6 +31,10 @@ class BadSpecError(UserReportsError):
     pass
 
 
+class DuplicateColumnIdError(BadSpecError):
+    pass
+
+
 class UserQueryError(UserReportsError):
     pass
 

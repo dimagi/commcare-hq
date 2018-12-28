@@ -52,7 +52,7 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
-    InvalidDataSourceType)
+    InvalidDataSourceType, DuplicateColumnIdError)
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -396,7 +396,9 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if len(columns) != len(unique_columns):
             for column in set(columns):
                 columns.remove(column)
-            raise BadSpecError(_('Report contains duplicate column ids: {}').format(', '.join(set(columns))))
+            raise DuplicateColumnIdError(_('Report contains duplicate column ids: {}').format(
+                ', '.join(set(columns)))
+            )
 
         if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
             raise BadSpecError(
