@@ -79,6 +79,7 @@ class AtomsStyleGuideView(BaseStyleGuideArticleView):
         return [
             'atoms/intro',
             'atoms/accessibility',
+            'atoms/typography',
             'atoms/colors',
             'atoms/icons',
             'atoms/css',
