@@ -396,9 +396,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if len(columns) != len(unique_columns):
             for column in set(columns):
                 columns.remove(column)
-            raise DuplicateColumnIdError(_('Report contains duplicate column ids: {}').format(
-                ', '.join(set(columns)))
-            )
+            raise DuplicateColumnIdError(columns=columns)
 
         if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
             raise BadSpecError(

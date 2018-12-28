@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from sqlalchemy.exc import ProgrammingError
+from django.utils.translation import ugettext as _
 
 
 class UserReportsError(Exception):
@@ -32,7 +33,12 @@ class BadSpecError(UserReportsError):
 
 
 class DuplicateColumnIdError(BadSpecError):
-    pass
+    def __init__(self, columns, *args, **kwargs):
+        self.columns = columns
+        super(DuplicateColumnIdError, self).__init__(*args, **kwargs)
+
+    def __str__(self):
+        return _('Report contains duplicate column ids: {}').format(', '.join(set(self.columns)))
 
 
 class UserQueryError(UserReportsError):
