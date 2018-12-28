@@ -4,7 +4,7 @@ from __future__ import unicode_literals, absolute_import
 
 from django.db import migrations
 from corehq.sql_db.operations import RawSQLMigration
-
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
@@ -16,5 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('update_tables38.sql')
+        migrator.get_migration('update_tables36.sql')
     ]
+
+    operations.extend(get_view_migrations())

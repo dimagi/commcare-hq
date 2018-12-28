@@ -1,0 +1,69 @@
+<div class="cas-export-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+    <div class="row fixes-filters">
+        <div class="col-md-11">
+            <span class="breadcrump-element">Export CAS Data: </span>
+        </div>
+    </div>
+    <div class="report-content">
+        <div class="alert alert-info" ng-show="!$ctrl.allFiltersSelected()">
+            <strong>Info!</strong> Please select all filters!
+        </div>
+        <div class="form-horizontal black">
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="indicator">Data Type: <i class="fa fa-info-circle" uib-popover="Select the data type for which you want to download a CAS Export."
+                       popover-placement="top-right"
+                       popover-trigger="'mouseenter'"></i></label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedIndicator" theme="bootstrap">
+                        <ui-select-match placeholder="Data Type"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="indicator.id as indicator in $ctrl.indicators | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="indicator.name"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="indicator">State: <i class="fa fa-info-circle" uib-popover="Select the location."
+                       popover-placement="top-right"
+                       popover-trigger="'mouseenter'"></i></label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedLocation" theme="bootstrap">
+                        <ui-select-match placeholder="State"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="indicator.location_id as indicator in $ctrl.locations | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="indicator.name"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="indicator">Month: <i class="fa fa-info-circle" uib-popover="Select the month."
+                       popover-placement="top-right"
+                       popover-trigger="'mouseenter'"></i></label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap">
+                        <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="indicator.id as indicator in $ctrl.months | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="indicator.name"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-6">
+                    <form action="{% url 'cas_export' domain %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="location" ng-value="$ctrl.selectedLocation" />
+                        <input type="hidden" name="month" ng-value="$ctrl.selectedMonth" />
+                        <input type="hidden" name="indicator" ng-value="$ctrl.selectedIndicator" />
+                        <button type="submit"
+                                class="btn btn-default normalButton orangeButton"
+                                ng-disabled=!$ctrl.allFiltersSelected()
+                        >
+                            Export
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

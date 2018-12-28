@@ -220,6 +220,9 @@ class DashboardView(TemplateView):
         kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
             self.kwargs['domain']
         ).location_ids())
+        kwargs['state_level_access'] = 'state' in set(
+            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations()]
+        )
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
@@ -1716,3 +1719,23 @@ class DishaAPIView(View):
     @quickcache([])
     def valid_state_names(self):
         return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class CasDataExport(View):
+    def post(self, request, *args, **kwargs):
+
+        indicators = ['', 'child_health_monthly', 'ccs_record_monthly', 'agg_awc']
+
+        data_type = int(request.POST.get('indicator', None))
+        state_id = request.POST.get('location', None)
+        month = request.POST.get('month', None)
+        blob_id = "{}-{}-{}".format(indicators[data_type], state_id, month)
+
+        sync = IcdsFile.objects.get(blob_id=blob_id)
+
+        zip_name = 'cas_data_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        except NotFound:
+            raise Http404
