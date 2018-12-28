@@ -466,9 +466,9 @@ def reverse_chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert():
+def maintenance_alert(request):
     alert = MaintenanceAlert.get_latest_alert()
-    if alert:
+    if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
         return format_html(
             '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
             alert.id,

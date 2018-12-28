@@ -155,6 +155,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('opened_on', 'case_list.opened_on'),
             ('dob', 'case_list.dob'),
             ('closed', 'case_list.closed'),
+            ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
             ('date_death', 'person.date_death'),
             ('person_case_id', 'ucr.person_case_id')
         )

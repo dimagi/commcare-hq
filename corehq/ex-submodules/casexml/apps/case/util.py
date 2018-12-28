@@ -18,8 +18,10 @@ from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrappe
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
 from corehq.util.soft_assert import soft_assert
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
+
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -289,11 +291,10 @@ def get_case_history(case):
     from corehq.apps.reports.display import xmlns_to_name
 
     changes = defaultdict(dict)
-    for action in case.actions:
-        case_blocks = extract_case_blocks(action.form)
+    for form in FormAccessors(case.domain).get_forms(case.xform_ids):
+        case_blocks = extract_case_blocks(form)
         for block in case_blocks:
             if block.get('@case_id') == case.case_id:
-                form = action.form
                 property_changes = {
                     'Form ID': form.form_id,
                     'Form Name': xmlns_to_name(case.domain, form.xmlns, form.app_id),

@@ -38,6 +38,7 @@
                 <div class="panel panel-dashboard panel-dashboard-medium">
                     <div class="panel-heading">
                         <a data-bind="
+                               visible: url,
                                text: title,
                                attr: {href: url},
                                popover: {
@@ -47,6 +48,7 @@
                                     trigger: 'hover',
                                },
                            "></a>
+                        <span data-bind="text: title, visible: !url"></span>
                     </div>
                     <div class="panel-body">
 
