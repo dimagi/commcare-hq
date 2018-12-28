@@ -504,6 +504,30 @@
         }
       },
       {
+        "column_id": "person_case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "parent_id",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "date",
+        "is_primary_key": false,
+        "column_id": "pnc1_date",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "pnc1_date"
+      },
+
+      {
         "filter": {
           "type": "named",
           "name": "open_cases"

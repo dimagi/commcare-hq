@@ -26,7 +26,8 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth, valid_visits
+          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth, valid_visits,
+          where_born
         ) (
           SELECT
             DISTINCT case_load_ccs_record0 AS case_id,
@@ -34,7 +35,8 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
             %(month)s::DATE AS month,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
             LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth,
-            SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
+            SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits,
+            where_born
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
