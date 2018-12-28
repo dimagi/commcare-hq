@@ -1,6 +1,8 @@
 {
   "domains": [
     "reach-test",
+    "reach-sandbox",
+    "cas-lab",
     "icds-dashboard-qa",
     "icds-cas"
   ],
@@ -191,6 +193,32 @@
         "datatype": "date",
         "type": "raw",
         "property_name": "referral_reached_date"
+      },
+      {
+        "column_id": "referral_reached_facility",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "referral_reached_facility"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       },
       {
         "column_id": "hh_caste",

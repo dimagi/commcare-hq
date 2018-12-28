@@ -199,7 +199,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     """
     Set the xmlns on an XFormInstance, and the save the document.
     """
-    old_xml = xform_instance.get_xml()
+    old_xml = xform_instance.get_xml().decode('utf-8')
     assert old_xml.count('xmlns="undefined"') == 1
     new_xml = old_xml.replace('xmlns="undefined"', 'xmlns="{}"'.format(xmlns))
     if not dry_run:
@@ -236,7 +236,7 @@ def set_xmlns_on_form(form_id, xmlns, app_build, log_file, dry_run):
         data = data.replace("undefined", xmlns, 1)
         wrapped_xml.instance_node.remove(wrapped_xml.data_node.xml)
         wrapped_xml.instance_node.append(parse_xml(data))
-        new_xml = wrapped_xml.render()
+        new_xml = wrapped_xml.render().decode('utf-8')
 
         form_in_build.source = new_xml
         form_in_build.form_migrated_from_undefined_xmlns = datetime.utcnow()

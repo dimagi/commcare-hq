@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
@@ -23,7 +23,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
-    chosen_filters_to_labels, default_age_interval, get_anamic_status, get_symptoms, get_counseling, get_tt_dates
+    chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, get_tt_dates, is_anemic, format_decimal
 from custom.icds_reports.const import MapColors
 import six
 
@@ -1026,7 +1026,9 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
                 'Normal weight for height',
                 data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
-            pse_days_attended=row_data.pse_days_attended
+            pse_days_attended=row_data.pse_days_attended,
+            mother_phone_number=row_data.mother_phone_number,
+            aww_phone_number=row_data.aww_phone_number
         )
 
     for row in data:
@@ -1092,21 +1094,16 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
-    ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
+    this_month = date.today() - relativedelta(day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
-        month__gte=ten_months_ago,
-    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'pregnant', 'open_in_month').filter(
-        pregnant=1).exclude(open_in_month=False)
-    data = CcsRecordMonthlyView.objects.filter(
-        awc_id=awc_id,
-        month__gte=ten_months_ago,
-        case_id__in=[case['case_id'] for case in data],
+        month=this_month,
+        pregnant_all=1,
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
-        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
-        'num_rations_distributed', 'last_date_thr', 'month'
-    )
+        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant_all',
+        'num_rations_distributed', 'last_date_thr', 'month', 'closed', 'open_in_month', 'pregnant'
+    ).exclude(open_in_month=False)
     data_count = data.count()
     config = {
         'data': [],
@@ -1117,10 +1114,11 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
             case_id=row_data['case_id'],
             person_name=row_data['person_name'],
             age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+            closed=row_data['closed'],
             opened_on=row_data['opened_on'],
             edd=row_data['edd'],
             trimester=row_data['trimester'],
-            anemic=get_anamic_status(row_data),
+            anemic=is_anemic(row_data),
             num_anc_complete=row_data['num_anc_complete'],
             beneficiary='Yes' if row_data['pregnant'] else 'No',
             number_of_thrs_given=row_data['num_rations_distributed'],
@@ -1130,7 +1128,18 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     for row in data:
         config['data'].append(base_data(row))
 
-    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    def ordering_format(record):
+        if record[order]:
+            return record[order]
+        numeric_fields = ['age', 'closed', 'trimester', 'num_anc_complete', 'number_of_thrs_given']
+        if any([field in order for field in numeric_fields]):
+            return 0
+        date_fields = ['opened_on', 'edd', 'last_date_thr']
+        if any([field in order for field in date_fields]):
+            return date.today()
+        return ""
+
+    config['data'].sort(key=ordering_format, reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
@@ -1151,7 +1160,7 @@ def get_pregnant_details(case_id, awc_id):
         'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
         'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
         'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
-        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month'
+        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month', 'anc_abnormalities'
     )
 
     config = {
@@ -1180,9 +1189,9 @@ def get_pregnant_details(case_id, awc_id):
                     row_data['bp_dia'] if row_data['bp_dia'] else '--',
                 ),
                 anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else '--',
-                anc_hemoglobin=row_data['anc_hemoglobin'] if row_data['anc_hemoglobin'] else '--',
-                anc_abnormalities=None,  # todo change to num_anc_complete when available in Model
-                anemic=get_anamic_status(row_data),
+                anc_hemoglobin=format_decimal(row_data['anc_hemoglobin']) if row_data['anc_hemoglobin'] else '--',
+                anc_abnormalities='Yes' if row_data['anc_abnormalities'] else 'None',
+                anemic=get_anemic_status(row_data),
                 symptoms=get_symptoms(row_data),
                 counseling=get_counseling(row_data),
                 using_ifa='Y' if row_data['using_ifa'] else 'N',
@@ -1237,7 +1246,18 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     for row in data:
         config['data'].append(base_data(row))
 
-    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    def ordering_format(record):
+        if record[order]:
+            return record[order]
+        numeric_fields = ['age', 'delivery_nature', 'num_pnc_visits', 'num_rations_distributed']
+        if any([field in order for field in numeric_fields]):
+            return 0
+        date_fields = ['add']
+        if any([field in order for field in date_fields]):
+            return date.today()
+        return ""
+
+    config['data'].sort(key=ordering_format, reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count

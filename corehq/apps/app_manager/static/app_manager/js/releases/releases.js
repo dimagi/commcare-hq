@@ -352,9 +352,15 @@ hqDefine('app_manager/js/releases/releases', function () {
                         }
                     },
                     success: function (data) {
-                        savedApp.is_released(data.is_released);
-                        self.latestReleasedVersion(data.latest_released_version);
-                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                        if (data.error) {
+                            alert(data.error);
+                            $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                            savedApp.is_released(isReleased);
+                        } else {
+                            savedApp.is_released(data.is_released);
+                            self.latestReleasedVersion(data.latest_released_version);
+                            $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                        }
                     },
                     error: function () {
                         savedApp.is_released('error');

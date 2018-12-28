@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>New Form2</h:title>
+    <model>
+      <instance>
+        <data xmlns="http://openrosa.org/formdesigner/E9760D33-ABD1-45D8-A08C-815E1F48713A" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="1">
+          <question1/>
+          <question2/>
+        </data>
+      </instance>
+      <bind id="question1" nodeset="/data/question1" type="xsd:string"/>
+      <bind id="question2" nodeset="/data/question2" type="xsd:string"/>
+      <itext>
+        <translation lang="en">
+          <text id="question1">
+            <value>q1-en</value>
+            <value form="image">jr://file/commcare/q1_en.jpg</value>
+            <value form="audio">jr://file/commcare/q1_en.mp3</value>
+          </text>
+          <text id="question2">
+            <value>q2-en</value>
+            <value form="audio">jr://file/commcare/q2_en.mp3</value>
+          </text>
+        </translation>
+        <translation lang="hin">
+          <text id="question1">
+            <value>q1-hin</value>
+            <value form="image">jr://file/commcare/q1_hin.jpg</value>
+          </text>
+          <text id="question2">
+            <value>q2-hin</value>
+            <value form="image">jr://file/commcare/q2_hin.jpg</value>
+            <value form="audio">jr://file/commcare/q2_hin.mp3</value>
+          </text>
+        </translation>
+      </itext>
+    </model>
+  </h:head>
+  <h:body>
+    <input bind="question1">
+      <label ref="jr:itext('question1')"/>
+    </input>
+    <input bind="question2">
+      <label ref="jr:itext('question2')"/>
+    </input>
+  </h:body>
+</h:html>

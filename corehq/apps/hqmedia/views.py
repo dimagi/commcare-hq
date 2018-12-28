@@ -3,18 +3,21 @@ from __future__ import unicode_literals
 from mimetypes import guess_all_extensions, guess_type
 import uuid
 import zipfile
+import io
 import logging
 import os
 from django.contrib.auth.decorators import login_required
 import json
 import itertools
+from collections import defaultdict
 from django.conf import settings
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import View, TemplateView
 
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 
 from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
 
@@ -24,14 +27,21 @@ from corehq import privileges
 from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.files import file_extention_from_filename
+from corehq.util.workbook_reading import SpreadsheetFileExtError
 
 from soil import DownloadBase
 
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from corehq import toggles
 from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.decorators import safe_cached_download
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
+from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
@@ -42,16 +52,21 @@ from corehq.apps.hqmedia.controller import (
 )
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from dimagi.utils.web import json_response
 from memoized import memoized
 from soil.util import expose_cached_download
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from django_prbac.decorators import requires_privilege_raise404
 import six
 
 
-class BaseMultimediaView(ApplicationViewMixin, View):
+transient_file_store = TransientFileStore("hqmedia_upload_paths", timeout=1 * 60 * 60)
+
+
+class BaseMultimediaView(ApplicationViewMixin, BaseSectionPageView):
 
     @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_and_domain_required))
     def dispatch(self, request, *args, **kwargs):
@@ -62,17 +77,37 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
     """
         The base view for all the multimedia templates.
     """
+    @property
+    def section_name(self):
+        return self.app.name
 
     @property
-    def page_context(self):
-        return {}
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.app.get_id])
 
-    def get_context_data(self, **kwargs):
-        context = {
+    @property
+    def section_url(self):
+        return reverse("app_settings", args=[self.domain, self.app.get_id])
+
+    @property
+    def page_context(self, **kwargs):
+        context = super(BaseMultimediaTemplateView, self).page_context
+        views = [MultimediaReferencesView, BulkUploadMultimediaView]
+        if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
+            views.append(ManageMultimediaPathsView)
+        context.update({
             "domain": self.domain,
             "app": self.app,
-        }
-        context.update(self.page_context)
+            "navigation_sections": (
+                (_("Multimedia"), [
+                    {
+                        'title': view.page_title,
+                        'url': reverse(view.urlname, args=[self.domain, self.app.id]),
+                        'is_active': view.urlname == self.urlname,
+                    } for view in views
+                ]),
+            ),
+        })
         return context
 
     def render_to_response(self, context, **response_kwargs):
@@ -83,11 +118,13 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
     @property
     def page_context(self):
-        return {
+        context = super(BaseMultimediaUploaderView, self).page_context
+        context.update({
             'uploaders': self.upload_controllers,
             'uploaders_js': [u.js_options for u in self.upload_controllers],
             "sessionid": self.request.COOKIES.get('sessionid'),
-        }
+        })
+        return context
 
     @property
     def upload_controllers(self):
@@ -98,8 +135,9 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
 
 class MultimediaReferencesView(BaseMultimediaUploaderView):
-    name = "hqmedia_references"
+    urlname = "hqmedia_references"
     template_name = "hqmedia/references.html"
+    page_title = ugettext_noop("Multimedia Reference Checker")
 
     @property
     def page_context(self):
@@ -117,23 +155,126 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
     @property
     def upload_controllers(self):
         return [
-            MultimediaImageUploadController("hqimage", reverse(ProcessImageFileUploadView.name,
+            MultimediaImageUploadController("hqimage", reverse(ProcessImageFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
-            MultimediaAudioUploadController("hqaudio", reverse(ProcessAudioFileUploadView.name,
+            MultimediaAudioUploadController("hqaudio", reverse(ProcessAudioFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
-            MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.name,
+            MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
         ]
 
 
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
-    name = "hqmedia_bulk_upload"
+    urlname = "hqmedia_bulk_upload"
     template_name = "hqmedia/bulk_upload.html"
+    page_title = ugettext_noop("Bulk Upload Multimedia")
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Multimedia Reference Checker"),
+            'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+        }]
 
     @property
     def upload_controllers(self):
-        return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.name,
+        return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.urlname,
                                                                        args=[self.domain, self.app_id]))]
+
+
+@method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
+class ManageMultimediaPathsView(BaseMultimediaTemplateView):
+    urlname = "manage_multimedia_paths"
+    template_name = "hqmedia/manage_paths.html"
+    page_title = ugettext_noop("Manage Multimedia Paths")
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Multimedia Reference Checker"),
+            'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+        }]
+
+
+@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
+@require_can_edit_apps
+@require_GET
+def download_multimedia_paths(request, domain, app_id):
+    from corehq.apps.hqmedia.view_helpers import download_multimedia_paths_rows
+    app = get_app(domain, app_id)
+
+    headers = ((_("Paths"), (_("Path in Application"), _("Usages"))),)
+    rows = download_multimedia_paths_rows(app)
+
+    temp = io.BytesIO()
+    export_raw(headers, rows, temp)
+    filename = '{app_name} v.{app_version} - App Multimedia Paths'.format(
+        app_name=app.name,
+        app_version=app.version)
+    return export_response(temp, Format.XLS_2007, filename)
+
+
+@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
+@require_can_edit_apps
+@require_POST
+def validate_multimedia_paths(request, domain, app_id):
+    if not request.FILES:
+        return json_response({
+            'error': _("Please choose an Excel file to import.")
+        })
+
+    handle = request.FILES['file']
+
+    extension = os.path.splitext(handle.name)[1][1:].strip().lower()
+    if extension not in ALLOWED_EXTENSIONS:
+        return json_response({
+            'error': _("Please choose a file with one of the following extensions: "
+                       "{}").format(", ".join(ALLOWED_EXTENSIONS))
+        })
+
+    meta = transient_file_store.write_file(handle, handle.name, domain)
+    file_id = meta.identifier
+
+    f = transient_file_store.get_tempfile_ref_for_contents(file_id)
+    try:
+        open_spreadsheet_download_ref(f)
+    except SpreadsheetFileExtError:
+        return json_response({
+            'error': _("File does not appear to be an Excel file. Please choose another file.")
+        })
+
+    from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows
+    app = get_app(domain, app_id)
+    with get_spreadsheet(f) as spreadsheet:
+        (errors, warnings) = validate_multimedia_paths_rows(app, spreadsheet.iter_rows())
+
+    return json_response({
+        'success': 1,
+        'file_id': file_id,
+        'errors': errors,
+        'warnings': warnings,
+    })
+
+
+@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
+@require_can_edit_apps
+@require_POST
+def update_multimedia_paths(request, domain, app_id):
+    file_id = request.POST.get('file_id')
+
+    f = transient_file_store.get_tempfile_ref_for_contents(file_id)
+
+    if not f:
+        return json_response({
+            'error': _("Could not find file. Please re-upload file.")
+        })
+
+    # TODO: update paths
+
+    return json_response({
+        'success': 1,
+    })
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
@@ -192,7 +333,8 @@ class BaseProcessUploadedView(BaseMultimediaView):
         response.update({
             'errors': self.errors,
         })
-        return HttpResponse(json.dumps(response))
+        response_class = HttpResponseBadRequest if self.errors else HttpResponse
+        return response_class(json.dumps(response))
 
     def validate_file(self, replace_diff_ext=False):
         raise NotImplementedError("You must validate your uploaded file!")
@@ -202,7 +344,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
 
 
 class ProcessBulkUploadView(BaseProcessUploadedView):
-    name = "hqmedia_uploader_bulk"
+    urlname = "hqmedia_uploader_bulk"
 
     @property
     @memoized
@@ -211,15 +353,16 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             self.uploaded_file.file.seek(0)
             return zipfile.ZipFile(self.uploaded_file)
         except Exception as e:
-            raise BadMediaFileException("There was an issue processing the zip file you provided. Error: %s" % e)
+            msg = _("There was an issue processing the zip file you provided. Error: %s")
+            raise BadMediaFileException(msg % e)
 
     def validate_file(self, replace_diff_ext=False):
         if not self.mime_type in self.valid_mime_types():
-            raise BadMediaFileException("Your zip file doesn't have a valid mimetype.")
+            raise BadMediaFileException(_("Uploaded file is not a ZIP file."))
         if not self.uploaded_zip:
-            raise BadMediaFileException("There is no ZIP file.")
+            raise BadMediaFileException(_("There is no ZIP file."))
         if self.uploaded_zip.testzip():
-            raise BadMediaFileException("The ZIP file provided was bad.")
+            raise BadMediaFileException(_("Unable to extract the ZIP file."))
 
     def process_upload(self):
         if hasattr(self.uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:
@@ -340,7 +483,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
 
 class ProcessImageFileUploadView(BaseProcessFileUploadView):
     media_class = CommCareImage
-    name = "hqmedia_uploader_image"
+    urlname = "hqmedia_uploader_image"
 
     @classmethod
     def valid_base_types(cls):
@@ -348,7 +491,7 @@ class ProcessImageFileUploadView(BaseProcessFileUploadView):
 
 
 class ProcessLogoFileUploadView(ProcessImageFileUploadView):
-    name = "hqmedia_uploader_logo"
+    urlname = "hqmedia_uploader_logo"
 
     @method_decorator(requires_privilege_raise404(privileges.COMMCARE_LOGO_UPLOADER))
     def post(self, request, *args, **kwargs):
@@ -381,7 +524,7 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
 
 class ProcessAudioFileUploadView(BaseProcessFileUploadView):
     media_class = CommCareAudio
-    name = "hqmedia_uploader_audio"
+    urlname = "hqmedia_uploader_audio"
 
     @classmethod
     def valid_base_types(cls):
@@ -390,7 +533,7 @@ class ProcessAudioFileUploadView(BaseProcessFileUploadView):
 
 class ProcessVideoFileUploadView(BaseProcessFileUploadView):
     media_class = CommCareVideo
-    name = "hqmedia_uploader_video"
+    urlname = "hqmedia_uploader_video"
 
     @classmethod
     def valid_base_types(cls):
@@ -399,7 +542,7 @@ class ProcessVideoFileUploadView(BaseProcessFileUploadView):
 
 class ProcessTextFileUploadView(BaseProcessFileUploadView):
     media_class = CommCareMultimedia
-    name = "hqmedia_uploader_text"
+    urlname = "hqmedia_uploader_text"
 
     @classmethod
     def valid_base_types(cls):
@@ -407,7 +550,7 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
 
 
 class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
-    name = "hqmedia_uploader_detail_print_template"
+    urlname = "hqmedia_uploader_detail_print_template"
 
     @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
     def post(self, request, *args, **kwargs):
@@ -435,7 +578,7 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
 
 
 class RemoveDetailPrintTemplateView(BaseMultimediaView):
-    name = "hqmedia_remove_detail_print_template"
+    urlname = "hqmedia_remove_detail_print_template"
 
     @property
     def module_unique_id(self):
@@ -451,7 +594,7 @@ class RemoveDetailPrintTemplateView(BaseMultimediaView):
 
 
 class RemoveLogoView(BaseMultimediaView):
-    name = "hqmedia_remove_logo"
+    urlname = "hqmedia_remove_logo"
 
     @property
     def logo_slug(self):
@@ -468,7 +611,7 @@ class RemoveLogoView(BaseMultimediaView):
 
 
 class CheckOnProcessingFile(BaseMultimediaView):
-    name = "hqmedia_check_processing"
+    urlname = "hqmedia_check_processing"
 
     def get(self, request, *args, **kwargs):
         return HttpResponse("workin on it")
@@ -505,21 +648,25 @@ def iter_media_files(media_objects):
 def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None, download_targeted_version=False):
     file_iterator = []
     errors = []
+    index_file_count = 0
+    multimedia_file_count = 0
     if include_multimedia_files:
         app.remove_unused_mappings()
         languages = None
         if build_profile_id is not None:
             languages = app.build_profiles[build_profile_id].langs
-        file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
+        media_objects = list(app.get_media_objects(languages=languages))
+        multimedia_file_count = len(media_objects)
+        file_iterator, errors = iter_media_files(media_objects)
     if include_index_files:
-        index_files, index_file_errors = iter_index_files(
+        index_files, index_file_errors, index_file_count = iter_index_files(
             app, build_profile_id=build_profile_id, download_targeted_version=download_targeted_version
         )
         if index_file_errors:
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
 
-    return file_iterator, errors
+    return file_iterator, errors, (index_file_count + multimedia_file_count)
 
 
 class DownloadMultimediaZip(View, ApplicationViewMixin):
@@ -529,7 +676,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
     """
 
-    name = "download_multimedia_zip"
+    urlname = "download_multimedia_zip"
     compress_zip = False
     include_multimedia_files = True
     include_index_files = False
@@ -541,18 +688,6 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
     def check_before_zipping(self):
         if not self.app.multimedia_map and self.include_multimedia_files:
             return HttpResponse("You have no multimedia to download.")
-
-    def log_errors(self, errors):
-        logging.error(
-            "Error downloading multimedia ZIP "
-            "for domain %s and application %s." % (
-                self.domain, self.app_id)
-        )
-        return HttpResponseServerError(
-            "Errors were encountered while "
-            "retrieving media for this application.<br /> %s" % (
-                "<br />".join(errors))
-        )
 
     def get(self, request, *args, **kwargs):
         assert self.include_multimedia_files or self.include_index_files
@@ -584,7 +719,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
 
 class MultimediaUploadStatusView(View):
-    name = "hqmedia_upload_status"
+    urlname = "hqmedia_upload_status"
 
     @property
     @memoized
@@ -617,7 +752,7 @@ class MultimediaUploadStatusView(View):
 
 
 class ViewMultimediaFile(View):
-    name = "hqmedia_download"
+    urlname = "hqmedia_download"
 
     @always_allow_browser_caching
     def dispatch(self, request, *args, **kwargs):
@@ -699,10 +834,19 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
                 extension = os.path.splitext(name)[1]
                 data = _encode_if_unicode(f) if extension in text_extensions else f
                 yield (_get_name(name), data)
+
+    def _download_index_files(app, build_profile_id, is_retry=False):
+        try:
+            return download_index_files(app, build_profile_id)
+        except ResourceConflict as e:
+            if is_retry:
+                raise e
+            return _download_index_files(app, build_profile_id, is_retry=True)
+
     try:
-        files = download_index_files(app, build_profile_id)
+        files = _download_index_files(app, build_profile_id)
     except Exception as e:
         notify_exception(None, e.message)
         errors = [six.text_type(e)]
 
-    return _files(files), errors
+    return _files(files), errors, len(files)

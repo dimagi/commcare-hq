@@ -38,19 +38,19 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def child_health_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_health_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def child_tasks_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_tasks_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def person_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def tablename(self):
@@ -280,6 +280,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                       date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
                   THEN 1 ELSE NULL END
             """),
+            ("mother_phone_number", "child_health.mother_phone_number"),
         )
         return """
         INSERT INTO "{tablename}" (

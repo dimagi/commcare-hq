@@ -2,17 +2,39 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
 
-    // Demo CTA test
-    hqImport("analytix/js/hubspot").then(function () {
-        var kissmetrics = hqImport('analytix/js/kissmetrix');
-        $("#test-cta-form-get-demo-button").click(function () {
-            kissmetrics.track.event("Body Get Demo CTA clicked");
+    $('#js-start-trial').click(function (e) {
+        e.preventDefault();
+        $('#registration-start-container').hide();
+        $('#registration-form-container').fadeIn();
+
+        $('#back-to-start-btn').removeClass('hide');
+    });
+
+    $('#back-to-start-btn').click(function () {
+        $('#registration-form-container').hide();
+        $('#registration-start-container').fadeIn();
+    });
+
+    $('.view-features').click(function (e) {
+        e.preventDefault();
+
+        $('.tile-wrapper').addClass('show-features');
+    });
+
+    var kissmetrics = hqImport('analytix/js/kissmetrix');
+    kissmetrics.whenReadyAlways(function () {
+
+        $('#js-start-trial').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked start trial");
         });
-        $("#cta-form-get-demo-button").click(function () {
-            kissmetrics.track.event("Header Get Demo button clicked");
+
+        $('#js-get-tour').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked get a tour");
+            kissmetrics.track.event("Demo Workflow - Get A Tour Button Clicked (new UX)");
         });
-        $(".hs_submit .hs-button").click(function () {
-            kissmetrics.track.event("Demo request sent");
+
+        $('#start-chat-cta-btn').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked start chat");
         });
     });
 
@@ -80,4 +102,5 @@ $(function () {
     reg.setGetPhoneNumberFn(function () {
         return $number.intlTelInput("getNumber");
     });
+
 });

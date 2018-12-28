@@ -4,23 +4,23 @@ import uuid
 from datetime import datetime
 from io import BytesIO
 
-from contextlib2 import ExitStack
 from django.core.files.uploadedfile import UploadedFile
+from django.db import connections
 from django.test import TestCase
 
 import settings
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
+from corehq.blobs.exceptions import NotFound as BlobNotFound
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
-from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
-)
+from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (
     create_form_for_test, FormProcessorTestUtils, use_sql_backend
@@ -28,6 +28,7 @@ from corehq.form_processor.tests.utils import (
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 from six.moves import range
 from io import open
@@ -98,43 +99,40 @@ class FormAccessorTestsSQL(TestCase):
     def test_get_with_attachments(self):
         form = create_form_for_test(DOMAIN)
         form = FormAccessorSQL.get_form(form.form_id)  # refetch to clear cached attachments
-        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
+        form_db = get_db_alias_for_partitioned_doc(form.form_id)
+        with self.assertNumQueries(1, using=form_db):
             form.get_attachment_meta('form.xml')
 
-        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
+        with self.assertNumQueries(1, using=form_db):
             form.get_attachment_meta('form.xml')
 
-        with ExitStack() as stack:
-            if settings.USE_PARTITIONED_DATABASE:
-                proxy_queries = 1
-                stack.enter_context(self.assertNumQueries(1, using=form.db))
-            else:
-                proxy_queries = 2
-            stack.enter_context(self.assertNumQueries(proxy_queries, using=db_for_read_write(XFormAttachmentSQL)))
+        with self.assertNumQueries(2, using=form_db):
             form = FormAccessorSQL.get_with_attachments(form.form_id)
 
         self._check_simple_form(form)
-        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
+        with self.assertNumQueries(0, using=form_db):
             attachment_meta = form.get_attachment_meta('form.xml')
 
-        self.assertEqual(form.form_id, attachment_meta.form_id)
+        self.assertEqual(form.form_id, attachment_meta.parent_id)
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
 
     def test_get_attachment_by_name(self):
         form = create_form_for_test(DOMAIN)
         form_xml = get_simple_form_xml(form.form_id)
+        form_db = get_db_alias_for_partitioned_doc(form.form_id)
 
         with self.assertRaises(AttachmentNotFound):
             FormAccessorSQL.get_attachment_by_name(form.form_id, 'not_a_form.xml')
 
-        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
+        with self.assertNumQueries(1, using=form_db):
             attachment_meta = FormAccessorSQL.get_attachment_by_name(form.form_id, 'form.xml')
 
-        self.assertEqual(form.form_id, attachment_meta.form_id)
+        self.assertEqual(form.form_id, attachment_meta.parent_id)
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
-        self.assertEqual(form_xml, attachment_meta.read_content())
+        with attachment_meta.open() as content:
+            self.assertEqual(form_xml, content.read().decode('utf-8'))
 
     def test_get_form_operations(self):
         form = create_form_for_test(DOMAIN)
@@ -173,7 +171,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(2, len(forms))
         form = forms[0]
         self.assertEqual(form_with_pic.form_id, form.form_id)
-        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
+        with self.assertNumQueries(0, using=db_for_read_write(BlobMeta)):
             expected = {
                 'form.xml': 'text/xml',
                 'pic.jpg': 'image/jpeg',
@@ -182,7 +180,7 @@ class FormAccessorTestsSQL(TestCase):
             self.assertEqual(2, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
-        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
+        with self.assertNumQueries(0, using=db_for_read_write(BlobMeta)):
             expected = {
                 'form.xml': 'text/xml',
             }
@@ -435,8 +433,8 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         self.assertIn("image", form.attachments)
         self.assertEqual(form.get_attachment("image"), b"fake")
         self.assertXmlEqual(
-            form.get_attachment("form.xml"),
-            formxml.replace(b"toast", b"fruit"),
+            form.get_attachment("form.xml").decode('utf-8'),
+            formxml.replace("toast", "fruit"),
         )
 
     def test_update_responses_error(self):
@@ -453,7 +451,52 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
 
 @use_sql_backend
 class FormAccessorsTestsSQL(FormAccessorsTests):
-    pass
+
+    def test_update_responses_with_legacy_blobmeta(self):
+        # This test can be removed when blobs_blobmeta view
+        # and form_processor_xformattachmentsql goes away
+        from ..models import DeprecatedXFormAttachmentSQL
+
+        formxml = FormSubmissionBuilder(
+            form_id='123',
+            form_properties={'breakfast': 'toast', 'lunch': 'sandwich'}
+        ).as_xml_string()
+        xform = submit_form_locally(formxml, DOMAIN).xform
+
+        # temporarily disable insert restriction
+        # (until this test's transaction is rolled back)
+        db = get_db_alias_for_partitioned_doc(xform.form_id)
+        with connections[db].cursor() as cursor:
+            cursor.execute("""
+            DROP TRIGGER IF EXISTS legacy_xform_attachment_insert_not_allowed
+                ON form_processor_xformattachmentsql;
+            """)
+
+        # move blob metadata into old xformattachmentsql table
+        acc = FormAccessors(DOMAIN)
+        meta = xform.get_attachments()[0]
+        get_blob_db().metadb.bulk_delete([meta])
+        DeprecatedXFormAttachmentSQL(
+            form_id=meta.parent_id,
+            attachment_id=uuid.uuid4().hex,
+            blob_id=meta.key,
+            blob_bucket="",
+            name=meta.name,
+            content_length=meta.content_length,
+            md5='wrong',
+        ).save(using=db)
+        xform = acc.get_form(xform.form_id)
+        self.assertLess(xform.get_attachments()[0].id, 0)
+        self.assertEqual(xform.get_xml().decode('utf-8'), formxml)
+
+        updates = {'breakfast': 'fruit'}
+        FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
+        new_form = acc.get_form(xform.form_id)
+        new_xml = new_form.get_xml()
+        old_xml = acc.get_form(new_form.deprecated_form_id).get_xml()
+        self.assertNotEqual(old_xml, new_xml)
+        self.assertNotIn("fruit", old_xml.decode('utf-8'))
+        self.assertIn("fruit", new_xml.decode('utf-8'))
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
@@ -467,14 +510,17 @@ class DeleteAttachmentsFSDBTests(TestCase):
 
     def test_hard_delete_forms_and_attachments(self):
         forms = [create_form_for_test(DOMAIN) for i in range(3)]
-        form_ids = [form.form_id for form in forms]
+        form_ids = sorted(form.form_id for form in forms)
         forms = FormAccessorSQL.get_forms(form_ids)
         self.assertEqual(3, len(forms))
 
         other_form = create_form_for_test('other_domain')
         self.addCleanup(lambda: FormAccessorSQL.hard_delete_forms('other_domain', [other_form.form_id]))
 
-        attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids, ordered=True))
+        attachments = sorted(
+            get_blob_db().metadb.get_for_parents(form_ids),
+            key=lambda meta: meta.parent_id
+        )
         self.assertEqual(3, len(attachments))
 
         deleted = FormAccessorSQL.hard_delete_forms(DOMAIN, form_ids[1:] + [other_form.form_id])
@@ -485,10 +531,11 @@ class DeleteAttachmentsFSDBTests(TestCase):
         self.assertEqual(form_ids[0], forms[0].form_id)
 
         for attachment in attachments[1:]:
-            with self.assertRaises(AttachmentNotFound):
-                attachment.read_content()
+            with self.assertRaises(BlobNotFound):
+                attachment.open()
 
-        self.assertIsNotNone(attachments[0].read_content())
+        with attachments[0].open() as content:
+            self.assertIsNotNone(content.read())
         other_form = FormAccessorSQL.get_form(other_form.form_id)
         self.assertIsNotNone(other_form.get_xml())
 

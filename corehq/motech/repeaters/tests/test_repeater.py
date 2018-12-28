@@ -700,6 +700,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with patch('corehq.motech.repeaters.models.simple_post') as mock_post:
+            mock_post.return_value.status_code = 200
             repeat_record.fire()
             headers = self.repeater.get_headers(repeat_record)
             mock_post.assert_called_with(
@@ -882,3 +883,43 @@ class TestRepeaterPause(BaseRepeaterTest):
         self.repeater.delete()
         delete_all_repeat_records()
         super(TestRepeaterPause, self).tearDown()
+
+
+class TestRepeaterDeleted(BaseRepeaterTest):
+    def setUp(self):
+        super(TestRepeaterDeleted, self).setUp()
+        self.domain_name = "test-domain"
+        self.domain = create_domain(self.domain_name)
+
+        self.repeater = CaseRepeater(
+            domain=self.domain_name,
+            url='case-repeater-url',
+        )
+        self.repeater.save()
+        self.post_xml(self.xform_xml, self.domain_name)
+        self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+
+    def tearDown(self):
+        self.domain.delete()
+        self.repeater.delete()
+        delete_all_repeat_records()
+        super(TestRepeaterDeleted, self).tearDown()
+
+    @run_with_all_backends
+    def test_trigger_when_deleted(self):
+        self.repeater.retire()
+
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            process_repeat_record(self.repeat_record)
+            self.assertEqual(mock_fire.call_count, 0)
+            self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
+
+    @run_with_all_backends
+    def test_paused_then_deleted(self):
+        self.repeater.pause()
+        self.repeater.retire()
+
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            process_repeat_record(self.repeat_record)
+            self.assertEqual(mock_fire.call_count, 0)
+            self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")

@@ -41,6 +41,7 @@ from corehq.apps.analytics.tasks import (
     HUBSPOT_INVITATION_SENT_FORM, HUBSPOT_NEW_USER_INVITE_FORM,
     HUBSPOT_EXISTING_USER_INVITE_FORM)
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
@@ -479,6 +480,7 @@ class ListWebUsersView(BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'web_apps_list': get_cloudcare_apps(self.domain),
+            'apps_list': get_brief_apps_in_domain(self.domain),
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
@@ -561,13 +563,13 @@ def remove_web_user(request, domain, couch_user_id):
         user.save()
         if record:
             message = _('You have successfully removed {username} from your '
-                        'domain. <a href="{url}" class="post-link">Undo</a>')
+                        'project space. <a href="{url}" class="post-link">Undo</a>')
             messages.success(request, message.format(
                 username=user.username,
                 url=reverse('undo_remove_web_user', args=[domain, record.get_id])
             ), extra_tags="html")
         else:
-            message = _('It appears {username} has already been removed from your domain.')
+            message = _('It appears {username} has already been removed from your project space.')
             messages.success(request, message.format(username=user.username))
 
     return HttpResponseRedirect(
@@ -1091,18 +1093,6 @@ def change_password(request, domain, login_id, template="users/partials/reset_pa
 @login_and_domain_required
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
-
-
-@domain_admin_required
-@require_POST
-def location_restriction_for_users(request, domain):
-    if not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(request.domain):
-        raise Http403()
-    project = Domain.get_by_name(domain)
-    if "restrict_users" in request.POST:
-        project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
-    project.save()
-    return HttpResponse()
 
 
 @csrf_exempt

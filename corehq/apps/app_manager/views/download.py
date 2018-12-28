@@ -12,12 +12,16 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
 from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import add_odk_profile_after_build
+from corehq.apps.app_manager.util import (
+    add_odk_profile_after_build,
+    get_enabled_build_profiles_for_version,
+)
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
@@ -258,7 +262,7 @@ def download_file(request, domain, app_id, path):
         try:
             try:
                 # look for file guaranteed to exist if profile is created
-                request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
+                request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile), return_bytes=True)
             except ResourceNotFound:
                 request.app.create_build_files(build_profile_id=build_profile)
                 request.app.save()
@@ -271,15 +275,13 @@ def download_file(request, domain, app_id, path):
         assert request.app.copy_of
         # lazily create language profiles to avoid slowing initial build
         try:
-            payload = request.app.fetch_attachment(full_path)
+            payload = request.app.fetch_attachment(full_path, return_bytes=True)
         except ResourceNotFound:
             if build_profile in request.app.build_profiles and build_profile_access:
                 create_build_files_if_necessary_handling_conflicts()
-                payload = request.app.fetch_attachment(full_path)
+                payload = request.app.fetch_attachment(full_path, return_bytes=True)
             else:
                 raise
-        if type(payload) is six.text_type:
-            payload = payload.encode('utf-8')
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
@@ -411,16 +413,21 @@ def download_index(request, domain, app_id):
             extra_tags='html'
         )
     built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
+    enabled_build_profiles = []
+    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+        enabled_build_profiles = get_enabled_build_profiles_for_version(request.app.get_id, request.app.version)
+
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
         'files': OrderedDict(sorted(six.iteritems(files), key=lambda x: x[0])),
         'supports_j2me': request.app.build_spec.supports_j2me(),
         'built_versions': [{
-            'app_id': app_id,
+            'app_id': _app_id,
             'build_id': build_id,
             'version': version,
             'comment': comment,
-        } for app_id, build_id, version, comment in built_versions]
+        } for _app_id, build_id, version, comment in built_versions],
+        'enabled_build_profiles': enabled_build_profiles
     })
 
 
@@ -473,10 +480,14 @@ def download_index_files(app, build_profile_id=None):
             # profile hasnt been built yet
             app.create_build_files(build_profile_id=build_profile_id)
             app.save()
-        files = [(path[len(prefix):], app.fetch_attachment(path))
+        files = [(path[len(prefix):], app.fetch_attachment(path, return_bytes=True))
                  for path in app.blobs if needed_for_CCZ(path)]
     else:
         files = list(app.create_all_files().items())
+    files = [
+        (name, build_file if isinstance(build_file, six.text_type) else build_file.decode('utf-8'))
+        for (name, build_file) in files
+    ]
     return sorted(files)
 
 
@@ -489,9 +500,12 @@ def source_files(app):
     if not app.copy_of:
         app.set_media_versions(None)
     files = download_index_files(app)
+    app_json = json.dumps(
+        app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+    )
+    if six.PY2:
+        app_json = app_json.decode('utf-8')
     files.append(
-        ("app.json", json.dumps(
-            app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-        ))
+        ("app.json", app_json)
     )
     return sorted(files)

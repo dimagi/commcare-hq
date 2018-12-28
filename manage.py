@@ -5,11 +5,18 @@ from __future__ import unicode_literals
 import sys
 import os
 import mimetypes
-from collections import namedtuple
+import six
+import requests
+import attr
 
 import django
 
-GeventCommand = namedtuple('GeventCommand', 'command contains')
+
+@attr.s
+class GeventCommand(object):
+    command = attr.ib()
+    contains = attr.ib(default=None)
+    http_adapter_pool_size = attr.ib(default=None)
 
 
 def _set_source_root_parent(source_root_parent):
@@ -68,6 +75,8 @@ def _should_patch_gevent(args, gevent_commands):
         if gevent_command.contains:
             should_patch = should_patch and gevent_command.contains in ' '.join(args)
         if should_patch:
+            if gevent_command.http_adapter_pool_size:
+                requests.adapters.DEFAULT_POOLSIZE = gevent_command.http_adapter_pool_size
             break
     return should_patch
 
@@ -102,6 +111,12 @@ def patch_jsonfield():
     JSONField.to_python = to_python
 
 
+def patch_assertItemsEqual():
+    import unittest
+    if six.PY3:
+        unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
+
+
 if __name__ == "__main__":
     init_hq_python_path()
 
@@ -111,18 +126,20 @@ if __name__ == "__main__":
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
-        GeventCommand('mvp_force_update', None),
-        GeventCommand('run_gunicorn', None),
-        GeventCommand('preindex_everything', None),
-        GeventCommand('migrate_multi', None),
-        GeventCommand('prime_views', None),
-        GeventCommand('ptop_preindex', None),
-        GeventCommand('sync_prepare_couchdb_multi', None),
-        GeventCommand('sync_couch_views', None),
-        GeventCommand('celery', '-P gevent'),
-        GeventCommand('populate_form_date_modified', None),
-        GeventCommand('migrate_domain_from_couch_to_sql', None),
-        GeventCommand('migrate_multiple_domains_from_couch_to_sql', None),
+        GeventCommand('mvp_force_update'),
+        GeventCommand('run_gunicorn'),
+        GeventCommand('run_sql'),
+        GeventCommand('run_blob_migration'),
+        GeventCommand('preindex_everything'),
+        GeventCommand('migrate_multi'),
+        GeventCommand('prime_views'),
+        GeventCommand('ptop_preindex'),
+        GeventCommand('sync_prepare_couchdb_multi'),
+        GeventCommand('sync_couch_views'),
+        GeventCommand('celery', contains='-P gevent'),
+        GeventCommand('populate_form_date_modified'),
+        GeventCommand('migrate_domain_from_couch_to_sql', http_adapter_pool_size=32),
+        GeventCommand('migrate_multiple_domains_from_couch_to_sql', http_adapter_pool_size=32),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
         from gevent.monkey import patch_all; patch_all(subprocess=True)
@@ -131,6 +148,8 @@ if __name__ == "__main__":
     # workaround for https://github.com/smore-inc/tinys3/issues/33
     mimetypes.init()
     patch_jsonfield()
+
+    patch_assertItemsEqual()
 
     set_default_settings_path(sys.argv)
     from django.core.management import execute_from_command_line

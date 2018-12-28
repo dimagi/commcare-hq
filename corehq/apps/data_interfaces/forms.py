@@ -128,8 +128,8 @@ class AddCaseGroupForm(forms.Form):
         self.helper.layout = Layout(
             InlineField('name'),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Create Group")),
-                css_class='btn-success',
+                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Group")),
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -198,7 +198,7 @@ class AddCaseToGroupForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
-                css_class='btn-success',
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -632,9 +632,9 @@ class CaseRuleActionsForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _("Actions"),
-                hidden_bound_field('close_case'),
-                hidden_bound_field('properties_to_update'),
-                hidden_bound_field('custom_action_definitions'),
+                hidden_bound_field('close_case', 'closeCase'),
+                hidden_bound_field('properties_to_update', 'propertiesToUpdate'),
+                hidden_bound_field('custom_action_definitions', 'customActionDefinitions'),
                 Div(data_bind="template: {name: 'case-actions'}"),
                 css_id="rule-actions",
             ),

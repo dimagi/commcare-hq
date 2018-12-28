@@ -25,19 +25,19 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def ccs_record_monthly_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def ccs_record_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def pregnant_tasks_cases_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-pregnant-tasks_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def tablename(self):
@@ -213,7 +213,9 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 'COALESCE(agg_delivery.valid_visits, 0)'
              ')'),
             ('opened_on', 'case_list.opened_on'),
-            ('dob', 'case_list.dob')
+            ('dob', 'case_list.dob'),
+            ('closed', 'case_list.closed'),
+            ('anc_abnormalities', 'agg_bp.anc_abnormalities')
         )
         return """
         INSERT INTO "{tablename}" (

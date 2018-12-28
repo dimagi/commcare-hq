@@ -1736,11 +1736,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
             DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
             DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
+            DTColumnBuilder.newColumn('aww_phone_number').withTitle('AWW Phone Number').renderWith(renderAwwPhoneNumber).withClass('medium-col'),
+            DTColumnBuilder.newColumn('mother_phone_number').withTitle('Mother Phone Number').renderWith(renderMotherPhoneNumber).withClass('medium-col'),
         ];
     } else if (vm.step === 'pregnant') {
         vm.dtColumns = [
             DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNamePregnant).withClass('big-col'),
             DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
+            DTColumnBuilder.newColumn('closed').withTitle('Status').renderWith(renderClosed).withClass('medium-col'),
             DTColumnBuilder.newColumn('opened_on').withTitle('Pregnancy registration').renderWith(renderOpenedOn).withClass('medium-col'),
             DTColumnBuilder.newColumn('edd').withTitle('EDD').renderWith(renderEdd).withClass('medium-col'),
             DTColumnBuilder.newColumn('trimester').withTitle('Trimester').renderWith(renderTrimester).withClass('medium-col'),
@@ -1788,6 +1791,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     function renderAge(data, type, full) {
         return full.age || 'Data not Entered';
+    }
+
+    function renderClosed(data, type, full) {
+        return full.closed ? 'Pregnancy terminated' : 'Pregnant';
     }
 
     function renderOpenedOn(data, type, full) {
@@ -1877,6 +1884,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     function renderPseDaysAttended(data, type, full) {
         return full.pse_days_attended || 'Data not Entered';
+    }
+
+    function renderAwwPhoneNumber(data, type, full) {
+        return full.aww_phone_number || 'Data not Entered';
+    }
+
+    function renderMotherPhoneNumber(data, type, full) {
+        return full.mother_phone_number || 'Data not Entered';
     }
 
     vm.showTable = true;

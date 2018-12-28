@@ -1,7 +1,6 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load djangular_tags %}
 {% load humanize %}
 
 {% if request|toggle_enabled:"PAGINATED_EXPORTS" %}
@@ -23,10 +22,10 @@
 {% if has_edit_permissions %}
     <div id="create-export" class="ko-template">
         <p>
-            <a href="#createExportOptionsModal" data-toggle="modal" class="btn btn-success">
+            <a href="#createExportOptionsModal" data-toggle="modal" class="btn btn-primary">
                 <i class="fa fa-plus"></i>
                 {% blocktrans %}
-                    Create New {{ export_type_caps }}
+                    Add {{ export_type_caps }}
                 {% endblocktrans %}
             </a>
         </p>

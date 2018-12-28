@@ -189,6 +189,7 @@ class TestFixtureUpload(TestCase):
         export_raw(headers, rows, file, format=Format.XLS_2007)
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
+            f.seek(0)
             return get_workbook(f)
 
     def get_fixture_items(self, attribute):
@@ -224,7 +225,7 @@ class TestFixtureUpload(TestCase):
         new_rows = [(apple_id, 'N', 'apple'), (None, 'N', 'orange')]
         workbook = self._get_workbook_from_data(self.headers, self.make_rows(new_rows))
         _run_fixture_upload(self.domain, workbook)
-        self.assertEqual(
-            set(self.get_fixture_items('name')),
-            {'apple', 'orange'}
+        self.assertItemsEqual(
+            self.get_fixture_items('name'),
+            ['apple', 'orange']
         )
