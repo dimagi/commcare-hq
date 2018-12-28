@@ -1,12 +1,11 @@
 /* global moment */
 
-function CasExportController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-                             downloadService) {
+function CasExportController($rootScope, $location, locationHierarchy, locationsService, userLocationId) {
     var vm = this;
 
     $rootScope.report_link = '';
 
-    locationsService.getRootLocations().then(function(data) {
+    locationsService.getRootLocations().then(function (data) {
         vm.locations = data.locations;
     });
 
@@ -30,7 +29,7 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
     var currentDay = moment().date(); //in  moment date() function returns number of day in month
     var startByMonth = 0;
     if (currentDay <= 15) {
-        startByMonth = 1
+        startByMonth = 1;
     }
 
     var twoAgoMonth = moment().subtract(startByMonth + 2,'months');
@@ -40,7 +39,7 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
     vm.months = [
         {id: currentMonth.month() + 1, name: currentMonth.format('MMMM YYYY')},
         {id: prevMonth.month() + 1, name: prevMonth.format('MMMM YYYY')},
-        {id: twoAgoMonth.month() + 1, name: twoAgoMonth.format('MMMM YYYY')}
+        {id: twoAgoMonth.month() + 1, name: twoAgoMonth.format('MMMM YYYY')},
     ];
 
     vm.selectedLocation = userLocationId;
@@ -50,22 +49,21 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
     vm.indicators = [
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant and Lactating Women'},
-        {id: 3, name: 'AWC'}
+        {id: 3, name: 'AWC'},
     ];
 
     vm.allFiltersSelected = function () {
-        return vm.selectedLocation !== null && vm.selectedMonth !== null && vm.selectedIndicator !== null
-    }
+        return vm.selectedLocation !== null && vm.selectedMonth !== null && vm.selectedIndicator !== null;
+    };
 
 }
 
-CasExportController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'downloadService'];
+CasExportController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
 
-window.angular.module('icdsApp').directive("casExport", function() {
+window.angular.module('icdsApp').directive("casExport", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
-        restrict:'E',
+        restrict: 'E',
         scope: {
         },
         bindToController: true,
