@@ -1393,7 +1393,6 @@ COUCHDB_APPS = [
     ('custom_data_fields', META_DB),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
-    ('bihar', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', META_DB),
@@ -2031,8 +2030,6 @@ COUCH_CACHE_BACKENDS = [
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
-    'care-bihar',
-    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
