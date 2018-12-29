@@ -138,6 +138,3 @@ class CareBiharFluff(fluff.IndicatorDocument):
         app_label = 'bihar'
 
 CareBiharFluffPillow = CareBiharFluff.pillow()
-
-
-from .signals import *
