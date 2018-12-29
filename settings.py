@@ -345,7 +345,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'custom.bihar',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -2089,8 +2088,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'care-bihar': 'custom.bihar',
-    'bihar': 'custom.bihar',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
