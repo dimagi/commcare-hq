@@ -892,23 +892,6 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-# Example:
-# TRANSIFEX_DETAILS = {
-#     'organization': 'selfproject',
-#     'project': {
-#        'icds-test': ['test-1236', 'test-hindi-marathi'],
-#     },
-#     'teams': {
-#         'icds-test': {
-#              source lang code at HQ : link to team on transifex
-#             'en': 'https://www.transifex.com/selfproject/teams/'
-#         }
-#     },
-#     'token': 'api-token'
-#
-# }
-# ToDO: make it support for multiple domains
-TRANSIFEX_DETAILS = None
 from env_settings import *
 
 try:
