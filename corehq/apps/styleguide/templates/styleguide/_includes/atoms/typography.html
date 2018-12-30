@@ -2,25 +2,10 @@
     <h1 id="atoms-typography">Typography</h1>
     <p class="lead">
         Font choice can have a strong yet subtle effect on how users perceive content.
-    </p>
-    <p>
-        HQ's default fonts are defined
-        <a href='https://github.com/dimagi/commcare-hq/blob/83de733474b2876c12cd9e766d856f558d3be420/corehq/apps/hqwebapp/static/hqwebapp/less/_hq/includes/variables.less#L6'
-        target='_blank'>as follows</a>:
-        <pre>Avenir, Roboto, "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif</pre>
-        Which specific font a user sees will depend on what they have installed.
-        The first available font, reading left to right, will be used.
-        We <a
-        href='https://github.com/dimagi/commcare-hq/blob/83de733474b2876c12cd9e766d856f558d3be420/corehq/apps/hqwebapp/templates/hqwebapp/base.html#L39'
-        target='_blank'>embed</a> Nunito Sans, so it should be rare for someone to see anything lower in the hierarchy than that.
-    </p>
-    <p>
-        This set of fonts ensures consistency with:
-        <ul>
-            <li>Dimagi print designs, which are based on Avenir</li>
-            <li>Android, which uses Roboto as its default font</li>
-            <li>dimagi.com, which uses Nunito Sans</li>
-        </ul>
+        HQ uses <a href='https://fonts.google.com/specimen/Nunito+Sans' target='_blank'>Nunito Sans</a> as its default font.
+        This is embdedded in our <a
+        href='https://github.com/dimagi/commcare-hq/blob/92b21a8bc9522148872fbcd735c9aa26839940d5/corehq/apps/hqwebapp/templates/hqwebapp/base.html#L39'
+        target='_blank'>base template</a> and is consistent with dimagi.com.
     </p>
     <p>
         Further reading:
@@ -28,30 +13,8 @@
             The science behind fonts (and how they make you feel)
         </a>
     </p>
-    <div class="row" style="background-color: #ededec; color: #1c2126">
-        <div class="col-sm-4" style="font-family: Avenir;">
-            <h1>Avenir H1</h1>
-            <h2>Avenir H2</h2>
-            <h3>Avenir H3</h3>
-            <h4>Avenir H4</h4>
-            <h5>Avenir H5</h5>
-            <h6>Avenir H6</h6>
-            <p>Avenir paragraph</p>
-            <p><strong>Avenir strong</strong></p>
-            <p><em>Avenir emphasis</em></p>
-        </div>
-        <div class="col-sm-4" style="font-family: Roboto;">
-            <h1>Roboto H1</h1>
-            <h2>Roboto H2</h2>
-            <h3>Roboto H3</h3>
-            <h4>Roboto H4</h4>
-            <h5>Roboto H5</h5>
-            <h6>Roboto H6</h6>
-            <p>Roboto paragraph</p>
-            <p><strong>Roboto strong</strong></p>
-            <p><em>Roboto emphasis</em></p>
-        </div>
-        <div class="col-sm-4" style="font-family: 'Nunito Sans';">
+    <div class="row">
+        <div class="col-sm-6" style="font-family: 'Nunito Sans'; background-color: #ededec; color: #1c2126;">
             <h1>Nunito Sans H1</h1>
             <h2>Nunito Sans H2</h2>
             <h3>Nunito Sans H3</h3>
@@ -62,32 +25,7 @@
             <p><strong>Nunito Sans strong</strong></p>
             <p><em>Nunito Sans emphasis</em></p>
         </div>
-    </div>
-    <br>
-    <div class="row" style="background-color: #1b2126; color: #ffffff;">
-        <div class="col-sm-4" style="font-family: Avenir;">
-            <h1>Avenir H1</h1>
-            <h2>Avenir H2</h2>
-            <h3>Avenir H3</h3>
-            <h4>Avenir H4</h4>
-            <h5>Avenir H5</h5>
-            <h6>Avenir H6</h6>
-            <p>Avenir paragraph</p>
-            <p><strong>Avenir strong</strong></p>
-            <p><em>Avenir emphasis</em></p>
-        </div>
-        <div class="col-sm-4" style="font-family: Roboto;">
-            <h1>Roboto H1</h1>
-            <h2>Roboto H2</h2>
-            <h3>Roboto H3</h3>
-            <h4>Roboto H4</h4>
-            <h5>Roboto H5</h5>
-            <h6>Roboto H6</h6>
-            <p>Roboto paragraph</p>
-            <p><strong>Roboto strong</strong></p>
-            <p><em>Roboto emphasis</em></p>
-        </div>
-        <div class="col-sm-4" style="font-family: 'Nunito Sans';">
+        <div class="col-sm-6" style="font-family: 'Nunito Sans'; background-color: #1b2126; color: #ffffff;">
             <h1>Nunito Sans H1</h1>
             <h2>Nunito Sans H2</h2>
             <h3>Nunito Sans H3</h3>
