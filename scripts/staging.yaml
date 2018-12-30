@@ -55,7 +55,7 @@ branches:
   - jls/conflicts  # Jenny Dec 26: fixes master conflict for lwyszomi:lw/js-forms-modules
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
   - reports-effective-start-date  # Gabriella Dec 18
-  - jls/mm-update-paths  # Jenny Dec 19
+#  - jls/mm-update-paths  # Jenny Dec 19
   - jls/mm-update-paths-find-import-error  # Jenny Dec 30
   - cz/kill-bihar  # cory dec 29
 submodules: {}
