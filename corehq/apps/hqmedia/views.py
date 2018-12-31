@@ -18,6 +18,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+from lxml import etree
 
 from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
 
@@ -40,6 +41,8 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -270,10 +273,69 @@ def update_multimedia_paths(request, domain, app_id):
             'error': _("Could not find file. Please re-upload file.")
         })
 
-    # TODO: update paths
+    app = get_app(domain, app_id)
+    from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows
+    with get_spreadsheet(f) as spreadsheet:
+        rows = list(spreadsheet.iter_rows())
+        (errors, warnings) = validate_multimedia_paths_rows(app, rows)
+        if len(errors):
+            return json_response({
+                'success': 1,
+                'errors': errors,
+            })
+        paths = {row[0]: interpolate_media_path(row[1]) for row in rows}
+        success_counts = defaultdict(lambda: 0)
+        success_links = defaultdict(lambda: '')
+        for module in app.modules:
+            success_links[module.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_module",
+                args=[domain, app.id, module.unique_id]), module.default_name())
+            for lang in app.langs:
+                if module.icon_by_language(lang) in paths:
+                    # TODO: move into hqmedia.models?
+                    module.set_icon(lang, paths[module.icon_by_language(lang)])
+                    success_counts[module.unique_id] += 1
+                # TODO: audio_by_language => set_audio(self, lang, icon_path)
+                # TODO: all the other non-menu module media
+            for form in module.forms:
+                success_links[form.unique_id] = "<a href='{}' target='_blank'>{}</a>".format(reverse("view_form",
+                    args=[domain, app.id, form.unique_id]), form.default_name())
+                # TODO: handle form menu
+                # TODO: move somewhere like app_manager.xform?
+                xform = XForm(form.source)
+                dirty = False
+                for node in xform.itext_node.findall('{f}translation/{f}text/{f}value'):
+                    if node.text in paths:
+                        node.xml.text = paths[node.text]
+                        success_counts[form.unique_id] += 1
+                        dirty = True
+                if dirty:
+                    form.source = etree.tostring(xform.xml).decode('utf-8')
+
+        for old_path, new_path in six.iteritems(paths):
+            app.multimedia_map.update({
+                new_path: app.multimedia_map[old_path],
+            })
+
+        app.save()
+
+        # Force all_media to reset
+        app.all_media.reset_cache(app)
+        app.all_media_paths.reset_cache(app)
+
+        # Warn if any old paths remain in app (because they're used in a place this function doesn't know about)
+        warnings = []
+        app.remove_unused_mappings()
+        app_paths = {m.path: True for m in app.all_media()}
+        for old_path, new_path in six.iteritems(paths):
+            if old_path in app_paths:
+                warnings.append(_("Could not completely update path <code>{}</code>, "
+                                  "please check app for remaining references.").format(old_path))
 
     return json_response({
         'success': 1,
+        'success_counts': success_counts,
+        'success_links': success_links,
+        'warnings': warnings,
     })
 
 
