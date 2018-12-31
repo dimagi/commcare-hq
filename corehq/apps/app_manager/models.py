@@ -101,7 +101,12 @@ from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
-from corehq.apps.hqmedia.models import HQMediaMixin, CommCareMultimedia
+from corehq.apps.hqmedia.models import (
+    ApplicationMediaMixin,
+    CommCareMultimedia,
+    FormMediaMixin,
+    ModuleMediaMixin,
+)
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
@@ -1714,7 +1719,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return self.custom_icons[0]
 
 
-class Form(IndexedFormBase, NavMenuItemMediaMixin):
+class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'module_form'
 
     form_filter = StringProperty()
@@ -2482,7 +2487,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
-class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
+class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(six.text_type)
     unique_id = StringProperty()
     case_type = StringProperty()
@@ -3025,7 +3030,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 pass
 
 
-class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
+class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
@@ -5520,7 +5525,7 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
+class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     """
     An Application that can be created entirely through the online interface
 
