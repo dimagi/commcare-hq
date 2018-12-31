@@ -5,12 +5,17 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
 
         self.fileId = ko.observable('');
 
+        // Messaging
         self.genericErrorMessage = gettext("There was an error processing your file. Please try again or report an issue if the problem persists.");
         self.serverError = ko.observable('');
         self.errorMessages = ko.observableArray();
         self.warningMessages = ko.observableArray();
         self.successMessage = ko.observable('');
+        self.successMessages = ko.observableArray();
 
+        // Controls for disabling, etc in UI
+        self.isValidating = ko.observable(false);
+        self.isUpdating = ko.observable(false);
         self.allowUpdate = ko.computed(function () {
             return self.fileId() && !self.serverError() && !self.errorMessages().length;
         });
@@ -20,11 +25,12 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
             self.errorMessages.removeAll();
             self.warningMessages.removeAll();
             self.successMessage('');
+            self.successMessages.removeAll();
         };
 
         self.validate = function (form) {
-            // TODO: spinner behavior
             self.clearMessages();
+            self.isValidating(true);
             $.ajax({
                 method: 'POST',
                 url: self.validateUrl,
@@ -32,6 +38,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                 processData: false,
                 contentType: false,
                 success: function (data) {
+                    self.isValidating(false);
                     if (data.success) {     // file was uploaded successfully, though its content may have errors
                         self.fileId(data.file_id);
                         self.errorMessages(data.errors);
@@ -44,6 +51,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                     }
                 },
                 error: function () {
+                    self.isValidating(false);
                     self.serverError(self.genericError);
                 },
             });
@@ -52,7 +60,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
         };
 
         self.update = function () {
-            // TODO: spinner behavior
+            self.isUpdating(true);
             self.clearMessages();
             $.ajax({
                 method: 'POST',
@@ -61,13 +69,29 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                     file_id: self.fileId(),
                 },
                 success: function (data) {
+                    self.isUpdating(false);
                     if (data.success) {
-                        alert("TODO: implement");
+                        if (!_.isEmpty(data.errors)) {
+                            self.errorMessages(data.errors);
+                        }
+
+                        if (_.isEmpty(data.success_counts)) {
+                            self.successMessage(gettext("No items were found to update."));
+                        } else {
+                            var messageTemplate = _.template(gettext("<%= count %> item(s) were updated in <%= link %>"));
+                            self.successMessages(_.map(data.success_counts, function (count, id) {
+                                return messageTemplate({
+                                    count: data.success_counts[id],
+                                    link: data.success_links[id],
+                                });
+                            }));
+                        }
                     } else {
                         self.serverError(data.error || self.genericError);
                     }
                 },
                 error: function () {
+                    self.isUpdating(false);
                     self.serverError(self.genericError);
                 },
             });
