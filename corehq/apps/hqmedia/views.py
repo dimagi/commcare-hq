@@ -40,7 +40,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.views.media_utils import interpolate_media_path
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -272,6 +271,7 @@ def update_multimedia_paths(request, domain, app_id):
         })
 
     app = get_app(domain, app_id)
+    from corehq.apps.app_manager.views.media_utils import interpolate_media_path
     from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows, update_multimedia_paths
     with get_spreadsheet(f) as spreadsheet:
         rows = list(spreadsheet.iter_rows())
