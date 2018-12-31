@@ -203,6 +203,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_select2_v4,
     use_datatables,
     use_multiselect,
+    use_jquery_ui
 )
 import six
 from six.moves import range
@@ -897,6 +898,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
     @use_multiselect
     @use_select2_v4
+    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
 
