@@ -449,12 +449,22 @@ class ReportModuleValidator(object):
                 'type': 'no reports',
                 'module': self.module.get_module_info(),
             })
-        if self.module.has_duplicate_instance_ids():
+        if self._has_duplicate_instance_ids():
             errors.append({
                 'type': 'report config id duplicated',
                 'module': self.module.get_module_info(),
             })
         return errors
+
+    def _has_duplicate_instance_ids(self):
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+        duplicate_instance_ids = {
+            instance_id
+            for instance_id, uuids in get_uuids_by_instance_id(self.get_app().domain).items()
+            if len(uuids) > 1
+        }
+        return any(report_config.instance_id in duplicate_instance_ids
+                   for report_config in self.report_configs)
 
 
 class ShadowModuleValidator(object):
