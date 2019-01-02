@@ -1,6 +1,6 @@
 <section class="hq-styleguide-article">
     <header class="page-header">
-        <h1 id="hq-views-baseclass">Base Classes</h1>
+        <h1 id="organisms-views">Class-Based Views on CommCare HQ</h1>
     </header>
     <p class="lead">
         Ultimately all views are based on django's <code>TemplateView</code> class,
@@ -39,20 +39,20 @@
     <p>
         Here is an example of a class inheriting from the <code>BaseDomainView</code>.
     </p>
-    <pre><code>class MyView(BaseDomainView):
-    urlname = 'my_view'</code></pre>
+    <pre>class MyView(BaseDomainView):
+    urlname = 'my_view'</pre>
     <p>
         (Required) <code>urlname</code> will be the string referenced when you do the url mapping for
         this view in it's application's <code>urls.py</code>.<br />(e.g.
         <code>url(r'^myview/$', MyView.as_view(), name=MyView.urlname)</code>.
     </p>
-<pre><code>    template_name = 'all_the_views/my_view.html'
+    <pre>   template_name = 'all_the_views/my_view.html'
     page_title = ugettext_lazy("My View")
     section_title = ugettext_lazy("All the Views")
 
     @property
     def section_url(self):
-        return reverse(MySectionPageRoot.urlnale, args=[self.domain])</code></pre>
+        return reverse(MySectionPageRoot.urlnale, args=[self.domain])</pre>
     <p>
         (Required) <code>section_title</code> and <code>section_url</code> are the title and url
         for the "tab" or major content area that the view is inside. For instance, Settings,
@@ -67,49 +67,49 @@
         the page's breadcrumbs (it's the first crumb).
     </p>
 
-<pre><code>    @property
+<pre>    @property
     def parent_pages(self):
         return [
             {
                 'title': MyParentPageView.page_title,
                 'url': reverse(MyParentPageView.urlname, args=[self.domain]),
             }
-        ]</code></pre>
+        ]</pre>
 
     <p>
         (Optional) This is what shows up as the hierarchy in the Breadcrumbs for the page, and is
         what's in between the first crumb (the section) and the last crumb (the current page).
     </p>
 
-<pre><code>    @property
+<pre>    @property
     def page_name(self):
         return "{domain}'s {page_title}".format(
             domain=self.domain,
             page_title=self.page_title,
-        )</code></pre>
+        )</pre>
     <p>
         (Optional) <code>page_name</code> by default returns <code>page_title</code>. It's a
         way of adding request-specific context to the <code>page_title</code>, but still having
         access to the <code>page_title</code> from a class level for general referencing of the page.
     </p>
-    <pre><code>    @property
+    <pre>    @property
     def page_context(self):
         return {
             'form': MyForm(),
-        }</code></pre>
+        }</pre>
     <p>
         (Optional) While <code>page_context</code> is optional, it's very likely you'll implement it,
         as that's where you return all the variables specific to that page. If you are starting to create
         a hierarchy where you're then adding to the <code>page_context</code> via.
     </p>
-    <pre><code>    # note, this is an example of what NOT to do
+    <pre>    # note, this is an example of what NOT to do
     @property
     def page_context(self):
         context = super(MyView, self).page_context
         context.update({
             'form': MyForm(),
         })
-        return context</code></pre>
+        return context</pre>
     <p>
         Then, first, ask why you need that specific hierarchy. Perhaps you want to just inherit from
         a Base Section view? Second, this should never happen with <code>page_context</code>. That's what
@@ -123,7 +123,7 @@
         <code>section_url</code> and any section-specific context can be added to the
         <code>main_context</code>.
     </p>
-    <pre><code>class BaseMySectionView(BaseDomainView):
+    <pre>class BaseMySectionView(BaseDomainView):
     section_name = "My Section"
 
     @property
@@ -136,13 +136,13 @@
         context.update({
             'my_section_emoji': "bears",
         })
-        return context</code></pre>
+        return context</pre>
     <p>
         <code>main_context</code> here is optional but a good place to insert any section-specific
         template contexts in.
     </p>
 
-    <pre><code>
+    <pre>
     def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)</code></pre>
+        return super(MyView, self).dispatch(request, *args, **kwargs)</pre>
 </section>
