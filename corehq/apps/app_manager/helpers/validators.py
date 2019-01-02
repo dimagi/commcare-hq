@@ -291,7 +291,7 @@ class ModuleBaseValidator(object):
     def validate_for_build(self):
         errors = []
         try:
-            errors += self.module.validate_with_raise()
+            errors += self.validate_with_raise()
         except ModuleNotFoundException as ex:
             errors.append({
                 "type": "missing module",

@@ -2646,11 +2646,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             if form.get_unique_id() == unique_id:
                 return form
 
-    def validate_for_build(self):
-        return ModuleBaseValidator(self).validate_for_build()
+    @property
+    def validator(self):
+        return ModuleBaseValidator(self)
 
-    def validate_with_raise(self):
-        return ModuleBaseValidator(self).validate_with_raise()
+    def validate_for_build(self):
+        return self.validator.validate_for_build()
 
     @memoized
     def get_subcase_types(self):
@@ -2872,8 +2873,9 @@ class Module(ModuleBase, ModuleDetailsMixin):
             self.forms.append(new_form)
         return self.get_form(index or -1)
 
-    def validate_with_raise(self):
-        return ModuleValidator(self).validate_with_raise()
+    @property
+    def validator(self):
+        return ModuleValidator(self)
 
     def requires(self):
         r = set(["none"])
@@ -3719,8 +3721,9 @@ class AdvancedModule(ModuleBase):
             for error in errors:
                 yield error
 
-    def validate_with_raise(self):
-        return AdvancedModuleValidator(self).validate_with_raise()
+    @property
+    def validator(self):
+        return AdvancedModuleValidator(self)
 
     def _uses_case_type(self, case_type, invert_match=False):
         return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
@@ -4230,8 +4233,9 @@ class ReportModule(ModuleBase):
             valid_report_configs=valid_report_configs
         )
 
-    def validate_with_raise(self):
-        return ReportModuleValidator(self).validate_with_raise()
+    @property
+    def validator(self):
+        return ReportModuleValidator(self)
 
 
 class ShadowModule(ModuleBase, ModuleDetailsMixin):
@@ -4339,8 +4343,9 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
-    def validate_with_raise(self):
-        return ShadowModuleValidator(self).validate_with_raise()
+    @property
+    def validator(self):
+        return ShadowModuleValidator(self)
 
 
 class LazyBlobDoc(BlobMixin):
