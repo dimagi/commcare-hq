@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import six
+from lxml import etree
 
 from collections import defaultdict
 from django.conf import settings
@@ -27,6 +28,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationError,
 )
 from corehq.apps.app_manager.util import app_callout_templates, module_case_hierarchy_has_circular_reference
+from corehq.apps.app_manager.xpath import interpolate_xpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 
 
@@ -321,13 +323,55 @@ class ModuleBaseValidator(object):
         return errors
 
 
-class ModuleValidator(object):
+class ModuleDetailValidatorMixin(object):
+    def validate_details_for_build(self):
+        errors = []
+        for sort_element in self.module.detail_sort_elements:
+            try:
+                validate_detail_screen_field(sort_element.field)
+            except ValueError:
+                errors.append({
+                    'type': 'invalid sort field',
+                    'field': sort_element.field,
+                    'module': self.module.get_module_info(),
+                })
+        if self.module.case_list_filter:
+            try:
+                # test filter is valid, while allowing for advanced user hacks like "foo = 1][bar = 2"
+                case_list_filter = interpolate_xpath('dummy[' + self.module.case_list_filter + ']')
+                etree.XPath(case_list_filter)
+            except (etree.XPathSyntaxError, CaseXPathValidationError):
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.module.get_module_info(),
+                    'filter': self.module.case_list_filter,
+                })
+        for detail in [self.module.case_details.short, self.module.case_details.long]:
+            if detail.use_case_tiles:
+                if not detail.display == "short":
+                    errors.append({
+                        'type': "invalid tile configuration",
+                        'module': self.module.get_module_info(),
+                        'reason': _('Case tiles may only be used for the case list (not the case details).')
+                    })
+                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                    if field not in col_by_tile_field:
+                        errors.append({
+                            'type': "invalid tile configuration",
+                            'module': self.module.get_module_info(),
+                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                        })
+        return errors
+
+
+class ModuleValidator(ModuleDetailValidatorMixin):
     def __init__(self, module, *args, **kwargs):
         super(ModuleValidator, self).__init__(*args, **kwargs)
         self.module = module
 
     def _validate_for_build(self):
-        errors = self.module.validate_details_for_build()
+        errors = self.validate_details_for_build()
         if not self.module.forms and not self.module.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
@@ -467,13 +511,13 @@ class ReportModuleValidator(object):
                    for report_config in self.report_configs)
 
 
-class ShadowModuleValidator(object):
+class ShadowModuleValidator(ModuleDetailValidatorMixin):
     def __init__(self, module, *args, **kwargs):
         super(ShadowModuleValidator, self).__init__(*args, **kwargs)
         self.module = module
 
     def _validate_for_build(self):
-        errors = self.module.validate_details_for_build()
+        errors = self.validate_details_for_build()
         if not self.module.source_module:
             errors.append({
                 'type': 'no source module id',
