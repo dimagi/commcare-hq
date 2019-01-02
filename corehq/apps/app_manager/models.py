@@ -43,6 +43,7 @@ from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
     ApplicationValidator,
     ModuleValidator,
+    ModuleBaseValidator,
     AdvancedModuleValidator,
     ReportModuleValidator,
     ShadowModuleValidator,
@@ -2660,39 +2661,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         return errors
 
     def _validate_for_build(self):
-        errors = []
-        needs_case_detail = self.requires_case_details()
-        needs_case_type = needs_case_detail or len([1 for f in self.get_forms() if f.is_registration_form()])
-        if needs_case_detail or needs_case_type:
-            errors.extend(self.get_case_errors(
-                needs_case_type=needs_case_type,
-                needs_case_detail=needs_case_detail
-            ))
-        if self.case_list_form.form_id:
-            try:
-                form = self.get_app().get_form(self.case_list_form.form_id)
-            except FormNotFoundException:
-                errors.append({
-                    'type': 'case list form missing',
-                    'module': self.get_module_info()
-                })
-            else:
-                if not form.is_registration_form(self.case_type):
-                    errors.append({
-                        'type': 'case list form not registration',
-                        'module': self.get_module_info(),
-                        'form': form,
-                    })
-        if self.module_filter:
-            is_valid, message = validate_xpath(self.module_filter)
-            if not is_valid:
-                errors.append({
-                    'type': 'module filter has xpath error',
-                    'xpath_error': message,
-                    'module': self.get_module_info(),
-                })
-
-        return errors
+        return ModuleBaseValidator(self)._validate_for_build()
 
     @memoized
     def get_subcase_types(self):

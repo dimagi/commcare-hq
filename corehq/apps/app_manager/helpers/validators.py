@@ -18,6 +18,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
+    FormNotFoundException,
     UserCaseXPathValidationError,
     ModuleIdMissingException,
     PracticeUserException,
@@ -26,6 +27,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationError,
 )
 from corehq.apps.app_manager.util import app_callout_templates, module_case_hierarchy_has_circular_reference
+from corehq.apps.app_manager.xpath_validator import validate_xpath
 
 
 class ApplicationBaseValidator(object):
@@ -275,6 +277,47 @@ class ApplicationValidator(ApplicationBaseValidator):
                              'support that. You can remove User Properties functionality by opening the User '
                              'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
             })
+        return errors
+
+
+class ModuleBaseValidator(object):
+    def __init__(self, module, *args, **kwargs):
+        super(ModuleBaseValidator, self).__init__(*args, **kwargs)
+        self.module = module
+
+    def _validate_for_build(self):
+        errors = []
+        needs_case_detail = self.module.requires_case_details()
+        needs_case_type = needs_case_detail or len([1 for f in self.module.get_forms() if f.is_registration_form()])
+        if needs_case_detail or needs_case_type:
+            errors.extend(self.module.get_case_errors(
+                needs_case_type=needs_case_type,
+                needs_case_detail=needs_case_detail
+            ))
+        if self.module.case_list_form.form_id:
+            try:
+                form = self.module.get_app().get_form(self.module.case_list_form.form_id)
+            except FormNotFoundException:
+                errors.append({
+                    'type': 'case list form missing',
+                    'module': self.module.get_module_info()
+                })
+            else:
+                if not form.is_registration_form(self.module.case_type):
+                    errors.append({
+                        'type': 'case list form not registration',
+                        'module': self.module.get_module_info(),
+                        'form': form,
+                    })
+        if self.module.module_filter:
+            is_valid, message = validate_xpath(self.module.module_filter)
+            if not is_valid:
+                errors.append({
+                    'type': 'module filter has xpath error',
+                    'xpath_error': message,
+                    'module': self.module.get_module_info(),
+                })
+
         return errors
 
 
