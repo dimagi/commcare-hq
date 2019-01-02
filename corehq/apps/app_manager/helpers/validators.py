@@ -25,7 +25,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormException,
     XFormValidationError,
 )
-from corehq.apps.app_manager.util import app_callout_templates
+from corehq.apps.app_manager.util import app_callout_templates, module_case_hierarchy_has_circular_reference
 
 
 class ApplicationBaseValidator(object):
@@ -275,4 +275,38 @@ class ApplicationValidator(ApplicationBaseValidator):
                              'support that. You can remove User Properties functionality by opening the User '
                              'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
             })
+        return errors
+
+
+class ModuleValidator(object):
+    def __init__(self, module, *args, **kwargs):
+        super(ModuleValidator, self).__init__(*args, **kwargs)
+        self.module = module
+
+    def _validate_for_build(self):
+        errors = self.module.validate_details_for_build()
+        if not self.module.forms and not self.module.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.module.get_module_info(),
+            })
+
+        if module_case_hierarchy_has_circular_reference(self.module):
+            errors.append({
+                'type': 'circular case hierarchy',
+                'module': self.module.get_module_info(),
+            })
+
+        if self.module.root_module and self.module.root_module.is_training_module:
+            errors.append({
+                'type': 'training module parent',
+                'module': self.module.get_module_info(),
+            })
+
+        if self.module.root_module and self.module.is_training_module:
+            errors.append({
+                'type': 'training module child',
+                'module': self.module.get_module_info(),
+            })
+
         return errors

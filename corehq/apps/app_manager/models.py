@@ -39,7 +39,11 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
-from corehq.apps.app_manager.helpers.validators import ApplicationBaseValidator, ApplicationValidator
+from corehq.apps.app_manager.helpers.validators import (
+    ApplicationBaseValidator,
+    ApplicationValidator,
+    ModuleValidator,
+)
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -122,7 +126,6 @@ from corehq.apps.app_manager.util import (
     update_form_unique_ids,
     xpath_references_case,
     xpath_references_user_case,
-    module_case_hierarchy_has_circular_reference,
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
     LatestAppInfo,
@@ -2949,32 +2952,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return self.get_form(index or -1)
 
     def _validate_for_build(self):
-        errors = super(Module, self)._validate_for_build() + self.validate_details_for_build()
-        if not self.forms and not self.case_list.show:
-            errors.append({
-                'type': 'no forms or case list',
-                'module': self.get_module_info(),
-            })
-
-        if module_case_hierarchy_has_circular_reference(self):
-            errors.append({
-                'type': 'circular case hierarchy',
-                'module': self.get_module_info(),
-            })
-
-        if self.root_module and self.root_module.is_training_module:
-            errors.append({
-                'type': 'training module parent',
-                'module': self.get_module_info(),
-            })
-
-        if self.root_module and self.is_training_module:
-            errors.append({
-                'type': 'training module child',
-                'module': self.get_module_info(),
-            })
-
-        return errors
+        return super(Module, self)._validate_for_build() + ModuleValidator(self)._validate_for_build()
 
     def requires(self):
         r = set(["none"])
