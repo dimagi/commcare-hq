@@ -43,6 +43,9 @@ from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
     ApplicationValidator,
     ModuleValidator,
+    AdvancedModuleValidator,
+    ReportModuleValidator,
+    ShadowModuleValidator,
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
@@ -3799,75 +3802,7 @@ class AdvancedModule(ModuleBase):
                 yield error
 
     def _validate_for_build(self):
-        errors = super(AdvancedModule, self)._validate_for_build()
-        if not self.forms and not self.case_list.show:
-            errors.append({
-                'type': 'no forms or case list',
-                'module': self.get_module_info(),
-            })
-        if self.case_list_form.form_id:
-            forms = self.forms
-
-            case_tag = None
-            loaded_case_types = None
-            for form in forms:
-                info = self.get_module_info()
-                form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
-                non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
-                this_forms_loaded_case_types = {action.case_type for action in non_auto_select_actions}
-                if loaded_case_types is None:
-                    loaded_case_types = this_forms_loaded_case_types
-                elif loaded_case_types != this_forms_loaded_case_types:
-                    errors.append({
-                        'type': 'all forms in case list module must load the same cases',
-                        'module': info,
-                        'form': form_info,
-                    })
-
-                if not non_auto_select_actions:
-                    errors.append({
-                        'type': 'case list module form must require case',
-                        'module': info,
-                        'form': form_info,
-                    })
-                elif len(non_auto_select_actions) != 1:
-                    for index, action in reversed(list(enumerate(non_auto_select_actions))):
-                        if (
-                            index > 0 and
-                            non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
-                        ):
-                            errors.append({
-                                'type': 'case list module form can only load parent cases',
-                                'module': info,
-                                'form': form_info,
-                            })
-
-                case_action = non_auto_select_actions[-1] if non_auto_select_actions else None
-                if case_action and case_action.case_type != self.case_type:
-                    errors.append({
-                        'type': 'case list module form must match module case type',
-                        'module': info,
-                        'form': form_info,
-                    })
-
-                # set case_tag if not already set
-                case_tag = case_action.case_tag if not case_tag and case_action else case_tag
-                if case_action and case_action.case_tag != case_tag:
-                    errors.append({
-                        'type': 'all forms in case list module must have same case management',
-                        'module': info,
-                        'form': form_info,
-                        'expected_tag': case_tag
-                    })
-
-                if case_action and case_action.details_module and case_action.details_module != self.unique_id:
-                    errors.append({
-                        'type': 'forms in case list module must use modules details',
-                        'module': info,
-                        'form': form_info,
-                    })
-
-        return errors
+        return super(AdvancedModule, self)._validate_for_build() + AdvancedModuleValidator(self)._validate_for_build()
 
     def _uses_case_type(self, case_type, invert_match=False):
         return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
@@ -4388,23 +4323,7 @@ class ReportModule(ModuleBase):
                    for report_config in self.report_configs)
 
     def _validate_for_build(self):
-        errors = super(ReportModule, self)._validate_for_build()
-        if not self.check_report_validity().is_valid:
-            errors.append({
-                'type': 'report config ref invalid',
-                'module': self.get_module_info()
-            })
-        elif not self.reports:
-            errors.append({
-                'type': 'no reports',
-                'module': self.get_module_info(),
-            })
-        if self.has_duplicate_instance_ids():
-            errors.append({
-                'type': 'report config id duplicated',
-                'module': self.get_module_info(),
-            })
-        return errors
+        return super(ReportModule, self)._validate_for_build() + ReportModuleValidator(self)._validate_for_build()
 
 
 class ShadowModule(ModuleBase, ModuleDetailsMixin):
@@ -4513,14 +4432,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return module
 
     def _validate_for_build(self):
-        errors = super(ShadowModule, self)._validate_for_build()
-        errors += self.validate_details_for_build()
-        if not self.source_module:
-            errors.append({
-                'type': 'no source module id',
-                'module': self.get_module_info()
-            })
-        return errors
+        return super(ShadowModule, self)._validate_for_build() + ShadowModuleValidator(self)._validate_for_build()
 
 
 class LazyBlobDoc(BlobMixin):

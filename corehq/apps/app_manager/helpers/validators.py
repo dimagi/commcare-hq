@@ -310,3 +310,120 @@ class ModuleValidator(object):
             })
 
         return errors
+
+
+class AdvancedModuleValidator(object):
+    def __init__(self, module, *args, **kwargs):
+        super(AdvancedModuleValidator, self).__init__(*args, **kwargs)
+        self.module = module
+
+    def _validate_for_build(self):
+        errors = []
+        if not self.module.forms and not self.module.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.module.get_module_info(),
+            })
+        if self.module.case_list_form.form_id:
+            forms = self.module.forms
+
+            case_tag = None
+            loaded_case_types = None
+            for form in forms:
+                info = self.module.get_module_info()
+                form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
+                non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
+                this_forms_loaded_case_types = {action.case_type for action in non_auto_select_actions}
+                if loaded_case_types is None:
+                    loaded_case_types = this_forms_loaded_case_types
+                elif loaded_case_types != this_forms_loaded_case_types:
+                    errors.append({
+                        'type': 'all forms in case list module must load the same cases',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+                if not non_auto_select_actions:
+                    errors.append({
+                        'type': 'case list module form must require case',
+                        'module': info,
+                        'form': form_info,
+                    })
+                elif len(non_auto_select_actions) != 1:
+                    for index, action in reversed(list(enumerate(non_auto_select_actions))):
+                        if (
+                            index > 0 and
+                            non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
+                        ):
+                            errors.append({
+                                'type': 'case list module form can only load parent cases',
+                                'module': info,
+                                'form': form_info,
+                            })
+
+                case_action = non_auto_select_actions[-1] if non_auto_select_actions else None
+                if case_action and case_action.case_type != self.module.case_type:
+                    errors.append({
+                        'type': 'case list module form must match module case type',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+                # set case_tag if not already set
+                case_tag = case_action.case_tag if not case_tag and case_action else case_tag
+                if case_action and case_action.case_tag != case_tag:
+                    errors.append({
+                        'type': 'all forms in case list module must have same case management',
+                        'module': info,
+                        'form': form_info,
+                        'expected_tag': case_tag
+                    })
+
+                if case_action and case_action.details_module and case_action.details_module != self.module.unique_id:
+                    errors.append({
+                        'type': 'forms in case list module must use modules details',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+        return errors
+
+
+class ReportModuleValidator(object):
+    def __init__(self, module, *args, **kwargs):
+        super(ReportModuleValidator, self).__init__(*args, **kwargs)
+        self.module = module
+
+    def _validate_for_build(self):
+        errors = []
+        if not self.module.check_report_validity().is_valid:
+            errors.append({
+                'type': 'report config ref invalid',
+                'module': self.module.get_module_info()
+            })
+        elif not self.module.reports:
+            errors.append({
+                'type': 'no reports',
+                'module': self.module.get_module_info(),
+            })
+        if self.module.has_duplicate_instance_ids():
+            errors.append({
+                'type': 'report config id duplicated',
+                'module': self.module.get_module_info(),
+            })
+        return errors
+
+
+class ShadowModuleValidator(object):
+    def __init__(self, module, *args, **kwargs):
+        super(ShadowModuleValidator, self).__init__(*args, **kwargs)
+        self.module = module
+
+    def _validate_for_build(self):
+        errors = self.module.validate_details_for_build()
+        if not self.module.source_module:
+            errors.append({
+                'type': 'no source module id',
+                'module': self.module.get_module_info()
+            })
+        return errors
