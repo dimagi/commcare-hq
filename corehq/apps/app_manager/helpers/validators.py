@@ -397,7 +397,6 @@ class ModuleDetailValidatorMixin(object):
             raise ValueError("Invalid Sort Field")
 
 
-
 class ModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
     def validate_with_raise(self):
         errors = super(ModuleValidator, self).validate_with_raise()
@@ -492,8 +491,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                         'expected_tag': case_tag
                     })
 
-                if (case_action and case_action.details_module
-                    and case_action.details_module != self.module.unique_id):
+                if case_action and case_action.details_module != self.module.unique_id:
                     errors.append({
                         'type': 'forms in case list module must use modules details',
                         'module': info,
