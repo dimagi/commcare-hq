@@ -13,6 +13,7 @@ from corehq.util.teeout import tee_output
 
 
 DEFAULT_WORKER_POOL_SIZE = 10
+DEFAULT_BOTOCORE_MAX_POOL_CONNECTIONS = 10
 USAGE = """Usage: ./manage.py run_blob_migration [options] <slug>
 
 Slugs:
@@ -29,29 +30,34 @@ class Command(BaseCommand):
     help = USAGE
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        def add_argument(*args, **kw):
+            name = args[-1].lstrip("-").replace("-", "_")
+            self.option_names.add(name)
+            parser.add_argument(*args, **kw)
+
+        self.option_names = set()
+        add_argument(
             'slug',
             choices=sorted(MIGRATIONS),
             help="Migration slug: {}".format(', '.join(sorted(MIGRATIONS))),
         )
-        parser.add_argument(
+        add_argument(
             '--log-dir',
             help="Migration log directory.",
         )
-        parser.add_argument(
+        add_argument(
             '--reset',
             action="store_true",
             default=False,
             help="Discard any existing migration state.",
         )
-        parser.add_argument(
+        add_argument(
             '--chunk-size',
-            dest="chunk_size",  # redundant arg for grep
             type=int,
             default=100,
             help="Maximum number of records to read from couch at once.",
         )
-        parser.add_argument(
+        add_argument(
             '--num-workers',
             type=int,
             default=DEFAULT_WORKER_POOL_SIZE,
@@ -68,11 +74,17 @@ class Command(BaseCommand):
             migrator = MIGRATIONS[slug]
         except KeyError:
             raise CommandError(USAGE)
+        # drop options not added by this command
+        for name in list(options):
+            if name not in self.option_names:
+                options.pop(name)
         if not migrator.has_worker_pool:
             num_workers = options.pop("num_workers")
             if num_workers != DEFAULT_WORKER_POOL_SIZE:
                 print("--num-workers={} ignored because this migration "
                       "does not use a worker pool".format(num_workers))
+        elif options["num_workers"] > DEFAULT_BOTOCORE_MAX_POOL_CONNECTIONS:
+            set_max_connections(options["num_workers"])
 
         if log_dir is None:
             summary_file = log_file = None
@@ -93,3 +105,19 @@ class Command(BaseCommand):
             except KeyboardInterrupt:
                 print("stopped by operator")
                 sys.exit(1)
+
+
+def set_max_connections(num_workers):
+    # see botocore.config.Config max_pool_connections
+    # https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
+    from django.conf import settings
+    from corehq.blobs import _db
+
+    def update_config(name):
+        config = getattr(settings, name)["config"]
+        config["max_pool_connections"] = num_workers
+
+    assert not _db, "get_blob_db() has been called"
+    for name in ["S3_BLOB_DB_SETTINGS", "OLD_S3_BLOB_DB_SETTINGS"]:
+        if getattr(settings, name, False):
+            update_config(name)

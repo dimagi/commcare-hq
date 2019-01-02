@@ -6,7 +6,6 @@ import uuid
 from itertools import chain
 from os.path import join
 
-import corehq.blobs.migrate as migrate
 import corehq.blobs.migrate_metadata as mod
 from corehq.blobs import CODES
 from corehq.blobs.migrate import MIGRATIONS
@@ -18,7 +17,7 @@ from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 import attr
 from dimagi.ext.couchdbkit import DocumentSchema, IntegerProperty, StringProperty
 from django.test import TestCase
-from testil import replattr, tempdir
+from testil import tempdir
 
 
 class TestMigrateBackend(TestCase):

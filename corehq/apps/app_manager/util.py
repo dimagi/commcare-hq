@@ -21,13 +21,14 @@ from django.urls import reverse
 from django.core.cache import cache
 from django.http import Http404
 from django.utils.translation import ugettext as _
+from django.db.models import Max
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_app
 )
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
-from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
+from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.soft_assert import soft_assert
@@ -36,7 +37,8 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
-    USERCASE_PREFIX)
+    USERCASE_PREFIX,
+)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
@@ -675,3 +677,32 @@ def get_form_source_download_url(xform):
         xform.build_id,
         app.get_form_filename(module=form.get_module(), form=form),
     ])
+
+
+@quickcache(['domain', 'profile_id'], timeout=24 * 60 * 60)
+def get_latest_enabled_build_for_profile(domain, profile_id):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    latest_enabled_build = (LatestEnabledBuildProfiles.objects.
+                            filter(build_profile_id=profile_id)
+                            .order_by('-version')
+                            .first())
+    if latest_enabled_build:
+        return get_app(domain, latest_enabled_build.build_id)
+
+
+@quickcache(['build_id', 'version'], timeout=24 * 60 * 60)
+def get_enabled_build_profiles_for_version(build_id, version):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    return list(LatestEnabledBuildProfiles.objects.filter(
+        build_id=build_id, version=version).values_list('build_profile_id', flat=True))
+
+
+def get_latest_enabled_versions_per_profile(app_id):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    # a dict with each profile id mapped to its latest enabled version number, if present
+    return {
+        build_profile['build_profile_id']: build_profile['version__max']
+        for build_profile in
+        LatestEnabledBuildProfiles.objects.filter(app_id=app_id).values('build_profile_id').annotate(
+            Max('version'))
+    }

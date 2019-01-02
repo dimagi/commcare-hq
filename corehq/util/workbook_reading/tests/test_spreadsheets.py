@@ -40,27 +40,53 @@ class SpreadsheetCellTypeTest(SimpleTestCase):
 @run_on_all_adapters(SpreadsheetCellTypeTest)
 def test_xlsx_types(self, open_workbook, ext):
     with open_workbook(get_file('types', ext)) as workbook:
-        self.assert_workbooks_equal(
-            workbook,
-            Workbook(
-                worksheets=[
-                    make_worksheet(title='Sheet1', rows=[
-                        ['String', 'Danny'],
-                        ['Date', date(1988, 7, 7)],
-                        ['Date Time', datetime(2016, 1, 1, 12, 0)],
-                        ['Time', time(12, 0)],
-                        ['Midnight', time(0, 0)],
-                        ['Int', 28],
-                        ['Int.0', 5],
-                        ['Float', 5.1],
-                        ['Bool-F', False],
-                        ['Bool-T', True],
-                        ['Empty', None],
-                        ['Percent', 0.49],
-                        ['Calculation', 2],
-                        ['Styled', 'Styled'],
-                        ['Empty Date', None],
-                    ]),
-                ]
+        if ext == 'xlsx':
+            self.assert_workbooks_equal(
+                workbook,
+                Workbook(
+                    worksheets=[
+                        make_worksheet(title='Sheet1', rows=[
+                            ['String', 'Danny'],
+                            ['Date', date(1988, 7, 7)],
+                            ['Date Time', datetime(2016, 1, 1, 12, 0)],
+                            ['Time', time(12, 0)],
+                            ['Midnight', date(1899, 12, 30)],
+                            ['Int', 28],
+                            ['Int.0', 5],
+                            ['Float', 5.1],
+                            ['Bool-F', False],
+                            ['Bool-T', True],
+                            ['Empty', None],
+                            ['Percent', 0.49],
+                            ['Calculation', 2],
+                            ['Styled', 'Styled'],
+                            ['Empty Date', None],
+                        ]),
+                    ]
+                )
             )
-        )
+        else:
+            self.assert_workbooks_equal(
+                workbook,
+                Workbook(
+                    worksheets=[
+                        make_worksheet(title='Sheet1', rows=[
+                            ['String', 'Danny'],
+                            ['Date', date(1988, 7, 7)],
+                            ['Date Time', datetime(2016, 1, 1, 12, 0)],
+                            ['Time', time(12, 0)],
+                            ['Midnight', time(0, 0)],
+                            ['Int', 28],
+                            ['Int.0', 5],
+                            ['Float', 5.1],
+                            ['Bool-F', False],
+                            ['Bool-T', True],
+                            ['Empty', None],
+                            ['Percent', 0.49],
+                            ['Calculation', 2],
+                            ['Styled', 'Styled'],
+                            ['Empty Date', None],
+                        ]),
+                    ]
+                )
+            )

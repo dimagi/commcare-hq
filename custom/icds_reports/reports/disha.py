@@ -115,7 +115,7 @@ def build_dumps_for_month(month, rebuild=False):
 
     for state_name in states:
         dump = DishaDump(state_name, month)
-        if dump.export_exists() and not rebuild:
+        if not rebuild and dump.export_exists():
             logger.info("Skipping, export is already generated for state {}".format(state_name))
         else:
             logger.info("Generating for state {}".format(state_name))
