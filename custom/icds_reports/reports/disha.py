@@ -31,6 +31,9 @@ class DishaDump(object):
         self.month = month
 
     def _blob_id(self):
+        # This will be the reference to the blob, if this is updated
+        #   attention should be paid to the old blobs whose references
+        #   might be lost.
         # strip all non-alphanumeric chars
         safe_state_name = re.sub('[^0-9a-zA-Z]+', '', self.state_name)
         return 'disha_dump-{}-{}.json'.format(safe_state_name, self.month.strftime('%Y-%m-%d'))
