@@ -379,13 +379,10 @@ class ModuleDetailValidatorMixin(object):
         return errors
 
 
-class ModuleValidator(ModuleDetailValidatorMixin):
-    def __init__(self, module, *args, **kwargs):
-        super(ModuleValidator, self).__init__(*args, **kwargs)
-        self.module = module
-
+class ModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
     def validate_with_raise(self):
-        errors = self.validate_details_for_build()
+        errors = super(ModuleValidator, self).validate_with_raise()
+        errors += self.validate_details_for_build()
         if not self.module.forms and not self.module.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
@@ -413,13 +410,9 @@ class ModuleValidator(ModuleDetailValidatorMixin):
         return errors
 
 
-class AdvancedModuleValidator(object):
-    def __init__(self, module, *args, **kwargs):
-        super(AdvancedModuleValidator, self).__init__(*args, **kwargs)
-        self.module = module
-
+class AdvancedModuleValidator(ModuleBaseValidator):
     def validate_with_raise(self):
-        errors = []
+        errors = super(AdvancedModuleValidator, self).validate_with_raise()
         if not self.module.forms and not self.module.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
@@ -490,13 +483,9 @@ class AdvancedModuleValidator(object):
         return errors
 
 
-class ReportModuleValidator(object):
-    def __init__(self, module, *args, **kwargs):
-        super(ReportModuleValidator, self).__init__(*args, **kwargs)
-        self.module = module
-
+class ReportModuleValidator(ModuleBaseValidator):
     def validate_with_raise(self):
-        errors = []
+        errors = super(ReportModuleValidator, self).validate_with_raise()
         if not self.module.check_report_validity().is_valid:
             errors.append({
                 'type': 'report config ref invalid',
@@ -525,13 +514,10 @@ class ReportModuleValidator(object):
                    for report_config in self.module.report_configs)
 
 
-class ShadowModuleValidator(ModuleDetailValidatorMixin):
-    def __init__(self, module, *args, **kwargs):
-        super(ShadowModuleValidator, self).__init__(*args, **kwargs)
-        self.module = module
-
+class ShadowModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
     def validate_with_raise(self):
-        errors = self.validate_details_for_build()
+        errors = super(ShadowModuleValidator, self).validate_with_raise()
+        errors += self.validate_details_for_build()
         if not self.module.source_module:
             errors.append({
                 'type': 'no source module id',

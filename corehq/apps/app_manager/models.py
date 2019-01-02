@@ -2873,7 +2873,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return self.get_form(index or -1)
 
     def validate_with_raise(self):
-        return super(Module, self).validate_with_raise() + ModuleValidator(self).validate_with_raise()
+        return ModuleValidator(self).validate_with_raise()
 
     def requires(self):
         r = set(["none"])
@@ -3720,7 +3720,7 @@ class AdvancedModule(ModuleBase):
                 yield error
 
     def validate_with_raise(self):
-        return super(AdvancedModule, self).validate_with_raise() + AdvancedModuleValidator(self).validate_with_raise()
+        return AdvancedModuleValidator(self).validate_with_raise()
 
     def _uses_case_type(self, case_type, invert_match=False):
         return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
@@ -4231,7 +4231,7 @@ class ReportModule(ModuleBase):
         )
 
     def validate_with_raise(self):
-        return super(ReportModule, self).validate_with_raise() + ReportModuleValidator(self).validate_with_raise()
+        return ReportModuleValidator(self).validate_with_raise()
 
 
 class ShadowModule(ModuleBase, ModuleDetailsMixin):
@@ -4340,7 +4340,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return module
 
     def validate_with_raise(self):
-        return super(ShadowModule, self).validate_with_raise() + ShadowModuleValidator(self).validate_with_raise()
+        return ShadowModuleValidator(self).validate_with_raise()
 
 
 class LazyBlobDoc(BlobMixin):
