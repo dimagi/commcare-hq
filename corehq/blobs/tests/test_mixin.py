@@ -447,6 +447,22 @@ class TestBlobMixin(BaseTestCase):
         with self.assertRaises(AttributeError):
             meta.id
 
+    def test_wrap_with_bad_id(self):
+        doc = {
+            "_id": "uuid:9855adcb-da3a-41e2-afaf-71d5b42c7e5e",
+            "external_blobs": {
+                "form.xml": {
+                    "content_length": 34282,
+                    "content_type": "text/xml",
+                    "digest": "md5-EhgFC+ZQGc7pGTu7CwMRwA==",
+                    "doc_type": "BlobMeta",
+                    "id": "form.xml.11764c68ee5e41b69b748fc76d69e309"
+                }
+            }
+        }
+        # this line previously failed hard when called
+        FakeCouchDocument.wrap(doc)
+
 
 class TestBlobMixinWithS3Backend(TestBlobMixin):
 
