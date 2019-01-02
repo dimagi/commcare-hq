@@ -289,6 +289,10 @@ class ModuleBaseValidator(object):
         self.module = module
 
     def validate_for_build(self):
+        '''
+        This is a wrapper for the actual validation logic, in order to gracefully capture exceptions
+        caused by modules missing (parent modules, source modules, etc). Subclasses should not override.
+        '''
         errors = []
         try:
             errors += self.validate_with_raise()
@@ -302,6 +306,9 @@ class ModuleBaseValidator(object):
         return errors
 
     def validate_with_raise(self):
+        '''
+        This is the real validation logic, to be overridden/augmented by subclasses.
+        '''
         errors = []
         needs_case_detail = self.module.requires_case_details()
         needs_case_type = needs_case_detail or len([1 for f in self.module.get_forms() if f.is_registration_form()])
@@ -338,6 +345,9 @@ class ModuleBaseValidator(object):
 
 
 class ModuleDetailValidatorMixin(object):
+    '''
+    Validation logic common to basic and shadow modules, which both have detail configuration.
+    '''
     def validate_details_for_build(self):
         errors = []
         for sort_element in self.module.detail_sort_elements:
