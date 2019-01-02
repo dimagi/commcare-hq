@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import, unicode_literals
 
+import re
 import six
 from lxml import etree
 
@@ -311,7 +312,7 @@ class ModuleBaseValidator(object):
         '''
         errors = []
         needs_case_detail = self.module.requires_case_details()
-        needs_case_type = needs_case_detail or len([1 for f in self.module.get_forms() if f.is_registration_form()])
+        needs_case_type = needs_case_detail or any(f.is_registration_form() for f in self.module.get_forms())
         if needs_case_detail or needs_case_type:
             errors.extend(self.module.get_case_errors(
                 needs_case_type=needs_case_type,
@@ -352,7 +353,7 @@ class ModuleDetailValidatorMixin(object):
         errors = []
         for sort_element in self.module.detail_sort_elements:
             try:
-                validate_detail_screen_field(sort_element.field)
+                self._validate_detail_screen_field(sort_element.field)
             except ValueError:
                 errors.append({
                     'type': 'invalid sort field',
@@ -387,6 +388,14 @@ class ModuleDetailValidatorMixin(object):
                             'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
                         })
         return errors
+
+    def _validate_detail_screen_field(self, field):
+        # If you change here, also change here:
+        # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
+        field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
+        if not re.match(field_re, field):
+            raise ValueError("Invalid Sort Field")
+
 
 
 class ModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
@@ -483,7 +492,8 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                         'expected_tag': case_tag
                     })
 
-                if case_action and case_action.details_module and case_action.details_module != self.module.unique_id:
+                if (case_action and case_action.details_module
+                    and case_action.details_module != self.module.unique_id):
                     errors.append({
                         'type': 'forms in case list module must use modules details',
                         'module': info,
