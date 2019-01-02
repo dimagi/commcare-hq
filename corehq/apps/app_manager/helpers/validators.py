@@ -287,7 +287,7 @@ class ModuleBaseValidator(object):
         super(ModuleBaseValidator, self).__init__(*args, **kwargs)
         self.module = module
 
-    def _validate_for_build(self):
+    def validate_with_raise(self):
         errors = []
         needs_case_detail = self.module.requires_case_details()
         needs_case_type = needs_case_detail or len([1 for f in self.module.get_forms() if f.is_registration_form()])
@@ -370,7 +370,7 @@ class ModuleValidator(ModuleDetailValidatorMixin):
         super(ModuleValidator, self).__init__(*args, **kwargs)
         self.module = module
 
-    def _validate_for_build(self):
+    def validate_with_raise(self):
         errors = self.validate_details_for_build()
         if not self.module.forms and not self.module.case_list.show:
             errors.append({
@@ -404,7 +404,7 @@ class AdvancedModuleValidator(object):
         super(AdvancedModuleValidator, self).__init__(*args, **kwargs)
         self.module = module
 
-    def _validate_for_build(self):
+    def validate_with_raise(self):
         errors = []
         if not self.module.forms and not self.module.case_list.show:
             errors.append({
@@ -481,7 +481,7 @@ class ReportModuleValidator(object):
         super(ReportModuleValidator, self).__init__(*args, **kwargs)
         self.module = module
 
-    def _validate_for_build(self):
+    def validate_with_raise(self):
         errors = []
         if not self.module.check_report_validity().is_valid:
             errors.append({
@@ -516,7 +516,7 @@ class ShadowModuleValidator(ModuleDetailValidatorMixin):
         super(ShadowModuleValidator, self).__init__(*args, **kwargs)
         self.module = module
 
-    def _validate_for_build(self):
+    def validate_with_raise(self):
         errors = self.validate_details_for_build()
         if not self.module.source_module:
             errors.append({

@@ -2649,7 +2649,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def validate_for_build(self):
         errors = []
         try:
-            errors += self._validate_for_build()
+            errors += self.validate_with_raise()
         except ModuleNotFoundException as ex:
             errors.append({
                 "type": "missing module",
@@ -2659,8 +2659,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
         return errors
 
-    def _validate_for_build(self):
-        return ModuleBaseValidator(self)._validate_for_build()
+    def validate_with_raise(self):
+        return ModuleBaseValidator(self).validate_with_raise()
 
     @memoized
     def get_subcase_types(self):
@@ -2882,8 +2882,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
             self.forms.append(new_form)
         return self.get_form(index or -1)
 
-    def _validate_for_build(self):
-        return super(Module, self)._validate_for_build() + ModuleValidator(self)._validate_for_build()
+    def validate_with_raise(self):
+        return super(Module, self).validate_with_raise() + ModuleValidator(self).validate_with_raise()
 
     def requires(self):
         r = set(["none"])
@@ -3729,8 +3729,8 @@ class AdvancedModule(ModuleBase):
             for error in errors:
                 yield error
 
-    def _validate_for_build(self):
-        return super(AdvancedModule, self)._validate_for_build() + AdvancedModuleValidator(self)._validate_for_build()
+    def validate_with_raise(self):
+        return super(AdvancedModule, self).validate_with_raise() + AdvancedModuleValidator(self).validate_with_raise()
 
     def _uses_case_type(self, case_type, invert_match=False):
         return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
@@ -4240,8 +4240,8 @@ class ReportModule(ModuleBase):
             valid_report_configs=valid_report_configs
         )
 
-    def _validate_for_build(self):
-        return super(ReportModule, self)._validate_for_build() + ReportModuleValidator(self)._validate_for_build()
+    def validate_with_raise(self):
+        return super(ReportModule, self).validate_with_raise() + ReportModuleValidator(self).validate_with_raise()
 
 
 class ShadowModule(ModuleBase, ModuleDetailsMixin):
@@ -4349,8 +4349,8 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
-    def _validate_for_build(self):
-        return super(ShadowModule, self)._validate_for_build() + ShadowModuleValidator(self)._validate_for_build()
+    def validate_with_raise(self):
+        return super(ShadowModule, self).validate_with_raise() + ShadowModuleValidator(self).validate_with_raise()
 
 
 class LazyBlobDoc(BlobMixin):
