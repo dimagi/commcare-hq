@@ -8,6 +8,7 @@ import uuid
 from corehq.apps.es.es_query import ESQuerySet
 from corehq.apps.es.utils import values_list
 from six.moves import filter
+from corehq.elastic import ScanResult
 
 FILTER_TEMPLATE = """
     def {fn}(self, ...):
@@ -92,7 +93,12 @@ class ESQueryFake(object):
             raise AttributeError('{} must define attribute _all_docs'.format(cls_name))
 
     def values_list(self, *fields, **kwargs):
-        return values_list(self.run().hits, *fields, **kwargs)
+        if kwargs.pop('scroll', False):
+            hits = self.scroll()
+        else:
+            hits = self.run().hits
+
+        return values_list(hits, *fields, **kwargs)
 
     @check_deep_copy
     def search_string_query(self, search_string, default_fields=None):
@@ -153,6 +159,26 @@ class ESQueryFake(object):
                 'total': total,
             },
         }, self)
+
+    def scroll(self):
+        result_docs = list(self._result_docs)
+        total = len(result_docs)
+        if self._sort_field:
+            result_docs.sort(key=lambda doc: doc[self._sort_field],
+                             reverse=self._sort_desc)
+        if self._size is not None:
+            result_docs = result_docs[self._start:self._start + self._size]
+        else:
+            result_docs = result_docs[self._start:]
+
+        def _get_doc(doc):
+            if self._source_fields:
+                return {key: doc[key] for key in self._source_fields if key in doc}
+            return doc
+
+        es_query_set = (ESQuerySet.normalize_result(self,
+                                                    {'_source': _get_doc(r)}) for r in result_docs)
+        return ScanResult(total, es_query_set)
 
     @check_deep_copy
     def term(self, field, value):
