@@ -22,6 +22,7 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     UserCaseXPathValidationError,
     ModuleIdMissingException,
+    ModuleNotFoundException,
     PracticeUserException,
     SuiteValidationError,
     XFormException,
@@ -287,6 +288,19 @@ class ModuleBaseValidator(object):
         super(ModuleBaseValidator, self).__init__(*args, **kwargs)
         self.module = module
 
+    def validate_for_build(self):
+        errors = []
+        try:
+            errors += self.module.validate_with_raise()
+        except ModuleNotFoundException as ex:
+            errors.append({
+                "type": "missing module",
+                "message": six.text_type(ex),
+                "module": self.module.get_module_info(),
+            })
+
+        return errors
+
     def validate_with_raise(self):
         errors = []
         needs_case_detail = self.module.requires_case_details()
@@ -504,11 +518,11 @@ class ReportModuleValidator(object):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
         duplicate_instance_ids = {
             instance_id
-            for instance_id, uuids in get_uuids_by_instance_id(self.get_app().domain).items()
+            for instance_id, uuids in get_uuids_by_instance_id(self.module.get_app().domain).items()
             if len(uuids) > 1
         }
         return any(report_config.instance_id in duplicate_instance_ids
-                   for report_config in self.report_configs)
+                   for report_config in self.module.report_configs)
 
 
 class ShadowModuleValidator(ModuleDetailValidatorMixin):

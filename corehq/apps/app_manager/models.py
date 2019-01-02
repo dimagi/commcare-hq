@@ -2647,17 +2647,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 return form
 
     def validate_for_build(self):
-        errors = []
-        try:
-            errors += self.validate_with_raise()
-        except ModuleNotFoundException as ex:
-            errors.append({
-                "type": "missing module",
-                "message": six.text_type(ex),
-                "module": self.get_module_info(),
-            })
-
-        return errors
+        return ModuleBaseValidator(self).validate_for_build()
 
     def validate_with_raise(self):
         return ModuleBaseValidator(self).validate_with_raise()
