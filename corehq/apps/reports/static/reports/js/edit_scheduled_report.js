@@ -52,7 +52,7 @@ hqDefine("reports/js/edit_scheduled_report", [
                 });
                 $("#id_start_date").datepicker({
                     dateFormat: "yy-mm-dd",
-                    minDate: 0
+                    minDate: 0,
                 });
             });
         };
