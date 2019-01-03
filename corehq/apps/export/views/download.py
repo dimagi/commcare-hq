@@ -361,9 +361,9 @@ def poll_custom_export_download(request, domain):
     download_id = request.GET.get('download_id')
     try:
         context = get_download_context(download_id)
-    except TaskFailedError:
+    except TaskFailedError as e:
         notify_exception(request, "Export download failed",
-                         details={'download_id': download_id})
+                         details={'download_id': download_id, 'errors': e.errors})
         return json_response({
             'error': _("Download task failed to start."),
         })
