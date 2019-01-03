@@ -161,18 +161,17 @@ def commcare_hq_names(request):
 def mobile_experience(request):
     show_mobile_ux_warning = False
     mobile_ux_cookie_name = ''
-    if (hasattr(request, 'couch_user')
-        and hasattr(request, 'user_agent')
-        and (settings.SERVER_ENVIRONMENT
-             in ['production', 'staging', 'localdev'])):
+    if (hasattr(request, 'couch_user') and
+            hasattr(request, 'user_agent') and
+            settings.SERVER_ENVIRONMENT in ['production', 'staging', 'localdev']):
         mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
         from corehq import toggles
         show_mobile_ux_warning = (
-            not request.COOKIES.get(mobile_ux_cookie_name)
-            and request.user_agent.is_mobile
-            and request.user.is_authenticated
-            and request.user.is_active
-            and not toggles.HIDE_HQ_ON_MOBILE_EXPERIENCE.enabled(request.domain, toggles.NAMESPACE_DOMAIN)
+            not request.COOKIES.get(mobile_ux_cookie_name) and
+            request.user_agent.is_mobile and
+            request.user.is_authenticated and
+            request.user.is_active and
+            not toggles.HIDE_HQ_ON_MOBILE_EXPERIENCE.enabled(request.domain, toggles.NAMESPACE_DOMAIN)
         )
     return {
         'show_mobile_ux_warning': show_mobile_ux_warning,
