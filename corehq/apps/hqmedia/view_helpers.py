@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 import six
 
 from collections import defaultdict
+from lxml import etree
 
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
@@ -64,3 +66,46 @@ def validate_multimedia_paths_rows(app, rows):
             new_paths_last_seen[new_path] = i
 
     return errors, warnings
+
+
+def update_multimedia_paths(app, paths):
+    # Update module and form references
+    success_counts = defaultdict(lambda: 0)
+    dirty_xform_ids = set()
+    for old_path, new_path in six.iteritems(paths):
+        for module in app.modules:
+            success_counts[module.unique_id] += module.rename_media(old_path, new_path)
+            for form in module.forms:
+                update_count = form.rename_media(old_path, new_path)
+                if update_count:
+                    dirty_xform_ids.add(form.unique_id)
+                    success_counts[form.unique_id] += update_count
+
+    # Update any form xml that changed
+    for module in app.modules:
+        for form in module.forms:
+            if form.unique_id in dirty_xform_ids:
+                form.source = etree.tostring(form.memoized_xform().xml).decode('utf-8')
+
+    # Update app's master map of multimedia
+    for old_path, new_path in six.iteritems(paths):
+        app.multimedia_map.update({
+            new_path: app.multimedia_map[old_path],
+        })
+
+    # Put together success messages
+    successes = []
+    for module in app.modules:
+        if success_counts[module.unique_id]:
+            successes.append(_("{} item(s) updated in <a href='{}' target='_blank'>{}</a>").format(
+                             success_counts[module.unique_id],
+                             reverse("view_module", args=[app.domain, app.id, module.unique_id]),
+                             module.default_name()))
+        for form in module.forms:
+            if success_counts[form.unique_id]:
+                successes.append(_("{} item(s) updated in <a href='{}' target='_blank'>{}</a>").format(
+                                 success_counts[form.unique_id],
+                                 reverse("view_form", args=[app.domain, app.id, form.unique_id]),
+                                 "{} > {}".format(module.default_name(), form.default_name())))
+
+    return successes

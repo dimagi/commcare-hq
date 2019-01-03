@@ -250,7 +250,7 @@ def validate_multimedia_paths(request, domain, app_id):
         (errors, warnings) = validate_multimedia_paths_rows(app, spreadsheet.iter_rows())
 
     return json_response({
-        'success': 1,
+        'complete': 1,
         'file_id': file_id,
         'errors': errors,
         'warnings': warnings,
@@ -270,10 +270,41 @@ def update_multimedia_paths(request, domain, app_id):
             'error': _("Could not find file. Please re-upload file.")
         })
 
-    # TODO: update paths
+    app = get_app(domain, app_id)
+    from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+    from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows, update_multimedia_paths
+    with get_spreadsheet(f) as spreadsheet:
+        rows = list(spreadsheet.iter_rows())
+        (errors, warnings) = validate_multimedia_paths_rows(app, rows)
+        if len(errors):
+            return json_response({
+                'complete': 1,
+                'errors': errors,
+            })
+
+        paths = {
+            row[0]: interpolate_media_path(row[1]) for row in rows
+        }
+        successes = update_multimedia_paths(app, paths)
+        app.save()
+
+        # Force all_media to reset
+        app.all_media.reset_cache(app)
+        app.all_media_paths.reset_cache(app)
+
+        # Warn if any old paths remain in app (because they're used in a place this function doesn't know about)
+        warnings = []
+        app.remove_unused_mappings()
+        app_paths = {m.path: True for m in app.all_media()}
+        for old_path, new_path in six.iteritems(paths):
+            if old_path in app_paths:
+                warnings.append(_("Could not completely update path <code>{}</code>, "
+                                  "please check app for remaining references.").format(old_path))
 
     return json_response({
-        'success': 1,
+        'complete': 1,
+        'successes': successes,
+        'warnings': warnings,
     })
 
 
