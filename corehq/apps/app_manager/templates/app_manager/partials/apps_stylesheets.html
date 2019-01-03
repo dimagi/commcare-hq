@@ -4,13 +4,13 @@
 {% compress css %}
   {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
   <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
-  {% if legacy_select2 %}
-      <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
-      <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
-  {% else %}
-      <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
-  {% endif %}
-  {% endcompress %}
+{% endcompress %}
+{% if legacy_select2 %}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
+{% else %}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
+{% endif %}
 
   {% if less_debug %}
     <link type="text/less"
