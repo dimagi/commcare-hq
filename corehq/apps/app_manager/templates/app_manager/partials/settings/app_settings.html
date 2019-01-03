@@ -184,7 +184,13 @@
             <div class="panel panel-appmanager panel-appmanager-form">
                 <form action="{% url "pull_master_app" domain app.id %}" method="POST">
                     {% csrf_token %}
-                    <legend>Update from master application</legend>
+                    <legend>Update from
+                        {% if upstream_url %}
+                            <a href="{{ upstream_url }}">master application</a>
+                        {% else %}
+                            master application
+                        {% endif %}
+                    </legend>
                     <div class="panel-body">
                         <p> Your app is at version {{ app.version }}.
                             {% if master_version %}The master app is at version {{ master_version }}.
