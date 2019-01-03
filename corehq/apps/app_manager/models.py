@@ -29,6 +29,7 @@ from lxml import etree
 from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
+from django.db import models
 from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -38,6 +39,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
+from corehq.apps.app_manager.helpers.validators import ApplicationBaseValidator, ApplicationValidator
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -118,7 +120,6 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     actions_use_usercase,
     update_form_unique_ids,
-    app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
     module_case_hierarchy_has_circular_reference,
@@ -127,6 +128,8 @@ from corehq.apps.app_manager.util import (
     LatestAppInfo,
     update_report_module_ids,
     module_offers_search,
+    get_latest_enabled_build_for_profile,
+    get_enabled_build_profiles_for_version,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -146,7 +149,6 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationError,
     ScheduleError,
     CaseXPathValidationError,
-    UserCaseXPathValidationError,
     XFormValidationFailed,
     PracticeUserException)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
@@ -438,7 +440,10 @@ class FormActions(DocumentSchema):
 class CaseIndex(DocumentSchema):
     tag = StringProperty()
     reference_id = StringProperty(default='parent')
-    relationship = StringProperty(choices=['child', 'extension'], default='child')
+    relationship = StringProperty(choices=['child', 'extension', 'question'], default='child')
+    # if relationship is 'question', this is the question path
+    # question's response must be either "child" or "extension"
+    relationship_question = StringProperty(default='')
 
 
 class AdvancedAction(IndexedSchema):
@@ -3175,6 +3180,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             for case_index in action.case_indices:
                 if case_index.tag not in case_tags:
                     errors.append({'type': 'missing parent tag', 'case_tag': case_index.tag})
+                if case_index.relationship == 'question' and not case_index.relationship_question:
+                    errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
 
             if isinstance(action, AdvancedOpenCaseAction):
                 if not action.name_path:
@@ -5077,25 +5084,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         else:
             self.admin_password_charset = 'x'
 
-    def check_password_charset(self):
-        errors = []
-        if hasattr(self, 'profile'):
-            password_format = self.profile.get('properties', {}).get('password_format', 'n')
-            message = _(
-                'Your app requires {0} passwords but the admin password is not '
-                '{0}. To resolve, go to app settings, Advanced Settings, Java '
-                'Phone General Settings, and reset the Admin Password to '
-                'something that is {0}'
-            )
-
-            if password_format == 'n' and self.admin_password_charset in 'ax':
-                errors.append({'type': 'password_format',
-                               'message': message.format('numeric')})
-            if password_format == 'a' and self.admin_password_charset in 'x':
-                errors.append({'type': 'password_format',
-                               'message': message.format('alphanumeric')})
-        return errors
-
     def get_build(self):
         return self.build_spec.get_build()
 
@@ -5193,44 +5181,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
-    @time_method()
-    def validate_fixtures(self):
-        if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
-            # remote apps don't support get_forms yet.
-            # for now they can circumvent the fixture limitation. sneaky bastards.
-            if hasattr(self, 'get_forms'):
-                for form in self.get_forms():
-                    if form.has_fixtures:
-                        raise PermissionDenied(_(
-                            "Usage of lookup tables is not supported by your "
-                            "current subscription. Please upgrade your "
-                            "subscription before using this feature."
-                        ))
-
-    @time_method()
-    def validate_intents(self):
-        if domain_has_privilege(self.domain, privileges.CUSTOM_INTENTS):
-            return
-
-        if hasattr(self, 'get_forms'):
-            for form in self.get_forms():
-                intents = form.wrapped_xform().odk_intents
-                if intents:
-                    if not domain_has_privilege(self.domain, privileges.TEMPLATED_INTENTS):
-                        raise PermissionDenied(_(
-                            "Usage of integrations is not supported by your "
-                            "current subscription. Please upgrade your "
-                            "subscription before using this feature."
-                        ))
-                    else:
-                        templates = next(app_callout_templates)
-                        if len(set(intents) - set(t['id'] for t in templates)):
-                            raise PermissionDenied(_(
-                                "Usage of external integration is not supported by your "
-                                "current subscription. Please upgrade your "
-                                "subscription before using this feature."
-                            ))
-
     def validate_jar_path(self):
         build = self.get_build()
         setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
@@ -5308,45 +5258,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return TimingContext(self.name)
 
     def validate_app(self):
-        errors = []
-
-        errors.extend(self.check_password_charset())
-
-        try:
-            self.validate_fixtures()
-            self.validate_intents()
-            self.validate_practice_users()
-            self.create_all_files()
-        except CaseXPathValidationError as cve:
-            errors.append({
-                'type': 'invalid case xpath reference',
-                'module': cve.module,
-                'form': cve.form,
-            })
-        except UserCaseXPathValidationError as ucve:
-            errors.append({
-                'type': 'invalid user property xpath reference',
-                'module': ucve.module,
-                'form': ucve.form,
-            })
-        except PracticeUserException as pue:
-            errors.append({
-                'type': 'practice user config error',
-                'message': six.text_type(pue),
-                'build_profile_id': pue.build_profile_id,
-            })
-        except (AppEditingError, XFormValidationError, XFormException,
-                PermissionDenied, SuiteValidationError) as e:
-            errors.append({'type': 'error', 'message': six.text_type(e)})
-        except Exception as e:
-            if settings.DEBUG:
-                raise
-
-            # this is much less useful/actionable without a URL
-            # so make sure to include the request
-            notify_exception(view_utils.get_request(), "Unexpected error building app")
-            errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
-        return errors
+        return ApplicationBaseValidator(self).validate_app()
 
     @absolute_url_property
     def odk_profile_url(self):
@@ -5963,20 +5875,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return None
 
-    @time_method()
-    def validate_practice_users(self):
-        # validate practice_mobile_worker of app and all app profiles
-        # raises PracticeUserException in case of misconfiguration
-        if not self.enable_practice_users:
-            return
-        self.get_practice_user()
-        try:
-            for build_profile_id in self.build_profiles:
-                self.get_practice_user(build_profile_id)
-        except PracticeUserException as e:
-            e.build_profile_id = build_profile_id
-            raise e
-
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
@@ -6314,116 +6212,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         # will be the same.
         return forms[0].get_questions(langs or self.langs, include_triggers, include_groups, include_translations)
 
-    def check_subscription(self):
-
-        def app_uses_usercase(app):
-            return any(m.uses_usercase() for m in app.get_modules())
-
-        errors = []
-        if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
-            errors.append({
-                'type': 'subscription',
-                'message': _('Your application is using User Properties and your current subscription does not '
-                             'support that. You can remove User Properties functionality by opening the User '
-                             'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
-            })
-        return errors
-
-    @time_method()
-    def _check_modules(self):
-        errors = []
-        if not self.modules:
-            errors.append({'type': "no modules"})
-        for module in self.get_modules():
-            errors.extend(module.validate_for_build())
-        return errors
-
-    @time_method()
-    def _check_forms(self):
-        errors = []
-        xmlns_count = defaultdict(int)
-        for form in self.get_forms():
-            errors.extend(form.validate_for_build(validate_module=False))
-
-            # make sure that there aren't duplicate xmlns's
-            if not isinstance(form, ShadowForm):
-                xmlns_count[form.xmlns] += 1
-            for xmlns in xmlns_count:
-                if xmlns_count[xmlns] > 1:
-                    errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
-        return errors
-
-    @time_method()
     def validate_app(self):
-        errors = []
-
-        for lang in self.langs:
-            if not lang:
-                errors.append({'type': 'empty lang'})
-
-        errors.extend(self._check_modules())
-        errors.extend(self._check_forms())
-
-        if any(not module.unique_id for module in self.get_modules()):
-            raise ModuleIdMissingException
-        modules_dict = {m.unique_id: m for m in self.get_modules()}
-
-        def _parent_select_fn(module):
-            if hasattr(module, 'parent_select') and module.parent_select.active:
-                return module.parent_select.module_id
-
-        if self._has_dependency_cycle(modules_dict, _parent_select_fn):
-            errors.append({'type': 'parent cycle'})
-
-        errors.extend(self._child_module_errors(modules_dict))
-        errors.extend(self.check_subscription())
-
-        if not errors:
-            errors = super(Application, self).validate_app()
-        return errors
-
-    def _has_dependency_cycle(self, modules, neighbour_id_fn):
-        """
-        Detect dependency cycles given modules and the neighbour_id_fn
-
-        :param modules: A mapping of module unique_ids to Module objects
-        :neighbour_id_fn: function to get the neibour module unique_id
-        :return: True if there is a cycle in the module relationship graph
-        """
-        visited = set()
-        completed = set()
-
-        def cycle_helper(m):
-            if m.id in visited:
-                if m.id in completed:
-                    return False
-                return True
-            visited.add(m.id)
-            parent = modules.get(neighbour_id_fn(m), None)
-            if parent is not None and cycle_helper(parent):
-                return True
-            completed.add(m.id)
-            return False
-        for module in modules.values():
-            if cycle_helper(module):
-                return True
-        return False
-
-    def _child_module_errors(self, modules_dict):
-        module_errors = []
-
-        def _root_module_fn(module):
-            if hasattr(module, 'root_module_id'):
-                return module.root_module_id
-
-        if self._has_dependency_cycle(modules_dict, _root_module_fn):
-            module_errors.append({'type': 'root cycle'})
-
-        module_ids = set([m.unique_id for m in self.get_modules()])
-        root_ids = set([_root_module_fn(m) for m in self.get_modules() if _root_module_fn(m) is not None])
-        if not root_ids.issubset(module_ids):
-            module_errors.append({'type': 'unknown root'})
-        return module_errors
+        return ApplicationValidator(self).validate_app()
 
     def get_profile_setting(self, s_type, s_id):
         setting = self.profile.get(s_type, {}).get(s_id)
@@ -6833,6 +6623,16 @@ class GlobalAppConfig(Document):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
+
+class LatestEnabledBuildProfiles(models.Model):
+    app_id = models.CharField(max_length=255)
+    build_profile_id = models.CharField(max_length=255)
+    version = models.IntegerField()
+    build_id = models.CharField(max_length=255)
+
+    def expire_cache(self, domain):
+        get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
+        get_enabled_build_profiles_for_version.clear(self.build_id, self.version)
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

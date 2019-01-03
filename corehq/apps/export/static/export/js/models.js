@@ -223,8 +223,6 @@ hqDefine('export/js/models', [
             $btn.removeSpinnerFromButton();
             $btn.removeClass('disabled');
             $btn.attr('disabled', false);
-            $btn.removeClass('btn-primary');
-            $btn.addClass('btn-success');
             self.schemaProgressText(gettext('Refresh page'));
         };
 
@@ -500,6 +498,7 @@ hqDefine('export/js/models', [
         self.showDeleted = ko.observable(false);
         self.displayType = ko.observable("labels");
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
+        self.useLabels(self);
     };
 
     TableConfiguration.prototype.isVisible = function () {
@@ -889,7 +888,7 @@ hqDefine('export/js/models', [
     };
 
     ExportItem.prototype.readablePath = function () {
-        return utils.readablePath(this.path());
+        return readablePath(this.path());
     };
 
     ExportItem.mapping = {

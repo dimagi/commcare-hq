@@ -84,7 +84,7 @@ class BlobMixin(Document):
                 if value["doc_type"] == "BlobMetaRef":
                     blobs[key] = value
                 else:
-                    blobs[key] = normalize(dbname, doc_id, value)
+                    blobs[key] = normalize(dbname, data['_id'], value)
                     normalized = True
             if normalized:
                 data = data.copy()

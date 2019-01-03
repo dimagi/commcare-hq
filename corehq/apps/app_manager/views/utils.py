@@ -16,6 +16,7 @@ from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException, AppLinkError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
+from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.apps.linked_domain.models import AppLinkDetail
@@ -363,3 +364,7 @@ def update_linked_app(app, user_id):
 def clear_xmlns_app_id_cache(domain):
     from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
     get_all_xmlns_app_id_pairs_submitted_to_in_domain.clear(domain)
+
+
+def form_has_submissions(domain, app_id, xmlns):
+    return FormES().domain(domain).app([app_id]).xmlns([xmlns]).count() != 0

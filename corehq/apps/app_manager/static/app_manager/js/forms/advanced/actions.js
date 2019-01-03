@@ -5,17 +5,20 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
     var caseIndex = {
         mapping: {
-            include: ['tag', 'reference_id', 'relationship'],
+            include: ['tag', 'reference_id', 'relationship', 'relationship_question'],
         },
         wrap: function (data) {
             var self = ko.mapping.fromJS(data, caseIndex.mapping);
             self.relationship.subscribe(function (value) {
-                if (value === 'extension' && self.reference_id() === 'parent') {
+                if (value === 'extension' && self.reference_id() !== 'host') {
                     self.reference_id('host');
-                } else if (value === 'child' && self.reference_id() === 'host') {
+                } else if (value === 'child' && self.reference_id() !== 'parent') {
                     self.reference_id('parent');
+                } else if (value === 'question') {
+                    self.reference_id('');
                 }
             });
+
             return self;
         },
     };
@@ -134,7 +137,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             }
             return properties;
         },
-        relationshipTypes: ['child', 'extension'],
+        relationshipTypes: ['child', 'extension', 'question'],
     };
 
     var loadUpdateAction = {
@@ -486,6 +489,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                             tag: gettext('Select parent'),
                             reference_id: 'parent',
                             relationship: 'child',
+                            relationship_question: '',
                         }));
                     } else {
                         self.case_indices.removeAll();
@@ -505,6 +509,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                     tag: '',
                     reference_id: 'parent',
                     relationship: 'child',
+                    relationship_question: '',
                 }));
             };
 

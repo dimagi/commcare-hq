@@ -1,8 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import codecs
 from datetime import timedelta
+
 from django.test import TestCase
 from django.test.client import Client
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, INCOMING
 from corehq.apps.users.models import WebUser
@@ -63,7 +67,7 @@ class IncomingPostTest(TestCase):
                      InboundParams.DCS: '8'}
         response, log = post(fake_post, self.unicel_backend)
         self.assertEqual(200, response.status_code)
-        self.assertEqual(self.message_utf_hex.decode("hex").decode("utf_16_be"),
+        self.assertEqual(codecs.decode(codecs.decode(self.message_utf_hex, 'hex'), 'utf_16_be'),
                         log.text)
         self.assertEqual(INCOMING, log.direction)
         self.assertEqual(log.backend_message_id, fake_post[InboundParams.MID])

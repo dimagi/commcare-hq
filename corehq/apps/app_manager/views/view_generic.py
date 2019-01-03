@@ -222,11 +222,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         uploaders = {
             'icon': MultimediaImageUploadController(
                 "hqimage",
-                reverse(ProcessImageFileUploadView.name,
+                reverse(ProcessImageFileUploadView.urlname,
                         args=[app.domain, app.get_id])
             ),
             'audio': MultimediaAudioUploadController(
-                "hqaudio", reverse(ProcessAudioFileUploadView.name,
+                "hqaudio", reverse(ProcessAudioFileUploadView.urlname,
                         args=[app.domain, app.get_id])
             ),
         }
@@ -283,7 +283,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             MultimediaLogoUploadController(
                 slug,
                 reverse(
-                    ProcessLogoFileUploadView.name,
+                    ProcessLogoFileUploadView.urlname,
                     args=[domain, app_id, slug],
                 )
             )

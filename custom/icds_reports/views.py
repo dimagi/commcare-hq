@@ -319,6 +319,7 @@ class LadySupervisorView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+        config['aggregation_level'] = 4
 
         data = get_lady_supervisor_data(
             domain, config, include_test

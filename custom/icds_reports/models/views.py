@@ -605,6 +605,7 @@ class CcsRecordMonthlyView(models.Model):
     person_name = models.TextField(blank=True, null=True)
     preg_order = models.SmallIntegerField(blank=True, null=True)
     pregnant = models.IntegerField(blank=True, null=True)
+    pregnant_all = models.IntegerField(blank=True, null=True)
     rupture = models.SmallIntegerField(blank=True, null=True)
     swelling = models.SmallIntegerField(blank=True, null=True)
     trimester = models.IntegerField(blank=True, null=True)
@@ -615,6 +616,7 @@ class CcsRecordMonthlyView(models.Model):
     dob = models.DateField(blank=True, null=True)
     open_in_month = models.SmallIntegerField(blank=True, null=True)
     closed = models.SmallIntegerField(blank=True, null=True)
+    anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -834,10 +836,6 @@ class AwcLocationMonths(models.Model):
 
 
 class DishaIndicatorView(models.Model):
-    awc_id = models.TextField(primary_key=True)
-    awc_name = models.TextField(blank=True, null=True)
-    supervisor_id = models.TextField(blank=True, null=True)
-    supervisor_name = models.TextField(blank=True, null=True)
     block_id = models.TextField(blank=True, null=True)
     block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)

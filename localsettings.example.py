@@ -256,11 +256,6 @@ CACHES = {
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
-
 LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],
 #    'and_more': []

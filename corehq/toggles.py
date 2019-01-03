@@ -1532,13 +1532,13 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
 
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
-    'Allow linking domains (successor to linked apps)',
-    TAG_INTERNAL,
+    'Allow linking project spaces (successor to linked apps)',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
-    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
+    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
@@ -1676,6 +1676,14 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
 RESTRICT_APP_RELEASE = StaticToggle(
     'restrict_app_release',
     'ICDS: Show permission to manage app releases on user roles',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+RELEASE_BUILDS_PER_PROFILE = StaticToggle(
+    'release_builds_per_profile',
+    'Do not release builds for all app profiles by default. Then manage via Source files view',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

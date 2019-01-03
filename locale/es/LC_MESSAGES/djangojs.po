@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-12-11 20:06+0000\n"
+"POT-Creation-Date: 2018-12-18 20:11+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2018\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -152,7 +152,7 @@ msgstr ""
 msgid "Project name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:62
+#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:60
 msgid ""
 "Something went wrong refreshing your form properties. Please refresh the "
 "page and try again"
@@ -206,10 +206,8 @@ msgid "Decreasing (1.3, 1.2, 1.1)"
 msgstr "Descendente (1.3, 1.2, 1.1)"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:260
-#, fuzzy
-#| msgid "Unknown"
 msgid "Unknown menu"
-msgstr "Desconocido"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:277
 msgid "Select One"
@@ -1049,7 +1047,7 @@ msgid "Phone Number or Numeric ID"
 msgstr "Número de teléfono o ID Numérico"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:172
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:181
 msgid "Password"
 msgstr "Contraseña"
 
@@ -1344,8 +1342,8 @@ msgstr "Agregue Expresión"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:558
-#: corehq/apps/export/static/export/js/models.js:335
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:567
+#: corehq/apps/export/static/export/js/models.js:333
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:260
 msgid "Save"
 msgstr "Guardar"
@@ -2041,12 +2039,8 @@ msgid "Could not load app properties."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#, fuzzy
-#| msgid "Error generating the application diff. Please report an issue."
 msgid "If this error persists, please report an issue."
 msgstr ""
-"Ocurrió un error al generar la aplicación diff. Por favor reporte un "
-"problema."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid ""
@@ -2291,7 +2285,7 @@ msgid "Inlined attachments must have an attachment name"
 msgstr "Los adjuntos en línea deben tener un nombre del adjunto"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/export/static/export/js/models.js:335
+#: corehq/apps/export/static/export/js/models.js:333
 msgid "Create"
 msgstr "Crear"
 
@@ -2500,20 +2494,20 @@ msgstr "Evaluar XPath"
 msgid "Error evaluating expression."
 msgstr "Error al evaluar la expresión."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:176
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:185
 msgid "Barcode"
 msgstr "Código de barras"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:178
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:187
 msgid "Free response"
 msgstr "Respuesta libre"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:355
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:364
 msgid "Type to filter answers"
 msgstr "Escriba para filtrar respuestas"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:368
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:480
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:377
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:489
 msgid "Not a valid choice"
 msgstr "Opción no válida"
 
@@ -2833,58 +2827,58 @@ msgstr "Proceso"
 msgid "Processing..."
 msgstr "Procesando..."
 
-#: corehq/apps/export/static/export/js/models.js:228
+#: corehq/apps/export/static/export/js/models.js:226
 msgid "Refresh page"
 msgstr "Actualizar la página"
 
-#: corehq/apps/export/static/export/js/models.js:291
+#: corehq/apps/export/static/export/js/models.js:289
 msgid "Web Page (Excel Dashboards)"
 msgstr "Página Web (Tablero de Excel)"
 
-#: corehq/apps/export/static/export/js/models.js:293
+#: corehq/apps/export/static/export/js/models.js:291
 msgid "CSV (Zip file)"
 msgstr "CSV (archivo Zip)"
 
-#: corehq/apps/export/static/export/js/models.js:295
+#: corehq/apps/export/static/export/js/models.js:293
 msgid "Excel (older versions)"
 msgstr "Excel (versiones antiguas)"
 
-#: corehq/apps/export/static/export/js/models.js:297
+#: corehq/apps/export/static/export/js/models.js:295
 msgid "Excel 2007+"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:309
+#: corehq/apps/export/static/export/js/models.js:307
 msgid "Private"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:311
+#: corehq/apps/export/static/export/js/models.js:309
 msgid "Export Only"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:313
+#: corehq/apps/export/static/export/js/models.js:311
 msgid "Edit and Export"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:318
+#: corehq/apps/export/static/export/js/models.js:316
 msgid ""
 "<strong>Private</strong>: Only you can edit and export.<br/> <strong>Export "
 "Only</strong>: You can edit and export, other users can only export.<br/> "
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:634
+#: corehq/apps/export/static/export/js/models.js:633
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:745
+#: corehq/apps/export/static/export/js/models.js:744
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:747
+#: corehq/apps/export/static/export/js/models.js:746
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:749
+#: corehq/apps/export/static/export/js/models.js:748
 msgid "None"
 msgstr "Ninguna"
 
@@ -2931,6 +2925,16 @@ msgstr "Reemplazaar"
 #: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
 msgid "Upload "
 msgstr "Cargar"
+
+#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:8
+msgid ""
+"There was an error processing your file. Please try again or report an issue "
+"if the problem persists."
+msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:40
+msgid "File validated with no errors or warnings."
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js:7
 msgid "This is Danny, one of our best developers."
@@ -3623,8 +3627,10 @@ msgstr "Editar Rol:"
 msgid "Delete Role: "
 msgstr "Eliminar Rol:"
 
-#: corehq/apps/users/static/users/js/roles.js:147
-msgid "Are you sure you want to delete this role?"
+#: corehq/apps/users/static/users/js/roles.js:149
+#, fuzzy
+#| msgid "Are you sure you want to delete this role?"
+msgid "Are you sure you want to delete the role <%= role %>?"
 msgstr "¿Está seguro que desea eliminar este rol?"
 
 #: corehq/apps/users/static/users/js/web_users.js:49

@@ -95,10 +95,19 @@ class MetaDB(object):
         :param parent_id: `BlobMeta.parent_id`
         :param type_code: `BlobMeta.type_code`
         :param name: `BlobMeta.name`
+        :param key: `BlobMeta.key`
         :raises: `BlobMeta.DoesNotExist` if the metadata is not found.
         :returns: A `BlobMeta` object.
         """
-        if set(kw) != {"parent_id", "type_code", "name"}:
+        keywords = set(kw)
+        if 'key' in keywords and keywords != {'key', 'parent_id'}:
+            kw.pop('key', None)
+            if 'parent_id' not in keywords:
+                raise TypeError("Missing argument 'parent_id'")
+            else:
+                kw.pop('parent_id')
+                raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
+        elif 'key' not in keywords and keywords != {"parent_id", "type_code", "name"}:
             # arg check until on Python 3 -> PEP 3102: required keyword args
             kw.pop("parent_id", None)
             kw.pop("type_code", None)

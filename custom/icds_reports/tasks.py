@@ -62,8 +62,8 @@ from custom.icds_reports.models import (
     AWWIncentiveReport,
     AggLs,
     AggAwc,
-    AwcLocation
-)
+    AwcLocation,
+    AwcLocationMonths)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance,\
     AggregateLsVhndForm, AggregateBeneficiaryForm, AggregateLsAWCVisitForm
 from custom.icds_reports.models.helper import IcdsFile
@@ -77,7 +77,7 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
-    create_excel_file
+    create_excel_file, create_aww_performance_excel_file
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
@@ -610,7 +610,6 @@ def _find_stagnant_cases(adapter):
     return query.all()
 
 
-
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
 def prepare_excel_reports(config, aggregation_level, include_test, beta, location, domain,
                           file_format, indicator):
@@ -668,14 +667,29 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             block=location,
             month=config['month']
         ).get_excel_data()
-    cache_key = create_excel_file(excel_data, data_type, file_format)
+        location_object = AwcLocationMonths.objects.filter(
+            block_id=location,
+            aggregation_level=3
+        ).first()
+        if file_format == 'xlsx':
+            cache_key = create_aww_performance_excel_file(
+                excel_data,
+                data_type,
+                config['month'].strftime("%B %Y"),
+                location_object.state_name,
+                location_object.district_name,
+                location_object.block_name,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+    if indicator != AWW_INCENTIVE_REPORT:
+        cache_key = create_excel_file(excel_data, data_type, file_format)
     params = {
         'domain': domain,
         'uuid': cache_key,
         'file_format': file_format,
         'data_type': data_type,
     }
-
     return {
         'domain': domain,
         'uuid': cache_key,
@@ -878,11 +892,15 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='20'), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(day_of_week=6, hour=0, minute=0), acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
+    # Weekly refresh of disha dumps for current and last month
     month = date.today().replace(day=1)
+    last_month = month - timedelta(days=1)
+    last_month = last_month.replace(day=1)
     celery_task_logger.info("Started dumping DISHA data")
-    build_dumps_for_month(month)
+    build_dumps_for_month(month, rebuild=True)
+    build_dumps_for_month(last_month, rebuild=True)
     celery_task_logger.info("Finished dumping DISHA data")
 
 

@@ -145,6 +145,7 @@ class CcsRecordMonthly(models.Model):
     valid_visits = models.SmallIntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
     closed = models.SmallIntegerField(blank=True, null=True)
+    anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -1582,6 +1583,7 @@ class AggregateAwcInfrastructureForms(models.Model):
             cursor.execute(helper.drop_table_query())
             cursor.execute(curr_month_query, curr_month_params)
             cursor.execute(agg_query, agg_params)
+
 
 class AWWIncentiveReport(models.Model):
     """Monthly updated table that holds metrics for the incentive report"""

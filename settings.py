@@ -721,11 +721,6 @@ ENABLE_PRELOGIN_SITE = False
 # dimagi.com urls
 PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
 
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
-
 # Sumologic log aggregator
 SUMOLOGIC_URL = None
 
@@ -2213,7 +2208,6 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
-
 
 
 if 'locmem' not in CACHES:
