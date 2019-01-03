@@ -228,6 +228,7 @@ def _get_report_module_context(app, module):
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
             'filter_structure': report.filters_without_prefilters,
+            'legacy_select2': False,
         }
 
     all_reports = ReportConfiguration.by_domain(app.domain) + \
