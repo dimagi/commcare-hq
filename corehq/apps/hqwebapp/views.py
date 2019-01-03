@@ -664,7 +664,7 @@ class BugReportView(View):
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
             ).format(**debug_context)
-            traceback_info = cache.cache.get(report['500traceback'])
+            traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
             cache.cache.delete(report['500traceback'])
             message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
 
