@@ -40,6 +40,14 @@
 
         {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
+        {% if CUSTOM_LOGO_URL %}
+            <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
+        {% else %}
+            <link rel="apple-touch-icon" sizes="38x38" href="/static/hqstyle/images/commcare-flower.png"/>
+            <link rel="apple-touch-icon" sizes="96x96" href="/static/hqstyle/images/commcare-icon-large.png"/>
+            <link rel="apple-touch-icon" sizes="193×144" href="/static/hqstyle/images/commcare-flower-lg.png"/>
+        {% endif %}
+
         {% block stylesheets %}{% endblock stylesheets %}
         {% block csrf_token_block %}
           <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
