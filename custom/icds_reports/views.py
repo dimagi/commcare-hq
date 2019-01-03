@@ -45,8 +45,8 @@ from custom.icds_reports.const import (
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE,
     VALID_LEVELS_FOR_DUMP,
 )
+from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
-from custom.icds_reports.models.views import AwcLocationMonths
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
@@ -1726,4 +1726,4 @@ class DishaAPIView(View):
     @property
     @quickcache([])
     def valid_state_names(self):
-        return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())
+        return AwcLocation.objects.filter(aggregation_level=1, state_is_test=0).values_list('state_name', flat=True)
