@@ -94,7 +94,7 @@ def check_elasticsearch():
     if cluster_health != 'green':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
-    doc = {'_id': 'elasticsearch-service-check-{}'.format(random_hex[:7]),
+    doc = {'_id': 'elasticsearch-service-check-{}'.format(random_hex()[:7]),
            'date': datetime.datetime.now().isoformat()}
     send_to_elasticsearch('groups', doc)
     refresh_elasticsearch_index('groups')
