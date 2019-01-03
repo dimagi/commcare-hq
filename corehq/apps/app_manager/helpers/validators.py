@@ -285,8 +285,7 @@ class ApplicationValidator(ApplicationBaseValidator):
 
 
 class ModuleBaseValidator(object):
-    def __init__(self, module, *args, **kwargs):
-        super(ModuleBaseValidator, self).__init__(*args, **kwargs)
+    def __init__(self, module):
         self.module = module
 
     def validate_for_build(self):
