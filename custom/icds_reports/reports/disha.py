@@ -111,8 +111,7 @@ class DishaDump(object):
 
 
 def build_dumps_for_month(month, rebuild=False):
-    states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
-
+    states = AwcLocation.objects.filter(aggregation_level=1, state_is_test=0).values_list('state_name', flat=True)
     for state_name in states:
         dump = DishaDump(state_name, month)
         if not rebuild and dump.export_exists():
