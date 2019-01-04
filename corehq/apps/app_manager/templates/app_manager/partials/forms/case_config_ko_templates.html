@@ -8,35 +8,39 @@
         <a href="#" class="btn btn-default" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
     </div>
 
-    <div class="form-inline" data-bind="visible: type() === 'if'">
-        <a href="#" class="btn btn-default" data-bind="click: function () {type('always')}">
-            <i class="fa fa-remove"></i>
-        </a>
-        {% trans "Only if the answer to" %}
-        <!--
-            This would normally use .form-control, but it's going to become a select2,
-            which adds wonky height & borders on Firefox when it uses .form-control
-        -->
-        <select data-bind="
-            questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
-            value: question,
-            optionsCaption: ' '
-        "></select>
-        <select class="form-control" data-bind="
-                optstr: [
-                    {label:'{% trans "is" %}', value:'='},
-                    {label:'{% trans "has selected" %}', value:'selected'},
-                    {label:'{% trans "is true" %}', value:'boolean_true'}
-                ],
-                value: operator"></select>
-        <span data-bind="if: $root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
+    <div class="row" data-bind="visible: type() === 'if'">
+        <div class="col-sm-1">
+            {% trans "Only if the answer to" %}
+        </div>
+        <div class="col-sm-4">
+            <select class="form-control" data-bind="
+                questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
+                value: question,
+                optionsCaption: ' '
+            "></select>
+        </div>
+        <div class="col-sm-2">
+            <select class="form-control" data-bind="
+                    optstr: [
+                        {label:'{% trans "is" %}', value:'='},
+                        {label:'{% trans "has selected" %}', value:'selected'},
+                        {label:'{% trans "is true" %}', value:'boolean_true'}
+                    ],
+                    value: operator"></select>
+        </div>
+        <div class="col-sm-4" data-bind="visible: $root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
             <select class="form-control" data-bind="
                 optstr: $root.getAnswers({question: question()}),
                 value: answer"></select>
-        </span>
-        <span data-bind="if: !$root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
+        </div>
+        <div class="col-sm-4" data-bind="visible: !$root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
             <input type="text" class="form-control" data-bind="value: answer"/>
-        </span>
+        </div>
+        <div class="col-sm-1">
+            <a href="#" class="btn btn-default" data-bind="click: function () {type('always')}">
+                <i class="fa fa-remove"></i>
+            </a>
+        </div>
     </div>
     <!--/ko-->
 </script>
