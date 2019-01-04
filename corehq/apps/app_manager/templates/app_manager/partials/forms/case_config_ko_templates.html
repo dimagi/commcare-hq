@@ -16,7 +16,6 @@
             <select class="form-control" data-bind="
                 questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
                 value: question,
-                optionsCaption: ' '
             "></select>
         </div>
         <div class="col-sm-2">
@@ -46,14 +45,9 @@
 </script>
 
 <script type="text/html" id="case-config:case-properties:question">
-    <!--
-        This would normally use .form-control, but it's going to become a select2,
-        which adds wonky height & borders on Firefox when it uses .form-control
-    -->
-    <select data-bind="
+    <select class="form-control" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
         value: path,
-        optionsCaption: ' ',
         event: { change: function(view, e) {
             if (e.target.closest('#case-config-ko')) {
                 var action = e.target.closest('.case-preload') ? 'Load' : 'Save';
