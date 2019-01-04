@@ -21,7 +21,7 @@ from corehq.util.timer import time_method
 from corehq.util import view_utils
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.const import WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
+from corehq.apps.app_manager.const import AUTO_SELECT_CASE, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
@@ -33,11 +33,14 @@ from corehq.apps.app_manager.exceptions import (
     SuiteValidationError,
     XFormException,
     XFormValidationError,
+    XFormValidationFailed,
 )
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
     split_path,
+    xpath_references_case,
+    xpath_references_user_case,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import interpolate_xpath
@@ -790,6 +793,8 @@ class FormValidator(IndexedFormBaseValidator):
 class AdvancedFormValidator(IndexedFormBaseValidator):
     def check_actions(self):
         errors = []
+
+        from corehq.apps.app_manager.models import AdvancedOpenCaseAction, LoadUpdateAction
 
         for action in self.form.actions.get_subcase_actions():
             case_tags = self.form.actions.get_case_tags()

@@ -132,8 +132,6 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     actions_use_usercase,
     update_form_unique_ids,
-    xpath_references_case,
-    xpath_references_user_case,
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
     LatestAppInfo,
