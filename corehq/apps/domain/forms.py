@@ -76,11 +76,12 @@ from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -1765,7 +1766,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField(label=ugettext_lazy("Email To"))
+    contact_email = MultiCharField(label=ugettext_lazy("Email To"), widget=forms.Select(choices=[]))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
@@ -1811,6 +1812,13 @@ class ProBonoForm(forms.Form):
                 )
             ),
         )
+
+    def clean_contact_email(self):
+        if 'contact_email' in self.cleaned_data:
+            copy = self.data.copy()
+            self.data = copy
+            copy.update({'contact_email': ", ".join(self.data.getlist('contact_email'))})
+            return self.data.get('contact_email')
 
     def process_submission(self, domain=None):
         try:
