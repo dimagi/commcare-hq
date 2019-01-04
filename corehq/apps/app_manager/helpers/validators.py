@@ -789,8 +789,6 @@ class IndexedFormBaseValidator(FormBaseValidator):
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         errors = []
 
-        # reserved_words are hard-coded in three different places!
-        # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in all_names:
             try:
