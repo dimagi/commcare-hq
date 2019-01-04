@@ -728,7 +728,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,
-        'legacy_select2': True,
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
