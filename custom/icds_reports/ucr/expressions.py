@@ -391,10 +391,12 @@ class AWCOwnerId(JsonObject):
             accessor = CaseAccessors(context.root_doc['domain'])
             indices = {case_id}
             last_indices = set()
-            while indices != last_indices:
-                # assuming no loops
+            loop_counter = 0
+            # only allow 10 iterations at most in case there are loops
+            while indices != last_indices and loop_counter < 10:
                 last_indices |= indices
                 indices |= set(accessor.get_indexed_case_ids(indices))
+                loop_counter += 1
 
             cases = accessor.get_cases(list(indices))
             cases_with_owners = [
