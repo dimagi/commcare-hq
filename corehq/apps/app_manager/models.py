@@ -2406,33 +2406,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         for _, detail, _ in self.get_details():
             detail.rename_lang(old_lang, new_lang)
 
-    def validate_detail_columns(self, columns):
-        from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LOCATION
-        from corehq.apps.locations.util import parent_child
-        from corehq.apps.locations.fixtures import should_sync_hierarchical_fixture
-
-        hierarchy = None
-        for column in columns:
-            if column.field_type == FIELD_TYPE_LOCATION:
-                domain = self.get_app().domain
-                project = Domain.get_by_name(domain)
-                try:
-                    if not should_sync_hierarchical_fixture(project, self.get_app()):
-                        # discontinued feature on moving to flat fixture format
-                        raise LocationXpathValidationError(
-                            _('That format is no longer supported. To reference the location hierarchy you need to'
-                              ' use the "Custom Calculations in Case List" feature preview. For more information '
-                              'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
-                    hierarchy = hierarchy or parent_child(domain)
-                    LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError as e:
-                    yield {
-                        'type': 'invalid location xpath',
-                        'details': six.text_type(e),
-                        'module': self.get_module_info(),
-                        'column': column,
-                    }
-
     def get_form_by_unique_id(self, unique_id):
         for form in self.get_forms():
             if form.get_unique_id() == unique_id:
@@ -2548,30 +2521,8 @@ class ModuleDetailsMixin(object):
         return tuple(details)
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        module_info = self.get_module_info()
-
-        if needs_case_type and not self.case_type:
-            yield {
-                'type': 'no case type',
-                'module': module_info,
-            }
-
-        if needs_case_detail:
-            if not self.case_details.short.columns:
-                yield {
-                    'type': 'no case detail',
-                    'module': module_info,
-                }
-            columns = self.case_details.short.columns + self.case_details.long.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
-
-        if needs_referral_detail and not self.ref_details.short.columns:
-            yield {
-                'type': 'no ref detail',
-                'module': module_info,
-            }
+        return self.validator.get_case_errors(needs_case_type, needs_case_detail,
+                                              needs_referral_detail=needs_referral_detail)
 
 
 class Module(ModuleBase, ModuleDetailsMixin):
@@ -3347,36 +3298,8 @@ class AdvancedModule(ModuleBase):
         return details
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-
-        module_info = self.get_module_info()
-
-        if needs_case_type and not self.case_type:
-            yield {
-                'type': 'no case type',
-                'module': module_info,
-            }
-
-        if needs_case_detail:
-            if not self.case_details.short.columns:
-                yield {
-                    'type': 'no case detail',
-                    'module': module_info,
-                }
-            if self.get_app().commtrack_enabled and not self.product_details.short.columns:
-                for form in self.forms:
-                    if self.case_list.show or \
-                            any(action.show_product_stock for action in form.actions.load_update_cases):
-                        yield {
-                            'type': 'no product detail',
-                            'module': module_info,
-                        }
-                        break
-            columns = self.case_details.short.columns + self.case_details.long.columns
-            if self.get_app().commtrack_enabled:
-                columns += self.product_details.short.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
+        return self.validator.get_case_errors(needs_case_type, needs_case_detail,
+                                              needs_referral_detail=needs_referral_detail)
 
     @property
     def validator(self):
