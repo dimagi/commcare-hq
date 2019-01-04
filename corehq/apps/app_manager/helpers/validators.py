@@ -326,7 +326,7 @@ class ModuleBaseValidator(object):
         needs_case_detail = self.module.requires_case_details()
         needs_case_type = needs_case_detail or any(f.is_registration_form() for f in self.module.get_forms())
         if needs_case_detail or needs_case_type:
-            errors.extend(self.module.get_case_errors(
+            errors.extend(self.module.validator.get_case_errors(
                 needs_case_type=needs_case_type,
                 needs_case_detail=needs_case_detail
             ))
@@ -865,7 +865,7 @@ class FormValidator(IndexedFormBaseValidator):
             if self.form.requires_referral():
                 needs_referral_detail = True
 
-            errors.extend(self.form.get_module().get_case_errors(
+            errors.extend(self.form.get_module().validator.get_case_errors(
                 needs_case_type=needs_case_type,
                 needs_case_detail=needs_case_detail,
                 needs_referral_detail=needs_referral_detail,
@@ -981,7 +981,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
 
         module = self.form.get_module()
         if validate_module:
-            errors.extend(module.get_case_errors(
+            errors.extend(module.validator.get_case_errors(
                 needs_case_type=False,
                 needs_case_detail=module.requires_case_details(),
                 needs_referral_detail=False,

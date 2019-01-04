@@ -2520,10 +2520,6 @@ class ModuleDetailsMixin(object):
             details.append(('search_short', self.search_detail, True))
         return tuple(details)
 
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        return self.validator.get_case_errors(needs_case_type, needs_case_detail,
-                                              needs_referral_detail=needs_referral_detail)
-
 
 class Module(ModuleBase, ModuleDetailsMixin):
     """
@@ -3296,10 +3292,6 @@ class AdvancedModule(ModuleBase):
         if module_offers_search(self) and not self.case_details.short.custom_xml:
             details.append(('search_short', self.search_detail, True))
         return details
-
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        return self.validator.get_case_errors(needs_case_type, needs_case_detail,
-                                              needs_referral_detail=needs_referral_detail)
 
     @property
     def validator(self):
