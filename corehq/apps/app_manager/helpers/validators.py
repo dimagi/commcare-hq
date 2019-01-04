@@ -787,6 +787,8 @@ class IndexedFormBaseValidator(FormBaseValidator):
         return self.form.get_app().timing_context
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
+        all_names = all_names or []
+        subcase_names = subcase_names or []
         errors = []
 
         reserved_words = load_case_reserved_words()
