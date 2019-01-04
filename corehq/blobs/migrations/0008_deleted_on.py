@@ -29,4 +29,8 @@ class Migration(migrations.Migration):
             migrator.get_migration('delete_blob_meta_v2.sql', 'delete_blob_meta.sql'),
             apply_to_proxy=False,
         ),
+        partitioned(
+            migrator.get_migration('get_blobmetas_v2.sql', 'get_blobmetas.sql'),
+            apply_to_proxy=False,
+        ),
     ]

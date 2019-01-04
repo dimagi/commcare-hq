@@ -130,7 +130,8 @@ class MetaDB(object):
                 raise TypeError("Missing argument 'name' and/or 'parent_id'")
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
         dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
-        meta = BlobMeta.objects.using(dbname).filter(**kw).first()
+        meta = BlobMeta.objects.using(dbname).filter(
+            deleted_on__isnull=True, **kw).first()
         if meta is None:
             raise BlobMeta.DoesNotExist(repr(kw))
         return meta
@@ -143,7 +144,7 @@ class MetaDB(object):
         :returns: A list of `BlobMeta` objects.
         """
         dbname = get_db_alias_for_partitioned_doc(parent_id)
-        kw = {"parent_id": parent_id}
+        kw = {"parent_id": parent_id, "deleted_on__isnull": True}
         if type_code is not None:
             kw["type_code"] = type_code
         return list(BlobMeta.objects.using(dbname).filter(**kw))

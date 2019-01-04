@@ -93,7 +93,10 @@ class BlobMeta(PartitionedModel, Model):
         ]
 
     def __repr__(self):
-        return "<BlobMeta id={self.id} key={self.key}>".format(self=self)
+        return "<BlobMeta id={self.id} key={self.key}{deleted}>".format(
+            self=self,
+            deleted=(" deleted" if self.deleted_on else ""),
+        )
 
     @property
     def is_image(self):

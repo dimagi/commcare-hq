@@ -120,6 +120,13 @@ class TestMetaDB(TestCase):
         )
         self.assertEqual(copy.key, meta.key)
 
+    def test_get_deleted_metadata(self):
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta())
+        self.db.delete(meta.key)
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            self.db.metadb.get(parent_id=meta.parent_id, key=meta.key)
+        self.assertTrue(get_meta(meta, deleted=True).deleted_on)
+
     def test_get_missing_blobmeta(self):
         xid = uuid4().hex
         with self.assertRaises(BlobMeta.DoesNotExist):
@@ -157,6 +164,13 @@ class TestMetaDB(TestCase):
         items = self.db.metadb.get_for_parent(m1.parent_id, CODES.form_xml)
         self.assertEqual([x.key for x in items], [m1.key])
 
+    def test_get_for_parent_after_delete(self):
+        ns = self.create_blobs()
+        self.db.delete(ns.m1.key)
+        items = self.db.metadb.get_for_parent(ns.p1)
+        self.assertEqual([x.key for x in items], [])
+        self.assertTrue(get_meta(ns.m1, deleted=True).deleted_on)
+
     def test_get_for_parents(self):
         ns = self.create_blobs()
         items = self.db.metadb.get_for_parents([ns.p1, ns.p2])
@@ -169,6 +183,14 @@ class TestMetaDB(TestCase):
             CODES.multimedia,
         )
         self.assertEqual({x.key for x in items}, {ns.m2.key, ns.m3.key})
+
+    def test_get_for_parents_after_delete(self):
+        ns = self.create_blobs()
+        self.db.bulk_delete([ns.m1, ns.m2])
+        items = self.db.metadb.get_for_parents([ns.p1, ns.p2])
+        self.assertEqual([x.key for x in items], [])
+        self.assertTrue(get_meta(ns.m1, deleted=True).deleted_on)
+        self.assertTrue(get_meta(ns.m2, deleted=True).deleted_on)
 
     def test_reparent(self):
         metadb = self.db.metadb
