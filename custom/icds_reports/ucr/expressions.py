@@ -6,6 +6,7 @@ from jsonobject.base_properties import DefaultProperty
 from quickcache.django_quickcache import get_django_quickcache
 from six.moves import filter
 
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
@@ -381,13 +382,13 @@ class AWCOwnerId(JsonObject):
         if not case_id:
             return None
 
-        if item['owner_id'] and item['owner_id'] != '-':
+        if item['owner_id'] and item['owner_id'] != UNOWNED_EXTENSION_OWNER_ID:
             return item['owner_id']
 
         return self._owner_from_extension(item, context, case_id)
 
     def _owner_from_extension(self, item, context, case_id):
-        if item['owner_id'] == '-':
+        if item['owner_id'] == UNOWNED_EXTENSION_OWNER_ID:
             accessor = CaseAccessors(context.root_doc['domain'])
             indices = {case_id}
             last_indices = set()
@@ -401,7 +402,7 @@ class AWCOwnerId(JsonObject):
             cases = accessor.get_cases(list(indices))
             cases_with_owners = [
                 case for case in cases
-                if case.owner_id and case.owner_id != '-'
+                if case.owner_id and case.owner_id != UNOWNED_EXTENSION_OWNER_ID
             ]
             if len(cases_with_owners) != 0:
                 # This shouldn't happen in this world, but will feasibly
@@ -419,7 +420,7 @@ class AWCOwnerId(JsonObject):
             subcases = household_case.get_subcases(index_identifier=self.index_identifier)
             cases_with_owners = [
                 case for case in subcases
-                if case.owner_id and case.owner_id != '-'
+                if case.owner_id and case.owner_id != UNOWNED_EXTENSION_OWNER_ID
             ]
             assert len(cases_with_owners) == 1
             assert cases_with_owners[0].type == 'assignment'
@@ -447,7 +448,7 @@ class VillageOwnerId(AWCOwnerId):
 
         # a village will only be on the case as the owner if
         # its the assignment case so we should verify that
-        if item['owner_id'] != '-':
+        if item['owner_id'] != UNOWNED_EXTENSION_OWNER_ID:
             accessor = CaseAccessors(context.root_doc['domain'])
             case = accessor.get_case(case_id)
             if case.type == 'assignment':
