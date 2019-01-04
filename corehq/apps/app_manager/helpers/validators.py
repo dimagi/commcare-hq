@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 from io import open
 import json
+import logging
 import os
 import re
 import six
@@ -21,16 +22,24 @@ from corehq.util.timer import time_method
 from corehq.util import view_utils
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.const import AUTO_SELECT_CASE, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
+from corehq.apps.app_manager.const import (
+    AUTO_SELECT_CASE,
+    AUTO_SELECT_FIXTURE,
+    AUTO_SELECT_RAW,
+    AUTO_SELECT_USER,
+    WORKFLOW_FORM,
+    WORKFLOW_PARENT_MODULE,
+)
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
     FormNotFoundException,
-    UserCaseXPathValidationError,
+    LocationXpathValidationError,
     ModuleIdMissingException,
     ModuleNotFoundException,
     PracticeUserException,
     SuiteValidationError,
+    UserCaseXPathValidationError,
     XFormException,
     XFormValidationError,
     XFormValidationFailed,
@@ -43,8 +52,9 @@ from corehq.apps.app_manager.util import (
     xpath_references_user_case,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
-from corehq.apps.app_manager.xpath import interpolate_xpath
+from corehq.apps.app_manager.xpath import interpolate_xpath, LocationXpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.domain.models import Domain
 
 
 class ApplicationBaseValidator(object):

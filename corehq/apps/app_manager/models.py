@@ -102,7 +102,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     interpolate_xpath,
-    LocationXpath,
 )
 from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
@@ -147,7 +146,6 @@ from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,
     IncompatibleFormTypeException,
-    LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
     RearrangeError,
