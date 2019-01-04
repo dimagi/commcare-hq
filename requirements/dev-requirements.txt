@@ -28,7 +28,7 @@ certifi==2018.11.29
 cffi==1.11.5
 chardet==3.0.4
 click==7.0                # via pip-tools
-cloudant==2.7.0
+cloudant==2.10.2
 colorama==0.4.1           # via sniffer
 concurrentloghandler==0.9.1
 contextlib2==0.5.4

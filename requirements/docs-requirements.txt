@@ -20,7 +20,7 @@ celery==3.1.25
 certifi==2018.11.29
 cffi==1.11.5
 chardet==3.0.4
-cloudant==2.7.0
+cloudant==2.10.2
 concurrentloghandler==0.9.1
 contextlib2==0.5.4
 cryptography==2.4.2
