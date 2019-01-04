@@ -301,6 +301,13 @@ class ModuleBaseValidator(object):
     def __init__(self, module):
         self.module = module
 
+    def get_module_info(self):
+        return {
+            'id': self.module.id,
+            'name': self.module.name,
+            'unique_id': self.module.unique_id,
+        }
+
     def validate_for_build(self):
         '''
         This is a wrapper for the actual validation logic, in order to gracefully capture exceptions
@@ -313,7 +320,7 @@ class ModuleBaseValidator(object):
             errors.append({
                 "type": "missing module",
                 "message": six.text_type(ex),
-                "module": self.module.get_module_info(),
+                "module": self.get_module_info(),
             })
 
         return errors
@@ -336,13 +343,13 @@ class ModuleBaseValidator(object):
             except FormNotFoundException:
                 errors.append({
                     'type': 'case list form missing',
-                    'module': self.module.get_module_info()
+                    'module': self.get_module_info()
                 })
             else:
                 if not form.is_registration_form(self.module.case_type):
                     errors.append({
                         'type': 'case list form not registration',
-                        'module': self.module.get_module_info(),
+                        'module': self.get_module_info(),
                         'form': form,
                     })
         if self.module.module_filter:
@@ -351,7 +358,7 @@ class ModuleBaseValidator(object):
                 errors.append({
                     'type': 'module filter has xpath error',
                     'xpath_error': message,
-                    'module': self.module.get_module_info(),
+                    'module': self.get_module_info(),
                 })
 
         return errors
@@ -379,7 +386,7 @@ class ModuleBaseValidator(object):
                     yield {
                         'type': 'invalid location xpath',
                         'details': six.text_type(e),
-                        'module': self.module.get_module_info(),
+                        'module': self.get_module_info(),
                         'column': column,
                     }
 
@@ -397,7 +404,7 @@ class ModuleDetailValidatorMixin(object):
                 errors.append({
                     'type': 'invalid sort field',
                     'field': sort_element.field,
-                    'module': self.module.get_module_info(),
+                    'module': self.get_module_info(),
                 })
         if self.module.case_list_filter:
             try:
@@ -407,7 +414,7 @@ class ModuleDetailValidatorMixin(object):
             except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
                     'type': 'invalid filter xpath',
-                    'module': self.module.get_module_info(),
+                    'module': self.get_module_info(),
                     'filter': self.module.case_list_filter,
                 })
         for detail in [self.module.case_details.short, self.module.case_details.long]:
@@ -415,7 +422,7 @@ class ModuleDetailValidatorMixin(object):
                 if not detail.display == "short":
                     errors.append({
                         'type': "invalid tile configuration",
-                        'module': self.module.get_module_info(),
+                        'module': self.get_module_info(),
                         'reason': _('Case tiles may only be used for the case list (not the case details).')
                     })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
@@ -423,13 +430,13 @@ class ModuleDetailValidatorMixin(object):
                     if field not in col_by_tile_field:
                         errors.append({
                             'type': "invalid tile configuration",
-                            'module': self.module.get_module_info(),
+                            'module': self.get_module_info(),
                             'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
                         })
         return errors
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        module_info = self.module.get_module_info()
+        module_info = self.get_module_info()
 
         if needs_case_type and not self.module.case_type:
             yield {
@@ -469,25 +476,25 @@ class ModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
         if not self.module.forms and not self.module.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
-                'module': self.module.get_module_info(),
+                'module': self.get_module_info(),
             })
 
         if module_case_hierarchy_has_circular_reference(self.module):
             errors.append({
                 'type': 'circular case hierarchy',
-                'module': self.module.get_module_info(),
+                'module': self.get_module_info(),
             })
 
         if self.module.root_module and self.module.root_module.is_training_module:
             errors.append({
                 'type': 'training module parent',
-                'module': self.module.get_module_info(),
+                'module': self.get_module_info(),
             })
 
         if self.module.root_module and self.module.is_training_module:
             errors.append({
                 'type': 'training module child',
-                'module': self.module.get_module_info(),
+                'module': self.get_module_info(),
             })
 
         return errors
@@ -499,7 +506,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
         if not self.module.forms and not self.module.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
-                'module': self.module.get_module_info(),
+                'module': self.get_module_info(),
             })
         if self.module.case_list_form.form_id:
             forms = self.module.forms
@@ -507,7 +514,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
             case_tag = None
             loaded_case_types = None
             for form in forms:
-                info = self.module.get_module_info()
+                info = self.get_module_info()
                 form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
                 non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
                 this_forms_loaded_case_types = {action.case_type for action in non_auto_select_actions}
@@ -566,7 +573,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
         return errors
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        module_info = self.module.get_module_info()
+        module_info = self.get_module_info()
 
         if needs_case_type and not self.module.case_type:
             yield {
@@ -603,17 +610,17 @@ class ReportModuleValidator(ModuleBaseValidator):
         if not self.module.check_report_validity().is_valid:
             errors.append({
                 'type': 'report config ref invalid',
-                'module': self.module.get_module_info()
+                'module': self.get_module_info()
             })
         elif not self.module.reports:
             errors.append({
                 'type': 'no reports',
-                'module': self.module.get_module_info(),
+                'module': self.get_module_info(),
             })
         if self._has_duplicate_instance_ids():
             errors.append({
                 'type': 'report config id duplicated',
-                'module': self.module.get_module_info(),
+                'module': self.get_module_info(),
             })
         return errors
 
@@ -635,7 +642,7 @@ class ShadowModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
         if not self.module.source_module:
             errors.append({
                 'type': 'no source module id',
-                'module': self.module.get_module_info()
+                'module': self.get_module_info()
             })
         return errors
 
@@ -683,7 +690,7 @@ class FormBaseValidator(object):
 
         meta = {
             'form_type': self.form.form_type,
-            'module': module.get_module_info() if module else {},
+            'module': module.validator.get_module_info() if module else {},
             'form': {
                 "id": self.form.id if hasattr(self.form, 'id') else None,
                 "name": self.form.name,

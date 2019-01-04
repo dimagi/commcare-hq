@@ -2380,13 +2380,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def get_case_types(self):
         return set([self.case_type])
 
-    def get_module_info(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'unique_id': self.unique_id,
-        }
-
     def get_app(self):
         return self._parent
 
