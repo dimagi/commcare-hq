@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-from django.test.testcases import TestCase
 
 from custom.icds_reports.queries import get_cas_data_blob_file
 
