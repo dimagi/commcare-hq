@@ -31,6 +31,9 @@ class DishaDump(object):
         self.month = month
 
     def _blob_id(self):
+        # This will be the reference to the blob, if this is updated
+        #   attention should be paid to the old blobs whose references
+        #   might be lost.
         # strip all non-alphanumeric chars
         safe_state_name = re.sub('[^0-9a-zA-Z]+', '', self.state_name)
         return 'disha_dump-{}-{}.json'.format(safe_state_name, self.month.strftime('%Y-%m-%d'))
@@ -106,7 +109,7 @@ class DishaDump(object):
                 self._write_data_in_chunks(f)
                 f.seek(0)
                 blob_ref, _ = IcdsFile.objects.get_or_create(blob_id=self._blob_id(), data_type='disha_dumps')
-                blob_ref.store_file_in_blobdb(f, expired=1)
+                blob_ref.store_file_in_blobdb(f, expired=DISHA_DUMP_EXPIRY)
                 blob_ref.save()
 
 
