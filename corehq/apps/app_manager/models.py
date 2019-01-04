@@ -42,6 +42,7 @@ from corehq.apps.linked_domain.applications import get_master_app_version, get_l
 from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
     ApplicationValidator,
+    IndexedFormBaseValidator,
     ModuleValidator,
     ModuleBaseValidator,
     AdvancedModuleValidator,
@@ -125,7 +126,6 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
 )
 from corehq.apps.app_manager.util import (
-    split_path,
     save_xform,
     is_usercase_in_use,
     actions_use_usercase,
@@ -251,15 +251,6 @@ def app_template_dir(slug):
 @memoized
 def load_app_template(slug):
     with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
-        return json.load(f)
-
-
-@memoized
-def load_case_reserved_words():
-    with open(
-        os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),
-        encoding='utf-8'
-    ) as f:
         return json.load(f)
 
 
@@ -1370,6 +1361,10 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def get_case_type(self):
         return self._parent.case_type
 
+    @property
+    def validator(self):
+        return IndexedFormBaseValidator(self)
+
     def _add_save_to_case_questions(self, form_questions, app_case_meta):
         def _make_save_to_case_question(path):
             from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -1408,45 +1403,10 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                     type_meta.add_closer(self.unique_id, _make_dummy_condition())
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
-        all_names = all_names or []
-        subcase_names = subcase_names or []
-        errors = []
-
-        # reserved_words are hard-coded in three different places!
-        # Here, case-config-ui-*.js, and module_view.html
-        reserved_words = load_case_reserved_words()
-        for key in all_names:
-            try:
-                validate_property(key)
-            except ValueError:
-                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
-            _, key = split_path(key)
-            if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key, 'case_tag': case_tag})
-
-        # no parent properties for subcase
-        for key in subcase_names:
-            if not re.match(r'^[a-zA-Z][\w_-]*$', key):
-                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
-
-        return errors
+        return self.validator.check_case_properties(all_names, subcase_names, case_tag)
 
     def check_paths(self, paths):
-        errors = []
-        try:
-            questions = self.cached_get_questions()
-            valid_paths = {question['value']: question['tag'] for question in questions}
-        except XFormException as e:
-            errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
-        else:
-            no_multimedia = not self.get_app().enable_multimedia_case_property
-            for path in set(paths):
-                if path not in valid_paths:
-                    errors.append({'type': 'path error', 'path': path})
-                elif no_multimedia and valid_paths[path] == "upload":
-                    errors.append({'type': 'multimedia case property not supported', 'path': path})
-
-        return errors
+        return self.validator.check_paths(paths)
 
     def add_property_save(self, app_case_meta, case_type, name,
                           questions, question_path, condition=None):
@@ -5141,26 +5101,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
-
-
-def validate_property(property, allow_parents=True):
-    """
-    Validate a case property name
-
-    >>> validate_property('parent/maternal-grandmother_fullName')
-    >>> validate_property('foo+bar')
-    Traceback (most recent call last):
-      ...
-    ValueError: Invalid Property
-
-    """
-    if allow_parents:
-        # this regex is also copied in propertyList.ejs
-        regex = r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$'
-    else:
-        regex = r'^[a-zA-Z][\w_-]*$'
-    if not re.match(regex, property):
-        raise ValueError("Invalid Property")
 
 
 class SavedAppBuild(ApplicationBase):

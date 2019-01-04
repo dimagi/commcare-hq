@@ -66,6 +66,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
@@ -80,7 +81,6 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     UpdateCaseAction,
-    load_case_reserved_words,
     WORKFLOW_FORM,
     CustomAssertion,
     CustomInstance,

@@ -1,9 +1,13 @@
 # coding=utf-8
 from __future__ import absolute_import, unicode_literals
 
+from io import open
+import json
+import os
 import re
 import six
 from lxml import etree
+from memoized import memoized
 
 from collections import defaultdict
 from django.conf import settings
@@ -29,7 +33,11 @@ from corehq.apps.app_manager.exceptions import (
     XFormException,
     XFormValidationError,
 )
-from corehq.apps.app_manager.util import app_callout_templates, module_case_hierarchy_has_circular_reference
+from corehq.apps.app_manager.util import (
+    app_callout_templates,
+    module_case_hierarchy_has_circular_reference,
+    split_path,
+)
 from corehq.apps.app_manager.xpath import interpolate_xpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 
@@ -540,6 +548,79 @@ class ShadowModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
                 'type': 'no source module id',
                 'module': self.module.get_module_info()
             })
+        return errors
+
+
+@memoized
+def load_case_reserved_words():
+    with open(
+        os.path.join(os.path.dirname(__file__), '..', 'static', 'app_manager', 'json', 'case-reserved-words.json'),
+        encoding='utf-8'
+    ) as f:
+        return json.load(f)
+
+
+def validate_property(property, allow_parents=True):
+    """
+    Validate a case property name
+
+    >>> validate_property('parent/maternal-grandmother_fullName')
+    >>> validate_property('foo+bar')
+    Traceback (most recent call last):
+      ...
+    ValueError: Invalid Property
+
+    """
+    if allow_parents:
+        # this regex is also copied in propertyList.ejs
+        regex = r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$'
+    else:
+        regex = r'^[a-zA-Z][\w_-]*$'
+    if not re.match(regex, property):
+        raise ValueError("Invalid Property")
+
+
+class IndexedFormBaseValidator(object):
+    def __init__(self, form):
+        self.form = form
+
+    def check_case_properties(self, all_names, subcase_names, case_tag):
+        errors = []
+
+        # reserved_words are hard-coded in three different places!
+        # Here, case-config-ui-*.js, and module_view.html
+        reserved_words = load_case_reserved_words()
+        for key in all_names:
+            try:
+                validate_property(key)
+            except ValueError:
+                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
+            _, key = split_path(key)
+            if key in reserved_words:
+                errors.append({'type': 'update_case uses reserved word', 'word': key, 'case_tag': case_tag})
+
+        # no parent properties for subcase
+        for key in subcase_names:
+            if not re.match(r'^[a-zA-Z][\w_-]*$', key):
+                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
+
+        return errors
+
+    def check_paths(self, paths):
+        errors = []
+        try:
+            questions = self.form.cached_get_questions()
+            valid_paths = {question['value']: question['tag'] for question in questions}
+        except XFormException as e:
+            errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
+        else:
+            no_multimedia = not self.form.get_app().enable_multimedia_case_property
+            for path in set(paths):
+                if path not in valid_paths:
+                    errors.append({'type': 'path error', 'path': path})
+                elif no_multimedia and valid_paths[path] == "upload":
+                    errors.append({'type': 'multimedia case property not supported', 'path': path})
+
         return errors
 
 
