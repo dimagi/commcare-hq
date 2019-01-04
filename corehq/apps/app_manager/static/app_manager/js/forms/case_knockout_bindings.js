@@ -123,7 +123,7 @@
                     if (option.value && !_.contains(allowedValues, option.value)) {
                         $(option).remove();
                     }
-                })
+                });
                 $element.trigger('change.select2');
             }
         },
