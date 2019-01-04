@@ -300,8 +300,9 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
         # Send an email but then crash the process
         # so we know what the error was
         send_html_email_async.delay(subject, email, _(
-            "Something went wrong! There was an error. Please try again. "
-            "If you see this error repeatedly please report it as issue."))
+            "Something went wrong updating your linked app. "
+            "Our team has been notified and will monitor the situation. "
+            "Please try again, and if the problem persists report it as an issue."))
         raise
     else:
         message = _("Your linked application was successfully updated to the latest version.")
