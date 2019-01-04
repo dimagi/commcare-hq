@@ -146,6 +146,8 @@ class CcsRecordMonthly(models.Model):
     dob = models.DateField(blank=True, null=True)
     closed = models.SmallIntegerField(blank=True, null=True)
     anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    person_case_id = models.TextField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -290,6 +292,8 @@ class ChildHealthMonthly(models.Model):
     muac_grading = models.SmallIntegerField(blank=True, null=True)
     muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
     mother_phone_number = models.TextField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    mother_case_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False

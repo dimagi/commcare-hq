@@ -44,6 +44,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AwcLocationMonths
+from custom.icds_reports.queries import get_cas_data_blob_file
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
@@ -220,6 +221,9 @@ class DashboardView(TemplateView):
         kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
             self.kwargs['domain']
         ).location_ids())
+        kwargs['state_level_access'] = 'state' in set(
+            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations()]
+        )
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
@@ -1716,3 +1720,22 @@ class DishaAPIView(View):
     @quickcache([])
     def valid_state_names(self):
         return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class CasDataExport(View):
+    def post(self, request, *args, **kwargs):
+
+        data_type = int(request.POST.get('indicator', None))
+        state_id = request.POST.get('location', None)
+        month = request.POST.get('month', None)
+        year = request.POST.get('year', None)
+        selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+
+        sync = get_cas_data_blob_file(data_type, state_id, selected_date)
+
+        zip_name = 'cas_data_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        except NotFound:
+            raise Http404
