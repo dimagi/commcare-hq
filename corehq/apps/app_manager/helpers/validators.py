@@ -666,11 +666,11 @@ class FormBaseValidator(object):
                 error.update(meta)
                 errors.append(error)
 
-        errors.extend(self.form.extended_build_validation(meta, xml_valid, validate_module))
+        errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
         return errors
 
-    def extended_build_validation(self, error_meta, xml_valid, validate_module):
+    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         """
         Override to perform additional validation during build process.
         """
@@ -682,7 +682,7 @@ class IndexedFormBaseValidator(FormBaseValidator):
     def timing_context(self):
         return self.form.get_app().timing_context
 
-    def check_case_properties(self, all_names, subcase_names, case_tag):
+    def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         errors = []
 
         # reserved_words are hard-coded in three different places!
@@ -737,7 +737,7 @@ class FormValidator(IndexedFormBaseValidator):
                 and not self.form.actions.open_case.name_path:
             errors.append({'type': 'case_name required'})
 
-        errors.extend(self.form.check_case_properties(
+        errors.extend(self.check_case_properties(
             all_names=self.form.actions.all_property_names(),
             subcase_names=subcase_names
         ))
@@ -753,15 +753,15 @@ class FormValidator(IndexedFormBaseValidator):
                     for path in FormAction.get_action_paths(action):
                         yield path
 
-        errors.extend(self.form.check_paths(generate_paths()))
+        errors.extend(self.check_paths(generate_paths()))
 
         return errors
 
     @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module):
+    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
         if xml_valid:
-            for error in self.form.check_actions():
+            for error in self.check_actions():
                 error.update(error_meta)
                 errors.append(error)
 
@@ -814,7 +814,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                                            'case_tag': action.case_tag,
                                            'parent_tag': case_index.tag})
 
-            errors.extend(self.form.check_case_properties(
+            errors.extend(self.check_case_properties(
                 subcase_names=action.get_property_names(),
                 case_tag=action.case_tag
             ))
@@ -847,7 +847,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                     if not self.form.actions.get_action_from_tag(case_tag):
                         errors.append({'type': 'auto select case ref', 'case_tag': action.case_tag})
 
-            errors.extend(self.form.check_case_properties(
+            errors.extend(self.check_case_properties(
                 all_names=action.get_property_names(),
                 case_tag=action.case_tag
             ))
@@ -878,7 +878,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                 if self.form.schedule.termination_condition.type == 'if':
                     yield self.form.schedule.termination_condition.question
 
-        errors.extend(self.form.check_paths(generate_paths()))
+        errors.extend(self.check_paths(generate_paths()))
 
         return errors
 
@@ -886,7 +886,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
         if xml_valid:
-            for error in self.form.check_actions():
+            for error in self.check_actions():
                 error.update(error_meta)
                 errors.append(error)
 
@@ -903,8 +903,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
 
 class ShadowFormValidator(IndexedFormBaseValidator):
     @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module):
-        errors = []
+    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+        errors = super(ShadowFormValidator, self).extended_build_validation(error_meta, xml_valid, validate_module)
         if not self.form.shadow_parent_form_id:
             error = {
                 "type": "missing shadow parent",
@@ -920,7 +920,7 @@ class ShadowFormValidator(IndexedFormBaseValidator):
         return errors
 
     def check_actions(self):
-        errors = []
+        errors = super(ShadowFormValidator, self).check_actions()
 
         shadow_parent_form = self.form.shadow_parent_form
         if shadow_parent_form:

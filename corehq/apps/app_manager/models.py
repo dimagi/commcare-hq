@@ -1087,9 +1087,6 @@ class FormBase(DocumentSchema):
     def validate_for_build(self, validate_module=True):
         return self.validator.validate_for_build(validate_module)
 
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        return self.validator.extended_build_validation(error_meta, xml_valid, validate_module)
-
     def get_unique_id(self):
         """
         Return unique_id if it exists, otherwise initialize it
@@ -1300,12 +1297,6 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                     type_meta.add_opener(self.unique_id, _make_dummy_condition())
                 if property_info.close:
                     type_meta.add_closer(self.unique_id, _make_dummy_condition())
-
-    def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
-        return self.validator.check_case_properties(all_names, subcase_names, case_tag)
-
-    def check_paths(self, paths):
-        return self.validator.check_paths(paths)
 
     def add_property_save(self, app_case_meta, case_type, name,
                           questions, question_path, condition=None):
@@ -1692,9 +1683,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def validator(self):
         return FormValidator(self)
 
-    def check_actions(self):
-        return self.validator.check_actions()
-
     def requires_case(self):
         # all referrals also require cases
         return self.requires in ("case", "referral")
@@ -1737,9 +1725,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def uses_usercase(self):
         return actions_use_usercase(self.active_actions())
-
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        return self.validator.extended_build_validation(error_meta, xml_valid, validate_module)
 
     def get_case_updates(self):
         # This method is used by both get_all_case_properties and
@@ -2886,12 +2871,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         if phase:
             phase.remove_form(self)
 
-    def check_actions(self):
-        return self.validator.check_actions()
-
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        return self.validator.extended_build_validation(error_meta, xml_valid, validate_module)
-
     def get_case_updates(self):
         updates_by_case_type = defaultdict(set)
         format_key = self.get_case_property_name_formatter()
@@ -3083,13 +3062,6 @@ class ShadowForm(AdvancedForm):
             load_update_cases=new_actions,
             open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
         )
-
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        return (super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
-            + self.validator.extended_build_validation(error_meta, xml_valid, validate_module))
-
-    def check_actions(self):
-        return super(ShadowForm, self).check_actions() + self.validator.check_actions()
 
 
 class SchedulePhaseForm(IndexedSchema):
