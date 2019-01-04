@@ -38,14 +38,12 @@
                 ...
             ]
          */
-        init: function (element, valueAccessor) {
-            $(element).after('<div class="alert alert-danger"></div>');
-        },
-        update: function (element, valueAccessor, allBindingsAccessor) {
-            var optionObjects = ko.utils.unwrapObservable(valueAccessor());
-            var allBindings = ko.utils.unwrapObservable(allBindingsAccessor());
-            var value = ko.utils.unwrapObservable(allBindings.value);
-            var $warning = $(element).next();
+        init: function (element, valueAccessor, allBindingsAccessor) {
+            var optionObjects = ko.utils.unwrapObservable(valueAccessor()),
+                allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
+                value = ko.utils.unwrapObservable(allBindings.value);
+
+            // Add a warning if the current value isn't a legitimate question
             if (value && !_.some(optionObjects, function (option) {
                 return option.value === value;
             })) {
@@ -54,12 +52,15 @@
                     value: value,
                 };
                 optionObjects = [option].concat(optionObjects);
-                $warning.show().text(gettext('We cannot find this question in the allowed questions for this field. ' +
+                var $warning = $('<div class="help-block"></div>').text(gettext(
+                    'We cannot find this question in the allowed questions for this field. ' +
                     'It is likely that you deleted or renamed the question. ' +
-                    'Please choose a valid question from the dropdown.'));
-            } else {
-                $warning.hide();
+                    'Please choose a valid question from the dropdown.'
+                ));
+                $(element).after($warning);
+                $(element).parent().addClass('has-error');
             }
+
             _.delay(function () {
                 // Initialize select2
                 var options = {
@@ -108,6 +109,26 @@
                 $(element).val(value).trigger('change.select2');
             });
             allBindings.optstrText = utils.getLabel;
+        },
+        update: function (element, valueAccessor, allBindingsAccessor) {
+            var optionObjects = ko.utils.unwrapObservable(valueAccessor()),
+                allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
+                value = ko.utils.unwrapObservable(allBindings.value),
+                allowedValues = _.pluck(optionObjects, 'value'),
+                $element = $(element),
+                $container = $element.parent();
+
+            if ($container.hasClass("has-error") && _.contains(allowedValues, value)) {
+                // There was an error but it's fixed now, so remove the error and the bad option
+                $container.removeClass("has-error");
+                $container.find(".help-block").remove();
+                _.each($element.find("option"), function (option) {
+                    if (option.value && !_.contains(allowedValues, option.value)) {
+                        $(option).remove();
+                    }
+                })
+                $element.trigger('change.select2');
+            }
         },
     };
 }());
