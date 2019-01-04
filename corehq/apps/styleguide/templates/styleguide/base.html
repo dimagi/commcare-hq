@@ -21,6 +21,8 @@
         {% endcompress %}
         {% endif %}
 
+        <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
         {% javascript_libraries %}
 
         {% if less_debug %}
@@ -52,12 +54,9 @@
                 </div>
                 <nav class="collapse navbar-collapse" role="navigation">
                     <ul class="nav navbar-nav">
-                        <li><a href="{% url 'styleguide_accessibility' %}">Accessibility</a></li>
-                        <li><a href="{% url 'styleguide_views' %}">Views</a></li>
-                        <li><a href="{% url 'styleguide_forms' %}">Forms</a></li>
-                        <li><a href="{% url 'styleguide_css' %}">CSS</a></li>
-                        <li><a href="{% url 'styleguide_icons' %}">Icons</a></li>
-                        <li><a href="{% url 'styleguide_colors' %}">Colors</a></li>
+                        <li><a href="{% url 'styleguide_atoms' %}">Atoms</a></li>
+                        <li><a href="{% url 'styleguide_molecules' %}">Molecules</a></li>
+                        <li><a href="{% url 'styleguide_organisms' %}">Organisms</a></li>
                     </ul>
                 </nav>
             </div>

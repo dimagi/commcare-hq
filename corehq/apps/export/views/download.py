@@ -283,6 +283,7 @@ def _check_deid_permissions(permissions, export_instances):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def prepare_custom_export(request, domain):
     """Uses the current exports download framework (with some nasty filters)
     to return the current download id to POLL for the download status.
@@ -346,6 +347,7 @@ def prepare_custom_export(request, domain):
 
 @require_GET
 @login_and_domain_required
+@location_safe
 def poll_custom_export_download(request, domain):
     """Polls celery to see how the export download task is going.
     :return: final response: {
@@ -361,9 +363,9 @@ def poll_custom_export_download(request, domain):
     download_id = request.GET.get('download_id')
     try:
         context = get_download_context(download_id)
-    except TaskFailedError:
+    except TaskFailedError as e:
         notify_exception(request, "Export download failed",
-                         details={'download_id': download_id})
+                         details={'download_id': download_id, 'errors': e.errors})
         return json_response({
             'error': _("Download task failed to start."),
         })

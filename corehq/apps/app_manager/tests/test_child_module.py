@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import (
     Module,
     PreloadAction,
 )
-from corehq.apps.app_manager.models import WORKFLOW_PREVIOUS
+from corehq.apps.app_manager.const import WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 DOMAIN = 'domain'

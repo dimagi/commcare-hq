@@ -2,52 +2,44 @@
 
 {% block content %}
 <div class="container">
-    <h1>The Official CommCare HQ Style Guide</h1>
+    <h1>CommCare HQ Style Guide</h1>
     <p class="lead">
-        This is a communication and reference tool. It can be used to help make decisions that
-        have already been thoughtfully made. Want to add new navigation? Perhaps you need to show a parent/child
-        relationship, or show all the children, or their children. By taking similar, simiplifed base patterns,
-        often called "Atoms", we can build cohesive molecules. This keeps code cleaner and lighter while also keeping
-        things simpler for our users to understand. 
+        This is a communication and reference tool. It can be used to help make decisions that have already been thoughtfully made.
+        By taking similar, simiplifed base patterns, often called "atoms", we can build cohesive "molecules" and
+        then more complex "organisms." This keeps code cleaner and lighter while also keeping things simpler for our users to understand.
     </p>
-    <h2>Accessibility</h2>
-    <p><a href="{% url 'styleguide_accessibility' %}">Read about accessibility and why it matters</a></p>
-    <h2>Views</h2>
+    <p class="lead">
+        Why all the biology-related terminology? It comes from the notion of <a href='http://atomicdesign.bradfrost.com/chapter-2/' target="_blank">atomic design</a>.
+        Atomic design relates design to the hierarchies and building processes of the natural world.
+        It uses five stages: atoms, molecules, organisms, templates, and pages.
+    </p>
+    <p class="lead">
+        HQ doesn't follow this methodology, but the rough ideas can still make for a useful framework.
+        As such, this style guide is organized into atoms, molecules, and organisms.
+    </p>
+
+    <h2>Atoms</h2>
     <ul>
-        <li>How do I use class-based views?</li>
-        <li>what parent classes to inherit from</li>
-        <li>how to add permissions</li>
-        <li>how to designate what version of Bootstrap to use</li>
-        <li>which templates to extend and what context is required</li>
+        <li>Accessibility: what is it and why does it matter?</li>
+        <li>Typography: what fonts do we use and why?</li>
+        <li>Colors: why use one color or another?</li>
+        <li>Icons: how do you find an icon that enhances your content?</li>
+        <li>Code Guidelines: how does one write good CSS/LESS?</li>
     </ul>
-    <p><a href="{% url 'styleguide_views' %}">Read about Views in HQ</a></p>
-    <h2>Forms</h2>
+    <p><a href="{% url 'styleguide_atoms' %}">Read about atoms in HQ</a></p>
+
+    <h2>Molecules</h2>
     <ul>
-        <li>How do I create a crispy form?</li>
-        <li>How do I migrate a form to Bootstrap 3?</li>
-        <li>How do I use my crispy form with angular.js?</li>
-        <li>How do I use my crispy form with knockout.js?</li>
+        <li>Forms</li>
     </ul>
-    <p><a href="{% url 'styleguide_forms' %}">Read about Forms in HQ</a></p>
-    <h2>CSS</h2>
+    <p><a href="{% url 'styleguide_molecules' %}">Read about molecules in HQ</a></p>
+
+    <h2>Organisms</h2>
     <ul>
-        <li>Am I writing CSS or LESS or SaSS?</li>
-        <li>How should I handle page-specific or app-specific styles?</li>
-        <li>When should I use inline styles?</li>
-        <li>How do I avoid z-index headaches?</li>
+        <li>Pages</li>
+        <li>Class-Based Views</li>
+        <li>Functional Views</li>
     </ul>
-    <p><a href="{% url 'styleguide_css' %}">Read about CSS in HQ</a></p>
-    <h2>Icons</h2>
-    <ul>
-        <li>What icon library do we use?</li>
-        <li>What HQ-specific custom icons are available?</li>
-    </ul>
-    <p><a href="{% url 'styleguide_icons' %}">Read about Icons in HQ</a></p>
-    <h2>Colors</h2>
-    <ul>
-        <li>What are CommCare HQ's official colors?</li>
-        <li>Is there any advice as to when to use each color?</li>
-    </ul>
-    <p><a href="{% url 'styleguide_colors' %}">Read about Colors in HQ</a></p>
+    <p><a href="{% url 'styleguide_organisms' %}">Read about organisms in HQ</a></p>
 </div>
 {% endblock content %}
