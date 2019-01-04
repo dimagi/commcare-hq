@@ -722,6 +722,71 @@ class IndexedFormBaseValidator(FormBaseValidator):
         return errors
 
 
+class FormValidator(IndexedFormBaseValidator):
+    def check_actions(self):
+        errors = []
+
+        subcase_names = set()
+        for subcase_action in self.form.actions.subcases:
+            if not subcase_action.case_type:
+                errors.append({'type': 'subcase has no case type'})
+
+            subcase_names.update(subcase_action.case_properties)
+
+        if self.form.requires == 'none' and self.form.actions.open_case.is_active() \
+                and not self.form.actions.open_case.name_path:
+            errors.append({'type': 'case_name required'})
+
+        errors.extend(self.form.check_case_properties(
+            all_names=self.form.actions.all_property_names(),
+            subcase_names=subcase_names
+        ))
+
+        def generate_paths():
+            from corehq.apps.app_manager.models import FormAction
+            for action in self.form.active_actions().values():
+                if isinstance(action, list):
+                    actions = action
+                else:
+                    actions = [action]
+                for action in actions:
+                    for path in FormAction.get_action_paths(action):
+                        yield path
+
+        errors.extend(self.form.check_paths(generate_paths()))
+
+        return errors
+
+    @time_method()
+    def extended_build_validation(self, error_meta, xml_valid, validate_module):
+        errors = []
+        if xml_valid:
+            for error in self.form.check_actions():
+                error.update(error_meta)
+                errors.append(error)
+
+        if validate_module:
+            needs_case_type = False
+            needs_case_detail = False
+            needs_referral_detail = False
+
+            if self.form.requires_case():
+                needs_case_detail = True
+                needs_case_type = True
+            if self.form.requires_case_type():
+                needs_case_type = True
+            if self.form.requires_referral():
+                needs_referral_detail = True
+
+            errors.extend(self.form.get_module().get_case_errors(
+                needs_case_type=needs_case_type,
+                needs_case_detail=needs_case_detail,
+                needs_referral_detail=needs_referral_detail,
+            ))
+
+        return errors
+
+
 class AdvancedFormValidator(IndexedFormBaseValidator):
     def check_actions(self):
         errors = []

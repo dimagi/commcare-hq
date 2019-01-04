@@ -42,6 +42,7 @@ from corehq.apps.linked_domain.applications import get_master_app_version, get_l
 from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
     ApplicationValidator,
+    FormValidator,
     FormBaseValidator,
     IndexedFormBaseValidator,
     ModuleValidator,
@@ -1687,38 +1688,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             'open_case', 'update_case', 'close_case',
             'open_referral', 'update_referral', 'close_referral'))
 
+    @property
+    def validator(self):
+        return FormValidator(self)
+
     def check_actions(self):
-        errors = []
-
-        subcase_names = set()
-        for subcase_action in self.actions.subcases:
-            if not subcase_action.case_type:
-                errors.append({'type': 'subcase has no case type'})
-
-            subcase_names.update(subcase_action.case_properties)
-
-        if self.requires == 'none' and self.actions.open_case.is_active() \
-                and not self.actions.open_case.name_path:
-            errors.append({'type': 'case_name required'})
-
-        errors.extend(self.check_case_properties(
-            all_names=self.actions.all_property_names(),
-            subcase_names=subcase_names
-        ))
-
-        def generate_paths():
-            for action in self.active_actions().values():
-                if isinstance(action, list):
-                    actions = action
-                else:
-                    actions = [action]
-                for action in actions:
-                    for path in FormAction.get_action_paths(action):
-                        yield path
-
-        errors.extend(self.check_paths(generate_paths()))
-
-        return errors
+        return self.validator.check_actions()
 
     def requires_case(self):
         # all referrals also require cases
@@ -1763,34 +1738,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return actions_use_usercase(self.active_actions())
 
-    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        errors = []
-        if xml_valid:
-            for error in self.check_actions():
-                error.update(error_meta)
-                errors.append(error)
-
-        if validate_module:
-            needs_case_type = False
-            needs_case_detail = False
-            needs_referral_detail = False
-
-            if self.requires_case():
-                needs_case_detail = True
-                needs_case_type = True
-            if self.requires_case_type():
-                needs_case_type = True
-            if self.requires_referral():
-                needs_referral_detail = True
-
-            errors.extend(self.get_module().get_case_errors(
-                needs_case_type=needs_case_type,
-                needs_case_detail=needs_case_detail,
-                needs_referral_detail=needs_referral_detail,
-            ))
-
-        return errors
+        return self.validator.extended_build_validation(error_meta, xml_valid, validate_module)
 
     def get_case_updates(self):
         # This method is used by both get_all_case_properties and
