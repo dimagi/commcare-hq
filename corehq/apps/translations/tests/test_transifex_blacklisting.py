@@ -53,14 +53,8 @@ class TestTransifexBlacklist(TestCase, TestXmlMixin):
     def test_allowed_help_message(self):
         self.assertIn('information-help', self.labels_sent_to_transifex)
 
-    def test_blacklisted_help_message(self):
-        self.assertNotIn('sample_choice_question-help', self.labels_sent_to_transifex)
-
     def test_allowed_hint_message(self):
         self.assertIn('information-hint', self.labels_sent_to_transifex)
-
-    def test_blacklisted_hint_message(self):
-        self.assertNotIn('sample_choice_question-hint', self.labels_sent_to_transifex)
 
     def test_blacklisted_choices(self):
         self.assertNotIn('sample_choice_question-label', self.labels_sent_to_transifex)
