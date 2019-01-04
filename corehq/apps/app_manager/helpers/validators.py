@@ -541,3 +541,43 @@ class ShadowModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
                 'module': self.module.get_module_info()
             })
         return errors
+
+
+class ShadowFormValidator(object):
+    def __init__(self, form):
+        self.form = form
+
+    @property
+    def timing_context(self):
+        return self.form.get_app().timing_context
+
+    @time_method()
+    def extended_build_validation(self, error_meta, xml_valid, validate_module):
+        errors = []
+        if not self.form.shadow_parent_form_id:
+            error = {
+                "type": "missing shadow parent",
+            }
+            error.update(error_meta)
+            errors.append(error)
+        elif not self.form.shadow_parent_form:
+            error = {
+                "type": "shadow parent does not exist",
+            }
+            error.update(error_meta)
+            errors.append(error)
+        return errors
+
+    def check_actions(self):
+        errors = []
+
+        shadow_parent_form = self.form.shadow_parent_form
+        if shadow_parent_form:
+            case_tags = set(self.form.extra_actions.get_case_tags())
+            missing_tags = []
+            for action in shadow_parent_form.actions.load_update_cases:
+                if action.case_tag not in case_tags:
+                    missing_tags.append(action.case_tag)
+            if missing_tags:
+                errors.append({'type': 'missing shadow parent tag', 'case_tags': missing_tags})
+        return errors

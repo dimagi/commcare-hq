@@ -46,6 +46,7 @@ from corehq.apps.app_manager.helpers.validators import (
     ModuleBaseValidator,
     AdvancedModuleValidator,
     ReportModuleValidator,
+    ShadowFormValidator,
     ShadowModuleValidator,
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -3331,6 +3332,10 @@ class ShadowForm(AdvancedForm):
             shadow_parent_actions = self.shadow_parent_form.actions
         return self._merge_actions(shadow_parent_actions, self.extra_actions)
 
+    @property
+    def validator(self):
+        return ShadowFormValidator(self)
+
     def get_shadow_parent_options(self):
         options = [
             (form.get_unique_id(), '{} / {}'.format(form.get_module().default_name(), form.default_name()))
@@ -3373,36 +3378,12 @@ class ShadowForm(AdvancedForm):
             open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
         )
 
-    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        errors = super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
-        if not self.shadow_parent_form_id:
-            error = {
-                "type": "missing shadow parent",
-            }
-            error.update(error_meta)
-            errors.append(error)
-        elif not self.shadow_parent_form:
-            error = {
-                "type": "shadow parent does not exist",
-            }
-            error.update(error_meta)
-            errors.append(error)
-        return errors
+        return (super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
+            + self.validator.extended_build_validation(error_meta, xml_valid, validate_module))
 
     def check_actions(self):
-        errors = super(ShadowForm, self).check_actions()
-
-        shadow_parent_form = self.shadow_parent_form
-        if shadow_parent_form:
-            case_tags = set(self.extra_actions.get_case_tags())
-            missing_tags = []
-            for action in shadow_parent_form.actions.load_update_cases:
-                if action.case_tag not in case_tags:
-                    missing_tags.append(action.case_tag)
-            if missing_tags:
-                errors.append({'type': 'missing shadow parent tag', 'case_tags': missing_tags})
-        return errors
+        return super(ShadowForm, self).check_actions() + self.validator.check_actions()
 
 
 class SchedulePhaseForm(IndexedSchema):
