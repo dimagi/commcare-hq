@@ -149,7 +149,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('opened_on', 'case_list.opened_on'),
             ('dob', 'case_list.dob'),
             ('closed', 'case_list.closed'),
-            ('anc_abnormalities', 'agg_bp.anc_abnormalities')
+            ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
+            ('home_visit_date', 'agg_bp.latest_time_end_processed')
         )
         return """
         INSERT INTO "{tablename}" (
