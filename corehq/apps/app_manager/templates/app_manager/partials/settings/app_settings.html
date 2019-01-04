@@ -194,7 +194,7 @@
                         {% endif %}
                     </legend>
                     <div class="panel-body">
-                        <p>{% blocktrans with version=app.version %}Your app is at version {{ app.version }}.{% endblocktrans %}
+                        <p>{% blocktrans with version=app.version %}Your app is at version {{ version }}.{% endblocktrans %}
                             {% if master_version %}
                                 {% blocktrans %}The master app is at version {{ master_version }}.{% endblocktrans %}
                             {% else %}
