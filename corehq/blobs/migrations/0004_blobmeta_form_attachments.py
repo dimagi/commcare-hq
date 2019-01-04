@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             "SELECT 1"
         ),
 
-        migrator.get_migration('get_blobmetas.sql'),
+        partitioned(migrator.get_migration('get_blobmetas.sql'), apply_to_proxy=False),
         migrator.get_migration('setup_blobmeta_view.sql', 'drop_blobmeta_view.sql'),
         migrator.get_migration('restrict_legacy_attachment_metadata_insert.sql', testing_only=True),
     ]

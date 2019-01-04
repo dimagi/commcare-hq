@@ -13,7 +13,6 @@ from corehq.sql_db.migrations import partitioned
 migrator = RawSQLMigration(('corehq', 'blobs', 'sql_templates'), {})
 
 
-@partitioned
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -21,10 +20,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
+        partitioned(migrations.AddField(
             model_name='blobmeta',
             name='deleted_on',
             field=models.DateTimeField(default=None, help_text='Timestamp when the blob was deleted.\n\n        This is used for blobs that do not expire but end up deleted for\n        some reason. It should help in researching blobs that are\n        missing at the content storage level.\n        ', null=True),
+        )),
+        partitioned(
+            migrator.get_migration('delete_blob_meta_v2.sql', 'delete_blob_meta.sql'),
+            apply_to_proxy=False,
         ),
-        migrator.get_migration('delete_blob_meta_v2.sql', 'delete_blob_meta.sql'),
     ]
