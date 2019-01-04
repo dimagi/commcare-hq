@@ -1,7 +1,9 @@
 # coding=utf-8
 from __future__ import absolute_import, unicode_literals
 
+import re
 import six
+from lxml import etree
 
 from collections import defaultdict
 from django.conf import settings
@@ -18,14 +20,18 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
+    FormNotFoundException,
     UserCaseXPathValidationError,
     ModuleIdMissingException,
+    ModuleNotFoundException,
     PracticeUserException,
     SuiteValidationError,
     XFormException,
     XFormValidationError,
 )
-from corehq.apps.app_manager.util import app_callout_templates
+from corehq.apps.app_manager.util import app_callout_templates, module_case_hierarchy_has_circular_reference
+from corehq.apps.app_manager.xpath import interpolate_xpath
+from corehq.apps.app_manager.xpath_validator import validate_xpath
 
 
 class ApplicationBaseValidator(object):
@@ -274,5 +280,264 @@ class ApplicationValidator(ApplicationBaseValidator):
                 'message': _('Your application is using User Properties and your current subscription does not '
                              'support that. You can remove User Properties functionality by opening the User '
                              'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
+            })
+        return errors
+
+
+class ModuleBaseValidator(object):
+    def __init__(self, module):
+        self.module = module
+
+    def validate_for_build(self):
+        '''
+        This is a wrapper for the actual validation logic, in order to gracefully capture exceptions
+        caused by modules missing (parent modules, source modules, etc). Subclasses should not override.
+        '''
+        errors = []
+        try:
+            errors += self.validate_with_raise()
+        except ModuleNotFoundException as ex:
+            errors.append({
+                "type": "missing module",
+                "message": six.text_type(ex),
+                "module": self.module.get_module_info(),
+            })
+
+        return errors
+
+    def validate_with_raise(self):
+        '''
+        This is the real validation logic, to be overridden/augmented by subclasses.
+        '''
+        errors = []
+        needs_case_detail = self.module.requires_case_details()
+        needs_case_type = needs_case_detail or any(f.is_registration_form() for f in self.module.get_forms())
+        if needs_case_detail or needs_case_type:
+            errors.extend(self.module.get_case_errors(
+                needs_case_type=needs_case_type,
+                needs_case_detail=needs_case_detail
+            ))
+        if self.module.case_list_form.form_id:
+            try:
+                form = self.module.get_app().get_form(self.module.case_list_form.form_id)
+            except FormNotFoundException:
+                errors.append({
+                    'type': 'case list form missing',
+                    'module': self.module.get_module_info()
+                })
+            else:
+                if not form.is_registration_form(self.module.case_type):
+                    errors.append({
+                        'type': 'case list form not registration',
+                        'module': self.module.get_module_info(),
+                        'form': form,
+                    })
+        if self.module.module_filter:
+            is_valid, message = validate_xpath(self.module.module_filter)
+            if not is_valid:
+                errors.append({
+                    'type': 'module filter has xpath error',
+                    'xpath_error': message,
+                    'module': self.module.get_module_info(),
+                })
+
+        return errors
+
+
+class ModuleDetailValidatorMixin(object):
+    '''
+    Validation logic common to basic and shadow modules, which both have detail configuration.
+    '''
+    def validate_details_for_build(self):
+        errors = []
+        for sort_element in self.module.detail_sort_elements:
+            try:
+                self._validate_detail_screen_field(sort_element.field)
+            except ValueError:
+                errors.append({
+                    'type': 'invalid sort field',
+                    'field': sort_element.field,
+                    'module': self.module.get_module_info(),
+                })
+        if self.module.case_list_filter:
+            try:
+                # test filter is valid, while allowing for advanced user hacks like "foo = 1][bar = 2"
+                case_list_filter = interpolate_xpath('dummy[' + self.module.case_list_filter + ']')
+                etree.XPath(case_list_filter)
+            except (etree.XPathSyntaxError, CaseXPathValidationError):
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.module.get_module_info(),
+                    'filter': self.module.case_list_filter,
+                })
+        for detail in [self.module.case_details.short, self.module.case_details.long]:
+            if detail.use_case_tiles:
+                if not detail.display == "short":
+                    errors.append({
+                        'type': "invalid tile configuration",
+                        'module': self.module.get_module_info(),
+                        'reason': _('Case tiles may only be used for the case list (not the case details).')
+                    })
+                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                    if field not in col_by_tile_field:
+                        errors.append({
+                            'type': "invalid tile configuration",
+                            'module': self.module.get_module_info(),
+                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                        })
+        return errors
+
+    def _validate_detail_screen_field(self, field):
+        # If you change here, also change here:
+        # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
+        field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
+        if not re.match(field_re, field):
+            raise ValueError("Invalid Sort Field")
+
+
+class ModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
+    def validate_with_raise(self):
+        errors = super(ModuleValidator, self).validate_with_raise()
+        errors += self.validate_details_for_build()
+        if not self.module.forms and not self.module.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.module.get_module_info(),
+            })
+
+        if module_case_hierarchy_has_circular_reference(self.module):
+            errors.append({
+                'type': 'circular case hierarchy',
+                'module': self.module.get_module_info(),
+            })
+
+        if self.module.root_module and self.module.root_module.is_training_module:
+            errors.append({
+                'type': 'training module parent',
+                'module': self.module.get_module_info(),
+            })
+
+        if self.module.root_module and self.module.is_training_module:
+            errors.append({
+                'type': 'training module child',
+                'module': self.module.get_module_info(),
+            })
+
+        return errors
+
+
+class AdvancedModuleValidator(ModuleBaseValidator):
+    def validate_with_raise(self):
+        errors = super(AdvancedModuleValidator, self).validate_with_raise()
+        if not self.module.forms and not self.module.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.module.get_module_info(),
+            })
+        if self.module.case_list_form.form_id:
+            forms = self.module.forms
+
+            case_tag = None
+            loaded_case_types = None
+            for form in forms:
+                info = self.module.get_module_info()
+                form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
+                non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
+                this_forms_loaded_case_types = {action.case_type for action in non_auto_select_actions}
+                if loaded_case_types is None:
+                    loaded_case_types = this_forms_loaded_case_types
+                elif loaded_case_types != this_forms_loaded_case_types:
+                    errors.append({
+                        'type': 'all forms in case list module must load the same cases',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+                if not non_auto_select_actions:
+                    errors.append({
+                        'type': 'case list module form must require case',
+                        'module': info,
+                        'form': form_info,
+                    })
+                elif len(non_auto_select_actions) != 1:
+                    for index, action in reversed(list(enumerate(non_auto_select_actions))):
+                        if (
+                            index > 0 and
+                            non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
+                        ):
+                            errors.append({
+                                'type': 'case list module form can only load parent cases',
+                                'module': info,
+                                'form': form_info,
+                            })
+
+                case_action = non_auto_select_actions[-1] if non_auto_select_actions else None
+                if case_action and case_action.case_type != self.module.case_type:
+                    errors.append({
+                        'type': 'case list module form must match module case type',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+                # set case_tag if not already set
+                case_tag = case_action.case_tag if not case_tag and case_action else case_tag
+                if case_action and case_action.case_tag != case_tag:
+                    errors.append({
+                        'type': 'all forms in case list module must have same case management',
+                        'module': info,
+                        'form': form_info,
+                        'expected_tag': case_tag
+                    })
+
+                if case_action and case_action.details_module != self.module.unique_id:
+                    errors.append({
+                        'type': 'forms in case list module must use modules details',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+        return errors
+
+
+class ReportModuleValidator(ModuleBaseValidator):
+    def validate_with_raise(self):
+        errors = super(ReportModuleValidator, self).validate_with_raise()
+        if not self.module.check_report_validity().is_valid:
+            errors.append({
+                'type': 'report config ref invalid',
+                'module': self.module.get_module_info()
+            })
+        elif not self.module.reports:
+            errors.append({
+                'type': 'no reports',
+                'module': self.module.get_module_info(),
+            })
+        if self._has_duplicate_instance_ids():
+            errors.append({
+                'type': 'report config id duplicated',
+                'module': self.module.get_module_info(),
+            })
+        return errors
+
+    def _has_duplicate_instance_ids(self):
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+        duplicate_instance_ids = {
+            instance_id
+            for instance_id, uuids in get_uuids_by_instance_id(self.module.get_app().domain).items()
+            if len(uuids) > 1
+        }
+        return any(report_config.instance_id in duplicate_instance_ids
+                   for report_config in self.module.report_configs)
+
+
+class ShadowModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
+    def validate_with_raise(self):
+        errors = super(ShadowModuleValidator, self).validate_with_raise()
+        errors += self.validate_details_for_build()
+        if not self.module.source_module:
+            errors.append({
+                'type': 'no source module id',
+                'module': self.module.get_module_info()
             })
         return errors
