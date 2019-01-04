@@ -42,6 +42,7 @@ from corehq.apps.linked_domain.applications import get_master_app_version, get_l
 from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
     ApplicationValidator,
+    FormBaseValidator,
     IndexedFormBaseValidator,
     ModuleValidator,
     ModuleBaseValidator,
@@ -166,29 +167,6 @@ from six.moves import filter
 from six.moves import range
 from six.moves import map
 from io import open
-
-WORKFLOW_DEFAULT = 'default'  # go to the app main screen
-WORKFLOW_ROOT = 'root'  # go to the module select screen
-WORKFLOW_PARENT_MODULE = 'parent_module'  # go to the parent module's screen
-WORKFLOW_MODULE = 'module'  # go to the current module's screen
-WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
-WORKFLOW_FORM = 'form'  # go straight to another form
-ALL_WORKFLOWS = [
-    WORKFLOW_DEFAULT,
-    WORKFLOW_ROOT,
-    WORKFLOW_PARENT_MODULE,
-    WORKFLOW_MODULE,
-    WORKFLOW_PREVIOUS,
-    WORKFLOW_FORM,
-]
-# allow all options as fallback except the one for form linking
-WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
-
-WORKFLOW_CASE_LIST = 'case_list'  # Return back to the caselist after registering a case
-REGISTRATION_FORM_WORFLOWS = [
-    WORKFLOW_DEFAULT,
-    WORKFLOW_CASE_LIST,
-]
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -1004,6 +982,10 @@ class FormBase(DocumentSchema):
     def clear_validation_cache(self):
         self.set_validation_cache(None)
 
+    @property
+    def validator(self):
+        return FormBaseValidator(self)
+
     def is_allowed_to_be_release_notes_form(self):
         # checks if this form can be marked as a release_notes form
         #   based on whether it belongs to a training_module
@@ -1102,94 +1084,10 @@ class FormBase(DocumentSchema):
         return self.get_app().timing_context
 
     def validate_for_build(self, validate_module=True):
-        errors = []
-
-        try:
-            module = self.get_module()
-        except AttributeError:
-            module = None
-
-        meta = {
-            'form_type': self.form_type,
-            'module': module.get_module_info() if module else {},
-            'form': {
-                "id": self.id if hasattr(self, 'id') else None,
-                "name": self.name,
-                'unique_id': self.unique_id,
-            }
-        }
-
-        xml_valid = False
-        if self.source == '' and self.form_type != 'shadow_form':
-            errors.append(dict(type="blank form", **meta))
-        else:
-            try:
-                _parse_xml(self.source)
-                xml_valid = True
-            except XFormException as e:
-                errors.append(dict(
-                    type="invalid xml",
-                    message=six.text_type(e) if self.source else '',
-                    **meta
-                ))
-            except ValueError:
-                logging.error("Failed: _parse_xml(string=%r)" % self.source)
-                raise
-
-        try:
-            questions = self.cached_get_questions()
-        except XFormException as e:
-            error = {'type': 'validation error', 'validation_message': six.text_type(e)}
-            error.update(meta)
-            errors.append(error)
-
-        if not errors:
-            has_questions = any(not q.get('is_group') for q in questions)
-            if not has_questions and self.form_type != 'shadow_form':
-                errors.append(dict(type="blank form", **meta))
-            else:
-                try:
-                    self.validate_form()
-                except XFormValidationError as e:
-                    error = {'type': 'validation error', 'validation_message': six.text_type(e)}
-                    error.update(meta)
-                    errors.append(error)
-                except XFormValidationFailed:
-                    pass  # ignore this here as it gets picked up in other places
-
-        if self.post_form_workflow == WORKFLOW_FORM:
-            if not self.form_links:
-                errors.append(dict(type="no form links", **meta))
-            for form_link in self.form_links:
-                try:
-                    self.get_app().get_form(form_link.form_id)
-                except FormNotFoundException:
-                    errors.append(dict(type='bad form link', **meta))
-        elif self.post_form_workflow == WORKFLOW_PARENT_MODULE:
-            if not module.root_module:
-                errors.append(dict(type='form link to missing root', **meta))
-
-        # this isn't great but two of FormBase's subclasses have form_filter
-        if hasattr(self, 'form_filter') and self.form_filter:
-            with self.timing_context("validate_xpath"):
-                is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
-            if not is_valid:
-                error = {
-                    'type': 'form filter has xpath error',
-                    'xpath_error': message,
-                }
-                error.update(meta)
-                errors.append(error)
-
-        errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
-
-        return errors
+        return self.validator.validate_for_build(validate_module)
 
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        """
-        Override to perform additional validation during build process.
-        """
-        return []
+        return self.validator.extended_build_validation(error_meta, xml_valid, validate_module)
 
     def get_unique_id(self):
         """

@@ -21,6 +21,7 @@ from corehq.util.timer import time_method
 from corehq.util import view_utils
 
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager.const import WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
@@ -38,6 +39,7 @@ from corehq.apps.app_manager.util import (
     module_case_hierarchy_has_circular_reference,
     split_path,
 )
+from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import interpolate_xpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 
@@ -580,9 +582,105 @@ def validate_property(property, allow_parents=True):
         raise ValueError("Invalid Property")
 
 
-class IndexedFormBaseValidator(object):
+class FormBaseValidator(object):
     def __init__(self, form):
         self.form = form
+
+    def validate_for_build(self, validate_module):
+        errors = []
+
+        try:
+            module = self.form.get_module()
+        except AttributeError:
+            module = None
+
+        meta = {
+            'form_type': self.form.form_type,
+            'module': module.get_module_info() if module else {},
+            'form': {
+                "id": self.form.id if hasattr(self.form, 'id') else None,
+                "name": self.form.name,
+                'unique_id': self.form.unique_id,
+            }
+        }
+
+        xml_valid = False
+        if self.form.source == '' and self.form.form_type != 'shadow_form':
+            errors.append(dict(type="blank form", **meta))
+        else:
+            try:
+                _parse_xml(self.form.source)
+                xml_valid = True
+            except XFormException as e:
+                errors.append(dict(
+                    type="invalid xml",
+                    message=six.text_type(e) if self.form.source else '',
+                    **meta
+                ))
+            except ValueError:
+                logging.error("Failed: _parse_xml(string=%r)" % self.form.source)
+                raise
+
+        try:
+            questions = self.form.cached_get_questions()
+        except XFormException as e:
+            error = {'type': 'validation error', 'validation_message': six.text_type(e)}
+            error.update(meta)
+            errors.append(error)
+
+        if not errors:
+            has_questions = any(not q.get('is_group') for q in questions)
+            if not has_questions and self.form.form_type != 'shadow_form':
+                errors.append(dict(type="blank form", **meta))
+            else:
+                try:
+                    self.form.validate_form()
+                except XFormValidationError as e:
+                    error = {'type': 'validation error', 'validation_message': six.text_type(e)}
+                    error.update(meta)
+                    errors.append(error)
+                except XFormValidationFailed:
+                    pass  # ignore this here as it gets picked up in other places
+
+        if self.form.post_form_workflow == WORKFLOW_FORM:
+            if not self.form.form_links:
+                errors.append(dict(type="no form links", **meta))
+            for form_link in self.form.form_links:
+                try:
+                    self.form.get_app().get_form(form_link.form_id)
+                except FormNotFoundException:
+                    errors.append(dict(type='bad form link', **meta))
+        elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
+            if not module.root_module:
+                errors.append(dict(type='form link to missing root', **meta))
+
+        # this isn't great but two of FormBase's subclasses have form_filter
+        if hasattr(self.form, 'form_filter') and self.form.form_filter:
+            with self.form.timing_context("validate_xpath"):
+                is_valid, message = validate_xpath(self.form.form_filter, allow_case_hashtags=True)
+            if not is_valid:
+                error = {
+                    'type': 'form filter has xpath error',
+                    'xpath_error': message,
+                }
+                error.update(meta)
+                errors.append(error)
+
+        errors.extend(self.form.extended_build_validation(meta, xml_valid, validate_module))
+
+        return errors
+
+    def extended_build_validation(self, error_meta, xml_valid, validate_module):
+        """
+        Override to perform additional validation during build process.
+        """
+        return []
+
+
+class IndexedFormBaseValidator(FormBaseValidator):
+    @property
+    def timing_context(self):
+        return self.form.get_app().timing_context
 
     def check_case_properties(self, all_names, subcase_names, case_tag):
         errors = []
@@ -624,14 +722,7 @@ class IndexedFormBaseValidator(object):
         return errors
 
 
-class AdvancedFormValidator(object):
-    def __init__(self, form):
-        self.form = form
-
-    @property
-    def timing_context(self):
-        return self.form.get_app().timing_context
-
+class AdvancedFormValidator(IndexedFormBaseValidator):
     def check_actions(self):
         errors = []
 
@@ -745,14 +836,7 @@ class AdvancedFormValidator(object):
         return errors
 
 
-class ShadowFormValidator(object):
-    def __init__(self, form):
-        self.form = form
-
-    @property
-    def timing_context(self):
-        return self.form.get_app().timing_context
-
+class ShadowFormValidator(IndexedFormBaseValidator):
     @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module):
         errors = []
