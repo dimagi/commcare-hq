@@ -23,8 +23,8 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
-    chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, get_tt_dates, \
-    is_anemic, format_decimal, DATA_NOT_ENTERED
+    chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, \
+    get_tt_dates, is_anemic, format_decimal, DATA_NOT_ENTERED
 from custom.icds_reports.const import MapColors
 import six
 
