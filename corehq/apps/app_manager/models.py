@@ -45,6 +45,7 @@ from corehq.apps.app_manager.helpers.validators import (
     ModuleValidator,
     ModuleBaseValidator,
     AdvancedModuleValidator,
+    AdvancedFormValidator,
     ReportModuleValidator,
     ShadowFormValidator,
     ShadowModuleValidator,
@@ -2989,6 +2990,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def requires(self):
         return 'case' if self.requires_case() else 'none'
 
+    @property
+    def validator(self):
+        return AdvancedFormValidator(self)
+
     def is_registration_form(self, case_type=None):
         """
         Defined as form that opens a single case. If the case is a sub-case then
@@ -3075,116 +3080,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             phase.remove_form(self)
 
     def check_actions(self):
-        errors = []
+        return self.validator.check_actions()
 
-        for action in self.actions.get_subcase_actions():
-            case_tags = self.actions.get_case_tags()
-            for case_index in action.case_indices:
-                if case_index.tag not in case_tags:
-                    errors.append({'type': 'missing parent tag', 'case_tag': case_index.tag})
-                if case_index.relationship == 'question' and not case_index.relationship_question:
-                    errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
-
-            if isinstance(action, AdvancedOpenCaseAction):
-                if not action.name_path:
-                    errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
-
-                for case_index in action.case_indices:
-                    meta = self.actions.actions_meta_by_tag.get(case_index.tag)
-                    if meta and meta['type'] == 'open' and meta['action'].repeat_context:
-                        if (
-                            not action.repeat_context or
-                            not action.repeat_context.startswith(meta['action'].repeat_context)
-                        ):
-                            errors.append({'type': 'subcase repeat context',
-                                           'case_tag': action.case_tag,
-                                           'parent_tag': case_index.tag})
-
-            errors.extend(self.check_case_properties(
-                subcase_names=action.get_property_names(),
-                case_tag=action.case_tag
-            ))
-
-        for action in self.actions.get_all_actions():
-            if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
-                errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
-
-            if isinstance(action, LoadUpdateAction) and action.auto_select:
-                mode = action.auto_select.mode
-                if not action.auto_select.value_key:
-                    key_names = {
-                        AUTO_SELECT_CASE: _('Case property'),
-                        AUTO_SELECT_FIXTURE: _('Lookup Table field'),
-                        AUTO_SELECT_USER: _('custom user property'),
-                        AUTO_SELECT_RAW: _('custom XPath expression'),
-                    }
-                    if mode in key_names:
-                        errors.append({'type': 'auto select key', 'key_name': key_names[mode]})
-
-                if not action.auto_select.value_source:
-                    source_names = {
-                        AUTO_SELECT_CASE: _('Case tag'),
-                        AUTO_SELECT_FIXTURE: _('Lookup Table tag'),
-                    }
-                    if mode in source_names:
-                        errors.append({'type': 'auto select source', 'source_name': source_names[mode]})
-                elif mode == AUTO_SELECT_CASE:
-                    case_tag = action.auto_select.value_source
-                    if not self.actions.get_action_from_tag(case_tag):
-                        errors.append({'type': 'auto select case ref', 'case_tag': action.case_tag})
-
-            errors.extend(self.check_case_properties(
-                all_names=action.get_property_names(),
-                case_tag=action.case_tag
-            ))
-
-        if self.form_filter:
-            # Replace any dots with #case, which doesn't make for valid xpath
-            # but will trigger any appropriate validation errors
-            interpolated_form_filter = interpolate_xpath(self.form_filter, case_xpath="#case",
-                    module=self.get_module(), form=self)
-
-            form_filter_references_case = (
-                xpath_references_case(interpolated_form_filter) or
-                xpath_references_user_case(interpolated_form_filter)
-            )
-
-            if form_filter_references_case:
-                if not any(action for action in self.actions.load_update_cases if not action.auto_select):
-                    errors.append({'type': "filtering without case"})
-
-        def generate_paths():
-            for action in self.actions.get_all_actions():
-                for path in action.get_paths():
-                    yield path
-
-            if self.schedule:
-                if self.schedule.transition_condition.type == 'if':
-                    yield self.schedule.transition_condition.question
-                if self.schedule.termination_condition.type == 'if':
-                    yield self.schedule.termination_condition.question
-
-        errors.extend(self.check_paths(generate_paths()))
-
-        return errors
-
-    @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        errors = []
-        if xml_valid:
-            for error in self.check_actions():
-                error.update(error_meta)
-                errors.append(error)
-
-        module = self.get_module()
-        if validate_module:
-            errors.extend(module.get_case_errors(
-                needs_case_type=False,
-                needs_case_detail=module.requires_case_details(),
-                needs_referral_detail=False,
-            ))
-
-        return errors
+        return self.validator.extended_build_validation(error_meta, xml_valid, validate_module)
 
     def get_case_updates(self):
         updates_by_case_type = defaultdict(set)
