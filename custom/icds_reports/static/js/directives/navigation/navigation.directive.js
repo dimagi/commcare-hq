@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function NavigationController($window, $scope, $route, $routeParams, $location) {
+function NavigationController($window, $scope, $route, $routeParams, $location, stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -35,9 +35,13 @@ function NavigationController($window, $scope, $route, $routeParams, $location) 
         });
         return page_path;
     };
+
+    $scope.showCasData = function () {
+        return stateLevelAccess === false && haveAccessToAllLocations !== true && haveAccessToFeatures === true;
+    }
 }
 
-NavigationController.$inject = ['$window', '$scope', '$route', '$routeParams', '$location'];
+NavigationController.$inject = ['$window', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('navigation', function() {
     return {
