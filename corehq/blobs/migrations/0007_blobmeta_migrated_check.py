@@ -11,7 +11,6 @@ from django.core.management import call_command
 from django.db import connections, migrations
 
 from corehq.sql_db.operations import HqRunPython, noop_migration_fn
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
 BLOBMETAS_NOT_MIGRATED_ERROR = """
@@ -28,19 +27,16 @@ git checkout acc40116a96a40c64efb8613fb2ba5933122b151
 """
 
 
-def get_num_attachments():
+def get_num_attachments(connection):
     """Get the number of attachments that need to be migrated"""
-    def count(dbname):
-        with connections[dbname].cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM form_processor_xformattachmentsql")
-            return cursor.fetchone()[0]
-
-    return sum(count(db) for db in get_db_aliases_for_partitioned_query())
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM form_processor_xformattachmentsql")
+        return cursor.fetchone()[0]
 
 
 def _assert_blobmetas_migrated(apps, schema_editor):
     """Check if migrated. Raises SystemExit if not migrated"""
-    num_attachments = get_num_attachments()
+    num_attachments = get_num_attachments(schema_editor.connection)
 
     migrated = num_attachments == 0
     if migrated:
@@ -51,9 +47,9 @@ def _assert_blobmetas_migrated(apps, schema_editor):
             call_command(
                 "run_sql",
                 "simple_move_form_attachments_to_blobmeta",
-                yes=True,
+                dbname=schema_editor.connection.alias,
             )
-            migrated = get_num_attachments() == 0
+            migrated = get_num_attachments(schema_editor.connection) == 0
             if not migrated:
                 print("Automatic migration failed")
                 migrated = False
