@@ -288,6 +288,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'molecules/intro',
+            'molecules/buttons',
             'molecules/forms',
             'molecules/modals',
         ]
