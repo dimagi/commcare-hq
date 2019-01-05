@@ -8,7 +8,7 @@ import sys
 import traceback
 
 from django.core.management import call_command
-from django.db import connections, migrations
+from django.db import migrations
 
 from corehq.sql_db.operations import HqRunPython, noop_migration_fn
 
