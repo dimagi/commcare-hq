@@ -260,20 +260,184 @@ WHERE  (i.indisvalid = false OR i.indisready = false) AND
 """
 
 
-# see https://github.com/dimagi/commcare-hq/pull/21631
-blobmeta_key = """
-CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
-ON public.form_processor_xformattachmentsql (((
-    CASE
-        WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(blob_bucket, 'form/' || REPLACE(attachment_id::text, '-', '')) || '/'
-    END || blob_id
-)::varchar(255)))
-"""
+# Move rows incrementally.
+# WARNING monitor disk usage when running in large environments.
+# Does not require downtime, but may be slow.
+simple_move_form_attachments_to_blobmeta = RunUntilZeroHandleDupBlobs("""
+WITH deleted AS (
+    DELETE FROM form_processor_xformattachmentsql
+    WHERE id IN (
+        SELECT id FROM form_processor_xformattachmentsql
+        LIMIT {chunk_size}
+    )
+    RETURNING *
+), moved AS (
+    INSERT INTO blobs_blobmeta_tbl (
+        "domain",
+        parent_id,
+        "name",
+        "key",
+        type_code,
+        content_type,
+        properties,
+        created_on,
+        content_length
+    ) SELECT
+        COALESCE(xform."domain", '<unknown>'),
+        att.form_id AS parent_id,
+        att."name",
+        (CASE
+            WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+            ELSE COALESCE(
+                att.blob_bucket,
+                'form/' || REPLACE(att.attachment_id::text, '-', '')
+            ) || '/'
+        END || att.blob_id)::VARCHAR(255) AS "key",
+        CASE
+            WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+            ELSE 3 -- corehq.blobs.CODES.form_attachment
+        END::SMALLINT AS type_code,
+        att.content_type,
+        CASE
+            WHEN att.properties = '{{}}' THEN NULL
+            ELSE att.properties
+        END AS properties,
+        COALESCE(xform.received_on, CURRENT_TIMESTAMP) AS created_on,
+        att.content_length
+    FROM deleted att
+    -- outer join so we move deleted rows with no corresponding xform instance
+    -- should not happen, but just in case (without this they would be lost)
+    LEFT OUTER JOIN form_processor_xforminstancesql xform
+        ON xform.form_id = att.form_id
+    RETURNING *
+) SELECT COUNT(*) FROM moved
+""")
+
+
+# Move rows incrementally.
+# WARNING monitor disk usage when running in large environments.
+# Does not require downtime, but may be slow.
+# This variant may be faster than the "simple" version above if there
+# are many duplicate metadata records. However, it will likely "finish"
+# before all records have been migrated due to returning zero even
+# though there are more to migrate.
+move_form_attachments_to_blobmeta = RunUntilZeroHandleDupBlobs("""
+WITH to_move AS (
+    SELECT
+        COALESCE(xform."domain", '<unknown>') AS "domain",
+        att.form_id AS parent_id,
+        att."name",
+        (CASE
+            WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+            ELSE COALESCE(
+                att.blob_bucket,
+                'form/' || REPLACE(att.attachment_id::text, '-', '')
+            ) || '/'
+        END || att.blob_id)::VARCHAR(255) AS "key",
+        CASE
+            WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+            ELSE 3 -- corehq.blobs.CODES.form_attachment
+        END::SMALLINT AS type_code,
+        att.content_type,
+        CASE
+            WHEN att.properties = '{{}}' THEN NULL
+            ELSE att.properties
+        END AS properties,
+        COALESCE(xform.received_on, CURRENT_TIMESTAMP) AS created_on,
+        att.content_length
+    FROM form_processor_xformattachmentsql att
+    -- outer join so we move deleted rows with no corresponding xform instance
+    -- should not happen, but just in case (without this they would be lost)
+    LEFT OUTER JOIN form_processor_xforminstancesql xform
+        ON xform.form_id = att.form_id
+    LIMIT {chunk_size}
+), moved AS (
+    INSERT INTO blobs_blobmeta_tbl AS blob (
+        "domain",
+        parent_id,
+        "name",
+        "key",
+        type_code,
+        content_type,
+        properties,
+        created_on,
+        content_length
+    )
+    SELECT * FROM to_move
+    ON CONFLICT (key) DO UPDATE
+        SET created_on = EXCLUDED.created_on, type_code = EXCLUDED.type_code
+        -- this where clause will exclude a row with key conflict belonging to
+        -- a different parent or with different name (unexpected, but possible)
+        WHERE blob.parent_id = EXCLUDED.parent_id AND blob.name = EXCLUDED.name
+    RETURNING *
+), deleted AS (
+    -- do the delete last so we only delete rows that were inserted or updated
+    -- unfortunately this requires a bit more complex where clause because it
+    -- is not possible to pass form_processor_xformattachmentsql.id through
+    -- INSERT INTO blobs_blobmeta_tbl ... RETURNING
+    DELETE FROM form_processor_xformattachmentsql att
+    USING moved WHERE moved.parent_id = att.form_id
+    AND moved.name = att.name
+    AND moved.key = (CASE
+        WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+        ELSE COALESCE(
+            att.blob_bucket,
+            'form/' || REPLACE(att.attachment_id::text, '-', '')
+        ) || '/'
+    END || att.blob_id)::VARCHAR(255)
+    RETURNING *
+) SELECT COUNT(*) FROM deleted;
+""")
+
+
+# use this when simple_move_form_attachments_to_blobmeta gets too slow
+delete_dup_form_attachments = RunUntilZero("""
+WITH dups AS (
+    SELECT * FROM (
+        SELECT
+            att.id,
+            att.form_id,
+            att.name,
+            CASE
+                WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+                ELSE 3 -- corehq.blobs.CODES.form_attachment
+            END::SMALLINT AS type_code,
+            (CASE
+                WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+                ELSE COALESCE(
+                    blob_bucket,
+                    'form/' || REPLACE(attachment_id::text, '-', '')
+                ) || '/'
+            END || blob_id) AS key
+        FROM form_processor_xformattachmentsql att
+    ) AS att
+    WHERE EXISTS (
+        SELECT 1 FROM blobs_blobmeta_tbl blob
+        WHERE blob.key = att.key
+        AND blob.parent_id = att.form_id
+        AND blob.name = att.name
+    )
+    LIMIT 1000
+), deleted AS (
+    DELETE FROM form_processor_xformattachmentsql att
+    USING dups WHERE att.id = dups.id
+    RETURNING 1
+), updated AS (
+    -- fix create_on and type_code
+    UPDATE blobs_blobmeta_tbl
+    SET created_on = xform.received_on, type_code = dups.type_code
+    FROM dups
+    INNER JOIN form_processor_xforminstancesql xform
+        ON xform.form_id = dups.form_id
+    WHERE blobs_blobmeta_tbl.key = dups.key
+) SELECT COUNT(*) FROM deleted;
+""")
 
 
 TEMPLATES = {
-    "blobmeta_key": blobmeta_key,
+    "simple_move_form_attachments_to_blobmeta": simple_move_form_attachments_to_blobmeta,
+    "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
+    "delete_dup_form_attachments": delete_dup_form_attachments,
     "show_invalid_indexes": show_invalid_indexes,
 
     # use to verify tables are empty
