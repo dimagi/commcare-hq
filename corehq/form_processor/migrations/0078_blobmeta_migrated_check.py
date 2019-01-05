@@ -68,7 +68,7 @@ def _assert_blobmetas_migrated(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('blobs', '0006_restrict_form_attachments'),
+        ('form_processor', '0077_null_properties'),
     ]
 
     operations = [
