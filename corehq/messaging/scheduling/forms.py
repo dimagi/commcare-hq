@@ -23,7 +23,7 @@ from django.forms.fields import (
 )
 from django.forms.forms import Form
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, SelectMultiple
 from django.utils.functional import cached_property
 from memoized import memoized
 from dimagi.utils.django.fields import TrimmedCharField
@@ -114,10 +114,13 @@ def validate_int(value, min_value):
 
 
 class CommaSeparatedListField(CharField):
+    '''
     def to_python(self, value):
         if not value:
             return []
         return value.split(',')
+    '''
+    pass
 
 
 def get_system_admin_label(data_bind=""):
@@ -1048,14 +1051,17 @@ class ScheduleForm(Form):
     user_recipients = CommaSeparatedListField(
         required=False,
         label=ugettext_lazy("User Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     user_group_recipients = CommaSeparatedListField(
         required=False,
         label=ugettext_lazy("User Group Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     user_organization_recipients = CommaSeparatedListField(
         required=False,
         label=ugettext_lazy("User Organization Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     include_descendant_locations = BooleanField(
         required=False,
@@ -1071,10 +1077,12 @@ class ScheduleForm(Form):
     location_types = CommaSeparatedListField(
         required=False,
         label='',
+        widget=SelectMultiple(choices=[]),
     )
     case_group_recipients = CommaSeparatedListField(
         required=False,
         label=ugettext_lazy("Case Group Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     content = ChoiceField(
         required=True,
@@ -1898,7 +1906,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for user_id in value.strip().split(','):
+        for user_id in value:
             user_id = user_id.strip()
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if user and not user.is_deleted():
@@ -1918,7 +1926,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for group_id in value.strip().split(','):
+        for group_id in value:
             group_id = group_id.strip()
             group = Group.get(group_id)
             if group.doc_type != 'Group' or group.domain != self.domain:
@@ -1935,7 +1943,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for location_id in value.strip().split(','):
+        for location_id in value:
             location_id = location_id.strip()
             try:
                 location = SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
@@ -1953,7 +1961,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for location_type_id in value.strip().split(','):
+        for location_type_id in value:
             location_type_id = location_type_id.strip()
             try:
                 location_type = LocationType.objects.get(domain=self.domain, pk=location_type_id)
@@ -1971,7 +1979,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for case_group_id in value.strip().split(','):
+        for case_group_id in value:
             case_group_id = case_group_id.strip()
             case_group = CommCareCaseGroup.get(case_group_id)
             if case_group.doc_type != 'CommCareCaseGroup' or case_group.domain != self.domain:
