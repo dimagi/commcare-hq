@@ -1906,7 +1906,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for user_id in value.strip().split(','):
+        for user_id in value:
             user_id = user_id.strip()
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if user and not user.is_deleted():
@@ -1926,7 +1926,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for group_id in value.strip().split(','):
+        for group_id in value:
             group_id = group_id.strip()
             group = Group.get(group_id)
             if group.doc_type != 'Group' or group.domain != self.domain:
@@ -1943,7 +1943,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for location_id in value.strip().split(','):
+        for location_id in value:
             location_id = location_id.strip()
             try:
                 location = SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
@@ -1961,7 +1961,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for location_type_id in value.strip().split(','):
+        for location_type_id in value:
             location_type_id = location_type_id.strip()
             try:
                 location_type = LocationType.objects.get(domain=self.domain, pk=location_type_id)
@@ -1979,7 +1979,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for case_group_id in value.strip().split(','):
+        for case_group_id in value:
             case_group_id = case_group_id.strip()
             case_group = CommCareCaseGroup.get(case_group_id)
             if case_group.doc_type != 'CommCareCaseGroup' or case_group.domain != self.domain:
