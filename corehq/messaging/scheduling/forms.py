@@ -23,7 +23,7 @@ from django.forms.fields import (
 )
 from django.forms.forms import Form
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, SelectMultiple
 from django.utils.functional import cached_property
 from memoized import memoized
 from dimagi.utils.django.fields import TrimmedCharField
@@ -114,10 +114,13 @@ def validate_int(value, min_value):
 
 
 class CommaSeparatedListField(CharField):
+    '''
     def to_python(self, value):
         if not value:
             return []
         return value.split(',')
+    '''
+    pass
 
 
 def get_system_admin_label(data_bind=""):
@@ -1048,14 +1051,17 @@ class ScheduleForm(Form):
     user_recipients = CommaSeparatedListField(
         required=False,
         label=ugettext_lazy("User Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     user_group_recipients = CommaSeparatedListField(
         required=False,
         label=ugettext_lazy("User Group Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     user_organization_recipients = CommaSeparatedListField(
         required=False,
         label=ugettext_lazy("User Organization Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     include_descendant_locations = BooleanField(
         required=False,
@@ -1071,10 +1077,12 @@ class ScheduleForm(Form):
     location_types = CommaSeparatedListField(
         required=False,
         label='',
+        widget=SelectMultiple(choices=[]),
     )
     case_group_recipients = CommaSeparatedListField(
         required=False,
         label=ugettext_lazy("Case Group Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     content = ChoiceField(
         required=True,
