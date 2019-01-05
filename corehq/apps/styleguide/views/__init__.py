@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from io import open
+import os
+
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
@@ -285,13 +289,22 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
         return [
             'molecules/intro',
             'molecules/forms',
+            'molecules/modals',
         ]
 
     @property
     def page_context(self):
         return {
             'basic_crispy_form': BasicCrispyForm(),
+            'examples': {
+                'modals': self._example('modals.html'),
+            },
         }
+
+    def _example(self, filename):
+        examples = os.path.join(os.path.dirname(__file__), '..', 'templates', 'styleguide', 'examples')
+        with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
+            return content.read()
 
 
 class OrganismsStyleGuideView(BaseStyleGuideArticleView):
