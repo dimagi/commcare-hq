@@ -58,4 +58,5 @@ branches:
   - jls/mm-update-paths  # Jenny Dec 19
   - cz/kill-bihar  # cory dec 29
   - dmr/fix-es-service-check  # Danny Jan 3
+  - jls/scheduling-select2-v4  # Jenny Jan 5
 submodules: {}
