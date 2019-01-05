@@ -62,6 +62,11 @@ class BaseStyleGuideArticleView(TemplateView):
         """
         return {}
 
+    def example(self, filename):
+        examples = os.path.join(os.path.dirname(__file__), '..', 'templates', 'styleguide', 'examples')
+        with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
+            return content.read()
+
     def render_to_response(self, context, **response_kwargs):
         context.update(self.section_context)
         context.update(self.page_context)
@@ -298,14 +303,9 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
         return {
             'basic_crispy_form': BasicCrispyForm(),
             'examples': {
-                'modals': self._example('modals.html'),
+                'modals': self.example('modals.html'),
             },
         }
-
-    def _example(self, filename):
-        examples = os.path.join(os.path.dirname(__file__), '..', 'templates', 'styleguide', 'examples')
-        with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
-            return content.read()
 
 
 class OrganismsStyleGuideView(BaseStyleGuideArticleView):
@@ -316,5 +316,15 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'organisms/intro',
+            'organisms/tables',
             'organisms/views',
         ]
+
+    @property
+    def page_context(self):
+        return {
+            'examples': {
+                'basic_table': self.example('basic_table.html'),
+                'complex_table': self.example('complex_table.html'),
+            },
+        }
