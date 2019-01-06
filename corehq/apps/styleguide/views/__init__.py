@@ -16,7 +16,7 @@ def styleguide_default(request):
 
 
 class MainStyleGuideView(TemplateView):
-    template_name = 'styleguide/pages/home.html'
+    template_name = 'styleguide/home.html'
     urlname = 'styleguide_home'
 
 
