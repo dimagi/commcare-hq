@@ -88,12 +88,12 @@
         css_class="btn btn-default",
     )</pre>
     <p>
-        If you want to specify another attribute, say a <code>data-bind=""</code> or
-        <code>ng-model=""</code>, you would add it to a field like so:
+        If you want to specify another attribute, say a <code>data-bind=""</code>,
+        add it to a field like so:
     </p>
     <pre>crispy.Field(
         'first_name',
-        ng_model="firstName",
+        data_bind="value: firstName",
     )
     </pre>
     <p>
