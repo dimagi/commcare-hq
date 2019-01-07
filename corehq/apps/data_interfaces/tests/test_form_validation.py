@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.data_interfaces.forms import validate_case_property_name
+from corehq.apps.data_interfaces.forms import validate_case_property_name, is_valid_case_property_name
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -57,3 +57,10 @@ class TestFormValidation(TestCase):
         for invalid_property_name in self.INVALID_PROPERTY_NAMES:
             with self.assertRaises(ValidationError):
                 validate_case_property_name(invalid_property_name, allow_parent_case_references=False)
+
+    def test_is_valid_caes_property_name(self):
+        for valid_property_name in ['abc', 'foo_bar']:
+            self.assertTrue(is_valid_case_property_name(valid_property_name))
+
+        for invalid_property_name in self.INVALID_PROPERTY_NAMES + [' abc ']:
+            self.assertFalse(is_valid_case_property_name(invalid_property_name))
