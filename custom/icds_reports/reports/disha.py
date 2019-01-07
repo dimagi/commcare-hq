@@ -12,6 +12,7 @@ from corehq.util.download import get_download_response
 from corehq.util.files import TransientTempfile
 from couchexport.export import Format
 
+from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.views import DishaIndicatorView
 from custom.icds_reports.models.helper import IcdsFile
@@ -114,8 +115,7 @@ class DishaDump(object):
 
 
 def build_dumps_for_month(month, rebuild=False):
-    states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
-
+    states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True)
     for state_name in states:
         dump = DishaDump(state_name, month)
         if not rebuild and dump.export_exists():
