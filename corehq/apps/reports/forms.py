@@ -129,11 +129,13 @@ class ScheduledReportForm(forms.Form):
 
     send_to_owner = forms.BooleanField(
         label=_('Send to owner'),
-        required=False)
+        required=False
+    )
 
     attach_excel = forms.BooleanField(
         label=_('Attach Excel Report'),
-        required=False)
+        required=False
+    )
 
     recipient_emails = MultiEmailField(
         label=_('Other recipients'),
