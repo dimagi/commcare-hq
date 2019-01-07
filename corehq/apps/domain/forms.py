@@ -79,7 +79,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV4
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import WebUser, CouchUser
@@ -499,7 +499,7 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2AjaxV3):
+class CallCenterOwnerWidget(Select2AjaxV4):
 
     def set_domain(self, domain):
         self.domain = domain
