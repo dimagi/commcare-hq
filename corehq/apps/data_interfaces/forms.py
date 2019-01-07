@@ -720,6 +720,7 @@ class CaseRuleCriteriaForm(forms.Form):
             # we always allow proper display and edit of rules
             case_types.append(initial)
         case_types.sort()
+        case_types = ['song', 'point', 'case']
         self.fields['case_type'].choices = (
             (case_type, case_type) for case_type in case_types
         )
