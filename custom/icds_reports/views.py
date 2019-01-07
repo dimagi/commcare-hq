@@ -1638,12 +1638,17 @@ class CheckExportReportStatus(View):
         status = res.ready()
 
         if status:
-            return JsonResponse(
-                {
-                    'task_ready': status,
-                    'task_result': res.result
-                }
-            )
+            if res.successful():
+                return JsonResponse(
+                    {
+                        'task_ready': status,
+                        'task_result': res.result
+                    }
+                )
+            else:
+                error = res.result
+                traceback = res.traceback
+                raise Exception(error, traceback)
         return JsonResponse({'task_ready': status})
 
 
