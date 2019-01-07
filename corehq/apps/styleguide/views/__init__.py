@@ -296,6 +296,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'molecules/buttons',
             'molecules/forms',
             'molecules/modals',
+            'molecules/pagination',
         ]
 
     @property
@@ -304,6 +305,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'basic_crispy_form': BasicCrispyForm(),
             'examples': {
                 'modals': self.example('modals.html'),
+                'pagination': self.example('pagination.html'),
             },
         }
 
