@@ -1,4 +1,4 @@
-hqDefine('accounting/js/widgets', [
+hqDefine('accounting/js/widgets_v3', [
     'jquery',
     'knockout',
     'underscore',

@@ -1,7 +1,7 @@
 hqDefine('accounting/js/base_subscriptions_main', [
     'jquery',
     'knockout',
-    'accounting/js/widgets',
+    'accounting/js/widgets_v3',
     'accounting/js/credits_tab',
     'jquery-ui/ui/datepicker',
 ], function (
