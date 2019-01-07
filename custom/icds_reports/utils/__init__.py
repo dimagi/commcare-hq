@@ -431,7 +431,7 @@ def get_counseling(value):
     if counseling:
         return ', '.join(counseling)
     else:
-        return DATA_NOT_ENTERED
+        return 'None'
 
 
 def get_tt_dates(value):
@@ -445,7 +445,7 @@ def get_tt_dates(value):
     if tt_dates:
         return '; '.join(tt_dates)
     else:
-        return DATA_NOT_ENTERED
+        return 'None'
 
 
 def current_age(dob, selected_date):

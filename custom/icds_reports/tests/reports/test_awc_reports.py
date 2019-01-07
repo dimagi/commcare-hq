@@ -2547,9 +2547,9 @@ class TestAWCReport(TestCase):
                         'anc_hemoglobin': 'Data Not Entered',
                         'anc_weight': 'Data Not Entered',
                         'anemic': 'Data Not Entered',
-                        'bp': 'Data Not Entered / Data Not Entered',
+                        'bp': 'Data Not Entered',
                         'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
-                        'counseling': 'Data Not Entered',
+                        'counseling': 'None',
                         'edd': 'Data Not Entered',
                         'home_visit_date': 'Data Not Entered',
                         'ifa_consumed_last_seven_days': 'Y',
@@ -2559,7 +2559,7 @@ class TestAWCReport(TestCase):
                         'preg_order': 'Data Not Entered',
                         'symptoms': 'None',
                         'trimester': 2,
-                        'tt_date': 'Data Not Entered',
+                        'tt_date': 'None',
                         'tt_taken': 'N',
                         'using_ifa': 'Y'
                     }

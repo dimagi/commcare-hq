@@ -1185,7 +1185,7 @@ def get_pregnant_details(case_id, awc_id):
                 opened_on=row_data['opened_on'] if row_data['opened_on'] else DATA_NOT_ENTERED,
                 preg_order=row_data['preg_order'] if row_data['preg_order'] else DATA_NOT_ENTERED,
                 home_visit_date=row_data['home_visit_date'] if row_data['home_visit_date'] else DATA_NOT_ENTERED,
-                bp='{} / {}'.format(
+                bp=DATA_NOT_ENTERED if not row_data['bp_sys'] and not row_data['bp_dia'] else '{} / {}'.format(
                     row_data['bp_sys'] if row_data['bp_sys'] else DATA_NOT_ENTERED,
                     row_data['bp_dia'] if row_data['bp_dia'] else DATA_NOT_ENTERED,
                 ),
