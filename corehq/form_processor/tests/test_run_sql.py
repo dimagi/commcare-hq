@@ -11,7 +11,10 @@ from django.test import TransactionTestCase
 from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import new_meta, TemporaryFilesystemBlobDB
-from corehq.form_processor.management.commands.run_sql import Command
+from corehq.form_processor.management.commands.run_sql import (
+    Command,
+    get_form_attachment_blob_metas_by_key,
+)
 from corehq.form_processor.models import (
     DeprecatedXFormAttachmentSQL,
     XFormInstanceSQL,
@@ -127,7 +130,10 @@ class TestRunSql(TransactionTestCase):
                     attach(meta, third_id, deprecated_form_id=form_id)
                     yield third_id, code, name
             db = get_db_alias_for_partitioned_doc(parent_id)
-            metas = list(BlobMeta.objects.using(db).filter(key=meta.key))
+            metas = (
+                list(BlobMeta.objects.using(db).filter(key=meta.key)) +
+                list(get_form_attachment_blob_metas_by_key(meta.key, db))
+            )
             assert len(metas) == meta_count, (metas, action, meta_count)
 
         def get_new_id(parent_id):
@@ -144,6 +150,8 @@ class TestRunSql(TransactionTestCase):
         metas = []
         for db in get_db_aliases_for_partitioned_query():
             metas.extend(model.objects.using(db).all())
+            if model is BlobMeta:
+                metas.extend(get_form_attachment_blob_metas_by_key(None, db))
         return metas
 
     def setUp(self):
