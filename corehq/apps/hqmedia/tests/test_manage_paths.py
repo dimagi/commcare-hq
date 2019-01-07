@@ -2,13 +2,20 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
+import json
+import os
 import re
 
 from mock import patch
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.hqmedia.view_helpers import download_multimedia_paths_rows, validate_multimedia_paths_rows
+from corehq.apps.hqmedia.view_helpers import (
+    download_multimedia_paths_rows,
+    validate_multimedia_paths_rows,
+    update_multimedia_paths,
+)
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -41,7 +48,7 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
 
         return app
 
-    def test_paths_download(self, mock):
+    def test_paths_download(self, validate_xform):
         app = self._get_app()
         module_name = app.modules[0].default_name()
         form_name = app.modules[0].forms[0].default_name()
@@ -72,7 +79,7 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(rows_by_path[path]), 1)
         self.assertTrue(rows_by_path[path][0].endswith(form_name))
 
-    def test_paths_validate(self, mock):
+    def test_paths_validate(self, validate_xform):
         app = self._get_app()
 
         rows = (
@@ -96,3 +103,93 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
         self.assertTrue(re.search(r'3.*replace', warnings[0]))
         self.assertTrue('already' in warnings[1])
         self.assertTrue('hyacinth' in warnings[1])
+
+    @patch('dimagi.ext.couchdbkit.Document.get_db')
+    def test_paths_upload(self, validate_xform, get_db):
+        paths = {
+            'jr://file/commcare/image/data/undefined-86sshg.jpg': 'jr://file/commcare/nin/ghosts.jpg',
+            'jr://file/commcare/audio/module0_form0_en.mp3': 'jr://file/commcare/en/audio/laundry.mp3',
+            'jr://file/commcare/image/data/la_la_la-zvj1k3.jpg': 'jr://file/commcare/nin/sin.jpg',
+            'jr://file/commcare/audio/module0_en.mp3': 'jr://file/commcare/en/audio/dream.mp3',
+            'jr://file/commcare/image/module1_case_list_menu_item_en.png': 'jr://file/commcare/image/lemonade.jpg',
+            'jr://file/commcare/image/module0_form0_fra.jpg': 'jr://file/commcare/aff/pines.jpg',
+            'jr://file/commcare/audio/module0_form0_fra.mp3': 'jr://file/commcare/fra/audio/souled.mp3',
+            'jr://file/commcare/image/module0_form0_en.jpg': 'jr://file/commcare/aff/one_cell.jpg',
+            'jr://file/commcare/image/module1_list_icon_name_1480.jpg': 'jr://file/commcare/image/le_monde.jpg',
+            'jr://file/commcare/image/module0_en.jpg': 'jr://file/commcare/image/chime.jpg',
+            'jr://file/commcare/image/module1_case_list_form_en.png': 'jr://file/commcare/image/trip.jpg',
+            'jr://file/commcare/image/module1_case_list_lookup.jpg': 'jr://file/commcare/debut.jpg',
+        }
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'manage-multimedia.json')) as f:
+            source = json.load(f)
+            app = Application.wrap(source)
+            update_multimedia_paths(app, paths)
+
+            self.assertEquals(len(app.all_media()), len(paths))
+
+            # Module and form menu media
+            self.assertEquals(
+                app.modules[0].forms[0].icon_by_language('en'),
+                'jr://file/commcare/aff/pines.jpg'
+            )
+            self.assertEquals(
+                app.modules[0].forms[0].icon_by_language('fra'),
+                'jr://file/commcare/aff/one_cell.jpg'
+            )
+            self.assertEquals(
+                app.modules[0].icon_by_language('en'),
+                'jr://file/commcare/image/chime.jpg'
+            )
+            self.assertEquals(
+                app.modules[0].audio_by_language('en'),
+                'jr://file/commcare/en/audio/dream.mp3'
+            )
+            self.assertEquals(
+                app.modules[0].forms[0].audio_by_language('en'),
+                'jr://file/commcare/fra/audio/souled.mp3'
+            )
+            self.assertEquals(
+                app.modules[0].forms[0].audio_by_language('fra'),
+                'jr://file/commcare/en/audio/laundry.mp3'
+            )
+            self.assertEquals(
+                app.modules[0].forms[0].audio_by_language('en'),
+                'jr://file/commcare/fra/audio/souled.mp3'
+            )
+
+            # Form media
+            form_images = app.modules[1].forms[0].wrapped_xform().image_references
+            self.assertTrue('jr://file/commcare/nin/ghosts.jpg' in form_images)
+            self.assertTrue('jr://file/commcare/nin/sin.jpg' in form_images)
+
+            # Case list lookup
+            self.assertEquals(
+                app.modules[1].get_details()[0][1].lookup_image,
+                'jr://file/commcare/debut.jpg'
+            )
+
+            # Case list icons
+            self.assertEquals(
+                app.modules[1].get_details()[0][1].columns[2].enum[0].value['en'],
+                'jr://file/commcare/image/le_monde.jpg'
+            )
+
+            # Case list menu item
+            self.assertEquals(
+                app.modules[1].case_list.icon_by_language('en'),
+                'jr://file/commcare/image/lemonade.jpg'
+            )
+            self.assertEquals(
+                app.modules[1].case_list.icon_by_language('fra'),
+                'jr://file/commcare/image/lemonade.jpg'
+            )
+
+            # Reg from cast list
+            self.assertEquals(
+                app.modules[1].case_list_form.icon_by_language('en'),
+                'jr://file/commcare/image/trip.jpg'
+            )
+            self.assertEquals(
+                app.modules[1].case_list_form.icon_by_language('fra'),
+                'jr://file/commcare/image/trip.jpg'
+            )
