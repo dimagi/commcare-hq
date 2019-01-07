@@ -32,15 +32,18 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.maxPagesShown = params.maxPagesShown || 9;
 
-            self.nextPage = function () {
-                self.goToPage(Math.min(self.currentPage() + 1, self.numPages()));
+            self.nextPage = function (model, e) {
+                self.goToPage(Math.min(self.currentPage() + 1, self.numPages()), e);
             };
-            self.previousPage = function () {
-                self.goToPage(Math.max(self.currentPage() - 1, 1));
+            self.previousPage = function (model, e) {
+                self.goToPage(Math.max(self.currentPage() - 1, 1), e);
             };
-            self.goToPage = function (page) {
+            self.goToPage = function (page, e) {
                 self.currentPage(page);
                 params.goToPage(self.currentPage());
+                if (e) {
+                    e.stopPropagation();
+                }
             };
             self.itemsShowing = ko.computed(function () {
                 return self.currentPage() * self.perPage();
