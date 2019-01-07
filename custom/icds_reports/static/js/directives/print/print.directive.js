@@ -19,8 +19,9 @@ function PrintReportController() {
             head_copy.innerHTML +
             '<body style="width: 1100px !important;" onload="window.print()">' +
             reportMetaData +
+            "<div class='report-content'>" +
             innerContents +
-            '</body>'
+            '</div></body>'
         );
         popupWindow.document.close();
     };

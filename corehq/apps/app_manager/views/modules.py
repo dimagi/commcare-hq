@@ -141,7 +141,8 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
-        }
+        },
+        'legacy_select2': True,
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
@@ -227,6 +228,7 @@ def _get_report_module_context(app, module):
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
             'filter_structure': report.filters_without_prefilters,
+            'legacy_select2': False,
         }
 
     all_reports = ReportConfiguration.by_domain(app.domain) + \

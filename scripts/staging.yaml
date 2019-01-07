@@ -52,7 +52,11 @@ branches:
 #  - rn_migrate_multimedia # Rohit 3 Dec
   - mk-transifex-improv # MK Dec 8
   - mk-215 # MK Dec 13
+  - jls/conflicts  # Jenny Dec 26: fixes master conflict for lwyszomi:lw/js-forms-modules
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
   - reports-effective-start-date  # Gabriella Dec 18
   - jls/mm-update-paths  # Jenny Dec 19
+  - cz/kill-bihar  # cory dec 29
+  - dmr/fix-es-service-check  # Danny Jan 3
+  - jls/scheduling-select2-v4  # Jenny Jan 5
 submodules: {}

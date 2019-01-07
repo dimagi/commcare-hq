@@ -413,8 +413,10 @@ class Excel2007ExportWriter(ExportWriter):
                 cell.number_format = numbers.FORMAT_TEXT
         if isinstance(row, FormattedRow):
             for hyperlink_column_index in row.hyperlink_column_indices:
-                cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
-                cells[hyperlink_column_index].style = 'Hyperlink'
+                cell_value = cells[hyperlink_column_index].value
+                if isinstance(cell_value, six.string_types):
+                    cells[hyperlink_column_index].hyperlink = cell_value
+                    cells[hyperlink_column_index].style = 'Hyperlink'
         sheet.append(cells)
 
     def _close(self):

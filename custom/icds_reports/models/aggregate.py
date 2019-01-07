@@ -137,7 +137,11 @@ class CcsRecordMonthly(models.Model):
     valid_in_month = models.SmallIntegerField(blank=True, null=True)
     mobile_number = models.TextField(blank=True, null=True)
     preg_order = models.SmallIntegerField(blank=True, null=True)
-    home_visit_date = models.DateField(blank=True, null=True)
+    home_visit_date = models.DateField(
+        blank=True,
+        null=True,
+        help_text='date of last bp visit in month'
+    )
     num_pnc_visits = models.SmallIntegerField(blank=True, null=True)
     last_date_thr = models.DateField(blank=True, null=True)
     num_anc_complete = models.SmallIntegerField(blank=True, null=True)
@@ -145,6 +149,9 @@ class CcsRecordMonthly(models.Model):
     valid_visits = models.SmallIntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
     closed = models.SmallIntegerField(blank=True, null=True)
+    anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    person_case_id = models.TextField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -289,6 +296,8 @@ class ChildHealthMonthly(models.Model):
     muac_grading = models.SmallIntegerField(blank=True, null=True)
     muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
     mother_phone_number = models.TextField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    mother_case_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False

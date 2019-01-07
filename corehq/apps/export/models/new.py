@@ -550,10 +550,7 @@ class TableConfiguration(DocumentSchema):
         for selected_column in self.selected_columns:
             if selected_column.item.transform in [CASE_ID_TO_LINK, FORM_ID_TO_LINK]:
                 hyperlink_column_indices.append(export_column_index)
-            if isinstance(selected_column, SplitExportColumn) and split_columns:
-                export_column_index += len(selected_column.item.options)
-            else:
-                export_column_index += 1
+            export_column_index += len(selected_column.get_headers(split_column=split_columns))
         return hyperlink_column_indices
 
     def _get_sub_documents(self, document, row_number, document_id=None):
@@ -1878,7 +1875,7 @@ class FormExportDataSchema(ExportDataSchema):
         if case_indices:
             for index in case_indices:
                 props = ('#text', '@case_type',)
-                if index.relationship == 'extension':
+                if index.relationship != 'child':
                     props = props + ('@relationship',)
                 for prop in props:
                     identifier = index.reference_id or 'parent'

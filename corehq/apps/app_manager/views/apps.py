@@ -65,6 +65,7 @@ from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_and_assert_practice_user_in_domain,
+    get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, update_linked_app, clear_xmlns_app_id_cache
@@ -161,7 +162,9 @@ def get_app_view_context(request, app):
     This is where additional app or domain specific context can be added to any individual
     commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
     """
-    context = {}
+    context = {
+        'legacy_select2': True,
+    }
 
     settings_layout = copy.deepcopy(
         get_commcare_settings_layout(app.get_doc_type())
@@ -284,11 +287,24 @@ def get_app_view_context(request, app):
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
+        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
             context['master_version'] = app.get_master_version()
         except RemoteRequestError:
             pass
     return context
+
+
+def _get_upstream_url(app, request_user):
+    """Get the upstream url if the user has access"""
+    if request_user.is_superuser or (
+            not app.domain_link.is_remote
+            and request_user.is_member_of(app.domain_link.master_domain)
+    ):
+        url = reverse('view_app', args=[app.domain_link.master_domain, app.master])
+        if app.domain_link.is_remote:
+            url = '{}{}'.format(app.domain_link.remote_base_url, url)
+        return url
 
 
 def clear_app_cache(request, domain):
@@ -342,6 +358,10 @@ def get_apps_base_context(request, domain, app):
             except ESError:
                 notify_exception(request, 'Error getting practice mode mobile workers')
 
+        latest_version_for_build_profiles = {}
+        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+            latest_version_for_build_profiles = get_latest_enabled_versions_per_profile(app.get_id)
+
         context.update({
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
@@ -350,6 +370,7 @@ def get_apps_base_context(request, domain, app):
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
+            'latest_version_for_build_profiles': latest_version_for_build_profiles,
         })
 
     return context

@@ -1148,6 +1148,7 @@ class MaintenanceAlertsView(BasePageView):
                 'active': alert.active,
                 'html': alert.html,
                 'id': alert.id,
+                'domains': ", ".join(alert.domains) if alert.domains else "All domains",
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 
@@ -1161,7 +1162,8 @@ class MaintenanceAlertsView(BasePageView):
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     alert_text = request.POST.get('alert_text')
-    MaintenanceAlert(active=False, text=alert_text).save()
+    domains = request.POST.get('domains').split() or None
+    MaintenanceAlert(active=False, text=alert_text, domains=domains).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 

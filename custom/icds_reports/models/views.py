@@ -616,6 +616,7 @@ class CcsRecordMonthlyView(models.Model):
     dob = models.DateField(blank=True, null=True)
     open_in_month = models.SmallIntegerField(blank=True, null=True)
     closed = models.SmallIntegerField(blank=True, null=True)
+    anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -835,11 +836,7 @@ class AwcLocationMonths(models.Model):
 
 
 class DishaIndicatorView(models.Model):
-    awc_id = models.TextField(primary_key=True)
-    awc_name = models.TextField(blank=True, null=True)
-    supervisor_id = models.TextField(blank=True, null=True)
-    supervisor_name = models.TextField(blank=True, null=True)
-    block_id = models.TextField(blank=True, null=True)
+    block_id = models.TextField(primary_key=True)
     block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)
     district_name = models.TextField(blank=True, null=True)

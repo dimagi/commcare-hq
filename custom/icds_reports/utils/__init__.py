@@ -6,7 +6,7 @@ import time
 import zipfile
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import wraps
 
 import operator
@@ -375,13 +375,24 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
     return status if not exportable else status['value']
 
 
-def get_anamic_status(value):
+def is_anemic(value):
     if value['anemic_severe']:
         return 'Y'
     elif value['anemic_moderate']:
         return 'Y'
     elif value['anemic_normal']:
         return 'N'
+    else:
+        return DATA_NOT_ENTERED
+
+
+def get_anemic_status(value):
+    if value['anemic_severe']:
+        return 'Severe'
+    elif value['anemic_moderate']:
+        return 'Moderate'
+    elif value['anemic_normal']:
+        return 'Normal'
     else:
         return DATA_NOT_ENTERED
 
@@ -425,9 +436,11 @@ def get_counseling(value):
 
 def get_tt_dates(value):
     tt_dates = []
-    if value['tt_1']:
+    # ignore 1970-01-01 as that is default date for ledger dates
+    default = date(1970, 1, 1)
+    if value['tt_1'] and value['tt_1'] != default:
         tt_dates.append(str(value['tt_1']))
-    if value['tt_2']:
+    if value['tt_2'] and value['tt_2'] != default:
         tt_dates.append(str(value['tt_2']))
     if tt_dates:
         return '; '.join(tt_dates)
@@ -764,6 +777,10 @@ def percent_num(x, y):
 
 def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
+
+
+def format_decimal(num):
+    return "%.2f" % num
 
 
 def percent_or_not_entered(x, y):

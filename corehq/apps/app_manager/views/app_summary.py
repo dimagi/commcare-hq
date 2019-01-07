@@ -12,7 +12,8 @@ from dimagi.utils.web import json_response
 from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
-from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
+from corehq.apps.app_manager.const import WORKFLOW_FORM
+from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
@@ -160,7 +161,7 @@ def _translate_name(names, language):
     if not names:
         return "[{}]".format(_("Unknown"))
     try:
-        return names[language]
+        return six.text_type(names[language])
     except KeyError:
         first_name = next(six.iteritems(names))
         return "{} [{}]".format(first_name[1], first_name[0])
