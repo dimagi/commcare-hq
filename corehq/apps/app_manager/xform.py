@@ -8,6 +8,7 @@ import itertools
 from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xml import V2_NAMESPACE
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
@@ -428,7 +429,7 @@ class CaseBlock(object):
         )
 
         if not autoset_owner_id:
-            owner_id_node.text = '-'
+            owner_id_node.text = UNOWNED_EXTENSION_OWNER_ID
         elif has_case_sharing:
             self.xform.add_instance('groups', src='jr://fixture/user-groups')
             add_setvalue_or_bind(
@@ -1915,7 +1916,8 @@ class XForm(WrappedNode):
                     self.add_bind(
                         nodeset="%scase/create/owner_id" % path,
                         calculate=XPath.if_(XPath(case_index.relationship_question).eq(XPath.string('extension')),
-                                            XPath.string('-'), self.resolve_path("meta/userID")),
+                                            XPath.string(UNOWNED_EXTENSION_OWNER_ID),
+                                            self.resolve_path("meta/userID")),
                     )
 
             if action.close_condition.type != 'never':
