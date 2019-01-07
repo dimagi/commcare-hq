@@ -1916,7 +1916,8 @@ class XForm(WrappedNode):
                     self.add_bind(
                         nodeset="%scase/create/owner_id" % path,
                         calculate=XPath.if_(XPath(case_index.relationship_question).eq(XPath.string('extension')),
-                                            XPath.string(UNOWNED_EXTENSION_OWNER_ID), self.resolve_path("meta/userID")),
+                                            XPath.string(UNOWNED_EXTENSION_OWNER_ID),
+                                            self.resolve_path("meta/userID")),
                     )
 
             if action.close_condition.type != 'never':
