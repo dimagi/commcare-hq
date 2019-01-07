@@ -1,6 +1,6 @@
 /* globals hqDefine _ */
 hqDefine('app_manager/js/modules/report_module', function () {
-    function graphConfigModel(reportId, reportName, availableReportIds, reportCharts, graphConfigs,
+    var graphConfigModel = function (reportId, reportName, availableReportIds, reportCharts, graphConfigs,
         columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
         var self = {},
             columnTemplate = _.template(columnXpathTemplate);
@@ -80,7 +80,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         };
 
         return self;
-    }
+    };
 
     /**
      * View-model for the filters of a mobile UCR.
@@ -91,7 +91,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
      * @param reportFilters - { report id --> [ { slug: filter slug } for each filter in report ] for each report }
      * @param changeSaveButton - function that enables the "Save" button
      */
-    function filterConfigModel(savedReportId, selectedReportId, filterValues, reportFilters, changeSaveButton) {
+    var filterConfigModel = function (savedReportId, selectedReportId, filterValues, reportFilters, changeSaveButton) {
         var self = {};
 
         self.reportFilters = JSON.parse(JSON.stringify(reportFilters || {}));
@@ -198,9 +198,9 @@ hqDefine('app_manager/js/modules/report_module', function () {
         };
 
         return self;
-    }
+    };
 
-    function reportConfigModel(reportId, display,
+    var reportConfigModel = function(reportId, display,
         localizedDescription, xpathDescription, useXpathDescription,
         showDataTable, syncDelay, reportSlug, uuid, availableReportIds,
         reportCharts, graphConfigs, columnXpathTemplate, dataPathPlaceholders,
@@ -271,9 +271,9 @@ hqDefine('app_manager/js/modules/report_module', function () {
         };
 
         return self;
-    }
+    };
 
-    function staticFilterDataModel(options) {
+    var staticFilterDataModel = function(options) {
         var self = {};
         self.filterChoices = options.filterChoices;
         // support "unselected"
@@ -283,9 +283,9 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.dateOperators = ['=', '<', '<=', '>', '>=', 'between'];
         self.numericOperators = ['=', '!=', '<', '<=', '>', '>='];
         return self;
-    }
+    };
 
-    function reportModuleModel(options) {
+    var reportModuleModel = function(options) {
         var self = {};
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
@@ -367,7 +367,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.currentModuleFilter.subscribe(self.changeSaveButton);
         $(options.containerId + ' input').on('textchange', self.changeSaveButton);
 
-        function newReport(options) {
+        var newReport = function (options) {
             options = options || {};
             var report = reportConfigModel(
                 options.report_id,
@@ -398,7 +398,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
             });
 
             return report;
-        }
+        };
         self.addReport = function () {
             self.reports.push(newReport());
         };
@@ -436,7 +436,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         };
 
         return self;
-    }
+    };
 
     $(function () {
         var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
