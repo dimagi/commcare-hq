@@ -840,12 +840,12 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         worksheet[cell].fill = blue_fill
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
-    worksheet['B3'].value = "State:"
-    worksheet['C3'].value = state
-    worksheet['D3'].value = "District:"
-    worksheet['E3'].value = district
-    worksheet['F3'].value = "Block:"
-    worksheet['G3'].value = block
+    worksheet.merge_cells('B3:C3')
+    worksheet['B3'].value = "State: {}".format(state)
+    worksheet.merge_cells('D3:E3')
+    worksheet['D3'].value = "District: {}".format(district)
+    worksheet.merge_cells('F3:G3')
+    worksheet['F3'].value = "Block: {}".format(block)
     worksheet.merge_cells('H3:I3')
     worksheet['H3'].value = "Date when downloaded:"
     utc_now = datetime.now(pytz.utc)
@@ -904,6 +904,10 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         'I': 14,
         'J': 14,
     }
+    for column in ["C", "E", "G"]:
+        if widths[column] > 25:
+            worksheet.row_dimensions[3].height = max(16 * ((widths[column] // 25) + 1), worksheet.row_dimensions[3].height)
+            widths[column] = 25
     columns = ["C", "D", "E", "F", "G", "H", "I", "J"]
     # column widths based on table contents
     for column_index in range(len(columns)):
