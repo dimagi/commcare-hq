@@ -18,12 +18,8 @@
         action, but it does not interrupt their flow and increase their congitive load.
         Read more on <a target='_blank' href='https://modalzmodalzmodalz.com/'>https://modalzmodalzmodalz.com/</a>
     </p>
-
-    <h2>Basic example</h2>
     <p>
         <a href='https://getbootstrap.com/docs/3.4/javascript/#modals' target='_blank'>Bootstrap documentation</a>
     </p>
-    {{ examples.modals|safe }}
-    <br><br>
-    <pre>{% autoescape on %}{{ examples.modals }}{% endautoescape %}</pre>
+    {% include 'styleguide/example_html.html' with slug='basic-modal' title='Basic modal' content=examples.modals %}
 </section>
