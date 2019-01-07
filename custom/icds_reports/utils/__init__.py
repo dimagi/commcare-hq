@@ -906,7 +906,10 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     }
     for column in ["C", "E", "G"]:
         if widths[column] > 25:
-            worksheet.row_dimensions[3].height = max(16 * ((widths[column] // 25) + 1), worksheet.row_dimensions[3].height)
+            worksheet.row_dimensions[3].height = max(
+                16 * ((widths[column] // 25) + 1),
+                worksheet.row_dimensions[3].height
+            )
             widths[column] = 25
     columns = ["C", "D", "E", "F", "G", "H", "I", "J"]
     # column widths based on table contents
