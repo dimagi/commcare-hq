@@ -28,6 +28,14 @@ class LocationTypes(object):
     AWC = 'awc'
 
 
+class AggregationLevels(object):
+    STATE = 1
+    DISTRICT = 2
+    BLOCK = 3
+    SUPERVISOR = 4
+    AWC = 5
+
+
 class ChartColors(object):
     PINK = '#fcb18d'
     ORANGE = '#fa683c'

@@ -42,6 +42,7 @@ from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
+from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_cas_data_blob_file
@@ -1719,7 +1720,7 @@ class DishaAPIView(View):
     @property
     @quickcache([])
     def valid_state_names(self):
-        return list(AwcLocation.objects.filter(aggregation_level=1, state_is_test=0).values_list('state_name', flat=True))
+        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
