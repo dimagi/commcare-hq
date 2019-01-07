@@ -2072,9 +2072,13 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
-CUSTOM_UCR_REPORT_FILTERS = []
+CUSTOM_UCR_REPORT_FILTERS = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
+]
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = []
+CUSTOM_UCR_REPORT_FILTER_VALUES = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
+]
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',

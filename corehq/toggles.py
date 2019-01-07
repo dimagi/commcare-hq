@@ -1687,3 +1687,11 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+
+HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
+    'hide_hq_on_mobile_experience',
+    'Do not show modal on mobile that mobile hq experience is bad',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN]
+)

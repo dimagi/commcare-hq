@@ -404,7 +404,7 @@ class ParentCasePropertyBuilder(object):
             case_properties.update(self.defaults)
 
         if self.exclude_invalid_properties:
-            from corehq.apps.app_manager.models import validate_property
+            from corehq.apps.app_manager.helpers.validators import validate_property
             for case_type, case_properties in case_properties_by_case_type.items():
                 to_remove = []
                 for prop in case_properties:

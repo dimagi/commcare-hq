@@ -162,7 +162,9 @@ def get_app_view_context(request, app):
     This is where additional app or domain specific context can be added to any individual
     commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
     """
-    context = {}
+    context = {
+        'legacy_select2': True,
+    }
 
     settings_layout = copy.deepcopy(
         get_commcare_settings_layout(app.get_doc_type())
@@ -285,11 +287,24 @@ def get_app_view_context(request, app):
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
+        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
             context['master_version'] = app.get_master_version()
         except RemoteRequestError:
             pass
     return context
+
+
+def _get_upstream_url(app, request_user):
+    """Get the upstream url if the user has access"""
+    if request_user.is_superuser or (
+            not app.domain_link.is_remote
+            and request_user.is_member_of(app.domain_link.master_domain)
+    ):
+        url = reverse('view_app', args=[app.domain_link.master_domain, app.master])
+        if app.domain_link.is_remote:
+            url = '{}{}'.format(app.domain_link.remote_base_url, url)
+        return url
 
 
 def clear_app_cache(request, domain):
