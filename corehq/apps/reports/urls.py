@@ -65,10 +65,6 @@ from .views import (
     delete_scheduled_report,
     send_test_scheduled_report,
     view_scheduled_report,
-    export_all_form_metadata,
-    export_all_form_metadata_async,
-    download_cases,
-    download_cases_internal,
 )
 
 
@@ -176,10 +172,6 @@ urlpatterns = [
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     # Internal Use
-    url(r"^export/forms/all/$", export_all_form_metadata, name="export_all_form_metadata"),
-    url(r"^export/forms/all/async/$", export_all_form_metadata_async, name="export_all_form_metadata_async"),
-    url(r'^download/cases/$', download_cases, name='download_cases'),
-    url(r'^download/internal/cases/$', download_cases_internal, name='download_cases_internal'),
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
         name=ReprocessXFormErrorView.urlname),
 
