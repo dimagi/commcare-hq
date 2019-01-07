@@ -51,7 +51,7 @@ class UploadedTranslationsValidator(object):
         :param for_type: type of sheet, module_and_forms, module, form
         :return: list of errors messages if any
         """
-        columns_to_compare = COLUMNS_TO_COMPARE[for_type] + [self.default_language_column]
+        columns_to_compare = COLUMNS_TO_COMPARE[for_type]
         expected_rows = self.expected_rows[sheet_name]
         msgs = []
         number_of_uploaded_rows = len(uploaded_rows)
@@ -64,11 +64,21 @@ class UploadedTranslationsValidator(object):
         iterate_on = [expected_rows, uploaded_rows]
         # 2 to account for the sheet header as well
         for i, (expected_row, uploaded_row) in enumerate(zip(*iterate_on), 2):
+            matched = True
             for column_name in columns_to_compare:
                 uploaded_value = uploaded_row.get(column_name)
                 expected_value = expected_row[self._get_header_index(sheet_name, column_name)]
                 if expected_value != uploaded_value:
-
+                    matched = False
+                    msgs.append("For {}:{}  uploaded '{}' but expected '{}'.".format(
+                        i, column_name, uploaded_value, expected_value
+                    ))
+            # check for default language column in case the rest matched
+            if matched:
+                column_name = self.default_language_column
+                uploaded_value = uploaded_row.get(column_name)
+                expected_value = expected_row[self._get_header_index(sheet_name, column_name)]
+                if expected_value != uploaded_value:
                     msgs.append("For {}:{}  uploaded '{}' but expected '{}'.".format(
                         i, column_name, uploaded_value, expected_value
                     ))
