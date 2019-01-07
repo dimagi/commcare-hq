@@ -297,6 +297,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'molecules/forms',
             'molecules/modals',
             'molecules/pagination',
+            'molecules/inline_edit',
         ]
 
     @property
@@ -306,6 +307,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'examples': {
                 'modals': self.example('modals.html'),
                 'pagination': self.example('pagination.html'),
+                'inline_edit': self.example('inline_edit.html'),
             },
         }
 
