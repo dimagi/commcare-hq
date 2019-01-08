@@ -35,10 +35,6 @@ function NavigationController($window, $scope, $route, $routeParams, $location, 
         });
         return page_path;
     };
-
-    $scope.showCasData = function () {
-        return stateLevelAccess === false && haveAccessToAllLocations !== true && haveAccessToFeatures === true;
-    }
 }
 
 NavigationController.$inject = ['$window', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
