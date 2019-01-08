@@ -1,7 +1,7 @@
 {% load crispy_forms_tags %}
 <section class="hq-styleguide-article">
     <header class="page-header">
-        <h1 id="molecules-forms">Forms on CommCare HQ</h1>
+        <h1 id="organisms-forms">Forms on CommCare HQ</h1>
     </header>
     <p class="lead">
         The following guide is a living document that demonstrates how to
@@ -33,7 +33,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy</pre>
         Below is a basic Crispy Form implementation with no javascript integration.
         A good starting point just to understand what's going on.
     </p>
-    {% include 'styleguide/_includes/molecules/forms/basic_crispy.html' with slug='basic-crispy' title='Basic Crispy Form' %}
+    {% include 'styleguide/_includes/organisms/forms/basic_crispy.html' with slug='basic-crispy' title='Basic Crispy Form' %}
 
     <h2>Visual Appearance</h2>
     <p>
@@ -52,7 +52,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy</pre>
     </div>
     <p>
         <a href="{% url 'ex_simple_crispy_forms' %}" class="btn btn-primary pull-right">View Example</a>
-        {% include 'styleguide/_includes/molecules/forms/visual-defs.html' %}
+        {% include 'styleguide/_includes/organisms/forms/visual_defs.html' %}
     </p>
 
     <script>
