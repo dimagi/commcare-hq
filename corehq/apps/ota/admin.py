@@ -35,7 +35,7 @@ class MobileRecoveryMeasureForm(forms.ModelForm):
                 raise ValidationError("You must specify both {} and {}."
                                       .format(version_min, version_max))
 
-        application_measures = ['app_reinstall_and_update', 'app_update']
+        application_measures = ['app_reinstall_and_update', 'app_offline_reinstall_and_update', 'app_update']
         commcare_measures = ['cc_reinstall', 'cc_update']
         if data['measure'] in application_measures:
             if data['app_all_versions']:
