@@ -1731,8 +1731,8 @@ class CasDataExport(View):
 
         data_type = int(request.POST.get('indicator', None))
         state_id = request.POST.get('location', None)
-        month = request.POST.get('month', None)
-        year = request.POST.get('year', None)
+        month = int(request.POST.get('month', None))
+        year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
         sync = get_cas_data_blob_file(data_type, state_id, selected_date)
