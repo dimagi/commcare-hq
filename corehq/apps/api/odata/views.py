@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 import os
 from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
