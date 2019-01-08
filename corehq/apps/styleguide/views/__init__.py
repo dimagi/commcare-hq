@@ -294,6 +294,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
         return [
             'molecules/intro',
             'molecules/buttons',
+            'molecules/selections',
             'molecules/forms',
             'molecules/modals',
             'molecules/pagination',
@@ -305,6 +306,11 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
         return {
             'basic_crispy_form': BasicCrispyForm(),
             'examples': {
+                'selections': {
+                    'button_group': self.example('button_group.html'),
+                    'select2': self.example('select2.html'),
+                    'multiselect': self.example('multiselect.html'),
+                },
                 'modals': self.example('modals.html'),
                 'pagination': self.example('pagination.html'),
                 'inline_edit': self.example('inline_edit.html'),
