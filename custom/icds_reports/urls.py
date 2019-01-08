@@ -143,5 +143,4 @@ urlpatterns = [
     url(r'^have_access_to_location/', HaveAccessToLocation.as_view(), name='have_access_to_location'),
     url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww'),
     url(r'^health_indicators', DishaAPIView.as_view(), name='disha_api'),
-    url(r'^cas_export', CasDataExport.as_view(), name='cas_export'),
 ]
