@@ -13,9 +13,9 @@ end;
 $body$ language plpgsql;
 
 -- temporary table holding get_blobmetas source
-CREATE TEMPORARY TABLE temp_func_src(src TEXT);
-INSERT INTO temp_func_src (src)
-SELECT routine_definition
+CREATE TEMPORARY TABLE temp_func_src(src TEXT, lang TEXT);
+INSERT INTO temp_func_src (src, lang)
+SELECT routine_definition, external_language
 FROM information_schema.routines
 WHERE specific_schema = 'public' AND routine_name = 'get_blobmetas';
 
@@ -27,9 +27,9 @@ DROP VIEW blobs_blobmeta;
 ALTER TABLE blobs_blobmeta_tbl RENAME TO blobs_blobmeta;
 
 -- re-create get_blobmetas function
-SELECT tmp_eval(
-    'CREATE OR REPLACE FUNCTION get_blobmetas(parent_ids TEXT[], '
-    || 'type_code_ SMALLINT) RETURNS SETOF blobs_blobmeta AS $func$ '
-    || src || ' $func$ LANGUAGE plproxy'
-)
+SELECT tmp_eval(format(
+    'CREATE OR REPLACE FUNCTION get_blobmetas(parent_ids TEXT[], ' ||
+    'type_code_ SMALLINT) RETURNS SETOF blobs_blobmeta AS $func$ ' ||
+    '%s $func$ LANGUAGE %s', src, lang
+))
 FROM temp_func_src;
