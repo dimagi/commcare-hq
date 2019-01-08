@@ -17,11 +17,11 @@
             This would normally use .form-control, but it's going to become a select2,
             which adds wonky height & borders on Firefox when it uses .form-control
         -->
-        <select data-bind="
+        <input type="hidden" data-bind="
             questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
             value: question,
             optionsCaption: ' '
-        "></select>
+        "/>
         <select class="form-control" data-bind="
                 optstr: [
                     {label:'{% trans "is" %}', value:'='},
@@ -46,7 +46,7 @@
         This would normally use .form-control, but it's going to become a select2,
         which adds wonky height & borders on Firefox when it uses .form-control
     -->
-    <select data-bind="
+    <input type="hidden" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
         value: path,
         optionsCaption: ' ',
@@ -56,7 +56,7 @@
                 hqImport('analytix/js/google').track.event('Case Management', 'Form Level', action + ' Property (add/edit)');
             }
         } }
-    "></select>
+    "/>
     <p class="help-block" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
     <p class="help-block" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
 </script>
