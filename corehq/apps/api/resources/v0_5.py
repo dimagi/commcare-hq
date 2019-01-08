@@ -947,6 +947,7 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
         # populate the domain which is required by the serializer
         data['domain'] = request.domain
         data['resource_name'] = ODATA_CASE_RESOURCE_NAME
+        data['api_path'] = request.path
         response = super(ODataCommCareCaseResource, self).create_response(request, data, response_class,
                                                                           **response_kwargs)
         # adds required odata headers to the returned response
