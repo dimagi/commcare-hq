@@ -167,8 +167,70 @@ from collections import defaultdict  # noqa: E402
 from django.db import IntegrityError, transaction  # noqa: E402
 from corehq.blobs import CODES, get_blob_db  # noqa: E402
 from corehq.blobs.models import BlobMeta  # noqa: E402
+from corehq.form_processor.models import DeprecatedXFormAttachmentSQL  # noqa: E402
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc  # noqa: E402
 
 KEYRE = re.compile(r"DETAIL:  Key \(key\)=\((.*)\) already exists\.")
+ATTACHMENT_BLOB_META_SQL = """
+SELECT
+    id,
+    domain,
+    parent_id,
+    name,
+    key,
+    type_code,
+    content_type,
+    properties,
+    created_on,
+    NULL AS expires_on,
+    content_length
+FROM (
+    SELECT
+        -att.id AS id,
+        COALESCE(xform."domain", '<unknown>') AS domain,
+        att.form_id AS parent_id,
+        att."name",
+        (CASE
+            WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
+            ELSE COALESCE(
+                att.blob_bucket,
+                'form/' || REPLACE(att.attachment_id::text, '-', '')
+            ) || '/'
+        END || att.blob_id)::VARCHAR(255) AS "key",
+        CASE
+            WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
+            ELSE 3 -- corehq.blobs.CODES.form_attachment
+        END::SMALLINT AS type_code,
+        att.content_type,
+        CASE
+            WHEN att.properties = '{{}}' THEN NULL
+            ELSE att.properties
+        END AS properties,
+        COALESCE(xform.received_on, CURRENT_TIMESTAMP) AS created_on,
+        att.content_length
+    FROM form_processor_xformattachmentsql att
+    -- outer join so we move deleted rows with no corresponding xform instance
+    -- should not happen, but just in case (without this they would be lost)
+    LEFT OUTER JOIN form_processor_xforminstancesql xform
+        ON xform.form_id = att.form_id
+) blobmeta
+"""
+
+
+def get_form_attachment_blob_metas_by_key(key, dbname):
+    if key is None:
+        params = (ATTACHMENT_BLOB_META_SQL, [])
+    else:
+        params = (ATTACHMENT_BLOB_META_SQL + " WHERE key = %s", [key])
+    return BlobMeta.objects.using(dbname).raw(*params)
+
+
+def delete_blobmeta(meta):
+    if meta.id > 0:
+        meta.delete()
+    else:
+        db = get_db_alias_for_partitioned_doc(meta.parent_id)
+        DeprecatedXFormAttachmentSQL.objects.using(db).filter(id=-meta.id).delete()
 
 
 class RunUntilZeroHandleDupBlobs(RunUntilZero):
@@ -183,6 +245,7 @@ class RunUntilZeroHandleDupBlobs(RunUntilZero):
             raise
         key = match.group(1)
         key_metas = list(BlobMeta.objects.using(dbname).filter(key=key))
+        key_metas.extend(get_form_attachment_blob_metas_by_key(key, dbname))
         by_parent = defaultdict(list)
         for meta in key_metas:
             by_parent[meta.parent_id].append(meta)
@@ -217,7 +280,7 @@ class RunUntilZeroHandleDupBlobs(RunUntilZero):
             meta = metas.pop()
             print("{dbname}: deleting duplicate blob for "
                 "{meta.parent_id} / {meta.name} key={key}".format(**locals()))
-            meta.delete()
+            delete_blobmeta(meta)
             diff_parents.append(metas[0])
         if len(diff_parents) > 1:
             # copy blob for all except one
@@ -226,7 +289,7 @@ class RunUntilZeroHandleDupBlobs(RunUntilZero):
                       "{meta.name} key={key}".format(**locals()))
                 with meta.open() as content, transaction.atomic(using=dbname):
                     newmeta = get_blob_db().put(content, **cls.meta_fields(meta))
-                    meta.delete()
+                    delete_blobmeta(meta)
 
     @staticmethod
     def meta_fields(meta, with_variable_fields=True):
@@ -260,18 +323,6 @@ WHERE  (i.indisvalid = false OR i.indisready = false) AND
 """
 
 
-# see https://github.com/dimagi/commcare-hq/pull/21631
-blobmeta_key = """
-CREATE INDEX CONCURRENTLY IF NOT EXISTS form_processor_xformattachmentsql_blobmeta_key
-ON public.form_processor_xformattachmentsql (((
-    CASE
-        WHEN blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(blob_bucket, 'form/' || REPLACE(attachment_id::text, '-', '')) || '/'
-    END || blob_id
-)::varchar(255)))
-"""
-
-
 # Move rows incrementally.
 # WARNING monitor disk usage when running in large environments.
 # Does not require downtime, but may be slow.
@@ -284,7 +335,7 @@ WITH deleted AS (
     )
     RETURNING *
 ), moved AS (
-    INSERT INTO blobs_blobmeta_tbl (
+    INSERT INTO blobs_blobmeta (
         "domain",
         parent_id,
         "name",
@@ -364,7 +415,7 @@ WITH to_move AS (
         ON xform.form_id = att.form_id
     LIMIT {chunk_size}
 ), moved AS (
-    INSERT INTO blobs_blobmeta_tbl AS blob (
+    INSERT INTO blobs_blobmeta AS blob (
         "domain",
         parent_id,
         "name",
@@ -386,7 +437,7 @@ WITH to_move AS (
     -- do the delete last so we only delete rows that were inserted or updated
     -- unfortunately this requires a bit more complex where clause because it
     -- is not possible to pass form_processor_xformattachmentsql.id through
-    -- INSERT INTO blobs_blobmeta_tbl ... RETURNING
+    -- INSERT INTO blobs_blobmeta ... RETURNING
     DELETE FROM form_processor_xformattachmentsql att
     USING moved WHERE moved.parent_id = att.form_id
     AND moved.name = att.name
@@ -424,7 +475,7 @@ WITH dups AS (
         FROM form_processor_xformattachmentsql att
     ) AS att
     WHERE EXISTS (
-        SELECT 1 FROM blobs_blobmeta_tbl blob
+        SELECT 1 FROM blobs_blobmeta blob
         WHERE blob.key = att.key
         AND blob.parent_id = att.form_id
         AND blob.name = att.name
@@ -436,172 +487,17 @@ WITH dups AS (
     RETURNING 1
 ), updated AS (
     -- fix create_on and type_code
-    UPDATE blobs_blobmeta_tbl
+    UPDATE blobs_blobmeta
     SET created_on = xform.received_on, type_code = dups.type_code
     FROM dups
     INNER JOIN form_processor_xforminstancesql xform
         ON xform.form_id = dups.form_id
-    WHERE blobs_blobmeta_tbl.key = dups.key
+    WHERE blobs_blobmeta.key = dups.key
 ) SELECT COUNT(*) FROM deleted;
 """)
 
 
-# move all rows in one go.
-# requires table lock, so may not be feasible without some downtime.
-# this may be necessary if MOVE_FORM_ATTACHMENTS is too slow.
-blobmeta_forms = """
-BEGIN;
-LOCK TABLE blobs_blobmeta_tbl IN SHARE MODE;
-
--- drop indexes/constaints
-ALTER TABLE blobs_blobmeta_tbl DROP CONSTRAINT blobs_blobmeta_pkey;
-ALTER TABLE blobs_blobmeta_tbl DROP CONSTRAINT blobs_blobmeta_key_a9ed5760_uniq;
-DROP INDEX blobs_blobm_expires_64b92d_partial;
-DROP INDEX blobs_blobmeta_parent_id_type_code_name_9a2a0a9e_idx;
-ALTER TABLE blobs_blobmeta_tbl DROP CONSTRAINT IF EXISTS blobs_blobmeta_type_code_check;
-ALTER TABLE blobs_blobmeta_tbl DROP CONSTRAINT IF EXISTS blobs_blobmeta_content_length_check;
-
--- copy rows as quickly as possible
-INSERT INTO blobs_blobmeta_tbl (
-    "domain",
-    parent_id,
-    "name",
-    "key",
-    type_code,
-    content_type,
-    properties,
-    created_on,
-    content_length
-) SELECT
-    COALESCE(xform."domain", '<unknown>'),
-    att.form_id AS parent_id,
-    att."name",
-    (CASE
-        WHEN att.blob_bucket = '' THEN '' -- empty bucket -> blob_id is the key
-        ELSE COALESCE(
-            att.blob_bucket,
-            'form/' || REPLACE(att.attachment_id::text, '-', '')
-        ) || '/'
-    END || att.blob_id)::VARCHAR(255) AS "key",
-    CASE
-        WHEN att."name" = 'form.xml' THEN 2 -- corehq.blobs.CODES.form_xml
-        ELSE 3 -- corehq.blobs.CODES.form_attachment
-    END::SMALLINT AS type_code,
-    att.content_type,
-    CASE
-        WHEN att.properties = '{{}}' THEN NULL
-        ELSE att.properties
-    END AS properties,
-    COALESCE(xform.received_on, CURRENT_TIMESTAMP) AS created_on,
-    att.content_length
-FROM form_processor_xformattachmentsql att
--- outer join so we move rows with no corresponding xform instance
--- should not happen, but just in case (without this they would be lost)
-LEFT OUTER JOIN form_processor_xforminstancesql xform
-    ON xform.form_id = att.form_id;
-
-DELETE FROM form_processor_xformattachmentsql;
-
--- re-add indexes/constraints
-ALTER TABLE blobs_blobmeta_tbl ADD CONSTRAINT blobs_blobmeta_pkey
-    PRIMARY KEY (id);
-ALTER TABLE blobs_blobmeta_tbl ADD CONSTRAINT blobs_blobmeta_key_a9ed5760_uniq
-    UNIQUE (key);
-CREATE INDEX blobs_blobm_expires_64b92d_partial
-    ON public.blobs_blobmeta_tbl USING btree (expires_on) WHERE (expires_on IS NOT NULL);
-CREATE INDEX blobs_blobmeta_parent_id_type_code_name_9a2a0a9e_idx
-    ON public.blobs_blobmeta_tbl USING btree (parent_id, type_code, name);
-ALTER TABLE blobs_blobmeta_tbl ADD CONSTRAINT blobs_blobmeta_type_code_check
-    CHECK (type_code >= 0);
-ALTER TABLE blobs_blobmeta_tbl ADD CONSTRAINT blobs_blobmeta_content_length_check
-    CHECK (content_length >= 0);
-
-COMMIT;
-"""
-
-
-# Expected output is all rows having DELETED status (no rows with KEPT status).
-fix_bad_blobmeta_copies = """
-WITH blobs AS (
-    -- get rows with negative id (should be very few of these)
-    -- use CTE to work around bad query plan in comp query
-    SELECT * FROM blobs_blobmeta_tbl WHERE id < 0
-),
-
-deleted AS (
-    -- delete where duplicate attachment from old form is associated with new form
-    DELETE FROM blobs_blobmeta_tbl
-    USING blobs
-    INNER JOIN form_processor_xforminstancesql new_form
-        ON new_form.form_id = blobs.parent_id AND new_form.domain = blobs.domain
-    INNER JOIN form_processor_xformattachmentsql att ON att.id = -blobs.id
-    INNER JOIN form_processor_xforminstancesql old_form
-        ON old_form.form_id = att.form_id AND old_form.domain = blobs.domain
-    WHERE blobs_blobmeta_tbl.id = blobs.id
-        AND blobs.parent_id != att.form_id
-        AND old_form.orig_id = blobs.parent_id
-        AND new_form.deprecated_form_id = att.form_id
-        AND blobs.name = att.name
-        AND blobs.key = att.blob_id
-        AND blobs.type_code = 2
-        AND blobs.content_type = att.content_type
-        AND blobs.content_length = att.content_length
-    RETURNING blobs_blobmeta_tbl.*
-)
-
-SELECT 'DELETED' AS "status", * FROM deleted
-UNION
-SELECT 'KEPT' AS "status", * FROM blobs_blobmeta_tbl
-WHERE id < 0 AND id NOT IN (SELECT id FROM deleted)
-"""
-
-# Expected output is updated rows, including with original form id.
-fix_bad_form_attachment_reparenting = """
-    WITH forms AS (
-        -- CTE reduces number of rows that must be considered in,
-        -- UPDATE WHERE clause below, a major optimization.
-        SELECT *
-        FROM form_processor_xforminstancesql form
-        WHERE form.server_modified_on BETWEEN '2018-11-25' AND '2018-12-02'
-        AND form.deprecated_form_id IS NOT NULL
-    )
-    UPDATE form_processor_xformattachmentsql upatt
-    SET form_id = form.deprecated_form_id
-    FROM forms form
-    WHERE form.form_id = upatt.form_id
-    AND EXISTS (
-        -- form has at least one old-style attachment
-        SELECT 1
-        FROM form_processor_xformattachmentsql att
-        WHERE att.form_id = form.form_id
-    )
-    AND EXISTS (
-        -- form has at least one new-style attachment
-        SELECT 1
-        FROM blobs_blobmeta_tbl blob
-        WHERE blob.parent_id = form.form_id
-    )
-    AND NOT EXISTS (
-        -- deprecated form has no old-style attachments
-        SELECT 1
-        FROM form_processor_xformattachmentsql depr
-        WHERE depr.form_id = form.deprecated_form_id
-    )
-    AND NOT EXISTS (
-        -- deprecated form has no new-style attachments
-        SELECT 1
-        FROM blobs_blobmeta_tbl depr
-        WHERE depr.parent_id = form.deprecated_form_id
-    )
-    RETURNING form.form_id AS old_form_id, upatt.*
-"""
-
-
 TEMPLATES = {
-    "blobmeta_key": blobmeta_key,
-    "blobmeta_forms": blobmeta_forms,
-    "fix_bad_blobmeta_copies": fix_bad_blobmeta_copies,
-    "fix_bad_form_attachment_reparenting": fix_bad_form_attachment_reparenting,
     "simple_move_form_attachments_to_blobmeta": simple_move_form_attachments_to_blobmeta,
     "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
     "delete_dup_form_attachments": delete_dup_form_attachments,
