@@ -111,5 +111,6 @@ DATA_FIND_BY_ID = StaticUINotify(
 )
 
 FORMS_CASES_URL_IN_EXPORTS = StaticUINotify(
-    'forms_cases_url_in_exports_jan2019'
+    'forms_cases_url_in_exports_jan2019',
+    ends_on=datetime(2019, 2, 14)
 )
