@@ -23,7 +23,7 @@ from django.forms.fields import (
 )
 from django.forms.forms import Form
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, SelectMultiple
 from django.utils.functional import cached_property
 from memoized import memoized
 from dimagi.utils.django.fields import TrimmedCharField
@@ -113,11 +113,9 @@ def validate_int(value, min_value):
     return value
 
 
-class CommaSeparatedListField(CharField):
-    def to_python(self, value):
-        if not value:
-            return []
-        return value.split(',')
+class RelaxedMultipleChoiceField(MultipleChoiceField):
+    def validate(self, value):
+        pass
 
 
 def get_system_admin_label(data_bind=""):
@@ -1045,17 +1043,20 @@ class ScheduleForm(Form):
             (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, ugettext_lazy("Case Groups")),
         )
     )
-    user_recipients = CommaSeparatedListField(
+    user_recipients = RelaxedMultipleChoiceField(
         required=False,
         label=ugettext_lazy("User Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
-    user_group_recipients = CommaSeparatedListField(
+    user_group_recipients = RelaxedMultipleChoiceField(
         required=False,
         label=ugettext_lazy("User Group Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
-    user_organization_recipients = CommaSeparatedListField(
+    user_organization_recipients = RelaxedMultipleChoiceField(
         required=False,
         label=ugettext_lazy("User Organization Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     include_descendant_locations = BooleanField(
         required=False,
@@ -1068,13 +1069,15 @@ class ScheduleForm(Form):
             ('Y', ugettext_lazy("Only users at the following organization levels")),
         ),
     )
-    location_types = CommaSeparatedListField(
+    location_types = RelaxedMultipleChoiceField(
         required=False,
         label='',
+        widget=SelectMultiple(choices=[]),
     )
-    case_group_recipients = CommaSeparatedListField(
+    case_group_recipients = RelaxedMultipleChoiceField(
         required=False,
         label=ugettext_lazy("Case Group Recipient(s)"),
+        widget=SelectMultiple(choices=[]),
     )
     content = ChoiceField(
         required=True,
@@ -1273,13 +1276,13 @@ class ScheduleForm(Form):
 
         initial.update({
             'recipient_types': list(recipient_types),
-            'user_recipients': ','.join(user_recipients),
-            'user_group_recipients': ','.join(user_group_recipients),
-            'user_organization_recipients': ','.join(user_organization_recipients),
-            'case_group_recipients': ','.join(case_group_recipients),
+            'user_recipients': user_recipients,
+            'user_group_recipients': user_group_recipients,
+            'user_organization_recipients': user_organization_recipients,
+            'case_group_recipients': case_group_recipients,
             'include_descendant_locations': self.initial_schedule.include_descendant_locations,
             'restrict_location_types': 'Y' if len(self.initial_schedule.location_type_filter) > 0 else 'N',
-            'location_types': ','.join(six.text_type(i) for i in self.initial_schedule.location_type_filter),
+            'location_types': [six.text_type(i) for i in self.initial_schedule.location_type_filter],
         })
 
     def add_initial_for_content(self, initial):
@@ -1898,7 +1901,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for user_id in value.strip().split(','):
+        for user_id in value:
             user_id = user_id.strip()
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if user and not user.is_deleted():
@@ -1918,7 +1921,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for group_id in value.strip().split(','):
+        for group_id in value:
             group_id = group_id.strip()
             group = Group.get(group_id)
             if group.doc_type != 'Group' or group.domain != self.domain:
@@ -1935,7 +1938,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for location_id in value.strip().split(','):
+        for location_id in value:
             location_id = location_id.strip()
             try:
                 location = SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
@@ -1953,7 +1956,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for location_type_id in value.strip().split(','):
+        for location_type_id in value:
             location_type_id = location_type_id.strip()
             try:
                 location_type = LocationType.objects.get(domain=self.domain, pk=location_type_id)
@@ -1971,7 +1974,7 @@ class ScheduleForm(Form):
             return []
 
         result = []
-        for case_group_id in value.strip().split(','):
+        for case_group_id in value:
             case_group_id = case_group_id.strip()
             case_group = CommCareCaseGroup.get(case_group_id)
             if case_group.doc_type != 'CommCareCaseGroup' or case_group.domain != self.domain:
