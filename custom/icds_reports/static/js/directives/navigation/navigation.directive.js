@@ -6,6 +6,9 @@ function NavigationController($window, $scope, $route, $routeParams, $location, 
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
+    $scope.stateLevelAccess = stateLevelAccess;
+    $scope.haveAccessToAllLocations = haveAccessToAllLocations;
+    $scope.haveAccessToFeatures = haveAccessToFeatures;
 
     var checkColapse = function(reports) {
         var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
