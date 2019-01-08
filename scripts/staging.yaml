@@ -57,8 +57,8 @@ branches:
   - jls/mm-update-paths  # Jenny Dec 19
   - cz/odata-poc  # cory jan 8
   - dmr/fix-es-service-check  # Danny Jan 3
-  - jls/scheduling-select2-v4  # Jenny Jan 5
   - crs-url-exports-alert-bubble  # Gabriella Jan 8
   - reports-effective-start-date  # Gabriella Jan 8
   - mk-new-recovery-measure # MK Jan 8
+  - jls/restyle-nav-pills # Jenny Jan 8
 submodules: {}
