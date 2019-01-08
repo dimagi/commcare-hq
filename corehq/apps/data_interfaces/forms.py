@@ -47,6 +47,16 @@ def remove_quotes(value):
     return value
 
 
+def is_valid_case_property_name(value):
+    if not isinstance(value, six.string_types):
+        return False
+    try:
+        validate_case_property_characters(value)
+        return True
+    except ValidationError:
+        return False
+
+
 def validate_case_property_characters(value):
     if not re.match('^[a-zA-Z0-9_-]+$', value):
         raise ValidationError(

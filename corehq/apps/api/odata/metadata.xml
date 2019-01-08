@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+    <edmx:DataServices>
+        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
+            <ComplexType Name="CaseProperties" >
+                <Property Name="case_name" Type="Edm.String" />
+                <Property Name="case_type" Type="Edm.String" />
+                <!-- todo: once working, this needs to be generated dynamically to include custom properties -->
+            </ComplexType>
+            <EntityType Name="Case" >
+                <Key>
+                    <PropertyRef Name="case_id" />
+                </Key>
+                <Property Name="case_id" Type="Edm.String" Nullable="false"/>
+                <Property Name="closed" Type="Edm.Boolean" />
+                <Property Name="domain" Type="Edm.String" Nullable="false"/>
+                <Property Name="date_modified" Type="Edm.DateTimeOffset" />
+                <!-- todo: this isn't working -->
+                <Property Name="properties" Type="CommCare.CaseProperties" Nullable="false"/>
+                <Property Name="server_date_modified" Type="Edm.DateTimeOffset" />
+                <Property Name="user_id" Type="Edm.String" />
+                <!-- todo: this isn't working -->
+                <Property Name="xform_ids" Type="Collection(Edm.String)" />
+            </EntityType>
+            <EntityContainer Name="Container" >
+                <EntitySet Name="Cases" EntityType="CommCare.Case"/>
+            </EntityContainer>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
