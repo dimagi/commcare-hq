@@ -9,6 +9,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import object_does_not_exist, get_obj
 from corehq.apps.cloudcare.api import es_filter_cases
+from corehq.apps.data_interfaces.forms import is_valid_case_property_name
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -18,7 +19,8 @@ class CaseListFilters(object):
     format = 'json'
     
     def __init__(self, params):
-        self.filters = dict((k, v) for k, v in params.items())
+
+        self.filters = dict((k, v) for k, v in params.items() if k and is_valid_case_property_name(k))
 
         #hacky hack for v0.3.
         #for v0.4, the API will explicitly require name and type
