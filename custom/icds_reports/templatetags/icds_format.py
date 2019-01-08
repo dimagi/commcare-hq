@@ -19,7 +19,7 @@ def get_value(data, prop):
         return 0
 
 
-def format(data, prop, default='Data Not Entered'):
+def format(data, prop, default=DATA_NOT_ENTERED):
         return data[prop] if data and prop in data and data[prop] is not None else default
 
 
