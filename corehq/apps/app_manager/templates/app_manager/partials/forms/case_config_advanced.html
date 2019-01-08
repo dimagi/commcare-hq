@@ -144,11 +144,11 @@
                                                        value: relationship"></select>
                                     <br />
                                     <div data-bind="visible: relationship() === 'question'">
-                                        <select data-bind="
+                                        <input type="hidden" data-bind="
                                             questionsSelect: $root.getQuestions('all', false, false),
                                             value: relationship_question,
                                             optionsCaption: ' ',
-                                        "></select>
+                                        "/>
                                     </div>
                                     <br />
                                     <button class="btn btn-danger" data-bind="click: $parent.removeCaseIndex">
