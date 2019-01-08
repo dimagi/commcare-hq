@@ -109,3 +109,7 @@ DATA_FIND_BY_ID = StaticUINotify(
     ends_on=datetime(2018, 11, 1),
     only_visible_for_users_created_before=datetime(2018, 9, 26),
 )
+
+FORMS_CASES_URL_IN_EXPORTS = StaticUINotify(
+    'forms_cases_url_in_exports_jan2019'
+)
