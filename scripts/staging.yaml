@@ -59,4 +59,5 @@ branches:
   - cz/odata-poc  # cory jan 8
   - dmr/fix-es-service-check  # Danny Jan 3
   - jls/scheduling-select2-v4  # Jenny Jan 5
+  - crs-url-exports-alert-bubble  # Gabriella Jan 8
 submodules: {}
