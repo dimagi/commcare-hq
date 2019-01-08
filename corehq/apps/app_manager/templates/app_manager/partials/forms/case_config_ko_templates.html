@@ -8,55 +8,58 @@
         <a href="#" class="btn btn-default" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
     </div>
 
-    <div class="form-inline" data-bind="visible: type() === 'if'">
-        <a href="#" class="btn btn-default" data-bind="click: function () {type('always')}">
-            <i class="fa fa-remove"></i>
-        </a>
-        {% trans "Only if the answer to" %}
-        <!--
-            This would normally use .form-control, but it's going to become a select2,
-            which adds wonky height & borders on Firefox when it uses .form-control
-        -->
-        <input type="hidden" data-bind="
-            questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
-            value: question,
-            optionsCaption: ' '
-        "/>
-        <select class="form-control" data-bind="
-                optstr: [
-                    {label:'{% trans "is" %}', value:'='},
-                    {label:'{% trans "has selected" %}', value:'selected'},
-                    {label:'{% trans "is true" %}', value:'boolean_true'}
-                ],
-                value: operator"></select>
-        <span data-bind="if: $root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
+    <div class="row" data-bind="visible: type() === 'if'">
+        <div class="col-sm-1">
+            {% trans "Only if the answer to" %}
+        </div>
+        <div class="col-sm-4">
             <select class="form-control" data-bind="
-                optstr: $root.getAnswers({question: question()}),
-                value: answer"></select>
-        </span>
-        <span data-bind="if: !$root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
-            <input type="text" class="form-control" data-bind="value: answer"/>
-        </span>
+                questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
+                value: question,
+            "></select>
+        </div>
+        <div class="col-sm-2">
+            <select class="form-control" data-bind="
+                    optstr: [
+                        {label:'{% trans "is" %}', value:'='},
+                        {label:'{% trans "has selected" %}', value:'selected'},
+                        {label:'{% trans "is true" %}', value:'boolean_true'}
+                    ],
+                    value: operator"></select>
+        </div>
+        <!-- Input for question's answer -->
+        <div class="col-sm-4" data-bind="visible: operator() != 'boolean_true'">
+            <!-- Select question: answer is a dropdown -->
+            <span data-bind="if: $root.getAnswers({question: question()}).length">
+                <select class="form-control" data-bind="
+                    optstr: $root.getAnswers({question: question()}),
+                    value: answer"></select>
+            </span>
+            <!-- Non-select question: answer is a text box -->
+            <span data-bind="if: !$root.getAnswers({question: question()}).length">
+                <input type="text" class="form-control" data-bind="value: answer"/>
+            </span>
+        </div>
+        <div class="col-sm-1">
+            <a href="#" class="btn btn-default" data-bind="click: function () {type('always')}">
+                <i class="fa fa-remove"></i>
+            </a>
+        </div>
     </div>
     <!--/ko-->
 </script>
 
 <script type="text/html" id="case-config:case-properties:question">
-    <!--
-        This would normally use .form-control, but it's going to become a select2,
-        which adds wonky height & borders on Firefox when it uses .form-control
-    -->
-    <input type="hidden" data-bind="
+    <select class="form-control" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
         value: path,
-        optionsCaption: ' ',
         event: { change: function(view, e) {
             if (e.target.closest('#case-config-ko')) {
                 var action = e.target.closest('.case-preload') ? 'Load' : 'Save';
                 hqImport('analytix/js/google').track.event('Case Management', 'Form Level', action + ' Property (add/edit)');
             }
         } }
-    "/>
+    "></select>
     <p class="help-block" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
     <p class="help-block" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
 </script>
