@@ -223,7 +223,9 @@ class DashboardView(TemplateView):
             self.kwargs['domain']
         ).location_ids())
         kwargs['state_level_access'] = 'state' in set(
-            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations()]
+            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
+                self.kwargs['domain']
+            )]
         )
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
