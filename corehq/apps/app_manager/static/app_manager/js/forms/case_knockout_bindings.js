@@ -50,19 +50,19 @@
                 return option.value === value;
             })) {
                 var option = {
-                    label: gettext('Unidentified Question') + ' (' + value + ')',
+                    label: 'Unidentified Question (' + value + ')',
                     value: value,
                 };
                 optionObjects = [option].concat(optionObjects);
-                $warning.show().text(gettext('We cannot find this question in the allowed questions for this field. ' +
+                $warning.show().text('We cannot find this question in the allowed questions for this field. ' +
                     'It is likely that you deleted or renamed the question. ' +
-                    'Please choose a valid question from the dropdown.'));
+                    'Please choose a valid question from the dropdown.');
             } else {
                 $warning.hide();
             }
             _.delay(function () {
                 $(element).select2({
-                    placeholder: gettext('Select a Question'),
+                    placeholder: 'Select a Question',
                     data: {
                         results: _(optionObjects).map(function (o) {
                             return {id: o.value, text: utils.getDisplay(o), question: o};
