@@ -27,13 +27,18 @@
                     ],
                     value: operator"></select>
         </div>
-        <div class="col-sm-4" data-bind="visible: $root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
-            <select class="form-control" data-bind="
-                optstr: $root.getAnswers({question: question()}),
-                value: answer"></select>
-        </div>
-        <div class="col-sm-4" data-bind="visible: !$root.getAnswers({question: question()}).length && operator() != 'boolean_true'">
-            <input type="text" class="form-control" data-bind="value: answer"/>
+        <!-- Input for question's answer -->
+        <div class="col-sm-4" data-bind="visible: operator() != 'boolean_true'">
+            <!-- Select question: answer is a dropdown -->
+            <span data-bind="if: $root.getAnswers({question: question()}).length">
+                <select class="form-control" data-bind="
+                    optstr: $root.getAnswers({question: question()}),
+                    value: answer"></select>
+            </span>
+            <!-- Non-select question: answer is a text box -->
+            <span data-bind="if: !$root.getAnswers({question: question()}).length">
+                <input type="text" class="form-control" data-bind="value: answer"/>
+            </span>
         </div>
         <div class="col-sm-1">
             <a href="#" class="btn btn-default" data-bind="click: function () {type('always')}">
