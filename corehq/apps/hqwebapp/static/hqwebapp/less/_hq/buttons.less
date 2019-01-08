@@ -27,3 +27,22 @@
 .btn-full-width {
   width: 100%;
 }
+
+.btn-group-separated {
+    > button {
+        // Styled similarly to .btn-default
+        border-radius: 20px !important;     // force override bootstrap's per-corner styles for leftmost/rightmost buttons
+        padding: 3px 15px;
+        background-color: white;
+        border: 1px solid @call-to-action-mid;
+        color: @call-to-action-mid;
+        margin-right: 5px;
+
+        &.active {
+            // Styled similarly to .btn-primary
+            background-color: @call-to-action-mid;
+            color: white;
+            font-weight: bold;
+        }
+    }
+}
