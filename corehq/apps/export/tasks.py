@@ -89,7 +89,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     email_requests.delete()
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True, acks_late=True)
+@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
 def _start_export_task(export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     rebuild_export(export_instance, progress_tracker=_start_export_task)
