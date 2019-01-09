@@ -140,6 +140,7 @@ class DownloadBase(object):
     def task_id(self):
         timeout = 60 * 60 * 24
         task_id = self.get_cache().get(self._task_key(), None)
+        # This resets the timeout whenever a task is accessed in any way
         self.get_cache().set(self._task_key(), task_id, timeout)
         return task_id
 
