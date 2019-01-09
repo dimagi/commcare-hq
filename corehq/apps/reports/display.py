@@ -72,17 +72,10 @@ class FormDisplay(object):
 
 class _FormType(object):
 
-    def __init__(self, domain, xmlns, app_id=None):
+    def __init__(self, domain, xmlns, app_id):
         self.domain = domain
         self.xmlns = xmlns
-        if app_id:
-            self.app_id = app_id
-        else:
-            form = get_form_analytics_metadata(domain, app_id, xmlns)
-            try:
-                self.app_id = form['app']['id'] if form else None
-            except KeyError:
-                self.app_id = None
+        self.app_id = app_id
 
     def get_label(self, lang=None, separator=None):
         if separator is None:
