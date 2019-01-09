@@ -182,6 +182,8 @@ class AppTranslationsForm(forms.Form):
             return BackUpAppTranslationsForm
         elif form_action == 'delete':
             return DeleteAppTranslationsForm
+        elif form_action == 'download':
+            return DownloadAppTranslationsForm
 
 
 class CreateAppTranslationsForm(AppTranslationsForm):
@@ -236,6 +238,12 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
         form_fields = super(DeleteAppTranslationsForm, self).form_fields()
         form_fields.append(hqcrispy.Field('perform_translated_check'))
         return form_fields
+
+
+class DownloadAppTranslationsForm(CreateAppTranslationsForm):
+    """Used to download the files that are being uploaded to Transifex."""
+
+    form_action = 'download'
 
 
 class BackUpAppTranslationsForm(AppTranslationsForm):

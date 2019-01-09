@@ -35,6 +35,7 @@ from corehq.apps.translations.tasks import (
     pull_translation_files_from_transifex,
     delete_resources_on_transifex,
     backup_project_from_transifex,
+    download_project_from_hq,
 )
 from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.files import safe_filename_header
@@ -268,6 +269,7 @@ class AppTranslations(BaseTranslationsView):
             context['push_form'] = AppTranslationsForm.form_for('push')(self.domain)
             context['pull_form'] = AppTranslationsForm.form_for('pull')(self.domain)
             context['backup_form'] = AppTranslationsForm.form_for('backup')(self.domain)
+            context['download_form'] = AppTranslationsForm.form_for('download')(self.domain)
             if self.request.user.is_staff:
                 context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
         form_action = self.request.POST.get('action')
@@ -346,7 +348,16 @@ class AppTranslations(BaseTranslationsView):
         messages.success(request, _('Successfully enqueued request to delete resources.'))
         return True
 
+    def perform_download_request(self, request, form_data):
+        download_project_from_hq.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to submit files for translations'))
+        return True
+
     def perform_request(self, request, form_data):
+        if form_data['action'] == 'download':
+            # The download functionality does not depend on Transifex resources
+            return self.perform_download_request(request, form_data)
+
         self._transifex = self.transifex(request.domain, form_data)
         if form_data.get('source_lang') and not self._transifex.source_lang_is(form_data.get('source_lang')):
             messages.error(request, _('Source lang selected not available for the project'))
