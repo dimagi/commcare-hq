@@ -274,7 +274,6 @@ def save_copy(request, domain, app_id):
                 copy = app.make_build(
                     comment=comment,
                     user_id=user_id,
-                    previous_version=app.get_latest_app(released_only=False)
                 )
                 copy.save(increment_version=False)
             CouchUser.get(user_id).set_has_built_app()
@@ -342,7 +341,6 @@ def revert_to_copy(request, domain, app_id):
     copy = app.make_build(
         comment=new_build_comment,
         user_id=request.couch_user.get_id,
-        previous_version=app.get_latest_app(released_only=False)
     )
     copy.save(increment_version=False)
     return back_to_main(request, domain, app_id=app_id)
