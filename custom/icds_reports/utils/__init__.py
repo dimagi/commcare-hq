@@ -915,7 +915,6 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
                     )
                 for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
             )
-        )
 
     for column, width in widths.items():
         worksheet.column_dimensions[column].width = width
