@@ -125,7 +125,7 @@
                                 <button type="button"
                                         class="btn btn-default btn-xs"
                                         data-bind="
-                                            visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.inProgress()),
+                                            visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
                                             attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}
                                         "
                                         data-toggle="modal">
@@ -139,7 +139,7 @@
                                     <i class="fa fa-refresh fa-spin"></i>
                                     {% trans "Updating Data, please wait..." %}
                                 </button>
-                                <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.inProgress()">
+                                <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.started()">
                                     <div class="progress">
                                         <div class="progress-bar progress-bar-striped active"
                                              role="progressbar"
