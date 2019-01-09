@@ -41,7 +41,7 @@ class BasicCrispyForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Submit Information"),
+                    _("Save"),
                     type="submit",
                     css_class="btn btn-primary",
                 ),
