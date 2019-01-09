@@ -50,5 +50,10 @@ hqDefine("export/js/export_list_main", [
         } else if (modelType === 'case') {
             kissmetricsAnalytics.track.event('Visited Export Cases Page');
         }
+
+        // Analytics: Send Kissmetrics event when user closes alert bubble
+        $('#alert-export-deep-links').on('click', function () {
+            kissmetricsAnalytics.track.event("Dismissed alert bubble - Deep links in exports");
+        });
     });
 });
