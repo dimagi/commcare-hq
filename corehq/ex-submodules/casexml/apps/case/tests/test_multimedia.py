@@ -92,13 +92,14 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        result = submit_form_locally(
-            xml_data,
-            TEST_DOMAIN_NAME,
-            attachments=dict_attachments,
-            last_sync_token=sync_token,
-            received_on=date
-        )
+        with flag_enabled('MM_CASE_PROPERTIES'):
+            result = submit_form_locally(
+                xml_data,
+                TEST_DOMAIN_NAME,
+                attachments=dict_attachments,
+                last_sync_token=sync_token,
+                received_on=date
+            )
         attachments = result.xform.attachments
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))

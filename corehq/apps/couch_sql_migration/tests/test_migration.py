@@ -35,7 +35,7 @@ from corehq.util.test_utils import (
     trap_extra_setup, TestFileMixin,
     softer_assert)
 from couchforms.models import XFormInstance
-from corehq.util.test_utils import patch_datadog
+from corehq.util.test_utils import patch_datadog, flag_enabled
 from io import open
 
 
@@ -320,6 +320,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_form_ids()))
         self._compare_diffs([])
 
+    @flag_enabled('MM_CASE_PROPERTIES')
     def test_migrate_attachments(self):
         attachment_source = './corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'
         attachment_file = open(attachment_source, 'rb')
