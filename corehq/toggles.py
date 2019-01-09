@@ -1704,4 +1704,3 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN]
 )
-
