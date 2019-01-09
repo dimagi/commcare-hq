@@ -90,14 +90,16 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
             (self._get_form_media('en'), 'jr://file/tulip.png'),      # 5. valid
             (self._get_form_media('en'), 'jr://file/hyacinth.png'),   # 6. error & warning: dupe old and new paths
             (self._get_form_media('fra'), 'jr://file/hyacinth.png'),  # 7. warning: dupe new path
+            (self._get_menu_media('en'), self._get_menu_media('en')), # 8. error: same old and new path
         )
         (errors, warnings) = validate_multimedia_paths_rows(app, rows)
 
-        self.assertEqual(len(errors), 3)
+        self.assertEqual(len(errors), 4)
         self.assertTrue(re.search(r'1.*columns', errors[0]))
         self.assertTrue(re.search(r'2.*not.*found', errors[1]))
         self.assertTrue('already' in errors[2])
         self.assertTrue(self._get_form_media('en') in errors[2])
+        self.assertTrue(re.search(r'8.*are both', errors[3]))
 
         self.assertEqual(len(warnings), 2)
         self.assertTrue(re.search(r'3.*replace', warnings[0]))

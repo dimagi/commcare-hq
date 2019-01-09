@@ -48,6 +48,9 @@ def validate_multimedia_paths_rows(app, rows):
             if old_path not in old_paths_last_seen:
                 errors.append(_("Path in row {} could not be found in application: "
                                 "<code>{}</code>").format(i, old_path))
+            elif old_path == new_path:
+                errors.append(_("In row {}, old and new paths are both <code>{}</code>. Please provide "
+                                "an updated path or remove this row").format(i, old_path))
             elif old_paths_last_seen[old_path] is not None:
                 # Duplicate old paths is an error: can't rename to two different new values
                 errors.append(_("Path in row {} was already renamed in row {}: "
