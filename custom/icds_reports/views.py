@@ -259,8 +259,9 @@ class BaseReportView(View):
         year = int(request.GET.get('year', now.year))
 
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
+            prev_month = now - relativedelta(months=1)
+            month = prev_month.month
+            year = prev_month.year
 
         include_test = request.GET.get('include_test', False)
         domain = self.kwargs['domain']
