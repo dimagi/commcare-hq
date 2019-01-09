@@ -349,7 +349,17 @@ class PagesStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'pages/intro',
-            'pages/template',
+            'pages/navigation',
             'pages/class_based',
             'pages/functional',
         ]
+
+    @property
+    def page_context(self):
+        return {
+            'examples': {
+                'header': self.example('header.html'),
+                'panels': self.example('panels.html'),
+                'tabs': self.example('tabs.html'),
+            },
+        }
