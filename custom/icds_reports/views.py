@@ -218,7 +218,10 @@ class DashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
-        kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
+        user_location = self.couch_user.get_location(self.domain)
+        kwargs['user_location_id'] = user_location.location_id if user_location else None
+        kwargs['user_location_type'] = user_location.location_type.code if user_location else None
+        kwargs['user_location_name'] = user_location.name if user_location else None
         kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
             self.kwargs['domain']
         ).location_ids())
@@ -231,6 +234,8 @@ class DashboardView(TemplateView):
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
         )
+        kwargs['is_dimagi_user'] = '@dimagi.com' in self.couch_user.username
+
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():

@@ -2,7 +2,8 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser, userLocationId) {
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser,
+                        userLocationId, userLocationType, userLocationName, isDimagiUser) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -66,9 +67,31 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
 
     $scope.$on('$routeChangeStart', function() {
         $scope.checkAccessToLocation();
-        var path = window.location.pathname + $location.path().substr(1);
-        $window.ga('set', 'page', path);
-        $window.ga('send', 'pageview', path);
+        if (!isDimagiUser) {
+            var path = window.location.pathname + $location.path().substr(1);
+            var selectedLocation = $location.search()['location_name'] || userLocationName;
+            var selectedGender = $location.search()['gender'] || 'All';
+            var selectedAge = $location.search()['age'] || 'All';
+
+            var now = moment();
+            var selectedMonth = $location.search()['month'] || new Date().getMonth() + 1;
+            var selectedYear = $location.search()['year'] || new Date().getFullYear();
+            if ((now.date() === 1 || now.date() === 2) && (now.month() + 1) === selectedMonth && now.year() === selectedYear) {
+                var prev_month = now.subtract(1, 'month');
+                selectedMonth = prev_month.month() + 1;
+                selectedYear = prev_month.year();
+            }
+
+            $window.ga('set', 'UserLocationLevel', userLocationType);
+            $window.ga('set', 'UserDefaultLocation', userLocationName);
+            $window.ga('set', 'selectedLocation', selectedLocation);
+            $window.ga('set', 'selectedMonth', selectedMonth);
+            $window.ga('set', 'selectedYear', selectedYear);
+            $window.ga('set', 'selectedGender', selectedGender);
+            $window.ga('set', 'selectedAge', selectedAge);
+            $window.ga('set', 'page', path);
+            $window.ga('send', 'pageview', path);
+        }
     });
 
     // hack to have the same width between origin table and fixture headers,
@@ -114,6 +137,9 @@ MainController.$inject = [
     'reportAnIssueUrl',
     'isWebUser',
     'userLocationId',
+    'userLocationType',
+    'userLocationName',
+    'isDimagiUser'
 ];
 
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
