@@ -3,7 +3,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser,
-                        userLocationId, userLocationType, userLocationName, isDimagiUser) {
+    userLocationId, userLocationType, userLocationName, isDimagiUser) {
+
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -77,9 +78,9 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
             var selectedMonth = $location.search()['month'] || new Date().getMonth() + 1;
             var selectedYear = $location.search()['year'] || new Date().getFullYear();
             if ((now.date() === 1 || now.date() === 2) && (now.month() + 1) === selectedMonth && now.year() === selectedYear) {
-                var prev_month = now.subtract(1, 'month');
-                selectedMonth = prev_month.month() + 1;
-                selectedYear = prev_month.year();
+                var prevMonth = now.subtract(1, 'month');
+                selectedMonth = prevMonth.month() + 1;
+                selectedYear = prevMonth.year();
             }
 
             $window.ga('set', 'UserLocationLevel', userLocationType);
@@ -139,7 +140,7 @@ MainController.$inject = [
     'userLocationId',
     'userLocationType',
     'userLocationName',
-    'isDimagiUser'
+    'isDimagiUser',
 ];
 
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
