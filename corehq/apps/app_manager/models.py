@@ -4917,6 +4917,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         # Import loop if this is imported at the top
         # TODO: revamp so signal_connections <- models <- signals
         from corehq.apps.app_manager import signals
+        from couchforms.analytics import get_form_analytics_metadata
+        xmlns_list = self.get_xmlns_map().keys()
+        for xmlns in xmlns_list:
+            get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
         signals.app_post_save.send(Application, application=self)
 
     def make_reversion_to_copy(self, copy):
