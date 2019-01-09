@@ -3,6 +3,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     "underscore",
     "analytix/js/google",
     "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/toggles",
     "hqwebapp/js/multiselect_utils",
     "hqwebapp/js/widgets_v4",  // autocomplete widget for email recipient list
     "jquery-ui/ui/datepicker",
@@ -11,6 +12,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     _,
     googleAnalytics,
     initialPageData,
+    toggles,
     multiselectUtils
 ) {
     var add_options_to_select = function ($select, opt_list, selected_val) {
@@ -54,6 +56,9 @@ hqDefine("reports/js/edit_scheduled_report", [
                     dateFormat: "yy-mm-dd",
                     minDate: 0,
                 });
+                if (!toggles.toggleEnabled('SET_SCHEDULED_REPORT_START_DATE')) {
+                    $("#div_id_start_date").hide();
+                }
             });
         };
     };

@@ -1687,3 +1687,11 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
+    'set_scheduled_report_start_date',
+    'Allow users to set an effective start date for scheduled reports.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
+)
