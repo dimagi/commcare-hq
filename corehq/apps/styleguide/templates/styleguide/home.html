@@ -12,10 +12,7 @@
         Why all the biology-related terminology? It comes from the notion of <a href='http://atomicdesign.bradfrost.com/chapter-2/' target="_blank">atomic design</a>.
         Atomic design relates design to the hierarchies and building processes of the natural world.
         It uses five stages: atoms, molecules, organisms, templates, and pages.
-    </p>
-    <p class="lead">
         HQ doesn't follow this methodology, but the rough ideas can still make for a useful framework.
-        As such, this style guide is organized into atoms, molecules, and organisms.
     </p>
 
     <h2>Atoms</h2>
@@ -42,9 +39,15 @@
     <ul>
         <li>Forms</li>
         <li>Tables</li>
+    </ul>
+    <p><a href="{% url 'styleguide_organisms' %}">Read about organisms in HQ</a></p>
+
+    <h2>Templates and Pages</h2>
+    <ul>
+        <li>HQ's Page Template</li>
         <li>Class-Based Views</li>
         <li>Functional Views</li>
     </ul>
-    <p><a href="{% url 'styleguide_organisms' %}">Read about organisms in HQ</a></p>
+    <p><a href="{% url 'styleguide_pages' %}">Read about templates and pages in HQ</a></p>
 </div>
 {% endblock content %}

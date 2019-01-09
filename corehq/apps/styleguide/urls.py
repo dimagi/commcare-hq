@@ -7,6 +7,7 @@ from corehq.apps.styleguide.views import (
     MainStyleGuideView,
     MoleculesStyleGuideView,
     OrganismsStyleGuideView,
+    PagesStyleGuideView,
 )
 from corehq.apps.styleguide.views.docs import default
 
@@ -24,6 +25,8 @@ urlpatterns = [
         name=MoleculesStyleGuideView.urlname),
     url(r'^organisms/$', OrganismsStyleGuideView.as_view(),
         name=OrganismsStyleGuideView.urlname),
+    url(r'^pages/$', PagesStyleGuideView.as_view(),
+        name=PagesStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
 ]
 

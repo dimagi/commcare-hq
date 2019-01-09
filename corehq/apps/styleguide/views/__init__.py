@@ -326,7 +326,6 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
             'organisms/intro',
             'organisms/forms',
             'organisms/tables',
-            'organisms/views',
         ]
 
     @property
@@ -340,3 +339,17 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
                 'complex_table': self.example('complex_table.html'),
             },
         }
+
+
+class PagesStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_pages'
+    navigation_name = 'pages'
+
+    @property
+    def sections(self):
+        return [
+            'pages/intro',
+            'pages/template',
+            'pages/class_based',
+            'pages/functional',
+        ]
