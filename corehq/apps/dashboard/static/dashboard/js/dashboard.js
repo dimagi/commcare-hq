@@ -2,7 +2,6 @@ hqDefine("dashboard/js/dashboard", [
     'jquery',
     'knockout',
     'underscore',
-    'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components.ko',    // pagination widget
     'hqwebapp/js/main',     // post-link function
@@ -10,7 +9,6 @@ hqDefine("dashboard/js/dashboard", [
     $,
     ko,
     _,
-    kissmetrics,
     initialPageData
 ) {
     var tileModel = function (options) {
@@ -117,10 +115,5 @@ hqDefine("dashboard/js/dashboard", [
         $("#dashboard-tiles").koApplyBindings(dashboardModel({
             tiles: initialPageData.get("dashboard_tiles"),
         }));
-
-        // Analytics: Send Kissmetrics event when user closes alert bubble
-        $('#alert-export-deep-links').on('click', function () {
-            kissmetrics.track.event("Dismissed alert bubble - Deep links in exports");
-        });
     });
 });
