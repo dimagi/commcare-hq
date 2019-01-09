@@ -122,7 +122,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_("Date Submitted")),
+            DataTablesColumn(_("Missing Report Date")),
             DataTablesColumn(_("Username")),
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Country")),
