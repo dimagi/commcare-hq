@@ -717,6 +717,15 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ALLOW_CASE_ATTACHMENTS = StaticToggle(
+    'allow_case_attachments',
+    "Allow creation of case attachments. DO NOT ENABLE THIS FLAG. Case "
+    "attachments are slated for removal. This flag is to prevent new domains "
+    "from using the feature.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
