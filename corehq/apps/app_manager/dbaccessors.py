@@ -100,6 +100,12 @@ def get_latest_build_id(domain, app_id):
     return res['id'] if res else None
 
 
+def get_latest_build_version(domain, app_id):
+    """Get id of the latest build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=False)
+    return res['value']['version'] if res else None
+
+
 def get_build_doc_by_version(domain, app_id, version):
     from .models import Application
     res = Application.get_db().view(
@@ -117,6 +123,15 @@ def wrap_app(app_doc, wrap_cls=None):
     from corehq.apps.app_manager.util import get_correct_app_class
     cls = wrap_cls or get_correct_app_class(app_doc)
     return cls.wrap(app_doc)
+
+
+def get_current_app_version(domain, app_id):
+    from .models import Application
+    result = Application.get_db().view(
+        'app_manager/applications_brief',
+        key=[domain, app_id],
+    ).one(except_all=True)
+    return result['value']['version']
 
 
 def get_current_app_doc(domain, app_id):
