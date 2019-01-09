@@ -104,11 +104,11 @@
                                 <span data-bind="text: emailedExport.fileData.size()"></span>
                                 &nbsp;&nbsp;&nbsp;
                                 <strong>{% trans "Last Updated:" %}</strong>
-                                <span data-bind="if: !emailedExport.taskStatus.justFinished()">
+                                <span data-bind="if: !justUpdated()">
                                     <span data-bind="text: emailedExport.fileData.lastUpdated()"></span>
                                     &nbsp;&nbsp;&nbsp;
                                 </span>
-                                <span data-bind="if: emailedExport.taskStatus.justFinished()">
+                                <span data-bind="if: justUpdated()">
                                     {% trans "Just now" %}&nbsp;&nbsp;&nbsp;
                                 </span>
                                 <strong>{% trans "Last Downloaded:" %}</strong>
@@ -188,10 +188,18 @@
                                     button and download the file.
                                 {% endblocktrans %}
                             </p>
-                            <p data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished()">
+
+                            <p class="text-success" data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.success()">
                                 <i class="fa fa-check"></i>
                                 <strong>{% trans "Data update complete" %}</strong>
                             </p>
+
+                            <p class="text-danger" data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.failed()">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <strong>{% trans "Data update failed!" %}</strong>
+                                {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.{% endblocktrans %}
+                            </p>
+
                         </div>
 
                         <div data-bind="if: isLocationSafeForUser">

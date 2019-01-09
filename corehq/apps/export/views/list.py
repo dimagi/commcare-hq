@@ -226,6 +226,7 @@ def _get_task_status_json(export_instance_id):
         'percentComplete': status.progress.percent or 0,
         'started': status.started(),
         'success': status.success(),
+        'failed': status.failed(),
         'justFinished': False,
     }
 

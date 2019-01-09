@@ -20,7 +20,7 @@
                         <i class="fa fa-exclamation-triangle"></i>
                         <strong data-bind="text: drilldownSubmissionError"></strong>
                         <p>
-                            If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.
+                            {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.{% endblocktrans %}
                         </p>
                     </div>
                     {% crispy create_export_form %}

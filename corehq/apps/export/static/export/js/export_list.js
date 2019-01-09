@@ -45,6 +45,10 @@ hqDefine("export/js/export_list", [
             }));
         }
 
+        self.justUpdated = ko.computed(function () {
+            return self.emailedExport.taskStatus.justFinished() && self.emailedExport.taskStatus.success();
+        });
+
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();
         };
@@ -72,6 +76,7 @@ hqDefine("export/js/export_list", [
             self.emailedExport.taskStatus.percentComplete();
             self.emailedExport.taskStatus.started(true);
             self.emailedExport.taskStatus.success(false);
+            self.emailedExport.taskStatus.failed(false);
             var tick = function () {
                 $.ajax({
                     method: 'GET',
@@ -85,8 +90,9 @@ hqDefine("export/js/export_list", [
                         self.emailedExport.taskStatus.percentComplete(data.taskStatus.percentComplete);
                         self.emailedExport.taskStatus.started(data.taskStatus.started);
                         self.emailedExport.taskStatus.success(data.taskStatus.success);
+                        self.emailedExport.taskStatus.failed(data.taskStatus.failed);
                         self.emailedExport.taskStatus.justFinished(data.taskStatus.justFinished);
-                        if (!data.taskStatus.success) {
+                        if (!data.taskStatus.success & !data.taskStatus.failed) {
                             // The first few ticks don't yet register the task
                             self.emailedExport.taskStatus.started(true);
                             setTimeout(tick, 1500);
