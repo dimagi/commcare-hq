@@ -6,3 +6,5 @@ feedparser
 pycrypto
 restkit
 http-parser
+zeep
+cython

@@ -94,10 +94,10 @@
     <div class="panel-body">
         {% if app.enable_detail_print %}
             <div class="form-group" data-bind="with: printTemplateReference">
-                <label class="col-sm-2 control-label">
+                <label class="{% css_label_class %} control-label">
                     {% trans "Document Template" %}
                 </label>
-                <div class="col-sm-4">
+                <div class="{% css_field_class %}">
                     <a class="btn btn-default existing-media"
                        data-bind="visible: url(), attr: {href: url()}"
                        target="_blank"

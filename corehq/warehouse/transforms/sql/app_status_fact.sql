@@ -20,7 +20,7 @@ SELECT
 
 FROM
     {{ app_status_form_staging }} as form_table
-ON CONFLICT (app_dim_id, user_dim_id) DO UPDATE
+ON CONFLICT (user_dim_id, COALESCE(app_dim_id, -1)) DO UPDATE
 SET last_form_submission_date = EXCLUDED.last_form_submission_date,
     last_form_app_build_version = EXCLUDED.last_form_app_build_version,
     last_form_app_commcare_version = EXCLUDED.last_form_app_commcare_version,

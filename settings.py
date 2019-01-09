@@ -345,7 +345,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'custom.bihar',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -522,7 +521,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
-    "custom.bihar.reports.indicators.fixtures.generator",
     "custom.m4change.fixtures.report_fixtures.generator",
     "custom.m4change.fixtures.location_fixtures.generator",
 ]
@@ -721,11 +719,6 @@ ENABLE_PRELOGIN_SITE = False
 # dimagi.com urls
 PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
 
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
-
 # Sumologic log aggregator
 SUMOLOGIC_URL = None
 
@@ -741,7 +734,8 @@ BITLY_APIKEY = ''
 INTERNAL_DATA = defaultdict(list)
 
 COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
-
+# Run reindex every 10 minutes (by default)
+COUCH_REINDEX_SCHEDULE = {'timedelta': {'minutes': 10}}
 
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
@@ -896,23 +890,6 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-# Example:
-# TRANSIFEX_DETAILS = {
-#     'organization': 'selfproject',
-#     'project': {
-#        'icds-test': ['test-1236', 'test-hindi-marathi'],
-#     },
-#     'teams': {
-#         'icds-test': {
-#              source lang code at HQ : link to team on transifex
-#             'en': 'https://www.transifex.com/selfproject/teams/'
-#         }
-#     },
-#     'token': 'api-token'
-#
-# }
-# ToDO: make it support for multiple domains
-TRANSIFEX_DETAILS = None
 from env_settings import *
 
 try:
@@ -989,6 +966,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.js_api_keys',
+                'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
             ],
@@ -1398,7 +1376,6 @@ COUCHDB_APPS = [
     ('custom_data_fields', META_DB),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
-    ('bihar', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', META_DB),
@@ -1671,7 +1648,28 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
+            'name': 'case-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'xform-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
             'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow_old',
+        },
+        {
+            'name': 'user-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
@@ -1683,12 +1681,17 @@ PILLOWTOPS = {
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.group.get_group_pillow',
+            'instance': 'corehq.pillows.group.get_group_pillow_old',
         },
         {
             'name': 'GroupToUserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
+        {
+            'name': 'group-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_pillow',
         },
         {
             'name': 'SqlSMSPillow',
@@ -1714,23 +1717,6 @@ PILLOWTOPS = {
             'name': 'UpdateUserSyncHistoryPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
-        },
-    ],
-    'core_ext': [
-        {
-            'name': 'AppDbChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'DomainDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'kafka-ucr-main',
@@ -1762,6 +1748,28 @@ PILLOWTOPS = {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
+        },
+    ],
+    'core_ext': [
+        {
+            'name': 'AppDbChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
+        },
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'DomainDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
+        },
+        {
+            'name': 'location-ucr-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_location_pillow',
         },
     ],
     'cache': [
@@ -2005,8 +2013,6 @@ COUCH_CACHE_BACKENDS = [
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
-    'care-bihar',
-    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
@@ -2044,9 +2050,13 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
-CUSTOM_UCR_REPORT_FILTERS = []
+CUSTOM_UCR_REPORT_FILTERS = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
+]
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = []
+CUSTOM_UCR_REPORT_FILTER_VALUES = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
+]
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -2062,8 +2072,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'care-bihar': 'custom.bihar',
-    'bihar': 'custom.bihar',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -2180,7 +2188,6 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
-
 
 
 if 'locmem' not in CACHES:

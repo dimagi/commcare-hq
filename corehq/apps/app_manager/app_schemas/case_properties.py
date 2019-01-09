@@ -7,8 +7,8 @@ import logging
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_case_sharing_apps_in_domain
-from corehq.apps.app_manager.util import is_usercase_in_use, all_apps_by_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_case_sharing_apps_in_domain
+from corehq.apps.app_manager.util import is_usercase_in_use
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 import six
@@ -291,7 +291,7 @@ class ParentCasePropertyBuilder(object):
 
     @classmethod
     def for_domain(cls, domain, include_parent_properties=True):
-        apps = [app for app in all_apps_by_domain(domain) if not app.is_remote_app()]
+        apps = get_apps_in_domain(domain, include_remote=False)
         return cls(domain,
                    apps,
                    defaults=('name',),
@@ -404,7 +404,7 @@ class ParentCasePropertyBuilder(object):
             case_properties.update(self.defaults)
 
         if self.exclude_invalid_properties:
-            from corehq.apps.app_manager.models import validate_property
+            from corehq.apps.app_manager.helpers.validators import validate_property
             for case_type, case_properties in case_properties_by_case_type.items():
                 to_remove = []
                 for prop in case_properties:

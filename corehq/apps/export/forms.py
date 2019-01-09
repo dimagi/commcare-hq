@@ -38,7 +38,7 @@ from corehq.apps.reports.util import (
     case_users_filter,
     datespan_from_beginning,
 )
-from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2AjaxV3
 from corehq.pillows import utils
 
@@ -101,11 +101,8 @@ class CreateExportTagForm(forms.Form):
             model_field.widget.attrs['readonly'] = True
             model_field.widget.attrs['disabled'] = True
 
-        # This form appears inside a modal, so it's differently proportioned than most forms
-        self.helper = FormHelper()
+        self.helper = HQModalFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-2'
-        self.helper.field_class = 'col-sm-10'
 
         self.helper.layout = crispy.Layout(
             crispy.Div(
@@ -330,11 +327,8 @@ class DashboardFeedFilterForm(forms.Form):
             reverse(ExpandedMobileWorkerFilter.options_url, args=(self.domain_object.name,))
         )
 
-        # This form appears inside a modal, so it's differently proportioned than most forms
-        self.helper = FormHelper()
+        self.helper = HQModalFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-10 col-lg-10'
         self.helper.layout = Layout(*self.layout_fields)
 
     def clean(self):

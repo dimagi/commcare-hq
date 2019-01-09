@@ -24,7 +24,7 @@
         <span data-bind="visible: onlyShowReleased()">
             {% trans 'Released versions only' %}
         </span>
-        <a href="#" data-bind="click: toggleLimitToReleased, visible: onlyShowReleased()" class="label label-info">{% trans 'show all' %}</a>
+        <a href="#" data-bind="click: toggleLimitToReleased, visible: onlyShowReleased()" class="btn btn-default btn-xs">{% trans 'show all' %}</a>
 
         <span class="hq-help-template"
             data-title="Released Versions"
@@ -34,16 +34,16 @@
         </span>
     </p>
     <p>
-        <button class="btn btn-success" data-bind="
+        <button class="btn btn-primary" data-bind="
             click: function() {
                 hqImport('analytix/js/kissmetrix').track.event('Clicked Make New Version');
                           return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
             css: {disabled: !buildButtonEnabled()}">
+            <i class="fa fa-spin fa-spinner" data-bind="visible: buildState() === 'pending'"></i>
             {% trans 'Make New Version' %}
         </button>
-
         {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
             <button class="btn btn-default"
                 id="recent-changes-btn"
@@ -53,6 +53,9 @@
             </button>
         {% endif %}
     </p>
+
+    <div id="build-errors-wrapper"></div>
+
     <div class="row">
         <div class="col-md-3 col-md-offset-9">
             <span class="input-group input-group-sm">
@@ -70,14 +73,6 @@
         </div>
     </div>
 
-
-    <div id="build-errors-wrapper"></div>
-
-    <div class="label label-success label-lg hide"
-         data-bind="visible: buildState() === 'pending', css: {hide: false}">
-      <i class="fa fa-spin fa-spinner"></i> {% trans "Please wait while your CommCare Application builds..." %}
-    </div>
-
     <div class="alert alert-danger hide"
          data-bind="visible: buildState() == 'error', css: {hide: false}">
         <span data-bind="visible: buildErrorCode() === 403">
@@ -88,10 +83,11 @@
         </span>
     </div>
 
-    <div class="label label-primary label-lg hide"
-         data-bind="visible: fetchState() === 'pending', css: {hide: false}">
-        <i class="fa fa-spin fa-spinner"></i> {% trans "Loading Versions..." %}
-    </div>
+    <h4 id="loading" class="hide"
+        data-bind="visible: fetchState() === 'pending', css: {hide: false}">
+        <i class="fa fa-spin fa-spinner"></i>
+        {% trans "Loading versions..." %}
+    </h4>
 
     <div class="alert alert-danger hide"
          data-bind="visible: fetchState() === 'error', css: {hide: false}">
@@ -110,34 +106,35 @@
                 'error': build_broken
             }">
           <div class="panel-heading">
-              {% if can_manage_releases %}
-                  {% if request|toggle_enabled:"SUPPORT" %}
-                      <div class="release-trash-container">
-                        <a href="#"
-                           class="hide release-remove"
-                           data-bind="openModal: 'delete-build-modal-template',
-                                      visible: !_deleteState(),
-                                      css: {hide: false}">
-                            <i class="fa fa-trash"></i>
-                        </a>
-                        <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-                            <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                        </div>
-                        <i class="fa fa-exclamation-circle hide"
-                           data-bind="visible: _deleteState() == 'error',
-                                      css: {hide: false}"></i>
-                      </div>
-                  {% endif %}
-                  <div class="build-is-released">
-                      <!--ko if: is_released() == 'error' -->
+              {% if can_manage_releases and request|toggle_enabled:"SUPPORT" %}
+                  <div class="release-trash-container">
+                    <a href="#"
+                       class="hide release-remove"
+                       data-bind="openModal: 'delete-build-modal-template',
+                                  visible: !_deleteState(),
+                                  css: {hide: false}">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+                    </div>
+                    <i class="fa fa-exclamation-circle hide"
+                       data-bind="visible: _deleteState() == 'error',
+                                  css: {hide: false}"></i>
+                  </div>
+              {% endif %}
+              <div class="build-is-released">
+                  <!--ko if: is_released() == 'error' -->
 
-                      <span class="label label-danger">{% trans "Could not update" %}</span>
+                  <span class="label label-danger">{% trans "Could not update" %}</span>
 
-                      <!--/ko-->
-                      <!--ko if: is_released() != 'error' -->
+                  <!--/ko-->
+                  <!--ko if: is_released() != 'error' -->
 
-                      <span class="label label-info"
-                            data-bind="visible: version() === $root.latestReleasedVersion()">{% trans "Latest" %}</span>
+                  <span class="label label-info"
+                        data-bind="visible: version() === $root.latestReleasedVersion()">{% trans "Latest" %}</span>
+
+                  {% if can_manage_releases %}
                       <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
                       <div class="btn-group">
                           <button type="button"
@@ -145,7 +142,7 @@
                                   data-bind="click: $root.toggleRelease,
                                              css: {
                                                 'active': is_released(),
-                                                'btn-success': is_released(),
+                                                'btn-primary': is_released(),
                                                 'btn-default': !is_released()
                                              }">
                               {% trans "Released" %}
@@ -161,10 +158,17 @@
                               {% trans "In Test" %}
                           </button>
                       </div>
+                  {% else %}
+                      <span class="label label-success" data-bind="visible: is_released()">
+                          {% trans "Released" %}
+                      </span>
+                      <span class="label label-primary" data-bind="visible: !is_released()">
+                          {% trans "In Test" %}
+                      </span>
+                  {% endif %}
 
-                      <!--/ko-->
-                  </div>
-              {% endif %}
+                  <!--/ko-->
+              </div>
               <h4 class="panel-release-title">
                 <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
                 <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
@@ -195,11 +199,16 @@
             </div>
           </div><!-- .panel-body -->
           <div class="panel-footer">
-            <button class="btn btn-default hide"
-                    data-bind="
-                        openModal: 'revert-build-modal-template',
-                        visible: version() !== $root.currentAppVersion(),
-                        css: {hide: false}">{% trans "Revert to this Version" %}</button>
+              <a class="btn btn-default" target="_blank"
+                 data-bind="attr: { href: hqImport('hqwebapp/js/initial_page_data').reverse('app_form_summary', $data.id()) }">
+                  <i class="fa fa-list-alt"></i>
+                  {% trans "App Summary" %}
+              </a>
+              <button class="btn btn-default hide"
+                      data-bind="
+                             openModal: 'revert-build-modal-template',
+                             visible: version() !== $root.currentAppVersion(),
+                             css: {hide: false}">{% trans "Revert to this Version" %}</button>
             {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
             <button class="btn btn-default" data-toggle="modal" data-target="#app-diff-modal" data-bind="
                 click: function() { $parent.onViewChanges($data.id(), $parent.previousBuildId($index())) }
@@ -207,17 +216,19 @@
                 {% trans "View Changes" %}
             </button>
             {% endif %}
-            <a class="btn"
-               data-bind="
-                openModal: 'deploy-build-modal-template',
-                css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                click: clickDeploy
-            ">
-                <span class="fa fa-exclamation-circle hide"
-                      data-bind="visible: build_broken, css: {hide: false}">
-                </span>
-                {% trans "Publish" %}
-            </a>
+            <span class="pull-right">
+                <a class="btn"
+                   data-bind="
+                          openModal: 'deploy-build-modal-template',
+                          css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
+                          click: clickDeploy
+                          ">
+                    <span class="fa fa-exclamation-circle hide"
+                          data-bind="visible: build_broken, css: {hide: false}">
+                    </span>
+                    {% trans "Publish" %}
+                </a>
+            </span>
           </div><!-- .panel-footer -->
         </div><!-- .panel-release -->
     </div> <!-- .releases-container -->

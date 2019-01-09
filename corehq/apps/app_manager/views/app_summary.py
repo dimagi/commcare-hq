@@ -1,26 +1,23 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import io
-from copy import copy
 from collections import namedtuple
 
 from django.urls import reverse
 from django.http import Http404
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
-from djangular.views.mixins import allow_remote_invocation
 from django.views.generic import View
 from dimagi.utils.web import json_response
 
-from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
-from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
+from corehq.apps.app_manager.const import WORKFLOW_FORM
+from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-from corehq.apps.hqwebapp.decorators import use_angular_js
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -59,6 +56,8 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
             'app_id': self.app.id,
             'app_name': self.app.name,
             'read_only': self.app.doc_type == 'LinkedApplication',
+            'app_version': self.app.version,
+            'latest_app_id': self.app.master_id,
         }
 
     @property
@@ -162,7 +161,7 @@ def _translate_name(names, language):
     if not names:
         return "[{}]".format(_("Unknown"))
     try:
-        return names[language]
+        return six.text_type(names[language])
     except KeyError:
         first_name = next(six.iteritems(names))
         return "{} [{}]".format(first_name[1], first_name[0])

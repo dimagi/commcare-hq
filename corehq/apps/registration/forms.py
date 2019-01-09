@@ -162,8 +162,13 @@ class RegisterWebUserForm(forms.Form):
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
+                        ugettext("Back"),
+                        css_id="back-to-start-btn",
+                        css_class="btn btn-default btn-lg hide",
+                    ),
+                    twbscrispy.StrictButton(
                         ugettext("Next"),
-                        css_class="btn btn-success btn-lg",
+                        css_class="btn btn-primary btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
                     ),
                     hqcrispy.InlineField('is_mobile'),
@@ -192,13 +197,13 @@ class RegisterWebUserForm(forms.Form):
                         data_bind="checked: eulaConfirmed"
                     ),
                     twbscrispy.StrictButton(
-                        ugettext("Previous"),
-                        css_class="btn btn-primary-dark btn-lg",
+                        ugettext("Back"),
+                        css_class="btn btn-default btn-lg",
                         data_bind="click: previousStep"
                     ),
                     twbscrispy.StrictButton(
                         ugettext("Finish"),
-                        css_class="btn btn-success btn-lg",
+                        css_class="btn btn-primary btn-lg",
                         data_bind="click: submitForm, "
                                   "disable: disableNextStepTwo"
                     )

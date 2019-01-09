@@ -86,6 +86,8 @@ class AncestorLocationExpression(JsonObject):
         location_id = self._location_id_expression(item, context)
         location_type = self._location_type_expression(item, context)
         location = self._get_ancestors_by_type(location_id, context).get(location_type)
+        if not location:
+            return None
 
         if self.location_property:
             return location.get(self.location_property)

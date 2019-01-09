@@ -41,9 +41,11 @@ from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
+from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
-from custom.icds_reports.models.views import AwcLocationMonths
+from custom.icds_reports.queries import get_cas_data_blob_file
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
@@ -83,6 +85,7 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
     get_institutional_deliveries_data_map, get_institutional_deliveries_sector_data
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
+from custom.icds_reports.reports.lady_supervisor import get_lady_supervisor_data
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
     get_medicine_kit_sector_data
@@ -101,7 +104,7 @@ from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
-from dimagi.utils.dates import force_to_date
+from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
@@ -219,6 +222,11 @@ class DashboardView(TemplateView):
         kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
             self.kwargs['domain']
         ).location_ids())
+        kwargs['state_level_access'] = 'state' in set(
+            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
+                self.kwargs['domain']
+            )]
+        )
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
@@ -251,8 +259,9 @@ class BaseReportView(View):
         year = int(request.GET.get('year', now.year))
 
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
+            prev_month = now - relativedelta(months=1)
+            month = prev_month.month
+            year = prev_month.year
 
         include_test = request.GET.get('include_test', False)
         domain = self.kwargs['domain']
@@ -303,6 +312,26 @@ class ProgramSummaryView(BaseReportView):
             )
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(domain, config, include_test)
+        return JsonResponse(data=data)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class LadySupervisorView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        config = {
+            'month': tuple(current_month.timetuple())[:3]
+        }
+
+        config.update(get_location_filter(location, domain))
+        config['aggregation_level'] = 4
+
+        data = get_lady_supervisor_data(
+            domain, config, include_test
+        )
         return JsonResponse(data=data)
 
 
@@ -728,6 +757,11 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
         if indicator == AWW_INCENTIVE_REPORT:
             if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
+                return HttpResponseBadRequest()
+            today = datetime.now(INDIA_TIMEZONE)
+            month_offset = 2 if today.day < 15 else 1
+            latest_year, latest_month = add_months(today.year, today.month, -month_offset)
+            if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT):
@@ -1668,7 +1702,6 @@ class DishaAPIView(View):
         try:
             month = int(request.GET.get('month'))
             year = int(request.GET.get('year'))
-            stream = True if request.GET.get('stream') == 'true' else False
         except (ValueError, TypeError):
             return JsonResponse(self.message('missing_date'), status=400)
 
@@ -1685,9 +1718,28 @@ class DishaAPIView(View):
             return JsonResponse(self.message('invalid_state'), status=400)
 
         dump = DishaDump(state_name, query_month)
-        return dump.get_export_as_http_response(stream)
+        return dump.get_export_as_http_response(request)
 
     @property
     @quickcache([])
     def valid_state_names(self):
-        return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())
+        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class CasDataExport(View):
+    def post(self, request, *args, **kwargs):
+
+        data_type = int(request.POST.get('indicator', None))
+        state_id = request.POST.get('location', None)
+        month = int(request.POST.get('month', None))
+        year = int(request.POST.get('year', None))
+        selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+
+        sync = get_cas_data_blob_file(data_type, state_id, selected_date)
+
+        zip_name = 'cas_data_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        except NotFound:
+            raise Http404

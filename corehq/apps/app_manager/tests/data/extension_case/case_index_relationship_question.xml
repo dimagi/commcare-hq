@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+  <h:head>
+    <h:title>New Form</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="None" name="New Form">
+          <question1/>
+          <question2/>
+          <case_open_freshwater_0>
+            <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+              <create>
+                <case_name/>
+                <owner_id>-</owner_id>
+                <case_type>freshwater</case_type>
+              </create>
+              <update>
+                <case_name/>
+              </update>
+              <index>
+                <node case_type="freshwater" relationship="@relationship"/>
+              </index>
+            </case>
+          </case_open_freshwater_0>
+          <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+          <orx:deviceID/>
+          <orx:timeStart/>
+          <orx:timeEnd/>
+          <orx:username/>
+          <orx:userID/>
+          <orx:instanceID/>
+          <cc:appVersion/>
+          <orx:drift/>
+        </orx:meta></data>
+      </instance>
+      <instance id="commcaresession" src="jr://instance/session"/>
+      <bind nodeset="/data/question1" required="true()" type="xsd:string"/>
+      <bind nodeset="/data/question2" type="xsd:string"/>
+      <itext>
+        <translation default="" lang="en">
+          <text id="question1-label">
+            <value>question1</value>
+          </text>
+          <text id="question2-label">
+            <value>question2</value>
+          </text>
+        </translation>
+      </itext>
+      <bind calculate="/data/meta/timeEnd" nodeset="/data/case_open_freshwater_0/case/@date_modified" type="xsd:dateTime"/>
+      <bind calculate="/data/meta/userID" nodeset="/data/case_open_freshwater_0/case/@user_id"/>
+      <setvalue event="xforms-ready" ref="/data/case_open_freshwater_0/case/@case_id" value="instance('commcaresession')/session/data/case_id_new_freshwater_0"/>
+      <bind calculate="/data/question1" nodeset="/data/case_open_freshwater_0/case/create/case_name"/>
+      <bind calculate="/data/question1" nodeset="/data/case_open_freshwater_0/case/update/case_name" relevant="count(/data/question1) &gt; 0"/>
+      <bind calculate="/data/case_open_freshwater_0/case/@case_id" nodeset="/data/case_open_freshwater_0/case/index/node"/>
+      <bind calculate="/data/question2" nodeset="/data/case_open_freshwater_0/case/index/node/@relationship"/>
+      <bind calculate="if(/data/question2 = 'extension', '-', /data/meta/userID)" nodeset="/data/case_open_freshwater_0/case/create/owner_id"/>
+      <setvalue event="xforms-ready" ref="/data/meta/deviceID" value="instance('commcaresession')/session/context/deviceid"/>
+      <setvalue event="xforms-ready" ref="/data/meta/timeStart" value="now()"/>
+      <bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
+      <setvalue event="xforms-revalidate" ref="/data/meta/timeEnd" value="now()"/>
+      <bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
+      <setvalue event="xforms-ready" ref="/data/meta/username" value="instance('commcaresession')/session/context/username"/>
+      <setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid"/>
+      <setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()"/>
+      <setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion"/>
+      <setvalue event="xforms-revalidate" ref="/data/meta/drift" value="if(count(instance('commcaresession')/session/context/drift) = 1, instance('commcaresession')/session/context/drift, '')"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/question1">
+      <label ref="jr:itext('question1-label')"/>
+    </input>
+    <input ref="/data/question2">
+      <label ref="jr:itext('question2-label')"/>
+    </input>
+  </h:body>
+</h:html>

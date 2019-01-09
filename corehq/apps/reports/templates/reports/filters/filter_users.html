@@ -6,11 +6,11 @@
 {% block filter_content %}
 {% if show_user_filter %}
     <div id="{{ css_id }}"
-         class="btn-group report-filter-button-group report-filter-user-filter"
+         class="btn-group btn-group-separated report-filter-button-group report-filter-user-filter"
          data-toggle="buttons-checkbox"
          data-toggle-users="{{ toggle_users }}">
 	    {% for user in toggle_users %}
-        <button class="btn btn-default {% if user.show %} btn-success{% else %} active{% endif %} user-type-btn"
+        <button class="btn btn-default {% if user.show %} btn-primary{% else %} active{% endif %} user-type-btn"
                 data-checkfilter="user-filter-{{ user.type }}"
                 data-ufilter="{{ user.type }}"
                 id="btn-user-filter-{{ user.type }}">
@@ -23,7 +23,7 @@
     {% endfor %}
 {% else %}
     <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
-        <button class="btn btn-success">{% commcare_user %}s {% trans "Only" %}</button>
+        <button class="btn btn-primary">{% commcare_user %}s {% trans "Only" %}</button>
     </div>
 {% endif %}
 {% endblock %}

@@ -29,6 +29,7 @@
   {% initial_page_data 'app_version' app.version %}
   {% initial_page_data 'application_profile_url' application_profile_url %}
   {% initial_page_data 'build_profiles' app.build_profiles %}
+  {% initial_page_data 'latest_version_for_build_profiles' latest_version_for_build_profiles %}
   {% initial_page_data 'fetch_limit' fetchLimit %}
   {% initial_page_data 'latestReleasedVersion' latest_released_version %}
   {% initial_page_data 'practice_users' practice_users %}
@@ -54,6 +55,7 @@
   {% registerurl "download_multimedia_zip" app.domain '---' %}
   {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
   {% registerurl "formplayer_main" app.domain %}
+  {% registerurl "app_form_summary" app.domain '---' %}
   <div class="tab-pane" id="releases">
     {% include "app_manager/partials/releases/releases.html" %}
   </div>

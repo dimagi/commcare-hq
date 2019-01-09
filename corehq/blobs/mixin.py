@@ -11,7 +11,7 @@ from hashlib import sha1
 from itertools import chain
 from os.path import join
 
-from corehq.blobs import BlobInfo, get_blob_db, CODES  # noqa: F401
+from corehq.blobs import get_blob_db, CODES  # noqa: F401
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
 from corehq.blobs.util import (
     classproperty,
@@ -37,10 +37,6 @@ class BlobMetaRef(DocumentSchema):
     blobmeta_id = IntegerProperty()
     content_type = StringProperty()
     content_length = IntegerProperty()
-
-    @property
-    def info(self):
-        return BlobInfo(self.key, self.content_length, "unknown-md5")
 
     @classmethod
     def _from_attachment(cls, data):
@@ -88,7 +84,7 @@ class BlobMixin(Document):
                 if value["doc_type"] == "BlobMetaRef":
                     blobs[key] = value
                 else:
-                    blobs[key] = normalize(dbname, doc_id, value)
+                    blobs[key] = normalize(dbname, data['_id'], value)
                     normalized = True
             if normalized:
                 data = data.copy()

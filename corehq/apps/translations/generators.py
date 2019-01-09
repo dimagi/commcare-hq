@@ -303,17 +303,10 @@ class AppTranslationsGenerator:
 
     @property
     def metadata(self):
-        if settings.TRANSIFEX_DETAILS:
-            team = settings.TRANSIFEX_DETAILS['teams'][self.domain].get(self.source_lang)
-        else:
-            team = ""
         now = str(datetime.datetime.now())
         return {
             'App-Id': self.app_id,
             'PO-Creation-Date': now,
-            'Language-Team': "{lang} ({team})".format(
-                lang=self.key_lang, team=team
-            ),
             'MIME-Version': '1.0',
             'Content-Type': 'text/plain; charset=utf-8',
             'Language': self.key_lang,

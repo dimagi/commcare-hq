@@ -16,6 +16,7 @@ from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException, AppLinkError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
+from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.apps.linked_domain.models import AppLinkDetail
@@ -290,16 +291,21 @@ def handle_custom_icon_edits(request, form_or_module, lang):
 
 def update_linked_app_and_notify(domain, app_id, user_id, email):
     app = get_current_app(domain, app_id)
+    subject = _("Update Status for linked app %s") % app.name
     try:
         update_linked_app(app, user_id)
     except AppLinkError as e:
         message = six.text_type(e)
     except Exception:
-        message = _("Something went wrong! There was an error. Please try again. "
-                    "If you see this error repeatedly please report it as issue.")
+        # Send an email but then crash the process
+        # so we know what the error was
+        send_html_email_async.delay(subject, email, _(
+            "Something went wrong updating your linked app. "
+            "Our team has been notified and will monitor the situation. "
+            "Please try again, and if the problem persists report it as an issue."))
+        raise
     else:
         message = _("Your linked application was successfully updated to the latest version.")
-    subject = _("Update Status for linked app %s") % app.name
     send_html_email_async.delay(subject, email, message)
 
 
@@ -343,7 +349,7 @@ def update_linked_app(app, user_id):
                 _(
                     'This application uses mobile UCRs '
                     'which are not available in the linked domain: {ucr_id}'
-                ).format(str(e))
+                ).format(ucr_id=str(e))
             )
 
     if app.master_is_remote:
@@ -363,3 +369,7 @@ def update_linked_app(app, user_id):
 def clear_xmlns_app_id_cache(domain):
     from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
     get_all_xmlns_app_id_pairs_submitted_to_in_domain.clear(domain)
+
+
+def form_has_submissions(domain, app_id, xmlns):
+    return FormES().domain(domain).app([app_id]).xmlns([xmlns]).count() != 0

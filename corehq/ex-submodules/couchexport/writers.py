@@ -239,13 +239,13 @@ class ExportWriter(object):
 
         self._current_primary_id += 1
 
-    def write_row(self, table_index, headers):
+    def write_row(self, table_index, row):
         """
         Currently just calls the subclass's implementation
         but if we were to add a universal validation step,
         such a thing would happen here.
         """
-        return self._write_row(table_index, headers)
+        return self._write_row(table_index, row)
 
     def close(self):
         """
@@ -387,6 +387,7 @@ class Excel2007ExportWriter(ExportWriter):
         self.table_indices[table_index] = 0
 
     def _write_row(self, sheet_index, row):
+        from couchexport.export import FormattedRow
         sheet = self.tables[sheet_index]
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
@@ -398,17 +399,24 @@ class Excel2007ExportWriter(ExportWriter):
             if isinstance(value, six.integer_types + (float,)):
                 return value
             if isinstance(value, bytes):
-                value = six.text_type(value, encoding="utf-8")
+                value = value.decode('utf-8')
             elif value is not None:
                 value = six.text_type(value)
             else:
                 value = ''
             return dirty_chars.sub('?', value)
 
-        cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        write_values = [get_write_value(val) for val in row]
+        cells = [WriteOnlyCell(sheet, val) for val in write_values]
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
+        if isinstance(row, FormattedRow):
+            for hyperlink_column_index in row.hyperlink_column_indices:
+                cell_value = cells[hyperlink_column_index].value
+                if isinstance(cell_value, six.string_types):
+                    cells[hyperlink_column_index].hyperlink = cell_value
+                    cells[hyperlink_column_index].style = 'Hyperlink'
         sheet.append(cells)
 
     def _close(self):
@@ -436,11 +444,10 @@ class Excel2003ExportWriter(ExportWriter):
         row_index = self.table_indices[sheet_index]
         sheet = self.tables[sheet_index]
 
-        if hasattr(row, 'data') and len(row.data) >= MAX_XLS_COLUMNS:
-            raise XlsLengthException
-
         # have to deal with primary ids
         for i, val in enumerate(row):
+            if i >= MAX_XLS_COLUMNS:
+                raise XlsLengthException
             sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 

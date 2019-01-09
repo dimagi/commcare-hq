@@ -36,6 +36,8 @@
               href="{% url 'osdd' %}"
               title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
 
+        <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
         {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
         {% block stylesheets %}{% endblock stylesheets %}
@@ -181,12 +183,11 @@
         <!-- End Google Tag Manager (noscript) -->
         {% endif %}
         {% block background_content %}{% endblock %}
-        {% maintenance_alert %}
+        {% maintenance_alert request %}
         {% if request.user.is_authenticated and is_demo_visible %}
           {% include "hqwebapp/partials/get_demo_banner.html" %}
         {% endif %}
-        <!-- .hide used for A/B test of account creation page -->
-        <div class="hq-container{% if is_register_user %} molly{% endif %}">
+        <div class="hq-container">
             {% block navigation %}
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
@@ -208,28 +209,20 @@
 
                         <div class="nav-settings-bar pull-right">
                           <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
 
-                            <span class="optimize-abtest">
-
+                              {% if demo_workflow_ab.version == 'hubspot' %}
                               <a href="#cta-form-get-demo"
-                                 target="_blank"
                                  data-toggle="modal"
-                                 id="cta-form-get-demo-button"
-                                 class="optimize-abtest-control btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
+                                 id="cta-form-get-demo-button-header"
+                                 class="btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
+                              {% endif %}
 
-                              {# hubspot #}
-                              <a href="#cta-form-get-demo-new"
-                                 data-toggle="modal"
-                                 id="cta-form-get-demo-button-new"
-                                 class="optimize-abtest-variant-a btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
-
-                              {# drift #}
-                              <a href="#demo-request"
-                                 id="cta-form-get-demo-button-drift"
-                                 class="optimize-abtest-variant-b btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
-
-                            </span>
+                              {% if demo_workflow_ab.version == 'drift' %}
+                              <button id="cta-form-get-demo-button-header"
+                                      class="btn btn-purple navbar-btn schedule-demo-drift-cta">
+                                {% trans 'Schedule a Demo' %}</button>
+                              {% endif %}
 
                           {% endif %}
                         </div>
@@ -344,8 +337,10 @@
                 awkward or impossible to include it in another block
             {% endcomment %}
         {% endblock %}
-        {%  initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
-        {%  initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
+        {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
+        {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
+        {% initial_page_data 'toggles_dict' toggles_dict %}
+        {% initial_page_data 'previews_dict' previews_dict %}
         <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
@@ -516,11 +511,6 @@
         {% include 'hqwebapp/ko_pagination.html' %}
         {% include 'hqwebapp/partials/ko_inline_edit.html' %}
 
-        {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
-        {# If it's loaded early, then execution of all following scripts block on it #}
-        {% if request.domain and request.user.username and not requirejs_main %}
-            <script src="{% toggle_js_url request.domain request.user.username %}"></script>
-        {% endif %}
         {% block js %}{% endblock js %}
 
         {% block js-inline %}{% endblock js-inline %}

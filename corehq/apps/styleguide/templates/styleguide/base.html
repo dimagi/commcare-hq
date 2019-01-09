@@ -1,4 +1,4 @@
-{% load compress %}{% load hq_shared_tags %}<!DOCTYPE html>
+{% load compress %}{% load hq_shared_tags %}{% load statici18n %}<!DOCTYPE html>
 <html lang="en">
     <head>
         <title>CommCare HQ Style Guide</title>
@@ -21,7 +21,10 @@
         {% endcompress %}
         {% endif %}
 
-        {% javascript_libraries %}
+        <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
+        {% javascript_libraries hq=True %}
+        <script src="{% statici18n LANGUAGE_CODE %}"></script>
 
         {% if less_debug %}
             <script>
@@ -52,11 +55,9 @@
                 </div>
                 <nav class="collapse navbar-collapse" role="navigation">
                     <ul class="nav navbar-nav">
-                        <li><a href="{% url 'styleguide_views' %}">Views</a></li>
-                        <li><a href="{% url 'styleguide_forms' %}">Forms</a></li>
-                        <li><a href="{% url 'styleguide_css' %}">CSS</a></li>
-                        <li><a href="{% url 'styleguide_icons' %}">Icons</a></li>
-                        <li><a href="{% url 'styleguide_colors' %}">Colors</a></li>
+                        <li><a href="{% url 'styleguide_atoms' %}">Atoms</a></li>
+                        <li><a href="{% url 'styleguide_molecules' %}">Molecules</a></li>
+                        <li><a href="{% url 'styleguide_organisms' %}">Organisms</a></li>
                     </ul>
                 </nav>
             </div>
@@ -65,6 +66,11 @@
         {% block content %}
         {% endblock content %}
         </div>
+
+        {# Knockout component templates #}
+        {% include 'hqwebapp/ko_pagination.html' %}
+        {% include 'hqwebapp/partials/ko_inline_edit.html' %}
+
         <footer class="docs-footer">
             <div class="container">
                 <p class="lead">Thanks for reading the style guide! <3</p>

@@ -3,7 +3,8 @@
 {% load i18n %}
 
 <form class="form-horizontal save-button-form"
-      action="{% url 'edit_module_attr' domain app.id module.unique_id 'all' %}">
+      action="{% url 'edit_module_attr' domain app.id module.unique_id 'all' %}"
+      id="module-settings-form">
     {% csrf_token %}
     <div class="save-button-holder clearfix"></div>
     <div class="section-changer btn-group" data-collapse-key="module-view-settings">
@@ -51,13 +52,13 @@
 
               {% if child_module_enabled and not module.is_training_module%}
                 <div class="form-group">
-                    <label class="col-sm-2 control-label">
+                    <label class="{% css_label_class %} control-label">
                         {% trans "Parent Menu" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Parent Menu" %}"
                               data-content="{% blocktrans %}Parent menus may not be nested, so menus that already have a parent will not appear in this list, and this list will be empty if the current menu itself is already another menu's parent.{% endblocktrans %}"></span>
                     </label>
-                    <div class="col-sm-4">
+                    <div class="{% css_field_class %}">
                         <select type="text" name="root_module_id" class="form-control">
                             <option value="">{% trans "No Parent" %}</option>
                             {% for mod in valid_parents_for_child_module %}
@@ -73,10 +74,10 @@
               {% if module.module_type == 'shadow' %}
               <div id="sourceModuleForms">
                   <div class="form-group">
-                      <label class="col-sm-2 control-label">
+                      <label class="{% css_label_class %} control-label">
                           {% trans "Source Menu" %}
                       </label>
-                      <div class="col-sm-4">
+                      <div class="{% css_field_class %}">
                           <select name="source_module_id" class="form-control"
                                   data-bind="options: modules,
                                              optionsText: 'name',
@@ -85,10 +86,10 @@
                       </div>
                   </div>
                   <div class="form-group" data-bind="visible: selectedModule().forms().length">
-                      <label class="col-sm-2 control-label">
+                      <label class="{% css_label_class %} control-label">
                           {% trans "Include Forms" %}
                       </label>
-                      <div class="col-sm-4"
+                      <div class="{% css_field_class %}"
                            data-bind="template: {name: 'module-forms-template',
                                                  foreach: sourceForms()}"></div>
                       <div class="hidden">
@@ -107,10 +108,10 @@
 
               {% if add_ons.menu_mode %}
                   <div class="form-group">
-                      <label class="col-sm-2 control-label">
+                      <label class="{% css_label_class %} control-label">
                           {% trans "Menu Mode" %}
                       </label>
-                      <div class="col-sm-4">
+                      <div class="{% css_field_class %}">
                           <select type="text" name="put_in_root" class="form-control" id="put_in_root">
                               <option value="false">{% trans "Display menu and then forms" %}</option>
                               <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
@@ -124,13 +125,13 @@
 
               {% if app.grid_display_for_some_modules %}
               <div class="form-group" id="display_style_container">
-                  <label class="col-sm-2 control-label">
+                  <label class="{% css_label_class %} control-label">
                       {% trans "Display Style" %}
                       <span class="hq-help-template"
                             data-title="{% trans "Display Style" %}"
                             data-content="{% blocktrans %}Display this module's forms as a list or a grid. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Grid+View+for+Form+and+Module+Screens'>Help Site</a>.{% endblocktrans %}"></span>
                   </label>
-                  <div class="col-sm-4">
+                  <div class="{% css_field_class %}">
                       <select type="text" name="display_style" class="form-control">
                           <option value="list">{% trans "List" %}</option>
                           <option value="grid"{% if module.grid_display_style %} selected{% endif %}>
@@ -177,14 +178,14 @@
 
                         {% if module.doc_type == "AdvancedModule" %}
                             <div class="form-group">
-                                <label class="control-label col-sm-2">
+                                <label class="control-label {% css_label_class %}">
                                     {% trans "Auto Select Case" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Auto Select Case" %}"
                                           data-content="{% blocktrans %}When the case list contains only one case, skip over it, jumping directly to case details.{% endblocktrans %}"
                                     ></span>
                                 </label>
-                                <div id="auto-select-case" class="col-sm-4 checkbox commcare-feature" data-since-version="2.24">
+                                <div id="auto-select-case" class="{% css_field_class %} checkbox commcare-feature" data-since-version="2.24">
                                     <input type="checkbox" data-bind="checked: auto_select_case" />
                                     <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
                                 </div>

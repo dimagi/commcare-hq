@@ -4,16 +4,22 @@ import copy
 import datetime
 import logging
 
+from django.conf import settings
+
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, UCR_PROCESSING_CHUNK_SIZE
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.pillows.case_search import get_case_search_processor
+from corehq.pillows.reportcase import get_case_to_report_es_processor
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
@@ -39,15 +45,16 @@ def transform_case_for_elasticsearch(doc_dict):
 
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_processes=1,
                                      process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, topics.CASE_TOPICS)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, CASE_TOPICS)
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
     kafka_change_feed = KafkaChangeFeed(
-        topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
+        topics=CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -57,6 +64,60 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
+    )
+
+
+def get_case_pillow(
+        pillow_id='case-pillow', ucr_division=None,
+        include_ucrs=None, exclude_ucrs=None,
+        num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
+        processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
+    """
+    Return a pillow that processes cases. The processors include, UCR and elastic processors
+        Args:
+            skip_ucr: Can be set to True to avoid passing UCR processor, useful for tests
+    """
+    if topics:
+        assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"
+    topics = topics or CASE_TOPICS
+    change_feed = KafkaChangeFeed(
+        topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
+    )
+    ucr_processor = ConfigurableReportPillowProcessor(
+        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+    )
+    if ucr_configs:
+        ucr_processor.bootstrap(ucr_configs)
+    case_to_es_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=CASE_INDEX_INFO,
+        doc_prep_fn=transform_case_for_elasticsearch
+    )
+    case_search_processor = get_case_search_processor()
+
+    checkpoint_id = "{}-{}-{}".format(
+        pillow_id, CASE_INDEX_INFO.index, case_search_processor.index_info.index)
+    checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
+    event_handler = KafkaCheckpointEventHandler(
+        checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+        checkpoint_callback=ucr_processor
+    )
+    processors = [case_to_es_processor, case_search_processor]
+    if not settings.ENTERPRISE_MODE:
+        processors.append(get_case_to_report_es_processor())
+    if not skip_ucr:
+        # this option is useful in tests to avoid extra UCR setup where unneccessary
+        processors = [ucr_processor] + processors
+    return ConstructedPillow(
+        name=pillow_id,
+        change_feed=change_feed,
+        checkpoint=checkpoint,
+        change_processed_event_handler=event_handler,
+        processor=processors,
+        processor_chunk_size=processor_chunk_size
     )
 
 

@@ -71,3 +71,26 @@ SYNC_FLAT_FIXTURES = ('both_fixtures', 'only_flat_fixture')
 
 TARGET_COMMCARE = 'commcare'
 TARGET_COMMCARE_LTS = 'commcare_lts'
+
+WORKFLOW_DEFAULT = 'default'  # go to the app main screen
+WORKFLOW_ROOT = 'root'  # go to the module select screen
+WORKFLOW_PARENT_MODULE = 'parent_module'  # go to the parent module's screen
+WORKFLOW_MODULE = 'module'  # go to the current module's screen
+WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
+WORKFLOW_FORM = 'form'  # go straight to another form
+ALL_WORKFLOWS = [
+    WORKFLOW_DEFAULT,
+    WORKFLOW_ROOT,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_MODULE,
+    WORKFLOW_PREVIOUS,
+    WORKFLOW_FORM,
+]
+# allow all options as fallback except the one for form linking
+WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
+
+WORKFLOW_CASE_LIST = 'case_list'  # Return back to the caselist after registering a case
+REGISTRATION_FORM_WORFLOWS = [
+    WORKFLOW_DEFAULT,
+    WORKFLOW_CASE_LIST,
+]

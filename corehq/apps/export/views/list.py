@@ -75,12 +75,7 @@ from corehq.apps.export.dbaccessors import (
 )
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_ko_validation,
-)
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.permissions import (
     can_download_data_files,
@@ -110,7 +105,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     ''')
 
     @use_select2
-    @use_ko_validation
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
@@ -761,6 +755,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
 @require_GET
 @login_and_domain_required
+@location_safe
 def get_app_data_drilldown_values(request, domain):
     if json.loads(request.GET.get('is_deid')):
         raise Http404()
@@ -782,6 +777,7 @@ def get_app_data_drilldown_values(request, domain):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def submit_app_data_drilldown_form(request, domain):
     if json.loads(request.POST.get('is_deid')):
         raise Http404()

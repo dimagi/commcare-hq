@@ -1,15 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
+from django.http import JsonResponse
 from io import open
-from wsgiref.util import FileWrapper
 
 import json
 import logging
+import re
 from corehq.apps.reports.util import batch_qs
+from corehq.util.download import get_download_response
 from corehq.util.files import TransientTempfile
+from couchexport.export import Format
 
+from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.views import DishaIndicatorView
 from custom.icds_reports.models.helper import IcdsFile
@@ -29,7 +32,12 @@ class DishaDump(object):
         self.month = month
 
     def _blob_id(self):
-        return 'disha_dump-{}-{}.json'.format(self.state_name.encode('ascii', 'ignore').replace(" ", ""), self.month.strftime('%Y-%m-%d'))
+        # This will be the reference to the blob, if this is updated
+        #   attention should be paid to the old blobs whose references
+        #   might be lost.
+        # strip all non-alphanumeric chars
+        safe_state_name = re.sub('[^0-9a-zA-Z]+', '', self.state_name)
+        return 'disha_dump-{}-{}.json'.format(safe_state_name, self.month.strftime('%Y-%m-%d'))
 
     @memoized
     def _get_file_ref(self):
@@ -41,19 +49,12 @@ class DishaDump(object):
         else:
             return False
 
-    def get_export_as_http_response(self, stream=False):
+    def get_export_as_http_response(self, request):
         file_ref = self._get_file_ref()
         if file_ref:
             _file = file_ref.get_file_from_blobdb()
-            if stream:
-                response = StreamingHttpResponse(
-                    FileWrapper(_file),
-                    content_type='application/json'
-                )
-                response['Content-Length'] = file_ref.get_file_size()
-                return response
-            else:
-                return HttpResponse(_file.read(), content_type='application/json')
+            content_format = Format('', 'json', '', True)
+            return get_download_response(_file, file_ref.get_file_size(), content_format, self._blob_id(), request)
         else:
             return JsonResponse({"message": "Data is not updated for this month"})
 
@@ -99,7 +100,8 @@ class DishaDump(object):
             written_count += len(chunk)
             if written_count != total:
                 file_obj.write(",")
-            logger.info("Processed {count}/{total} batches".format(count=count, total=num_batches))
+            logger.info("Processed {count}/{batches} batches. Total records:{total}".format(
+                count=count, total=total, batches=num_batches))
         file_obj.write("]}")
 
     def build_export_json(self):
@@ -108,16 +110,15 @@ class DishaDump(object):
                 self._write_data_in_chunks(f)
                 f.seek(0)
                 blob_ref, _ = IcdsFile.objects.get_or_create(blob_id=self._blob_id(), data_type='disha_dumps')
-                blob_ref.store_file_in_blobdb(f, expired=1)
+                blob_ref.store_file_in_blobdb(f, expired=DISHA_DUMP_EXPIRY)
                 blob_ref.save()
 
 
 def build_dumps_for_month(month, rebuild=False):
-    states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
-
+    states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True)
     for state_name in states:
         dump = DishaDump(state_name, month)
-        if dump.export_exists() and not rebuild:
+        if not rebuild and dump.export_exists():
             logger.info("Skipping, export is already generated for state {}".format(state_name))
         else:
             logger.info("Generating for state {}".format(state_name))

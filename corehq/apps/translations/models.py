@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from django.contrib import admin
 from django.db import models
+from django.utils.functional import cached_property
 
 from dimagi.ext.couchdbkit import (
     Document,
@@ -12,6 +13,8 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch import CouchDocLockableMixIn
+
+from corehq.motech.utils import b64_aes_decrypt
 
 
 class TranslationMixin(Document):
@@ -116,14 +119,14 @@ Example: case detail for tasks_type would have entries:
 
 
 class TransifexBlacklist(models.Model):
-    """Used for removing case list and case detail translations before an
-    upload to Transifex.
+    """Used for removing case list and case detail translations before an upload to Transifex.
 
     Note that field_name is not sufficient to exclude properties as you can
     have two details in the same module that display the same information in a
     different way e.g. date of birth and age in years. display_text is used to
     determine which trnaslations to hold back from Transifex
     """
+
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=32)
     module_id = models.CharField(max_length=32)
@@ -141,4 +144,27 @@ class TransifexBlacklist(models.Model):
         "the field_type and field_name will be blacklisted")
 
 
-admin.site.register(TransifexBlacklist)
+class TransifexOrganization(models.Model):
+    slug = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    api_token = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name + ' (' + self.slug + ')'
+
+    @cached_property
+    def get_api_token(self):
+        return b64_aes_decrypt(self.api_token)
+
+
+class TransifexProject(models.Model):
+    organization = models.ForeignKey(TransifexOrganization)
+    slug = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name + ' (' + self.slug + ')'
+
+
+admin.site.register(TransifexProject)

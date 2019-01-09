@@ -62,13 +62,9 @@
                             <i class="fa fa-plus"></i> <strong>Add...</strong> to create
                             some menus.
                         {% case "missing module" %}
-                            {% blocktrans %}
-                            This application is missing a module. If you have deleted any modules recently, make sure that
-                            you have removed all references to them. If you continue to experience problems, please report an issue.
-                            {% endblocktrans %}
+                            {% include "app_manager/partials/module_error_message.html" %} references a missing menu.
                             {% if error.message %}
-                            <br/>{% trans "Details:" %}<br/>
-                            {{ error.message }}
+                                {% trans "Details:" %}
                             {% endif %}
                         {% case "no forms" %}
                             <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
@@ -267,6 +263,10 @@
                             One of your languages is empty. Check your <a href="{% url "view_app" domain app.id %}">app settings</a>.
                         {% case "missing parent tag" %}
                             A subcase is referencing a parent case tag that does not exist: "{{ error.case_tag }}"
+                            {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% case "missing relationship question" %}
+                            A subcase's index relationship with parent case tag "{{ error.case_tag }}" is determined by a question,
+                            but no question is specified.
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
                         {% case "subcase repeat context" %}
                             The subcase "{{ error.case_tag }}" is in a different repeat context to its parent "{{ error.parent_tag }}"

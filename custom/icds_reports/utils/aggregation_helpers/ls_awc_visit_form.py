@@ -24,15 +24,15 @@ class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-        state_id, supervisor_id, month, unique_awc_vists
+        state_id, supervisor_id, month, awc_visits
         ) (
             SELECT
             state_id,
             location_id as supervisor_id,
             %(start_date)s::DATE AS month,
-            count(distinct awc_id) as unique_awc_vists
+            count(*) as awc_visits
                 FROM "{ucr_tablename}"
-                WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
+                WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
                 AND location_entered is not null and location_entered <> ''
                 AND state_id=%(state_id)s
                 GROUP BY state_id,location_id

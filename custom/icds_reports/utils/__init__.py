@@ -6,7 +6,7 @@ import time
 import zipfile
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import wraps
 
 import operator
@@ -17,6 +17,8 @@ from base64 import b64encode
 from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
+from openpyxl import Workbook
 from xhtml2pdf import pisa
 
 from corehq import toggles
@@ -59,9 +61,9 @@ BLUE = '#006fdf'
 PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
-DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DEFAULT_VALUE = DATA_NOT_ENTERED
 DATA_NOT_VALID = "Data Not Valid"
 
 india_timezone = pytz.timezone('Asia/Kolkata')
@@ -373,17 +375,26 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
     return status if not exportable else status['value']
 
 
-def get_anamic_status(value):
+def is_anemic(value):
     if value['anemic_severe']:
         return 'Y'
     elif value['anemic_moderate']:
         return 'Y'
     elif value['anemic_normal']:
         return 'N'
-    elif value['anemic_unknown']:
-        return 'Unknown'
     else:
-        return 'Not entered'
+        return DATA_NOT_ENTERED
+
+
+def get_anemic_status(value):
+    if value['anemic_severe']:
+        return 'Severe'
+    elif value['anemic_moderate']:
+        return 'Moderate'
+    elif value['anemic_normal']:
+        return 'Normal'
+    else:
+        return DATA_NOT_ENTERED
 
 
 def get_symptoms(value):
@@ -420,19 +431,21 @@ def get_counseling(value):
     if counseling:
         return ', '.join(counseling)
     else:
-        return '--'
+        return 'None'
 
 
 def get_tt_dates(value):
     tt_dates = []
-    if value['tt_1']:
+    # ignore 1970-01-01 as that is default date for ledger dates
+    default = date(1970, 1, 1)
+    if value['tt_1'] and value['tt_1'] != default:
         tt_dates.append(str(value['tt_1']))
-    if value['tt_2']:
+    if value['tt_2'] and value['tt_2'] != default:
         tt_dates.append(str(value['tt_2']))
     if tt_dates:
         return '; '.join(tt_dates)
     else:
-        return '--'
+        return 'None'
 
 
 def current_age(dob, selected_date):
@@ -766,6 +779,10 @@ def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
 
 
+def format_decimal(num):
+    return "%.2f" % num
+
+
 def percent_or_not_entered(x, y):
     return percent(x, y) if y and x is not None else DATA_NOT_ENTERED
 
@@ -779,3 +796,149 @@ def india_now():
     utc_now = datetime.now(pytz.utc)
     india_now = utc_now.astimezone(india_timezone)
     return india_now.strftime("%H:%M:%S %d %B %Y")
+
+
+def day_suffix(day):
+    return 'th' if 11 <= day <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
+
+
+def custom_strftime(format_to_use, date_to_format):
+    # adds {S} option to strftime that formats day as 1st, 3rd, 11th etc.
+    return date_to_format.strftime(format_to_use).replace(
+        '{S}', str(date_to_format.day) + day_suffix(date_to_format.day)
+    )
+
+
+def create_aww_performance_excel_file(excel_data, data_type, month, state, district, block):
+    export_info = excel_data[1][1]
+    excel_data = [line[3:] for line in excel_data[0][1]]
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    warp_text_alignment = Alignment(wrap_text=True)
+    bold_font = Font(bold=True)
+    blue_fill = PatternFill("solid", fgColor="B3C5E5")
+    grey_fill = PatternFill("solid", fgColor="BFBFBF")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "AWW Performance Report"
+    worksheet.sheet_view.showGridLines = False
+    # sheet title
+    worksheet.merge_cells('B2:J2')
+    title_cell = worksheet['B2']
+    title_cell.fill = PatternFill("solid", fgColor="4472C4")
+    title_cell.value = "AWW Performance Report for the month of {}".format(month)
+    title_cell.font = Font(size=18, color="FFFFFF")
+    title_cell.alignment = Alignment(horizontal="center")
+
+    # sheet header
+    for cell in {"B3", "C3", "D3", "E3", "F3", "G3", "H3", "J3"}:
+        worksheet[cell].fill = blue_fill
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+    worksheet['B3'].value = "State:"
+    worksheet['C3'].value = state
+    worksheet['D3'].value = "District:"
+    worksheet['E3'].value = district
+    worksheet['F3'].value = "Block:"
+    worksheet['G3'].value = block
+    worksheet.merge_cells('H3:I3')
+    worksheet['H3'].value = "Date when downloaded:"
+    utc_now = datetime.now(pytz.utc)
+    now_in_india = utc_now.astimezone(india_timezone)
+    worksheet['J3'].value = custom_strftime('{S} %b %Y', now_in_india)
+
+    # table header
+    table_header_position_row = 5
+    table_header = {
+        'B': "S.No",
+        'C': "Supervisor",
+        'D': "AWC",
+        'E': "AWW Name",
+        'F': "AWW Contact Number",
+        'G': "Home Visits Conducted",
+        'H': "Number of Days AWC was Open",
+        'I': "Weighing Efficiency",
+        'J': "Eligible for Incentive",
+    }
+    for column, value in table_header.items():
+        cell = "{}{}".format(column, table_header_position_row)
+        worksheet[cell].fill = grey_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].value = value
+
+    # table contents
+    row_position = table_header_position_row + 1
+
+    for enum, row in enumerate(excel_data[1:], start=1):
+        columns = ["B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        for column_index in range(len(columns)):
+            column = columns[column_index]
+            cell = "{}{}".format(column, row_position)
+            worksheet[cell].border = thin_border
+            if column_index == 0:
+                worksheet[cell].value = enum
+            else:
+                worksheet[cell].value = row[column_index - 1]
+        row_position += 1
+
+    # sheet dimensions
+    title_row = worksheet.row_dimensions[2]
+    title_row.height = 23
+    worksheet.row_dimensions[table_header_position_row].height = 46
+    widths = {
+        'A': 4,
+        'B': 7,
+        'C': max(15, len(state) * 4 // 3),
+        'D': 13,
+        'E': max(12, len(district) * 4 // 3),
+        'F': 13,
+        'G': max(15, len(block) * 4 // 3),
+        'H': 11,
+        'I': 14,
+        'J': 14,
+    }
+    columns = ["C", "D", "E", "F", "G", "H", "I", "J"]
+    # column widths based on table contents
+    for column_index in range(len(columns)):
+        widths[columns[column_index]] = max(
+            widths[columns[column_index]],
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else six.text_type(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+        )
+
+    for column, width in widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    # export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    worksheet2['A1'].value = export_info[0][0]
+    worksheet2['B1'].value = export_info[0][1]
+    worksheet2['A2'].value = export_info[1][0]
+    worksheet2['B2'].value = export_info[1][1]
+    worksheet2['A3'].value = export_info[2][0]
+    worksheet2['B3'].value = export_info[2][1]
+    worksheet2['A4'].value = export_info[3][0]
+    worksheet2['B4'].value = export_info[3][1]
+    worksheet2['A4'].value = export_info[4][0]
+    worksheet2['B4'].value = export_info[4][1]
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
+import json
 import logging
 import mimetypes
 from datetime import datetime
@@ -140,7 +141,10 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
             else:
                 # this should only be files that had attachments deleted while the bug
                 # was in effect, so hopefully we will stop seeing it after a few days
-                logging.error('someone is uploading a file that should have existed for multimedia %s' % self._id)
+                soft_assert(notify_admins=True)(False, 'someone is uploading a file that should have existed for multimedia', {
+                    'media_id': self._id,
+                    'attachment_id': attachment_id
+                })
             self.put_attachment(
                 data,
                 attachment_id,
@@ -524,16 +528,19 @@ class ApplicationMediaReference(object):
         return self._get_name(self.form_name, lang=lang)
 
 
-def _log_media_deletion(app, map_item, path):
-    if app.domain in {'icds-cas', 'icds-test'}:
-        soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
-            False, "path deleted from multimedia map", {
-                'domain': app.domain,
-                'app_id': app._id,
-                'path': path,
-                'map_item': map_item.to_json()
-            }
-        )
+def _log_media_deletion(app, deleted_media):
+    # https://dimagi-dev.atlassian.net/browse/ICDS-2
+    formatted_media = [
+        {'path': path, 'map_item': map_item.to_json(), 'media': media.as_dict() if media else None}
+        for path, map_item, media in deleted_media
+    ]
+    soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
+        False, "path deleted from multimedia map", json.dumps({
+            'domain': app.domain,
+            'app_id': app._id,
+            'deleted_media': list(formatted_media),
+        }, indent=4)
+    )
 
 
 class HQMediaMixin(Document):
@@ -742,12 +749,19 @@ class HQMediaMixin(Document):
             return
         paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths() | self.logo_paths
+        deleted_media = []
+        allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
         for path in paths:
             if path not in permitted_paths:
-                map_changed = True
                 map_item = self.multimedia_map[path]
-                _log_media_deletion(self, map_item, path)
-                del self.multimedia_map[path]
+                deleted_media.append((path, map_item, None))
+                if allow_deletion:
+                    map_changed = True
+                    del self.multimedia_map[path]
+
+        if not allow_deletion and deleted_media:
+            _log_media_deletion(self, deleted_media)
+
         if map_changed:
             self.save()
 
@@ -786,6 +800,9 @@ class HQMediaMixin(Document):
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
+        all_media = {m.path: m for m in self.all_media()}
+        deleted_media = []
+        allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
         for path, map_item in list(self.multimedia_map.items()):
             if not filter_multimedia or not map_item.form_media or path in requested_media:
                 media_item = raw_docs.get(map_item.multimedia_id)
@@ -794,9 +811,14 @@ class HQMediaMixin(Document):
                     yield path, media_cls.wrap(media_item)
                 else:
                     # delete media reference from multimedia map so this doesn't pop up again!
-                    _log_media_deletion(self, map_item, path)
-                    del self.multimedia_map[path]
-                    found_missing_mm = True
+                    deleted_media.append((path, map_item, all_media.get(path)))
+                    if allow_deletion:
+                        del self.multimedia_map[path]
+                        found_missing_mm = True
+
+        if not allow_deletion and deleted_media:
+            _log_media_deletion(self, deleted_media)
+
         if found_missing_mm:
             self.save()
 

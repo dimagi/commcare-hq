@@ -54,13 +54,13 @@ class TestAdultWeightScale(TestCase):
         )
         self.assertDictEqual(
             data['data'],
-            {u'st4': {u'in_month': 0, u'original_name': [u'st4'], u'all': 0, u'fillKey': u'0%-25%'},
-             u'st5': {u'in_month': 0, u'original_name': [u'st5'], u'all': 0, u'fillKey': u'0%-25%'},
-             u'st6': {u'in_month': 0, u'original_name': [u'st6'], u'all': 0, u'fillKey': u'0%-25%'},
-             u'st7': {u'in_month': 0, u'original_name': [u'st7'], u'all': 0, u'fillKey': u'0%-25%'},
-             u'st1': {u'in_month': 5, u'original_name': [u'st1'], u'all': 17, u'fillKey': u'25%-75%'},
-             u'st2': {u'in_month': 4, u'original_name': [u'st2'], u'all': 13, u'fillKey': u'25%-75%'},
-             u'st3': {u'in_month': 0, u'original_name': [u'st3'], u'all': 0, u'fillKey': u'0%-25%'}
+            {'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+             'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+             'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+             'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'},
+             'st1': {'in_month': 5, 'original_name': ['st1'], 'all': 17, 'fillKey': '25%-75%'},
+             'st2': {'in_month': 4, 'original_name': ['st2'], 'all': 13, 'fillKey': '25%-75%'},
+             'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
              },
         )
 
@@ -230,28 +230,28 @@ class TestAdultWeightScale(TestCase):
                     }
                 ],
                 "top_five": [
-                    {'loc_name': u'st2', 'percent': 30.76923076923077},
-                    {'loc_name': u'st1', 'percent': 29.41176470588235},
-                    {'loc_name': u'st4', 'percent': 0.0},
-                    {'loc_name': u'st5', 'percent': 0.0},
-                    {'loc_name': u'st6', 'percent': 0.0}
+                    {'loc_name': 'st2', 'percent': 30.76923076923077},
+                    {'loc_name': 'st1', 'percent': 29.41176470588235},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "location_type": "State",
                 "all_locations": [
-                    {'loc_name': u'st2', 'percent': 30.76923076923077},
-                    {'loc_name': u'st1', 'percent': 29.41176470588235},
-                    {'loc_name': u'st4', 'percent': 0.0},
-                    {'loc_name': u'st5', 'percent': 0.0},
-                    {'loc_name': u'st6', 'percent': 0.0},
-                    {'loc_name': u'st7', 'percent': 0.0},
-                    {'loc_name': u'st3', 'percent': 0.0}
+                    {'loc_name': 'st2', 'percent': 30.76923076923077},
+                    {'loc_name': 'st1', 'percent': 29.41176470588235},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "bottom_five": [
-                    {'loc_name': u'st4', 'percent': 0.0},
-                    {'loc_name': u'st5', 'percent': 0.0},
-                    {'loc_name': u'st6', 'percent': 0.0},
-                    {'loc_name': u'st7', 'percent': 0.0},
-                    {'loc_name': u'st3', 'percent': 0.0}
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )

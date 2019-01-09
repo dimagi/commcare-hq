@@ -2,15 +2,16 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.const import AUTO_SELECT_RAW, AUTO_SELECT_CASE
-from corehq.apps.app_manager.models import (
-    FormLink,
+from corehq.apps.app_manager.const import (
+    AUTO_SELECT_RAW,
+    AUTO_SELECT_CASE,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PREVIOUS,
     WORKFLOW_ROOT,
     WORKFLOW_PARENT_MODULE,
-    FormDatum)
+)
+from corehq.apps.app_manager.models import FormDatum, FormLink
 from corehq.apps.app_manager.suite_xml.post_process.workflow import _replace_session_references_in_stack, CommandId
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory

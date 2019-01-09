@@ -22,6 +22,8 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
 from io import open
 
+from corehq.util.test_utils import softer_assert
+
 
 class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     file_path = ('data',)
@@ -290,6 +292,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         image = CommCareImage.get(self.image._id)
         self.assertIn(self.master_app_with_report_modules.domain, image.valid_domains)
 
+    @softer_assert()
     def test_fetch_missing_media(self):
         image_path = 'jr://file/commcare/case_list_image.jpg'
         self.master_app_with_report_modules.get_module(0).set_icon('en', image_path)

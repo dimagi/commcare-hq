@@ -140,8 +140,16 @@
                                     <label>{% trans "Relationship" %}</label>
                                     <select class="form-control"
                                             data-bind="options: $parent.relationshipTypes,
-                                                       optionsCaption: 'Child case or extension case?',
+                                                       optionsCaption: ' ',
                                                        value: relationship"></select>
+                                    <br />
+                                    <div data-bind="visible: relationship() === 'question'">
+                                        <select data-bind="
+                                            questionsSelect: $root.getQuestions('all', false, false),
+                                            value: relationship_question,
+                                            optionsCaption: ' ',
+                                        "></select>
+                                    </div>
                                     <br />
                                     <button class="btn btn-danger" data-bind="click: $parent.removeCaseIndex">
                                         <i class="fa fa-trash"></i>

@@ -66,7 +66,6 @@ def get_per_domain_context(project, request=None):
 
 def domain(request):
     """Global per-domain context variables"""
-
     project = getattr(request, 'project', None)
     return get_per_domain_context(project, request=request)
 
@@ -115,6 +114,19 @@ def js_api_keys(request):
     }
 
 
+def js_toggles(request):
+    if not getattr(request, 'couch_user', None):
+        return {}
+    if not getattr(request, 'project', None):
+        return {}
+    from corehq import toggles, feature_previews
+    domain = request.project.name
+    return {
+        'toggles_dict': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
+        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    }
+
+
 def websockets_override(request):
     # for some reason our proxy setup doesn't properly detect these things, so manually override them
     try:
@@ -148,21 +160,30 @@ def commcare_hq_names(request):
 def mobile_experience(request):
     show_mobile_ux_warning = False
     mobile_ux_cookie_name = ''
-    if (hasattr(request, 'couch_user')
-        and hasattr(request, 'user_agent')
-        and (settings.SERVER_ENVIRONMENT
-             in ['production', 'staging', 'localdev'])):
+    if (hasattr(request, 'couch_user') and
+            hasattr(request, 'user_agent') and
+            settings.SERVER_ENVIRONMENT in ['production', 'staging', 'localdev']):
         mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
         show_mobile_ux_warning = (
-            not request.COOKIES.get(mobile_ux_cookie_name)
-            and request.user_agent.is_mobile
-            and request.user.is_authenticated
-            and request.user.is_active
+            not request.COOKIES.get(mobile_ux_cookie_name) and
+            request.user_agent.is_mobile and
+            request.user.is_authenticated and
+            request.user.is_active and
+            not mobile_experience_hidden_by_toggle(request)
         )
     return {
         'show_mobile_ux_warning': show_mobile_ux_warning,
         'mobile_ux_cookie_name': mobile_ux_cookie_name,
     }
+
+
+def mobile_experience_hidden_by_toggle(request):
+    from corehq import toggles
+    user = request.couch_user
+    for project in user.domains:
+        if toggles.HIDE_HQ_ON_MOBILE_EXPERIENCE.enabled(project, toggles.NAMESPACE_DOMAIN):
+            return True
+    return False
 
 
 def get_demo(request):

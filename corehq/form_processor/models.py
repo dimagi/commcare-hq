@@ -84,6 +84,7 @@ class Attachment(IsImageMixin):
     name = attr.ib()
     raw_content = attr.ib(repr=False)
     content_type = attr.ib()
+    properties = attr.ib(default=None)
 
     def __attrs_post_init__(self):
         """This is necessary for case attachments
@@ -94,13 +95,14 @@ class Attachment(IsImageMixin):
         `write()` when case attachments are removed.
         """
         self.key = uuid.uuid4().hex
-        self.properties = {}
-        if self.is_image:
-            try:
-                img_size = Image.open(self.open()).size
-                self.properties.update(width=img_size[0], height=img_size[1])
-            except IOError:
-                self.content_type = 'application/octet-stream'
+        if self.properties is None:
+            self.properties = {}
+            if self.is_image:
+                try:
+                    img_size = Image.open(self.open()).size
+                    self.properties.update(width=img_size[0], height=img_size[1])
+                except IOError:
+                    self.content_type = 'application/octet-stream'
 
     @property
     @memoized
@@ -228,7 +230,7 @@ class AttachmentMixin(SaveStateMixin):
         """Copy attachments from the given xform"""
         existing_names = {a.name for a in self.attachments_list}
         self.attachments_list.extend(
-            Attachment(meta.name, meta, meta.content_type)
+            Attachment(meta.name, meta, meta.content_type, meta.properties)
             for meta in six.itervalues(xform.attachments)
             if meta.name not in existing_names
         )
@@ -552,19 +554,46 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         return self.get_attachment_meta('form.xml').content_md5()
 
     def archive(self, user_id=None):
+        # If this archive was initiated by a user, delete all other stubs for this action so that this action
+        # isn't overridden
         if self.is_archived:
             return
+        from couchforms.models import UnfinishedArchiveStub
+        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.archive_form(self, user_id=user_id)
-        xform_archived.send(sender="form_processor", xform=self)
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
+            FormAccessorSQL.archive_form(self, user_id)
+            archive_stub.archive_history_updated()
+            xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user_id=None):
+        # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
+        # isn't overridden
         if not self.is_archived:
             return
-
+        from couchforms.models import UnfinishedArchiveStub
+        UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.unarchive_form(self, user_id=user_id)
-        xform_unarchived.send(sender="form_processor", xform=self)
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
+            FormAccessorSQL.unarchive_form(self, user_id)
+            archive_stub.archive_history_updated()
+            xform_unarchived.send(sender="form_processor", xform=self)
+
+    def publish_archive_action_to_kafka(self, user_id, archive):
+        # Don't update the history, just send to kafka
+        from couchforms.models import UnfinishedArchiveStub
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        from corehq.form_processor.change_publishers import publish_form_saved
+        # Delete the original stub
+        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
+        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
+            if archive:
+                xform_archived.send(sender="form_processor", xform=self)
+            else:
+                xform_unarchived.send(sender="form_processor", xform=self)
+            publish_form_saved(self)
 
     def __unicode__(self):
         return (

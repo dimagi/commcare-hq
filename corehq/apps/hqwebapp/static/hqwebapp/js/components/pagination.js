@@ -1,10 +1,17 @@
-// Knockout Pagination Component
-// Include the <pagination> element on on your knockout page with the following parameters:
-// goToPage(page): a function that updates your view with new items for the given page.
-// perPage: a knockout observable that holds the number of items per page. This will be updated when the user changes the number of items using the dropdown. This should be used in your `goToPage` function to return the correct number of items.
-// totalItems: a knockout observable that returns the total number of items
-// See releases_table.html for an example.
-// This component must be nested within another element that has had knockout bindings applied to it.
+/**
+ *  Knockout Pagination Component
+ *
+ *  Include the <pagination> element on on your knockout page with the following parameters:
+ *      goToPage(page): A function that updates your view with new items for the given page.
+ *      perPage: A knockout observable that holds the number of items per page.
+ *          This will be updated when the user changes the number of items using the dropdown.
+ *          This should be used in your `goToPage` function to return the correct number of items.
+ *      totalItems: A knockout observable that returns the total number of items
+ *      inlinePageListOnly: Optional. True or false. If true, leave off the "Showing X to Y of Z entries"
+ *          text and the associated dropdown.
+ *
+ *  See releases_table.html for an example.
+ */
 
 hqDefine('hqwebapp/js/components/pagination', [
     'knockout',
@@ -32,15 +39,18 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.maxPagesShown = params.maxPagesShown || 9;
 
-            self.nextPage = function () {
-                self.goToPage(Math.min(self.currentPage() + 1, self.numPages()));
+            self.nextPage = function (model, e) {
+                self.goToPage(Math.min(self.currentPage() + 1, self.numPages()), e);
             };
-            self.previousPage = function () {
-                self.goToPage(Math.max(self.currentPage() - 1, 1));
+            self.previousPage = function (model, e) {
+                self.goToPage(Math.max(self.currentPage() - 1, 1), e);
             };
-            self.goToPage = function (page) {
+            self.goToPage = function (page, e) {
                 self.currentPage(page);
                 params.goToPage(self.currentPage());
+                if (e) {
+                    e.stopPropagation();
+                }
             };
             self.itemsShowing = ko.computed(function () {
                 return self.currentPage() * self.perPage();

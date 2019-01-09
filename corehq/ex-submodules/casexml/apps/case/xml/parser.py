@@ -74,6 +74,9 @@ class CaseActionBase(object):
         return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES.keys()
                     if getattr(self, p) is not None)
 
+    def __repr__(self):
+        return "CaseAction(block={})".format(self.raw_block)
+
     @classmethod
     def _from_block_and_mapping(cls, block, mapping):
         def _normalize(val):

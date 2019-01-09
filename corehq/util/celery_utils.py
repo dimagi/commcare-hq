@@ -1,11 +1,12 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep, time
 
 from celery import Celery, current_app
 from celery.backends.base import DisabledBackend
+from celery.schedules import crontab
 from celery.task import task
 from django.conf import settings
 import kombu.five
@@ -189,3 +190,24 @@ def get_running_workers(timeout=10):
         worker_names.extend(list(worker_info))
 
     return worker_names
+
+
+def deserialize_run_every_setting(run_every_setting):
+    generic_value_error = ValueError(
+        "A run_every setting has to be an int or a dict with a single key: "
+        "crontab or timedelta")
+    if isinstance(run_every_setting, six.integer_types):
+        return run_every_setting
+    elif isinstance(run_every_setting, dict):
+        if len(run_every_setting) != 1:
+            raise generic_value_error
+        key, params = list(run_every_setting.items())[0]
+        if key == 'crontab':
+            fn = crontab
+        elif key == 'timedelta':
+            fn = timedelta
+        else:
+            raise generic_value_error
+        return fn(**params)
+    else:
+        raise generic_value_error

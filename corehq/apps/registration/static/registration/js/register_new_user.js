@@ -2,37 +2,40 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
 
-    // Demo CTA test
-    hqImport("analytix/js/hubspot").then(function () {
+    $('#js-start-trial').click(function (e) {
+        e.preventDefault();
+        $('#registration-start-container').hide();
+        $('#registration-form-container').fadeIn();
 
-        var kissmetrics = hqImport('analytix/js/kissmetrix');
-        $("#test-cta-form-get-demo-button").click(function () {
-            kissmetrics.track.event("Body Get Demo CTA clicked");
-        });
-        $("#cta-form-get-demo-button").click(function () {
-            kissmetrics.track.event("Header Get Demo button clicked");
-        });
-        $(".hs_submit .hs-button").click(function () {
-            kissmetrics.track.event("Demo request sent");
-        });
+        $('#back-to-start-btn').removeClass('hide');
+    });
 
+    $('#back-to-start-btn').click(function () {
+        $('#registration-form-container').hide();
+        $('#registration-start-container').fadeIn();
+    });
 
-        $("#cta-form-get-demo-button-new-body").click(function () {
-            kissmetrics.track.event("Body Get Demo CTA clicked (new)");
-        });
+    $('.view-features').click(function (e) {
+        e.preventDefault();
 
-        $("#cta-form-get-demo-button-drift-body").click(function () {
-            kissmetrics.track.event("Body Get Demo CTA clicked (drift)");
-        });
+        $('.tile-wrapper').addClass('show-features');
+    });
 
-        $("#cta-form-get-demo-button-new").click(function () {
-            kissmetrics.track.event("Header Get Demo button clicked (new form)");
-        });
+    var kissmetrics = hqImport('analytix/js/kissmetrix');
+    kissmetrics.whenReadyAlways(function () {
 
-        $("#cta-form-get-demo-button-drift").click(function () {
-            kissmetrics.track.event("Header Get Demo button clicked (drift)");
+        $('#js-start-trial').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked start trial");
         });
 
+        $('#js-get-tour').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked get a tour");
+            kissmetrics.track.event("Demo Workflow - Get A Tour Button Clicked (new UX)");
+        });
+
+        $('#start-chat-cta-btn').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked start chat");
+        });
     });
 
     // Link up with registration form ko model

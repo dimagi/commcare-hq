@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 
 <div data-bind="with: filter">
@@ -13,7 +14,7 @@
     <div data-bind="visible: showing">
         <form class="form-horizontal">
             <div class="form-group">
-                <label class="control-label col-sm-2">
+                <label class="control-label {% css_label_class %}">
                     {% trans "Filter" %}
                     <span class="hq-help-template"
                         data-title="{% trans "Filter" %}"
@@ -31,14 +32,14 @@
                         {% endblocktrans %}"
                     ></span>
                 </label>
-                <div class="col-sm-4">
+                <div class="{% css_field_class %}">
                     <textarea placeholder="Filter expression" class="ui-autocomplete-input form-control vertical-resize"
                            data-bind="value: filterText"
                     ></textarea>
-                </div>
-                <div class="col-sm-1">
+                    <br>
                     <button class="btn btn-danger" data-bind="click: function(data){showing(false);}">
                         <i class="fa fa-remove"></i>
+                        {% trans "Remove filter" %}
                     </button>
                 </div>
             </div>
