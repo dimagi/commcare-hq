@@ -2580,11 +2580,13 @@ class StockExportColumn(ExportColumn):
             return product_id
 
     def get_headers(self, **kwargs):
-        for product_id, section in self._column_tuples:
-            yield "{product} ({section})".format(
+        return [
+            "{product} ({section})".format(
                 product=self._get_product_name(product_id),
                 section=section
             )
+            for product_id, section in self._column_tuples
+        ]
 
     def get_value(self, domain, doc_id, doc, base_path, **kwargs):
         states = self.accessor.get_ledger_values_for_case(doc_id)
