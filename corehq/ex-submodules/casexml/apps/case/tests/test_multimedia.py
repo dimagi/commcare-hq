@@ -90,7 +90,8 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
 
     def _do_submit(self, xml_data, dict_attachments, sync_token=None, date=None):
         """
-        RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
+        RequestFactory submitter - simulates direct submission to server
+        directly (no need to call process case after fact)
         """
         with flag_enabled('MM_CASE_PROPERTIES'):
             result = submit_form_locally(
