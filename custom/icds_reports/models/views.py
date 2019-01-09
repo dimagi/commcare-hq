@@ -836,7 +836,7 @@ class AwcLocationMonths(models.Model):
 
 
 class DishaIndicatorView(models.Model):
-    block_id = models.TextField(blank=True, null=True)
+    block_id = models.TextField(primary_key=True)
     block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)
     district_name = models.TextField(blank=True, null=True)

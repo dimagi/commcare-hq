@@ -11,7 +11,12 @@ describe('Navigation Directive', function () {
     var $rootScope, $compile, $httpBackend, controller;
 
     var myScope;
-    beforeEach(module('icdsApp'));
+
+    beforeEach(module('icdsApp', function ($provide) {
+        $provide.constant("stateLevelAccess", false);
+        $provide.constant("haveAccessToAllLocations", false);
+        $provide.constant("haveAccessToFeatures", false);
+    }));
 
     beforeEach(inject(function (_$rootScope_, _$compile_, _$httpBackend_) {
         $compile = _$compile_;

@@ -5,7 +5,7 @@ from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.html import format_html
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.app_manager.models import validate_property
+from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS

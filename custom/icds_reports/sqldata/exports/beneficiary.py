@@ -12,7 +12,7 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import get_status, calculate_date_for_age, \
     current_month_stunting_column, \
-    current_month_wasting_column, ICDSDatabaseColumn, format_decimal
+    current_month_wasting_column, ICDSDatabaseColumn, format_decimal, DATA_NOT_ENTERED
 
 
 class BeneficiaryExport(ExportableMixin, SqlData):
@@ -81,7 +81,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         selected_month = self.config['month']
 
         def test_fucntion(x):
-            return format_decimal(x) if x else "Data Not Entered"
+            return format_decimal(x) if x else DATA_NOT_ENTERED
 
         def phone_number_fucntion(x):
             return "'{}".format(x) if x else x

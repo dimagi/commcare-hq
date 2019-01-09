@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, date
 from functools import partial
 import itertools
 import json
-from wsgiref.util import FileWrapper
 import csv
 
 from corehq.util.download import get_download_response
@@ -33,13 +32,10 @@ from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 import langcodes
-import os
 import pytz
 import re
 import io
-import tempfile
 from six.moves import zip
-from six.moves.urllib.error import URLError
 
 from django.conf import settings
 from django.contrib import messages
@@ -53,7 +49,6 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
-    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -71,8 +66,6 @@ from django.views.generic.base import TemplateView
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
-from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
@@ -100,8 +93,6 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -112,7 +103,6 @@ from dimagi.utils.parsing import (json_format_datetime, string_to_boolean,
 from dimagi.utils.web import json_request, json_response
 from django_prbac.utils import has_privilege
 from soil import DownloadBase
-from soil.tasks import prepare_download
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
@@ -135,10 +125,7 @@ from corehq.apps.export.models import CaseExportDataSchema
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqcase.utils import submit_case_blocks, EDIT_FORM_XMLNS
-from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
     location_restricted_exception, user_can_access_case
 from corehq.apps.products.models import SQLProduct
@@ -146,7 +133,6 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.apps.reports.util import validate_xform_for_edit
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.export import export_users
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -154,8 +140,6 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.util.couch import get_document_or_404
-from corehq.util.files import safe_filename_header
-from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import (
     absolute_reverse,
@@ -169,7 +153,6 @@ from .dispatcher import ProjectReportDispatcher
 from .export import (
     ApplicationBulkExportHelper,
     CustomBulkExportHelper,
-    save_metadata_export_to_tempfile,
 )
 from .exportfilters import default_form_filter
 from .filters.users import UserTypeFilter
@@ -185,13 +168,11 @@ from .standard import inspect, ProjectReport
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
-    create_metadata_export,
     rebuild_export_async,
     send_delayed_report,
 )
 from .util import (
     create_export_filter,
-    get_all_users_by_domain,
     get_group,
     group_filter,
     users_matching_filter,
@@ -208,7 +189,6 @@ from corehq.apps.hqwebapp.decorators import (
 import six
 from six.moves import range
 from no_exceptions.exceptions import Http403
-from io import open
 
 
 # Number of columns in case property history popup
@@ -672,50 +652,6 @@ def _download_saved_export(req, domain, saved_export):
 def should_update_export(last_accessed):
     cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
     return not last_accessed or last_accessed < cutoff
-
-
-@login_or_digest
-@require_form_export_permission
-@require_GET
-def export_all_form_metadata(req, domain):
-    """
-    Export metadata for _all_ forms in a domain.
-    """
-    format = req.GET.get("format", Format.XLS_2007)
-    tmp_path = save_metadata_export_to_tempfile(domain, format=format)
-
-    return export_response(open(tmp_path, 'rb'), format, "%s_forms" % domain)
-
-
-@login_or_digest
-@require_form_export_permission
-@require_GET
-@datespan_in_request(from_param="startdate", to_param="enddate")
-def export_all_form_metadata_async(req, domain):
-    datespan = req.datespan if req.GET.get("startdate") and req.GET.get("enddate") else None
-    group_id = req.GET.get("group")
-    ufilter =  UserTypeFilter.get_user_filter(req)[0]
-    users = get_all_users_by_domain(
-        domain=domain,
-        group=group_id,
-        user_filter=ufilter,
-        simplified=True,
-        include_inactive=True
-    )
-    user_ids = [_f for _f in [u["user_id"] for u in users] if _f]
-    format = req.GET.get("format", Format.XLS_2007)
-    filename = "%s_forms" % domain
-
-    download = DownloadBase()
-    download.set_task(create_metadata_export.delay(
-        download.download_id,
-        domain,
-        format=format,
-        filename=filename,
-        datespan=datespan,
-        user_ids=user_ids,
-    ))
-    return download.get_start_response()
 
 
 def touch_saved_reports_views(user, domain):
@@ -1709,107 +1645,6 @@ def export_case_transactions(request, domain, case_id):
     tmp = io.StringIO()
     export_from_tables(formatted_table, tmp, 'xlsx')
     return export_response(tmp, 'xlsx', '{}-stock-transactions'.format(case.name))
-
-
-def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
-    """
-    Returns a FileWrapper object, which only the file backend in django-soil supports
-
-    """
-    status = 'all' if include_closed else 'open'
-    if include_closed:
-        case_ids = get_case_ids_in_domain(domain)
-    else:
-        case_ids = get_open_case_ids_in_domain(domain)
-
-    class stream_cases(object):
-
-        def __init__(self, all_case_ids):
-            self.all_case_ids = all_case_ids
-
-        def __iter__(self):
-            for case_ids in chunked(self.all_case_ids, 500):
-                for case in wrapped_docs(CommCareCase, case_ids):
-                    yield case
-
-        def __len__(self):
-            return len(self.all_case_ids)
-
-    # todo deal with cached user dict here
-    group = Group.get(group) if group else None
-    users = get_all_users_by_domain(
-        domain,
-        group=group,
-        user_filter=user_filter,
-        include_inactive=True
-    )
-    groups = Group.get_case_sharing_groups(domain)
-
-    fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as file:
-        workbook = WorkBook(file, format)
-        export_cases(
-            domain,
-            stream_cases(case_ids),
-            workbook,
-            filter_group=group,
-            users=users,
-            all_groups=groups,
-            process=process
-        )
-        export_users(users, workbook)
-        workbook.close()
-    return FileWrapper(open(path, 'rb'))
-
-
-@requires_privilege_json_response(privileges.API_ACCESS)
-def download_cases(request, domain):
-    return download_cases_internal(request, domain)
-
-
-@login_or_digest
-@require_case_export_permission
-@require_GET
-def download_cases_internal(request, domain):
-    """
-    bypass api access checks to allow internal use
-    """
-    include_closed = json.loads(request.GET.get('include_closed', 'false'))
-    try:
-        format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
-    except URLError as e:
-        return HttpResponseBadRequest(e.reason)
-    group = request.GET.get('group', None)
-    user_filter, _ = UserTypeFilter.get_user_filter(request)
-
-    async = request.GET.get('async') == 'true'
-
-    kwargs = {
-        'domain': domain,
-        'include_closed': include_closed,
-        'format': format,
-        'group': group,
-        'user_filter': user_filter,
-    }
-    payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
-    content_disposition = 'attachment; filename="{domain}_data.{ext}"'.format(domain=domain, ext=format.extension)
-    content_type = "%s" % format.mimetype
-
-    def generate_payload(payload_func):
-        if async:
-            download = DownloadBase()
-            a_task = prepare_download.delay(download.download_id, payload_func,
-                                            content_disposition, content_type)
-            download.set_task(a_task)
-            return download.get_start_response()
-        else:
-            payload = payload_func()
-            response = HttpResponse(payload)
-            response['Content-Type'] = content_type
-            response['Content-Disposition'] = content_disposition
-            return response
-
-    return generate_payload(payload_func)
 
 
 def _get_form_context(request, domain, instance):
