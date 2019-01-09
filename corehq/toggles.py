@@ -1689,9 +1689,19 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 )
 
 
+SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
+    'set_scheduled_report_start_date',
+    'Allow users to set an effective start date for scheduled reports.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
+)
+
+
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
