@@ -138,8 +138,10 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         page = int(self.request.GET.get('page', 1))
         size = int(self.request.GET.get('page_limit', DEFAULT_PAGE_LIMIT))
         start = size * (page - 1)
+        # some options have an extra is_active field
         count, options = paginate_options(self.data_sources, self.q, start, size)
-        return count, [{'id': id_, 'text': text} for id_, text in options]
+        return count, [{'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
+                       {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in options]
 
     def get_static_options_size(self, query):
         return len(self.get_all_static_options(query))
@@ -185,6 +187,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
                 self.request.domain, self.request.couch_user)
             users = users.location(accessible_location_ids)
+            # this returns 3 things now
         return [self.utils.user_tuple(u) for u in users.run().hits]
 
     def get_all_users_size(self, query):
@@ -341,6 +344,7 @@ def paginate_options(data_sources, query, start, size):
     # Note this is pretty confusing, check TestEmwfPagination for reference
     options = []
     total = 0
+    # for _, _ is returning both items in the tuple. get_objects has an is_active field (sometimes)
     for get_size, get_objects in data_sources:
         count = get_size(query)
         total += count
@@ -350,9 +354,11 @@ def paginate_options(data_sources, query, start, size):
             continue
 
         # return a page of objects
+        # the result of get_objects() has an is_active in it now
         objects = list(get_objects(query, start, size))
         start = 0
         size -= len(objects)  # how many more do we need for this page?
+        # so each item in options has an extra is_active in it
         options.extend(objects)
     return total, options
 
