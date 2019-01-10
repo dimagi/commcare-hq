@@ -4418,17 +4418,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def is_remote_app(self):
         return False
 
-    def get_latest_app(self, released_only=True):
-        if released_only:
-            return get_app(self.domain, self.get_id, latest=True)
-        else:
-            return self.view('app_manager/applications',
-                startkey=[self.domain, self.get_id, {}],
-                endkey=[self.domain, self.get_id],
-                include_docs=True,
-                limit=1,
-                descending=True,
-            ).first()
+    @memoized
+    def get_previous_version(self):
+        return self.view('app_manager/applications',
+            startkey=[self.domain, self.master_id, {}],
+            endkey=[self.domain, self.master_id],
+            include_docs=True,
+            limit=1,
+            descending=True,
+        ).first()
 
     @memoized
     def get_latest_saved(self):
@@ -4712,18 +4710,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.get_jadjar().fetch_jar()
 
     @time_method()
-    def make_build(self, comment=None, user_id=None, previous_version=None):
+    def make_build(self, comment=None, user_id=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        force_new_forms = False
-        if previous_version and self.build_profiles != previous_version.build_profiles:
-            force_new_forms = True
-        copy.set_form_versions(previous_version, force_new_forms)
-        copy.set_media_versions(previous_version)
         copy.create_build_files()
 
         # since this hard to put in a test
@@ -4789,11 +4782,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     bulk_save = save_docs
 
-    def set_form_versions(self, previous_version, force_new_version=False):
+    def set_form_versions(self):
         # by default doing nothing here is fine.
         pass
 
-    def set_media_versions(self, previous_version):
+    def set_media_versions(self):
         pass
 
     def update_mm_map(self):
@@ -4967,7 +4960,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform(build_profile_id).encode('utf-8')
 
-    def set_form_versions(self, previous_version, force_new_version=False):
+    def set_form_versions(self):
         """
         Set the 'version' property on each form as follows to the current app version if the form is new
         or has changed since the last build. Otherwise set it to the version from the last build.
@@ -4975,7 +4968,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
+        previous_version = self.get_previous_version()
         if previous_version:
+            force_new_version = self.build_profiles != previous_version.build_profiles
             for form_stuff in self.get_forms(bare=False):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
@@ -5000,7 +4995,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 else:
                     form.version = None
 
-    def set_media_versions(self, previous_version):
+    def set_media_versions(self):
         """
         Set the media version numbers for all media in the app to the current app version
         if the media is new or has changed since the last build. Otherwise set it to the
@@ -5008,6 +5003,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
 
         # access to .multimedia_map is slow
+        previous_version = self.get_previous_version()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
@@ -5244,7 +5240,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return files
 
     @time_method()
+    @memoized
     def create_all_files(self, build_profile_id=None):
+        self.set_form_versions()
+        self.set_media_versions()
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
             '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),

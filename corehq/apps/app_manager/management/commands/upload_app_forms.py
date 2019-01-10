@@ -73,7 +73,6 @@ class Command(BaseCommand):
             copy = app.make_build(
                 comment=comment,
                 user_id=user._id,
-                previous_version=app.get_latest_app(released_only=False),
             )
             copy.is_released = True
             copy.save(increment_version=False)
