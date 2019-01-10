@@ -165,11 +165,9 @@ class ScheduledReportForm(forms.Form):
                         css_class='input-xlarge',
                     ),
                     crispy.Field(
-                        ugettext("Send Options"),
                         'send_to_owner'
                     ),
                     crispy.Field(
-                        ugettext("Excel Attachment"),
                         'attach_excel'
                     ),
                     'recipient_emails',
