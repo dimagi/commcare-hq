@@ -204,7 +204,7 @@ def download_multimedia_paths(request, domain, app_id):
     from corehq.apps.hqmedia.view_helpers import download_multimedia_paths_rows
     app = get_app(domain, app_id)
 
-    headers = ((_("Paths"), (_("Path in Application"), _("Usages"))),)
+    headers = ((_("Paths"), (_("Old Path"), _("New Path"), _("Usages"))),)
     rows = download_multimedia_paths_rows(app)
 
     temp = io.BytesIO()
@@ -218,7 +218,7 @@ def download_multimedia_paths(request, domain, app_id):
 @toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
 @require_can_edit_apps
 @require_POST
-def validate_multimedia_paths(request, domain, app_id):
+def update_multimedia_paths(request, domain, app_id):
     if not request.FILES:
         return json_response({
             'error': _("Please choose an Excel file to import.")
@@ -244,36 +244,47 @@ def validate_multimedia_paths(request, domain, app_id):
             'error': _("File does not appear to be an Excel file. Please choose another file.")
         })
 
-    from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows
     app = get_app(domain, app_id)
+    from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+    from corehq.apps.hqmedia.view_helpers import validate_multimedia_paths_rows, update_multimedia_paths
+
+    # Get rows, filtering out header, no-ops, and any extra "Usages" columns
+    rows = []
     with get_spreadsheet(f) as spreadsheet:
-        (errors, warnings) = validate_multimedia_paths_rows(app, spreadsheet.iter_rows())
+        for row in list(spreadsheet.iter_rows())[1:]:
+            if row[1]:
+                rows.append(row[:2])
 
-    return json_response({
-        'success': 1,
-        'file_id': file_id,
-        'errors': errors,
-        'warnings': warnings,
-    })
-
-
-@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
-@require_can_edit_apps
-@require_POST
-def update_multimedia_paths(request, domain, app_id):
-    file_id = request.POST.get('file_id')
-
-    f = transient_file_store.get_tempfile_ref_for_contents(file_id)
-
-    if not f:
+    (errors, warnings) = validate_multimedia_paths_rows(app, rows)
+    if len(errors):
         return json_response({
-            'error': _("Could not find file. Please re-upload file.")
+            'complete': 1,
+            'errors': errors,
         })
 
-    # TODO: update paths
+    paths = {
+        row[0]: interpolate_media_path(row[1]) for row in rows if row[1]
+    }
+    successes = update_multimedia_paths(app, paths)
+    app.save()
+
+    # Force all_media to reset
+    app.all_media.reset_cache(app)
+    app.all_media_paths.reset_cache(app)
+
+    # Warn if any old paths remain in app (because they're used in a place this function doesn't know about)
+    warnings = []
+    app.remove_unused_mappings()
+    app_paths = {m.path: True for m in app.all_media()}
+    for old_path, new_path in six.iteritems(paths):
+        if old_path in app_paths:
+            warnings.append(_("Could not completely update path <code>{}</code>, "
+                              "please check app for remaining references.").format(old_path))
 
     return json_response({
-        'success': 1,
+        'complete': 1,
+        'successes': successes,
+        'warnings': warnings,
     })
 
 
