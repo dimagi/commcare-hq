@@ -2327,7 +2327,9 @@ class MultiMediaExportColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
         value = super(MultiMediaExportColumn, self).get_value(domain, doc_id, doc, base_path, **kwargs)
 
-        if not value or value == MISSING_VALUE:
+        if (not value
+                or value == MISSING_VALUE
+                or value not in doc.get('external_blobs', {})):
             return value
 
         download_url = absolute_reverse('api_form_attachment', args=(domain, doc_id, value))
