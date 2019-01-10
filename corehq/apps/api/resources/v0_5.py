@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.forms import ValidationError
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
@@ -21,6 +21,8 @@ from tastypie.bundle import Bundle
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
+from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
@@ -930,3 +932,27 @@ class DomainUsernames(Resource):
         results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1]))
                    for user_pair in user_ids_username_pairs]
         return results
+
+
+ODATA_CASE_RESOURCE_NAME = 'Cases'
+
+
+class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
+
+    def determine_format(self, request):
+        # json only
+        return 'application/json'
+
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        # populate the domain which is required by the serializer
+        data['domain'] = request.domain
+        data['resource_name'] = ODATA_CASE_RESOURCE_NAME
+        data['api_path'] = request.path
+        response = super(ODataCommCareCaseResource, self).create_response(request, data, response_class,
+                                                                          **response_kwargs)
+        # adds required odata headers to the returned response
+        return add_odata_headers(response)
+
+    class Meta(v0_4.CommCareCaseResource.Meta):
+        resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
+        serializer = ODataCommCareCaseSerializer()
