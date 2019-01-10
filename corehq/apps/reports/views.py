@@ -184,6 +184,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_select2_v4,
     use_datatables,
     use_multiselect,
+    use_jquery_ui
 )
 import six
 from six.moves import range
@@ -833,6 +834,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
     @use_multiselect
     @use_select2_v4
+    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
 
@@ -940,9 +942,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 web_user_emails = [email] + web_user_emails
 
         from corehq.apps.reports.forms import ScheduledReportForm
+        enable_start_date = toggles.SET_SCHEDULED_REPORT_START_DATE.enabled(kwargs['initial']['domain'])
         form = ScheduledReportForm(*args, **kwargs)
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
+        form.fields['start_date'].disabled = not enable_start_date
 
         form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
