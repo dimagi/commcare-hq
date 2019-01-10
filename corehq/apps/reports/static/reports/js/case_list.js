@@ -9,8 +9,14 @@ hqDefine("reports/js/case_list", ['jquery', 'analytix/js/kissmetrix', 'hqwebapp/
                 $(document).on('click', '#apply-filters', function () {
                     kissAnalytics.track.event("[Case List Report] Clicked Apply",
                         {"filters": _.map($("#paramSelectorForm input[name='case_list_filter']").val().split(','),
-                            function (item) {
+                            function (item, index) {
                                 if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
+                                else if (item.substring(0,3) === "u__") {
+                                    if ($("input[name='case_list_filter']").select2("data")[index].is_active)
+                                    {return item + " [Active]"}
+                                    else
+                                    {return item + " [Deactivated]"}
+                                }
                                 else { return item; }
                             }
                         ).join()}
