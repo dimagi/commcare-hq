@@ -4,11 +4,6 @@ from __future__ import division
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
-import sqlalchemy
-from sqlalchemy.sql import select, func, case
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
-from corehq.apps.userreports.util import get_table_name
-from datetime import datetime
 
 from custom.icds_reports.models.helper import IcdsFile
 
@@ -40,4 +35,7 @@ def get_cas_data_blob_file(indicator, location, date):
         location,
         date
     )
-    return IcdsFile.objects.get(blob_id=blob_id)
+    try:
+        return IcdsFile.objects.get(blob_id=blob_id), blob_id
+    except IcdsFile.DoesNotExist:
+        return None, None

@@ -6,6 +6,8 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
+import zipfile
+from io import BytesIO
 
 from datetime import datetime, date
 from celery.result import AsyncResult
@@ -16,7 +18,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+from corehq.util.view_utils import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
 
@@ -1729,17 +1731,43 @@ class DishaAPIView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
-
         data_type = int(request.POST.get('indicator', None))
-        state_id = request.POST.get('location', None)
+        state_id = "9951736acfe54c68948225cc05fbbd63"
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
-        sync = get_cas_data_blob_file(data_type, state_id, selected_date)
+        sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
+        if not sync:
+            return JsonResponse({"message": "Export not exists."})
+        else:
+            params = dict(
+                indicator=data_type,
+                location=state_id,
+                month=month,
+                year=year
+            )
+            return JsonResponse(
+                {"report_link": reverse('cas_export', params=params, absolute=True, kwargs={'domain': self.kwargs['domain']})}
+            )
+
+    def get(self, request, *args, **kwargs):
+        data_type = int(request.GET.get('indicator', None))
+        state_id = request.GET.get('location', None)
+        month = int(request.GET.get('month', None))
+        year = int(request.GET.get('year', None))
+        selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+
+        sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
 
         zip_name = 'cas_data_%s' % sync.file_added.strftime('%Y-%m-%d')
         try:
-            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+            output = BytesIO()
+            f = zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED)
+            f.writestr('{}.csv'.format(blob_id), sync.get_file_from_blobdb().read())
+            f.close()
+            resp = HttpResponse(output.getvalue())
+            resp['Content-Disposition'] = 'attachment;filename={}.zip'.format(zip_name)
+            return resp
         except NotFound:
             raise Http404

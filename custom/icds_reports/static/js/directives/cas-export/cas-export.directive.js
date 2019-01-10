@@ -1,9 +1,7 @@
 /* global moment */
 
-function CasExportController($rootScope, $location, locationHierarchy, locationsService, userLocationId) {
+function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId) {
     var vm = this;
-
-    $rootScope.report_link = '';
 
     vm.months = [];
     vm.monthsCopy = [];
@@ -75,8 +73,7 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
     };
 
     vm.onSelectYear = function (year) {
-        var date = new Date();
-        var latest = date;
+        var latest = new Date();
         if (year.id > latest.getFullYear()) {
             vm.years =  _.filter(vm.yearsCopy, function (y) {
                 return y.id <= latest.getFullYear();
@@ -98,10 +95,29 @@ function CasExportController($rootScope, $location, locationHierarchy, locations
             vm.months = vm.monthsCopy;
         }
     };
+    vm.message = false;
+
+    vm.submitForm = function(csrfToken) {
+        vm.message = false;
+        var taskConfig = {
+            'csrfmiddlewaretoken': csrfToken,
+            'location': vm.selectedLocation,
+            'month': vm.selectedMonth,
+            'year': vm.selectedYear,
+            'indicator': vm.selectedIndicator,
+        };
+        downloadService.downloadCasData(taskConfig).then(function(data) {
+            if (data.message) {
+                vm.message = true;
+            } else {
+                $window.open(data.report_link);
+            }
+        });
+    };
 
 }
 
-CasExportController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
+CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("casExport", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
