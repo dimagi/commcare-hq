@@ -284,11 +284,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                     self._selected_user_entries(selected_ids) +
                     self._selected_group_entries(selected_ids) +
                     self._selected_location_entries(selected_ids))
-        known_ids = dict(selected)
         return [
-            {'id': id, 'text': known_ids[id]}
-            for id in selected_ids
-            if id in known_ids
+            {'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
+            {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in selected
         ]
 
     def selected_static_options(self, mobile_user_and_group_slugs):
