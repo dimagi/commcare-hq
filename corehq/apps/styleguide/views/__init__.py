@@ -326,7 +326,6 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
             'organisms/intro',
             'organisms/forms',
             'organisms/tables',
-            'organisms/views',
         ]
 
     @property
@@ -338,5 +337,29 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
                 'error_form': self.example('error_form.html'),
                 'basic_table': self.example('basic_table.html'),
                 'complex_table': self.example('complex_table.html'),
+            },
+        }
+
+
+class PagesStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_pages'
+    navigation_name = 'pages'
+
+    @property
+    def sections(self):
+        return [
+            'pages/intro',
+            'pages/navigation',
+            'pages/class_based',
+            'pages/functional',
+        ]
+
+    @property
+    def page_context(self):
+        return {
+            'examples': {
+                'header': self.example('header.html'),
+                'panels': self.example('panels.html'),
+                'tabs': self.example('tabs.html'),
             },
         }
