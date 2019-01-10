@@ -579,13 +579,16 @@ class MediaMixin(object):
         return set([m.path for m in self.all_media()])
 
     @memoized
-    def get_all_paths_of_type(self, media_class_name):
-        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_class_name])
+    def get_all_paths_of_type(self, media_type):
+        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_type])
 
     def menu_media(self, menu):
         """
             Convenience method. Gets the ApplicationMediaReference for a menu that's
             associated with this MediaMixin (which may be self or a different attribute)
+
+            Note that "menu" may refer to any object that implements NavMenuItemMediaMixin,
+            like a module or a form.
         """
         kwargs = self.get_media_ref_kwargs()
         media = []
@@ -628,9 +631,11 @@ class ModuleMediaMixin(MediaMixin):
 
         media.extend(self.menu_media(self))
 
+        # Registration from case list
         if self.case_list_form.form_id:
             media.extend(self.menu_media(self.case_list_form))
 
+        # Case list menu item
         if hasattr(self, 'case_list') and self.case_list.show:
             media.extend(self.menu_media(self.case_list))
 
@@ -661,9 +666,11 @@ class ModuleMediaMixin(MediaMixin):
 
         count += self.rename_menu_media(self, old_path, new_path)
 
+        # Registration from case list
         if self.case_list_form.form_id:
             count += self.rename_menu_media(self.case_list_form, old_path, new_path)
 
+        # Case list menu item
         if hasattr(self, 'case_list') and self.case_list.show:
             count += self.rename_menu_media(self.case_list, old_path, new_path)
 
@@ -709,9 +716,8 @@ class FormMediaMixin(MediaMixin):
 
     def all_media(self):
         kwargs = self.get_media_ref_kwargs()
-        media = []
 
-        media.extend(self.menu_media(self))
+        media = self.menu_media(self)
 
         # Form questions
         parsed = self.wrapped_xform()
