@@ -18,13 +18,33 @@
                   rel="stylesheet"
                   media="all"
                   href="{% static 'hqwebapp/less/docs-style.less' %}" />
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'select2/dist/css/select2.min.css' %}" />
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static "multiselect/css/multi-select.css" %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
         {% endcompress %}
         {% endif %}
 
         <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
         {% javascript_libraries hq=True %}
-        <script src="{% statici18n LANGUAGE_CODE %}"></script>
+        {% compress js %}
+            <script src="{% statici18n LANGUAGE_CODE %}"></script>
+            <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
+            <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
+            <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
+        {% endcompress %}
 
         {% if less_debug %}
             <script>
