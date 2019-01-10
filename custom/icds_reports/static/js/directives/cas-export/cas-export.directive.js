@@ -97,7 +97,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     };
     vm.message = false;
 
-    vm.submitForm = function(csrfToken) {
+    vm.submitForm = function (csrfToken) {
         vm.message = false;
         var taskConfig = {
             'csrfmiddlewaretoken': csrfToken,
@@ -106,7 +106,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
             'year': vm.selectedYear,
             'indicator': vm.selectedIndicator,
         };
-        downloadService.downloadCasData(taskConfig).then(function(data) {
+        downloadService.downloadCasData(taskConfig).then(function (data) {
             if (data.message) {
                 vm.message = true;
             } else {

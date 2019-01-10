@@ -1748,7 +1748,14 @@ class CasDataExport(View):
                 year=year
             )
             return JsonResponse(
-                {"report_link": reverse('cas_export', params=params, absolute=True, kwargs={'domain': self.kwargs['domain']})}
+                {
+                    "report_link": reverse(
+                        'cas_export',
+                        params=params,
+                        absolute=True,
+                        kwargs={'domain': self.kwargs['domain']}
+                    )
+                }
             )
 
     def get(self, request, *args, **kwargs):

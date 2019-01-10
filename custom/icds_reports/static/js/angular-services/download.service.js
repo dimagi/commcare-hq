@@ -41,14 +41,14 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 }
             ).then(
-                function(response) {
+                function (response) {
                     gtag.event('CAS Data', 'Fetching data succeeded', 'Creating Task');
                     return response.data;
                 },
-                function() {
+                function () {
                     gtag.event('CAS Data', 'Fetching data failed', 'Creating Task');
                 }
             );
-        }
+        },
     };
 }]);
