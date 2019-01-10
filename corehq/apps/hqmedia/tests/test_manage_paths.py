@@ -86,24 +86,28 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
             ('jr://nope.png', 'jr://yep.png'),                        # 0. error: existing path not in app
             (self._get_menu_media('en'), 'rose.png'),                 # 1. warning: unformatted path
             (self._get_menu_media('fra'), 'jr://lily.png'),           # 2. valid
-            (self._get_form_media('en'), 'jr://file/tulip.png'),      # 3. valid
-            (self._get_form_media('en'), 'jr://file/hyacinth.png'),   # 4. error & warning: dupe old and new paths
-            (self._get_form_media('fra'), 'jr://file/hyacinth.png'),  # 5. warning: dupe new path
+            (self._get_form_media('en'), 'jr://file/tulip.jpg'),      # 3. valid
+            (self._get_form_media('en'), 'jr://file/hyacinth.jpg'),   # 4. error & warning: dupe old and new paths
+            (self._get_form_media('fra'), 'jr://file/hyacinth.jpg'),  # 5. warning: dupe new path
             (self._get_form_media('en'), self._get_form_media('en')), # 6. error: same old and new path
+            (self._get_form_media('en'), 'jr://file/hyacinth.png'),   # 7. error & warning: dupe old path,
+                                                                      #    changing file extension
         )
         (errors, warnings) = validate_multimedia_paths_rows(app, rows)
 
-        self.assertEqual(len(errors), 3)
+        self.assertEqual(len(errors), 4)
         self.assertTrue(re.search(r'0.*not.*found', errors[0]))
         self.assertTrue('already' in errors[1])
         self.assertTrue(self._get_form_media('en') in errors[1])
         self.assertTrue(re.search(r'6.*are both', errors[2]))
         self.assertTrue(self._get_form_media('en') in errors[2])
+        self.assertTrue('already' in errors[3])
 
-        self.assertEqual(len(warnings), 2)
+        self.assertEqual(len(warnings), 3)
         self.assertTrue(re.search(r'1.*replace', warnings[0]))
         self.assertTrue('already' in warnings[1])
         self.assertTrue('hyacinth' in warnings[1])
+        self.assertTrue(re.search(r'7.*\bjpg\b.*\bpng\b', warnings[2]))
 
     @patch('dimagi.ext.couchdbkit.Document.get_db')
     def test_paths_upload(self, validate_xform, get_db):

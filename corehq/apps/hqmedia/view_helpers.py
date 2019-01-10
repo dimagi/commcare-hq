@@ -53,12 +53,19 @@ def validate_multimedia_paths_rows(app, rows):
 
         interpolated_new_path = interpolate_media_path(new_path)    # checks for jr://
         if interpolated_new_path != new_path:
-            warnings.append(_("Path <code>{}</code> in row {} will be replaced with "
+            warnings.append(_("Path <code>{}</code> in row {} was replaced with "
                               "<code>{}</code>").format(new_path, i, interpolated_new_path))
         else:
+            # It's usually a bad idea to change file extensions, since the file itself isn't changing
+            old_extension = old_path.split(".")[-1].lower()
+            new_extension = new_path.split(".")[-1].lower()
+            if old_extension != new_extension:
+                warnings.append(_("File extension in row {} changed "
+                                  "from {} to {}".format(i, old_extension, new_extension)))
+
             # Duplicate new paths is a warning: will combine what were previously different items
             if new_path in new_paths_last_seen:
-                warnings.append(_("New path in row {} is already being used to rename row {}: "
+                warnings.append(_("New path in row {} was already used to rename row {}: "
                                   "<code>{}</code>").format(i, new_paths_last_seen[new_path], new_path))
         new_paths_last_seen[new_path] = i
 
