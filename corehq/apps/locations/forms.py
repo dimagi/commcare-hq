@@ -249,6 +249,11 @@ class LocationForm(forms.Form):
 
         if site_code:
             site_code = site_code.lower()
+            slug_regex = re.compile('^[-_\w\d]+$')
+            if not slug_regex.match(site_code):
+                raise forms.ValidationError(_(
+                    'The site code cannot contain spaces or special characters.'
+                ))
             if (SQLLocation.objects.filter(domain=self.domain,
                                         site_code__iexact=site_code)
                                    .exclude(location_id=self.location.location_id)
