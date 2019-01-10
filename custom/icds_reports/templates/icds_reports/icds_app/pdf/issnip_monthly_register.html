@@ -4,6 +4,7 @@
 {% load i18n %}
 {% load icds_format %}
 <!DOCTYPE html>
+{% load staticfiles %}
 <html>
     <head>
         <title>ICDS-CAS Monthly Register</title>
@@ -32,6 +33,10 @@
                 display: table;
                 clear: both;
             }
+            @font-face {
+                font-family: HindGuntur-Regular;
+                src: url("{% static "fonts/HindGuntur-Regular.ttf" %}");
+            }
         </style>
     </head>
     <body>
@@ -58,7 +63,7 @@
                                     <td>*Name Of Supervisor: </td>
                                 </tr>
                                 <tr>
-                                    <td>Name of AWW: {{ report.agg_awc_monthly_data|icds_format:"aww_name" }}</td>
+                                    <td>Name of AWW: <span style="font-family: HindGuntur-Regular">{{ report.agg_awc_monthly_data|icds_format:"aww_name" }}</span></td>
                                     <td>Mobile number of AWW: {{ report.agg_awc_monthly_data|icds_format:"contact_phone_number" }}</td>
                                     <td>*Name of AW Helper: </td>
                                 </tr>

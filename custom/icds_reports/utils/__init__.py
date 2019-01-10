@@ -16,6 +16,7 @@ import qrcode
 from base64 import b64encode
 from io import BytesIO
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.template.loader import render_to_string, get_template
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
@@ -605,6 +606,34 @@ def create_excel_file(excel_data, data_type, file_format):
     return file_hash
 
 
+def link_callback(uri, rel):
+    """
+    Convert HTML URIs to absolute system paths so xhtml2pdf can access those
+    resources
+    https://xhtml2pdf.readthedocs.io/en/latest/usage.html
+    """
+    # use short variable names
+    sUrl = settings.STATIC_URL      # Typically /static/
+    sRoot = settings.STATIC_ROOT    # Typically /home/userX/project_static/
+    mUrl = settings.MEDIA_URL       # Typically /static/media/
+    mRoot = settings.MEDIA_ROOT     # Typically /home/userX/project_static/media/
+
+    # convert URIs to absolute system paths
+    if uri.startswith(mUrl):
+        path = os.path.join(mRoot, uri.replace(mUrl, ""))
+    elif uri.startswith(sUrl):
+        path = os.path.join(sRoot, uri.replace(sUrl, ""))
+    else:
+        return uri  # handle absolute uri (ie: http://some.tld/foo.png)
+
+    # make sure that file exists
+    if not os.path.isfile(path):
+            raise Exception(
+                'media URI must start with %s or %s' % (sUrl, mUrl)
+            )
+    return path
+
+
 def create_pdf_file(pdf_context):
     pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
@@ -617,7 +646,9 @@ def create_pdf_file(pdf_context):
     pisa.CreatePDF(
         pdf_page,
         dest=resultFile,
-        show_error_as_pdf=True)
+        show_error_as_pdf=True,
+        link_callback=link_callback,  # xhtml2pdf REQUIRES absolute system paths for staticfiles
+    )
     # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
     # we read this to save file in blobdb
     resultFile.seek(0)
