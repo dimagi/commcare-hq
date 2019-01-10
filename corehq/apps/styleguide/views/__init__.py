@@ -295,7 +295,6 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'molecules/intro',
             'molecules/buttons',
             'molecules/selections',
-            'molecules/forms',
             'molecules/modals',
             'molecules/pagination',
             'molecules/inline_edit',
@@ -304,7 +303,6 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
     @property
     def page_context(self):
         return {
-            'basic_crispy_form': BasicCrispyForm(),
             'examples': {
                 'selections': {
                     'button_group': self.example('button_group.html'),
@@ -326,6 +324,7 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'organisms/intro',
+            'organisms/forms',
             'organisms/tables',
             'organisms/views',
         ]
@@ -333,7 +332,10 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def page_context(self):
         return {
+            'basic_crispy_form': BasicCrispyForm(),
             'examples': {
+                'html_form': self.example('html_form.html'),
+                'error_form': self.example('error_form.html'),
                 'basic_table': self.example('basic_table.html'),
                 'complex_table': self.example('complex_table.html'),
             },
