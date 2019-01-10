@@ -46,6 +46,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(rupture) OVER w as rupture,
         LAST_VALUE(anemia) OVER w as anemia,
         LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities,
+        LAST_VALUE(using_ifa) OVER w as using_ifa,
+        LAST_VALUE(ifa_last_seven_days) OVER w as ifa_last_seven_days,
         SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
@@ -78,36 +80,38 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
           anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
           bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities, valid_visits,
           play_birth_preparedness_vid, counsel_preparation, play_family_planning_vid, conceive,
-          counsel_accessible_ppfp
+          counsel_accessible_ppfp, ifa_last_seven_days,using_ifa
         ) (
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
-            ucr.case_id AS case_id,
-            ucr.latest_time_end AS latest_time_end_processed,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            COALESCE(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.immediate_breastfeeding, prev_month.immediate_breastfeeding) AS immediate_breastfeeding,
-            ucr.anemia AS anemia,
-            ucr.eating_extra AS eating_extra,
-            ucr.resting AS resting,
-            ucr.anc_weight anc_weight,
-            ucr.anc_blood_pressure as anc_blood_pressure,
-            ucr.bp_sys as bp_sys,
-            ucr.bp_dia as bp_dia,
-            ucr.anc_hemoglobin as anc_hemoglobin,
-            ucr.bleeding as bleeding,
-            ucr.swelling as swelling,
-            ucr.blurred_vision as blurred_vision,
-            ucr.convulsions as convulsions,
-            ucr.rupture as rupture,
-            ucr.anc_abnormalities as anc_abnormalities,
+            COALESCE(ucr.anemia,prev_month.anemia) AS anemia,
+            COALESCE(ucr.eating_extra,prev_month.eating_extra) AS eating_extra,
+            COALESCE(ucr.resting,prev_month.resting) AS resting,
+            COALESCE(ucr.anc_weight,prev_month.anc_weight) anc_weight,
+            COALESCE(ucr.anc_blood_pressure,prev_month.anc_blood_pressure) as anc_blood_pressure,
+            COALESCE(ucr.bp_sys,prev_month.bp_sys) as bp_sys,
+            COALESCE(ucr.bp_dia,prev_month.bp_dia) as bp_dia,
+            COALESCE(ucr.anc_hemoglobin,prev_month.anc_hemoglobin) as anc_hemoglobin,
+            COALESCE(ucr.bleeding,prev_month.bleeding) as bleeding,
+            COALESCE(ucr.swelling,prev_month.swelling) as swelling,
+            COALESCE(ucr.blurred_vision,prev_month.blurred_vision) as blurred_vision,
+            COALESCE(ucr.convulsions,prev_month.convulsions) as convulsions,
+            COALESCE(ucr.rupture,prev_month.rupture) as rupture,
+            COALESCE(ucr.anc_abnormalities,prev_month.anc_abnormalities) as anc_abnormalities,
             COALESCE(ucr.valid_visits, 0) as valid_visits,
-            ucr.play_birth_preparedness_vid as play_birth_preparedness_vid,
-            ucr.counsel_preparation as counsel_preparation,
-            ucr.play_family_planning_vid as play_family_planning_vid,
-            ucr.conceive as conceive,
-            ucr.counsel_accessible_ppfp as counsel_accessible_ppfp
+            GREATEST(ucr.play_birth_preparedness_vid, prev_month.play_birth_preparedness_vid) as play_birth_preparedness_vid,
+            GREATEST(ucr.counsel_preparation, prev_month.counsel_preparation) as counsel_preparation,
+            GREATEST(ucr.play_family_planning_vid, prev_month.play_family_planning_vid) as play_family_planning_vid,
+            GREATEST(ucr.conceive,prev_month.conceive) as conceive,
+            GREATEST(ucr.counsel_accessible_ppfp, prev_month.counsel_accessible_ppfp) as counsel_accessible_ppfp,
+            COALESCE(ucr.ifa_last_seven_days, prev_month.ifa_last_seven_days) as ifa_last_seven_days,
+            COALESCE(ucr.using_ifa, prev_month.using_ifa) as using_ifa
           FROM ({ucr_table_query}) ucr
-          LEFT JOIN "{previous_month_tablename}" prev_month
+          FULL JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
         )
         """.format(

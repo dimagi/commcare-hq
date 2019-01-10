@@ -1406,6 +1406,14 @@ class AggregateBirthPreparednesForms(models.Model):
         null=True,
         help_text="Has ever had /data/family_planning_group/counsel_accessible_ppfp='yes'"
     )
+    ifa_last_seven_days = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of ifa taken in last seven days"
+    )
+    using_ifa = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/bp1/using_ifa='yes'"
+    )
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
 
