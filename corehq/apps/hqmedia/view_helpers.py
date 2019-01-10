@@ -25,7 +25,7 @@ def download_multimedia_paths_rows(app):
 
     rows = []
     for path, refs in six.iteritems(paths):
-        rows.append((_("Paths"), [path] + [_readable_ref(r) for r in refs]))
+        rows.append((_("Paths"), [path, ''] + [_readable_ref(r) for r in refs]))
 
     return rows
 
@@ -37,36 +37,30 @@ def validate_multimedia_paths_rows(app, rows):
     errors = []
     warnings = []
     for i, row in enumerate(rows):
-        i += 1  # spreadsheet rows are one-indexed
+        (old_path, new_path) = row
 
-        expected_length = 2
-        if len(row) != expected_length:
-            errors.append(_("Row {} should have {} columns but has {}").format(i, expected_length, len(row)))
+        if old_path not in old_paths_last_seen:
+            errors.append(_("Path in row {} could not be found in application: "
+                            "<code>{}</code>").format(i, old_path))
+        elif old_path == new_path:
+            errors.append(_("In row {}, old and new paths are both <code>{}</code>. Please provide "
+                            "an updated path or remove this row").format(i, old_path))
+        elif old_paths_last_seen[old_path] is not None:
+            # Duplicate old paths is an error: can't rename to two different new values
+            errors.append(_("Path in row {} was already renamed in row {}: "
+                            "<code>{}</code>").format(i, old_paths_last_seen[old_path], old_path))
+        old_paths_last_seen[old_path] = i
+
+        interpolated_new_path = interpolate_media_path(new_path)    # checks for jr://
+        if interpolated_new_path != new_path:
+            warnings.append(_("Path <code>{}</code> in row {} will be replaced with "
+                              "<code>{}</code>").format(new_path, i, interpolated_new_path))
         else:
-            (old_path, new_path) = row
-
-            if old_path not in old_paths_last_seen:
-                errors.append(_("Path in row {} could not be found in application: "
-                                "<code>{}</code>").format(i, old_path))
-            elif old_path == new_path:
-                errors.append(_("In row {}, old and new paths are both <code>{}</code>. Please provide "
-                                "an updated path or remove this row").format(i, old_path))
-            elif old_paths_last_seen[old_path] is not None:
-                # Duplicate old paths is an error: can't rename to two different new values
-                errors.append(_("Path in row {} was already renamed in row {}: "
-                                "<code>{}</code>").format(i, old_paths_last_seen[old_path], old_path))
-            old_paths_last_seen[old_path] = i
-
-            interpolated_new_path = interpolate_media_path(new_path)    # checks for jr://
-            if interpolated_new_path != new_path:
-                warnings.append(_("Path <code>{}</code> in row {} will be replaced with "
-                                  "<code>{}</code>").format(new_path, i, interpolated_new_path))
-            else:
-                # Duplicate new paths is a warning: will combine what were previously different items
-                if new_path in new_paths_last_seen:
-                    warnings.append(_("New path in row {} is already being used to rename row {}: "
-                                      "<code>{}</code>").format(i, new_paths_last_seen[new_path], new_path))
-            new_paths_last_seen[new_path] = i
+            # Duplicate new paths is a warning: will combine what were previously different items
+            if new_path in new_paths_last_seen:
+                warnings.append(_("New path in row {} is already being used to rename row {}: "
+                                  "<code>{}</code>").format(i, new_paths_last_seen[new_path], new_path))
+        new_paths_last_seen[new_path] = i
 
     return errors, warnings
 

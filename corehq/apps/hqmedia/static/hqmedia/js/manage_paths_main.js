@@ -1,9 +1,7 @@
 hqDefine("hqmedia/js/manage_paths_main", function () {
     var uploadPathsModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['validateUrl', 'updateUrl']);
+        hqImport("hqwebapp/js/assert_properties").assert(options, ['url']);
         var self = options;
-
-        self.fileId = ko.observable('');
 
         // Messaging
         self.genericErrorMessage = gettext("There was an error processing your file. Please try again or report an issue if the problem persists.");
@@ -12,13 +10,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
         self.warningMessages = ko.observableArray();
         self.successMessage = ko.observable('');
         self.successMessages = ko.observableArray();
-
-        // Controls for disabling, etc in UI
-        self.isValidating = ko.observable(false);
-        self.isUpdating = ko.observable(false);
-        self.allowUpdate = ko.computed(function () {
-            return self.fileId() && !self.serverError() && !self.errorMessages().length;
-        });
+        self.isSubmitting = ko.observable(false);
 
         self.clearMessages = function () {
             self.serverError('');
@@ -28,48 +20,17 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
             self.successMessages.removeAll();
         };
 
-        self.validate = function (form) {
+        self.update = function (form) {
+            self.isSubmitting(true);
             self.clearMessages();
-            self.isValidating(true);
             $.ajax({
                 method: 'POST',
-                url: self.validateUrl,
+                url: self.url,
                 data: new FormData(form),
                 processData: false,
                 contentType: false,
                 success: function (data) {
-                    self.isValidating(false);
-                    if (data.complete) {     // file was uploaded successfully, though its content may have errors
-                        self.fileId(data.file_id);
-                        self.errorMessages(data.errors);
-                        self.warningMessages(data.warnings);
-                        if (!self.errorMessages().length && !self.warningMessages().length) {
-                            self.successMessage(gettext("File validated with no errors or warnings."));
-                        }
-                    } else {
-                        self.serverError(data.error || self.genericErrorMessage);
-                    }
-                },
-                error: function () {
-                    self.isValidating(false);
-                    self.serverError(self.genericErrorMessage);
-                },
-            });
-
-            return false;
-        };
-
-        self.update = function () {
-            self.isUpdating(true);
-            self.clearMessages();
-            $.ajax({
-                method: 'POST',
-                url: self.updateUrl,
-                data: {
-                    file_id: self.fileId(),
-                },
-                success: function (data) {
-                    self.isUpdating(false);
+                    self.isSubmitting(false);
                     if (data.complete) {
                         self.errorMessages(data.errors || []);
                         if (self.errorMessages().length) {
@@ -86,7 +47,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
                     }
                 },
                 error: function () {
-                    self.isUpdating(false);
+                    self.isSubmitting(false);
                     self.serverError(self.genericErrorMessage);
                 },
             });
@@ -98,8 +59,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         $("#upload-paths").koApplyBindings(uploadPathsModel({
-            validateUrl: initialPageData.reverse("validate_multimedia_paths"),
-            updateUrl: initialPageData.reverse("update_multimedia_paths"),
+            url: initialPageData.reverse("update_multimedia_paths"),
         }));
     });
 });

@@ -56,7 +56,7 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
         rows = download_multimedia_paths_rows(app)
         self.assertEqual(len(rows), 4)
 
-        rows_by_path = {row[1][0]: row[1][1:] for row in rows}
+        rows_by_path = {row[1][0]: row[1][2:] for row in rows}
         self.assertEqual(len(rows_by_path), 4)
 
         # English icon used twice: once in module, once in form
@@ -83,26 +83,25 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
         app = self._get_app()
 
         rows = (
-            (self._get_menu_media('en'),),                            # 1. error: too few columns
-            ('jr://nope.png', 'jr://yep.png'),                        # 2. error: existing path not in app
-            (self._get_menu_media('en'), 'rose.png'),                 # 3. warning: unformatted path
-            (self._get_menu_media('fra'), 'jr://lily.png'),           # 4. valid
-            (self._get_form_media('en'), 'jr://file/tulip.png'),      # 5. valid
-            (self._get_form_media('en'), 'jr://file/hyacinth.png'),   # 6. error & warning: dupe old and new paths
-            (self._get_form_media('fra'), 'jr://file/hyacinth.png'),  # 7. warning: dupe new path
-            (self._get_menu_media('en'), self._get_menu_media('en')), # 8. error: same old and new path
+            ('jr://nope.png', 'jr://yep.png'),                        # 0. error: existing path not in app
+            (self._get_menu_media('en'), 'rose.png'),                 # 1. warning: unformatted path
+            (self._get_menu_media('fra'), 'jr://lily.png'),           # 2. valid
+            (self._get_form_media('en'), 'jr://file/tulip.png'),      # 3. valid
+            (self._get_form_media('en'), 'jr://file/hyacinth.png'),   # 4. error & warning: dupe old and new paths
+            (self._get_form_media('fra'), 'jr://file/hyacinth.png'),  # 5. warning: dupe new path
+            (self._get_form_media('en'), self._get_form_media('en')), # 6. error: same old and new path
         )
         (errors, warnings) = validate_multimedia_paths_rows(app, rows)
 
-        self.assertEqual(len(errors), 4)
-        self.assertTrue(re.search(r'1.*columns', errors[0]))
-        self.assertTrue(re.search(r'2.*not.*found', errors[1]))
-        self.assertTrue('already' in errors[2])
+        self.assertEqual(len(errors), 3)
+        self.assertTrue(re.search(r'0.*not.*found', errors[0]))
+        self.assertTrue('already' in errors[1])
+        self.assertTrue(self._get_form_media('en') in errors[1])
+        self.assertTrue(re.search(r'6.*are both', errors[2]))
         self.assertTrue(self._get_form_media('en') in errors[2])
-        self.assertTrue(re.search(r'8.*are both', errors[3]))
 
         self.assertEqual(len(warnings), 2)
-        self.assertTrue(re.search(r'3.*replace', warnings[0]))
+        self.assertTrue(re.search(r'1.*replace', warnings[0]))
         self.assertTrue('already' in warnings[1])
         self.assertTrue('hyacinth' in warnings[1])
 
