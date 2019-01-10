@@ -8,6 +8,7 @@ hqDefine('app_manager/js/summary/form_summary',[
     'app_manager/js/summary/models',
     'app_manager/js/summary/utils',
     'hqwebapp/js/knockout_bindings.ko',
+    'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
 ], function ($, _, ko, initialPageData, assertProperties, models, utils) {
     var formSummaryModel = function (options) {
         var self = models.contentModel(_.extend(options, {

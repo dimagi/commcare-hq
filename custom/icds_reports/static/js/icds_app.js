@@ -313,6 +313,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/fact_sheets/:report", {
                 template: "<progress-report></progress-report>",
             })
+            .when("/cas_export", {
+                template: "<cas-export></cas-export>",
+            })
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",
             });

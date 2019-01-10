@@ -39,6 +39,20 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
+from corehq.apps.app_manager.helpers.validators import (
+    ApplicationBaseValidator,
+    ApplicationValidator,
+    FormValidator,
+    FormBaseValidator,
+    IndexedFormBaseValidator,
+    ModuleValidator,
+    ModuleBaseValidator,
+    AdvancedModuleValidator,
+    AdvancedFormValidator,
+    ReportModuleValidator,
+    ShadowFormValidator,
+    ShadowModuleValidator,
+)
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -88,7 +102,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     interpolate_xpath,
-    LocationXpath,
 )
 from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
@@ -114,15 +127,10 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
 )
 from corehq.apps.app_manager.util import (
-    split_path,
     save_xform,
     is_usercase_in_use,
     actions_use_usercase,
     update_form_unique_ids,
-    app_callout_templates,
-    xpath_references_case,
-    xpath_references_user_case,
-    module_case_hierarchy_has_circular_reference,
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
     LatestAppInfo,
@@ -138,7 +146,6 @@ from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,
     IncompatibleFormTypeException,
-    LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
     RearrangeError,
@@ -148,8 +155,6 @@ from corehq.apps.app_manager.exceptions import (
     XFormIdNotUnique,
     XFormValidationError,
     ScheduleError,
-    CaseXPathValidationError,
-    UserCaseXPathValidationError,
     XFormValidationFailed,
     PracticeUserException)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
@@ -159,29 +164,6 @@ from six.moves import filter
 from six.moves import range
 from six.moves import map
 from io import open
-
-WORKFLOW_DEFAULT = 'default'  # go to the app main screen
-WORKFLOW_ROOT = 'root'  # go to the module select screen
-WORKFLOW_PARENT_MODULE = 'parent_module'  # go to the parent module's screen
-WORKFLOW_MODULE = 'module'  # go to the current module's screen
-WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
-WORKFLOW_FORM = 'form'  # go straight to another form
-ALL_WORKFLOWS = [
-    WORKFLOW_DEFAULT,
-    WORKFLOW_ROOT,
-    WORKFLOW_PARENT_MODULE,
-    WORKFLOW_MODULE,
-    WORKFLOW_PREVIOUS,
-    WORKFLOW_FORM,
-]
-# allow all options as fallback except the one for form linking
-WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
-
-WORKFLOW_CASE_LIST = 'case_list'  # Return back to the caselist after registering a case
-REGISTRATION_FORM_WORFLOWS = [
-    WORKFLOW_DEFAULT,
-    WORKFLOW_CASE_LIST,
-]
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -244,15 +226,6 @@ def app_template_dir(slug):
 @memoized
 def load_app_template(slug):
     with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
-        return json.load(f)
-
-
-@memoized
-def load_case_reserved_words():
-    with open(
-        os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),
-        encoding='utf-8'
-    ) as f:
         return json.load(f)
 
 
@@ -1006,6 +979,10 @@ class FormBase(DocumentSchema):
     def clear_validation_cache(self):
         self.set_validation_cache(None)
 
+    @property
+    def validator(self):
+        return FormBaseValidator(self)
+
     def is_allowed_to_be_release_notes_form(self):
         # checks if this form can be marked as a release_notes form
         #   based on whether it belongs to a training_module
@@ -1104,94 +1081,7 @@ class FormBase(DocumentSchema):
         return self.get_app().timing_context
 
     def validate_for_build(self, validate_module=True):
-        errors = []
-
-        try:
-            module = self.get_module()
-        except AttributeError:
-            module = None
-
-        meta = {
-            'form_type': self.form_type,
-            'module': module.get_module_info() if module else {},
-            'form': {
-                "id": self.id if hasattr(self, 'id') else None,
-                "name": self.name,
-                'unique_id': self.unique_id,
-            }
-        }
-
-        xml_valid = False
-        if self.source == '' and self.form_type != 'shadow_form':
-            errors.append(dict(type="blank form", **meta))
-        else:
-            try:
-                _parse_xml(self.source)
-                xml_valid = True
-            except XFormException as e:
-                errors.append(dict(
-                    type="invalid xml",
-                    message=six.text_type(e) if self.source else '',
-                    **meta
-                ))
-            except ValueError:
-                logging.error("Failed: _parse_xml(string=%r)" % self.source)
-                raise
-
-        try:
-            questions = self.cached_get_questions()
-        except XFormException as e:
-            error = {'type': 'validation error', 'validation_message': six.text_type(e)}
-            error.update(meta)
-            errors.append(error)
-
-        if not errors:
-            has_questions = any(not q.get('is_group') for q in questions)
-            if not has_questions and self.form_type != 'shadow_form':
-                errors.append(dict(type="blank form", **meta))
-            else:
-                try:
-                    self.validate_form()
-                except XFormValidationError as e:
-                    error = {'type': 'validation error', 'validation_message': six.text_type(e)}
-                    error.update(meta)
-                    errors.append(error)
-                except XFormValidationFailed:
-                    pass  # ignore this here as it gets picked up in other places
-
-        if self.post_form_workflow == WORKFLOW_FORM:
-            if not self.form_links:
-                errors.append(dict(type="no form links", **meta))
-            for form_link in self.form_links:
-                try:
-                    self.get_app().get_form(form_link.form_id)
-                except FormNotFoundException:
-                    errors.append(dict(type='bad form link', **meta))
-        elif self.post_form_workflow == WORKFLOW_PARENT_MODULE:
-            if not module.root_module:
-                errors.append(dict(type='form link to missing root', **meta))
-
-        # this isn't great but two of FormBase's subclasses have form_filter
-        if hasattr(self, 'form_filter') and self.form_filter:
-            with self.timing_context("validate_xpath"):
-                is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
-            if not is_valid:
-                error = {
-                    'type': 'form filter has xpath error',
-                    'xpath_error': message,
-                }
-                error.update(meta)
-                errors.append(error)
-
-        errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
-
-        return errors
-
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        """
-        Override to perform additional validation during build process.
-        """
-        return []
+        return self.validator.validate_for_build(validate_module)
 
     def get_unique_id(self):
         """
@@ -1363,6 +1253,10 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def get_case_type(self):
         return self._parent.case_type
 
+    @property
+    def validator(self):
+        return IndexedFormBaseValidator(self)
+
     def _add_save_to_case_questions(self, form_questions, app_case_meta):
         def _make_save_to_case_question(path):
             from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -1399,47 +1293,6 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                     type_meta.add_opener(self.unique_id, _make_dummy_condition())
                 if property_info.close:
                     type_meta.add_closer(self.unique_id, _make_dummy_condition())
-
-    def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
-        all_names = all_names or []
-        subcase_names = subcase_names or []
-        errors = []
-
-        # reserved_words are hard-coded in three different places!
-        # Here, case-config-ui-*.js, and module_view.html
-        reserved_words = load_case_reserved_words()
-        for key in all_names:
-            try:
-                validate_property(key)
-            except ValueError:
-                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
-            _, key = split_path(key)
-            if key in reserved_words:
-                errors.append({'type': 'update_case uses reserved word', 'word': key, 'case_tag': case_tag})
-
-        # no parent properties for subcase
-        for key in subcase_names:
-            if not re.match(r'^[a-zA-Z][\w_-]*$', key):
-                errors.append({'type': 'update_case word illegal', 'word': key, 'case_tag': case_tag})
-
-        return errors
-
-    def check_paths(self, paths):
-        errors = []
-        try:
-            questions = self.cached_get_questions()
-            valid_paths = {question['value']: question['tag'] for question in questions}
-        except XFormException as e:
-            errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
-        else:
-            no_multimedia = not self.get_app().enable_multimedia_case_property
-            for path in set(paths):
-                if path not in valid_paths:
-                    errors.append({'type': 'path error', 'path': path})
-                elif no_multimedia and valid_paths[path] == "upload":
-                    errors.append({'type': 'multimedia case property not supported', 'path': path})
-
-        return errors
 
     def add_property_save(self, app_case_meta, case_type, name,
                           questions, question_path, condition=None):
@@ -1822,38 +1675,9 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             'open_case', 'update_case', 'close_case',
             'open_referral', 'update_referral', 'close_referral'))
 
-    def check_actions(self):
-        errors = []
-
-        subcase_names = set()
-        for subcase_action in self.actions.subcases:
-            if not subcase_action.case_type:
-                errors.append({'type': 'subcase has no case type'})
-
-            subcase_names.update(subcase_action.case_properties)
-
-        if self.requires == 'none' and self.actions.open_case.is_active() \
-                and not self.actions.open_case.name_path:
-            errors.append({'type': 'case_name required'})
-
-        errors.extend(self.check_case_properties(
-            all_names=self.actions.all_property_names(),
-            subcase_names=subcase_names
-        ))
-
-        def generate_paths():
-            for action in self.active_actions().values():
-                if isinstance(action, list):
-                    actions = action
-                else:
-                    actions = [action]
-                for action in actions:
-                    for path in FormAction.get_action_paths(action):
-                        yield path
-
-        errors.extend(self.check_paths(generate_paths()))
-
-        return errors
+    @property
+    def validator(self):
+        return FormValidator(self)
 
     def requires_case(self):
         # all referrals also require cases
@@ -1897,35 +1721,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def uses_usercase(self):
         return actions_use_usercase(self.active_actions())
-
-    @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        errors = []
-        if xml_valid:
-            for error in self.check_actions():
-                error.update(error_meta)
-                errors.append(error)
-
-        if validate_module:
-            needs_case_type = False
-            needs_case_detail = False
-            needs_referral_detail = False
-
-            if self.requires_case():
-                needs_case_detail = True
-                needs_case_type = True
-            if self.requires_case_type():
-                needs_case_type = True
-            if self.requires_referral():
-                needs_referral_detail = True
-
-            errors.extend(self.get_module().get_case_errors(
-                needs_case_type=needs_case_type,
-                needs_case_detail=needs_case_detail,
-                needs_referral_detail=needs_referral_detail,
-            ))
-
-        return errors
 
     def get_case_updates(self):
         # This method is used by both get_all_case_properties and
@@ -2583,13 +2378,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def get_case_types(self):
         return set([self.case_type])
 
-    def get_module_info(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'unique_id': self.unique_id,
-        }
-
     def get_app(self):
         return self._parent
 
@@ -2609,85 +2397,17 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         for _, detail, _ in self.get_details():
             detail.rename_lang(old_lang, new_lang)
 
-    def validate_detail_columns(self, columns):
-        from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LOCATION
-        from corehq.apps.locations.util import parent_child
-        from corehq.apps.locations.fixtures import should_sync_hierarchical_fixture
-
-        hierarchy = None
-        for column in columns:
-            if column.field_type == FIELD_TYPE_LOCATION:
-                domain = self.get_app().domain
-                project = Domain.get_by_name(domain)
-                try:
-                    if not should_sync_hierarchical_fixture(project, self.get_app()):
-                        # discontinued feature on moving to flat fixture format
-                        raise LocationXpathValidationError(
-                            _('That format is no longer supported. To reference the location hierarchy you need to'
-                              ' use the "Custom Calculations in Case List" feature preview. For more information '
-                              'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
-                    hierarchy = hierarchy or parent_child(domain)
-                    LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError as e:
-                    yield {
-                        'type': 'invalid location xpath',
-                        'details': six.text_type(e),
-                        'module': self.get_module_info(),
-                        'column': column,
-                    }
-
     def get_form_by_unique_id(self, unique_id):
         for form in self.get_forms():
             if form.get_unique_id() == unique_id:
                 return form
 
+    @property
+    def validator(self):
+        return ModuleBaseValidator(self)
+
     def validate_for_build(self):
-        errors = []
-        try:
-            errors += self._validate_for_build()
-        except ModuleNotFoundException as ex:
-            errors.append({
-                "type": "missing module",
-                "message": six.text_type(ex),
-                "module": self.get_module_info(),
-            })
-
-        return errors
-
-    def _validate_for_build(self):
-        errors = []
-        needs_case_detail = self.requires_case_details()
-        needs_case_type = needs_case_detail or len([1 for f in self.get_forms() if f.is_registration_form()])
-        if needs_case_detail or needs_case_type:
-            errors.extend(self.get_case_errors(
-                needs_case_type=needs_case_type,
-                needs_case_detail=needs_case_detail
-            ))
-        if self.case_list_form.form_id:
-            try:
-                form = self.get_app().get_form(self.case_list_form.form_id)
-            except FormNotFoundException:
-                errors.append({
-                    'type': 'case list form missing',
-                    'module': self.get_module_info()
-                })
-            else:
-                if not form.is_registration_form(self.case_type):
-                    errors.append({
-                        'type': 'case list form not registration',
-                        'module': self.get_module_info(),
-                        'form': form,
-                    })
-        if self.module_filter:
-            is_valid, message = validate_xpath(self.module_filter)
-            if not is_valid:
-                errors.append({
-                    'type': 'module filter has xpath error',
-                    'xpath_error': message,
-                    'module': self.get_module_info(),
-                })
-
-        return errors
+        return self.validator.validate_for_build()
 
     @memoized
     def get_subcase_types(self):
@@ -2791,72 +2511,6 @@ class ModuleDetailsMixin(object):
             details.append(('search_short', self.search_detail, True))
         return tuple(details)
 
-    def validate_details_for_build(self):
-        errors = []
-        for sort_element in self.detail_sort_elements:
-            try:
-                validate_detail_screen_field(sort_element.field)
-            except ValueError:
-                errors.append({
-                    'type': 'invalid sort field',
-                    'field': sort_element.field,
-                    'module': self.get_module_info(),
-                })
-        if self.case_list_filter:
-            try:
-                # test filter is valid, while allowing for advanced user hacks like "foo = 1][bar = 2"
-                case_list_filter = interpolate_xpath('dummy[' + self.case_list_filter + ']')
-                etree.XPath(case_list_filter)
-            except (etree.XPathSyntaxError, CaseXPathValidationError):
-                errors.append({
-                    'type': 'invalid filter xpath',
-                    'module': self.get_module_info(),
-                    'filter': self.case_list_filter,
-                })
-        for detail in [self.case_details.short, self.case_details.long]:
-            if detail.use_case_tiles:
-                if not detail.display == "short":
-                    errors.append({
-                        'type': "invalid tile configuration",
-                        'module': self.get_module_info(),
-                        'reason': _('Case tiles may only be used for the case list (not the case details).')
-                    })
-                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
-                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
-                    if field not in col_by_tile_field:
-                        errors.append({
-                            'type': "invalid tile configuration",
-                            'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
-                        })
-        return errors
-
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        module_info = self.get_module_info()
-
-        if needs_case_type and not self.case_type:
-            yield {
-                'type': 'no case type',
-                'module': module_info,
-            }
-
-        if needs_case_detail:
-            if not self.case_details.short.columns:
-                yield {
-                    'type': 'no case detail',
-                    'module': module_info,
-                }
-            columns = self.case_details.short.columns + self.case_details.long.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
-
-        if needs_referral_detail and not self.ref_details.short.columns:
-            yield {
-                'type': 'no ref detail',
-                'module': module_info,
-            }
-
 
 class Module(ModuleBase, ModuleDetailsMixin):
     """
@@ -2949,33 +2603,9 @@ class Module(ModuleBase, ModuleDetailsMixin):
             self.forms.append(new_form)
         return self.get_form(index or -1)
 
-    def _validate_for_build(self):
-        errors = super(Module, self)._validate_for_build() + self.validate_details_for_build()
-        if not self.forms and not self.case_list.show:
-            errors.append({
-                'type': 'no forms or case list',
-                'module': self.get_module_info(),
-            })
-
-        if module_case_hierarchy_has_circular_reference(self):
-            errors.append({
-                'type': 'circular case hierarchy',
-                'module': self.get_module_info(),
-            })
-
-        if self.root_module and self.root_module.is_training_module:
-            errors.append({
-                'type': 'training module parent',
-                'module': self.get_module_info(),
-            })
-
-        if self.root_module and self.is_training_module:
-            errors.append({
-                'type': 'training module child',
-                'module': self.get_module_info(),
-            })
-
-        return errors
+    @property
+    def validator(self):
+        return ModuleValidator(self)
 
     def requires(self):
         r = set(["none"])
@@ -3088,6 +2718,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def requires(self):
         return 'case' if self.requires_case() else 'none'
 
+    @property
+    def validator(self):
+        return AdvancedFormValidator(self)
+
     def is_registration_form(self, case_type=None):
         """
         Defined as form that opens a single case. If the case is a sub-case then
@@ -3172,118 +2806,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         phase = self.get_phase()
         if phase:
             phase.remove_form(self)
-
-    def check_actions(self):
-        errors = []
-
-        for action in self.actions.get_subcase_actions():
-            case_tags = self.actions.get_case_tags()
-            for case_index in action.case_indices:
-                if case_index.tag not in case_tags:
-                    errors.append({'type': 'missing parent tag', 'case_tag': case_index.tag})
-                if case_index.relationship == 'question' and not case_index.relationship_question:
-                    errors.append({'type': 'missing relationship question', 'case_tag': case_index.tag})
-
-            if isinstance(action, AdvancedOpenCaseAction):
-                if not action.name_path:
-                    errors.append({'type': 'case_name required', 'case_tag': action.case_tag})
-
-                for case_index in action.case_indices:
-                    meta = self.actions.actions_meta_by_tag.get(case_index.tag)
-                    if meta and meta['type'] == 'open' and meta['action'].repeat_context:
-                        if (
-                            not action.repeat_context or
-                            not action.repeat_context.startswith(meta['action'].repeat_context)
-                        ):
-                            errors.append({'type': 'subcase repeat context',
-                                           'case_tag': action.case_tag,
-                                           'parent_tag': case_index.tag})
-
-            errors.extend(self.check_case_properties(
-                subcase_names=action.get_property_names(),
-                case_tag=action.case_tag
-            ))
-
-        for action in self.actions.get_all_actions():
-            if not action.case_type and (not isinstance(action, LoadUpdateAction) or not action.auto_select):
-                errors.append({'type': "no case type in action", 'case_tag': action.case_tag})
-
-            if isinstance(action, LoadUpdateAction) and action.auto_select:
-                mode = action.auto_select.mode
-                if not action.auto_select.value_key:
-                    key_names = {
-                        AUTO_SELECT_CASE: _('Case property'),
-                        AUTO_SELECT_FIXTURE: _('Lookup Table field'),
-                        AUTO_SELECT_USER: _('custom user property'),
-                        AUTO_SELECT_RAW: _('custom XPath expression'),
-                    }
-                    if mode in key_names:
-                        errors.append({'type': 'auto select key', 'key_name': key_names[mode]})
-
-                if not action.auto_select.value_source:
-                    source_names = {
-                        AUTO_SELECT_CASE: _('Case tag'),
-                        AUTO_SELECT_FIXTURE: _('Lookup Table tag'),
-                    }
-                    if mode in source_names:
-                        errors.append({'type': 'auto select source', 'source_name': source_names[mode]})
-                elif mode == AUTO_SELECT_CASE:
-                    case_tag = action.auto_select.value_source
-                    if not self.actions.get_action_from_tag(case_tag):
-                        errors.append({'type': 'auto select case ref', 'case_tag': action.case_tag})
-
-            errors.extend(self.check_case_properties(
-                all_names=action.get_property_names(),
-                case_tag=action.case_tag
-            ))
-
-        if self.form_filter:
-            # Replace any dots with #case, which doesn't make for valid xpath
-            # but will trigger any appropriate validation errors
-            interpolated_form_filter = interpolate_xpath(self.form_filter, case_xpath="#case",
-                    module=self.get_module(), form=self)
-
-            form_filter_references_case = (
-                xpath_references_case(interpolated_form_filter) or
-                xpath_references_user_case(interpolated_form_filter)
-            )
-
-            if form_filter_references_case:
-                if not any(action for action in self.actions.load_update_cases if not action.auto_select):
-                    errors.append({'type': "filtering without case"})
-
-        def generate_paths():
-            for action in self.actions.get_all_actions():
-                for path in action.get_paths():
-                    yield path
-
-            if self.schedule:
-                if self.schedule.transition_condition.type == 'if':
-                    yield self.schedule.transition_condition.question
-                if self.schedule.termination_condition.type == 'if':
-                    yield self.schedule.termination_condition.question
-
-        errors.extend(self.check_paths(generate_paths()))
-
-        return errors
-
-    @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        errors = []
-        if xml_valid:
-            for error in self.check_actions():
-                error.update(error_meta)
-                errors.append(error)
-
-        module = self.get_module()
-        if validate_module:
-            errors.extend(module.get_case_errors(
-                needs_case_type=False,
-                needs_case_detail=module.requires_case_details(),
-                needs_referral_detail=False,
-            ))
-
-        return errors
 
     def get_case_updates(self):
         updates_by_case_type = defaultdict(set)
@@ -3431,6 +2953,10 @@ class ShadowForm(AdvancedForm):
             shadow_parent_actions = self.shadow_parent_form.actions
         return self._merge_actions(shadow_parent_actions, self.extra_actions)
 
+    @property
+    def validator(self):
+        return ShadowFormValidator(self)
+
     def get_shadow_parent_options(self):
         options = [
             (form.get_unique_id(), '{} / {}'.format(form.get_module().default_name(), form.default_name()))
@@ -3472,37 +2998,6 @@ class ShadowForm(AdvancedForm):
             load_update_cases=new_actions,
             open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
         )
-
-    @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        errors = super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
-        if not self.shadow_parent_form_id:
-            error = {
-                "type": "missing shadow parent",
-            }
-            error.update(error_meta)
-            errors.append(error)
-        elif not self.shadow_parent_form:
-            error = {
-                "type": "shadow parent does not exist",
-            }
-            error.update(error_meta)
-            errors.append(error)
-        return errors
-
-    def check_actions(self):
-        errors = super(ShadowForm, self).check_actions()
-
-        shadow_parent_form = self.shadow_parent_form
-        if shadow_parent_form:
-            case_tags = set(self.extra_actions.get_case_tags())
-            missing_tags = []
-            for action in shadow_parent_form.actions.load_update_cases:
-                if action.case_tag not in case_tags:
-                    missing_tags.append(action.case_tag)
-            if missing_tags:
-                errors.append({'type': 'missing shadow parent tag', 'case_tags': missing_tags})
-        return errors
 
 
 class SchedulePhaseForm(IndexedSchema):
@@ -3789,108 +3284,9 @@ class AdvancedModule(ModuleBase):
             details.append(('search_short', self.search_detail, True))
         return details
 
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-
-        module_info = self.get_module_info()
-
-        if needs_case_type and not self.case_type:
-            yield {
-                'type': 'no case type',
-                'module': module_info,
-            }
-
-        if needs_case_detail:
-            if not self.case_details.short.columns:
-                yield {
-                    'type': 'no case detail',
-                    'module': module_info,
-                }
-            if self.get_app().commtrack_enabled and not self.product_details.short.columns:
-                for form in self.forms:
-                    if self.case_list.show or \
-                            any(action.show_product_stock for action in form.actions.load_update_cases):
-                        yield {
-                            'type': 'no product detail',
-                            'module': module_info,
-                        }
-                        break
-            columns = self.case_details.short.columns + self.case_details.long.columns
-            if self.get_app().commtrack_enabled:
-                columns += self.product_details.short.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
-
-    def _validate_for_build(self):
-        errors = super(AdvancedModule, self)._validate_for_build()
-        if not self.forms and not self.case_list.show:
-            errors.append({
-                'type': 'no forms or case list',
-                'module': self.get_module_info(),
-            })
-        if self.case_list_form.form_id:
-            forms = self.forms
-
-            case_tag = None
-            loaded_case_types = None
-            for form in forms:
-                info = self.get_module_info()
-                form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
-                non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
-                this_forms_loaded_case_types = {action.case_type for action in non_auto_select_actions}
-                if loaded_case_types is None:
-                    loaded_case_types = this_forms_loaded_case_types
-                elif loaded_case_types != this_forms_loaded_case_types:
-                    errors.append({
-                        'type': 'all forms in case list module must load the same cases',
-                        'module': info,
-                        'form': form_info,
-                    })
-
-                if not non_auto_select_actions:
-                    errors.append({
-                        'type': 'case list module form must require case',
-                        'module': info,
-                        'form': form_info,
-                    })
-                elif len(non_auto_select_actions) != 1:
-                    for index, action in reversed(list(enumerate(non_auto_select_actions))):
-                        if (
-                            index > 0 and
-                            non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
-                        ):
-                            errors.append({
-                                'type': 'case list module form can only load parent cases',
-                                'module': info,
-                                'form': form_info,
-                            })
-
-                case_action = non_auto_select_actions[-1] if non_auto_select_actions else None
-                if case_action and case_action.case_type != self.case_type:
-                    errors.append({
-                        'type': 'case list module form must match module case type',
-                        'module': info,
-                        'form': form_info,
-                    })
-
-                # set case_tag if not already set
-                case_tag = case_action.case_tag if not case_tag and case_action else case_tag
-                if case_action and case_action.case_tag != case_tag:
-                    errors.append({
-                        'type': 'all forms in case list module must have same case management',
-                        'module': info,
-                        'form': form_info,
-                        'expected_tag': case_tag
-                    })
-
-                if case_action and case_action.details_module and case_action.details_module != self.unique_id:
-                    errors.append({
-                        'type': 'forms in case list module must use modules details',
-                        'module': info,
-                        'form': form_info,
-                    })
-
-        return errors
+    @property
+    def validator(self):
+        return AdvancedModuleValidator(self)
 
     def _uses_case_type(self, case_type, invert_match=False):
         return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
@@ -4400,34 +3796,9 @@ class ReportModule(ModuleBase):
             valid_report_configs=valid_report_configs
         )
 
-    def has_duplicate_instance_ids(self):
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
-        duplicate_instance_ids = {
-            instance_id
-            for instance_id, uuids in get_uuids_by_instance_id(self.get_app().domain).items()
-            if len(uuids) > 1
-        }
-        return any(report_config.instance_id in duplicate_instance_ids
-                   for report_config in self.report_configs)
-
-    def _validate_for_build(self):
-        errors = super(ReportModule, self)._validate_for_build()
-        if not self.check_report_validity().is_valid:
-            errors.append({
-                'type': 'report config ref invalid',
-                'module': self.get_module_info()
-            })
-        elif not self.reports:
-            errors.append({
-                'type': 'no reports',
-                'module': self.get_module_info(),
-            })
-        if self.has_duplicate_instance_ids():
-            errors.append({
-                'type': 'report config id duplicated',
-                'module': self.get_module_info(),
-            })
-        return errors
+    @property
+    def validator(self):
+        return ReportModuleValidator(self)
 
 
 class ShadowModule(ModuleBase, ModuleDetailsMixin):
@@ -4535,15 +3906,9 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
-    def _validate_for_build(self):
-        errors = super(ShadowModule, self)._validate_for_build()
-        errors += self.validate_details_for_build()
-        if not self.source_module:
-            errors.append({
-                'type': 'no source module id',
-                'module': self.get_module_info()
-            })
-        return errors
+    @property
+    def validator(self):
+        return ShadowModuleValidator(self)
 
 
 class LazyBlobDoc(BlobMixin):
@@ -5053,17 +4418,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def is_remote_app(self):
         return False
 
-    def get_latest_app(self, released_only=True):
-        if released_only:
-            return get_app(self.domain, self.get_id, latest=True)
-        else:
-            return self.view('app_manager/applications',
-                startkey=[self.domain, self.get_id, {}],
-                endkey=[self.domain, self.get_id],
-                include_docs=True,
-                limit=1,
-                descending=True,
-            ).first()
+    @memoized
+    def get_previous_version(self):
+        return self.view('app_manager/applications',
+            startkey=[self.domain, self.master_id, {}],
+            endkey=[self.domain, self.master_id],
+            include_docs=True,
+            limit=1,
+            descending=True,
+        ).first()
 
     @memoized
     def get_latest_saved(self):
@@ -5084,25 +4447,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.admin_password_charset = 'a'
         else:
             self.admin_password_charset = 'x'
-
-    def check_password_charset(self):
-        errors = []
-        if hasattr(self, 'profile'):
-            password_format = self.profile.get('properties', {}).get('password_format', 'n')
-            message = _(
-                'Your app requires {0} passwords but the admin password is not '
-                '{0}. To resolve, go to app settings, Advanced Settings, Java '
-                'Phone General Settings, and reset the Admin Password to '
-                'something that is {0}'
-            )
-
-            if password_format == 'n' and self.admin_password_charset in 'ax':
-                errors.append({'type': 'password_format',
-                               'message': message.format('numeric')})
-            if password_format == 'a' and self.admin_password_charset in 'x':
-                errors.append({'type': 'password_format',
-                               'message': message.format('alphanumeric')})
-        return errors
 
     def get_build(self):
         return self.build_spec.get_build()
@@ -5201,44 +4545,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
-    @time_method()
-    def validate_fixtures(self):
-        if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
-            # remote apps don't support get_forms yet.
-            # for now they can circumvent the fixture limitation. sneaky bastards.
-            if hasattr(self, 'get_forms'):
-                for form in self.get_forms():
-                    if form.has_fixtures:
-                        raise PermissionDenied(_(
-                            "Usage of lookup tables is not supported by your "
-                            "current subscription. Please upgrade your "
-                            "subscription before using this feature."
-                        ))
-
-    @time_method()
-    def validate_intents(self):
-        if domain_has_privilege(self.domain, privileges.CUSTOM_INTENTS):
-            return
-
-        if hasattr(self, 'get_forms'):
-            for form in self.get_forms():
-                intents = form.wrapped_xform().odk_intents
-                if intents:
-                    if not domain_has_privilege(self.domain, privileges.TEMPLATED_INTENTS):
-                        raise PermissionDenied(_(
-                            "Usage of integrations is not supported by your "
-                            "current subscription. Please upgrade your "
-                            "subscription before using this feature."
-                        ))
-                    else:
-                        templates = next(app_callout_templates)
-                        if len(set(intents) - set(t['id'] for t in templates)):
-                            raise PermissionDenied(_(
-                                "Usage of external integration is not supported by your "
-                                "current subscription. Please upgrade your "
-                                "subscription before using this feature."
-                            ))
-
     def validate_jar_path(self):
         build = self.get_build()
         setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
@@ -5316,45 +4622,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return TimingContext(self.name)
 
     def validate_app(self):
-        errors = []
-
-        errors.extend(self.check_password_charset())
-
-        try:
-            self.validate_fixtures()
-            self.validate_intents()
-            self.validate_practice_users()
-            self.create_all_files()
-        except CaseXPathValidationError as cve:
-            errors.append({
-                'type': 'invalid case xpath reference',
-                'module': cve.module,
-                'form': cve.form,
-            })
-        except UserCaseXPathValidationError as ucve:
-            errors.append({
-                'type': 'invalid user property xpath reference',
-                'module': ucve.module,
-                'form': ucve.form,
-            })
-        except PracticeUserException as pue:
-            errors.append({
-                'type': 'practice user config error',
-                'message': six.text_type(pue),
-                'build_profile_id': pue.build_profile_id,
-            })
-        except (AppEditingError, XFormValidationError, XFormException,
-                PermissionDenied, SuiteValidationError) as e:
-            errors.append({'type': 'error', 'message': six.text_type(e)})
-        except Exception as e:
-            if settings.DEBUG:
-                raise
-
-            # this is much less useful/actionable without a URL
-            # so make sure to include the request
-            notify_exception(view_utils.get_request(), "Unexpected error building app")
-            errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
-        return errors
+        return ApplicationBaseValidator(self).validate_app()
 
     @absolute_url_property
     def odk_profile_url(self):
@@ -5442,18 +4710,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.get_jadjar().fetch_jar()
 
     @time_method()
-    def make_build(self, comment=None, user_id=None, previous_version=None):
+    def make_build(self, comment=None, user_id=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        force_new_forms = False
-        if previous_version and self.build_profiles != previous_version.build_profiles:
-            force_new_forms = True
-        copy.set_form_versions(previous_version, force_new_forms)
-        copy.set_media_versions(previous_version)
         copy.create_build_files()
 
         # since this hard to put in a test
@@ -5519,11 +4782,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     bulk_save = save_docs
 
-    def set_form_versions(self, previous_version, force_new_version=False):
+    def set_form_versions(self):
         # by default doing nothing here is fine.
         pass
 
-    def set_media_versions(self, previous_version):
+    def set_media_versions(self):
         pass
 
     def update_mm_map(self):
@@ -5554,34 +4817,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
-
-
-def validate_property(property, allow_parents=True):
-    """
-    Validate a case property name
-
-    >>> validate_property('parent/maternal-grandmother_fullName')
-    >>> validate_property('foo+bar')
-    Traceback (most recent call last):
-      ...
-    ValueError: Invalid Property
-
-    """
-    if allow_parents:
-        # this regex is also copied in propertyList.ejs
-        regex = r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$'
-    else:
-        regex = r'^[a-zA-Z][\w_-]*$'
-    if not re.match(regex, property):
-        raise ValueError("Invalid Property")
-
-
-def validate_detail_screen_field(field):
-    # If you change here, also change here:
-    # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
-    field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
-    if not re.match(field_re, field):
-        raise ValueError("Invalid Sort Field")
 
 
 class SavedAppBuild(ApplicationBase):
@@ -5725,7 +4960,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform(build_profile_id).encode('utf-8')
 
-    def set_form_versions(self, previous_version, force_new_version=False):
+    def set_form_versions(self):
         """
         Set the 'version' property on each form as follows to the current app version if the form is new
         or has changed since the last build. Otherwise set it to the version from the last build.
@@ -5733,7 +4968,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
+        previous_version = self.get_previous_version()
         if previous_version:
+            force_new_version = self.build_profiles != previous_version.build_profiles
             for form_stuff in self.get_forms(bare=False):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
@@ -5758,7 +4995,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 else:
                     form.version = None
 
-    def set_media_versions(self, previous_version):
+    def set_media_versions(self):
         """
         Set the media version numbers for all media in the app to the current app version
         if the media is new or has changed since the last build. Otherwise set it to the
@@ -5766,6 +5003,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         """
 
         # access to .multimedia_map is slow
+        previous_version = self.get_previous_version()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
@@ -5971,20 +5209,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return None
 
-    @time_method()
-    def validate_practice_users(self):
-        # validate practice_mobile_worker of app and all app profiles
-        # raises PracticeUserException in case of misconfiguration
-        if not self.enable_practice_users:
-            return
-        self.get_practice_user()
-        try:
-            for build_profile_id in self.build_profiles:
-                self.get_practice_user(build_profile_id)
-        except PracticeUserException as e:
-            e.build_profile_id = build_profile_id
-            raise e
-
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
@@ -6016,7 +5240,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return files
 
     @time_method()
+    @memoized
     def create_all_files(self, build_profile_id=None):
+        self.set_form_versions()
+        self.set_media_versions()
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
             '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
@@ -6322,116 +5549,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         # will be the same.
         return forms[0].get_questions(langs or self.langs, include_triggers, include_groups, include_translations)
 
-    def check_subscription(self):
-
-        def app_uses_usercase(app):
-            return any(m.uses_usercase() for m in app.get_modules())
-
-        errors = []
-        if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
-            errors.append({
-                'type': 'subscription',
-                'message': _('Your application is using User Properties and your current subscription does not '
-                             'support that. You can remove User Properties functionality by opening the User '
-                             'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
-            })
-        return errors
-
-    @time_method()
-    def _check_modules(self):
-        errors = []
-        if not self.modules:
-            errors.append({'type': "no modules"})
-        for module in self.get_modules():
-            errors.extend(module.validate_for_build())
-        return errors
-
-    @time_method()
-    def _check_forms(self):
-        errors = []
-        xmlns_count = defaultdict(int)
-        for form in self.get_forms():
-            errors.extend(form.validate_for_build(validate_module=False))
-
-            # make sure that there aren't duplicate xmlns's
-            if not isinstance(form, ShadowForm):
-                xmlns_count[form.xmlns] += 1
-            for xmlns in xmlns_count:
-                if xmlns_count[xmlns] > 1:
-                    errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
-        return errors
-
-    @time_method()
     def validate_app(self):
-        errors = []
-
-        for lang in self.langs:
-            if not lang:
-                errors.append({'type': 'empty lang'})
-
-        errors.extend(self._check_modules())
-        errors.extend(self._check_forms())
-
-        if any(not module.unique_id for module in self.get_modules()):
-            raise ModuleIdMissingException
-        modules_dict = {m.unique_id: m for m in self.get_modules()}
-
-        def _parent_select_fn(module):
-            if hasattr(module, 'parent_select') and module.parent_select.active:
-                return module.parent_select.module_id
-
-        if self._has_dependency_cycle(modules_dict, _parent_select_fn):
-            errors.append({'type': 'parent cycle'})
-
-        errors.extend(self._child_module_errors(modules_dict))
-        errors.extend(self.check_subscription())
-
-        if not errors:
-            errors = super(Application, self).validate_app()
-        return errors
-
-    def _has_dependency_cycle(self, modules, neighbour_id_fn):
-        """
-        Detect dependency cycles given modules and the neighbour_id_fn
-
-        :param modules: A mapping of module unique_ids to Module objects
-        :neighbour_id_fn: function to get the neibour module unique_id
-        :return: True if there is a cycle in the module relationship graph
-        """
-        visited = set()
-        completed = set()
-
-        def cycle_helper(m):
-            if m.id in visited:
-                if m.id in completed:
-                    return False
-                return True
-            visited.add(m.id)
-            parent = modules.get(neighbour_id_fn(m), None)
-            if parent is not None and cycle_helper(parent):
-                return True
-            completed.add(m.id)
-            return False
-        for module in modules.values():
-            if cycle_helper(module):
-                return True
-        return False
-
-    def _child_module_errors(self, modules_dict):
-        module_errors = []
-
-        def _root_module_fn(module):
-            if hasattr(module, 'root_module_id'):
-                return module.root_module_id
-
-        if self._has_dependency_cycle(modules_dict, _root_module_fn):
-            module_errors.append({'type': 'root cycle'})
-
-        module_ids = set([m.unique_id for m in self.get_modules()])
-        root_ids = set([_root_module_fn(m) for m in self.get_modules() if _root_module_fn(m) is not None])
-        if not root_ids.issubset(module_ids):
-            module_errors.append({'type': 'unknown root'})
-        return module_errors
+        return ApplicationValidator(self).validate_app()
 
     def get_profile_setting(self, s_type, s_id):
         setting = self.profile.get(s_type, {}).get(s_id)

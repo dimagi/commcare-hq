@@ -3,13 +3,10 @@ from __future__ import unicode_literals
 from django.conf.urls import include, url
 
 from corehq.apps.styleguide.views import (
-    AccessibilityStyleGuideView,
-    ClassBasedViewStyleGuideView,
-    ColorsStyleGuide,
-    CSSStyleGuideView,
-    FormsStyleGuideView,
-    IconsStyleGuideView,
+    AtomsStyleGuideView,
     MainStyleGuideView,
+    MoleculesStyleGuideView,
+    OrganismsStyleGuideView,
 )
 from corehq.apps.styleguide.views.docs import default
 
@@ -21,18 +18,12 @@ doc_urlpatterns = [
 
 urlpatterns = [
     url(r'^$', MainStyleGuideView.as_view(), name=MainStyleGuideView.urlname),
-    url(r'^accessibility/$', AccessibilityStyleGuideView.as_view(),
-        name=AccessibilityStyleGuideView.urlname),
-    url(r'^forms/$', FormsStyleGuideView.as_view(),
-        name=FormsStyleGuideView.urlname),
-    url(r'^icons/$', IconsStyleGuideView.as_view(),
-        name=IconsStyleGuideView.urlname),
-    url(r'^colors/$', ColorsStyleGuide.as_view(),
-        name=ColorsStyleGuide.urlname),
-    url(r'^css/$', CSSStyleGuideView.as_view(),
-        name=CSSStyleGuideView.urlname),
-    url(r'^views/$', ClassBasedViewStyleGuideView.as_view(),
-        name=ClassBasedViewStyleGuideView.urlname),
+    url(r'^atoms/$', AtomsStyleGuideView.as_view(),
+        name=AtomsStyleGuideView.urlname),
+    url(r'^molecules/$', MoleculesStyleGuideView.as_view(),
+        name=MoleculesStyleGuideView.urlname),
+    url(r'^organisms/$', OrganismsStyleGuideView.as_view(),
+        name=OrganismsStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
 ]
 

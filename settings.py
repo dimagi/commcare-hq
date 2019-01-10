@@ -345,7 +345,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'custom.bihar',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -522,7 +521,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
-    "custom.bihar.reports.indicators.fixtures.generator",
     "custom.m4change.fixtures.report_fixtures.generator",
     "custom.m4change.fixtures.location_fixtures.generator",
 ]
@@ -892,23 +890,6 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-# Example:
-# TRANSIFEX_DETAILS = {
-#     'organization': 'selfproject',
-#     'project': {
-#        'icds-test': ['test-1236', 'test-hindi-marathi'],
-#     },
-#     'teams': {
-#         'icds-test': {
-#              source lang code at HQ : link to team on transifex
-#             'en': 'https://www.transifex.com/selfproject/teams/'
-#         }
-#     },
-#     'token': 'api-token'
-#
-# }
-# ToDO: make it support for multiple domains
-TRANSIFEX_DETAILS = None
 from env_settings import *
 
 try:
@@ -1395,7 +1376,6 @@ COUCHDB_APPS = [
     ('custom_data_fields', META_DB),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
-    ('bihar', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', META_DB),
@@ -2033,8 +2013,6 @@ COUCH_CACHE_BACKENDS = [
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
-    'care-bihar',
-    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
@@ -2072,9 +2050,13 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
-CUSTOM_UCR_REPORT_FILTERS = []
+CUSTOM_UCR_REPORT_FILTERS = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
+]
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = []
+CUSTOM_UCR_REPORT_FILTER_VALUES = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
+]
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -2090,8 +2072,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'care-bihar': 'custom.bihar',
-    'bihar': 'custom.bihar',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',

@@ -1,97 +1,59 @@
 from __future__ import absolute_import
-
-from __future__ import division
 from __future__ import unicode_literals
-from datetime import datetime, timedelta
+
 import json
+from datetime import datetime, timedelta
 
 from couchdbkit import ResourceNotFound
+from couchexport.models import Format
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
+from django.http import Http404
 from django.template.defaultfilters import filesizeformat
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from memoized import memoized
+from six.moves import map
 
-from corehq.util.download import get_download_response
-from corehq.apps.domain.models import Domain
-from corehq.apps.export.views.utils import ExportsPermissionsManager, user_can_view_deid_exports
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
-from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe, location_restricted_response
-from corehq.apps.reports.views import should_update_export
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
-from django.utils.decorators import method_decorator
-
-
-from djangular.views.mixins import allow_remote_invocation
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.tasks import (
-    generate_schema_for_all_builds,
-    get_saved_export_task_status,
-    rebuild_saved_export,
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe, location_restricted_response
+from corehq.apps.reports.models import HQGroupExportConfiguration
+from corehq.apps.reports.views import should_update_export
+from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.users.models import WebUser
+from corehq.apps.users.permissions import (
+    CASE_EXPORT_PERMISSION,
+    FORM_EXPORT_PERMISSION,
+    has_permission_to_view_report,
 )
-from corehq.apps.export.exceptions import (
-    ExportAppException,
-    BadExportConfiguration,
-    ExportFormValidationException,
-)
-from corehq.apps.export.forms import (
-    EmwfFilterFormExport,
-    FilterCaseESExportDownloadForm,
-    FilterSmsESExportDownloadForm,
-    CreateExportTagForm,
-    DashboardFeedFilterForm,
-)
-from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
-    SMSExportDataSchema,
-    FormExportInstance,
-    CaseExportInstance,
-    SMSExportInstance,
-    ExportInstance,
-)
-from corehq.apps.export.const import (
-    FORM_EXPORT,
-    CASE_EXPORT,
-    MAX_EXPORTABLE_ROWS,
-    MAX_DATA_FILE_SIZE,
-    MAX_DATA_FILE_SIZE_TOTAL,
-    SharingOption,
-    UNKNOWN_EXPORT_OWNER,
-)
+from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
+from corehq.util.download import get_download_response
+
+from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT, MAX_EXPORTABLE_ROWS, UNKNOWN_EXPORT_OWNER
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_properly_wrapped_export_instance,
     get_case_exports_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.reports.models import HQGroupExportConfiguration
-from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import use_select2
-from corehq.apps.users.models import WebUser
-from corehq.apps.users.permissions import (
-    can_download_data_files,
-    CASE_EXPORT_PERMISSION,
-    DEID_EXPORT_PERMISSION,
-    FORM_EXPORT_PERMISSION,
-    has_permission_to_view_report,
-)
-from corehq.apps.analytics.tasks import track_workflow
-from couchexport.models import Format
-from memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
-from six.moves import map
+from corehq.apps.export.forms import CreateExportTagForm, DashboardFeedFilterForm
+from corehq.apps.export.models import FormExportInstance
+from corehq.apps.export.tasks import get_saved_export_task_status, rebuild_saved_export
+from corehq.apps.export.views.utils import ExportsPermissionsManager, user_can_view_deid_exports
 
 
 class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
@@ -755,6 +717,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
 @require_GET
 @login_and_domain_required
+@location_safe
 def get_app_data_drilldown_values(request, domain):
     if json.loads(request.GET.get('is_deid')):
         raise Http404()
@@ -776,6 +739,7 @@ def get_app_data_drilldown_values(request, domain):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def submit_app_data_drilldown_form(request, domain):
     if json.loads(request.POST.get('is_deid')):
         raise Http404()

@@ -40,6 +40,12 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return get_table_name(self.domain, config.table_id)
 
     @property
+    def person_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
     def tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
@@ -215,7 +221,10 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('opened_on', 'case_list.opened_on'),
             ('dob', 'case_list.dob'),
             ('closed', 'case_list.closed'),
-            ('anc_abnormalities', 'agg_bp.anc_abnormalities')
+            ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
+            ('home_visit_date', 'agg_bp.latest_time_end_processed'),
+            ('date_death', 'person.date_death'),
+            ('person_case_id', 'ucr.person_case_id')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -260,4 +269,5 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def indexes(self):
         return [
             'CREATE INDEX ON "{}" (awc_id, case_id)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (person_case_id, add, case_id)'.format(self.tablename)
         ]

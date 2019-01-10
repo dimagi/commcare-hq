@@ -40,7 +40,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
     DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
-    AWW_INCENTIVE_REPORT
+    AWW_INCENTIVE_REPORT, THREE_MONTHS
 from custom.icds_reports.models import (
     AggChildHealth,
     AggChildHealthMonthly,
@@ -79,6 +79,7 @@ from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
     create_excel_file, create_aww_performance_excel_file
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -263,6 +264,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                             ).apply_async()
 
             res_awc.get()
+
+            first_of_month_string = monthly_date.strftime('%Y-%m-01')
+            for state_id in state_ids:
+                create_mbt_for_month.delay(state_id, first_of_month_string)
 
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
@@ -671,7 +676,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             block_id=location,
             aggregation_level=3
         ).first()
-        if file_format == 'xlsx':
+        if file_format == 'xlsx' and beta:
             cache_key = create_aww_performance_excel_file(
                 excel_data,
                 data_type,
@@ -892,11 +897,15 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='20'), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(day_of_week=6, hour=0, minute=0), acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
+    # Weekly refresh of disha dumps for current and last month
     month = date.today().replace(day=1)
+    last_month = month - timedelta(days=1)
+    last_month = last_month.replace(day=1)
     celery_task_logger.info("Started dumping DISHA data")
-    build_dumps_for_month(month)
+    build_dumps_for_month(month, rebuild=True)
+    build_dumps_for_month(last_month, rebuild=True)
     celery_task_logger.info("Finished dumping DISHA data")
 
 
@@ -955,3 +964,16 @@ def build_incentive_report(agg_date=None):
         agg_date = current_month - relativedelta(months=1)
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
+
+
+@task(queue='icds_dashboard_reports_queue')
+def create_mbt_for_month(state_id, month):
+    helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
+    for helper_class in helpers:
+        helper = helper_class(state_id, month)
+        with get_cursor(helper.base_class) as cursor, open(helper.output_file, 'w+') as f:
+            cursor.copy_expert(helper.query(), f)
+            f.seek(0)
+            icds_file, _ = IcdsFile.objects.get_or_create(blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month), data_type='mbt_{}'.format(helper.base_tablename))
+            icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
+            icds_file.save()

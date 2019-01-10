@@ -54,6 +54,10 @@ branches:
   - mk-215 # MK Dec 13
   - jls/conflicts  # Jenny Dec 26: fixes master conflict for lwyszomi:lw/js-forms-modules
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
-  - reports-effective-start-date  # Gabriella Dec 18
   - jls/mm-update-paths  # Jenny Dec 19
+  - cz/odata-poc  # cory jan 8
+  - dmr/fix-es-service-check  # Danny Jan 3
+  - crs-url-exports-alert-bubble  # Gabriella Jan 8
+  - reports-effective-start-date  # Gabriella Jan 8
+  - mk-new-recovery-measure # MK Jan 8
 submodules: {}

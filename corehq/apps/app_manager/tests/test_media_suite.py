@@ -81,6 +81,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
+    @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
     def test_case_list_media(self):
         app = Application.wrap(self.get_json('app'))
         app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
@@ -93,11 +94,12 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
         app.create_mapping(CommCareAudio(_id='456'), audo_path, save=False)
 
-        app.set_media_versions(previous_version=None)
+        app.set_media_versions()
 
         self.assertXmlEqual(self.get_xml('case_list_media_suite'), app.create_media_suite())
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_form_media_with_app_profile(self, dom_has_priv):
         # Test that form media for languages not in the profile are removed from the media suite
@@ -129,7 +131,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         for i, path in enumerate(xform.media_references(form="image")):
             app.create_mapping(CommCareImage(_id='form_image_{}'.format(i)), path, save=False)
 
-        app.set_media_versions(previous_version=None)
+        app.set_media_versions()
         app.update_mm_map()
         app.remove_unused_mappings()
 
@@ -139,7 +141,8 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         # includes all app media and only form media for 'en'
         self.assertXmlEqual(self.get_xml('form_media_suite_en'), app.create_media_suite('profid'))
 
-    def test_update_image_id(self):
+    @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version')
+    def test_update_image_id(self, get_previous_version):
         """
         When an image is updated, change only version number, not resource id
         """
@@ -149,12 +152,14 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         app.version = 1
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
-        app.set_media_versions(previous_version=None)
+        get_previous_version.return_value = None
+        app.set_media_versions()
         old_app = deepcopy(app)
 
         app.version = 2
         app.create_mapping(CommCareImage(_id='456'), image_path, save=False)
-        app.set_media_versions(previous_version=old_app)
+        get_previous_version.return_value = old_app
+        app.set_media_versions()
 
         old_image = old_app.multimedia_map[image_path]
         new_image = app.multimedia_map[image_path]

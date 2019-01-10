@@ -1,6 +1,15 @@
-hqDefine("app_manager/js/menu", function () {
+hqDefine("app_manager/js/menu", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/layout',
+    'app_manager/js/app_manager_utils',
+], function (
+    $,
+    initialPageData,
+    layout,
+    utils
+) {
     var setPublishStatus = function (isOn) {
-        var layout = hqImport("hqwebapp/js/layout");
         if (isOn) {
             layout.showPublishStatus();
         } else {
@@ -24,7 +33,7 @@ hqDefine("app_manager/js/menu", function () {
     };
 
     var initPublishStatus = function () {
-        var currentAppVersionUrl = hqImport('hqwebapp/js/initial_page_data').reverse('current_app_version');
+        var currentAppVersionUrl = initialPageData.reverse('current_app_version');
         var _checkPublishStatus = function () {
             $.ajax({
                 url: currentAppVersionUrl,
@@ -38,7 +47,7 @@ hqDefine("app_manager/js/menu", function () {
         setInterval(_checkPublishStatus, 20000);
 
         // sniff ajax calls to other urls that make app changes
-        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function () {
+        utils.handleAjaxAppChange(function () {
             setPublishStatus(true);
         });
     };

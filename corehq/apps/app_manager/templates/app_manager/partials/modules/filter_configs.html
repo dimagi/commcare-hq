@@ -78,11 +78,12 @@
                         <input class="form-control" type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
                     </div>
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticChoiceListFilter'">
-                        <input type="text"
-                               class="choice_filter form-control"
-                               style="width:300px"
-                               data-bind="value: filter.selectedValue.value"/>
-                        <input type="hidden" data-bind="value: dynamicFilterName">
+                        <select class="choice_filter form-control"
+                                multiple="true"
+                                data-bind="
+                                    selectedOptions: filter.selectedValue.value,
+                                    attr: {'data-filter-name': dynamicFilterName, 'data-initial': JSON.stringify(filter.selectedValue.value())}">
+                        </select>
                     </div>
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticChoiceFilter'">
                         <select class="form-control" data-bind="
