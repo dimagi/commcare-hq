@@ -75,6 +75,7 @@ import os
 import traceback
 from base64 import b64encode
 from contextlib import contextmanager
+from datetime import timedelta
 from tempfile import mkdtemp
 from io import open
 
@@ -83,6 +84,7 @@ import six
 from django.conf import settings
 from gevent.pool import Pool
 from gevent.queue import LifoQueue
+from django.db.models import Q
 
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import get_blob_db
@@ -298,6 +300,7 @@ class BlobMetaReindexAccessor(ReindexAccessor):
 
     model_class = BlobMeta
     id_field = 'id'
+    date_range = None
 
     def get_doc(self, *args, **kw):
         # only used for retries; BlobDbBackendMigrator doesn't retry
@@ -311,6 +314,17 @@ class BlobMetaReindexAccessor(ReindexAccessor):
         assert isinstance(obj.id, six.integer_types), (type(obj.id), obj.id)
         # would use a tuple, but JsonObject.to_string requires dict keys to be strings
         return "%s %s" % (obj.parent_id, obj.id)
+
+    def extra_filters(self, for_count=False):
+        filters = list(super(BlobMetaReindexAccessor, self).extra_filters(for_count))
+        if self.date_range is not None:
+            start_date, end_date = self.date_range
+            if start_date is not None:
+                filters.append(Q(created_on__gte=start_date))
+            if end_date is not None:
+                one_day = timedelta(days=1)
+                filters.append(Q(created_on__lt=end_date + one_day))
+        return filters
 
     def load(self, key):
         parent_id, doc_id = key.rsplit(" ", 1)
@@ -396,7 +410,8 @@ class BackendMigrator(Migrator):
         super(BackendMigrator, self).__init__(slug, types, BlobDbBackendMigrator)
         self.reindexer = reindexer
 
-    def get_doc_migrator(self, filename, **kw):
+    def get_doc_migrator(self, filename, date_range=None, **kw):
+        self.reindexer.date_range = date_range
         migrator = super(BackendMigrator, self).get_doc_migrator(filename)
         return _migrator_with_worker_pool(migrator, self.reindexer, **kw)
 
