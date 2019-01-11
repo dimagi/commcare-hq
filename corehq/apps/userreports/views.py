@@ -954,7 +954,7 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
                 messages.success(request, _("Data source created for '{}'".format(app_source.source)))
             else:
                 assert app_source.source_type == 'form'
-                xform = Form.get_form(app_source.source)
+                xform = app.get_form(app_source.source)
                 data_source = get_form_data_source(app, xform)
                 data_source.save()
                 messages.success(request, _("Data source created for '{}'".format(xform.default_name())))
