@@ -123,7 +123,6 @@ class ScheduledReportForm(forms.Form):
 
     start_date = forms.DateField(
         label=_('Report Start Date'),
-        widget=forms.DateInput(),
         required=False
     )
 
