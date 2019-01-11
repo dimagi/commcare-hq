@@ -24,6 +24,8 @@ from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_f
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.util import get_static_report_mapping
+
+from dimagi.utils.logging import notify_exception
 import six
 
 CASE_TYPE_CONFLICT_MSG = (
@@ -298,6 +300,7 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     except Exception:
         message = _("Something went wrong! There was an error. Please try again. "
                     "If you see this error repeatedly please report it as issue.")
+        notify_exception(None, message)
     else:
         message = _("Your linked application was successfully updated to the latest version.")
     subject = _("Update Status for linked app %s") % app.name
