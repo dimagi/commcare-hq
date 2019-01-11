@@ -150,10 +150,10 @@ class BillingAccountBasicForm(forms.Form):
                 'name': account.name,
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
-                'email_list': ','.join(contact_info.email_list),
+                'email_list': contact_info.email_list,
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
-                'enterprise_admin_emails': ','.join(account.enterprise_admin_emails),
+                'enterprise_admin_emails': account.enterprise_admin_emails,
                 'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
                 'invoicing_plan': account.invoicing_plan,
                 'dimagi_contact': account.dimagi_contact,
@@ -200,9 +200,11 @@ class BillingAccountBasicForm(forms.Form):
                     'invoicing_plan',
                     crispy.Field(
                         'enterprise_admin_emails',
-                        css_class='input-xxlarge accounting-email-select2'
+                        css_class='input-xxlarge accounting-email-select2',
+                        data_initial=json.dumps(self.initial.get('enterprise_admin_emails')),
                     ),
-                    data_bind='visible: is_customer_billing_account'
+                    data_bind='visible: is_customer_billing_account',
+                    data_initial=json.dumps(self.initial.get('enterprise_admin_emails')),
                 )
             )
             additional_fields.append(
@@ -227,13 +229,14 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 crispy.Div(
                     crispy.Div(
                         css_class='col-sm-3 col-md-2'
                     ),
                     crispy.Div(
-                        crispy.HTML(self.initial['email_list']),
+                        crispy.HTML(", ".join(self.initial.get('email_list'))),
                         css_class='col-sm-9 col-md-8 col-lg-6'
                     ),
                     css_id='emails-text',
@@ -285,14 +288,10 @@ class BillingAccountBasicForm(forms.Form):
         return name
 
     def clean_email_list(self):
-        return self.cleaned_data['email_list'].split(',')
+        return self.data.getlist('email_list')
 
     def clean_enterprise_admin_emails(self):
-        # Do not return a list with an empty string
-        if self.cleaned_data['enterprise_admin_emails']:
-            return [e.strip() for e in self.cleaned_data['enterprise_admin_emails'].split(r',')]
-        else:
-            return []
+        return self.data.getlist('enterprise_admin_emails')
 
     def clean_enterprise_restricted_signup_domains(self):
         if self.cleaned_data['enterprise_restricted_signup_domains']:
@@ -416,6 +415,7 @@ class BillingAccountContactForm(forms.ModelForm):
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        country_code = args[0].get('country') if len(args) > 0 else account.billingcontactinfo.country
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Contact Information',
@@ -431,11 +431,8 @@ class BillingAccountContactForm(forms.ModelForm):
                 crispy.Field(
                     'country',
                     css_class="input-xlarge accounting-country-select2",
-                    data_countryname=COUNTRIES.get(
-                        args[0].get('country') if len(args) > 0
-                        else account.billingcontactinfo.country,
-                        ''
-                    )
+                    data_country_code=country_code or '',
+                    data_country_name=COUNTRIES.get(country_code, ''),
                 ),
             ),
             hqcrispy.FormActions(
@@ -2055,7 +2052,8 @@ class TriggerBookkeeperEmailForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Trigger Bookkeeper Email Details',
-                crispy.Field('emails', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('emails', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('emails'))),
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
             ),
