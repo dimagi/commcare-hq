@@ -858,3 +858,7 @@ hr {
     text-align: center;
     padding: 20px 50px;
 }
+
+.pregnantDetailsColumn {
+    min-width: 150px;
+}
