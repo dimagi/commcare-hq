@@ -8,6 +8,7 @@ import itertools
 from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xml import V2_NAMESPACE
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
@@ -19,6 +20,7 @@ from corehq.apps.app_manager.xpath import XPath
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
+from corehq.toggles import DONT_INDEX_SAME_CASETYPE
 from corehq.util.view_utils import get_request
 from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
@@ -428,7 +430,7 @@ class CaseBlock(object):
         )
 
         if not autoset_owner_id:
-            owner_id_node.text = '-'
+            owner_id_node.text = UNOWNED_EXTENSION_OWNER_ID
         elif has_case_sharing:
             self.xform.add_instance('groups', src='jr://fixture/user-groups')
             add_setvalue_or_bind(
@@ -1630,7 +1632,8 @@ class XForm(WrappedNode):
                 if subcase.close_condition.is_active():
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
-                if case_block is not None and subcase.case_type != form.get_case_type():
+                index_same_casetype = not DONT_INDEX_SAME_CASETYPE.enabled(form.get_app().domain)
+                if case_block is not None and (index_same_casetype or subcase.case_type != form.get_case_type()):
                     reference_id = subcase.reference_id or 'parent'
 
                     subcase_block.add_index_ref(
@@ -1915,7 +1918,8 @@ class XForm(WrappedNode):
                     self.add_bind(
                         nodeset="%scase/create/owner_id" % path,
                         calculate=XPath.if_(XPath(case_index.relationship_question).eq(XPath.string('extension')),
-                                            XPath.string('-'), self.resolve_path("meta/userID")),
+                                            XPath.string(UNOWNED_EXTENSION_OWNER_ID),
+                                            self.resolve_path("meta/userID")),
                     )
 
             if action.close_condition.type != 'never':

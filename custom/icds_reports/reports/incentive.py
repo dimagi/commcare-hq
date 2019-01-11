@@ -2,7 +2,7 @@ from __future__ import unicode_literals, absolute_import, division
 
 
 from custom.icds_reports.models.aggregate import AWWIncentiveReport
-from custom.icds_reports.utils import india_now
+from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 
 
 class IncentiveReport(object):
@@ -14,7 +14,7 @@ class IncentiveReport(object):
     def get_excel_data(self):
 
         def _format_infrastructure_data(data):
-            return data if data else 'Data not entered'
+            return data if data else DATA_NOT_ENTERED
 
         data = AWWIncentiveReport.objects.filter(
             month=self.month, block_id=self.block
@@ -38,7 +38,7 @@ class IncentiveReport(object):
             if home_visit_percent > 1:
                 home_visit_percent = 1
             if row['awc_num_open'] is None:
-                num_open = 'Data not entered'
+                num_open = DATA_NOT_ENTERED
             else:
                 num_open = row['awc_num_open']
 

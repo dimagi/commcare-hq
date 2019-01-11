@@ -75,6 +75,7 @@ hqDefine("hqwebapp/js/select2_handler_v4", [
                 allowClear: true,
                 multiple: self.multiple,
                 placeholder: self.placeholder,
+                width: '100%',
                 ajax: {
                     delay: 150,
                     url: '',

@@ -61,9 +61,9 @@ BLUE = '#006fdf'
 PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
-DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DEFAULT_VALUE = DATA_NOT_ENTERED
 DATA_NOT_VALID = "Data Not Valid"
 
 india_timezone = pytz.timezone('Asia/Kolkata')
@@ -431,7 +431,7 @@ def get_counseling(value):
     if counseling:
         return ', '.join(counseling)
     else:
-        return '--'
+        return 'None'
 
 
 def get_tt_dates(value):
@@ -445,7 +445,7 @@ def get_tt_dates(value):
     if tt_dates:
         return '; '.join(tt_dates)
     else:
-        return '--'
+        return 'None'
 
 
 def current_age(dob, selected_date):
@@ -909,7 +909,11 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     for column_index in range(len(columns)):
         widths[columns[column_index]] = max(
             widths[columns[column_index]],
-            max(len(str(row[column_index])) for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else six.text_type(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
         )
 
     for column, width in widths.items():

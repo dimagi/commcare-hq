@@ -8,10 +8,11 @@ import mock
 import postgres_copy
 import six
 import sqlalchemy
+import csv342 as csv
 
 from django.conf import settings
-from django.db import connections
 from django.test.utils import override_settings
+from django.test.testcases import TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -50,6 +51,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
     'agg_awc': 'agg_awc',
 }
+
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
 def setUpModule():
@@ -211,3 +214,54 @@ def tearDownModule():
 
     Domain.get_by_name('icds-cas').delete()
     _call_center_domain_mock.stop()
+
+
+class CSVTestCase(TestCase):
+
+    def _load_csv(self, path):
+        with open(path, encoding='utf-8') as f:
+            csv_data = list(csv.reader(f))
+            headers = csv_data[0]
+            for row_count, row in enumerate(csv_data):
+                csv_data[row_count] = dict(zip(headers, row))
+        return csv_data[1:]
+
+    def _fasterAssertListEqual(self, list1, list2):
+        if len(list1) != len(list2):
+            self.fail('Lists are not equal')
+
+        messages = []
+
+        for idx in range(len(list1)):
+            dict1 = list1[idx]
+            dict2 = list2[idx]
+
+            differences = set()
+
+            for key in dict1.keys():
+                if key != 'id':
+                    value1 = dict1[key] if isinstance(dict1[key], six.text_type) else dict1[key].decode('utf-8')
+                    value1 = value1.replace('\r\n', '\n')
+                    value2 = dict2.get(key, '').replace('\r\n', '\n')
+                    if value1 != value2:
+                        differences.add(key)
+
+            if differences:
+                if self.always_include_columns:
+                    differences |= self.always_include_columns
+                messages.append("""
+                    Actual and expected row {} are not the same
+                    Actual:   {}
+                    Expected: {}
+                """.format(
+                    idx + 1,
+                    ', '.join(['{}: {}'.format(
+                        difference, dict1[difference].decode('utf-8')) for difference in differences]
+                    ),
+                    ', '.join(['{}: {}'.format(
+                        difference, dict2.get(difference, '')) for difference in differences]
+                    )
+                ))
+
+        if messages:
+            self.fail('\n'.join(messages))

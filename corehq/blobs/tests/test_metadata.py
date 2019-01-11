@@ -187,53 +187,6 @@ class TestMetaDB(TestCase):
         )
         self.assertEqual(len(metadb.get_for_parent("no-change")), 1)
 
-    def test_get_when_dup_exists(self):
-        # this test can be removed with form_processor_xformattachmentsql table
-        from datetime import datetime
-        from corehq.form_processor.models import (
-            DeprecatedXFormAttachmentSQL,
-            XFormInstanceSQL,
-        )
-
-        meta = self.db.put(BytesIO(b"cx"), meta=new_meta(
-            parent_id=uuid4().hex,
-            type_code=CODES.form_xml,
-            name="form.xml",
-        ))
-
-        db = get_db_alias_for_partitioned_doc(meta.parent_id)
-        with connections[db].cursor() as cursor:
-            cursor.execute("""
-            DROP TRIGGER IF EXISTS legacy_xform_attachment_insert_not_allowed
-                ON form_processor_xformattachmentsql;
-            """)
-        # move blob metadata into old xformattachmentsql table
-        XFormInstanceSQL(
-            domain=meta.domain,
-            form_id=meta.parent_id,
-            received_on=datetime.now(),
-            xmlns="testing",
-        ).save(using=db)
-        att = DeprecatedXFormAttachmentSQL(
-            form_id=meta.parent_id,
-            attachment_id=uuid4().hex,
-            blob_id=meta.key,
-            blob_bucket="",
-            name=meta.name,
-            content_length=meta.content_length,
-            md5='wrong',
-        )
-        att.save(using=db)
-        metas = self.db.metadb.get_for_parent(meta.parent_id, CODES.form_xml)
-        self.assertEqual(len(metas), 2, metas)
-
-        copy = self.db.metadb.get(
-            parent_id=meta.parent_id,
-            type_code=CODES.form_xml,
-            name=meta.name,
-        )
-        self.assertEqual(copy.key, meta.key)
-
 
 @only_run_with_partitioned_database
 class TestPartitionedMetaDB(TestMetaDB):

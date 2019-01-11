@@ -1705,6 +1705,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.step = $routeParams.step;
     vm.filters = ['gender', 'age'];
     vm.userLocationId = userLocationId;
+    vm.dataNotEntered = "Data Not Entered";
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -1773,24 +1774,24 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     function renderPersonName(data, type, full) {
         return '<span class="pointer link" ng-click="$ctrl.goToBeneficiaryDetails(\''
-            + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
+            + full.case_id + '\')">' + full.person_name || vm.dataNotEntered + '</span>';
     }
 
     function renderPersonNamePregnant(data, type, full) {
         return '<span class="pointer link" ng-click="$ctrl.goToPregnantDetails(\''
-            + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
+            + full.case_id + '\')">' + full.person_name || vm.dataNotEntered + '</span>';
     }
 
     function renderPersonNameLactating(data, type, full) {
-        return full.person_name || 'Data not Entered';
+        return full.person_name || vm.dataNotEntered;
     }
 
     function renderDateOfBirth(data, type, full) {
-        return full.dob || 'Data not Entered';
+        return full.dob || vm.dataNotEntered;
     }
 
     function renderAge(data, type, full) {
-        return full.age || 'Data not Entered';
+        return full.age || vm.dataNotEntered;
     }
 
     function renderClosed(data, type, full) {
@@ -1798,67 +1799,67 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderOpenedOn(data, type, full) {
-        return full.opened_on || 'Data not Entered';
+        return full.opened_on || vm.dataNotEntered;
     }
 
     function renderEdd(data, type, full) {
-        return full.edd || 'Data not Entered';
+        return full.edd || vm.dataNotEntered;
     }
 
     function renderTrimester(data, type, full) {
-        return full.trimester || 'Data not Entered';
+        return full.trimester || vm.dataNotEntered;
     }
 
     function renderAnemic(data, type, full) {
-        return full.anemic || 'Data not Entered';
+        return full.anemic || vm.dataNotEntered;
     }
 
     function renderNumAncComplete(data, type, full) {
-        return full.num_anc_complete || 'Data not Entered';
+        return full.num_anc_complete || vm.dataNotEntered;
     }
 
     function renderBeneficiary(data, type, full) {
-        return full.beneficiary || 'Data not Entered';
+        return full.beneficiary || vm.dataNotEntered;
     }
 
     function renderNumberOfThrsGiven(data, type, full) {
-        return full.number_of_thrs_given || 'Data not Entered';
+        return full.number_of_thrs_given || vm.dataNotEntered;
     }
 
     function renderLastDateThr(data, type, full) {
-        return full.last_date_thr || 'Data not Entered';
+        return full.last_date_thr || vm.dataNotEntered;
     }
 
     function renderAdd(data, type, full) {
-        return full.add || 'Data not Entered';
+        return full.add || vm.dataNotEntered;
     }
 
     function renderBreastfedAtBirth(data, type, full) {
-        return full.breastfed_at_birth || 'Data not Entered';
+        return full.breastfed_at_birth || vm.dataNotEntered;
     }
 
     function renderIsEbf(data, type, full) {
-        return full.is_ebf || 'Data not Entered';
+        return full.is_ebf || vm.dataNotEntered;
     }
 
     function renderInstitutionalDeliveryInMonth(data, type, full) {
-        return full.institutional_delivery_in_month || 'Data not Entered';
+        return full.institutional_delivery_in_month || vm.dataNotEntered;
     }
 
     function renderDeliveryNature(data, type, full) {
-        return full.delivery_nature || 'Data not Entered';
+        return full.delivery_nature || vm.dataNotEntered;
     }
 
     function renderNumPncVisits(data, type, full) {
-        return full.num_pnc_visits || 'Data not Entered';
+        return full.num_pnc_visits || vm.dataNotEntered;
     }
 
     function renderNumRationsDistributed(data, type, full) {
-        return full.num_rations_distributed || 'Data not Entered';
+        return full.num_rations_distributed || vm.dataNotEntered;
     }
 
     function renderFullyImmunizedDate(data, type, full) {
-        return full.fully_immunized || 'Data not Entered';
+        return full.fully_immunized || vm.dataNotEntered;
     }
 
     function renderWeightForAgeStatus(data, type, full) {
@@ -1883,15 +1884,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderPseDaysAttended(data, type, full) {
-        return full.pse_days_attended || 'Data not Entered';
+        return full.pse_days_attended || vm.dataNotEntered;
     }
 
     function renderAwwPhoneNumber(data, type, full) {
-        return full.aww_phone_number || 'Data not Entered';
+        return full.aww_phone_number || vm.dataNotEntered;
     }
 
     function renderMotherPhoneNumber(data, type, full) {
-        return full.mother_phone_number || 'Data not Entered';
+        return full.mother_phone_number || vm.dataNotEntered;
     }
 
     vm.showTable = true;
@@ -1984,9 +1985,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getPopoverContent = function (weightRecorded, heightRecorded, ageInMonths, type) {
         var html = '';
 
-        var recordedWeight = 'Data not Entered';
-        var recordedHeight = 'Data not Entered';
-        var age = 'Data not Entered';
+        var recordedWeight = vm.dataNotEntered;
+        var recordedHeight = vm.dataNotEntered;
+        var age = vm.dataNotEntered;
 
         if (weightRecorded) {
             recordedWeight = d3.format(".2f")(weightRecorded) + ' kg';
@@ -2518,7 +2519,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     edd: null,
                     opened_on: null,
                     preg_order: null,
-                    home_visit_date: 'Not entered',
+                    home_visit_date: 'Data Not Entered',
                     bp: null,
                     anc_weight: null,
                     anc_hemoglobin: null,

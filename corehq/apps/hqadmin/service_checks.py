@@ -18,6 +18,7 @@ from celery import Celery
 import requests
 
 from corehq.util.timer import TimingContext
+from dimagi.utils.make_uuid import random_hex
 from soil import heartbeat
 
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
@@ -93,7 +94,7 @@ def check_elasticsearch():
     if cluster_health != 'green':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
-    doc = {'_id': 'elasticsearch-service-check',
+    doc = {'_id': 'elasticsearch-service-check-{}'.format(random_hex()[:7]),
            'date': datetime.datetime.now().isoformat()}
     send_to_elasticsearch('groups', doc)
     refresh_elasticsearch_index('groups')

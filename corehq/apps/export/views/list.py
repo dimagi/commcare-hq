@@ -755,6 +755,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
 @require_GET
 @login_and_domain_required
+@location_safe
 def get_app_data_drilldown_values(request, domain):
     if json.loads(request.GET.get('is_deid')):
         raise Http404()
@@ -776,6 +777,7 @@ def get_app_data_drilldown_values(request, domain):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def submit_app_data_drilldown_form(request, domain):
     if json.loads(request.POST.get('is_deid')):
         raise Http404()

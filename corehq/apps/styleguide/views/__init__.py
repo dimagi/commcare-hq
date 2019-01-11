@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from io import open
+import os
+
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
@@ -12,7 +16,7 @@ def styleguide_default(request):
 
 
 class MainStyleGuideView(TemplateView):
-    template_name = 'styleguide/pages/home.html'
+    template_name = 'styleguide/home.html'
     urlname = 'styleguide_home'
 
 
@@ -57,6 +61,11 @@ class BaseStyleGuideArticleView(TemplateView):
         :return: a dict
         """
         return {}
+
+    def example(self, filename):
+        examples = os.path.join(os.path.dirname(__file__), '..', 'templates', 'styleguide', 'examples')
+        with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
+            return content.read()
 
     def render_to_response(self, context, **response_kwargs):
         context.update(self.section_context)
@@ -284,13 +293,22 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'molecules/intro',
+            'molecules/buttons',
             'molecules/forms',
+            'molecules/modals',
+            'molecules/pagination',
+            'molecules/inline_edit',
         ]
 
     @property
     def page_context(self):
         return {
             'basic_crispy_form': BasicCrispyForm(),
+            'examples': {
+                'modals': self.example('modals.html'),
+                'pagination': self.example('pagination.html'),
+                'inline_edit': self.example('inline_edit.html'),
+            },
         }
 
 
@@ -302,5 +320,15 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'organisms/intro',
+            'organisms/tables',
             'organisms/views',
         ]
+
+    @property
+    def page_context(self):
+        return {
+            'examples': {
+                'basic_table': self.example('basic_table.html'),
+                'complex_table': self.example('complex_table.html'),
+            },
+        }

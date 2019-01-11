@@ -220,7 +220,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             if att.is_delete:
                 if name in current_attachments:
                     self.case.track_delete(current_attachments[name])
-            else:
+            elif att.attachment_src:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
                 if name in current_attachments:
                     existing_attachment = current_attachments[name]

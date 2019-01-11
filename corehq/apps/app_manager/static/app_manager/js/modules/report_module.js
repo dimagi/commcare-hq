@@ -131,7 +131,15 @@ hqDefine('app_manager/js/modules/report_module', function () {
                         filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(startVal || '');
                     }
                 }
-                filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join(select2Separator) : '');
+                var initial = filter.selectedValue.value;
+                if (initial) {
+                    if (!_.isArray(initial)) {
+                        initial = [initial];
+                    }
+                } else {
+                    initial = [];
+                }
+                filter.selectedValue.value = ko.observableArray(initial);
 
                 filter.dynamicFilterName = ko.computed(function () {
                     return selectedReportId() + '/' + filter.slug;
@@ -174,7 +182,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                         }
                     });
                     if (filter.selectedValue.doc_type() === 'StaticChoiceListFilter') {
-                        selectedFilterValues[filter.slug].value = filter.selectedValue.value().split(select2Separator);
+                        selectedFilterValues[filter.slug].value = filter.selectedValue.value();
                     }
                 }
             }
@@ -442,7 +450,6 @@ hqDefine('app_manager/js/modules/report_module', function () {
     return {
         reportModuleModel: reportModuleModel,
         staticFilterDataModel: staticFilterDataModel,
-        select2Separator: select2Separator,
     };
 });
 

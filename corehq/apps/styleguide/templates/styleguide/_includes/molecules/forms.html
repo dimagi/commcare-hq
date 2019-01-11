@@ -33,33 +33,8 @@ from corehq.apps.hqwebapp import crispy as hqcrispy</pre>
         Below is a basic Crispy Form implementation with no javascript integration.
         A good starting point just to understand what's going on.
     </p>
-    <div class="panel panel-default">
-        <div class="panel-body">
-            <!-- Form Overview Tab Nav -->
-            <ul class="nav nav-tabs" id="FormOverviewTabs" role="tablist">
-                <li class="active">
-                  <a href="#basic-example-code" role="tab" data-toggle="tab">Code</a>
-                </li>
-                <li>
-                  <a href="#basic-example-working" role="tab" data-toggle="tab">Working Form</a>
-                </li>
-            </ul>
+    {% include 'styleguide/_includes/molecules/forms/basic_crispy.html' with slug='basic-crispy' title='Basic Crispy Form' %}
 
-            <!-- Form Overview Tab Panes -->
-            <div class="tab-content">
-                <div class="tab-pane fade in active" id="basic-example-code">
-                    <div class="panel-body">
-                        {% include 'styleguide/_includes/molecules/forms/the_code.html' %}
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="basic-example-working">
-                    <div class="panel-body">
-                        {% crispy basic_crispy_form %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <h2>Visual Appearance</h2>
     <p>
         This is simply how the form looks to the user. HQ uses styles provided
@@ -82,14 +57,9 @@ from corehq.apps.hqwebapp import crispy as hqcrispy</pre>
 
     <script>
         $(function () {
-            $('ul#FormOverviewTabs a').click(function (e) {
-              e.preventDefault();
-              $(this).tab('show');
-            });
-            $('div#anatomy-visual-display form').submit(function (e) {
+            $('.styleguide-example form').submit(function (e) {
                 e.preventDefault();
             });
         });
-
     </script>
 </section>

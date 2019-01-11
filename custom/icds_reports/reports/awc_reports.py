@@ -23,7 +23,8 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
-    chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, get_tt_dates, is_anemic, format_decimal
+    chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, \
+    get_tt_dates, is_anemic, format_decimal, DATA_NOT_ENTERED
 from custom.icds_reports.const import MapColors
 import six
 
@@ -910,7 +911,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
             else:
                 return _("Not Available")
         else:
-            return _("Data not Entered")
+            return _(DATA_NOT_ENTERED)
 
     kpi_data = get_data_for_kpi(config, selected_month.date())
 
@@ -1176,20 +1177,22 @@ def get_pregnant_details(case_id, awc_id):
         if row_data['trimester'] >= current_trimester:
             config['data'][row_data['trimester'] - 1].append(dict(
                 case_id=row_data['case_id'],
-                trimester=row_data['trimester'],
-                person_name=row_data['person_name'],
+                trimester=row_data['trimester'] if row_data['trimester'] else DATA_NOT_ENTERED,
+                person_name=row_data['person_name'] if row_data['person_name'] else DATA_NOT_ENTERED,
                 age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
-                mobile_number=row_data['mobile_number'],
-                edd=row_data['edd'],
-                opened_on=row_data['opened_on'],
-                preg_order=row_data['preg_order'],
-                home_visit_date=row_data['home_visit_date'],
-                bp='{} / {}'.format(
-                    row_data['bp_sys'] if row_data['bp_sys'] else '--',
-                    row_data['bp_dia'] if row_data['bp_dia'] else '--',
+                mobile_number=row_data['mobile_number'] if row_data['mobile_number'] else DATA_NOT_ENTERED,
+                edd=row_data['edd'] if row_data['edd'] else DATA_NOT_ENTERED,
+                opened_on=row_data['opened_on'] if row_data['opened_on'] else DATA_NOT_ENTERED,
+                preg_order=row_data['preg_order'] if row_data['preg_order'] else DATA_NOT_ENTERED,
+                home_visit_date=row_data['home_visit_date'] if row_data['home_visit_date'] else DATA_NOT_ENTERED,
+                bp=DATA_NOT_ENTERED if not row_data['bp_sys'] and not row_data['bp_dia'] else '{} / {}'.format(
+                    row_data['bp_sys'] if row_data['bp_sys'] else DATA_NOT_ENTERED,
+                    row_data['bp_dia'] if row_data['bp_dia'] else DATA_NOT_ENTERED,
                 ),
-                anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else '--',
-                anc_hemoglobin=format_decimal(row_data['anc_hemoglobin']) if row_data['anc_hemoglobin'] else '--',
+                anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else DATA_NOT_ENTERED,
+                anc_hemoglobin=format_decimal(
+                    row_data['anc_hemoglobin']
+                ) if row_data['anc_hemoglobin'] else DATA_NOT_ENTERED,
                 anc_abnormalities='Yes' if row_data['anc_abnormalities'] else 'None',
                 anemic=get_anemic_status(row_data),
                 symptoms=get_symptoms(row_data),

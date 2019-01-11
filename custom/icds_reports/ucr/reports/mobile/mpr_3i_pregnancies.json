@@ -29,6 +29,12 @@
         "datatype": "date"
       },
       {
+        "display": "Filter by Village",
+        "slug": "asha_id",
+        "type": "village_choice_list",
+        "field": "doc_id"
+      },
+      {
         "display": "Filter by AWW",
         "slug": "awc_id",
         "type": "dynamic_choice_list",
