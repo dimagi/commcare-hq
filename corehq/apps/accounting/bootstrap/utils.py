@@ -95,6 +95,8 @@ def ensure_plans(config, verbose, apps):
                     % (default_product_plan.edition, is_trial)
                 )
 
+    _clear_cache(SoftwarePlan.objects.all())
+
 
 def _ensure_role(role_slug, apps):
     Role = apps.get_model('django_prbac', 'Role')
@@ -199,3 +201,9 @@ def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
             log_accounting_info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
         db_feature_rates.append(feature_rate)
     return db_feature_rates
+
+
+def _clear_cache(software_plans):
+    from corehq.apps.accounting.models import SoftwarePlan
+    for software_plan in software_plans:
+        SoftwarePlan.get_version.clear(software_plan)
