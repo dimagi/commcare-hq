@@ -56,9 +56,6 @@ hqDefine("reports/js/edit_scheduled_report", [
                     dateFormat: "yy-mm-dd",
                     minDate: 0,
                 });
-                if (!toggles.toggleEnabled('SET_SCHEDULED_REPORT_START_DATE')) {
-                    $("#div_id_start_date").hide();
-                }
             });
         };
     };
