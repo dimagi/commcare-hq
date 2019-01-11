@@ -23,6 +23,7 @@ from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     _aggregate_child_health_pnc_forms,
+    _aggregate_bp_forms,
     _aggregate_gm_forms)
 from io import open
 
@@ -51,6 +52,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_home_vists': 'config_report_icds-cas_static-ls_home_visit_forms_fill_53a43d79',
     'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
     'agg_awc': 'agg_awc',
+    'birth_preparedness': 'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
+    'delivery_form': 'config_report_icds-cas_static-dashboard_delivery_forms_946d56bd',
 }
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -168,6 +171,7 @@ def setUpModule():
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
             _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
+            _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
