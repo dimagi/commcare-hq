@@ -76,34 +76,38 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         lactating = "({} AND {})".format(ccs_lactating, seeking_services)
         lactating_all = "({} AND  case_list.is_migrated=0)".format(ccs_lactating)
 
-        pregnant_to_consider = "(case_list.pregnant=1 AND {} AND {} AND {})".format(seeking_services, open_in_month,
-                                                                                  alive_in_month)
-        pregnant_all = "(case_list.pregnant=1 AND  case_list.is_migrated=0)"
+        ccs_pregnant = "({} AND {} AND case_list.edd is not null and" \
+                       " (case_list.add is null OR case_list.add>{}))".format(open_in_month, alive_in_month, end_month_string)
 
-        valid_in_month = "({} AND ( case_list.pregnant=1 OR {}))".format(alive_in_month, lactating)
+        pregnant_to_consider = "({} AND {} AND {} AND {})".format(ccs_pregnant, seeking_services,
+                                                                  open_in_month, alive_in_month)
+
+        pregnant_all = "({} AND  case_list.is_migrated=0)".format(ccs_pregnant)
+
+        valid_in_month = "( {} OR {})".format(pregnant_to_consider, lactating)
 
         add_in_month = "(case_list.add>= {} AND case_list.add<={})".format(start_month_string, end_month_string)
         delivered_in_month = "({} AND {})".format(seeking_services, add_in_month)
-        extra_meal = "(case_list.eating_extra_meal_last_visit=1 AND case_list.pregnant=1)"
+        extra_meal = "(agg_bp.eating_extra=1 AND {})".format(pregnant_to_consider)
         b1_complete = "(case_list.bp1_date <= {})".format(end_month_string)
         b2_complete = "(case_list.bp2_date <= {})".format(end_month_string)
         b3_complete = "(case_list.bp3_date <= {})".format(end_month_string)
 
-        trimester = "(CASE WHEN case_list.pregnant=1 THEN  CASE WHEN (case_list.edd-{})::integer>=183" \
+        trimester = "(CASE WHEN {} THEN  CASE WHEN (case_list.edd-{})::integer>=183" \
                     "THEN 1 ELSE CASE WHEN (case_list.edd-{})::integer<91" \
-                    "THEN 3 ELSE 2 END END ELSE null END)".format(end_month_string, end_month_string)
+                    "THEN 3 ELSE 2 END END ELSE null END)".format(pregnant_to_consider, end_month_string,
+                                                                  end_month_string)
 
         registration_trimester = "(CASE WHEN (case_list.edd-case_list.opened_on::date)::integer>=183" \
                                  "THEN 1 ELSE CASE WHEN (case_list.edd-case_list.opened_on::date)::integer<91" \
                                  "THEN 3 ELSE 2 END END)"
 
-        postnatal = "(case_list.add is not null AND ({}-case_list.add)::integer>=0 AND ({}-case_list.add)::integer<=21" \
-                    " AND {} AND {} AND {})".format(end_month_string, start_month_string,
-                                                    seeking_services, alive_in_month,
-                                                    open_in_month)
+        postnatal = "(case_list.add is not null AND ({}-case_list.add)::integer>=0 AND " \
+                    "({}-case_list.add)::integer<=21)".format(end_month_string, start_month_string)
         tetanus_complete = "({} AND ut.tt_complete_date is not null AND ut.tt_complete_date<={})".format(pregnant_to_consider,
                                                                                              end_month_string)
         pnc_complete = "(case_list.pnc1_date<{})".format(end_month_string)
+        bp_visited_in_month = "date_trunc('MONTH', agg_bp.latest_time_end_processed)={}".format(start_month_string)
 
         columns = (
             ('awc_id', 'case_list.awc_id'),
@@ -130,17 +134,18 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                                           'THEN 1 ELSE 0 END'.format(delivered_in_month)),
             ('registration_trimester_at_delivery', 'CASE WHEN {} '
                                                    'THEN {} ELSE null END'.format(delivered_in_month, registration_trimester)),
-            ('using_ifa', 'case_list.using_ifa_last_visit'),
-            ('ifa_consumed_last_seven_days', 'CASE WHEN {}>1 THEN case_list.ifa_gte_4_open_cases ELSE 0 END'.format(trimester)),
-            ('anemic_severe', "CASE WHEN case_list.anemia_status_last_visit='severe' THEN 1 ELSE 0 END"),
-            ('anemic_moderate', "CASE WHEN case_list.anemia_status_last_visit='moderate' THEN 1 ELSE 0 END"),
-            ('anemic_normal', "CASE WHEN case_list.anemia_status_last_visit='normal' THEN 1 ELSE 0 END"),
-            ('anemic_unknown', "CASE WHEN case_list.anemia_status_last_visit not in ('normal','severe','moderate')"
-                               "THEN 1 ELSE 0 END"),
+            ('using_ifa', 'CASE WHEN {} and agg_bp.using_ifa=1 THEN 1 ELSE 0 END'.format(pregnant_to_consider)),
+            ('ifa_consumed_last_seven_days', 'CASE WHEN {}>1 AND agg_bp.ifa_last_seven_days>=4 THEN 1 ELSE 0 END'.format(trimester)),
+            ('anemic_severe', "CASE WHEN agg_bp.anemia=1 THEN 1 ELSE 0 END"),
+            ('anemic_moderate', "CASE WHEN agg_bp.anemia=2 THEN 1 ELSE 0 END"),
+            ('anemic_normal', "CASE WHEN agg_bp.anemia=3 THEN 1 ELSE 0 END"),
+            ('anemic_unknown', "CASE WHEN agg_bp.anemia is NULL THEN 1 "
+                               "ELSE CASE WHEN agg_bp.anemia not in (1,2,3)"
+                               "THEN 1 ELSE 0 END END"),
             ('extra_meal', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(extra_meal)),
             ('resting_during_pregnancy', 'CASE WHEN {} THEN COALESCE(agg_bp.resting, 0)'
                                          'ELSE 0 END '.format(pregnant_to_consider)),
-            ('bp_visited_in_month', 'CASE WHEN agg_bp.month is not null THEN 1 ELSE 0 END'),
+            ('bp_visited_in_month', 'CASE WHEN {}  THEN 1 ELSE 0 END'.format(bp_visited_in_month)),
             ('pnc_visited_in_month', 'NULL'),
             ('trimester_2', 'CASE WHEN {}=2 THEN 1 ELSE 0 END'.format(trimester)),
             ('trimester_3', 'CASE WHEN {}=3 THEN 1 ELSE 0 END'.format(trimester)),
@@ -167,7 +172,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('pregnant_all', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(pregnant_all)),
             ('lactating', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(lactating)),
             ('lactating_all', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(lactating_all)),
-            ('institutional_delivery_in_month', 'CASE WHEN agg_delivery.where_born=3 THEN 1 ELSE 0 END'),
+            ('institutional_delivery_in_month', 'CASE WHEN agg_delivery.where_born=3 AND {} THEN 1 ELSE 0 END'.format(delivered_in_month)),
             ('add', 'case_list.add'),
             ('caste', 'case_list.caste'),
             ('disabled', 'case_list.disabled'),
@@ -223,8 +228,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('closed', 'case_list.closed'),
             ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
             ('home_visit_date', 'agg_bp.latest_time_end_processed'),
-            ('date_death', 'person.date_death'),
-            ('person_case_id', 'ucr.person_case_id')
+            ('date_death', 'person_cases.date_death'),
+            ('person_case_id', 'case_list.person_case_id')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -237,14 +242,15 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id 
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
             LEFT OUTER JOIN "{agg_bp_table}" agg_bp ON case_list.doc_id = agg_bp.case_id 
-                AND agg_bp.month= %(start_date)s AND {valid_in_month}
+                AND agg_bp.month = %(start_date)s AND {valid_in_month}
             LEFT OUTER JOIN "{agg_pnc_table}" agg_pnc ON case_list.doc_id = agg_pnc.case_id 
                 AND agg_pnc.month = %(start_date)s AND {valid_in_month}
             LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON case_list.doc_id = agg_cf.case_id 
                 AND agg_cf.month = %(start_date)s AND {valid_in_month}
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id 
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
-            ORDER BY case_list.awc_id, case_list.case_id
+            
+            ORDER BY case_list.awc_id, case_list.case_id, case_list.modified_on
         )
         """.format(
             tablename=self.tablename,
