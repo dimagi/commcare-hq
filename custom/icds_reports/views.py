@@ -1766,8 +1766,6 @@ class CasDataExport(View):
         sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
 
         try:
-            resp = HttpResponse(sync.get_file_from_blobdb())
-            resp['Content-Disposition'] = 'attachment;filename={}.csv'.format(blob_id)
-            return resp
+            return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
         except NotFound:
             raise Http404
