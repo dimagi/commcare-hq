@@ -104,10 +104,12 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
         postnatal = "(case_list.add is not null AND ({}-case_list.add)::integer>=0 AND " \
                     "({}-case_list.add)::integer<=21)".format(end_month_string, start_month_string)
-        tetanus_complete = "({} AND ut.tt_complete_date is not null AND ut.tt_complete_date<={})".format(pregnant_to_consider,
-                                                                                             end_month_string)
+        tetanus_complete = "({} AND ut.tt_complete_date is not null AND " \
+                           "ut.tt_complete_date<={})".format(pregnant_to_consider,
+                                                             end_month_string)
         pnc_complete = "(case_list.pnc1_date<{})".format(end_month_string)
-        bp_visited_in_month = "date_trunc('MONTH', agg_bp.latest_time_end_processed)={}".format(start_month_string)
+        bp_visited_in_month = "date_trunc('MONTH', agg_bp.latest_time_end_processed)=" \
+                              "{}".format(start_month_string)
 
         columns = (
             ('awc_id', 'case_list.awc_id'),
@@ -133,9 +135,11 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('anc4_received_at_delivery', 'CASE WHEN {} AND case_list.anc4_received=1 '
                                           'THEN 1 ELSE 0 END'.format(delivered_in_month)),
             ('registration_trimester_at_delivery', 'CASE WHEN {} '
-                                                   'THEN {} ELSE null END'.format(delivered_in_month, registration_trimester)),
+                                                   'THEN {} ELSE null END'.format(delivered_in_month,
+                                                                                  registration_trimester)),
             ('using_ifa', 'CASE WHEN {} and agg_bp.using_ifa=1 THEN 1 ELSE 0 END'.format(pregnant_to_consider)),
-            ('ifa_consumed_last_seven_days', 'CASE WHEN {}>1 AND agg_bp.ifa_last_seven_days>=4 THEN 1 ELSE 0 END'.format(trimester)),
+            ('ifa_consumed_last_seven_days', 'CASE WHEN {}>1 AND agg_bp.ifa_last_seven_days>=4 THEN'
+                                             ' 1 ELSE 0 END'.format(trimester)),
             ('anemic_severe', "CASE WHEN agg_bp.anemia=1 THEN 1 ELSE 0 END"),
             ('anemic_moderate', "CASE WHEN agg_bp.anemia=2 THEN 1 ELSE 0 END"),
             ('anemic_normal', "CASE WHEN agg_bp.anemia=3 THEN 1 ELSE 0 END"),
@@ -166,13 +170,15 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('bp3_complete', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(b3_complete)),
             ('pnc_complete', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(pnc_complete)),
             ('postnatal', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(postnatal)),
-            ('has_aadhar_id', "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
+            ('has_aadhar_id', "CASE WHEN person_cases.aadhar_date < {} THEN"
+                              "  1 ELSE 0 END".format(end_month_string)),
             ('counsel_fp_methods', 'NULL'),
             ('pregnant', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(pregnant_to_consider)),
             ('pregnant_all', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(pregnant_all)),
             ('lactating', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(lactating)),
             ('lactating_all', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(lactating_all)),
-            ('institutional_delivery_in_month', 'CASE WHEN agg_delivery.where_born=3 AND {} THEN 1 ELSE 0 END'.format(delivered_in_month)),
+            ('institutional_delivery_in_month', 'CASE WHEN agg_delivery.where_born=3 AND {} THEN'
+                                                ' 1 ELSE 0 END'.format(delivered_in_month)),
             ('add', 'case_list.add'),
             ('caste', 'case_list.caste'),
             ('disabled', 'case_list.disabled'),
