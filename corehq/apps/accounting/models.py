@@ -822,6 +822,10 @@ class SoftwarePlanVersion(models.Model):
             'version_num': self.version,
         }
 
+    def save(self, *args, **kwargs):
+        super(SoftwarePlanVersion, self).save(*args, **kwargs)
+        SoftwarePlan.get_version.clear(self.plan)
+
     @property
     def version(self):
         return (self.plan.softwareplanversion_set.count() -
