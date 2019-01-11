@@ -18,7 +18,7 @@ class TestLocationView(CSVTestCase):
     # 3 - agg_awc
 
     def _get_data_from_blobdb(self, indicator, state_id, month):
-        sync = get_cas_data_blob_file(indicator, state_id, month)
+        sync, _ = get_cas_data_blob_file(indicator, state_id, month)
         csv_file = sync.get_file_from_blobdb()
         csv_data = list(csv.reader(csv_file))
         headers = csv_data[0]

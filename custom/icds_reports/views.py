@@ -6,8 +6,6 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
-import zipfile
-from io import BytesIO
 
 from datetime import datetime, date
 from celery.result import AsyncResult
@@ -1732,7 +1730,7 @@ class DishaAPIView(View):
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
         data_type = int(request.POST.get('indicator', None))
-        state_id = "9951736acfe54c68948225cc05fbbd63"
+        state_id = request.GET.get('location', None)
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
@@ -1767,14 +1765,9 @@ class CasDataExport(View):
 
         sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
 
-        zip_name = 'cas_data_%s' % sync.file_added.strftime('%Y-%m-%d')
         try:
-            output = BytesIO()
-            f = zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED)
-            f.writestr('{}.csv'.format(blob_id), sync.get_file_from_blobdb().read())
-            f.close()
-            resp = HttpResponse(output.getvalue())
-            resp['Content-Disposition'] = 'attachment;filename={}.zip'.format(zip_name)
+            resp = HttpResponse(sync.get_file_from_blobdb())
+            resp['Content-Disposition'] = 'attachment;filename={}.csv'.format(blob_id)
             return resp
         except NotFound:
             raise Http404
