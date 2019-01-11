@@ -214,6 +214,7 @@ def current_app_version(request, domain, app_id):
     try:
         app_version = get_current_app_version(domain, app_id)
     except NoResultFound:
+        # occurs when passed a build
         raise Http404
     latest_build_version = get_latest_build_version(domain, app_id)
     latest_released_version = get_latest_released_app_version(domain, app_id)
