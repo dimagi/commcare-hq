@@ -497,7 +497,15 @@ WITH dups AS (
 """)
 
 
+# see https://github.com/dimagi/commcare-hq/pull/22932
+blobmeta_partial_key = """
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS blobs_blobm_key_14b5b7_partial
+ON public.blobs_blobmeta (key) WHERE deleted_on IS NULL;
+"""
+
+
 TEMPLATES = {
+    "blobmeta_partial_key": blobmeta_partial_key,
     "simple_move_form_attachments_to_blobmeta": simple_move_form_attachments_to_blobmeta,
     "move_form_attachments_to_blobmeta": move_form_attachments_to_blobmeta,
     "delete_dup_form_attachments": delete_dup_form_attachments,
