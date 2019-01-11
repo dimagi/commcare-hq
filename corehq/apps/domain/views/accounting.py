@@ -811,7 +811,6 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
     @method_decorator(require_superuser)
     @use_jquery_ui
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).dispatch(request, *args, **kwargs)
 
