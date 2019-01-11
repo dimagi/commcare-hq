@@ -148,25 +148,25 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
 
 
         _.each($(".ko-sms-rate-calculator"), function (element) {
-            var smsRateCalculator = smsRateCalculator({
+            var smsRateCalculatorModel = smsRateCalculator({
                 country_code: {
                     fieldName: 'country_code',
                     currentValue: '',
                     placeholder: gettext('Please Select a Country Code'),
                 },
             });
-            $(element).koApplyBindings(smsRateCalculator);
-            smsRateCalculator.init();
+            $(element).koApplyBindings(smsRateCalculatorModel);
+            smsRateCalculatorModel.init();
         });
 
         _.each($(".ko-public-sms-rate-calculator"), function (element) {
-            var smsRateCalculator = publicSMSRateCalculator({
+            var smsRateCalculatorModel = publicSMSRateCalculator({
                 country_code: {
                     fieldName: 'country_code',
                     currentValue: '',
                 },
             });
-            $(element).koApplyBindings(smsRateCalculator);
+            $(element).koApplyBindings(smsRateCalculatorModel);
         });
     });
 });
