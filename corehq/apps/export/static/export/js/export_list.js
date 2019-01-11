@@ -92,7 +92,7 @@ hqDefine("export/js/export_list", [
                         self.emailedExport.taskStatus.success(data.taskStatus.success);
                         self.emailedExport.taskStatus.failed(data.taskStatus.failed);
                         self.emailedExport.taskStatus.justFinished(data.taskStatus.justFinished);
-                        if (!data.taskStatus.success & !data.taskStatus.failed) {
+                        if (!data.taskStatus.success && !data.taskStatus.failed) {
                             // The first few ticks don't yet register the task
                             self.emailedExport.taskStatus.started(true);
                             setTimeout(tick, 1500);
