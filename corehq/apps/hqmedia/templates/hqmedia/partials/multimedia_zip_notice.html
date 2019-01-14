@@ -1,6 +1,5 @@
 {% load i18n %}
 {% if multimedia_state.has_media %}
-    <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
     {% if not include_modal and build_profile_access and not app.is_remote_app and app.build_profiles %}
         <div class="form-inline">
             <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
