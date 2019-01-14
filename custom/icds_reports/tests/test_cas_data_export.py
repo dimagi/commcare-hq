@@ -8,6 +8,7 @@ import os
 import csv342 as csv
 
 from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
+from six.moves import zip
 
 
 class TestLocationView(CSVTestCase):
