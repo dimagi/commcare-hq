@@ -46,6 +46,9 @@ hqDefine("export/js/export_list", [
         }
 
         self.justUpdated = ko.computed(function () {
+            if (self.emailedExport.taskStatus === undefined) {
+                return false;
+            }
             return self.emailedExport.taskStatus.justFinished() && self.emailedExport.taskStatus.success();
         });
 
