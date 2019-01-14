@@ -54,9 +54,11 @@
                         You can manage multimedia by uploading files individually below.
                     {% endblocktrans %}
                 </p>
-                <p>
-                    <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
-                </p>
+                {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
+                    <p>
+                        <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
+                    </p>
+                {% endif %}
             {% else %}
                 <div class="alert alert-info">
                     {% blocktrans %}This application references no multimedia.{% endblocktrans %}
