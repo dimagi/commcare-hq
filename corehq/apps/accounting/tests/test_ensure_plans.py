@@ -11,13 +11,20 @@ from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
+    SoftwarePlan,
     SoftwarePlanEdition,
+    SoftwarePlanVersion,
     UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 
 class TestEnsurePlans(BaseAccountingTest):
+
+    def tearDown(self):
+        for software_plan_version in SoftwarePlanVersion.objects.all():
+            SoftwarePlan.get_version.clear(software_plan_version.plan)
+        super(TestEnsurePlans, self).tearDown()
 
     def test_ensure_plans(self):
         self._test_plan_versions_ensured(BOOTSTRAP_CONFIG_TESTING)
