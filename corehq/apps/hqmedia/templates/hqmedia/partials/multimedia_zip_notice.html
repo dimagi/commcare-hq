@@ -1,4 +1,34 @@
 {% load i18n %}
+
+{% if multimedia_state.has_form_errors %}
+    <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
+        This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
+    {% endblocktrans %}</div>
+{% endif %}
+
+{% if multimedia_state.has_missing_refs %}
+    <div class="alert alert-warning">
+        <p>
+            {% blocktrans %}
+                <i class="fa fa-exclamation-triangle"></i>
+                This application is missing references, so this zip will be incomplete.
+            {% endblocktrans %}
+        </p>
+        {% if not is_multimedia_reference_checker %}
+            <p>
+                {% url "hqmedia_references" domain app.get_id as checker_url %}
+                {% blocktrans %}
+                    Visit the <a href='{{ checker_url }}' target= '_blank'>
+                        Multimedia Reference Checker
+                        <i class='fa fa-external-link'></i>
+                    </a>
+                    to upload any missing multimedia.
+                {% endblocktrans %}
+            </p>
+        {% endif %}
+    </div>
+{% endif %}
+
 {% if multimedia_state.has_media %}
     {% if not include_modal and build_profile_access and not app.is_remote_app and app.build_profiles %}
         <div class="form-inline">
@@ -30,33 +60,6 @@
     </p>
 {% else %}
     <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
-{% endif %}
-{% if multimedia_state.has_form_errors %}
-    <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
-        This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
-    {% endblocktrans %}</div>
-{% endif %}
-{% if multimedia_state.has_missing_refs %}
-    <div class="alert alert-warning">
-        <p>
-            {% blocktrans %}
-                <i class="fa fa-exclamation-triangle"></i>
-                This application is missing references, so this zip will be incomplete.
-            {% endblocktrans %}
-        </p>
-        {% if not is_multimedia_reference_checker %}
-            <p>
-                {% url "hqmedia_references" domain app.get_id as checker_url %}
-                {% blocktrans %}
-                    Visit the <a href='{{ checker_url }}' target= '_blank'>
-                        Multimedia Reference Checker
-                        <i class='fa fa-external-link'></i>
-                    </a>
-                    to upload any missing multimedia.
-                {% endblocktrans %}
-            </p>
-        {% endif %}
-    </div>
 {% endif %}
 
 {% if include_modal %}
