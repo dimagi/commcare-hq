@@ -892,7 +892,12 @@ class FormHasSubmissionsView(LoginAndDomainMixin, View):
 
     def get(self, request, domain, app_id, form_unique_id):
         app = get_app(domain, app_id)
-        form = app.get_form(form_unique_id)
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
+            has_submissions = False
+        else:
+            has_submissions = form_has_submissions(domain, app_id, form.xmlns)
         return JsonResponse({
-            'form_has_submissions': form_has_submissions(domain, app_id, form.xmlns),
+            'form_has_submissions': has_submissions,
         })
