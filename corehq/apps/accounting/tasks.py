@@ -132,7 +132,7 @@ def _deactivate_subscription(subscription):
     else:
         next_subscription = assign_explicit_community_subscription(
             subscription.subscriber.domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY,
-            account=subscription.account
+            account=subscription.account if not subscription.account.is_customer_billing_account else None
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
