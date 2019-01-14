@@ -26,7 +26,7 @@ from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
-    use_select2,
+    use_select2_v4,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
@@ -349,7 +349,7 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
                                           is_ops_user=is_ops_user)
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
@@ -815,7 +815,6 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
     @method_decorator(require_superuser)
     @use_jquery_ui
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).dispatch(request, *args, **kwargs)
 
@@ -1243,7 +1242,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(ConfirmBillingAccountInfoView, self).dispatch(request, *args, **kwargs)
 

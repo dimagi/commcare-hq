@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
 import io
+import json
 import logging
 import re
 import sys
@@ -76,11 +77,12 @@ from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV4
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -498,7 +500,7 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2AjaxV3):
+class CallCenterOwnerWidget(Select2AjaxV4):
 
     def set_domain(self, domain):
         self.domain = domain
@@ -1444,12 +1446,14 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     email_list = forms.CharField(
         label=BillingContactInfo._meta.get_field('email_list').verbose_name,
         help_text=BillingContactInfo._meta.get_field('email_list').help_text,
+        widget=forms.SelectMultiple(choices=[]),
     )
 
     class Meta(object):
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
+        widgets = {'country': forms.Select(choices=[])}
 
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         self.account = account
@@ -1466,7 +1470,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             kwargs['instance'] = self.account.billingcontactinfo
             kwargs['initial'] = {
-                'email_list': ','.join(self.account.billingcontactinfo.email_list),
+                'email_list': self.account.billingcontactinfo.email_list,
             }
 
         except BillingContactInfo.DoesNotExist:
@@ -1479,7 +1483,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                         data_initial=json.dumps(self.initial['email_list'])),
             'phone_number'
         ]
 
@@ -1489,7 +1494,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                     css_class='col-sm-3 col-md-2'
                 ),
                 crispy.Div(
-                    crispy.HTML(self.initial['email_list']),
+                    crispy.HTML(", ".join(self.initial['email_list'])),
                     css_class='col-sm-9 col-md-8 col-lg-6'
                 ),
                 css_id='emails-text',
@@ -1527,7 +1532,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, '')),
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1552,7 +1558,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
     def clean_email_list(self):
-        return self.cleaned_data['email_list'].split(',')
+        return self.data.getlist('email_list')
 
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
@@ -1591,7 +1597,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial['email_list'])),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1602,7 +1609,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, ''))
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(_("Cancel"),
@@ -1710,7 +1718,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial['email_list'])),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1721,7 +1730,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, ''))
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
@@ -1765,7 +1775,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField(label=ugettext_lazy("Email To"))
+    contact_email = MultiCharField(label=ugettext_lazy("Email To"), widget=forms.Select(choices=[]))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
@@ -1811,6 +1821,13 @@ class ProBonoForm(forms.Form):
                 )
             ),
         )
+
+    def clean_contact_email(self):
+        if 'contact_email' in self.cleaned_data:
+            copy = self.data.copy()
+            self.data = copy
+            copy.update({'contact_email': ", ".join(self.data.getlist('contact_email'))})
+            return self.data.get('contact_email')
 
     def process_submission(self, domain=None):
         try:
