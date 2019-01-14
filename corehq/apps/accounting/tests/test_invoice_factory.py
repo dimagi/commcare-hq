@@ -47,6 +47,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.domain.delete()
         super(TestDomainInvoiceFactory, self).tearDown()
 
+    @classmethod
     def tearDownClass(cls):
         clear_plan_version_cache()
         super(TestDomainInvoiceFactory, cls).tearDownClass()
