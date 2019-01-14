@@ -448,6 +448,16 @@ def get_tt_dates(value):
         return 'None'
 
 
+def get_delivery_nature(value):
+    delivery_natures = {
+        1: 'Vaginal',
+        2: 'Caesarean',
+        3: 'Instrumental',
+        0: DATA_NOT_ENTERED,
+    }
+    return delivery_natures.get(value['delivery_nature'], DATA_NOT_ENTERED)
+
+
 def current_age(dob, selected_date):
     age = relativedelta(selected_date, dob)
     age_format = ""

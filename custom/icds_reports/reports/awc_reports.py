@@ -24,7 +24,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
     chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, \
-    get_tt_dates, is_anemic, format_decimal, DATA_NOT_ENTERED
+    get_tt_dates, is_anemic, format_decimal, DATA_NOT_ENTERED, get_delivery_nature
 from custom.icds_reports.const import MapColors
 import six
 
@@ -1238,7 +1238,7 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
             person_name=row_data['person_name'],
             age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
             add=row_data['add'],
-            delivery_nature=row_data['delivery_nature'],
+            delivery_nature=get_delivery_nature(row_data),
             institutional_delivery_in_month='Y' if row_data['institutional_delivery_in_month'] else 'N',
             num_pnc_visits=row_data['num_pnc_visits'],
             breastfed_at_birth='Y' if row_data['breastfed_at_birth'] else 'N',
