@@ -381,4 +381,4 @@ class PoFileGenerator(object):
         for resource_name, filepath in self._generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
-        self.generated_files = []
+        self._generated_files = []
