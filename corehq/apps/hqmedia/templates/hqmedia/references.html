@@ -68,13 +68,7 @@
         <div class="col-sm-5">
             {% if totals|length %}
             <div class="well">
-                <p>
-                    <a class="btn btn-primary download-zip"
-                        href="#multimedia-zip-modal"
-                        data-toggle="modal">
-                        <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
-                    </a>
-                </p>
+                {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
                 <ul class="media-totals-list" data-bind="foreach: totals">
                     <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}">
                         <i data-bind="attr: {class: icon_class}"></i>
@@ -152,9 +146,4 @@
     {% endif %}
 </div>
 
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}
