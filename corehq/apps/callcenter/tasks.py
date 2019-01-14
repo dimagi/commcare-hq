@@ -41,10 +41,18 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
-@task(serializer='pickle', queue='background_queue')
-def sync_user_cases(user_id):
-    user = CommCareUser.get_by_user_id(user_id)
+def sync_user_cases_if_applicable(user, spawn_task):
     if settings.UNIT_TESTING and not user.project:
         return
+    if (user.project.call_center_config.enabled or user.project.usercase_enabled):
+        if spawn_task:
+            sync_user_cases_task.delay(user._id)
+        else:
+            sync_user_cases_task(user._id)
+
+
+@task(serializer='pickle', queue='background_queue')
+def sync_user_cases_task(user_id):
+    user = CommCareUser.get_by_user_id(user_id)
     sync_call_center_user_case(user)
     sync_usercase(user)
