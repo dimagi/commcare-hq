@@ -11,6 +11,7 @@ import six
 from django.utils.functional import cached_property
 from memoized import memoized
 
+from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 
@@ -57,6 +58,13 @@ class AppTranslationsGenerator:
         self.slug_to_name = defaultdict(dict)
         self.slug_to_name[MODULES_AND_FORMS_SHEET_NAME] = {'en': MODULES_AND_FORMS_SHEET_NAME}
         self._build_translations()
+
+    @cached_property
+    def build_id(self):
+        if self.version:
+            return get_version_build_id(self.domain, self.app_id, self.version)
+        else:
+            return self.app_id
 
     @cached_property
     def _get_labels_to_skip(self):
