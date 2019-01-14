@@ -3136,7 +3136,7 @@ class CreditLine(models.Model):
                     'feature': (' for Feature %s' % self.feature_type
                                 if self.feature_type is not None else ""),
                     'product': (' for Product'
-                                if self.is_product is not None else ""),
+                                if self.is_product else ""),
                     'balance': self.balance,
                 })
 
