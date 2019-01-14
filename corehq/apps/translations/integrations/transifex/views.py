@@ -3,12 +3,6 @@ from __future__ import unicode_literals
 
 from io import open
 
-import openpyxl
-import polib
-from corehq.apps.translations.integrations.transifex.transifex import Transifex
-from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
-from corehq.apps.translations.utils import get_file_content_from_workbook
-
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -20,7 +14,8 @@ from django.utils.translation import (
     ugettext_lazy,
 )
 from memoized import memoized
-from openpyxl import Workbook
+import openpyxl
+import polib
 
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
@@ -33,12 +28,15 @@ from corehq.apps.translations.forms import (
 )
 from corehq.apps.translations.generators import Translation, PoFileGenerator
 from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
+from corehq.apps.translations.integrations.transifex.transifex import Transifex
+from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
 from corehq.apps.translations.tasks import (
     push_translation_files_to_transifex,
     pull_translation_files_from_transifex,
     delete_resources_on_transifex,
     backup_project_from_transifex,
 )
+from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.files import safe_filename_header
 
 
@@ -216,7 +214,7 @@ class PullResource(BaseTranslationsView):
                               source_lang=target_lang,
                               project_slug=self.pull_resource_form.cleaned_data['transifex_project_slug'],
                               version=None)
-        wb = Workbook(write_only=True)
+        wb = openpyxl.Workbook(write_only=True)
         ws = wb.create_sheet(title='translations')
         ws.append(['context', 'source', 'translation', 'occurrence'])
         for po_entry in transifex.client.get_translation(resource_slug, target_lang, False):
