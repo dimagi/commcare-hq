@@ -5,6 +5,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
 import re
+import traceback
 from uuid import uuid4
 
 from django.conf import settings
@@ -1658,6 +1659,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+            log = logging.getLogger(__name__)
+            log.info("calling sync_user_cases spawn_task=%s domain=%s stack=\n%s",
+                     spawn_task, self.domain, '\n'.join(traceback.format_stack()[-8:])
+            )
             if spawn_task:
                 sync_user_cases.delay(self._id)
             else:
