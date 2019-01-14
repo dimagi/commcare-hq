@@ -37,4 +37,14 @@ class ODataCommCareCaseSerializer(Serializer):
             data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
         # move "objects" to "value"
         data['value'] = data.pop('objects')
+
+        # clean properties
+        def _clean_property_name(name):
+            # for whatever ridiculous reason, at least in Tableau,
+            # when these are nested inside an object they can't have underscores in them
+            return name.replace('_', '')
+
+        for i, case_json in enumerate(data['value']):
+            case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
+
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)

@@ -3,8 +3,8 @@
     <edmx:DataServices>
         <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
             <ComplexType Name="CaseProperties" >
-                <Property Name="case_name" Type="Edm.String" />
-                <Property Name="case_type" Type="Edm.String" />
+                <Property Name="casename" Type="Edm.String" Nullable="false" />
+                <Property Name="casetype" Type="Edm.String" Nullable="false" />
                 <!-- todo: once working, this needs to be generated dynamically to include custom properties -->
             </ComplexType>
             <EntityType Name="Case" >
@@ -15,7 +15,6 @@
                 <Property Name="closed" Type="Edm.Boolean" />
                 <Property Name="domain" Type="Edm.String" Nullable="false"/>
                 <Property Name="date_modified" Type="Edm.DateTimeOffset" />
-                <!-- todo: this isn't working -->
                 <Property Name="properties" Type="CommCare.CaseProperties" Nullable="false"/>
                 <Property Name="server_date_modified" Type="Edm.DateTimeOffset" />
                 <Property Name="user_id" Type="Edm.String" />
