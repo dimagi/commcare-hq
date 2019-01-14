@@ -1,7 +1,7 @@
 hqDefine('accounting/js/subscriptions_main', [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'accounting/js/widgets',
+    'accounting/js/widgets_v3',
     'accounting/js/base_subscriptions_main',
 ], function (
     $,
