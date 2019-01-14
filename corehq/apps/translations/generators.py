@@ -304,6 +304,24 @@ class AppTranslationsGenerator(object):
                 occurrence_row)
         return list(translations.values())
 
+    def get_translations(self):
+        ret = OrderedDict()
+        for file_name in self.translations:
+            sheet_translations = self.translations[file_name]
+            po = []
+            for translation in sheet_translations:
+                source = translation.key
+                if source:
+                    entry = polib.POEntry(
+                        msgid=translation.key,
+                        msgstr=translation.translation or '',
+                        occurrences=translation.occurrences,
+                        msgctxt=translation.msgctxt,
+                    )
+                    po.append(entry)
+            ret[file_name] = po
+        return ret
+
     @property
     @memoized
     def app(self):
