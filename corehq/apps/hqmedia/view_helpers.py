@@ -93,9 +93,10 @@ def update_multimedia_paths(app, paths):
 
     # Update app's master map of multimedia
     for old_path, new_path in six.iteritems(paths):
-        app.multimedia_map.update({
-            new_path: app.multimedia_map[old_path],
-        })
+        if old_path in app.multimedia_map:  # path will not be present if file is missing from app
+            app.multimedia_map.update({
+                new_path: app.multimedia_map[old_path],
+            })
 
     # Put together success messages
     successes = []
