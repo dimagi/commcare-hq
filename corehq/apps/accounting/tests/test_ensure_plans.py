@@ -8,7 +8,12 @@ from django.apps import apps
 
 from corehq.apps.accounting.bootstrap.config.testing import BOOTSTRAP_CONFIG_TESTING
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-from corehq.apps.accounting.models import DefaultProductPlan, FeatureType, SoftwarePlanEdition, UNLIMITED_FEATURE_USAGE
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    FeatureType,
+    SoftwarePlanEdition,
+    UNLIMITED_FEATURE_USAGE,
+)
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 
@@ -78,9 +83,18 @@ class TestEnsurePlans(BaseAccountingTest):
 
             self.assertEqual(software_plan_version.product_rate.monthly_fee, config['product_rate_monthly_fee'])
 
-            self.assertEqual(software_plan_version.user_limit, config['feature_rates'][FeatureType.USER]['monthly_limit'])
-            self.assertEqual(software_plan_version.user_feature.per_excess_fee, config['feature_rates'][FeatureType.USER]['per_excess_fee'])
+            self.assertEqual(
+                software_plan_version.user_limit,
+                config['feature_rates'][FeatureType.USER]['monthly_limit']
+            )
+            self.assertEqual(
+                software_plan_version.user_feature.per_excess_fee,
+                config['feature_rates'][FeatureType.USER]['per_excess_fee']
+            )
 
             sms_feature_rate = software_plan_version.feature_rates.get(feature__feature_type=FeatureType.SMS)
-            self.assertEqual(sms_feature_rate.monthly_limit, config['feature_rates'][FeatureType.SMS]['monthly_limit'])
+            self.assertEqual(
+                sms_feature_rate.monthly_limit,
+                config['feature_rates'][FeatureType.SMS]['monthly_limit']
+            )
             self.assertEqual(sms_feature_rate.per_excess_fee, 0)
