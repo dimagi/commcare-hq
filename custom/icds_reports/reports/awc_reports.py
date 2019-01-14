@@ -1199,7 +1199,7 @@ def get_pregnant_details(case_id, awc_id):
                 counseling=get_counseling(row_data),
                 using_ifa='Y' if row_data['using_ifa'] else 'N',
                 ifa_consumed_last_seven_days='Y' if row_data['ifa_consumed_last_seven_days'] else 'N',
-                tt_taken='Y' if row_data['tt_1'] or row_data['tt_2'] else 'N',
+                tt_taken='Y' if get_tt_dates(row_data) != 'None' else 'N',
                 tt_date=get_tt_dates(row_data),
             ))
             if current_trimester == 1 and row_data['trimester'] == 1 and current_record == 0:

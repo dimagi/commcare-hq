@@ -294,7 +294,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
         return [
             'molecules/intro',
             'molecules/buttons',
-            'molecules/forms',
+            'molecules/selections',
             'molecules/modals',
             'molecules/pagination',
             'molecules/inline_edit',
@@ -303,8 +303,12 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
     @property
     def page_context(self):
         return {
-            'basic_crispy_form': BasicCrispyForm(),
             'examples': {
+                'selections': {
+                    'button_group': self.example('button_group.html'),
+                    'select2': self.example('select2.html'),
+                    'multiselect': self.example('multiselect.html'),
+                },
                 'modals': self.example('modals.html'),
                 'pagination': self.example('pagination.html'),
                 'inline_edit': self.example('inline_edit.html'),
@@ -320,15 +324,42 @@ class OrganismsStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'organisms/intro',
+            'organisms/forms',
             'organisms/tables',
-            'organisms/views',
+        ]
+
+    @property
+    def page_context(self):
+        return {
+            'basic_crispy_form': BasicCrispyForm(),
+            'examples': {
+                'html_form': self.example('html_form.html'),
+                'error_form': self.example('error_form.html'),
+                'basic_table': self.example('basic_table.html'),
+                'complex_table': self.example('complex_table.html'),
+            },
+        }
+
+
+class PagesStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_pages'
+    navigation_name = 'pages'
+
+    @property
+    def sections(self):
+        return [
+            'pages/intro',
+            'pages/navigation',
+            'pages/class_based',
+            'pages/functional',
         ]
 
     @property
     def page_context(self):
         return {
             'examples': {
-                'basic_table': self.example('basic_table.html'),
-                'complex_table': self.example('complex_table.html'),
+                'header': self.example('header.html'),
+                'panels': self.example('panels.html'),
+                'tabs': self.example('tabs.html'),
             },
         }

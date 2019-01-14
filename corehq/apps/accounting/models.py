@@ -822,6 +822,10 @@ class SoftwarePlanVersion(models.Model):
             'version_num': self.version,
         }
 
+    def save(self, *args, **kwargs):
+        super(SoftwarePlanVersion, self).save(*args, **kwargs)
+        SoftwarePlan.get_version.clear(self.plan)
+
     @property
     def version(self):
         return (self.plan.softwareplanversion_set.count() -
@@ -3132,7 +3136,7 @@ class CreditLine(models.Model):
                     'feature': (' for Feature %s' % self.feature_type
                                 if self.feature_type is not None else ""),
                     'product': (' for Product'
-                                if self.is_product is not None else ""),
+                                if self.is_product else ""),
                     'balance': self.balance,
                 })
 

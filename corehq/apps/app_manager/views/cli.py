@@ -126,7 +126,7 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
             status_code=400,
         )
 
-    app.set_media_versions(None)
+    app.set_media_versions()
     download = FileDownload('application-{}-{}'.format(app.get_id, version))
     errors = build_application_zip(
         include_multimedia_files=include_multimedia,
