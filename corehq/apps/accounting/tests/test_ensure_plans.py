@@ -11,19 +11,17 @@ from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
-    SoftwarePlan,
     SoftwarePlanEdition,
-    SoftwarePlanVersion,
     UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.utils import clear_plan_version_cache
 
 
 class TestEnsurePlans(BaseAccountingTest):
 
     def tearDown(self):
-        for software_plan_version in SoftwarePlanVersion.objects.all():
-            SoftwarePlan.get_version.clear(software_plan_version.plan)
+        clear_plan_version_cache()
         super(TestEnsurePlans, self).tearDown()
 
     def test_ensure_plans(self):
