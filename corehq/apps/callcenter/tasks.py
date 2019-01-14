@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from django.conf import settings
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.users.models import CommCareUser
 
@@ -46,5 +48,14 @@ def sync_user_cases(user_id):
     user = CommCareUser.get_by_user_id(user_id)
     if settings.UNIT_TESTING and not user.project:
         return
+
+    # Temporary shim to clear out duplicates from the queue
+    if user.last_modified < datetime.datetime(2019, 1, 14, 18):
+        key = "clear-sync_user_cases-{}".format(user_id)
+        client = get_redis_client()
+        if client.get(key):
+            return
+        client.set(key, True, timeout=60 * 60 * 24 * 10)
+
     sync_call_center_user_case(user)
     sync_usercase(user)
