@@ -1,28 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from io import open
+from io import BytesIO, open
 from zipfile import ZipFile
-
-import openpyxl
-import polib
-from io import BytesIO
-from corehq.apps.translations.integrations.transifex.transifex import Transifex
-from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
-from corehq.apps.translations.utils import get_file_content_from_workbook
 
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import (
-    ugettext as _,
-    ugettext_noop,
-    ugettext_lazy,
-)
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+import openpyxl
+import polib
 from memoized import memoized
-from openpyxl import Workbook
 
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
@@ -33,15 +24,22 @@ from corehq.apps.translations.forms import (
     ConvertTranslationsForm,
     PullResourceForm,
 )
-from corehq.apps.translations.generators import Translation, PoFileGenerator
-from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
+from corehq.apps.translations.generators import PoFileGenerator, Translation
+from corehq.apps.translations.integrations.transifex.exceptions import (
+    ResourceMissing,
+)
+from corehq.apps.translations.integrations.transifex.transifex import Transifex
+from corehq.apps.translations.integrations.transifex.utils import (
+    transifex_details_available_for_domain,
+)
 from corehq.apps.translations.models import TransifexBlacklist
 from corehq.apps.translations.tasks import (
-    push_translation_files_to_transifex,
-    pull_translation_files_from_transifex,
-    delete_resources_on_transifex,
     backup_project_from_transifex,
+    delete_resources_on_transifex,
+    pull_translation_files_from_transifex,
+    push_translation_files_to_transifex,
 )
+from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.files import safe_filename_header
 
 
@@ -233,9 +231,17 @@ class PullResource(BaseTranslationsView):
             context['pull_resource_form'] = self.pull_resource_form
         return context
 
-    @staticmethod
-    def _generate_excel_file(transifex, resource_slug, target_lang):
-        wb = Workbook(write_only=True)
+    def _generate_excel_file(self, domain, resource_slug, target_lang):
+        """
+        extract translations from po file pulled from transifex and converts to a xlsx file
+
+        :return: Workbook object
+        """
+        transifex = Transifex(domain=domain, app_id=None,
+                              source_lang=target_lang,
+                              project_slug=self.pull_resource_form.cleaned_data['transifex_project_slug'],
+                              version=None)
+        wb = openpyxl.Workbook(write_only=True)
         ws = wb.create_sheet(title='translations')
         ws.append(['context', 'source', 'translation', 'occurrence'])
         for po_entry in transifex.client.get_translation(resource_slug, target_lang, False):
@@ -248,7 +254,7 @@ class PullResource(BaseTranslationsView):
         mem_file = BytesIO()
         with ZipFile(mem_file, 'w') as zipfile:
             for resource_slug in transifex.resource_slugs:
-                wb = Workbook(write_only=True)
+                wb = openpyxl.Workbook(write_only=True)
                 ws = wb.create_sheet(title='translations')
                 ws.append(['context', 'source', 'translation', 'occurrence'])
                 for po_entry in transifex.client.get_translation(resource_slug, target_lang, False):
@@ -277,7 +283,7 @@ class PullResource(BaseTranslationsView):
         resource_slug = self.pull_resource_form.cleaned_data['resource_slug']
         project_slug = self.pull_resource_form.cleaned_data['transifex_project_slug']
         file_response = self._generate_response_file(request.domain, project_slug, resource_slug)
-        if isinstance(file_response, Workbook):
+        if isinstance(file_response, openpyxl.Workbook):
             content = get_file_content_from_workbook(file_response)
             response = HttpResponse(content, content_type="text/html; charset=utf-8")
             response['Content-Disposition'] = safe_filename_header(resource_slug, "xlsx")
