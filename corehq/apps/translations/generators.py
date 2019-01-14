@@ -17,8 +17,8 @@ from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
-HQ_MODULE_SHEET_NAME = re.compile('^module(\d+)$')
-HQ_FORM_SHEET_NAME = re.compile('^module(\d+)_form(\d+)$')
+HQ_MODULE_SHEET_NAME = re.compile(r'^module(\d+)$')
+HQ_FORM_SHEET_NAME = re.compile(r'^module(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
 SKIP_TRANSFEX_STRING = "SKIP TRANSIFEX"
 
