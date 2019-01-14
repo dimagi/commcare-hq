@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
 
+from django.db.models import F
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
 
@@ -1155,6 +1156,7 @@ def get_pregnant_details(case_id, awc_id):
         case_id=case_id,
         awc_id=awc_id,
         month__gte=ten_months_ago,
+        home_visit_date__lte=F('month') + timedelta(days=31),
     ).order_by('home_visit_date', '-month').distinct('home_visit_date').values(
         'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
         'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
