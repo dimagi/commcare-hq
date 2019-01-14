@@ -32,10 +32,7 @@ class TranslationsParser(object):
     @memoized
     def get_app(self):
         from corehq.apps.app_manager.dbaccessors import get_current_app
-        try:
-            app_build_id = self.transifex.app_id_to_build
-        except AttributeError:
-            app_build_id = self.transifex.app_id
+        app_build_id = self.transifex.build_id
         return get_current_app(self.transifex.domain, app_build_id)
 
     def _add_sheet(self, ws, po_entries):
