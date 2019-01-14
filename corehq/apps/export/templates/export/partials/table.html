@@ -104,11 +104,11 @@
                                 <span data-bind="text: emailedExport.fileData.size()"></span>
                                 &nbsp;&nbsp;&nbsp;
                                 <strong>{% trans "Last Updated:" %}</strong>
-                                <span data-bind="if: !emailedExport.taskStatus.justFinished()">
+                                <span data-bind="if: !justUpdated()">
                                     <span data-bind="text: emailedExport.fileData.lastUpdated()"></span>
                                     &nbsp;&nbsp;&nbsp;
                                 </span>
-                                <span data-bind="if: emailedExport.taskStatus.justFinished()">
+                                <span data-bind="if: justUpdated()">
                                     {% trans "Just now" %}&nbsp;&nbsp;&nbsp;
                                 </span>
                                 <strong>{% trans "Last Downloaded:" %}</strong>
@@ -125,7 +125,7 @@
                                 <button type="button"
                                         class="btn btn-default btn-xs"
                                         data-bind="
-                                            visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.inProgress()),
+                                            visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
                                             attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}
                                         "
                                         data-toggle="modal">
@@ -139,7 +139,7 @@
                                     <i class="fa fa-refresh fa-spin"></i>
                                     {% trans "Updating Data, please wait..." %}
                                 </button>
-                                <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.inProgress()">
+                                <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.started()">
                                     <div class="progress">
                                         <div class="progress-bar progress-bar-striped active"
                                              role="progressbar"
@@ -188,11 +188,18 @@
                                     button and download the file.
                                 {% endblocktrans %}
                             </p>
-                            <p data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished()">
+
+                            <p class="text-success" data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.success()">
                                 <i class="fa fa-check"></i>
-                                <strong>{% trans "Data update started." %}</strong><br />
-                                {% trans "Please check back later for updates. (Page refresh required)" %}
+                                <strong>{% trans "Data update complete" %}</strong>
                             </p>
+
+                            <p class="text-danger" data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.failed()">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <strong>{% trans "Data update failed!" %}</strong>
+                                {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.{% endblocktrans %}
+                            </p>
+
                         </div>
 
                         <div data-bind="if: isLocationSafeForUser">

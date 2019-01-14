@@ -664,7 +664,7 @@ class BugReportView(View):
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
             ).format(**debug_context)
-            traceback_info = cache.cache.get(report['500traceback'])
+            traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
             cache.cache.delete(report['500traceback'])
             message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
 
@@ -1148,6 +1148,7 @@ class MaintenanceAlertsView(BasePageView):
                 'active': alert.active,
                 'html': alert.html,
                 'id': alert.id,
+                'domains': ", ".join(alert.domains) if alert.domains else "All domains",
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 
@@ -1161,7 +1162,8 @@ class MaintenanceAlertsView(BasePageView):
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     alert_text = request.POST.get('alert_text')
-    MaintenanceAlert(active=False, text=alert_text).save()
+    domains = request.POST.get('domains').split() or None
+    MaintenanceAlert(active=False, text=alert_text, domains=domains).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 

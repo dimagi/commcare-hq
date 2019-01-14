@@ -563,13 +563,13 @@ def remove_web_user(request, domain, couch_user_id):
         user.save()
         if record:
             message = _('You have successfully removed {username} from your '
-                        'domain. <a href="{url}" class="post-link">Undo</a>')
+                        'project space. <a href="{url}" class="post-link">Undo</a>')
             messages.success(request, message.format(
                 username=user.username,
                 url=reverse('undo_remove_web_user', args=[domain, record.get_id])
             ), extra_tags="html")
         else:
-            message = _('It appears {username} has already been removed from your domain.')
+            message = _('It appears {username} has already been removed from your project space.')
             messages.success(request, message.format(username=user.username))
 
     return HttpResponseRedirect(

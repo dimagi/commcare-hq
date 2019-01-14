@@ -8,14 +8,14 @@ function (
     ko
 ) {
     $(function () {
-        var RegistrationModel = function () {
-            var self = this;
+        var registrationModel = function () {
+            var self = {};
             self.registration_message_type = ko.observable();
             self.showCustomRegistrationMessage = ko.computed(function () {
                 return self.registration_message_type() === 'CUSTOM';
             });
+            return self;
         };
-        var registrationModel = new RegistrationModel();
-        ko.applyBindings(registrationModel, $('#registration-modal').get(0));
+        ko.applyBindings(registrationModel(), $('#registration-modal').get(0));
     });
 });

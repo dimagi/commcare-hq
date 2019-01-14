@@ -17,4 +17,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0082_ccs_record_monthly_closed'),
     ]
 
-    operations = get_view_migrations()
+    operations = []

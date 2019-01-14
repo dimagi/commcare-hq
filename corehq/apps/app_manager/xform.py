@@ -8,6 +8,7 @@ import itertools
 from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xml import V2_NAMESPACE
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
@@ -19,6 +20,7 @@ from corehq.apps.app_manager.xpath import XPath
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
+from corehq.toggles import DONT_INDEX_SAME_CASETYPE
 from corehq.util.view_utils import get_request
 from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
@@ -428,7 +430,7 @@ class CaseBlock(object):
         )
 
         if not autoset_owner_id:
-            owner_id_node.text = '-'
+            owner_id_node.text = UNOWNED_EXTENSION_OWNER_ID
         elif has_case_sharing:
             self.xform.add_instance('groups', src='jr://fixture/user-groups')
             add_setvalue_or_bind(
@@ -598,8 +600,10 @@ def validate_xform(domain, source):
         )
 
 
-ControlNode = collections.namedtuple('ControlNode', ['node', 'path', 'repeat', 'group', 'items',
+ControlNode = collections.namedtuple('ControlNode', ['node', 'bind_node', 'path', 'repeat', 'group', 'items',
                                      'is_leaf', 'data_type', 'relevant', 'required', 'constraint'])
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -994,7 +998,8 @@ class XForm(WrappedNode):
                 raise XFormException(_("<item> ({}) has no <value>").format(translation))
             option = {
                 'label': translation,
-                'value': value
+                'label_ref': self._get_label_ref(item),
+                'value': value,
             }
             if include_translations:
                 option['translations'] = self._get_label_translations(item, langs)
@@ -1048,6 +1053,11 @@ class XForm(WrappedNode):
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]
+
+            constraint_ref_xml = '{jr}constraintMsg'
+            if cnode.constraint and cnode.bind_node.attrib.get(constraint_ref_xml):
+                constraint_jr_itext = cnode.bind_node.attrib.get(constraint_ref_xml)
+                question['constraintMsg_ref'] = self._normalize_itext_id(constraint_jr_itext)
 
             questions.append(question)
 
@@ -1221,6 +1231,7 @@ class XForm(WrappedNode):
                     if not skip:
                         control_nodes.append(ControlNode(
                             node=node,
+                            bind_node=bind,
                             path=path,
                             repeat=repeat_context,
                             group=group_context,
@@ -1229,7 +1240,7 @@ class XForm(WrappedNode):
                             data_type=data_type,
                             relevant=relevant,
                             required=required,
-                            constraint=constraint
+                            constraint=constraint,
                         ))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)
@@ -1630,7 +1641,8 @@ class XForm(WrappedNode):
                 if subcase.close_condition.is_active():
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
-                if case_block is not None and subcase.case_type != form.get_case_type():
+                index_same_casetype = not DONT_INDEX_SAME_CASETYPE.enabled(form.get_app().domain)
+                if case_block is not None and (index_same_casetype or subcase.case_type != form.get_case_type()):
                     reference_id = subcase.reference_id or 'parent'
 
                     subcase_block.add_index_ref(
@@ -1915,7 +1927,8 @@ class XForm(WrappedNode):
                     self.add_bind(
                         nodeset="%scase/create/owner_id" % path,
                         calculate=XPath.if_(XPath(case_index.relationship_question).eq(XPath.string('extension')),
-                                            XPath.string('-'), self.resolve_path("meta/userID")),
+                                            XPath.string(UNOWNED_EXTENSION_OWNER_ID),
+                                            self.resolve_path("meta/userID")),
                     )
 
             if action.close_condition.type != 'never':

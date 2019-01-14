@@ -12,37 +12,32 @@ from corehq.util.download import get_download_response
 from corehq.util.files import TransientTempfile
 from couchexport.export import Format
 
+from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.views import DishaIndicatorView
 from custom.icds_reports.models.helper import IcdsFile
 from memoized import memoized
-from celery.task import task
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel('DEBUG')
 
-DISHA_DUMP_EXPIRY = 60 * 60 * 24 * 31  # 1 month
+DISHA_DUMP_EXPIRY = 60 * 60 * 24 * 360  # 1 year
 
 
 class DishaDump(object):
 
-    def __init__(self, state_name, month, level=None):
-        """
-        :param state_name: data for state
-        :param month: data for month
-        :param level: get data till level, valid values in const VALID_LEVELS_FOR_DUMP
-        """
+    def __init__(self, state_name, month):
         self.state_name = state_name
         self.month = month
-        self.level = int(level) if level else level
 
     def _blob_id(self):
+        # This will be the reference to the blob, if this is updated
+        #   attention should be paid to the old blobs whose references
+        #   might be lost.
         # strip all non-alphanumeric chars
         safe_state_name = re.sub('[^0-9a-zA-Z]+', '', self.state_name)
-        return 'disha_dump-{}-{}-level{}.json'.format(
-            safe_state_name, self.month.strftime('%Y-%m-%d'), self.level
-        )
+        return 'disha_dump-{}-{}.json'.format(safe_state_name, self.month.strftime('%Y-%m-%d'))
 
     @memoized
     def _get_file_ref(self):
@@ -69,14 +64,11 @@ class DishaDump(object):
         return columns
 
     def _get_rows(self):
-        rows = DishaIndicatorView.objects.filter(
+        return DishaIndicatorView.objects.filter(
             month=self.month,
             state_name__iexact=self.state_name
             # batch_qs requires ordered queryset
-        )
-        if self.level:
-            rows = rows.filter(aggregation_level__in=list(range(1, self.level + 1)))
-        return rows.order_by('pk').values_list(*self._get_columns())
+        ).order_by('pk').values_list(*self._get_columns())
 
     def _write_data_in_chunks(self, file_obj):
         # Writes indicators in json format to the file at temp_path
@@ -121,19 +113,12 @@ class DishaDump(object):
                 blob_ref.store_file_in_blobdb(f, expired=DISHA_DUMP_EXPIRY)
                 blob_ref.save()
 
-    def initiate_rebuild(self):
-        build_dumps_for_month.delay(self.month, rebuild=True, level=self.level, state_name=self.state_name)
 
-
-@task(serializer='pickle', queue='background_queue')
-def build_dumps_for_month(month, rebuild=False, level=None, state_name=None):
-    if state_name:
-        states = [state_name]
-    else:
-        states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
+def build_dumps_for_month(month, rebuild=False):
+    states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True)
     for state_name in states:
-        dump = DishaDump(state_name, month, level)
-        if dump.export_exists() and not rebuild:
+        dump = DishaDump(state_name, month)
+        if not rebuild and dump.export_exists():
             logger.info("Skipping, export is already generated for state {}".format(state_name))
         else:
             logger.info("Generating for state {}".format(state_name))

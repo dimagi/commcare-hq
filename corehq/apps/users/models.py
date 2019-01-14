@@ -1820,6 +1820,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             django_user.delete()
         self.save()
 
+    # Todo; temporary fix: Sravan
+    @quickcache(['self._id'], skip_arg=lambda user: user.domain != 'reach-sandbox', timeout=60 * 60 * 4)
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
         # get faked location group objects

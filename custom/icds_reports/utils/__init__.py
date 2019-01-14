@@ -6,7 +6,7 @@ import time
 import zipfile
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import wraps
 
 import operator
@@ -61,9 +61,9 @@ BLUE = '#006fdf'
 PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
-DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DEFAULT_VALUE = DATA_NOT_ENTERED
 DATA_NOT_VALID = "Data Not Valid"
 
 india_timezone = pytz.timezone('Asia/Kolkata')
@@ -375,13 +375,24 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
     return status if not exportable else status['value']
 
 
-def get_anamic_status(value):
+def is_anemic(value):
     if value['anemic_severe']:
         return 'Y'
     elif value['anemic_moderate']:
         return 'Y'
     elif value['anemic_normal']:
         return 'N'
+    else:
+        return DATA_NOT_ENTERED
+
+
+def get_anemic_status(value):
+    if value['anemic_severe']:
+        return 'Severe'
+    elif value['anemic_moderate']:
+        return 'Moderate'
+    elif value['anemic_normal']:
+        return 'Normal'
     else:
         return DATA_NOT_ENTERED
 
@@ -420,19 +431,21 @@ def get_counseling(value):
     if counseling:
         return ', '.join(counseling)
     else:
-        return '--'
+        return 'None'
 
 
 def get_tt_dates(value):
     tt_dates = []
-    if value['tt_1']:
+    # ignore 1970-01-01 as that is default date for ledger dates
+    default = date(1970, 1, 1)
+    if value['tt_1'] and value['tt_1'] != default:
         tt_dates.append(str(value['tt_1']))
-    if value['tt_2']:
+    if value['tt_2'] and value['tt_2'] != default:
         tt_dates.append(str(value['tt_2']))
     if tt_dates:
         return '; '.join(tt_dates)
     else:
-        return '--'
+        return 'None'
 
 
 def current_age(dob, selected_date):
@@ -766,6 +779,10 @@ def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
 
 
+def format_decimal(num):
+    return "%.2f" % num
+
+
 def percent_or_not_entered(x, y):
     return percent(x, y) if y and x is not None else DATA_NOT_ENTERED
 
@@ -823,12 +840,12 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         worksheet[cell].fill = blue_fill
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
-    worksheet['B3'].value = "State:"
-    worksheet['C3'].value = state
-    worksheet['D3'].value = "District:"
-    worksheet['E3'].value = district
-    worksheet['F3'].value = "Block:"
-    worksheet['G3'].value = block
+    worksheet.merge_cells('B3:C3')
+    worksheet['B3'].value = "State: {}".format(state)
+    worksheet.merge_cells('D3:E3')
+    worksheet['D3'].value = "District: {}".format(district)
+    worksheet.merge_cells('F3:G3')
+    worksheet['F3'].value = "Block: {}".format(block)
     worksheet.merge_cells('H3:I3')
     worksheet['H3'].value = "Date when downloaded:"
     utc_now = datetime.now(pytz.utc)
@@ -887,12 +904,23 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         'I': 14,
         'J': 14,
     }
+    for column in ["C", "E", "G"]:
+        if widths[column] > 25:
+            worksheet.row_dimensions[3].height = max(
+                16 * ((widths[column] // 25) + 1),
+                worksheet.row_dimensions[3].height
+            )
+            widths[column] = 25
     columns = ["C", "D", "E", "F", "G", "H", "I", "J"]
     # column widths based on table contents
     for column_index in range(len(columns)):
         widths[columns[column_index]] = max(
             widths[columns[column_index]],
-            max(len(str(row[column_index])) for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else six.text_type(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
         )
 
     for column, width in widths.items():

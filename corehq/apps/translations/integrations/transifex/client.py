@@ -159,12 +159,15 @@ class TransifexApiClient(object):
         check if a resource has been completely translated for
         all langs or a specific target lang
         """
+        def completed(details):
+            return not bool(details.get('untranslated_words'))
+
         if hq_lang_code:
             lang = self.transifex_lang_code(hq_lang_code)
-            return self._resource_details(resource_slug).get(lang, {}).get('completed') == "100%"
+            return completed(self._resource_details(resource_slug).get(lang, {}))
         else:
             for lang, detail in self._resource_details(resource_slug).items():
-                if detail.get('completed') != "100%":
+                if not completed(detail):
                     return False
             return True
 

@@ -22,18 +22,18 @@
 {% endblock %}
 
 {% block page_content %}
-    <div id="table-filters" class="btn-group" data-toggle="buttons-radio">
+    {% if not show_usage %}
+        <a href="{{ page_url }}?show_usage=true" class="btn btn-default btn-xs pull-right">
+            <i class="fa fa-info-circle"></i>
+            {% trans "Show usage metrics" %}
+        </a>
+    {% endif %}
+    <div id="table-filters" class="btn-group btn-group-separated" data-toggle="buttons-radio">
         <button class="btn btn-default active" data-bind="click: function (){ tagFilter(null) }">{% trans "All" %}</button>
         {% for tag in tags %}
             <button class="btn btn-default" data-bind="click: function (){ tagFilter('{{ tag.name }}') }">{{ tag.name }}</button>
         {% endfor %}
     </div>
-    {% if not show_usage %}
-        <a href="{{ page_url }}?show_usage=true" class="btn btn-default">
-            <i class="fa fa-info-circle"></i>
-            {% trans "Show usage metrics" %}
-        </a>
-    {% endif %}
     <table class="table table-striped datatable">
         <thead>
             <th>{% trans "Tag" %}</th>

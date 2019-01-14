@@ -183,7 +183,7 @@
         <!-- End Google Tag Manager (noscript) -->
         {% endif %}
         {% block background_content %}{% endblock %}
-        {% maintenance_alert %}
+        {% maintenance_alert request %}
         {% if request.user.is_authenticated and is_demo_visible %}
           {% include "hqwebapp/partials/get_demo_banner.html" %}
         {% endif %}

@@ -45,6 +45,10 @@ hqDefine("export/js/export_list", [
             }));
         }
 
+        self.justUpdated = ko.computed(function () {
+            return self.emailedExport.taskStatus.justFinished() && self.emailedExport.taskStatus.success();
+        });
+
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();
         };
@@ -70,8 +74,9 @@ hqDefine("export/js/export_list", [
         self.pollProgressBar = function () {
             self.emailedExport.updatingData(false);
             self.emailedExport.taskStatus.percentComplete();
-            self.emailedExport.taskStatus.inProgress(true);
+            self.emailedExport.taskStatus.started(true);
             self.emailedExport.taskStatus.success(false);
+            self.emailedExport.taskStatus.failed(false);
             var tick = function () {
                 $.ajax({
                     method: 'GET',
@@ -83,12 +88,13 @@ hqDefine("export/js/export_list", [
                     },
                     success: function (data) {
                         self.emailedExport.taskStatus.percentComplete(data.taskStatus.percentComplete);
-                        self.emailedExport.taskStatus.inProgress(data.taskStatus.inProgress);
+                        self.emailedExport.taskStatus.started(data.taskStatus.started);
                         self.emailedExport.taskStatus.success(data.taskStatus.success);
+                        self.emailedExport.taskStatus.failed(data.taskStatus.failed);
                         self.emailedExport.taskStatus.justFinished(data.taskStatus.justFinished);
-                        if (!data.taskStatus.success) {
+                        if (!data.taskStatus.success && !data.taskStatus.failed) {
                             // The first few ticks don't yet register the task
-                            self.emailedExport.taskStatus.inProgress(true);
+                            self.emailedExport.taskStatus.started(true);
                             setTimeout(tick, 1500);
                         } else {
                             self.emailedExport.taskStatus.justFinished(true);
@@ -175,7 +181,7 @@ hqDefine("export/js/export_list", [
         };
 
         _.each(self.exports, function (exp) {
-            if (exp.hasEmailedExport && exp.emailedExport.taskStatus && exp.emailedExport.taskStatus.inProgress()) {
+            if (exp.hasEmailedExport && exp.emailedExport.taskStatus && exp.emailedExport.taskStatus.started()) {
                 exp.pollProgressBar();
             }
         });

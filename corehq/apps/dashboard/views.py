@@ -155,6 +155,10 @@ def _get_default_tiles(request):
     )
 
     is_billing_admin = lambda request: request.couch_user.can_edit_billing()
+    apps_link = lambda urlname, req: (
+        '' if domain_has_apps(request.domain)
+        else reverse(urlname, args=[request.domain])
+    )
 
     return [
         Tile(
@@ -165,6 +169,7 @@ def _get_default_tiles(request):
             paginator_class=AppsPaginator,
             visibility_check=can_edit_apps,
             urlname='default_new_app',
+            url_generator=apps_link,
             help_text=_('Build, update, and deploy applications'),
         ),
         Tile(

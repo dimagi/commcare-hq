@@ -141,7 +141,10 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
             else:
                 # this should only be files that had attachments deleted while the bug
                 # was in effect, so hopefully we will stop seeing it after a few days
-                logging.error('someone is uploading a file that should have existed for multimedia %s' % self._id)
+                soft_assert(notify_admins=True)(False, 'someone is uploading a file that should have existed for multimedia', {
+                    'media_id': self._id,
+                    'attachment_id': attachment_id
+                })
             self.put_attachment(
                 data,
                 attachment_id,

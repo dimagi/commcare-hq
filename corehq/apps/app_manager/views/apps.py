@@ -89,6 +89,7 @@ from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
@@ -162,7 +163,9 @@ def get_app_view_context(request, app):
     This is where additional app or domain specific context can be added to any individual
     commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
     """
-    context = {}
+    context = {
+        'legacy_select2': True,
+    }
 
     settings_layout = copy.deepcopy(
         get_commcare_settings_layout(app.get_doc_type())
@@ -285,11 +288,24 @@ def get_app_view_context(request, app):
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
+        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
             context['master_version'] = app.get_master_version()
         except RemoteRequestError:
             pass
     return context
+
+
+def _get_upstream_url(app, request_user):
+    """Get the upstream url if the user has access"""
+    if request_user.is_superuser or (
+            not app.domain_link.is_remote
+            and request_user.is_member_of(app.domain_link.master_domain)
+    ):
+        url = reverse('view_app', args=[app.domain_link.master_domain, app.master])
+        if app.domain_link.is_remote:
+            url = '{}{}'.format(app.domain_link.remote_base_url, url)
+        return url
 
 
 def clear_app_cache(request, domain):
@@ -411,7 +427,13 @@ def copy_app(request, domain):
                 return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
             else:
                 extra_properties = {'name': data['name']}
-                app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
+                try:
+                    app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
+                except ReportConfigurationNotFoundError:
+                    messages.error(request, _("Copying the application failed because "
+                                              "your application contains a Report Module "
+                                              "that references a static UCR configuration."))
+                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
                 return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         # having login_and_domain_required validates that the user
