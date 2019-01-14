@@ -39,17 +39,27 @@
 {% if multimedia_state.has_missing_refs %}
     <div class="alert alert-warning">
         <p>
-            <i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Note:</strong> This application is
-            missing references, so this zip will be incomplete.
+            {% blocktrans %}
+                <i class="fa fa-exclamation-triangle"></i>
+                This application is missing references, so this zip will be incomplete.
+            {% endblocktrans %}
         </p>
-        <p>
-            Please make sure all of your application's multimedia references are linked to media files before
-            starting your Application, or it might be unstable.
-        </p>
-    {% endblocktrans %}</div>
+        {% if not is_multimedia_reference_checker %}
+            <p>
+                {% url "hqmedia_references" domain app.get_id as checker_url %}
+                {% blocktrans %}
+                    Visit the <a href='{{ checker_url }}' target= '_blank'>
+                        Multimedia Reference Checker
+                        <i class='fa fa-external-link'></i>
+                    </a>
+                    to upload any missing multimedia.
+                {% endblocktrans %}
+            </p>
+        {% endif %}
+    </div>
 {% endif %}
 
 {% if include_modal %}
-    {% url "download_multimedia_zip" domain app.get_id as multimedia_url%}
+    {% url "download_multimedia_zip" domain app.get_id as multimedia_url %}
     {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=multimedia_url %}
 {% endif %}

@@ -68,7 +68,7 @@
         <div class="col-sm-5">
             {% if totals|length %}
             <div class="well">
-                {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
+                {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True is_multimedia_reference_checker=True %}
                 <ul class="media-totals-list" data-bind="foreach: totals">
                     <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}">
                         <i data-bind="attr: {class: icon_class}"></i>
