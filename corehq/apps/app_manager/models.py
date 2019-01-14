@@ -44,7 +44,6 @@ from corehq.apps.app_manager.helpers.validators import (
     ApplicationValidator,
     FormValidator,
     FormBaseValidator,
-    IndexedFormBaseValidator,
     ModuleValidator,
     ModuleBaseValidator,
     AdvancedModuleValidator,
@@ -913,7 +912,7 @@ class CaseReferences(DocumentSchema):
             yield CaseSaveReferenceWithPath.wrap(ref_copy)
 
 
-class FormBase(DocumentSchema):
+class FormBase(IndexedSchema, CommentMixin):
     """
     Part of a Managed Application; configuration for a form.
     Translates to a second-level menu on the phone
@@ -1100,7 +1099,7 @@ class FormBase(DocumentSchema):
         return self.unique_id
 
     def get_app(self):
-        return self._app
+        return self._parent._parent
 
     def get_version(self):
         return self.version if self.version else self.get_app().version
@@ -1246,21 +1245,11 @@ class FormBase(DocumentSchema):
             updates_by_case_type[case_type].update(save_to_case_update.properties)
         return updates_by_case_type
 
-
-class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
-
-    def get_app(self):
-        return self._parent._parent
-
     def get_module(self):
         return self._parent
 
     def get_case_type(self):
         return self._parent.case_type
-
-    @property
-    def validator(self):
-        return IndexedFormBaseValidator(self)
 
     def _add_save_to_case_questions(self, form_questions, app_case_meta):
         def _make_save_to_case_question(path):
@@ -1573,7 +1562,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return self.custom_icons[0]
 
 
-class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
+class Form(FormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'module_form'
 
     form_filter = StringProperty()
@@ -2661,7 +2650,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 pass
 
 
-class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
+class AdvancedForm(FormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
