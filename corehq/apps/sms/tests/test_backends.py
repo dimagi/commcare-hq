@@ -4,6 +4,7 @@ import json
 import uuid
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
@@ -227,6 +228,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.ivory_coast_mtn_backend.delete()
         cls.karix_backend.delete()
         cls.airtel_tcl_backend.delete()
+        clear_plan_version_cache()
         super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -644,6 +646,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.teardown_subscription()
 
         cls.domain_obj.delete()
+        clear_plan_version_cache()
         super(OutgoingFrameworkTestCase, cls).tearDownClass()
 
     def test_multiple_country_prefixes(self):
