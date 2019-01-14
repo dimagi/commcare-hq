@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
 
+from django.db.models import F
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
 
@@ -1155,6 +1156,7 @@ def get_pregnant_details(case_id, awc_id):
         case_id=case_id,
         awc_id=awc_id,
         month__gte=ten_months_ago,
+        home_visit_date__lte=F('month') + timedelta(days=31),
     ).order_by('home_visit_date', '-month').distinct('home_visit_date').values(
         'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
         'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
@@ -1171,11 +1173,9 @@ def get_pregnant_details(case_id, awc_id):
             [],
         ],
     }
-    current_trimester = 1
-    current_record = 0
     for row_data in data:
-        if row_data['trimester'] >= current_trimester:
-            config['data'][row_data['trimester'] - 1].append(dict(
+        config['data'][row_data['trimester'] - 1].append(
+            dict(
                 case_id=row_data['case_id'],
                 trimester=row_data['trimester'] if row_data['trimester'] else DATA_NOT_ENTERED,
                 person_name=row_data['person_name'] if row_data['person_name'] else DATA_NOT_ENTERED,
@@ -1201,11 +1201,8 @@ def get_pregnant_details(case_id, awc_id):
                 ifa_consumed_last_seven_days='Y' if row_data['ifa_consumed_last_seven_days'] else 'N',
                 tt_taken='Y' if get_tt_dates(row_data) != 'None' else 'N',
                 tt_date=get_tt_dates(row_data),
-            ))
-            if current_trimester == 1 and row_data['trimester'] == 1 and current_record == 0:
-                current_record += 1
-            else:
-                current_trimester = row_data['trimester'] + 1
+            )
+        )
     return config
 
 
