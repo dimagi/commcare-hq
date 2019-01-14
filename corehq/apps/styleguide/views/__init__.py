@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import *
-from corehq.apps.styleguide.example_forms import BasicCrispyForm
+from corehq.apps.styleguide.example_forms import BasicCrispyForm, CheckboxesForm
 
 
 def styleguide_default(request):
@@ -295,6 +295,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'molecules/intro',
             'molecules/buttons',
             'molecules/selections',
+            'molecules/checkboxes',
             'molecules/modals',
             'molecules/pagination',
             'molecules/inline_edit',
@@ -303,12 +304,15 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
     @property
     def page_context(self):
         return {
+            'checkboxes_form': CheckboxesForm(),
             'examples': {
                 'selections': {
                     'button_group': self.example('button_group.html'),
                     'select2': self.example('select2.html'),
                     'multiselect': self.example('multiselect.html'),
                 },
+                'checkbox_in_form': self.example('checkbox_in_form.html'),
+                'lonely_checkbox': self.example('lonely_checkbox.html'),
                 'modals': self.example('modals.html'),
                 'pagination': self.example('pagination.html'),
                 'inline_edit': self.example('inline_edit.html'),
