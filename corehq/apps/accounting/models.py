@@ -403,6 +403,28 @@ class BillingAccount(ValidateModelMixin, models.Model):
         return self.auto_pay_user is not None
 
     @classmethod
+    def create_account_for_domain(cls, domain,
+                                  created_by=None, account_type=None,
+                                  entry_point=None, last_payment_method=None,
+                                  pre_or_post_pay=None):
+        account_type = account_type or BillingAccountType.INVOICE_GENERATED
+        entry_point = entry_point or EntryPoint.NOT_SET
+        last_payment_method = last_payment_method or LastPayment.NONE
+        pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
+        default_name = DEFAULT_ACCOUNT_FORMAT % domain
+        name = get_account_name_from_default_name(default_name)
+        return BillingAccount.objects.create(
+            name=name,
+            created_by=created_by,
+            created_by_domain=domain,
+            currency=Currency.get_default(),
+            account_type=account_type,
+            entry_point=entry_point,
+            last_payment_method=last_payment_method,
+            pre_or_post_pay=pre_or_post_pay
+        )
+
+    @classmethod
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
                                         entry_point=None, last_payment_method=None,
@@ -411,28 +433,17 @@ class BillingAccount(ValidateModelMixin, models.Model):
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
         """
-        is_new = False
         account = cls.get_account_by_domain(domain)
-        if account is None:
-            is_new = True
-            account_type = account_type or BillingAccountType.INVOICE_GENERATED
-            entry_point = entry_point or EntryPoint.NOT_SET
-            last_payment_method = last_payment_method or LastPayment.NONE
-            pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
-            default_name = DEFAULT_ACCOUNT_FORMAT % domain
-            name = get_account_name_from_default_name(default_name)
-            account = BillingAccount(
-                name=name,
-                created_by=created_by,
-                created_by_domain=domain,
-                currency=Currency.get_default(),
-                account_type=account_type,
-                entry_point=entry_point,
-                last_payment_method=last_payment_method,
-                pre_or_post_pay=pre_or_post_pay
-            )
-            account.save()
-        return account, is_new
+        if account:
+            return account, False
+        return cls.create_account_for_domain(
+            domain,
+            created_by=created_by,
+            account_type=account_type,
+            entry_point=entry_point,
+            last_payment_method=last_payment_method,
+            pre_or_post_pay=pre_or_post_pay,
+        ), True
 
     @classmethod
     def get_account_by_domain(cls, domain):
