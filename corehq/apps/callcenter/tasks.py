@@ -42,8 +42,6 @@ def calculate_indicators():
 
 
 def sync_user_cases_if_applicable(user, spawn_task):
-    if settings.UNIT_TESTING and not user.project:
-        return
     if (user.project.call_center_config.enabled or user.project.usercase_enabled):
         if spawn_task:
             sync_user_cases_task.delay(user._id)

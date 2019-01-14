@@ -275,7 +275,7 @@ class EditCommCareUserView(BaseEditUserView):
             phone_number = re.sub('\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
                 self.editable_user.add_phone_number(phone_number)
-                self.editable_user.save()
+                self.editable_user.save(spawn_task=True)
                 messages.success(request, _("Phone number added."))
             else:
                 messages.error(request, _("Please enter digits only."))
@@ -535,7 +535,7 @@ def update_user_data(request, domain, couch_user_id):
         assert user.doc_type == "CommCareUser"
         assert user.domain == domain
         user.user_data = updated_data
-        user.save()
+        user.save(spawn_task=True)
     messages.success(request, "User data updated!")
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
@@ -753,7 +753,7 @@ def _modify_user_status(request, domain, user_id, is_active):
                        "corresponding location to deactivate it."),
         })
     user.is_active = is_active
-    user.save()
+    user.save(spawn_task=True)
     return json_response({
         'success': True,
     })
