@@ -58,4 +58,5 @@ branches:
   - dmr/fix-es-service-check  # Danny Jan 3
   - mk-new-recovery-measure # MK Jan 8
   - jls/domain-select2-v4  # Jenny Jan 14
+  - jls/reduce-form-classes  # Jenny Jan 15
 submodules: {}
