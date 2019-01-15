@@ -727,8 +727,8 @@ def get_subscription_properties_by_user(couch_user):
         subscribed_editions.append(plan_version.plan.edition)
         if subscription is not None:
             all_subscriptions.append(subscription)
-        if subscription is not None and _is_paying_subscription(subscription, plan_version):
-            paying_subscribed_editions.append(plan_version.plan.edition)
+            if _is_paying_subscription(subscription, plan_version):
+                paying_subscribed_editions.append(plan_version.plan.edition)
 
     def _is_one_of_editions(edition):
         return 'yes' if edition in subscribed_editions else 'no'
