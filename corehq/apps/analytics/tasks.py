@@ -674,7 +674,6 @@ def get_ab_test_properties(user):
     }
 
 
-@analytics_task()
 def update_subscription_properties_by_domain(domain):
     domain_obj = Domain.get_by_name(domain)
     if domain_obj:
@@ -683,13 +682,15 @@ def update_subscription_properties_by_domain(domain):
         ).all()
 
         for web_user in affected_users:
-            update_subscription_properties_by_user(web_user)
+            properties = get_subscription_properties_by_user(web_user)
+            update_subscription_properties_by_user.delay(web_user.get_id, properties)
 
 
-def update_subscription_properties_by_user(couch_user):
-    properties = get_subscription_properties_by_user(couch_user)
-    identify_v2(couch_user.username, properties)
-    update_hubspot_properties_v2(couch_user, properties)
+@analytics_task()
+def update_subscription_properties_by_user(web_user_id, properties):
+    web_user = WebUser.get_by_user_id(web_user_id)
+    identify_v2(web_user.username, properties)
+    update_hubspot_properties_v2(web_user, properties)
 
 
 def get_subscription_properties_by_user(couch_user):
