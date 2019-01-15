@@ -1375,6 +1375,8 @@ class Subscription(models.Model):
             if change_status_result.adjustment_reason == SubscriptionAdjustmentReason.DOWNGRADE:
                 track_workflow(web_user, 'Changed Plan: Downgrade')
 
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+
         return new_subscription
 
     def reactivate_subscription(self, date_end=None, note=None, web_user=None,
