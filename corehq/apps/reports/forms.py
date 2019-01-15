@@ -160,17 +160,15 @@ class ScheduledReportForm(forms.Form):
                     'interval',
                     'day',
                     'hour',
-                    B3MultiField(
-                        ugettext("Send Options"),
-                        'send_to_owner'
-                    ),
-                    B3MultiField(
-                        ugettext("Excel Attachment"),
-                        'attach_excel'
-                    ),
                     crispy.Field(
                         'email_subject',
                         css_class='input-xlarge',
+                    ),
+                    crispy.Field(
+                        'send_to_owner'
+                    ),
+                    crispy.Field(
+                        'attach_excel'
                     ),
                     'recipient_emails',
                     'language',

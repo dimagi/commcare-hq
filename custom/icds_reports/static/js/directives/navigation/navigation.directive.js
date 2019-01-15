@@ -6,6 +6,9 @@ function NavigationController($window, $scope, $route, $routeParams, $location, 
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
+    $scope.stateLevelAccess = stateLevelAccess;
+    $scope.haveAccessToAllLocations = haveAccessToAllLocations;
+    $scope.haveAccessToFeatures = haveAccessToFeatures;
 
     var checkColapse = function(reports) {
         var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
@@ -35,10 +38,6 @@ function NavigationController($window, $scope, $route, $routeParams, $location, 
         });
         return page_path;
     };
-
-    $scope.showCasData = function () {
-        return stateLevelAccess === false && haveAccessToAllLocations !== true && haveAccessToFeatures === true;
-    }
 }
 
 NavigationController.$inject = ['$window', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];

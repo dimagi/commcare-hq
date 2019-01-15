@@ -99,13 +99,13 @@ TODO:
                    data-bind="select2: $parent.selectablePropertyOptions, value: property">
             <!-- /ko -->
             <!-- ko if: $root.optionsContainQuestions -->
-            <select class="form-control input-sm" type="hidden" data-bind="
+            <input class="form-control input-sm" type="hidden" data-bind="
                 questionsSelect: $parent.selectablePropertyOptions.concat(
                     existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                 ),
                 value: existsInCurrentVersion() ? property : dataSourceField,
                 attr: {disabled: !existsInCurrentVersion()}
-            "></select>
+            "/>
             <!-- /ko -->
             {% endblock %}
             <strong class="help-block" data-bind="if: $parent.showWarnings() && !property()">

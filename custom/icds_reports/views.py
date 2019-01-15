@@ -223,7 +223,9 @@ class DashboardView(TemplateView):
             self.kwargs['domain']
         ).location_ids())
         kwargs['state_level_access'] = 'state' in set(
-            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations()]
+            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
+                self.kwargs['domain']
+            )]
         )
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
@@ -257,8 +259,9 @@ class BaseReportView(View):
         year = int(request.GET.get('year', now.year))
 
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
+            prev_month = now - relativedelta(months=1)
+            month = prev_month.month
+            year = prev_month.year
 
         include_test = request.GET.get('include_test', False)
         domain = self.kwargs['domain']
@@ -1729,8 +1732,8 @@ class CasDataExport(View):
 
         data_type = int(request.POST.get('indicator', None))
         state_id = request.POST.get('location', None)
-        month = request.POST.get('month', None)
-        year = request.POST.get('year', None)
+        month = int(request.POST.get('month', None))
+        year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
         sync = get_cas_data_blob_file(data_type, state_id, selected_date)

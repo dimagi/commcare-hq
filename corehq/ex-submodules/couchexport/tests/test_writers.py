@@ -135,8 +135,8 @@ class Excel2003ExportWriterTests(SimpleTestCase):
         format_ = Format.XLS
         file_ = io.BytesIO()
         table = [
-            ['header{}'.format(i) for i in range(MAX_XLS_COLUMNS)],
-            ['row{}'.format(i) for i in range(MAX_XLS_COLUMNS)],
+            ['header{}'.format(i) for i in range(MAX_XLS_COLUMNS + 1)],
+            ['row{}'.format(i) for i in range(MAX_XLS_COLUMNS + 1)],
         ]
         tables = [['title', table]]
 
@@ -144,8 +144,8 @@ class Excel2003ExportWriterTests(SimpleTestCase):
             export_from_tables(tables, file_, format_)
 
         table = [
-            ['header{}'.format(i) for i in range(MAX_XLS_COLUMNS - 1)],
-            ['row{}'.format(i) for i in range(MAX_XLS_COLUMNS - 1)],
+            ['header{}'.format(i) for i in range(MAX_XLS_COLUMNS)],
+            ['row{}'.format(i) for i in range(MAX_XLS_COLUMNS)],
         ]
         tables = [['title', table]]
         export_from_tables(tables, file_, format_)
