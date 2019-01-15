@@ -4,16 +4,16 @@ hqDefine('userreports/js/report_config', function () {
         reportBuilder: function () {
             var self = this;
 
-            var PropertyList = hqImport('userreports/js/builder_view_models').PropertyList;
-            var PropertyListItem = hqImport('userreports/js/builder_view_models').PropertyListItem;
+            var propertyList = hqImport('userreports/js/builder_view_models').propertyList;
+            var propertyListItem = hqImport('userreports/js/builder_view_models').propertyListItem;
             var constants = hqImport('userreports/js/constants');
 
             var _kmq_track_click = function (action) {
                 hqImport('analytix/js/kissmetrix').track.event("RBv2 - " + action);
             };
 
-            var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
-                PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
+            var columnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
+                propertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
                 var self = this;
                 this.inputBoundCalculation = ko.computed({
                     read: function () {
@@ -28,25 +28,21 @@ hqDefine('userreports/js/report_config', function () {
                     owner: this,
                 });
             };
-            ColumnProperty.prototype = Object.create(PropertyListItem.prototype);
-            ColumnProperty.prototype.constructor = ColumnProperty;
 
-
-            var ColumnList = function (options) {
-                PropertyList.call(this, options);
+            var columnList = function (options) {
+                propertyList.call(this, options);
                 this.newProperty = ko.observable(null);
             };
-            ColumnList.prototype = Object.create(PropertyList.prototype);
-            ColumnList.prototype.constructor = ColumnList;
-            ColumnList.prototype._createListItem = function () {
-                return new ColumnProperty(
+            columnList = propertyList;
+            columnList._createListItem = function () {
+                return columnProperty(
                     this.getDefaultDisplayText.bind(this),
                     this.getPropertyObject.bind(this),
                     this.reorderColumns.bind(this),
                     this.hasDisplayCol
                 );
             };
-            ColumnList.prototype.buttonHandler = function () {
+            columnList.buttonHandler = function () {
                 if (this.newProperty()) {
                     var item = this._createListItem();
                     item.property(this.newProperty());
@@ -62,7 +58,7 @@ hqDefine('userreports/js/report_config', function () {
                     }
                 }
             };
-            ColumnList.prototype.reorderColumns = function () {
+            columnList.reorderColumns = function () {
                 var items = {};
 
                 // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
@@ -248,7 +244,7 @@ hqDefine('userreports/js/report_config', function () {
                 self.selectablePropertyOptions = _getSelectableProperties(config['dataSourceProperties']);
                 self.selectableReportColumnOptions = _getSelectableReportColumnOptions(self.columnOptions, config['dataSourceProperties']);
 
-                self.columnList = new ColumnList({
+                self.columnList = columnList({
                     hasFormatCol: false,
                     hasCalculationCol: self.isAggregationEnabled,
                     initialCols: config['initialColumns'],
@@ -279,7 +275,7 @@ hqDefine('userreports/js/report_config', function () {
                     self.saveButton.fire('change');
                 });
 
-                self.filterList = new PropertyList({
+                self.filterList = propertyList({
                     hasFormatCol: self._sourceType === "case",
                     hasCalculationCol: false,
                     initialCols: config['initialUserFilters'],
@@ -305,7 +301,7 @@ hqDefine('userreports/js/report_config', function () {
                 self.filterList.serializedProperties.subscribe(function () {
                     self.saveButton.fire("change");
                 });
-                self.defaultFilterList = new PropertyList({
+                self.defaultFilterList = propertyList({
                     hasFormatCol: true,
                     hasCalculationCol: false,
                     hasDisplayCol: false,
