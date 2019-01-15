@@ -261,27 +261,27 @@ hqDefine('userreports/js/builder_view_models', function () {
         /**
          * Return the default display text for this property. For questions, it is
          * the question label.
-         * @param {string} property_id
+         * @param {string} propertyId
          * @returns {string}
          */
-        self.getDefaultDisplayText = function (property_id) {
-            var property = self.getPropertyObject(property_id);
+        self.getDefaultDisplayText = function (propertyId) {
+            var property = self.getPropertyObject(propertyId);
             if (property !== undefined) {
                 // property.display will exist if the property is a ColumnOption
                 // property.text will exist if the property is a DataSourceProperty
-                return property.display || property.text || property_id;
+                return property.display || property.text || propertyId;
             }
-            return property_id;
+            return propertyId;
         };
 
         /**
          * Return the object representing the property corresponding to the given
          * property_id.
-         * @param {string} property_id
+         * @param {string} propertyId
          * @returns {object}
          */
-        self.getPropertyObject = function (property_id) {
-            return _.find(self.propertyOptions, function (opt) {return opt.id === property_id;});
+        self.getPropertyObject = function (propertyId) {
+            return _.find(self.propertyOptions, function (opt) {return opt.id === propertyId;});
         };
 
         var wrapListItem = function (item) {
