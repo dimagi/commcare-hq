@@ -151,7 +151,7 @@
                 "type": "filter_items",
                 "items_expression": {
                   "type": "property_path",
-                  "property_path": ["form", "child", "breastfed_at_birth"],
+                  "property_path": ["form", "child", "breastfed_within_first_hour"],
                   "datatype": "array"
                 },
                 "filter_expression": {
