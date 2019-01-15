@@ -890,7 +890,13 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-CUSTOM_LANDING_TEMPLATE = None
+
+# used for providing separate landing pages for different URLs
+# default will be used if no hosts match
+CUSTOM_LANDING_TEMPLATE = {
+    # "icds-cas.gov.in": 'icds/login.html',
+    # "default": 'login_and_password/login.html',
+}
 
 from env_settings import *
 

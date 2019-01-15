@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import functools
 import json
 import logging
 import os
@@ -11,7 +13,6 @@ import uuid
 from datetime import datetime
 from six.moves.urllib.parse import urlparse
 
-import functools
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -364,8 +365,13 @@ def _login(req, domain_name, template_name):
 
     context = {}
     custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
-    if custom_landing_page is not None:
-        template_name = custom_landing_page
+    if custom_landing_page:
+        if isinstance(custom_landing_page, six.string_types):
+            template_name = custom_landing_page
+        else:
+            template_name = custom_landing_page.get(req.get_host())
+            if template_name is None:
+                template_name = custom_landing_page.get('default', template_name)
     elif domain_name:
         domain = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
