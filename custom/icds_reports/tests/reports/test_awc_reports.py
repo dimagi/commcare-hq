@@ -2542,7 +2542,27 @@ class TestAWCReport(TestCase):
             )
             self.assertEqual(
                 data['data'][1],
-                []
+                [
+                    {'opened_on': datetime.date(2017, 5, 12),
+                     'tt_taken': u'N',
+                     'person_name': u'Data Not Entered',
+                     'anc_weight': u'Data Not Entered',
+                     'edd': datetime.date(2017, 8, 31),
+                     'age': 23,
+                     'tt_date': u'None',
+                     'anc_hemoglobin': u'Data Not Entered',
+                     'symptoms': u'None',
+                     'preg_order': u'Data Not Entered',
+                     'using_ifa': u'Y',
+                     'case_id': u'7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                     'bp': u'Data Not Entered',
+                     'ifa_consumed_last_seven_days': u'Y',
+                     'mobile_number': u'Data Not Entered',
+                     'trimester': 2,
+                     'counseling': u'None',
+                     'anc_abnormalities': u'None',
+                     'anemic': u'Data Not Entered',
+                     'home_visit_date': datetime.date(2017, 5, 4)}]
             )
 
     def test_pregnant_details_first_record_third_trimester(self):
