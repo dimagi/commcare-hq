@@ -66,16 +66,26 @@ def get_form_inferred_schema(domain, app_id, xmlns):
 
 def get_form_export_instances(domain):
     from .models import FormExportInstance
-
     key = [domain, 'FormExportInstance']
     return _get_export_instance(FormExportInstance, key)
 
 
 def get_case_export_instances(domain):
     from .models import CaseExportInstance
-
     key = [domain, 'CaseExportInstance']
     return _get_export_instance(CaseExportInstance, key)
+
+
+def get_brief_form_export_instances(domain):
+    from .models import FormExportInstance
+    key = [domain, 'FormExportInstance']
+    return _get_export_instance(FormExportInstance, key, include_docs=False)
+
+
+def get_brief_case_export_instances(domain):
+    from .models import CaseExportInstance
+    key = [domain, 'CaseExportInstance']
+    return _get_export_instance(CaseExportInstance, key, include_docs=False)
 
 
 def _get_saved_exports(domain, has_deid_permissions, new_exports_getter):
@@ -85,12 +95,27 @@ def _get_saved_exports(domain, has_deid_permissions, new_exports_getter):
     return sorted(exports, key=lambda x: x.name)
 
 
+def _get_brief_saved_exports(domain, has_deid_permissions, new_exports_getter):
+    exports = new_exports_getter(domain)
+    if not has_deid_permissions:
+        exports = [e for e in exports if not e.is_safe]
+    return sorted(exports, key=lambda x: x['name'])
+
+
 def get_case_exports_by_domain(domain, has_deid_permissions):
     return _get_saved_exports(domain, has_deid_permissions, get_case_export_instances)
 
 
 def get_form_exports_by_domain(domain, has_deid_permissions):
     return _get_saved_exports(domain, has_deid_permissions, get_form_export_instances)
+
+
+def get_brief_case_exports_by_domain(domain, has_deid_permissions):
+    return _get_brief_saved_exports(domain, has_deid_permissions, get_brief_case_export_instances)
+
+
+def get_brief_form_exports_by_domain(domain, has_deid_permissions):
+    return _get_brief_saved_exports(domain, has_deid_permissions, get_brief_form_export_instances)
 
 
 def get_export_count_by_domain(domain):
@@ -117,15 +142,17 @@ def get_deid_export_count(domain):
     ).all())
 
 
-def _get_export_instance(cls, key):
+def _get_export_instance(cls, key, include_docs=True):
     results = cls.get_db().view(
         'export_instances_by_domain/view',
         startkey=key,
         endkey=key + [{}],
-        include_docs=True,
+        include_docs=include_docs,
         reduce=False,
     ).all()
-    return [cls.wrap(result['doc']) for result in results]
+    if include_docs:
+        return [cls.wrap(result['doc']) for result in results]
+    return [result['value'] for result in results]
 
 
 def get_daily_saved_export_ids_for_auto_rebuild(accessed_after):

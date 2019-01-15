@@ -44,10 +44,9 @@ from corehq.util.download import get_download_response
 
 from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT, MAX_EXPORTABLE_ROWS, UNKNOWN_EXPORT_OWNER
 from corehq.apps.export.dbaccessors import (
-    get_form_export_instances,
     get_properly_wrapped_export_instance,
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
+    get_brief_case_exports_by_domain,
+    get_brief_form_exports_by_domain,
 )
 from corehq.apps.export.forms import CreateExportTagForm, DashboardFeedFilterForm
 from corehq.apps.export.models import FormExportInstance
@@ -120,21 +119,25 @@ class ExportListHelper(object):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
-    def get_exports_list(self, my_exports=False):
+    def get_exports_list(self, page, limit, my_exports=False):
         if not self._priv_check():
             raise Http404
 
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
-        saved_exports = self.get_saved_exports()
+        brief_exports = self.get_saved_exports()
         if toggles.EXPORT_OWNERSHIP.enabled(self.domain):
-            saved_exports = [
-                export for export in saved_exports
-                if export.can_view(self.request.couch_user.user_id)
-                and (export.owner_id == self.request.couch_user.user_id) == my_exports
+            brief_exports = [
+                export for export in brief_exports
+                #if export.can_view(self.request.couch_user.user_id)    # TODO
+                if (export.owner_id == self.request.couch_user.user_id) == my_exports
             ]
         if self.is_deid:
-            saved_exports = [x for x in saved_exports if x.is_safe]
-        return list(map(self.fmt_export_data, saved_exports))
+            brief_exports = [x for x in brief_exports if x['is_safe']]  # TODO: is_deidentified
+
+        docs = [self.fmt_export_data(get_properly_wrapped_export_instance(e['_id']))
+                for e in brief_exports[limit * (page - 1):limit * page]]
+        return (docs, len(brief_exports))
+
 
     @memoized
     def get_saved_exports(self):
@@ -228,13 +231,13 @@ class DailySavedExportListHelper(ExportListHelper):
     def get_saved_exports(self):
         combined_exports = []
         if self.permissions.has_form_export_permissions:
-            combined_exports.extend(get_form_exports_by_domain(self.domain,
-                                                               self.permissions.has_deid_view_permissions))
+            combined_exports.extend(get_brief_form_exports_by_domain(self.domain,
+                                                                     self.permissions.has_deid_view_permissions))
         if self.permissions.has_case_export_permissions:
-            combined_exports.extend(get_case_exports_by_domain(self.domain,
-                                                               self.permissions.has_deid_view_permissions))
-        combined_exports = sorted(combined_exports, key=lambda x: x.name)
-        return [x for x in combined_exports if x.is_daily_saved_export and not x.export_format == "html"]
+            combined_exports.extend(get_brief_case_exports_by_domain(self.domain,
+                                                                     self.permissions.has_deid_view_permissions))
+        combined_exports = sorted(combined_exports, key=lambda x: x['name'])
+        return [x for x in combined_exports if x['is_daily_saved_export'] and not x['export_format'] == "html"]
 
     def _get_edit_export_class(self, model):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -296,9 +299,8 @@ class FormExportListHelper(ExportListHelper):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_form_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
-        # New exports display daily saved exports in their own view
-        return [x for x in exports if not x.is_daily_saved_export]
+        exports = get_brief_form_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
+        return [x for x in exports if not x['is_daily_saved_export']]
 
     def _get_download_url(self, export_id):
         from corehq.apps.export.views.download import DownloadNewFormExportView
@@ -341,8 +343,8 @@ class CaseExportListHelper(ExportListHelper):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_case_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
-        return [x for x in exports if not x.is_daily_saved_export]
+        exports = get_brief_case_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
+        return [x for x in exports if not x['is_daily_saved_export']]
 
     def _get_download_url(self, export_id):
         from corehq.apps.export.views.download import DownloadNewCaseExportView
@@ -392,13 +394,13 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
     def get_saved_exports(self):
         combined_exports = []
         if self.permissions.has_form_export_permissions:
-            combined_exports.extend(get_form_exports_by_domain(self.domain,
-                                                               self.permissions.has_deid_view_permissions))
+            combined_exports.extend(get_brief_form_exports_by_domain(self.domain,
+                                                                     self.permissions.has_deid_view_permissions))
         if self.permissions.has_case_export_permissions:
-            combined_exports.extend(get_case_exports_by_domain(self.domain,
-                                                               self.permissions.has_deid_view_permissions))
-        combined_exports = sorted(combined_exports, key=lambda x: x.name)
-        return [x for x in combined_exports if x.is_daily_saved_export and x.export_format == "html"]
+            combined_exports.extend(get_brief_case_exports_by_domain(self.domain,
+                                                                     self.permissions.has_deid_view_permissions))
+        combined_exports = sorted(combined_exports, key=lambda x: x['name'])
+        return [x for x in combined_exports if x['is_daily_saved_export'] and x['export_format'] == "html"]
 
     def _get_edit_export_class(self, model):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
@@ -429,7 +431,10 @@ class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
 
     def get_saved_exports(self):
         exports = super(DeIdDailySavedExportListView, self).get_saved_exports()
-        return [x for x in exports if x.is_safe and x.is_daily_saved_export and not x.export_format == "html"]
+        return [
+            x for x in exports
+            if x['is_safe'] and x['is_daily_saved_export'] and not x['export_format'] == "html"
+        ]
 
     @property
     def create_export_form(self):
@@ -441,7 +446,7 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
     def get_saved_exports(self):
         exports = super(DeIdDashboardFeedListView, self).get_saved_exports()
-        return [x for x in exports if x.is_safe and x.is_daily_saved_export and x.export_format == "html"]
+        return [x for x in exports if x['is_safe'] and x['is_daily_saved_export'] and x['export_format'] == "html"]
 
     @property
     def create_export_form(self):
@@ -508,16 +513,13 @@ def get_exports_list(request, domain):
                                   is_daily_saved_export=json.loads(request.GET.get('is_daily_saved_export')),
                                   is_feed=json.loads(request.GET.get('is_feed')),
                                   is_deid=json.loads(request.GET.get('is_deid')))
-    my_exports = json.loads(request.GET.get('my_exports'))
-    exports = helper.get_exports_list(my_exports=my_exports)
-
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
-    docs = exports[limit * (page - 1):limit * page]
-
+    my_exports = json.loads(request.GET.get('my_exports'))
+    (exports, total) = helper.get_exports_list(page, limit, my_exports=my_exports)
     return json_response({
-        'exports': docs,
-        'total': len(exports),
+        'exports': exports,
+        'total': total,
     })
 
 
