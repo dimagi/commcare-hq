@@ -1122,8 +1122,10 @@ class Subscription(models.Model):
         )
 
     def check_cache(self):
-        print(Subscription._get_active_subscription_by_domain(self.subscriber.domain, test_cache=True))
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        result = Subscription._get_active_subscription_by_domain(self.subscriber.domain, test_cache=True)
+        if result == 'CACHE MISSED':
+            print('resetting cache to empty...')
+            Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
 
     def save(self, *args, **kwargs):
         """
