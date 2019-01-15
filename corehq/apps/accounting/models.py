@@ -1133,16 +1133,16 @@ class Subscription(models.Model):
         Overloaded to update domain pillow with subscription information
         """
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
-        self.check_cache()
+        print(self.check_cache())
         super(Subscription, self).save(*args, **kwargs)
-        self.check_cache()
+        print(self.check_cache())
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception:
             # If a subscriber doesn't have a valid domain associated with it
             # we don't care the pillow won't be updated
             pass
-        self.check_cache()
+        print(self.check_cache())
         print('end save')
         print('----------------------------------------')
 
