@@ -529,11 +529,12 @@ def get_xform_source(request, domain, app_id, form_unique_id):
     source = form.source
     response = HttpResponse(source)
     response['Content-Type'] = "application/xml"
+    filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:
-            filename = "%s.xml" % unidecode(form.name[lc])
+            filename = form.name[lc]
             break
-    set_file_download(response, filename)
+    set_file_download(response, "%s.xml" % unidecode(filename))
     return response
 
 
