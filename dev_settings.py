@@ -30,9 +30,9 @@ SMS_QUEUE_ENABLED = False
 
 # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-TEST_NON_SERIALIZED_APPS
 # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
-TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']
+TEST_NON_SERIALIZED_APPS = ['corehq.form_processor', 'corehq.blobs']
 
-####### Django Extensions #######
+# Django Extensions
 # These things will be imported when you run ./manage.py shell_plus
 SHELL_PLUS_POST_IMPORTS = (
     # Models
