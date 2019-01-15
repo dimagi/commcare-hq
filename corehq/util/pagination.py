@@ -11,6 +11,7 @@ from requests.exceptions import ConnectionError
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
 import six
+from six.moves import range
 
 
 class PaginationEventHandler(object):
@@ -298,7 +299,7 @@ class ResumableFunctionIterator(object):
                 self.couch_db.save_doc(state_json)
             except ConnectionError as err:
                 if x < 4 and "BadStatusLine(\"''\",)" in repr(err):
-                    time.sleep(x)
+                    time.sleep(2 ** x)
                     continue
                 raise
             break

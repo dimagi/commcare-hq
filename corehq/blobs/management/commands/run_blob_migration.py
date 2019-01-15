@@ -66,6 +66,16 @@ class Command(BaseCommand):
                 "ignored by migration types that do not support it."
             ),
         )
+        add_argument(
+            '--date-range',
+            help=(
+                "Creation date range of blobs to be migrated specified as one "
+                "or two dates in YYYYMMDD format. If only one date is "
+                "specified, it will be used as the end date, leaving the "
+                "start date unbounded. Some migrations may not support this"
+                "parameter. Example value: 20180109-20190109"
+            ),
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
@@ -85,6 +95,22 @@ class Command(BaseCommand):
                       "does not use a worker pool".format(num_workers))
         elif options["num_workers"] > DEFAULT_BOTOCORE_MAX_POOL_CONNECTIONS:
             set_max_connections(options["num_workers"])
+
+        if "date_range" in options:
+            rng = options["date_range"]
+            if rng is None:
+                options.pop("date_range")
+            else:
+                if "-" not in rng:
+                    rng = (None, get_date(rng))
+                else:
+                    rng = rng.split("-")
+                    if len(rng) != 2:
+                        raise CommandError("bad date range: {}".format(rng))
+                    rng = tuple(get_date(v) for v in rng)
+                # date_range is a tuple containing two date values
+                # a value of None means that side of the range is unbounded
+                options["date_range"] = rng
 
         if log_dir is None:
             summary_file = log_file = None
@@ -121,3 +147,12 @@ def set_max_connections(num_workers):
     for name in ["S3_BLOB_DB_SETTINGS", "OLD_S3_BLOB_DB_SETTINGS"]:
         if getattr(settings, name, False):
             update_config(name)
+
+
+def get_date(value):
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y%m%d").date()
+    except ValueError:
+        raise CommandError("bad date value: {}".format(value))

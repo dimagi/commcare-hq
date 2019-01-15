@@ -162,7 +162,6 @@ class ESView(View):
                         querystring)
 
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, str(e), es_query)
-            notify_exception(None, message=msg)
             raise ESError(msg)
 
         hits = []

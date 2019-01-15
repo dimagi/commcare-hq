@@ -2327,7 +2327,9 @@ class MultiMediaExportColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
         value = super(MultiMediaExportColumn, self).get_value(domain, doc_id, doc, base_path, **kwargs)
 
-        if not value or value == MISSING_VALUE:
+        if (not value
+                or value == MISSING_VALUE
+                or value not in doc.get('external_blobs', {})):
             return value
 
         download_url = absolute_reverse('api_form_attachment', args=(domain, doc_id, value))
@@ -2580,11 +2582,13 @@ class StockExportColumn(ExportColumn):
             return product_id
 
     def get_headers(self, **kwargs):
-        for product_id, section in self._column_tuples:
-            yield "{product} ({section})".format(
+        return [
+            "{product} ({section})".format(
                 product=self._get_product_name(product_id),
                 section=section
             )
+            for product_id, section in self._column_tuples
+        ]
 
     def get_value(self, domain, doc_id, doc, base_path, **kwargs):
         states = self.accessor.get_ledger_values_for_case(doc_id)

@@ -18,6 +18,18 @@
                   rel="stylesheet"
                   media="all"
                   href="{% static 'hqwebapp/less/docs-style.less' %}" />
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% static 'select2/dist/css/select2.min.css' %}" />
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static "multiselect/css/multi-select.css" %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
         {% endcompress %}
         {% endif %}
 
@@ -25,6 +37,14 @@
 
         {% javascript_libraries hq=True %}
         <script src="{% statici18n LANGUAGE_CODE %}"></script>
+        {% compress js %}
+            <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
+            <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
+            <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
+        {% endcompress %}
 
         {% if less_debug %}
             <script>
@@ -58,6 +78,7 @@
                         <li><a href="{% url 'styleguide_atoms' %}">Atoms</a></li>
                         <li><a href="{% url 'styleguide_molecules' %}">Molecules</a></li>
                         <li><a href="{% url 'styleguide_organisms' %}">Organisms</a></li>
+                        <li><a href="{% url 'styleguide_pages' %}">Pages</a></li>
                     </ul>
                 </nav>
             </div>

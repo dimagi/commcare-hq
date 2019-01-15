@@ -12,9 +12,9 @@ hqDefine('sms/js/chat_contacts', [
 ) {
     var contactListTable = null;
 
-    function FilterViewModel() {
+    function filterViewModel() {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.filterText = ko.observable();
 
@@ -26,6 +26,7 @@ hqDefine('sms/js/chat_contacts', [
             self.filterText("");
             self.performFilter();
         };
+        return self;
     }
 
     $(function () {
@@ -63,7 +64,6 @@ hqDefine('sms/js/chat_contacts', [
             "sAjaxSource": initialPageData.reverse("chat_contact_list"),
             "sDom": "lrtip",
         });
-        var filterViewModel = new FilterViewModel();
-        $('#id_filter').koApplyBindings(filterViewModel);
+        $('#id_filter').koApplyBindings(filterViewModel());
     });
 });

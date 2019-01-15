@@ -1134,7 +1134,7 @@
           "type": "switch",
           "switch_on": {
             "type": "property_name",
-            "property_name": "delivery_type"
+            "property_name": "delivery_nature"
           },
           "cases": {
             "vaginal": {
