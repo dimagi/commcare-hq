@@ -363,8 +363,8 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    custom_landing_page = getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
-    if custom_landing_page:
+    custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
+    if custom_landing_page is not None:
         template_name = custom_landing_page
     elif domain_name:
         domain = Domain.get_by_name(domain_name)
