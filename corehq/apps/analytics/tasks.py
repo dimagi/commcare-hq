@@ -674,7 +674,6 @@ def get_ab_test_properties(user):
     }
 
 
-@analytics_task()
 def update_subscription_properties_by_domain(domain):
     domain_obj = Domain.get_by_name(domain)
     if domain_obj:
@@ -683,13 +682,15 @@ def update_subscription_properties_by_domain(domain):
         ).all()
 
         for web_user in affected_users:
-            update_subscription_properties_by_user(web_user)
+            properties = get_subscription_properties_by_user(web_user)
+            update_subscription_properties_by_user.delay(web_user.get_id, properties)
 
 
-def update_subscription_properties_by_user(couch_user):
-    properties = get_subscription_properties_by_user(couch_user)
-    identify_v2(couch_user.username, properties)
-    update_hubspot_properties_v2(couch_user, properties)
+@analytics_task()
+def update_subscription_properties_by_user(web_user_id, properties):
+    web_user = WebUser.get_by_user_id(web_user_id)
+    identify_v2(web_user.username, properties)
+    update_hubspot_properties_v2(web_user, properties)
 
 
 def get_subscription_properties_by_user(couch_user):
@@ -726,8 +727,8 @@ def get_subscription_properties_by_user(couch_user):
         subscribed_editions.append(plan_version.plan.edition)
         if subscription is not None:
             all_subscriptions.append(subscription)
-        if subscription is not None and _is_paying_subscription(subscription, plan_version):
-            paying_subscribed_editions.append(plan_version.plan.edition)
+            if _is_paying_subscription(subscription, plan_version):
+                paying_subscribed_editions.append(plan_version.plan.edition)
 
     def _is_one_of_editions(edition):
         return 'yes' if edition in subscribed_editions else 'no'
