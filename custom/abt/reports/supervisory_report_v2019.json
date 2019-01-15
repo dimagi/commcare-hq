@@ -404,6 +404,27 @@
             },
             {
                 "description": null,
+                "field": "responsible_follow_up",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "responsible_follow_up",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Responsable de la résolution",
+                    "frm": "Responsable de la résolution",
+                    "en": "Responsible for resolution",
+                    "sw": "Responsible for resolution",
+                    "kin": "Responsible for resolution",
+                    "por": "Responsável pela resolução"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
                 "field": "comments",
                 "format": "default",
                 "transform": {
