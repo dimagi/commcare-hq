@@ -2510,43 +2510,12 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             function (response) {
                 vm.pregnantData = response.data['data'];
                 vm.showTable = false;
-                var empty = {
-                    case_id: null,
-                    trimester: null,
-                    person_name: null,
-                    age: null,
-                    mobile_number: null,
-                    edd: null,
-                    opened_on: null,
-                    preg_order: null,
-                    home_visit_date: 'Data Not Entered',
-                    bp: null,
-                    anc_weight: null,
-                    anc_hemoglobin: null,
-                    anc_abnormalities: null,
-                    anemic: null,
-                    symptoms: null,
-                    counseling: null,
-                    using_ifa: null,
-                    ifa_consumed_last_seven_days: null,
-                    tt_taken: null,
-                    tt_date: null,
-                };
                 if (vm.pregnantData[0].length > 0) {
                     vm.pregnant = vm.pregnantData[0][0];
                 } else if (vm.pregnantData[1].length > 0) {
-                    vm.pregnantData[0].push(empty);
                     vm.pregnant = vm.pregnantData[1][0];
                 } else {
-                    vm.pregnantData[0].push(empty);
-                    vm.pregnantData[1].push(empty);
                     vm.pregnant = vm.pregnantData[2][0];
-                }
-                if (vm.pregnantData[0].length === 1) {
-                    vm.pregnantData[0].push(empty);
-                }
-                if (vm.pregnantData[2].length === 0) {
-                    vm.pregnantData[2].push(empty);
                 }
                 vm.showPregnant = true;
             },

@@ -1195,6 +1195,8 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.Textarea,
     )
 
+    new_product_rate = None
+
     def __init__(self, plan, plan_version, *args, **kwargs):
         self.plan = plan
         self.plan_version = plan_version
@@ -1522,21 +1524,18 @@ class SoftwarePlanVersionForm(forms.Form):
             raise ValidationError(_("You must specify exactly one product rate."))
         rate_data = rates[0]
         rate_form = ProductRateForm(rate_data)
+
         if not rate_form.is_valid():
             errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
-            rate_instance = None
-        else:
-            rate_instance = self._retrieve_product_rate(rate_form)
-        if errors:
             self._errors.setdefault('product_rates', errors)
-
-        self.new_product_rates = [rate_instance] if rate_instance else []
-        self.is_update = (
-            self.is_update or
-            self.plan_version is None or
-            rate_instance is None or
-            rate_instance.id != self.plan_version.product_rate.id
-        )
+            self.is_update = True
+        else:
+            self.new_product_rate = self._retrieve_product_rate(rate_form)
+            self.is_update = (
+                self.is_update or
+                self.plan_version is None or
+                self.new_product_rate.id != self.plan_version.product_rate.id
+            )
         return original_data
 
     def clean_create_new_role(self):
@@ -1594,9 +1593,8 @@ class SoftwarePlanVersionForm(forms.Form):
             role=role
         )
 
-        product_rate = self.new_product_rates[0]  # always contains one item
-        product_rate.save()
-        new_version.product_rate = product_rate
+        self.new_product_rate.save()
+        new_version.product_rate = self.new_product_rate
         new_version.save()
 
         for feature_rate in self.new_feature_rates:

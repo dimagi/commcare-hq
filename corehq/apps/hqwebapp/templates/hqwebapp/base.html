@@ -387,7 +387,9 @@
                     requirejs([
                         'hqwebapp/js/base_main',
                     ], function () {
-                        requirejs(['{{ requirejs_main }}']);
+                        requirejs(['{{ requirejs_main }}'], function () {
+                            console.log("Loaded requirejs main module: {{ requirejs_main }}");
+                        });
                     });
                 });
             </script>

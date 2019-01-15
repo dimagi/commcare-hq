@@ -18,6 +18,7 @@ from couchforms.util import spoof_submission
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_submit_url
@@ -95,6 +96,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.domain.delete()
 
         self.teardown_subscription()
+        clear_plan_version_cache()
 
         super(ExportTest, self).tearDown()
 

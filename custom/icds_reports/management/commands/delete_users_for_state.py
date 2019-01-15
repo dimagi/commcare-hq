@@ -6,6 +6,8 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
+from io import open
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -23,7 +25,7 @@ class Command(BaseCommand):
         with open(user_list_file) as fin:
             users_to_delete = fin.readlines()
             users_to_delete = [user.strip() for user in users_to_delete]
-            choice = raw_input('Total {} users will be deleted: (Y/N)'.format(len(users_to_delete)))
+            choice = input('Total {} users will be deleted: (Y/N)'.format(len(users_to_delete)))
             if not choice.startswith('y'):
                 print("Nice!!! Its good to be safe than to be sorry")
                 return

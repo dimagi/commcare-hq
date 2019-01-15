@@ -40,7 +40,7 @@ def ensure_plans(config, verbose, apps):
 
         software_plan = SoftwarePlan(
             name=(
-                ('%s Edition' % product_rate.name)
+                (('%s Trial' % product_rate.name) if is_trial else ('%s Edition' % product_rate.name))
                 if product is None else product.name  # TODO - remove after squashing migrations
             ),
             edition=edition,
@@ -69,11 +69,6 @@ def ensure_plans(config, verbose, apps):
             software_plan_version.feature_rates.add(feature_rate)
         software_plan_version.save()
 
-        default_product_plan = DefaultProductPlan(
-            edition=edition, is_trial=is_trial
-        )
-        default_product_plan.is_report_builder_enabled = is_report_builder_enabled
-
         try:
             default_product_plan = DefaultProductPlan.objects.get(
                 edition=edition,
@@ -86,6 +81,12 @@ def ensure_plans(config, verbose, apps):
                     % (default_product_plan.edition, is_trial)
                 )
         except DefaultProductPlan.DoesNotExist:
+            default_product_plan = DefaultProductPlan(
+                edition=edition,
+                is_trial=is_trial,
+                is_report_builder_enabled=is_report_builder_enabled,
+            )
+        finally:
             default_product_plan.plan = software_plan
             default_product_plan.save()
             if verbose:
@@ -93,6 +94,8 @@ def ensure_plans(config, verbose, apps):
                     "Setting plan as default for edition '%s' with is_trial='%s'."
                     % (default_product_plan.edition, is_trial)
                 )
+
+    _clear_cache(SoftwarePlan.objects.all())
 
 
 def _ensure_role(role_slug, apps):
@@ -198,3 +201,9 @@ def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
             log_accounting_info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
         db_feature_rates.append(feature_rate)
     return db_feature_rates
+
+
+def _clear_cache(software_plans):
+    from corehq.apps.accounting.models import SoftwarePlan
+    for software_plan in software_plans:
+        SoftwarePlan.get_version.clear(software_plan)
