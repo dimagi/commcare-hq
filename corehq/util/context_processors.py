@@ -2,16 +2,18 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
+
+import six
 from django.conf import settings
-from django.urls import resolve, reverse
 from django.http import Http404
+from django.urls import resolve, reverse
 from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq import privileges
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name
-from corehq.apps.accounting.models import BillingAccount
 
+from corehq import privileges
+from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -151,10 +153,17 @@ def enterprise_mode(request):
 def commcare_hq_names(request):
     return {
         'commcare_hq_names': {
-            'COMMCARE_NAME': settings.COMMCARE_NAME,
-            'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
-        }
+            'COMMCARE_NAME': _get_cc_name(request, 'COMMCARE_NAME'),
+            'COMMCARE_HQ_NAME': _get_cc_name(request, 'COMMCARE_HQ_NAME'),
+        },
     }
+
+
+def _get_cc_name(request, var):
+    value = getattr(settings, var)
+    if isinstance(value, six.string_types):
+        return value
+    return value.get(request.get_host()) or value['default']
 
 
 def mobile_experience(request):

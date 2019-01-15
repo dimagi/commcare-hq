@@ -854,10 +854,12 @@ KAFKA_API_VERSION = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
-# CommCare HQ - To indicate server
-COMMCARE_HQ_NAME = "CommCare HQ"
-# CommCare - To Indicate mobile
-COMMCARE_NAME = "CommCare"
+COMMCARE_HQ_NAME = {
+    "default": "CommCare HQ",
+}
+COMMCARE_NAME = {
+    "default": "CommCare",
+}
 
 ENTERPRISE_MODE = False
 
