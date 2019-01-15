@@ -3,12 +3,35 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.db import migrations, models
+from django.conf import settings
+from django.db import migrations, models, ProgrammingError
 
-from corehq.sql_db.operations import RawSQLMigration
+from corehq.sql_db.operations import HqRunPython, noop_migration_fn, RawSQLMigration
 from corehq.sql_db.migrations import partitioned
 
 migrator = RawSQLMigration(('corehq', 'blobs', 'sql_templates'), {})
+
+
+def _drop_empty_default_blobmeta_table(apps, schema_editor):
+    """Drop unused table in partitioned environment 'default' database
+
+    The table is only dropped if it is empty (as it should be).
+    """
+    if schema_editor.connection.alias != "default" or not settings.USE_PARTITIONED_DATABASE:
+        return
+
+    with schema_editor.connection.cursor() as cursor:
+        try:
+            cursor.execute("SELECT COUNT(*) FROM blobs_blobmeta")
+        except ProgrammingError as err:
+            if '"blobs_blobmeta" does not exist' in repr(err):
+                return
+        blob_count = cursor.fetchone()[0]
+        if blob_count > 0:
+            # Unexpected state! Do not drop non-empty table.
+            return
+
+        cursor.execute("DROP TABLE blobs_blobmeta;")
 
 
 class Migration(migrations.Migration):
@@ -37,5 +60,6 @@ class Migration(migrations.Migration):
         partitioned(
             migrator.get_migration('delete_blob_meta_v2.sql', 'delete_blob_meta.sql'),
             apply_to_proxy=False,
-        )
+        ),
+        HqRunPython(_drop_empty_default_blobmeta_table, noop_migration_fn),
     ]
