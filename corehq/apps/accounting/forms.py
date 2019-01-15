@@ -91,6 +91,7 @@ class BillingAccountBasicForm(forms.Form):
 
     email_list = forms.CharField(
         label=ugettext_lazy('Client Contact Emails'),
+        widget=forms.SelectMultiple(choices=[]),
     )
     is_active = forms.BooleanField(
         label=ugettext_lazy("Account is Active"),
@@ -404,6 +405,7 @@ class BillingAccountContactForm(forms.ModelForm):
             'postal_code',
             'country',
         ]
+        widgets = {'country': forms.Select(choices=[])}
 
     def __init__(self, account, *args, **kwargs):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
