@@ -1121,18 +1121,27 @@ class Subscription(models.Model):
             and other.account.pk == self.account.pk
         )
 
+    def check_cache(self):
+        print(Subscription._get_active_subscription_by_domain(self.subscriber.domain, test_cache=True))
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+
     def save(self, *args, **kwargs):
         """
         Overloaded to update domain pillow with subscription information
         """
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        self.check_cache()
         super(Subscription, self).save(*args, **kwargs)
+        self.check_cache()
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception:
             # If a subscriber doesn't have a valid domain associated with it
             # we don't care the pillow won't be updated
             pass
+        self.check_cache()
+        print('end save')
+        print('----------------------------------------')
 
     def delete(self, *args, **kwargs):
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
@@ -1708,7 +1717,10 @@ class Subscription(models.Model):
 
     @classmethod
     @quickcache(['domain_name'], timeout=60 * 60)
-    def _get_active_subscription_by_domain(cls, domain_name):
+    def _get_active_subscription_by_domain(cls, domain_name, test_cache=False):
+        if test_cache:
+            return 'CACHE MISSED'
+        print('missed cache')
         try:
             return cls.visible_objects.select_related(
                 'plan_version__role'
