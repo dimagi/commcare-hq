@@ -350,3 +350,9 @@ def is_downgrade(current_edition, next_edition):
     from corehq.apps.accounting.models import SoftwarePlanEdition
     plans = SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]
     return plans.index(current_edition) > plans.index(next_edition)
+
+
+def clear_plan_version_cache():
+    from corehq.apps.accounting.models import SoftwarePlan
+    for software_plan in SoftwarePlan.objects.all():
+        SoftwarePlan.get_version.clear(software_plan)
