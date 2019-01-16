@@ -60,11 +60,16 @@ class AdjListManager(models.Manager):
             where = Q(id=node.parent_id)
 
         def make_cte_query(cte):
+            try:
+                base_queryset = self.filter(domain=node.domain).order_by()
+            except AttributeError:
+                base_queryset = self.all().order_by()
+
             return self.filter(where).order_by().annotate(
                 _depth=Value(0, output_field=field),
             ).union(
                 cte.join(
-                    self.filter(domain=node.domain).order_by(),
+                    base_queryset,
                     id=cte.col.parent_id,
                 ).annotate(
                     _depth=cte.col._depth + Value(1, output_field=field),
@@ -110,11 +115,16 @@ class AdjListManager(models.Manager):
             where = Q(parent_id=node.id)
 
         def make_cte_query(cte):
+            try:
+                base_queryset = self.filter(domain=node.domain).order_by()
+            except AttributeError:
+                base_queryset = self.all().order_by()
+
             return self.filter(where).order_by().annotate(
                 _cte_ordering=str_array(ordering_col),
             ).union(
                 cte.join(
-                    self.filter(domain=node.domain).order_by(),
+                    base_queryset,
                     parent_id=cte.col.id,
                 ).annotate(
                     _cte_ordering=array_append(
