@@ -260,7 +260,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
                 create_mbt_for_month.delay(state_id, first_of_month_string)
-        if date.weekday() == 6:
+        if date.weekday() == 5:
             icds_aggregation_task.delay(date=date, func=_agg_awc_table_weekly)
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
