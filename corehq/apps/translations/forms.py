@@ -61,7 +61,7 @@ class PullResourceForm(forms.Form):
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
                                     )
-    resource_slug = forms.CharField(label=_("Resource Slug"))
+    resource_slug = forms.CharField(label=_("Resource Slug"), required=False)
 
     def __init__(self, domain, *args, **kwargs):
         super(PullResourceForm, self).__init__(*args, **kwargs)

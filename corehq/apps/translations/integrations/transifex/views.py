@@ -2,9 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from io import open
+from zipfile import ZipFile
 
 import openpyxl
 import polib
+from io import BytesIO
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
 from corehq.apps.translations.utils import get_file_content_from_workbook
@@ -205,17 +207,8 @@ class PullResource(BaseTranslationsView):
             context['pull_resource_form'] = self.pull_resource_form
         return context
 
-    def _generate_excel_file(self, domain, resource_slug):
-        """
-        extract translations from po file pulled from transifex and converts to a xlsx file
-
-        :return: Workbook object
-        """
-        target_lang = self.pull_resource_form.cleaned_data['target_lang']
-        transifex = Transifex(domain=domain, app_id=None,
-                              source_lang=target_lang,
-                              project_slug=self.pull_resource_form.cleaned_data['transifex_project_slug'],
-                              version=None)
+    @staticmethod
+    def _generate_excel_file(transifex, resource_slug, target_lang):
         wb = Workbook(write_only=True)
         ws = wb.create_sheet(title='translations')
         ws.append(['context', 'source', 'translation', 'occurrence'])
@@ -224,12 +217,48 @@ class PullResource(BaseTranslationsView):
                        po_entry.occurrences[0][0] if po_entry.occurrences else ''])
         return wb
 
+    @staticmethod
+    def _generate_zip_file(transifex, target_lang):
+        mem_file = BytesIO()
+        with ZipFile(mem_file, 'w') as zipfile:
+            for resource_slug in transifex.resource_slugs:
+                wb = Workbook(write_only=True)
+                ws = wb.create_sheet(title='translations')
+                ws.append(['context', 'source', 'translation', 'occurrence'])
+                for po_entry in transifex.client.get_translation(resource_slug, target_lang, False):
+                    ws.append([po_entry.msgctxt, po_entry.msgid, po_entry.msgstr,
+                               po_entry.occurrences[0][0] if po_entry.occurrences else ''])
+                zipfile.writestr(resource_slug + '.xlsx', get_file_content_from_workbook(wb))
+        mem_file.seek(0)
+        return mem_file
+
+    def _generate_response_file(self, domain, project_slug, resource_slug):
+        """
+        extract translations from po file(s) pulled from transifex and converts to a xlsx/zip file
+
+        :return: Workbook object or BytesIO object
+        """
+        target_lang = self.pull_resource_form.cleaned_data['target_lang']
+        transifex = Transifex(domain=domain, app_id=None,
+                              source_lang=target_lang,
+                              project_slug=project_slug,
+                              version=None)
+        if resource_slug:
+            return self._generate_excel_file(transifex, resource_slug, target_lang)
+        else:
+            return self._generate_zip_file(transifex, target_lang)
+
     def _pull_resource(self, request):
         resource_slug = self.pull_resource_form.cleaned_data['resource_slug']
-        wb = self._generate_excel_file(request.domain, resource_slug)
-        content = get_file_content_from_workbook(wb)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
-        response['Content-Disposition'] = safe_filename_header(resource_slug, 'xlsx')
+        project_slug = self.pull_resource_form.cleaned_data['transifex_project_slug']
+        file_response = self._generate_response_file(request.domain, project_slug, resource_slug)
+        if isinstance(file_response, Workbook):
+            content = get_file_content_from_workbook(file_response)
+            response = HttpResponse(content, content_type="text/html; charset=utf-8")
+            response['Content-Disposition'] = safe_filename_header(resource_slug, "xlsx")
+        else:
+            response = HttpResponse(file_response, content_type="text/html; charset=utf-8")
+            response['Content-Disposition'] = safe_filename_header(project_slug, "zip")
         return response
 
     def post(self, request, *args, **kwargs):
