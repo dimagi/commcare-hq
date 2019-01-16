@@ -121,7 +121,6 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             restore_payload,
         )
 
-
     def testOverwriteCache(self):
         restore_config = get_restore_config(
             self.project, self.restore_user, items=True, force_cache=True
