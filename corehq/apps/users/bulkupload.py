@@ -532,7 +532,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                         if locations_updated:
                             user.reset_locations(location_ids, commit=False)
 
-                    user.save(spawn_task=False)
+                    user.save()
 
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
