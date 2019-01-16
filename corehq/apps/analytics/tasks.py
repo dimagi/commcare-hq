@@ -674,6 +674,7 @@ def get_ab_test_properties(user):
     }
 
 
+@analytics_task()  # TODO - remove analytics_task decorator after changes are deployed to all environments.
 def update_subscription_properties_by_domain(domain):
     domain_obj = Domain.get_by_name(domain)
     if domain_obj:
