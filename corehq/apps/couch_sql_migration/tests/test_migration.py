@@ -236,7 +236,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             update={
                 'property': 'original value'
             }
-        ).as_text(),
+        ).as_text()
         submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
 
         # submit a new form with a different case update
@@ -248,7 +248,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             update={
                 'property': 'edited value'
             }
-        ).as_text(),
+        ).as_text()
         submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
 
         self.assertEqual(1, len(self._get_form_ids()))
