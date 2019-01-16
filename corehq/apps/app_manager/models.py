@@ -4963,7 +4963,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     def fetch_xform(self, module_id=None, form_id=None, form=None, build_profile_id=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
-        return form.validate_form().render_xform(build_profile_id).encode('utf-8')
+        return form.validate_form().render_xform(build_profile_id)
 
     def set_form_versions(self):
         """
