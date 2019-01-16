@@ -163,7 +163,16 @@ def _get_cc_name(request, var):
     value = getattr(settings, var)
     if isinstance(value, six.string_types):
         return value
-    return value.get(request.get_host()) or value['default']
+    try:
+        host = request.get_host()
+    except KeyError:
+        # In reporting code we create an HttpRequest object inside python which
+        # does not have an HTTP_HOST attribute. Its unclear what host would be
+        # expected in that scenario, so we're showing the default.
+        # The true fix for this lies in removing fake requests from scheduled reports
+        host = 'default'
+
+    return value.get(host) or value.get('default')
 
 
 def mobile_experience(request):
