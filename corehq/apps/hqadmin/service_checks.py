@@ -96,13 +96,19 @@ def check_elasticsearch():
 
     doc = {'_id': 'elasticsearch-service-check-{}'.format(random_hex()[:7]),
            'date': datetime.datetime.now().isoformat()}
-    send_to_elasticsearch('groups', doc)
-    refresh_elasticsearch_index('groups')
-    hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
-    send_to_elasticsearch('groups', doc, delete=True)  # clean up
-    if doc in hits:
-        return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
-    return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    try:
+        send_to_elasticsearch('groups', doc)
+        refresh_elasticsearch_index('groups')
+        hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
+    except Exception:
+        raise
+    else:
+        if doc in hits:
+            return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
+        else:
+            return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    finally:
+        send_to_elasticsearch('groups', doc, delete=True)  # clean up
 
 
 def check_blobdb():
