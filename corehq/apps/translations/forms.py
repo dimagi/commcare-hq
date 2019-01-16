@@ -4,6 +4,7 @@ import openpyxl
 import langcodes
 
 from django import forms
+from zipfile import ZipFile
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -51,7 +52,16 @@ class ConvertTranslationsForm(forms.Form):
                 return uploaded_file
             elif uploaded_file.name.endswith('.po'):
                 return uploaded_file
-            raise forms.ValidationError(_('Unexpected file passed. Please upload xls/xlsx/po file.'))
+            elif uploaded_file.name.endswith('.zip'):
+                zipfile = ZipFile(uploaded_file)
+                for fileinfo in zipfile.filelist:
+                    filename = fileinfo.filename
+                    if (not filename.endswith('.xls') and not filename.endswith('.xlsx') and
+                            not filename.endswith('.po')):
+                        raise forms.ValidationError(
+                            _('Unexpected file passed within zip. Please upload xls/xlsx/po files.'))
+                return uploaded_file
+            raise forms.ValidationError(_('Unexpected file passed. Please upload xls/xlsx/po/zip file.'))
 
 
 class PullResourceForm(forms.Form):
