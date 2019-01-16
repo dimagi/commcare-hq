@@ -15,9 +15,9 @@ import corehq.apps.app_manager.models as apps
 import corehq.apps.hqmedia.models as hqmedia
 from corehq.apps.export import models as exports
 from corehq.blobs import get_blob_db, CODES
-from corehq.blobs.management.commands.run_blob_migration import set_max_connections
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobMetaRef
+from corehq.blobs.util import set_max_connections
 from corehq.util.decorators import change_log_level
 from io import open
 
