@@ -8,7 +8,7 @@ import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 import six
 from six.moves import zip
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import UploadedFile
 
 
 class InvalidExcelFileException(Exception):
@@ -193,10 +193,10 @@ class WorkbookJSONReader(object):
 
     def __init__(self, file_or_filename):
         if six.PY3:
-            check_types = (InMemoryUploadedFile, io.RawIOBase, io.BufferedIOBase)
+            check_types = (UploadedFile, io.RawIOBase, io.BufferedIOBase)
         else:
             from types import FileType
-            check_types = (InMemoryUploadedFile, FileType, io.BytesIO)
+            check_types = (UploadedFile, FileType, io.BytesIO)
 
         if isinstance(file_or_filename, check_types):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
