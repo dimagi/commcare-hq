@@ -265,8 +265,7 @@ class PullResource(BaseTranslationsView):
         target_lang = self.pull_resource_form.cleaned_data['target_lang']
         transifex = Transifex(domain=domain, app_id=None,
                               source_lang=target_lang,
-                              project_slug=project_slug,
-                              version=None)
+                              project_slug=project_slug)
         if resource_slug:
             return self._generate_excel_file(transifex, resource_slug, target_lang)
         else:
