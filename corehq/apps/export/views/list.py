@@ -62,36 +62,63 @@ class ExportListHelper(object):
     '''
     form_or_case = None         # None if this handles both forms and cases
     is_deid = False
+    allow_bulk_export = True
 
     @classmethod
     def get(self, request, domain, form_or_case=None, is_daily_saved_export=False, is_feed=False, is_deid=False):
         if is_feed:
             if is_deid:
-                return DeIdDashboardFeedListHelper(request, domain)
-            return DashboardFeedListHelper(request, domain)
+                return DeIdDashboardFeedListHelper(request)
+            return DashboardFeedListHelper(request)
 
         if is_daily_saved_export:
             if is_deid:
-                return DeIdDailySavedExportListHelper(request, domain)
-            return DailySavedExportListHelper(request, domain)
+                return DeIdDailySavedExportListHelper(request)
+            return DailySavedExportListHelper(request)
 
         if form_or_case == 'form':
             if is_deid:
-                return DeIdFormExportListHelper(request, domain)
-            return FormExportListHelper(request, domain)
+                return DeIdFormExportListHelper(request)
+            return FormExportListHelper(request)
         elif form_or_case == 'case':
-            return CaseExportListHelper(request, domain)
+            return CaseExportListHelper(request)
 
         raise ValueError("Could not determine ExportListHelper subclass")
 
-    def __init__(self, request, domain):
+    def __init__(self, request):
         super(ExportListHelper, self).__init__()
         self.request = request
-        self.domain = domain
-        self.permissions = ExportsPermissionsManager(self.form_or_case, domain, request.couch_user)
+        self.domain = request.domain
+        self.permissions = ExportsPermissionsManager(self.form_or_case, self.domain, request.couch_user)
 
     def _priv_check(self):
         return True
+
+    @property
+    def bulk_download_url(self):
+        """Returns url for bulk download
+        """
+        if not self.allow_bulk_export:
+            return None
+        raise NotImplementedError('must implement bulk_download_url')
+
+    @property
+    def create_export_form_title(self):
+        """Returns a string that is displayed as the title of the create
+        export form below.
+        """
+        raise NotImplementedError("must implement create_export_form_title")
+
+    @property
+    def create_export_form(self):
+        """Returns a django form that gets the information necessary to create
+        an export tag, which is the first step in creating a new export.
+
+        This form is what will interact with the createExportModel in export/js/export_list.js
+        """
+        if self.permissions.has_case_export_permissions or self.permissions.has_form_export_permissions:
+            return CreateExportTagForm(self.permissions.has_form_export_permissions,
+                                       self.permissions.has_case_export_permissions)
 
     def get_exports_list(self):
         if not self._priv_check():
@@ -181,8 +208,20 @@ class ExportListHelper(object):
 
 
 class DailySavedExportListHelper(ExportListHelper):
+    allow_bulk_export = False
+
     def _priv_check(self):
         return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+
+    @property
+    @memoized
+    def create_export_form_title(self):
+        return "Select a model to export"  # could be form or case
+
+    @property
+    def bulk_download_url(self):
+        # Daily Saved exports do not support bulk download
+        return ""
 
     @memoized
     def get_saved_exports(self):
@@ -246,6 +285,15 @@ class DailySavedExportListHelper(ExportListHelper):
 class FormExportListHelper(ExportListHelper):
     form_or_case = 'form'
 
+    @property
+    def bulk_download_url(self):
+        from corehq.apps.export.views.download import BulkDownloadNewFormExportView
+        return reverse(BulkDownloadNewFormExportView.urlname, args=(self.domain,))
+
+    @property
+    def create_export_form_title(self):
+        return _("Select a Form to Export")
+
     @memoized
     def get_saved_exports(self):
         exports = get_form_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
@@ -290,6 +338,7 @@ class FormExportListHelper(ExportListHelper):
 
 class CaseExportListHelper(ExportListHelper):
     form_or_case = 'case'
+    allow_bulk_export = False
 
     @memoized
     def get_saved_exports(self):
@@ -330,9 +379,14 @@ class CaseExportListHelper(ExportListHelper):
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
+    @property
+    def create_export_form_title(self):
+        return _("Select a Case Type to Export")
 
 
 class DashboardFeedListHelper(DailySavedExportListHelper):
+    allow_bulk_export = False
+
     def _priv_check(self):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
@@ -367,6 +421,10 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
 class DeIdFormExportListHelper(FormExportListHelper):
     is_deid = True
 
+    @property
+    def create_export_form(self):
+        return None
+
 
 class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
     is_deid = True
@@ -374,6 +432,10 @@ class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
     def get_saved_exports(self):
         exports = super(DeIdDailySavedExportListView, self).get_saved_exports()
         return [x for x in exports if x.is_safe and x.is_daily_saved_export and not x.export_format == "html"]
+
+    @property
+    def create_export_form(self):
+        return None
 
 
 class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
@@ -383,11 +445,13 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
         exports = super(DeIdDashboardFeedListView, self).get_saved_exports()
         return [x for x in exports if x.is_safe and x.is_daily_saved_export and x.export_format == "html"]
 
+    @property
+    def create_export_form(self):
+        return None
+
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-    allow_bulk_export = True
-    is_deid = False
 
     lead_text = ugettext_lazy('''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
@@ -422,32 +486,6 @@ class BaseExportListView(BaseProjectDataView):
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
             'lead_text': self.lead_text,
         }
-
-    @property
-    def bulk_download_url(self):
-        """Returns url for bulk download
-        """
-        if not self.allow_bulk_export:
-            return None
-        raise NotImplementedError('must implement bulk_download_url')
-
-    @property
-    def create_export_form_title(self):
-        """Returns a string that is displayed as the title of the create
-        export form below.
-        """
-        raise NotImplementedError("must implement create_export_form_title")
-
-    @property
-    def create_export_form(self):
-        """Returns a django form that gets the information necessary to create
-        an export tag, which is the first step in creating a new export.
-
-        This form is what will interact with the createExportModel in export/js/export_list.js
-        """
-        if self.permissions.has_case_export_permissions or self.permissions.has_form_export_permissions:
-            return CreateExportTagForm(self.permissions.has_form_export_permissions,
-                                       self.permissions.has_case_export_permissions)
 
 
 def _get_task_status_json(export_instance_id):
@@ -517,19 +555,14 @@ def update_emailed_export_data(request, domain):
 
 
 @location_safe
-class DailySavedExportListView(BaseExportListView):
+class DailySavedExportListView(BaseExportListView, DailySavedExportListHelper):
     urlname = 'list_daily_saved_exports'
     page_title = ugettext_lazy("Daily Saved Exports")
-    form_or_case = None  # This view lists both case and form feeds
-    allow_bulk_export = False
 
     def dispatch(self, *args, **kwargs):
         if not self._priv_check():
             raise Http404
         return super(DailySavedExportListView, self).dispatch(*args, **kwargs)
-
-    def _priv_check(self):
-        return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
 
     @property
     def page_context(self):
@@ -548,16 +581,6 @@ class DailySavedExportListView(BaseExportListView):
             )
         })
         return context
-
-    @property
-    @memoized
-    def create_export_form_title(self):
-        return "Select a model to export"  # could be form or case
-
-    @property
-    def bulk_download_url(self):
-        # Daily Saved exports do not support bulk download
-        return ""
 
 
 @require_POST
@@ -602,27 +625,15 @@ def commit_filters(request, domain):
 
 
 @location_safe
-class FormExportListView(BaseExportListView):
+class FormExportListView(BaseExportListView, FormExportListHelper):
     urlname = 'list_form_exports'
     page_title = ugettext_noop("Export Form Data")
-    form_or_case = 'form'
-
-    @property
-    def bulk_download_url(self):
-        from corehq.apps.export.views.download import BulkDownloadNewFormExportView
-        return reverse(BulkDownloadNewFormExportView.urlname, args=(self.domain,))
-
-    @property
-    def create_export_form_title(self):
-        return _("Select a Form to Export")
 
 
 @location_safe
-class CaseExportListView(BaseExportListView):
+class CaseExportListView(BaseExportListView, CaseExportListHelper):
     urlname = 'list_case_exports'
     page_title = ugettext_noop("Export Case Data")
-    allow_bulk_export = False
-    form_or_case = 'case'
 
     @property
     def page_name(self):
@@ -630,25 +641,16 @@ class CaseExportListView(BaseExportListView):
             return _("Export De-Identified Cases")
         return self.page_title
 
-    @property
-    def create_export_form_title(self):
-        return _("Select a Case Type to Export")
-
 
 @location_safe
-class DashboardFeedListView(DailySavedExportListView):
+class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
     urlname = 'list_dashboard_feeds'
     page_title = ugettext_lazy("Excel Dashboard Integration")
-    form_or_case = None  # This view lists both case and form feeds
-    allow_bulk_export = False
 
     lead_text = ugettext_lazy('''
         Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data.
         Data is updated daily.
     ''')
-
-    def _priv_check(self):
-        return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
     @property
     def page_context(self):
@@ -665,36 +667,21 @@ class DashboardFeedListView(DailySavedExportListView):
         return context
 
 
-class DeIdFormExportListView(FormExportListView):
+class DeIdFormExportListView(FormExportListView, DeIdFormExportListHelper):
     page_title = ugettext_noop("Export De-Identified Form Data")
     urlname = 'list_form_deid_exports'
-    is_deid = True
-
-    @property
-    def create_export_form(self):
-        return None
 
 
 @location_safe
-class DeIdDailySavedExportListView(DailySavedExportListView):
+class DeIdDailySavedExportListView(DailySavedExportListView, DeIdDailySavedExportListHelper):
     urlname = 'list_deid_daily_saved_exports'
     page_title = ugettext_noop("Export De-Identified Daily Saved Exports")
-    is_deid = True
-
-    @property
-    def create_export_form(self):
-        return None
 
 
 @location_safe
-class DeIdDashboardFeedListView(DashboardFeedListView):
+class DeIdDashboardFeedListView(DashboardFeedListView, DeIdDashboardFeedListHelper):
     urlname = 'list_deid_dashboard_feeds'
     page_title = ugettext_noop("Export De-Identified Dashboard Feeds")
-    is_deid = True
-
-    @property
-    def create_export_form(self):
-        return None
 
 
 def can_download_daily_saved_export(export, domain, couch_user):
