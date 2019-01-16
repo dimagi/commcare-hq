@@ -22,7 +22,7 @@ WHERE specific_schema = 'public' AND routine_name = 'get_blobmetas';
 -- do the stuff
 DROP TRIGGER blobs_blobmeta_trigger ON blobs_blobmeta;
 DROP FUNCTION mutate_blobs_blobmeta();
-DROP FUNCTION get_blobmetas(TEXT[], SMALLINT);
+DROP FUNCTION IF EXISTS get_blobmetas(TEXT[], SMALLINT);
 DROP VIEW blobs_blobmeta;
 ALTER TABLE blobs_blobmeta_tbl RENAME TO blobs_blobmeta;
 
