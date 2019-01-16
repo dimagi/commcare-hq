@@ -65,8 +65,7 @@ class ConvertTranslationsForm(forms.Form):
 
 
 class PullResourceForm(forms.Form):
-    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
-                                               required=True)
+    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=())
     target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
