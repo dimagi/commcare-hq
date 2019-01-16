@@ -36,6 +36,8 @@ hqDefine("export/js/export_list_main", [
         $("#export-list").koApplyBindings(listModels.exportListModel({
             modelType: modelType,
             isDeid: initialPageData.get('is_deid'),
+            isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
+            isFeed: initialPageData.get('is_feed', true),
             urls: {
                 commitFilters: initialPageData.reverse("commit_filters"),
                 getExportsList: initialPageData.reverse("get_exports_list"),

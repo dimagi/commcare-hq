@@ -158,12 +158,14 @@ hqDefine("export/js/export_list", [
     };
 
     var exportListModel = function (options) {
-        assertProperties.assert(options, ['isDeid', 'modelType', 'urls']);
+        assertProperties.assert(options, ['isDailySavedExport', 'isDeid', 'isFeed', 'modelType', 'urls']);
 
         var self = {};
 
         self.modelType = options.modelType;
         self.isDeid = options.isDeid;
+        self.isDailySavedExport = options.isDailySavedExport;
+        self.isFeed = options.isFeed;
 
         assertProperties.assert(options.urls, ['commitFilters', 'getExportsList', 'poll', 'toggleEnabled', 'update']);
         self.urls = options.urls;
@@ -190,6 +192,8 @@ hqDefine("export/js/export_list", [
                 data: {
                     is_deid: self.isDeid,
                     model_type: self.modelType,
+                    is_daily_saved_export: self.isDailySavedExport ? 1 : 0,
+                    is_feed: self.isFeed ? 1 : 0,
                 },
                 success: function (data) {
                     self.isLoading(false);
