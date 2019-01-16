@@ -60,4 +60,5 @@ branches:
   - jls/domain-select2-v4  # Jenny Jan 14
   - jls/reduce-form-classes  # Jenny Jan 15
   - get-subscription-properties-synchronously  # NP Jan 15
+  - reports-effective-start-date  # Gabriella Jan 16
 submodules: {}
