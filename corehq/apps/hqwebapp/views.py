@@ -339,7 +339,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name, template_name):
+def _login(req, domain_name):
 
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
@@ -364,6 +364,7 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
+    template_name = 'login_and_password/login.html'
     custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
         if isinstance(custom_landing_page, six.string_types):
@@ -419,7 +420,7 @@ def login(req):
 
 
 @location_safe
-def domain_login(req, domain, template_name="login_and_password/login.html"):
+def domain_login(req, domain):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -429,7 +430,7 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     # necessary domain contexts:
     req.project = project
 
-    return _login(req, domain, template_name)
+    return _login(req, domain)
 
 
 class HQLoginView(LoginView):
