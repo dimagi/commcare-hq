@@ -47,7 +47,7 @@ def user_save_callback(sender, **kwargs):
 @receiver(subscription_upgrade_or_downgrade)
 def domain_save_callback(sender, domain, **kwargs):
     domain_name = domain if isinstance(domain, six.string_types) else domain.name
-    update_subscription_properties_by_domain.delay(domain_name)
+    update_subscription_properties_by_domain(domain_name)
 
 
 def get_domain_membership_properties(couch_user):

@@ -1125,8 +1125,8 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         super(Subscription, self).save(*args, **kwargs)
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception:
@@ -1135,8 +1135,8 @@ class Subscription(models.Model):
             pass
 
     def delete(self, *args, **kwargs):
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         super(Subscription, self).delete(*args, **kwargs)
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
 
     @property
     def allowed_attr_changes(self):
