@@ -13,9 +13,8 @@ hqDefine('userreports/js/report_config', function () {
             };
 
             var columnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
-                propertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
-                var self = this;
-                this.inputBoundCalculation = ko.computed({
+                var self = propertyListItem(getDefaultDisplayText, getPropertyObject, hasDisplayText);
+                self.inputBoundCalculation = ko.computed({
                     read: function () {
                         return self.calculation();
                     },
@@ -27,65 +26,67 @@ hqDefine('userreports/js/report_config', function () {
                     },
                     owner: this,
                 });
+                return self;
             };
 
             var columnList = function (options) {
-                propertyList.call(this, options);
-                this.newProperty = ko.observable(null);
-            };
-            columnList = propertyList;
-            columnList._createListItem = function () {
-                return columnProperty(
-                    this.getDefaultDisplayText.bind(this),
-                    this.getPropertyObject.bind(this),
-                    this.reorderColumns.bind(this),
-                    this.hasDisplayCol
-                );
-            };
-            columnList.buttonHandler = function () {
-                if (this.newProperty()) {
-                    var item = this._createListItem();
-                    item.property(this.newProperty());
-                    if (this.reportType() === constants.REPORT_TYPE_LIST) {
-                        item.calculation(constants.GROUP_BY);
-                    } else {
-                        item.calculation(item.getDefaultCalculation());
-                    }
-                    this.newProperty(null);
-                    this.columns.push(item);
-                    if (_.isFunction(this.addItemCallback)) {
-                        this.addItemCallback();
-                    }
-                }
-            };
-            columnList.reorderColumns = function () {
-                var items = {};
+                var self = propertyList(options);
+                self.newProperty = ko.observable(null);
 
-                // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
-                // each ColumnProperty), but we don't want this function to run until the this.columns exists.
-                if (this.columns) {
-                    this.columns().forEach(function (v, i) {
-                        items[[v.property(), v.calculation(), v.displayText()]] = i;
-                    });
+                self._createListItem = function () {
+                    return columnProperty(
+                        self.getDefaultDisplayText.bind(self),
+                        self.getPropertyObject.bind(self),
+                        self.reorderColumns.bind(self),
+                        self.hasDisplayCol
+                    );
+                };
+                self.buttonHandler = function () {
+                    if (self.newProperty()) {
+                        var item = self._createListItem();
+                        item.property(self.newProperty());
+                        if (self.reportType() === constants.REPORT_TYPE_LIST) {
+                            item.calculation(constants.GROUP_BY);
+                        } else {
+                            item.calculation(item.getDefaultCalculation());
+                        }
+                        self.newProperty(null);
+                        self.columns.push(item);
+                        if (_.isFunction(self.addItemCallback)) {
+                            self.addItemCallback();
+                        }
+                    }
+                };
+                self.reorderColumns = function () {
+                    var items = {};
 
-                    var isGroupBy = function (column) {
-                        return column.calculation() === constants.GROUP_BY;
-                    };
-                    var index = function (column) {
-                        return items[[column.property(), column.calculation(), column.displayText()]];
-                    };
-                    var compare = function (first, second) {
-                        // return negative if first is smaller than second
-                        if (isGroupBy(first) !== isGroupBy(second)) {
-                            return isGroupBy(first) ? -1 : 1;
-                        }
-                        if (index(first) !== index(second)) {
-                            return index(first) < index(second) ? -1 : 1;
-                        }
-                        return 0;
-                    };
-                    this.columns.sort(compare);
-                }
+                    // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
+                    // each ColumnProperty), but we don't want this function to run until the this.columns exists.
+                    if (self.columns) {
+                        self.columns().forEach(function (v, i) {
+                            items[[v.property(), v.calculation(), v.displayText()]] = i;
+                        });
+
+                        var isGroupBy = function (column) {
+                            return column.calculation() === constants.GROUP_BY;
+                        };
+                        var index = function (column) {
+                            return items[[column.property(), column.calculation(), column.displayText()]];
+                        };
+                        var compare = function (first, second) {
+                            // return negative if first is smaller than second
+                            if (isGroupBy(first) !== isGroupBy(second)) {
+                                return isGroupBy(first) ? -1 : 1;
+                            }
+                            if (index(first) !== index(second)) {
+                                return index(first) < index(second) ? -1 : 1;
+                            }
+                            return 0;
+                        };
+                        self.columns.sort(compare);
+                    }
+                };
+                return self;
             };
 
 
