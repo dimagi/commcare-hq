@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import numbers
+import warnings
 from datetime import datetime, date
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.xml import V2_NAMESPACE
@@ -160,8 +161,18 @@ class CaseBlock(object):
             **fields
         )
 
-    def as_string(self):
+    def as_text(self):
+        return self.as_bytes().decode('utf-8')
+
+    def as_bytes(self):
         return ElementTree.tostring(self.as_xml())
+
+    def as_string(self):
+        warnings.warn(
+            "CaseBlock.as_string (%s) is deprecated. Use CaseBlock.as_bytes or CaseBlock.as_text instead.",
+            DeprecationWarning,
+        )
+        return self.as_bytes()
 
 
 class CaseBlockError(Exception):

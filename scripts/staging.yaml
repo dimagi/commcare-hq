@@ -58,4 +58,7 @@ branches:
   - dmr/fix-es-service-check  # Danny Jan 3
   - mk-new-recovery-measure # MK Jan 8
   - jls/domain-select2-v4  # Jenny Jan 14
+  - jls/reduce-form-classes  # Jenny Jan 15
+  - get-subscription-properties-synchronously  # NP Jan 15
+  - reports-effective-start-date  # Gabriella Jan 16
 submodules: {}
