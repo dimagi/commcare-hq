@@ -91,7 +91,13 @@ class ExportListHelper(object):
         self.domain = domain
         self.permissions = ExportsPermissionsManager(self.form_or_case, domain, request.couch_user)
 
+    def _priv_check(self):
+        return True
+
     def get_exports_list(self):
+        if not self._priv_check():
+            raise Http404
+
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
         saved_exports = self.get_saved_exports()
         if toggles.EXPORT_OWNERSHIP.enabled(self.domain):
@@ -176,6 +182,9 @@ class ExportListHelper(object):
 
 
 class DailySavedExportListHelper(ExportListHelper):
+    def _priv_check(self):
+        return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+
     @memoized
     def get_saved_exports(self):
         combined_exports = []
@@ -325,6 +334,9 @@ class CaseExportListHelper(ExportListHelper):
 
 
 class DashboardFeedListHelper(DailySavedExportListHelper):
+    def _priv_check(self):
+        return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
+
     @memoized
     def get_saved_exports(self):
         combined_exports = []
