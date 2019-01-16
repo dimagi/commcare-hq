@@ -127,14 +127,12 @@ class ConvertTranslations(BaseTranslationsView):
             with open(generated_files[0].path, 'rb') as f:
                 return f.read()
 
-    def _generate_excel_file(self, uploaded_file=None):
+    def _generate_excel_file(self, uploaded_file):
         """
         extract translations from po file and converts to a xlsx file
 
         :return: Workbook object
         """
-        if not uploaded_file:
-            uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
         po_file = polib.pofile(uploaded_file.read())
         wb = openpyxl.Workbook()
         ws = wb.worksheets[0]
@@ -154,7 +152,7 @@ class ConvertTranslations(BaseTranslationsView):
         return response
 
     def _excel_file_response(self):
-        wb = self._generate_excel_file()
+        wb = self._generate_excel_file(self.convert_translation_form.cleaned_data.get('upload_file'))
         content = get_file_content_from_workbook(wb)
         response = HttpResponse(content, content_type="text/html; charset=utf-8")
         response['Content-Disposition'] = safe_filename_header(self._uploaded_file_name.split('.po')[0], 'xlsx')
