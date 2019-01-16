@@ -6,6 +6,7 @@ from zipfile import ZipFile
 
 import openpyxl
 import polib
+import tempfile
 from io import BytesIO
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
@@ -124,16 +125,17 @@ class ConvertTranslations(BaseTranslationsView):
         translations = self._generate_translations_for_po(worksheet)
         with PoFileGenerator(translations, {}) as po_file_generator:
             generated_files = po_file_generator.generate_translation_files()
-            with open(generated_files[0].path, 'r', encoding="utf-8") as f:
+            with open(generated_files[0].path, 'rb') as f:
                 return f.read()
 
-    def _generate_excel_file(self):
+    def _generate_excel_file(self, uploaded_file=None):
         """
         extract translations from po file and converts to a xlsx file
 
         :return: Workbook object
         """
-        uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
+        if not uploaded_file:
+            uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
         po_file = polib.pofile(uploaded_file.read())
         wb = openpyxl.Workbook()
         ws = wb.worksheets[0]
@@ -159,6 +161,29 @@ class ConvertTranslations(BaseTranslationsView):
         response['Content-Disposition'] = safe_filename_header(self._uploaded_file_name.split('.po')[0], 'xlsx')
         return response
 
+    def _zip_file_response(self):
+        uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
+        uploaded_zipfile = ZipFile(uploaded_file)
+        mem_file = BytesIO()
+        with ZipFile(mem_file, 'w') as zipfile:
+            for file_info in uploaded_zipfile.filelist:
+                filename = file_info.filename
+                if filename.endswith('.po'):
+                    po_file = BytesIO(uploaded_zipfile.read(filename))
+                    wb = self._generate_excel_file(po_file)
+                    result_filename = filename.split('.po')[0]
+                    zipfile.writestr(result_filename + '.xlsx', get_file_content_from_workbook(wb))
+                elif filename.endswith('.xls') or filename.endswith('.xlsx'):
+                    worksheet = openpyxl.load_workbook(BytesIO(uploaded_zipfile.read(filename))).worksheets[0]
+                    po_file_content = self._generate_po_content(worksheet)
+                    result_filename = filename.split('.xls')[0]
+                    zipfile.writestr(result_filename + '.po', po_file_content)
+        mem_file.seek(0)
+        response = HttpResponse(mem_file, content_type="text/html")
+        zip_filename = 'Converted-' + uploaded_zipfile.filename.split('.zip')[0]
+        response['Content-Disposition'] = safe_filename_header(zip_filename, "zip")
+        return response
+
     def post(self, request, *args, **kwargs):
         if self.convert_translation_form.is_valid():
             uploaded_filename = self._uploaded_file_name
@@ -166,6 +191,8 @@ class ConvertTranslations(BaseTranslationsView):
                 return self._po_file_response()
             elif uploaded_filename.endswith('.po'):
                 return self._excel_file_response()
+            elif uploaded_filename.endswith('.zip'):
+                return self._zip_file_response()
         return self.get(request, *args, **kwargs)
 
     def section_url(self):
