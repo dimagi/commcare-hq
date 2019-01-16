@@ -4,7 +4,6 @@ import base64
 import re
 from functools import wraps
 
-import six
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
@@ -40,7 +39,6 @@ def determine_authtype_from_header(request, default=DIGEST):
     client should send the initial request with an Authorization header.
     """
     auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    assert isinstance(auth_header, six.text_type), auth_header
     if auth_header.startswith('basic '):
         return BASIC
     elif auth_header.startswith('digest '):
