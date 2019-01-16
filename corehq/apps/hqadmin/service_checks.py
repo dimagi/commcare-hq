@@ -100,9 +100,6 @@ def check_elasticsearch():
         send_to_elasticsearch('groups', doc)
         refresh_elasticsearch_index('groups')
         hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
-    except Exception:
-        raise
-    else:
         if doc in hits:
             return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
         else:
