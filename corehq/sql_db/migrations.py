@@ -14,7 +14,7 @@ def partitioned(cls_or_op=None, apply_to_proxy=True):
     """Decorator/wrapper for partitioned migrations/migration operations
 
     This is useful for apps that have both partitioned and non-
-    partitioned models. App names having partitioined models should be
+    partitioned models. App names having partitioned models should be
     added to `TEST_NON_SERIALIZED_APPS` (see dev_settings.py) if model
     creations will be partitioned.
 
