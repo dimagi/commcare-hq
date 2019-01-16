@@ -158,40 +158,85 @@ hqDefine("export/js/export_list", [
     };
 
     var exportListModel = function (options) {
-        assertProperties.assert(options, ['exports', 'isDeid', 'modelType', 'urls']);
+        assertProperties.assert(options, ['isDeid', 'modelType', 'urls']);
 
         var self = {};
 
         self.modelType = options.modelType;
         self.isDeid = options.isDeid;
 
-        assertProperties.assert(options.urls, ['commitFilters', 'poll', 'toggleEnabled', 'update']);
+        assertProperties.assert(options.urls, ['commitFilters', 'getExportsList', 'poll', 'toggleEnabled', 'update']);
         self.urls = options.urls;
 
-        self.exports = _.map(options.exports, function (e) {
-            return exportModel(e, {
-                is_deid: self.isDeid,
-                model_type: self.modelType,
-                urls: _.pick(self.urls, 'poll', 'toggleEnabled', 'update'),
-            });
+        // These are observable arrays because they'll be loaded via ajax
+        self.loadingErrorMessage = ko.observable('');
+        self.exports = ko.observableArray([]);
+        self.myExports = ko.observableArray([]);
+        self.notMyExports = ko.observableArray([]);
+
+        self.isLoading = ko.observable(true);
+        self.hasError = ko.observable(false);
+        self.showError = ko.computed(function () {
+            return !self.isLoading() && self.hasError();
         });
-        self.myExports = _.filter(self.exports, function (e) { return !!e.my_export; });
-        self.notMyExports = _.filter(self.exports, function (e) { return !e.my_export; });
+        self.showEmpty = ko.computed(function () {
+            return !self.isLoading() && !self.hasError() && !self.exports().length;
+        });
+
+        self.loadExports = function () {
+            $.ajax({
+                method: 'GET',
+                url: self.urls.getExportsList,
+                data: {
+                    is_deid: self.isDeid,
+                    model_type: self.modelType,
+                },
+                success: function (data) {
+                    self.isLoading(false);
+                    self.exports(_.map(data.exports, function (e) {
+                        return exportModel(e, {
+                            is_deid: self.isDeid,
+                            model_type: self.modelType,
+                            urls: _.pick(self.urls, 'poll', 'toggleEnabled', 'update'),
+                        });
+                    }));
+                    self.myExports(_.filter(self.exports(), function (e) { return !!e.my_export; }));
+                    self.notMyExports(_.filter(self.exports(), function (e) { return !e.my_export; }));
+
+                    // Set up progress bar polling for any exports with email tasks running
+                    _.each(self.exports(), function (exp) {
+                        if (exp.hasEmailedExport && exp.emailedExport.taskStatus && exp.emailedExport.taskStatus.started()) {
+                            exp.pollProgressBar();
+                        }
+                    });
+
+                    // Subscribe to bulk behavior
+                    _.each(self.exports, function (export_) {
+                        export_.addedToBulk.subscribe(function (newValue) {
+                            // Determine whether or not to show bulk export download button & message
+                            if (newValue !== self.showBulkExportDownload()) {
+                                self.showBulkExportDownload(!!_.find(self.exports, function (maybeSelectedExport) {
+                                    return maybeSelectedExport.addedToBulk();
+                                }));
+                            }
+                        });
+                    });
+                },
+                error: function () {
+                    self.isLoading(false);
+                    self.hasError(true);
+                },
+            });
+        };
 
         self.sendExportAnalytics = function () {
             kissmetricsAnalytics.track.event("Clicked Export button");
             return true;
         };
 
-        _.each(self.exports, function (exp) {
-            if (exp.hasEmailedExport && exp.emailedExport.taskStatus && exp.emailedExport.taskStatus.started()) {
-                exp.pollProgressBar();
-            }
-        });
-
         // Bulk export handling
         self.selectAll = function () {
-            _.each(self.exports, function (e) { e.addedToBulk(true); });
+            _.each(self.exports(), function (e) { e.addedToBulk(true); });
         };
         self.selectNone = function () {
             _.each(self.exports, function (e) { e.addedToBulk(false); });
@@ -208,16 +253,6 @@ hqDefine("export/js/export_list", [
 
             return true;
         };
-        _.each(self.exports, function (export_) {
-            export_.addedToBulk.subscribe(function (newValue) {
-                // Determine whether or not to show bulk export download button & message
-                if (newValue !== self.showBulkExportDownload()) {
-                    self.showBulkExportDownload(!!_.find(self.exports, function (maybeSelectedExport) {
-                        return maybeSelectedExport.addedToBulk();
-                    }));
-                }
-            });
-        });
 
         // HTML elements from filter form - admittedly it's not very knockout-y to manipulate these directly
         self.$filterModal = $("#setFeedFiltersModal");
@@ -348,6 +383,8 @@ hqDefine("export/js/export_list", [
                 },
             });
         };
+
+        self.loadExports();
 
         return self;
     };

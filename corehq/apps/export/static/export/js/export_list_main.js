@@ -34,11 +34,11 @@ hqDefine("export/js/export_list_main", [
 
         var modelType = initialPageData.get("model_type");
         $("#export-list").koApplyBindings(listModels.exportListModel({
-            exports: initialPageData.get("exports"),
             modelType: modelType,
             isDeid: initialPageData.get('is_deid'),
             urls: {
                 commitFilters: initialPageData.reverse("commit_filters"),
+                getExportsList: initialPageData.reverse("get_exports_list"),
                 poll: initialPageData.reverse("get_saved_export_progress"),
                 toggleEnabled: initialPageData.reverse("toggle_saved_export_enabled"),
                 update: initialPageData.reverse("update_emailed_export_data"),

@@ -77,7 +77,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     @property
     def page_context(self):
         return {
-            'exports': self.get_exports_list(),
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
             'bulk_download_url': self.bulk_download_url,
@@ -216,6 +215,17 @@ def _get_task_status_json(export_instance_id):
         'failed': status.failed(),
         'justFinished': False,
     }
+
+
+@login_and_domain_required
+@require_GET
+def get_exports_list(request, domain):
+    permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
+    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+
+    return json_response({
+        'exports': [],  # self.get_exports_list()
+    })
 
 
 @login_and_domain_required
