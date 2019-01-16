@@ -28,7 +28,6 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_select2
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.models import HQGroupExportConfiguration
@@ -385,8 +384,7 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
         return [x for x in exports if x.is_safe and x.is_daily_saved_export and x.export_format == "html"]
 
 
-
-class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
+class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
     allow_bulk_export = True
     is_deid = False
