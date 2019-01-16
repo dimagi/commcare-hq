@@ -63,6 +63,7 @@ from corehq.apps.accounting.forms import (
     EnterpriseSettingsForm,
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
+    HideInvoiceForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
@@ -868,6 +869,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'invoice_info_form': self.invoice_info_form,
             'resend_email_form': self.resend_email_form,
             'suppress_invoice_form': self.suppress_invoice_form,
+            'hide_invoice_form': self.hide_invoice_form,
         }
 
     @use_select2
@@ -902,6 +904,13 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             return SuppressInvoiceForm(self.invoice, self.request.POST)
         return SuppressInvoiceForm(self.invoice)
 
+    @property
+    @memoized
+    def hide_invoice_form(self):
+        if self.request.method == 'POST':
+            return HideInvoiceForm(self.invoice, self.request.POST)
+        return HideInvoiceForm(self.invoice)
+
     def post(self, request, *args, **kwargs):
         if 'adjust' in self.request.POST:
             if self.adjust_balance_form.is_valid():
@@ -924,6 +933,9 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                     return HttpResponseRedirect(CustomerInvoiceInterface.get_url())
                 else:
                     return HttpResponseRedirect(InvoiceInterface.get_url())
+        elif HideInvoiceForm.submit_kwarg in self.request.POST:
+            if self.hide_invoice_form.is_valid():
+                self.hide_invoice_form.hide_invoice()
         return self.get(request, *args, **kwargs)
 
 
