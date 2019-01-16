@@ -6,7 +6,6 @@ from zipfile import ZipFile
 
 import openpyxl
 import polib
-import tempfile
 from io import BytesIO
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
