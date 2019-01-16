@@ -64,7 +64,7 @@ class AdjListManager(models.Manager):
                 _depth=Value(0, output_field=field),
             ).union(
                 cte.join(
-                    self.all().order_by(),
+                    self.filter(domain=node.domain).order_by(),
                     id=cte.col.parent_id,
                 ).annotate(
                     _depth=cte.col._depth + Value(1, output_field=field),
@@ -114,7 +114,7 @@ class AdjListManager(models.Manager):
                 _cte_ordering=str_array(ordering_col),
             ).union(
                 cte.join(
-                    self.all().order_by(),
+                    self.filter(domain=node.domain).order_by(),
                     parent_id=cte.col.id,
                 ).annotate(
                     _cte_ordering=array_append(
