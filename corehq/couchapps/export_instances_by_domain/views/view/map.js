@@ -8,6 +8,7 @@ function(doc) {
             is_daily_saved_export: doc.is_daily_saved_export,
             export_format: doc.export_format,
             name: doc.name,
+            owner_id: doc.owner_id,
         });
     }
 }
