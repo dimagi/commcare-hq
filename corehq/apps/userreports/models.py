@@ -1081,8 +1081,10 @@ def get_report_configs(config_ids, domain):
     for config in dynamic_report_configs:
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
-
-    return dynamic_report_configs + static_report_configs
+    # rearrange the configs in the same order as the ids received
+    all_configs = dynamic_report_configs + static_report_configs
+    id_mapping = {config.get_id: config for config in all_configs}
+    return [id_mapping[config_id] for config_id in config_ids]
 
 
 def get_report_config(config_id, domain):
