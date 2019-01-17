@@ -367,7 +367,7 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     @run_with_all_backends
     def test_payload(self):
         self.post_xml(self.xform_xml, self.domain_name)
-        payload = self.repeat_records(self.domain_name).all()[0].get_payload()
+        payload = self.repeat_records(self.domain_name).all()[0].get_payload().decode('utf-8')
         self.assertXMLEqual(self.xform_xml, payload)
 
 
