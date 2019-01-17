@@ -553,10 +553,6 @@ class NewSoftwarePlanView(AccountingSectionView):
             'url': SoftwarePlanInterface.get_url(),
         }]
 
-    @use_select2
-    def dispatch(self, request, *args, **kwargs):
-        return super(NewSoftwarePlanView, self).dispatch(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         if self.plan_info_form.is_valid():
             plan = self.plan_info_form.create_plan()
@@ -670,10 +666,6 @@ class ViewSoftwarePlanVersionView(AccountingSectionView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=self.args)
-
-    @use_select2
-    def dispatch(self, request, *args, **kwargs):
-        return super(ViewSoftwarePlanVersionView, self).dispatch(request, *args, **kwargs)
 
 
 
@@ -821,10 +813,6 @@ class TestRenewalEmailView(AccountingSectionView):
         return {
             'reminder_email_form': self.reminder_email_form,
         }
-
-    @use_select2
-    def dispatch(self, request, *args, **kwargs):
-        return super(TestRenewalEmailView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.reminder_email_form.is_valid():
@@ -1144,10 +1132,6 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
             'id': admin.id,
             'username': admin.username,
         }
-
-    @use_select2
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManageAccountingAdminsView, self).dispatch(request, *args, **kwargs)
 
     def get_create_form(self, is_blank=False):
         if self.request.method == 'POST' and not is_blank:
