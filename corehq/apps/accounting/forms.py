@@ -451,7 +451,8 @@ class BillingAccountContactForm(forms.ModelForm):
 
 class SubscriptionForm(forms.Form):
     account = forms.IntegerField(
-        label=ugettext_lazy("Billing Account")
+        label=ugettext_lazy("Billing Account"),
+        widget=forms.Select(choices=[]),
     )
     start_date = forms.DateField(
         label=ugettext_lazy("Start Date"), widget=forms.DateInput()
@@ -463,8 +464,14 @@ class SubscriptionForm(forms.Form):
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    plan_version = forms.IntegerField(label=ugettext_lazy("Software Plan"))
-    domain = forms.CharField(label=ugettext_lazy("Project Space"))
+    plan_version = forms.IntegerField(
+        label=ugettext_lazy("Software Plan"),
+        widget=forms.Select(choices=[]),
+    )
+    domain = forms.CharField(
+        label=ugettext_lazy("Project Space"),
+        widget=forms.Select(choices=[]),
+    )
     salesforce_contract_id = forms.CharField(
         label=ugettext_lazy("Salesforce Deployment ID"), max_length=80, required=False
     )
@@ -485,6 +492,7 @@ class SubscriptionForm(forms.Form):
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscription To"),
         required=False,
+        widget=forms.Select(choices=[]),
     )
     service_type = forms.ChoiceField(
         label=ugettext_lazy("Type"),

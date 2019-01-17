@@ -280,7 +280,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
-    @use_select2
+    @use_select2_v4
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
         return super(NewSubscriptionView, self).dispatch(request, *args, **kwargs)
@@ -354,7 +354,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
-    @use_select2
+    @use_select2_v4
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
         return super(EditSubscriptionView, self).dispatch(request, *args, **kwargs)
