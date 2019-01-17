@@ -72,8 +72,8 @@ class _CaseRelationshipManager(object):
     >>> expansions = case_relationship_manager.expand_case_type('patient')
     >>> for case_type_ref in sorted(expansions):
     ...     print(case_type_ref)
-    _CaseTypeRef(case_type=u'patient', relationship_path=())
-    _CaseTypeRef(case_type=u'referral', relationship_path=(u'parent',))
+    _CaseTypeRef(case_type='patient', relationship_path=())
+    _CaseTypeRef(case_type='referral', relationship_path=('parent',))
 
     This is read "`patient` and `referral`'s parent are the two ways to refer to `patient`".
 
@@ -81,7 +81,7 @@ class _CaseRelationshipManager(object):
     You can also ask "What are all of the case_types a `referral`'s `parent` can be?":
 
     >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',)))
-    set([u'patient'])
+    {'patient'}
 
     This is read "a `referral`'s parent can only be a `patient`".
 
