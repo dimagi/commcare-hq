@@ -687,6 +687,10 @@ def validate_property(property, allow_parents=True):
 
 
 class FormBaseValidator(object):
+    @property
+    def timing_context(self):
+        return self.form.get_app().timing_context
+
     def __init__(self, form):
         self.form = form
 
@@ -780,12 +784,6 @@ class FormBaseValidator(object):
         """
         return []
 
-
-class IndexedFormBaseValidator(FormBaseValidator):
-    @property
-    def timing_context(self):
-        return self.form.get_app().timing_context
-
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
         subcase_names = subcase_names or []
@@ -826,7 +824,7 @@ class IndexedFormBaseValidator(FormBaseValidator):
         return errors
 
 
-class FormValidator(IndexedFormBaseValidator):
+class FormValidator(FormBaseValidator):
     def check_actions(self):
         errors = []
 
@@ -891,7 +889,7 @@ class FormValidator(IndexedFormBaseValidator):
         return errors
 
 
-class AdvancedFormValidator(IndexedFormBaseValidator):
+class AdvancedFormValidator(FormBaseValidator):
     def check_actions(self):
         errors = []
 
@@ -1007,7 +1005,7 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
         return errors
 
 
-class ShadowFormValidator(IndexedFormBaseValidator):
+class ShadowFormValidator(FormBaseValidator):
     @time_method()
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = super(ShadowFormValidator, self).extended_build_validation(error_meta, xml_valid, validate_module)
