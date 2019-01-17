@@ -150,7 +150,7 @@ def enterprise_mode(request):
     }
 
 
-def commcare_hq_names(request):
+def commcare_hq_names(request=None):
     return {
         'commcare_hq_names': {
             'COMMCARE_NAME': _get_cc_name(request, 'COMMCARE_NAME'),
@@ -163,6 +163,12 @@ def _get_cc_name(request, var):
     value = getattr(settings, var)
     if isinstance(value, six.string_types):
         return value
+
+    if request is None:
+        # There are a few places where we do not have access to a request,
+        # for these we return the default name for the enviroment.
+        return value['default']
+
     try:
         host = request.get_host()
     except KeyError:
@@ -172,7 +178,7 @@ def _get_cc_name(request, var):
         # The true fix for this lies in removing fake requests from scheduled reports
         host = 'default'
 
-    return value.get(host) or value.get('default')
+    return value.get(host) or value['default']
 
 
 def mobile_experience(request):
