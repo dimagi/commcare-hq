@@ -81,7 +81,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.middleware import always_allow_browser_caching
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
@@ -381,11 +381,12 @@ def _login(req, domain_name):
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
-            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()}
+            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()},
         })
     else:
+        commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
         context.update({
-            'current_page': {'page_name': _('Welcome back to %s!') % settings.COMMCARE_HQ_NAME}
+            'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
