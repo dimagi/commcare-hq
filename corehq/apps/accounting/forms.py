@@ -1146,7 +1146,8 @@ class SoftwarePlanVersionForm(forms.Form):
 
     feature_id = forms.CharField(
         required=False,
-        label="Search for or Create Feature"
+        label="Search for or Create Feature",
+        widget=forms.Select(choices=[]),
     )
     new_feature_type = forms.ChoiceField(
         required=False,
@@ -1159,7 +1160,8 @@ class SoftwarePlanVersionForm(forms.Form):
 
     product_rate_id = forms.CharField(
         required=False,
-        label="Search for or Create Product"
+        label="Search for or Create Product",
+        widget=forms.Select(choices=[]),
     )
     product_rates = forms.CharField(
         required=False,
@@ -1173,7 +1175,8 @@ class SoftwarePlanVersionForm(forms.Form):
     )
     role_slug = forms.ChoiceField(
         required=False,
-        label="Role"
+        label="Role",
+        widget=forms.Select(choices=[]),
     )
     role_type = forms.ChoiceField(
         required=True,

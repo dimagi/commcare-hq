@@ -570,7 +570,7 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         SoftwareProductRateAsyncHandler,
     ]
 
-    @use_select2
+    @use_select2_v4
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(EditSoftwarePlanView, self).dispatch(request, *args, **kwargs)
