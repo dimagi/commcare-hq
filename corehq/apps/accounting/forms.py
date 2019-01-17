@@ -106,6 +106,7 @@ class BillingAccountBasicForm(forms.Form):
     enterprise_admin_emails = forms.CharField(
         label="Enterprise Admin Emails",
         required=False,
+        widget=forms.SelectMultiple(choices=[]),
     )
     enterprise_restricted_signup_domains = forms.CharField(
         label="Enterprise Domains for Restricting Signups",
