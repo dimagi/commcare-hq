@@ -455,6 +455,24 @@ class SQLLocation(AdjListModel):
 
     full_delete = delete
 
+    def get_descendants(self, include_self=False, **kwargs):
+        if include_self:
+            where = Q(domain=self.domain, id=self.id)
+        else:
+            where = Q(domain=self.domain, parent_id=self.id)
+        return SQLLocation.objects.get_descendants(
+            where, **kwargs
+        )
+
+    def get_ancestors(self, include_self=False, **kwargs):
+        if include_self:
+            where = Q(domain=self.domain, id=self.id)
+        else:
+            where = Q(domain=self.domain, id=self.parent.id)
+        return SQLLocation.objects.get_descendants(
+            where, **kwargs
+        )
+
     @classmethod
     def bulk_delete(cls, locations, ancestor_location_ids):
         """Bulk delete the given locations and update their ancestors
