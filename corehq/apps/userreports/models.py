@@ -817,7 +817,7 @@ class StaticReportConfiguration(JsonObject):
         mapping = cls.by_id_mapping()
 
         return_configs = []
-        for config_id in set(config_ids):
+        for config_id in config_ids:
             try:
                 domain, wrapped = mapping[config_id]
             except KeyError:
