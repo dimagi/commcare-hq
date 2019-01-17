@@ -860,10 +860,6 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'hide_invoice_form': self.hide_invoice_form,
         }
 
-    @use_select2
-    def dispatch(self, request, *args, **kwargs):
-        return super(InvoiceSummaryViewBase, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def billing_records(self):
