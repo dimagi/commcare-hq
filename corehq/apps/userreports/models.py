@@ -1063,6 +1063,8 @@ def get_report_configs(config_ids, domain):
         else:
             dynamic_report_config_ids.append(config_id)
     static_report_configs = StaticReportConfiguration.by_ids(static_report_config_ids)
+    if len(static_report_configs) != len(static_report_config_ids):
+        raise ReportConfigurationNotFoundError
     for config in static_report_configs:
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
