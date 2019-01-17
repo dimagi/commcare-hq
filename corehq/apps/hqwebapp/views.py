@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-
-import functools
 import json
 import logging
 import os
@@ -13,6 +11,7 @@ import uuid
 from datetime import datetime
 from six.moves.urllib.parse import urlparse
 
+import functools
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -339,7 +338,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name):
+def _login(req, domain_name, template_name):
 
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
@@ -364,15 +363,9 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = 'login_and_password/login.html'
-    custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
+    custom_landing_page = getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
     if custom_landing_page:
-        if isinstance(custom_landing_page, six.string_types):
-            template_name = custom_landing_page
-        else:
-            template_name = custom_landing_page.get(req.get_host())
-            if template_name is None:
-                template_name = custom_landing_page.get('default', template_name)
+        template_name = custom_landing_page
     elif domain_name:
         domain = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
@@ -416,11 +409,11 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-    return _login(req, domain)
+    return _login(req, domain, "login_and_password/login.html")
 
 
 @location_safe
-def domain_login(req, domain):
+def domain_login(req, domain, template_name="login_and_password/login.html"):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -430,7 +423,7 @@ def domain_login(req, domain):
     # necessary domain contexts:
     req.project = project
 
-    return _login(req, domain)
+    return _login(req, domain, template_name)
 
 
 class HQLoginView(LoginView):
