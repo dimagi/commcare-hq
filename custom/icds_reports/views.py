@@ -218,7 +218,7 @@ class DashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
-        user_location = self.couch_user.get_location(self.domain)
+        user_location = self.couch_user.get_sql_location(self.domain)
         kwargs['user_location_id'] = user_location.location_id if user_location else None
         kwargs['user_location_type'] = user_location.location_type.code if user_location else None
         kwargs['user_location_name'] = user_location.name if user_location else None
