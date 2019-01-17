@@ -337,10 +337,7 @@ class TestExpandedColumn(TestCase):
 
         expected_rows = [get_expected_row(v, set(submitted_vals)) for v in submitted_vals]
         data = data_source.get_data()
-        self.assertEqual(
-            sorted(expected_rows, key=lambda d: sorted(d.items())),
-            sorted(data, key=lambda d: sorted(d.items()))
-        )
+        self.assertItemsEqual(expected_rows, data)
 
 
 class TestAggregateDateColumn(SimpleTestCase):
