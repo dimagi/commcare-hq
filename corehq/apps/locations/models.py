@@ -465,11 +465,10 @@ class SQLLocation(AdjListModel):
         )
 
     def get_ancestors(self, include_self=False, **kwargs):
-        if include_self:
-            where = Q(domain=self.domain, id=self.id)
-        else:
-            where = Q(domain=self.domain, id=self.parent.id)
-        return SQLLocation.objects.get_descendants(
+        if include_self and not self.parent:
+            return []
+        where = Q(domain=self.domain, id=self.id if include_self else self.parent.id)
+        return SQLLocation.objects.get_ancestors(
             where, **kwargs
         )
 
