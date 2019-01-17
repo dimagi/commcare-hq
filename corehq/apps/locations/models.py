@@ -643,7 +643,7 @@ class SQLLocation(AdjListModel):
                             .values_list('name', flat=True))
 
     @classmethod
-    def get_case_sharing_groups_bulk(cls, locations, for_user_id=None):
+    def get_case_sharing_groups_for_locations(cls, locations, for_user_id=None):
         # safety check to make sure all locations belong to same domain
         assert len(set([l.domain for l in locations])) < 2
 
@@ -651,17 +651,17 @@ class SQLLocation(AdjListModel):
             if location.location_type.shares_cases:
                 yield location.case_sharing_group_object(for_user_id)
 
-        sub_location_ids = [l.pk for l in locations if location.location_type.view_descendants]
-        sub_locations = []
-        if sub_location_ids:
-            where = Q(domain=locations[0].domain, parent_id__in=sub_location_ids)
-            sub_locations = cls.objects.get_queryset_descendants(where).filter(
+        location_ids = [l.pk for l in locations if location.location_type.view_descendants]
+        descendants = []
+        if location_ids:
+            where = Q(domain=locations[0].domain, parent_id__in=location_ids)
+            descendants = cls.objects.get_queryset_descendants(where).filter(
                 location_type__shares_cases=True, is_archived=False)
-        for loc in sub_locations:
+        for loc in descendants:
             yield loc.case_sharing_group_object(for_user_id)
 
     def get_case_sharing_groups(self, for_user_id=None):
-        return self.get_case_sharing_groups_bulk([self], for_user_id=for_user_id)
+        return self.get_case_sharing_groups_for_locations([self], for_user_id=for_user_id)
 
     def case_sharing_group_object(self, user_id=None):
         """
