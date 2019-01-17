@@ -2476,9 +2476,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             return SQLLocation.objects.none()
 
-    def get_location(self, domain):
-        return self.get_sql_location(domain)
-
 
 class FakeUser(WebUser):
     """
