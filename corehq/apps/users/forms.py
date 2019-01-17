@@ -174,7 +174,10 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             role = self.cleaned_data['role']
             try:
                 self.existing_user.set_role(self.domain, role)
-                self.existing_user.save()
+                if self.existing_user.is_commcare_user():
+                    self.existing_user.save(spawn_task=True)
+                else:
+                    self.existing_user.save()
                 is_update_successful = True
             except KeyError:
                 pass
