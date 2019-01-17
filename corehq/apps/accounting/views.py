@@ -41,7 +41,6 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
     use_select2_v4,
     use_jquery_ui,
     use_multiselect,
