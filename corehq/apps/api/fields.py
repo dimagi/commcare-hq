@@ -49,6 +49,8 @@ class UseIfRequested(object):
         return bundle.request.GET.get(full_name, 'false').lower() == 'true'
 
     def __getattr__(self, attr):
+        if attr == 'underlying_field':
+            return None
         return getattr(self.underlying_field, attr)
 
 
