@@ -222,7 +222,7 @@ def _get_task_status_json(export_instance_id):
 @require_GET
 def get_saved_export_progress(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+    permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
     export_instance_id = request.GET.get('export_instance_id')
     return json_response({
@@ -234,7 +234,7 @@ def get_saved_export_progress(request, domain):
 @require_POST
 def toggle_saved_export_enabled(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+    permissions.access_list_exports_or_404(is_deid=json.loads(request.POST.get('is_deid')))
 
     export_instance_id = request.POST.get('export_id')
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
@@ -250,7 +250,7 @@ def toggle_saved_export_enabled(request, domain):
 @require_POST
 def update_emailed_export_data(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+    permissions.access_list_exports_or_404(is_deid=json.loads(request.POST.get('is_deid')))
 
     export_instance_id = request.POST.get('export_id')
     rebuild_saved_export(export_instance_id, manual=True)
