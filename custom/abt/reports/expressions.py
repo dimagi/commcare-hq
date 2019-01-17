@@ -251,13 +251,6 @@ class AbtExpressionSpec(JsonObject):
                     ignore = spec.get("ignore", [])
                     section = spec.get("section", "data")
                     master_value = self._get_val(item, ['insecticide_prep_grp', 'Q10', 'sop_full_ppe'])
-                    master_unchecked = self._get_unchecked(
-                        item,
-                        ['insecticide_prep_grp', 'Q10', 'sop_full_ppe'],
-                        master_value,
-                        ignore,
-                        section
-                    )
                     second_unchecked = self._get_unchecked(
                         item,
                         spec.get('base_path', []) + spec['question'],
@@ -265,7 +258,7 @@ class AbtExpressionSpec(JsonObject):
                         ignore,
                         section
                     )
-                    if not master_unchecked and second_unchecked:
+                    if not master_value and second_unchecked:
                         # Raise a flag because master question is not answered but duplicate question is.
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
