@@ -2510,13 +2510,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             function (response) {
                 vm.pregnantData = response.data['data'];
                 vm.showTable = false;
-                if (vm.pregnantData[0].length > 0) {
-                    vm.pregnant = vm.pregnantData[0][0];
-                } else if (vm.pregnantData[1].length > 0) {
-                    vm.pregnant = vm.pregnantData[1][0];
-                } else {
-                    vm.pregnant = vm.pregnantData[2][0];
-                }
+                vm.pregnant = response.data['pregnant'];
                 vm.showPregnant = true;
             },
             function (error) {
