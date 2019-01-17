@@ -2460,6 +2460,42 @@ class SuppressInvoiceForm(forms.Form):
         self.invoice.save()
 
 
+class HideInvoiceForm(forms.Form):
+    submit_kwarg = 'hide'
+    hide = forms.CharField(widget=forms.HiddenInput, required=False)
+
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
+        super(HideInvoiceForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Hide invoice from customer.',
+                crispy.Div(
+                    crispy.HTML('Warning: this can only be undone by a developer.'),
+                    css_class='alert alert-danger',
+                ),
+                'hide',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    'Hide Invoice',
+                    css_class='btn-danger disable-on-submit',
+                    name=self.submit_kwarg,
+                    type='submit',
+                ),
+            ),
+        )
+
+    def hide_invoice(self):
+        self.invoice.is_hidden = True
+        self.invoice.save()
+
+
 class CreateAdminForm(forms.Form):
     username = forms.CharField(
         required=False,
