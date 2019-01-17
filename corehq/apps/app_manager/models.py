@@ -44,7 +44,6 @@ from corehq.apps.app_manager.helpers.validators import (
     ApplicationValidator,
     FormValidator,
     FormBaseValidator,
-    IndexedFormBaseValidator,
     ModuleValidator,
     ModuleBaseValidator,
     AdvancedModuleValidator,
@@ -913,472 +912,6 @@ class CaseReferences(DocumentSchema):
             yield CaseSaveReferenceWithPath.wrap(ref_copy)
 
 
-class FormBase(DocumentSchema):
-    """
-    Part of a Managed Application; configuration for a form.
-    Translates to a second-level menu on the phone
-
-    """
-    form_type = None
-
-    name = DictProperty(six.text_type)
-    unique_id = StringProperty()
-    show_count = BooleanProperty(default=False)
-    xmlns = StringProperty()
-    version = IntegerProperty()
-    source = FormSource()
-    validation_cache = CachedStringProperty(
-        lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
-    )
-    post_form_workflow = StringProperty(
-        default=WORKFLOW_DEFAULT,
-        choices=ALL_WORKFLOWS
-    )
-    post_form_workflow_fallback = StringProperty(
-        choices=WORKFLOW_FALLBACK_OPTIONS,
-        default=None,
-    )
-    auto_gps_capture = BooleanProperty(default=False)
-    no_vellum = BooleanProperty(default=False)
-    form_links = SchemaListProperty(FormLink)
-    schedule_form_id = StringProperty()
-    custom_assertions = SchemaListProperty(CustomAssertion)
-    custom_instances = SchemaListProperty(CustomInstance)
-    case_references_data = SchemaProperty(CaseReferences)
-    is_release_notes_form = BooleanProperty(default=False)
-    enable_release_notes = BooleanProperty(default=False)
-
-    @classmethod
-    def wrap(cls, data):
-        data.pop('validation_cache', '')
-
-        if cls is FormBase:
-            doc_type = data['doc_type']
-            if doc_type == 'Form':
-                return Form.wrap(data)
-            elif doc_type == 'AdvancedForm':
-                return AdvancedForm.wrap(data)
-            elif doc_type == 'ShadowForm':
-                return ShadowForm.wrap(data)
-            else:
-                raise ValueError('Unexpected doc_type for Form', doc_type)
-        else:
-            return super(FormBase, cls).wrap(data)
-
-    @property
-    def case_references(self):
-        return self.case_references_data or CaseReferences()
-
-    def requires_case(self):
-        return False
-
-    def get_action_type(self):
-        return ''
-
-    def get_validation_cache(self):
-        return self.validation_cache
-
-    def set_validation_cache(self, cache):
-        self.validation_cache = cache
-
-    def clear_validation_cache(self):
-        self.set_validation_cache(None)
-
-    @property
-    def validator(self):
-        return FormBaseValidator(self)
-
-    def is_allowed_to_be_release_notes_form(self):
-        # checks if this form can be marked as a release_notes form
-        #   based on whether it belongs to a training_module
-        #   and if no other form is already marked as release_notes form
-        module = self.get_module()
-        if not module or not module.is_training_module:
-            return False
-
-        forms = module.get_forms()
-        for form in forms:
-            if form.is_release_notes_form and form.unique_id != self.unique_id:
-                return False
-        return True
-
-    @property
-    def uses_cases(self):
-        return (
-            self.requires_case()
-            or self.get_action_type() != 'none'
-            or self.form_type == 'advanced_form'
-        )
-
-    @case_references.setter
-    def case_references(self, case_references):
-        self.case_references_data = case_references
-
-    @classmethod
-    def get_form(cls, form_unique_id, and_app=False):
-        try:
-            d = Application.get_db().view(
-                'app_manager/xforms_index',
-                key=form_unique_id
-            ).one()
-        except MultipleResultsFound as e:
-            raise XFormIdNotUnique(
-                "xform id '%s' not unique: %s" % (form_unique_id, e)
-            )
-        if d:
-            d = d['value']
-        else:
-            raise ResourceNotFound()
-        # unpack the dict into variables app_id, module_id, form_id
-        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
-
-        app = Application.get(app_id)
-        form = app.get_form(unique_id)
-        if and_app:
-            return form, app
-        else:
-            return form
-
-    def pre_delete_hook(self):
-        raise NotImplementedError()
-
-    def pre_move_hook(self, from_module, to_module):
-        """ Called before a form is moved between modules or to a different position """
-        raise NotImplementedError()
-
-    def wrapped_xform(self):
-        return XForm(self.source)
-
-    def validate_form(self):
-        vc = self.get_validation_cache()
-        if vc is None:
-            # todo: now that we don't use formtranslate, does this still apply?
-            # formtranslate requires all attributes to be valid xpaths, but
-            # vellum namespaced attributes aren't
-            form = self.wrapped_xform()
-            form.strip_vellum_ns_attributes()
-            try:
-                if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml))
-            except XFormValidationError as e:
-                validation_dict = {
-                    "fatal_error": e.fatal_error,
-                    "validation_problems": e.validation_problems,
-                    "version": e.version,
-                }
-                vc = json.dumps(validation_dict)
-            else:
-                vc = ""
-            self.set_validation_cache(vc)
-        if vc:
-            try:
-                raise XFormValidationError(**json.loads(vc))
-            except ValueError:
-                self.clear_validation_cache()
-                return self.validate_form()
-        return self
-
-    def is_a_disabled_release_form(self):
-        return self.is_release_notes_form and not self.enable_release_notes
-
-    @property
-    def timing_context(self):
-        return self.get_app().timing_context
-
-    def validate_for_build(self, validate_module=True):
-        return self.validator.validate_for_build(validate_module)
-
-    def get_unique_id(self):
-        """
-        Return unique_id if it exists, otherwise initialize it
-
-        Does _not_ force a save, so it's the caller's responsibility to save the app
-
-        """
-        if not self.unique_id:
-            self.unique_id = random_hex()
-        return self.unique_id
-
-    def get_app(self):
-        return self._app
-
-    def get_version(self):
-        return self.version if self.version else self.get_app().version
-
-    def add_stuff_to_xform(self, xform, build_profile_id=None):
-        app = self.get_app()
-        langs = app.get_build_langs(build_profile_id)
-        xform.exclude_languages(langs)
-        xform.set_default_language(langs[0])
-        xform.normalize_itext()
-        xform.strip_vellum_ns_attributes()
-        xform.set_version(self.get_version())
-        xform.add_missing_instances(app.domain)
-
-    def render_xform(self, build_profile_id=None):
-        xform = XForm(self.source)
-        self.add_stuff_to_xform(xform, build_profile_id)
-        return xform.render()
-
-    def cached_get_questions(self):
-        """
-        Call to get_questions with a superset of necessary information, so
-        it can hit the same cache across common app-building workflows
-        """
-        # it is important that this is called with the same params every time
-        return self.get_questions([], include_triggers=True, include_groups=True)
-
-    @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
-                timeout=24 * 60 * 60)
-    def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False):
-        try:
-            return XForm(self.source).get_questions(
-                langs=langs,
-                include_triggers=include_triggers,
-                include_groups=include_groups,
-                include_translations=include_translations,
-            )
-        except XFormException as e:
-            raise XFormException("Error in form {}".format(self.full_path_name), e)
-
-    @memoized
-    def get_case_property_name_formatter(self):
-        """Get a function that formats case property names
-
-        The returned function requires two arguments
-        `(case_property_name, data_path)` and returns a string.
-        """
-        valid_paths = {}
-        if toggles.MM_CASE_PROPERTIES.enabled(self.get_app().domain):
-            try:
-                valid_paths = {question['value']: question['tag']
-                               for question in self.get_questions(langs=[])}
-            except XFormException as e:
-                # punt on invalid xml (sorry, no rich attachments)
-                valid_paths = {}
-
-        def format_key(key, path):
-            if valid_paths.get(path) == "upload":
-                return "{}{}".format(ATTACHMENT_PREFIX, key)
-            return key
-        return format_key
-
-    def export_json(self, dump_json=True):
-        source = self.to_json()
-        del source['unique_id']
-        return json.dumps(source) if dump_json else source
-
-    def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.name, old_lang, new_lang)
-        try:
-            self.rename_xform_language(old_lang, new_lang)
-        except XFormException:
-            pass
-
-    def rename_xform_language(self, old_code, new_code):
-        source = XForm(self.source)
-        if source.exists():
-            source.rename_language(old_code, new_code)
-            self.source = source.render().decode('utf-8')
-
-    def default_name(self):
-        app = self.get_app()
-        return trans(
-            self.name,
-            [app.default_language] + app.langs,
-            include_lang=False
-        )
-
-    @property
-    def full_path_name(self):
-        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
-            'app_name': self.get_app().name,
-            'module_name': self.get_module().default_name(),
-            'form_name': self.default_name()
-        }
-
-    @property
-    def has_fixtures(self):
-        return 'src="jr://fixture/item-list:' in self.source
-
-    def get_auto_gps_capture(self):
-        app = self.get_app()
-        if app.build_version and app.enable_auto_gps:
-            return self.auto_gps_capture or app.auto_gps_capture
-        else:
-            return False
-
-    def is_registration_form(self, case_type=None):
-        """
-        Should return True if this form passes the following tests:
-         * does not require a case
-         * registers a case of type 'case_type' if supplied
-        """
-        raise NotImplementedError()
-
-    def uses_usercase(self):
-        raise NotImplementedError()
-
-    def update_app_case_meta(self, app_case_meta):
-        pass
-
-    @property
-    @memoized
-    def case_list_modules(self):
-        case_list_modules = [
-            mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
-        ]
-        return case_list_modules
-
-    @property
-    def is_case_list_form(self):
-        return bool(self.case_list_modules)
-
-    def get_save_to_case_updates(self):
-        """
-        Get a flat list of case property names from save to case questions
-        """
-        updates_by_case_type = defaultdict(set)
-        for save_to_case_update in self.case_references_data.get_save_references():
-            case_type = save_to_case_update.case_type
-            updates_by_case_type[case_type].update(save_to_case_update.properties)
-        return updates_by_case_type
-
-
-class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
-
-    def get_app(self):
-        return self._parent._parent
-
-    def get_module(self):
-        return self._parent
-
-    def get_case_type(self):
-        return self._parent.case_type
-
-    @property
-    def validator(self):
-        return IndexedFormBaseValidator(self)
-
-    def _add_save_to_case_questions(self, form_questions, app_case_meta):
-        def _make_save_to_case_question(path):
-            from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-            # todo: this is a hack - just make an approximate save-to-case looking question
-            return FormQuestionResponse.wrap({
-                "label": path,
-                "tag": path,
-                "value": path,
-                "repeat": None,
-                "group": None,
-                "type": 'SaveToCase',
-                "relevant": None,
-                "required": None,
-                "comment": None,
-                "hashtagValue": path,
-            })
-
-        def _make_dummy_condition():
-            # todo: eventually would be nice to support proper relevancy conditions here but that's a ways off
-            return FormActionCondition(type='always')
-
-        for property_info in self.case_references_data.get_save_references():
-            if property_info.case_type:
-                type_meta = app_case_meta.get_type(property_info.case_type)
-                for property_name in property_info.properties:
-                    app_case_meta.add_property_save(
-                        property_info.case_type,
-                        property_name,
-                        self.unique_id,
-                        _make_save_to_case_question(property_info.path),
-                        None
-                    )
-                if property_info.create:
-                    type_meta.add_opener(self.unique_id, _make_dummy_condition())
-                if property_info.close:
-                    type_meta.add_closer(self.unique_id, _make_dummy_condition())
-
-    def add_property_save(self, app_case_meta, case_type, name,
-                          questions, question_path, condition=None):
-        if question_path in questions:
-            app_case_meta.add_property_save(
-                case_type,
-                name,
-                self.unique_id,
-                questions[question_path],
-                condition
-            )
-        else:
-            app_case_meta.add_property_error(
-                case_type,
-                name,
-                self.unique_id,
-                "%s is not a valid question" % question_path
-            )
-
-    def add_property_load(self, app_case_meta, case_type, name,
-                          questions, question_path):
-        if question_path in questions:
-            app_case_meta.add_property_load(
-                case_type,
-                name,
-                self.unique_id,
-                questions[question_path]
-            )
-        else:
-            app_case_meta.add_property_error(
-                case_type,
-                name,
-                self.unique_id,
-                "%s is not a valid question" % question_path
-            )
-
-    def get_all_case_updates(self):
-        """
-        Collate contributed case updates from all sources within the form
-
-        Subclass must have helper methods defined:
-
-        - get_case_updates
-        - get_all_contributed_subcase_properties
-        - get_save_to_case_updates
-
-        :return: collated {<case_type>: set([<property>])}
-
-        """
-        updates_by_case_type = defaultdict(set)
-
-        for case_type, updates in self.get_case_updates().items():
-            updates_by_case_type[case_type].update(updates)
-
-        for case_type, updates in self.get_all_contributed_subcase_properties().items():
-            updates_by_case_type[case_type].update(updates)
-
-        for case_type, updates in self.get_save_to_case_updates().items():
-            updates_by_case_type[case_type].update(updates)
-
-        return updates_by_case_type
-
-    def get_case_updates_for_case_type(self, case_type):
-        """
-        Like get_case_updates filtered by a single case type
-
-        subclass must implement `get_case_updates`
-
-        """
-        return self.get_case_updates().get(case_type, [])
-
-
-class JRResourceProperty(StringProperty):
-
-    def validate(self, value, required=True):
-        super(JRResourceProperty, self).validate(value, required)
-        if value is not None and not value.startswith('jr://'):
-            raise BadValueError("JR Resources must start with 'jr://': {!r}".format(value))
-        return value
-
-
 class CustomIcon(DocumentSchema):
     """
     A custom icon to display next to a module or a form.
@@ -1573,7 +1106,463 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return self.custom_icons[0]
 
 
-class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
+class FormBase(IndexedSchema, CommentMixin, FormMediaMixin, NavMenuItemMediaMixin):
+    """
+    Part of a Managed Application; configuration for a form.
+    Translates to a second-level menu on the phone
+
+    """
+    form_type = None
+
+    name = DictProperty(six.text_type)
+    unique_id = StringProperty()
+    show_count = BooleanProperty(default=False)
+    xmlns = StringProperty()
+    version = IntegerProperty()
+    source = FormSource()
+    validation_cache = CachedStringProperty(
+        lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
+    )
+    post_form_workflow = StringProperty(
+        default=WORKFLOW_DEFAULT,
+        choices=ALL_WORKFLOWS
+    )
+    post_form_workflow_fallback = StringProperty(
+        choices=WORKFLOW_FALLBACK_OPTIONS,
+        default=None,
+    )
+    auto_gps_capture = BooleanProperty(default=False)
+    no_vellum = BooleanProperty(default=False)
+    form_links = SchemaListProperty(FormLink)
+    schedule_form_id = StringProperty()
+    custom_assertions = SchemaListProperty(CustomAssertion)
+    custom_instances = SchemaListProperty(CustomInstance)
+    case_references_data = SchemaProperty(CaseReferences)
+    is_release_notes_form = BooleanProperty(default=False)
+    enable_release_notes = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(cls, data):
+        data.pop('validation_cache', '')
+
+        if cls is FormBase:
+            doc_type = data['doc_type']
+            if doc_type == 'Form':
+                return Form.wrap(data)
+            elif doc_type == 'AdvancedForm':
+                return AdvancedForm.wrap(data)
+            elif doc_type == 'ShadowForm':
+                return ShadowForm.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for Form', doc_type)
+        else:
+            return super(FormBase, cls).wrap(data)
+
+    @property
+    def case_references(self):
+        return self.case_references_data or CaseReferences()
+
+    def requires_case(self):
+        return False
+
+    def get_action_type(self):
+        return ''
+
+    def get_validation_cache(self):
+        return self.validation_cache
+
+    def set_validation_cache(self, cache):
+        self.validation_cache = cache
+
+    def clear_validation_cache(self):
+        self.set_validation_cache(None)
+
+    @property
+    def validator(self):
+        return FormBaseValidator(self)
+
+    def is_allowed_to_be_release_notes_form(self):
+        # checks if this form can be marked as a release_notes form
+        #   based on whether it belongs to a training_module
+        #   and if no other form is already marked as release_notes form
+        module = self.get_module()
+        if not module or not module.is_training_module:
+            return False
+
+        forms = module.get_forms()
+        for form in forms:
+            if form.is_release_notes_form and form.unique_id != self.unique_id:
+                return False
+        return True
+
+    @property
+    def uses_cases(self):
+        return (
+            self.requires_case()
+            or self.get_action_type() != 'none'
+            or self.form_type == 'advanced_form'
+        )
+
+    @case_references.setter
+    def case_references(self, case_references):
+        self.case_references_data = case_references
+
+    @classmethod
+    def get_form(cls, form_unique_id, and_app=False):
+        try:
+            d = Application.get_db().view(
+                'app_manager/xforms_index',
+                key=form_unique_id
+            ).one()
+        except MultipleResultsFound as e:
+            raise XFormIdNotUnique(
+                "xform id '%s' not unique: %s" % (form_unique_id, e)
+            )
+        if d:
+            d = d['value']
+        else:
+            raise ResourceNotFound()
+        # unpack the dict into variables app_id, module_id, form_id
+        app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
+
+        app = Application.get(app_id)
+        form = app.get_form(unique_id)
+        if and_app:
+            return form, app
+        else:
+            return form
+
+    def pre_delete_hook(self):
+        raise NotImplementedError()
+
+    def pre_move_hook(self, from_module, to_module):
+        """ Called before a form is moved between modules or to a different position """
+        raise NotImplementedError()
+
+    def wrapped_xform(self):
+        return XForm(self.source)
+
+    def validate_form(self):
+        vc = self.get_validation_cache()
+        if vc is None:
+            # todo: now that we don't use formtranslate, does this still apply?
+            # formtranslate requires all attributes to be valid xpaths, but
+            # vellum namespaced attributes aren't
+            form = self.wrapped_xform()
+            form.strip_vellum_ns_attributes()
+            try:
+                if form.xml is not None:
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml))
+            except XFormValidationError as e:
+                validation_dict = {
+                    "fatal_error": e.fatal_error,
+                    "validation_problems": e.validation_problems,
+                    "version": e.version,
+                }
+                vc = json.dumps(validation_dict)
+            else:
+                vc = ""
+            self.set_validation_cache(vc)
+        if vc:
+            try:
+                raise XFormValidationError(**json.loads(vc))
+            except ValueError:
+                self.clear_validation_cache()
+                return self.validate_form()
+        return self
+
+    def is_a_disabled_release_form(self):
+        return self.is_release_notes_form and not self.enable_release_notes
+
+    @property
+    def timing_context(self):
+        return self.get_app().timing_context
+
+    def validate_for_build(self, validate_module=True):
+        return self.validator.validate_for_build(validate_module)
+
+    def get_unique_id(self):
+        """
+        Return unique_id if it exists, otherwise initialize it
+
+        Does _not_ force a save, so it's the caller's responsibility to save the app
+
+        """
+        if not self.unique_id:
+            self.unique_id = random_hex()
+        return self.unique_id
+
+    def get_app(self):
+        return self._parent._parent
+
+    def get_version(self):
+        return self.version if self.version else self.get_app().version
+
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
+        app = self.get_app()
+        langs = app.get_build_langs(build_profile_id)
+        xform.exclude_languages(langs)
+        xform.set_default_language(langs[0])
+        xform.normalize_itext()
+        xform.strip_vellum_ns_attributes()
+        xform.set_version(self.get_version())
+        xform.add_missing_instances(app.domain)
+
+    def render_xform(self, build_profile_id=None):
+        xform = XForm(self.source)
+        self.add_stuff_to_xform(xform, build_profile_id)
+        return xform.render()
+
+    def cached_get_questions(self):
+        """
+        Call to get_questions with a superset of necessary information, so
+        it can hit the same cache across common app-building workflows
+        """
+        # it is important that this is called with the same params every time
+        return self.get_questions([], include_triggers=True, include_groups=True)
+
+    @time_method()
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'],
+                timeout=24 * 60 * 60)
+    def get_questions(self, langs, include_triggers=False,
+                      include_groups=False, include_translations=False):
+        try:
+            return XForm(self.source).get_questions(
+                langs=langs,
+                include_triggers=include_triggers,
+                include_groups=include_groups,
+                include_translations=include_translations,
+            )
+        except XFormException as e:
+            raise XFormException("Error in form {}".format(self.full_path_name), e)
+
+    @memoized
+    def get_case_property_name_formatter(self):
+        """Get a function that formats case property names
+
+        The returned function requires two arguments
+        `(case_property_name, data_path)` and returns a string.
+        """
+        valid_paths = {}
+        if toggles.MM_CASE_PROPERTIES.enabled(self.get_app().domain):
+            try:
+                valid_paths = {question['value']: question['tag']
+                               for question in self.get_questions(langs=[])}
+            except XFormException as e:
+                # punt on invalid xml (sorry, no rich attachments)
+                valid_paths = {}
+
+        def format_key(key, path):
+            if valid_paths.get(path) == "upload":
+                return "{}{}".format(ATTACHMENT_PREFIX, key)
+            return key
+        return format_key
+
+    def export_json(self, dump_json=True):
+        source = self.to_json()
+        del source['unique_id']
+        return json.dumps(source) if dump_json else source
+
+    def rename_lang(self, old_lang, new_lang):
+        _rename_key(self.name, old_lang, new_lang)
+        try:
+            self.rename_xform_language(old_lang, new_lang)
+        except XFormException:
+            pass
+
+    def rename_xform_language(self, old_code, new_code):
+        source = XForm(self.source)
+        if source.exists():
+            source.rename_language(old_code, new_code)
+            self.source = source.render().decode('utf-8')
+
+    def default_name(self):
+        app = self.get_app()
+        return trans(
+            self.name,
+            [app.default_language] + app.langs,
+            include_lang=False
+        )
+
+    @property
+    def full_path_name(self):
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+            'app_name': self.get_app().name,
+            'module_name': self.get_module().default_name(),
+            'form_name': self.default_name()
+        }
+
+    @property
+    def has_fixtures(self):
+        return 'src="jr://fixture/item-list:' in self.source
+
+    def get_auto_gps_capture(self):
+        app = self.get_app()
+        if app.build_version and app.enable_auto_gps:
+            return self.auto_gps_capture or app.auto_gps_capture
+        else:
+            return False
+
+    def is_registration_form(self, case_type=None):
+        """
+        Should return True if this form passes the following tests:
+         * does not require a case
+         * registers a case of type 'case_type' if supplied
+        """
+        raise NotImplementedError()
+
+    def uses_usercase(self):
+        raise NotImplementedError()
+
+    def update_app_case_meta(self, app_case_meta):
+        pass
+
+    @property
+    @memoized
+    def case_list_modules(self):
+        case_list_modules = [
+            mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
+        ]
+        return case_list_modules
+
+    @property
+    def is_case_list_form(self):
+        return bool(self.case_list_modules)
+
+    def get_save_to_case_updates(self):
+        """
+        Get a flat list of case property names from save to case questions
+        """
+        updates_by_case_type = defaultdict(set)
+        for save_to_case_update in self.case_references_data.get_save_references():
+            case_type = save_to_case_update.case_type
+            updates_by_case_type[case_type].update(save_to_case_update.properties)
+        return updates_by_case_type
+
+    def get_module(self):
+        return self._parent
+
+    def get_case_type(self):
+        return self._parent.case_type
+
+    def _add_save_to_case_questions(self, form_questions, app_case_meta):
+        def _make_save_to_case_question(path):
+            from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+            # todo: this is a hack - just make an approximate save-to-case looking question
+            return FormQuestionResponse.wrap({
+                "label": path,
+                "tag": path,
+                "value": path,
+                "repeat": None,
+                "group": None,
+                "type": 'SaveToCase',
+                "relevant": None,
+                "required": None,
+                "comment": None,
+                "hashtagValue": path,
+            })
+
+        def _make_dummy_condition():
+            # todo: eventually would be nice to support proper relevancy conditions here but that's a ways off
+            return FormActionCondition(type='always')
+
+        for property_info in self.case_references_data.get_save_references():
+            if property_info.case_type:
+                type_meta = app_case_meta.get_type(property_info.case_type)
+                for property_name in property_info.properties:
+                    app_case_meta.add_property_save(
+                        property_info.case_type,
+                        property_name,
+                        self.unique_id,
+                        _make_save_to_case_question(property_info.path),
+                        None
+                    )
+                if property_info.create:
+                    type_meta.add_opener(self.unique_id, _make_dummy_condition())
+                if property_info.close:
+                    type_meta.add_closer(self.unique_id, _make_dummy_condition())
+
+    def add_property_save(self, app_case_meta, case_type, name,
+                          questions, question_path, condition=None):
+        if question_path in questions:
+            app_case_meta.add_property_save(
+                case_type,
+                name,
+                self.unique_id,
+                questions[question_path],
+                condition
+            )
+        else:
+            app_case_meta.add_property_error(
+                case_type,
+                name,
+                self.unique_id,
+                "%s is not a valid question" % question_path
+            )
+
+    def add_property_load(self, app_case_meta, case_type, name,
+                          questions, question_path):
+        if question_path in questions:
+            app_case_meta.add_property_load(
+                case_type,
+                name,
+                self.unique_id,
+                questions[question_path]
+            )
+        else:
+            app_case_meta.add_property_error(
+                case_type,
+                name,
+                self.unique_id,
+                "%s is not a valid question" % question_path
+            )
+
+    def get_all_case_updates(self):
+        """
+        Collate contributed case updates from all sources within the form
+
+        Subclass must have helper methods defined:
+
+        - get_case_updates
+        - get_all_contributed_subcase_properties
+        - get_save_to_case_updates
+
+        :return: collated {<case_type>: set([<property>])}
+
+        """
+        updates_by_case_type = defaultdict(set)
+
+        for case_type, updates in self.get_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_save_to_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
+
+    def get_case_updates_for_case_type(self, case_type):
+        """
+        Like get_case_updates filtered by a single case type
+
+        subclass must implement `get_case_updates`
+
+        """
+        return self.get_case_updates().get(case_type, [])
+
+
+class JRResourceProperty(StringProperty):
+
+    def validate(self, value, required=True):
+        super(JRResourceProperty, self).validate(value, required)
+        if value is not None and not value.startswith('jr://'):
+            raise BadValueError("JR Resources must start with 'jr://': {!r}".format(value))
+        return value
+
+
+class Form(FormBase):
     form_type = 'module_form'
 
     form_filter = StringProperty()
@@ -2661,7 +2650,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 pass
 
 
-class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
+class AdvancedForm(FormBase):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
