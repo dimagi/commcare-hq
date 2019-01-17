@@ -746,7 +746,7 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
             'trigger_customer_form': self.trigger_customer_invoice_form,
         }
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(TriggerCustomerInvoiceView, self).dispatch(request, *args, **kwargs)
 

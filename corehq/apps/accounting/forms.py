@@ -1919,7 +1919,7 @@ class TriggerInvoiceForm(forms.Form):
 class TriggerCustomerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
-    customer_account = forms.CharField(label="Billing Account")
+    customer_account = forms.CharField(label="Billing Account", widget=forms.Select(choices=[]))
 
     def __init__(self, *args, **kwargs):
         super(TriggerCustomerInvoiceForm, self).__init__(*args, **kwargs)
