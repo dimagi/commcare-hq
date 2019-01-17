@@ -416,7 +416,7 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-    return _login(req, domain, "login_and_password/login.html")
+    return _login(req, domain)
 
 
 @location_safe
