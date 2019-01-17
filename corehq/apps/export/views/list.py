@@ -58,7 +58,6 @@ from corehq.apps.export.views.utils import ExportsPermissionsManager, user_can_v
 
 class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
-    allow_bulk_export = True
     is_deid = False
 
     lead_text = ugettext_lazy('''
@@ -80,8 +79,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             'exports': self.get_exports_list(),
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
-            'bulk_download_url': self.bulk_download_url,
-            'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.permissions.has_edit_permissions,
             'is_deid': self.is_deid,
             "export_type_caps": _("Export"),
@@ -95,14 +92,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
             'lead_text': self.lead_text,
         }
-
-    @property
-    def bulk_download_url(self):
-        """Returns url for bulk download
-        """
-        if not self.allow_bulk_export:
-            return None
-        raise NotImplementedError('must implement bulk_download_url')
 
     @memoized
     def get_saved_exports(self):
@@ -262,7 +251,6 @@ class DailySavedExportListView(BaseExportListView):
     urlname = 'list_daily_saved_exports'
     page_title = ugettext_lazy("Daily Saved Exports")
     form_or_case = None  # This view lists both case and form feeds
-    allow_bulk_export = False
 
     def dispatch(self, *args, **kwargs):
         if not self._priv_check():
@@ -301,11 +289,6 @@ class DailySavedExportListView(BaseExportListView):
     @memoized
     def create_export_form_title(self):
         return "Select a model to export"  # could be form or case
-
-    @property
-    def bulk_download_url(self):
-        # Daily Saved exports do not support bulk download
-        return ""
 
     @memoized
     def get_saved_exports(self):
@@ -406,11 +389,6 @@ class FormExportListView(BaseExportListView):
     page_title = ugettext_noop("Export Form Data")
     form_or_case = 'form'
 
-    @property
-    def bulk_download_url(self):
-        from corehq.apps.export.views.download import BulkDownloadNewFormExportView
-        return reverse(BulkDownloadNewFormExportView.urlname, args=(self.domain,))
-
     @memoized
     def get_saved_exports(self):
         exports = get_form_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
@@ -458,10 +436,24 @@ class FormExportListView(BaseExportListView):
 
 
 @location_safe
+class BulkFormExportListView(FormExportListView):
+    urlname = 'list_form_exports_bulk'
+    page_title = ugettext_noop("Bulk Export Form Data")
+    template = "export/bulk_export_list.html"
+
+    @property
+    def page_context(self):
+        from corehq.apps.export.views.download import BulkDownloadNewFormExportView
+        return {
+            'bulk_download_url': reverse(BulkDownloadNewFormExportView.urlname, args=(self.domain,)),
+            'exports': self.get_exports_list(),
+        }
+
+
+@location_safe
 class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
     page_title = ugettext_noop("Export Case Data")
-    allow_bulk_export = False
     form_or_case = 'case'
 
     @property
@@ -519,7 +511,6 @@ class DashboardFeedListView(DailySavedExportListView):
     urlname = 'list_dashboard_feeds'
     page_title = ugettext_lazy("Excel Dashboard Integration")
     form_or_case = None  # This view lists both case and form feeds
-    allow_bulk_export = False
 
     lead_text = ugettext_lazy('''
         Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data.
@@ -578,6 +569,12 @@ class DeIdFormExportListView(FormExportListView):
     @property
     def create_export_form(self):
         return None
+
+
+class BulkDeIdFormExportListView(BulkFormExportListView):
+    page_title = ugettext_noop("Bulk Export De-Identified Form Data")
+    urlname = 'list_form_deid_exports_bulk'
+    is_deid = True
 
 
 class _DeidMixin(object):

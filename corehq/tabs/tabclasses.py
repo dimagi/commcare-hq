@@ -556,6 +556,7 @@ class ProjectDataTab(UITab):
             )
             from corehq.apps.export.views.list import (
                 FormExportListView,
+                BulkFormExportListView,
                 CaseExportListView,
                 DashboardFeedListView,
                 DailySavedExportListView,
@@ -599,8 +600,15 @@ class ProjectDataTab(UITab):
                                 'urlname': EditNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
-                    }
-                )
+                    })
+                export_data_views.append(
+                    {
+                        'title': _(BulkFormExportListView.page_title),
+                        'url': reverse(BulkFormExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': False,
+                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                    })
             if self.can_view_case_exports:
                 export_data_views.append(
                     {

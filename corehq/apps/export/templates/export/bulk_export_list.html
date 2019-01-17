@@ -1,0 +1,16 @@
+{%  extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% requirejs_main 'export/js/export_list_main' %}
+
+{% block page_content %}
+    {% initial_page_data 'bulk_download_url' bulk_download_url %}
+    {% initial_page_data 'exports' exports %}
+
+    {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
+
+    <h3>stuff goes here</h3>
+{% endblock %}
