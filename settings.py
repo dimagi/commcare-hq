@@ -854,12 +854,10 @@ KAFKA_API_VERSION = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
-COMMCARE_HQ_NAME = {
-    "default": "CommCare HQ",
-}
-COMMCARE_NAME = {
-    "default": "CommCare",
-}
+# CommCare HQ - To indicate server
+COMMCARE_HQ_NAME = "CommCare HQ"
+# CommCare - To Indicate mobile
+COMMCARE_NAME = "CommCare"
 
 ENTERPRISE_MODE = False
 
@@ -892,14 +890,6 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-
-# used for providing separate landing pages for different URLs
-# default will be used if no hosts match
-CUSTOM_LANDING_TEMPLATE = {
-    # "icds-cas.gov.in": 'icds/login.html',
-    # "default": 'login_and_password/login.html',
-}
-
 from env_settings import *
 
 try:
