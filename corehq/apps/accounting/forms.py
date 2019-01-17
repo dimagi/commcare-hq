@@ -2035,7 +2035,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
 class TriggerBookkeeperEmailForm(forms.Form):
     month = forms.ChoiceField(label="Invoice Month")
     year = forms.ChoiceField(label="Invoice Year")
-    emails = forms.CharField(label="Email To")
+    emails = forms.CharField(label="Email To", widget=forms.SelectMultiple(choices=[]),)
 
     def __init__(self, *args, **kwargs):
         super(TriggerBookkeeperEmailForm, self).__init__(*args, **kwargs)
@@ -2069,12 +2069,15 @@ class TriggerBookkeeperEmailForm(forms.Form):
             )
         )
 
+    def clean_emails(self):
+        return self.data.getlist('emails')
+
     def trigger_email(self):
         from corehq.apps.accounting.tasks import send_bookkeeper_email
         send_bookkeeper_email(
             month=int(self.cleaned_data['month']),
             year=int(self.cleaned_data['year']),
-            emails=self.cleaned_data['emails'].split(',')
+            emails=self.cleaned_data['emails']
         )
 
 

@@ -788,7 +788,7 @@ class TriggerBookkeeperEmailView(AccountingSectionView):
             'trigger_email_form': self.trigger_email_form,
         }
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(TriggerBookkeeperEmailView, self).dispatch(request, *args, **kwargs)
 
