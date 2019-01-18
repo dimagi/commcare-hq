@@ -584,6 +584,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
+    def is_active(self):
+        """
+        Returns True if the report has a start_date that is in the past or there is
+        no start date
+        :return: boolean
+        """
+        return self.start_date is None or self.start_date <= datetime.today().date()
+
+    @property
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReportView
         return self.report_type == ConfigurableReportView.prefix
