@@ -17,7 +17,11 @@ from corehq.apps.hqadmin.views.users import BaseAdminSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
+from corehq.apps.accounting.decorators import (
+    requires_privilege_with_fallback,
+    requires_privilege_plaintext_response,
+)
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
     send_sms,
@@ -140,10 +144,19 @@ class BaseMessagingSectionView(BaseDomainView):
     def is_system_admin(self):
         return self.request.couch_user.is_superuser
 
+    @cached_property
+    def is_granted_messaging_access(self):
+        if settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access:
+            return True
+        subscription = Subscription.get_active_subscription_by_domain(self.domain_object)
+        if subscription is not None:
+            return subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+        return False
+
     @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):
-        if not (settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access):
+        if not self.is_granted_messaging_access:
             return render(request, "sms/wall.html", self.main_context)
         return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
