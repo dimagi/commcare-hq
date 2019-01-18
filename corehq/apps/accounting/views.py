@@ -86,6 +86,8 @@ from corehq.apps.accounting.async_handlers import (
     DomainFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
     SoftwarePlanAsyncHandler,
+    InvoiceNumberAsyncHandler,
+    InvoiceBalanceAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     Invoice, WireInvoice, CustomerInvoice, BillingAccount, CreditLine, Subscription, CustomerBillingRecord,
@@ -1172,6 +1174,8 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         DomainFilterAsyncHandler,
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
+        InvoiceNumberAsyncHandler,
+        InvoiceBalanceAsyncHandler,
     ]
 
     @method_decorator(require_superuser)
