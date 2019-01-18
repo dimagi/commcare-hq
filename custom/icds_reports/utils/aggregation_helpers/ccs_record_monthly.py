@@ -158,7 +158,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
             ('home_visit_date', 'agg_bp.latest_time_end_processed'),
             ('date_death', 'person.date_death'),
-            ('person_case_id', 'ucr.person_case_id')
+            ('person_case_id', 'ucr.person_case_id'),
+            ('child_name', 'case_list.child_name')
         )
         return """
         INSERT INTO "{tablename}" (
