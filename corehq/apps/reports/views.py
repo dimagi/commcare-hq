@@ -1110,10 +1110,15 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 
-def get_scheduled_report_response(couch_user, domain, scheduled_report_id, email=True, attach_excel=False):
+def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
+                                  email=True, attach_excel=False,
+                                  send_only_active=False):
     """
     This function somewhat confusingly returns a tuple of: (response, excel_files)
     If attach_excel is false, excel_files will always be an empty list.
+    If send_only_active is True, then only ReportConfigs that have a start_date
+    in the past will be sent. If none of the ReportConfigs are valid, no email will
+    be sent.
     """
     # todo: clean up this API?
     from django.http import HttpRequest
@@ -1134,11 +1139,13 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id, email
         email,
         attach_excel=attach_excel,
         lang=notification.language,
+        send_only_active=send_only_active,
     )
 
 
 def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
-                           notes=None, attach_excel=False, once=False, lang=None):
+                           notes=None, attach_excel=False, once=False, lang=None,
+                           send_only_active=False):
     """
     Renders only notification's main content, which then may be used to generate full notification body.
     """
@@ -1147,6 +1154,14 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
     report_outputs = []
     excel_attachments = []
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+
+    # Show only the report configs that have started their reporting period
+    if send_only_active:
+        configs = filter(lambda c: c.is_active, configs)
+
+    # Don't send an email if none of the reports configs have started
+    if len(configs) == 0:
+        return False, False
 
     for config in configs:
         content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
@@ -1161,6 +1176,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             'title': config.full_name,
             'url': config.url,
             'content': content,
+            'is_active': config.is_active,
             'description': config.description,
             "startdate": date_range.get("startdate") if date_range else "",
             "enddate": date_range.get("enddate") if date_range else "",
