@@ -175,6 +175,8 @@ class ConvertTranslations(BaseTranslationsView):
                     po_file_content = self._generate_po_content(worksheet)
                     result_filename = filename.split('.xls')[0]
                     zipfile.writestr(result_filename + '.po', po_file_content)
+                else:
+                    assert False, "unexpected filename: {}".format(filename)
         mem_file.seek(0)
         response = HttpResponse(mem_file, content_type="text/html")
         zip_filename = 'Converted-' + uploaded_zipfile.filename.split('.zip')[0]
