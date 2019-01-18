@@ -815,8 +815,7 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def by_ids(cls, config_ids):
         mapping = cls.by_id_mapping()
-
-        return_configs = []
+        config_by_ids = {}
         for config_id in config_ids:
             try:
                 domain, wrapped = mapping[config_id]
@@ -824,8 +823,8 @@ class StaticReportConfiguration(JsonObject):
                 raise ReportConfigurationNotFoundError(_(
                     "The following report configuration could not be found: {}".format(config_id)
                 ))
-            return_configs.append(cls._get_report_config(wrapped, domain))
-        return return_configs
+            config_by_ids[config_id] = cls._get_report_config(wrapped, domain)
+        return config_by_ids
 
     @classmethod
     def report_class_by_domain_and_id(cls, domain, config_id):
@@ -1062,10 +1061,10 @@ def get_report_configs(config_ids, domain):
             static_report_config_ids.append(config_id)
         else:
             dynamic_report_config_ids.append(config_id)
-    static_report_configs = StaticReportConfiguration.by_ids(static_report_config_ids)
-    if len(static_report_configs) != len(static_report_config_ids):
+    static_report_config_by_ids = StaticReportConfiguration.by_ids(static_report_config_ids)
+    if len(static_report_config_by_ids.values()) != len(static_report_config_ids):
         raise ReportConfigurationNotFoundError
-    for config in static_report_configs:
+    for config in static_report_config_by_ids.values():
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
 
@@ -1082,7 +1081,7 @@ def get_report_configs(config_ids, domain):
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
     # rearrange the configs in the same order as the ids received
-    all_configs = dynamic_report_configs + static_report_configs
+    all_configs = dynamic_report_configs + static_report_config_by_ids.values()
     id_mapping = {config.get_id: config for config in all_configs}
     return [id_mapping[config_id] for config_id in config_ids]
 
