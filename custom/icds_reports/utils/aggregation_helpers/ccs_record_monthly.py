@@ -141,7 +141,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('person_name', 'case_list.person_name'),
             ('edd', 'case_list.edd'),
             ('delivery_nature', 'case_list.delivery_nature'),
-            ('mobile_number', 'case_list.mobile_number'),
+            ('mobile_number', 'person.phone_number'),
             ('preg_order', 'case_list.preg_order'),
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
             ('last_date_thr', 'case_list.last_date_thr'),
