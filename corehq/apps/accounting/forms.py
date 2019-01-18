@@ -451,7 +451,8 @@ class BillingAccountContactForm(forms.ModelForm):
 
 class SubscriptionForm(forms.Form):
     account = forms.IntegerField(
-        label=ugettext_lazy("Billing Account")
+        label=ugettext_lazy("Billing Account"),
+        widget=forms.Select(choices=[]),
     )
     start_date = forms.DateField(
         label=ugettext_lazy("Start Date"), widget=forms.DateInput()
@@ -463,8 +464,14 @@ class SubscriptionForm(forms.Form):
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    plan_version = forms.IntegerField(label=ugettext_lazy("Software Plan"))
-    domain = forms.CharField(label=ugettext_lazy("Project Space"))
+    plan_version = forms.IntegerField(
+        label=ugettext_lazy("Software Plan"),
+        widget=forms.Select(choices=[]),
+    )
+    domain = forms.CharField(
+        label=ugettext_lazy("Project Space"),
+        widget=forms.Select(choices=[]),
+    )
     salesforce_contract_id = forms.CharField(
         label=ugettext_lazy("Salesforce Deployment ID"), max_length=80, required=False
     )
@@ -485,6 +492,7 @@ class SubscriptionForm(forms.Form):
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscription To"),
         required=False,
+        widget=forms.Select(choices=[]),
     )
     service_type = forms.ChoiceField(
         label=ugettext_lazy("Type"),
@@ -1138,7 +1146,8 @@ class SoftwarePlanVersionForm(forms.Form):
 
     feature_id = forms.CharField(
         required=False,
-        label="Search for or Create Feature"
+        label="Search for or Create Feature",
+        widget=forms.Select(choices=[]),
     )
     new_feature_type = forms.ChoiceField(
         required=False,
@@ -1151,7 +1160,8 @@ class SoftwarePlanVersionForm(forms.Form):
 
     product_rate_id = forms.CharField(
         required=False,
-        label="Search for or Create Product"
+        label="Search for or Create Product",
+        widget=forms.Select(choices=[]),
     )
     product_rates = forms.CharField(
         required=False,
@@ -1165,7 +1175,8 @@ class SoftwarePlanVersionForm(forms.Form):
     )
     role_slug = forms.ChoiceField(
         required=False,
-        label="Role"
+        label="Role",
+        widget=forms.Select(choices=[]),
     )
     role_type = forms.ChoiceField(
         required=True,
@@ -1837,7 +1848,7 @@ class AnnualPlanContactForm(forms.Form):
 class TriggerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
-    domain = forms.CharField(label="Project Space")
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
 
     def __init__(self, *args, **kwargs):
         super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
@@ -1919,7 +1930,7 @@ class TriggerInvoiceForm(forms.Form):
 class TriggerCustomerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
-    customer_account = forms.CharField(label="Billing Account")
+    customer_account = forms.CharField(label="Billing Account", widget=forms.Select(choices=[]))
 
     def __init__(self, *args, **kwargs):
         super(TriggerCustomerInvoiceForm, self).__init__(*args, **kwargs)
@@ -2035,7 +2046,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
 class TriggerBookkeeperEmailForm(forms.Form):
     month = forms.ChoiceField(label="Invoice Month")
     year = forms.ChoiceField(label="Invoice Year")
-    emails = forms.CharField(label="Email To")
+    emails = forms.CharField(label="Email To", widget=forms.SelectMultiple(choices=[]),)
 
     def __init__(self, *args, **kwargs):
         super(TriggerBookkeeperEmailForm, self).__init__(*args, **kwargs)
@@ -2069,12 +2080,15 @@ class TriggerBookkeeperEmailForm(forms.Form):
             )
         )
 
+    def clean_emails(self):
+        return self.data.getlist('emails')
+
     def trigger_email(self):
         from corehq.apps.accounting.tasks import send_bookkeeper_email
         send_bookkeeper_email(
             month=int(self.cleaned_data['month']),
             year=int(self.cleaned_data['year']),
-            emails=self.cleaned_data['emails'].split(',')
+            emails=self.cleaned_data['emails']
         )
 
 
