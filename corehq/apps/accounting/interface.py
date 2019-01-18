@@ -34,6 +34,7 @@ from .filters import (
     DueDatePeriodFilter,
     EndDateFilter,
     EntryPointFilter,
+    InvoiceNumberFilter,
     IsHiddenFilter,
     NameFilter,
     PaymentStatusFilter,
@@ -635,6 +636,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
     description = "List of all invoices"
     slug = "invoices"
     fields = [
+        'corehq.apps.accounting.interface.InvoiceNumberFilter',
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
@@ -791,6 +793,10 @@ class InvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = Invoice.objects.all()
+
+        invoice_id = InvoiceNumberFilter.get_value(self.request, self.domain)
+        if invoice_id is not None:
+            queryset = queryset.filter(id=int(invoice_id))
 
         if self.subscription:
             queryset = queryset.filter(subscription=self.subscription)

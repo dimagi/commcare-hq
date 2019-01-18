@@ -16,6 +16,7 @@ from corehq.apps.accounting.async_handlers import (
     DomainFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
     SoftwarePlanAsyncHandler,
+    InvoiceNumberAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     BillingAccountType,
@@ -403,6 +404,14 @@ class SoftwarePlanVisibilityFilter(BaseSingleOptionFilter):
     label = _("Visibility")
     default_text = _("All")
     options = SoftwarePlanVisibility.CHOICES
+
+
+class InvoiceNumberFilter(BaseAccountingSingleOptionFilter):
+    slug = 'invoice_number'
+    label = 'Invoice Number'
+    default_text = 'All'
+    async_handler = InvoiceNumberAsyncHandler
+    async_action = 'invoice_number'
 
 
 class PaymentStatusFilter(BaseSingleOptionFilter):

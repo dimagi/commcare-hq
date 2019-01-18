@@ -1,12 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from django.db.models import Q
+import six
+
+from django.conf import settings
+from django.db.models import F, Q
 
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
     Feature,
+    Invoice,
     SoftwarePlan,
     SoftwarePlanVersion,
     SoftwareProductRate,
@@ -428,6 +432,29 @@ class SoftwarePlanAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     def name_response(self):
         return [self._fmt_select2_data(p.name, p.name)
                 for p in self.paginated_data]
+
+
+class InvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'invoice_number_filter'
+    allowed_actions = [
+        'invoice_number',
+    ]
+
+    @property
+    def query(self):
+        query = Invoice.objects.annotate(
+            number_on_invoice=F('id') + settings.INVOICE_STARTING_NUMBER
+        ).order_by('number_on_invoice')
+        if self.search_string:
+            query = query.filter(number_on_invoice__startswith=self.search_string)
+        return query
+
+    @property
+    def invoice_number_response(self):
+        return [
+            self._fmt_select2_data(six.text_type(p.id), six.text_type(p.number_on_invoice))
+            for p in self.paginated_data
+        ]
 
 
 class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
