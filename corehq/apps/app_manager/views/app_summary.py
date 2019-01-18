@@ -320,7 +320,8 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
         modules = list(self.app.get_modules())
-        headers = [(_('All Forms'), ('module_name', 'form_name', 'comment'))]
+        headers = [(_('All Forms'),
+                    ('module_name', 'form_name', 'comment', 'module_display_condition', 'form_display_condition'))]
         headers += [
             (self._get_form_sheet_name(module, form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
             for module in modules for form in module.get_forms()
@@ -386,8 +387,11 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         return ((
             _get_translated_module_name(self.app, module.unique_id, language),
             _get_translated_form_name(self.app, form.get_unique_id(), language),
-            form.short_comment
+            form.short_comment,
+            module.module_filter,
+            form.form_filter,
         ),)
+
 
 CASE_SUMMARY_EXPORT_HEADER_NAMES = [
     'case_property_name',
