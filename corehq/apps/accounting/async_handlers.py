@@ -457,6 +457,27 @@ class InvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
         ]
 
 
+class InvoiceBalanceAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'invoice_balance_filter'
+    allowed_actions = [
+        'invoice_balance'
+    ]
+
+    @property
+    def query(self):
+        query = Invoice.objects.order_by('balance')
+        if self.search_string:
+            query = query.filter(balance__startswith=self.search_string)
+        return query
+
+    @property
+    def invoice_balance_response(self):
+        return [
+            self._fmt_select2_data(six.text_type(p.balance), six.text_type(p.balance))
+            for p in self.paginated_data
+        ]
+
+
 class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     slug = 'domain_filter'
     allowed_actions = [

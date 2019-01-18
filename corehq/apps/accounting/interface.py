@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+from decimal import Decimal
 
 from django.urls import reverse
 from django.db.models import Q
@@ -35,6 +36,7 @@ from .filters import (
     EndDateFilter,
     EntryPointFilter,
     InvoiceNumberFilter,
+    InvoiceBalanceFilter,
     IsHiddenFilter,
     NameFilter,
     PaymentStatusFilter,
@@ -50,7 +52,7 @@ from .filters import (
     SubscriberFilter,
     SubscriptionTypeFilter,
     TrialStatusFilter,
-    CustomerAccountFilter
+    CustomerAccountFilter,
 )
 from .forms import AdjustBalanceForm
 from .models import (
@@ -637,6 +639,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
     slug = "invoices"
     fields = [
         'corehq.apps.accounting.interface.InvoiceNumberFilter',
+        'corehq.apps.accounting.interface.InvoiceBalanceFilter',
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
@@ -797,6 +800,10 @@ class InvoiceInterface(InvoiceInterfaceBase):
         invoice_id = InvoiceNumberFilter.get_value(self.request, self.domain)
         if invoice_id is not None:
             queryset = queryset.filter(id=int(invoice_id))
+
+        invoice_balance = InvoiceBalanceFilter.get_value(self.request, self.domain)
+        if invoice_balance is not None:
+            queryset = queryset.filter(balance=Decimal(invoice_balance))
 
         if self.subscription:
             queryset = queryset.filter(subscription=self.subscription)
