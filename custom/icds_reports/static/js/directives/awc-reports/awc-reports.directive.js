@@ -1751,7 +1751,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('anemic').withTitle('Anemia during last ANC (Y/N)').renderWith(renderAnemic).withClass('medium-col'),
             DTColumnBuilder.newColumn('num_anc_complete').withTitle('Number of ANC visits').renderWith(renderNumAncComplete).withClass('medium-col'),
             DTColumnBuilder.newColumn('beneficiary').withTitle('Beneficiary Status').renderWith(renderBeneficiary).withClass('medium-col'),
-            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given to date').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
+            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given in current month').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
             DTColumnBuilder.newColumn('last_date_thr').withTitle('Date of last THR').renderWith(renderLastDateThr).withClass('medium-col'),
         ];
     } else if (vm.step === 'lactating') {
