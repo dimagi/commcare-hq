@@ -21,7 +21,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
     requires_privilege_plaintext_response,
 )
-from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
+from corehq.apps.accounting.models import DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
     send_sms,
@@ -150,7 +150,9 @@ class BaseMessagingSectionView(BaseDomainView):
             return True
         subscription = Subscription.get_active_subscription_by_domain(self.domain_object)
         if subscription is not None:
-            return subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+            return subscription.plan_version.plan.name == DefaultProductPlan.get_default_plan_version(
+                edition=SoftwarePlanEdition.ENTERPRISE
+            ).plan.name
         return False
 
     @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
