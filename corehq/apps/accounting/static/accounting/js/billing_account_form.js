@@ -3,7 +3,7 @@ hqDefine('accounting/js/billing_account_form', [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'accounting/js/credits_tab',
-    'accounting/js/widgets',
+    'accounting/js/widgets_v4',
 ], function (
     $,
     ko,

@@ -25,6 +25,7 @@ class Migration(migrations.Migration):
                         to_field='form_id',
                         db_index=False,
                         db_constraint=False,
+                        on_delete=models.CASCADE,
                     )
                 ),
             ],

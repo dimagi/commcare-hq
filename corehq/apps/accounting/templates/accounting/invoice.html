@@ -37,6 +37,9 @@
         <li><a href="#adjustments" data-toggle="tab">{% trans "Adjustments" %}</a></li>
         {% endif %}
         <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
+        {% if not hide_invoice_form.invoice.is_hidden %}
+        <li><a href="#hide" data-toggle="tab">{% trans "Hide From Client" %}</a></li>
+        {% endif %}
     </ul>
 
     <div class="tab-content tab-padded">
@@ -117,6 +120,10 @@
         {% endif %}
         <div class="tab-pane" id="suppress">
             {% crispy suppress_invoice_form %}
+        </div>
+
+        <div class="tab-pane" id="hide">
+            {% crispy hide_invoice_form %}
         </div>
     </div>
 {% endblock %}

@@ -48,7 +48,7 @@ class DigestOtaRestoreTest(TestCase):
         uri, client = self._set_restore_client(self.domain, self.commcare_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content, "Success")
+        self.assertEqual(resp.content.decode('utf-8'), "Success")
 
     @mock.patch('corehq.apps.ota.views.get_restore_response')
     def test_web_user_restore(self, mock_restore):
@@ -57,7 +57,7 @@ class DigestOtaRestoreTest(TestCase):
         uri, client = self._set_restore_client(self.domain, self.web_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content, "Success")
+        self.assertEqual(resp.content.decode('utf-8'), "Success")
 
     def test_wrong_domain_web_user(self):
         uri, client = self._set_restore_client(self.wrong_domain, self.web_user.username)

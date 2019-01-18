@@ -111,19 +111,6 @@ class BaseExportListView(HQJSONResponseMixin, BaseProjectDataView):
         """
         raise NotImplementedError("must implement get_saved_exports")
 
-    @property
-    @memoized
-    def emailed_export_groups(self):
-        """The groups of saved exports by domain for daily emailed exports.
-        """
-        return HQGroupExportConfiguration.by_domain(self.domain)
-
-    @property
-    def daily_emailed_exports(self):
-        """Returns a list of exports marked for a daily email.
-        """
-        raise NotImplementedError("must implement daily_emailed_exports")
-
     def fmt_export_data(self, export):
         """Returns the object used for each row (per export)
         in the saved exports table. This data will eventually be processed as
@@ -235,7 +222,7 @@ def _get_task_status_json(export_instance_id):
 @require_GET
 def get_saved_export_progress(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+    permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
     export_instance_id = request.GET.get('export_instance_id')
     return json_response({
@@ -247,7 +234,7 @@ def get_saved_export_progress(request, domain):
 @require_POST
 def toggle_saved_export_enabled(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+    permissions.access_list_exports_or_404(is_deid=json.loads(request.POST.get('is_deid')))
 
     export_instance_id = request.POST.get('export_id')
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
@@ -263,7 +250,7 @@ def toggle_saved_export_enabled(request, domain):
 @require_POST
 def update_emailed_export_data(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=request.GET.get('is_deid'))
+    permissions.access_list_exports_or_404(is_deid=json.loads(request.POST.get('is_deid')))
 
     export_instance_id = request.POST.get('export_id')
     rebuild_saved_export(export_instance_id, manual=True)
@@ -331,12 +318,6 @@ class DailySavedExportListView(BaseExportListView):
                                                                self.permissions.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return [x for x in combined_exports if x.is_daily_saved_export and not x.export_format == "html"]
-
-    @property
-    def daily_emailed_exports(self):
-        # This function only returns old-style exports. Since this view will only be visible for people using new
-        # exports, it need not return anything.
-        return []
 
     def fmt_export_data(self, export):
         from corehq.apps.export.views.new import CopyExportView
@@ -437,14 +418,6 @@ class FormExportListView(BaseExportListView):
         return [x for x in exports if not x.is_daily_saved_export]
 
     @property
-    @memoized
-    def daily_emailed_exports(self):
-        all_form_exports = []
-        for group in self.emailed_export_groups:
-            all_form_exports.extend(group.form_exports)
-        return all_form_exports
-
-    @property
     def create_export_form_title(self):
         return _("Select a Form to Export")
 
@@ -496,14 +469,6 @@ class CaseExportListView(BaseExportListView):
         if self.is_deid:
             return _("Export De-Identified Cases")
         return self.page_title
-
-    @property
-    @memoized
-    def daily_emailed_exports(self):
-        all_case_exports = []
-        for group in self.emailed_export_groups:
-            all_case_exports.extend(group.case_exports)
-        return all_case_exports
 
     @memoized
     def get_saved_exports(self):

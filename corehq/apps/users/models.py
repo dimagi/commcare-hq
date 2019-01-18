@@ -1648,20 +1648,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, fire_signals=True, spawn_task=True, **params):
+    def save(self, fire_signals=True, spawn_task=False, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
-            from corehq.apps.callcenter.tasks import sync_user_cases
+            from corehq.apps.callcenter.tasks import sync_user_cases_if_applicable
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            if spawn_task:
-                sync_user_cases.delay(self._id)
-            else:
-                sync_user_cases(self._id)
+            sync_user_cases_if_applicable(self, spawn_task)
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user

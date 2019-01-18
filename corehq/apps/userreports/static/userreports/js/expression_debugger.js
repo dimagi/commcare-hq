@@ -1,7 +1,7 @@
 /* globals ace */
 hqDefine('userreports/js/expression_debugger', function () {
     $(function () {
-        var ExpressionModel = hqImport('userreports/js/expression_evaluator').ExpressionModel;
+        var expressionModel = hqImport('userreports/js/expression_evaluator').expressionModel;
         var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("expression_evaluator");
         var expressionEditor = ace.edit($('.jsonwidget ~pre')[0]);
         var sampleExpression = {
@@ -17,7 +17,7 @@ hqDefine('userreports/js/expression_debugger', function () {
             dataSourceId: initial_page_data('data_source_id'),
         };
         ko.applyBindings(
-            new ExpressionModel(expressionEditor, submitUrl, initialData),
+            expressionModel(expressionEditor, submitUrl, initialData),
             document.getElementById('expression-debugger')
         );
     });
