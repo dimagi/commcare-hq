@@ -1176,6 +1176,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             'title': config.full_name,
             'url': config.url,
             'content': content,
+            'is_active': config.is_active,
             'description': config.description,
             "startdate": date_range.get("startdate") if date_range else "",
             "enddate": date_range.get("enddate") if date_range else "",
