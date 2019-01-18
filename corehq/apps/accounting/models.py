@@ -1885,7 +1885,7 @@ class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=2)
     date_due = models.DateField(db_index=True, null=True)
     date_paid = models.DateField(blank=True, null=True)
     date_start = models.DateField()
@@ -3130,7 +3130,7 @@ class CreditLine(models.Model):
     feature_type = models.CharField(max_length=10, null=True, blank=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
-    balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -3616,7 +3616,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
     reason = models.CharField(max_length=25, default=CreditAdjustmentReason.MANUAL,
                               choices=CreditAdjustmentReason.CHOICES)
     note = models.TextField(blank=True)
-    amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=2)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True, blank=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True, blank=True)
     customer_invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT, null=True, blank=True)
