@@ -5576,9 +5576,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        # todo: fix this to expect a list of parent types
-        # todo: and get rid of if_multiple_parents_arbitrarily_pick_one arg
-        case_relationships = get_parent_type_map(self, if_multiple_parents_arbitrarily_pick_one=True)
+        case_relationships = get_parent_type_map(self)
         meta = AppCaseMetadata()
         descriptions_dict = get_case_property_description_dict(self.domain)
 
@@ -5595,7 +5593,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
 
         def get_children(case_type):
             seen_types.append(case_type)
-            return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]
+            return [type_.name for type_ in meta.case_types if case_type in type_.relationships.get('parent', [])]
 
         def get_hierarchy(case_type):
             return {child: get_hierarchy(child) for child in get_children(case_type)}
