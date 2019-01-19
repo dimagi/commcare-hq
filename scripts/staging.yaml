@@ -50,15 +50,11 @@ trunk: master
 name: autostaging
 branches:
 #  - rn_migrate_multimedia # Rohit 3 Dec
-  - mk-transifex-improv # MK Dec 8
-  - mk-215 # MK Dec 13
   - jls/conflicts  # Jenny Dec 26: fixes master conflict for lwyszomi:lw/js-forms-modules
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
   - cz/odata-poc  # cory jan 8
   - dmr/fix-es-service-check  # Danny Jan 3
-  - mk-new-recovery-measure # MK Jan 8
-  - jls/domain-select2-v4  # Jenny Jan 14
   - jls/reduce-form-classes  # Jenny Jan 15
-  - get-subscription-properties-synchronously  # NP Jan 15
-  - reports-effective-start-date  # Gabriella Jan 16
+  - revert-23027-revert-22985-je/variable-landing-page # Emord Jan 17
+  - invoice-filters  # Nick P Jan 18
 submodules: {}

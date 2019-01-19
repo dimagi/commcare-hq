@@ -1818,7 +1818,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
 
     # Todo; temporary fix: Sravan
-    @quickcache(['self._id'], skip_arg=lambda user: user.domain != 'reach-sandbox', timeout=60 * 60 * 4)
+    @quickcache(['self._id'], skip_arg=lambda user: user.domain not in ['reach-sandbox', 'reach-test'], timeout=60 * 60 * 4)
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
         # get faked location group objects

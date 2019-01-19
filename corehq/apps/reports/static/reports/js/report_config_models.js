@@ -39,9 +39,9 @@ hqDefine("reports/js/report_config_models", [
                 if (!_.isNumber(days) || _.isNaN(days)) {
                     error = true;
                 }
-            } else if ((date_range === 'since' || date_range === 'range') && _.isEmpty(self.start_date())) {
+            } else if ((date_range === 'since' || date_range === 'range') && _.isEmpty(ko.utils.unwrapObservable(self.start_date))) {
                 error = true;
-            } else if (date_range === 'range' && _.isEmpty(self.end_date())) {
+            } else if (date_range === 'range' && _.isEmpty(ko.utils.unwrapObservable(self.end_date))) {
                 error = true;
             }
             self.error(error);
