@@ -178,8 +178,12 @@ The two versions of select2 have several types of differences.
    - `formatResult` and `formatSelection` have been renamed to `templateResult` and `templateSelection`
    - The `results` option for ajax is renamed to `processResults`
    - `placeholder` is now required if `allowClear` is true (set it to `' '` if there isn't placeholder text)
-   - `formatNoMatches` text for when there are no results is now part of the `language` option, the property `noResults`
-   - The `data` option for ajax now takes a `params` parameter with a `term` property instead of having `term` passed as a parameter.
+   - `formatNoMatches` text for when there are no results is now part of the `language` option
+      - v3 `formatNoMatches: function() { return gettext("No groups found"); }`
+      - v4 `language: { noResults: { return gettext("No groups found"); } }`
+   - The `data` option for ajax now takes a `params` parameter with a `term` property instead of having `term` passed as a parameter
+      - v3 `data: fuction (term) { return { query: term }; }`
+      - v4 `data: function (params) { return { query: params.term } }`
    - To allow freetext entry, instead of using `createSearchChoice`, set `tags` to true. Custom logic relating to creating new options (such as validation for email inputs) can be added using `createTag`.
    - To allow for HTML in custom option templates, set `escapeMarkup` to a pass-through function: `function (m) { return m; }`
    - `initSelection` to initially populate the selected value is deprecated. Instead, you must make sure any selected options are added to the `<select>` element and then call `$element.val(...)` to set the value. Note that you also need to trigger a change event for the value to appear in the UI, and that you can trigger a `change.select2` instead of `change` if you don't want that event to be picked up by other code.
