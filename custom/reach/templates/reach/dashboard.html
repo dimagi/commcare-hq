@@ -1,10 +1,50 @@
+{% load menu_tags %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>REACH Dashboard</title>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
+        <link type="text/css"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'font-awesome/css/font-awesome.css' %}"/>
+
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'reach/css/reach_dashboard.css' %}"/>
+        {% include 'analytics/google.html' %}
+        {% javascript_libraries underscore=True hq=True %}
+         <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
 </head>
 <body>
-Test page
+<div class="wrapper">
+    {% include 'reach/menus/left_menu.html' %}
+    <div class="col-xs-10 col-md-10 main-container" >
+        {% include 'reach/menus/top_menu.html' %}
+
+        <div class="row no-margin">
+            <div class=""></div>
+        </div>
+    </div>
+</div>
+
+<div class="commcarehq-urls hide">
+{% block registered_urls %}
+    {# do not override this block, use registerurl template tag to populate #}
+{% endblock %}
+</div>
+
+{% include 'analytics/initial/global.html' %}
+{% include 'analytics/initial/google.html' %}
+<div class="initial-analytics-data hide">
+{% block initial_analytics_data %}
+     do not override this block, use initial_analytics_data template tag to populate
+{% endblock %}
+</div>
+
+{% block js-inline %}{% endblock js-inline %}
 </body>
 </html>
