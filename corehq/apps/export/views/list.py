@@ -429,7 +429,6 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
         return data
 
 
-
 class DeIdFormExportListHelper(FormExportListHelper):
     is_deid = True
 
