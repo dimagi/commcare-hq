@@ -376,7 +376,7 @@ class TestXFormInstanceResource(APIResourceTest):
             CaseBlock(
                 case_id=case_id,
                 create=True,
-            ).as_string(),
+            ).as_text(),
             self.domain.name
         )[0]
 
