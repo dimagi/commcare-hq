@@ -813,7 +813,7 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(location_id, fall_back_to_next=True)
 
 
-def get_case_sharing_groups_for_locations(cls, locations, for_user_id=None):
+def get_case_sharing_groups_for_locations(locations, for_user_id=None):
     # safety check to make sure all locations belong to same domain
     assert len(set([l.domain for l in locations])) < 2
 
@@ -825,7 +825,7 @@ def get_case_sharing_groups_for_locations(cls, locations, for_user_id=None):
     descendants = []
     if location_ids:
         where = Q(domain=locations[0].domain, parent_id__in=location_ids)
-        descendants = cls.objects.get_queryset_descendants(where).filter(
+        descendants = SQLLocation.objects.get_queryset_descendants(where).filter(
             location_type__shares_cases=True, is_archived=False)
     for loc in descendants:
         yield loc.case_sharing_group_object(for_user_id)
