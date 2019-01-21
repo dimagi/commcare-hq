@@ -41,15 +41,11 @@
                 {% include 'export/partials/loading_exports.html' %}
                 {% include 'export/partials/export_bulk_notice.html' %}
                 {% include 'export/partials/table.html' %}
-                {% comment %}
-                    TODO: this is solely so the bulk button appears at both the top and bottom of the screen if there
-                    are a lot of exports. Paginating should eliminate the need for this.
-
-                    Note this logic and this second div happens 3 times in this file.
-                {% endcomment %}
-                <div data-bind="visible: exports().length > 6">
-                    {% include 'export/partials/export_bulk_notice.html' %}
-                </div>
+                <pagination data-apply-bindings="false"
+                            data-bind="visible: showPagination"
+                            params="goToPage: goToPage,
+                                    perPage: itemsPerPage,
+                                    totalItems: totalItems"></pagination>
             </div>
         </div>
     </div>

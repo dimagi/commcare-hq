@@ -509,8 +509,15 @@ def get_exports_list(request, domain):
                                   is_feed=json.loads(request.GET.get('is_feed')),
                                   is_deid=json.loads(request.GET.get('is_deid')))
     my_exports = json.loads(request.GET.get('my_exports'))
+    exports = helper.get_exports_list(my_exports=my_exports)
+
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 5))
+    docs = exports[limit * (page - 1):limit * page]
+
     return json_response({
-        'exports': helper.get_exports_list(my_exports=my_exports)
+        'exports': docs,
+        'total': len(exports),
     })
 
 

@@ -22,6 +22,7 @@ hqDefine("export/js/export_list", [
     'analytix/js/kissmetrix',
     'export/js/utils',
     'hqwebapp/js/validators.ko',        // needed for validation of startDate and endDate
+    'hqwebapp/js/components.ko',        // pagination widget
 ], function (
     $,
     ko,
@@ -190,8 +191,13 @@ hqDefine("export/js/export_list", [
         self.showEmpty = ko.computed(function () {
             return !self.isLoading() && !self.hasError() && !self.exports().length;
         });
+        self.showPagination = ko.computed(function () {
+            return !self.isLoading() && !self.hasError() && self.exports().length;
+        });
 
-        self.loadExports = function () {
+        self.totalItems = ko.observable();
+        self.itemsPerPage = ko.observable();
+        self.goToPage = function (page) {
             $.ajax({
                 method: 'GET',
                 url: self.urls.getExportsList,
@@ -201,9 +207,13 @@ hqDefine("export/js/export_list", [
                     is_daily_saved_export: self.isDailySavedExport ? 1 : 0,
                     is_feed: self.isFeed ? 1 : 0,
                     my_exports: self.myExports ? 1 : 0,
+                    page: page,
+                    limit: self.itemsPerPage(),
                 },
                 success: function (data) {
                     self.isLoading(false);
+                    self.totalItems(data.total);
+
                     self.exports(_.map(data.exports, function (e) {
                         return exportModel(e, {
                             is_deid: self.isDeid,
@@ -226,7 +236,7 @@ hqDefine("export/js/export_list", [
             });
         };
 
-        self.loadExports();
+        self.goToPage(1);
 
         return self;
     };
