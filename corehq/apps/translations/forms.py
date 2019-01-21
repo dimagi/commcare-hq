@@ -4,6 +4,7 @@ import openpyxl
 import langcodes
 
 from django import forms
+from zipfile import ZipFile
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -19,7 +20,8 @@ from corehq.motech.utils import b64_aes_decrypt
 
 
 class ConvertTranslationsForm(forms.Form):
-    upload_file = forms.FileField(label="", required=True)
+    upload_file = forms.FileField(label="", required=True,
+                                  help_text=ugettext_lazy("Upload a xls/xlsx/po/zip file"))
 
     def __init__(self, *args, **kwargs):
         super(ConvertTranslationsForm, self).__init__(*args, **kwargs)
@@ -51,17 +53,27 @@ class ConvertTranslationsForm(forms.Form):
                 return uploaded_file
             elif uploaded_file.name.endswith('.po'):
                 return uploaded_file
-            raise forms.ValidationError(_('Unexpected file passed. Please upload xls/xlsx/po file.'))
+            elif uploaded_file.name.endswith('.zip'):
+                zipfile = ZipFile(uploaded_file)
+                for fileinfo in zipfile.filelist:
+                    filename = fileinfo.filename
+                    if (not filename.endswith('.xls') and not filename.endswith('.xlsx') and
+                            not filename.endswith('.po')):
+                        raise forms.ValidationError(
+                            _('Unexpected file passed within zip. Please upload xls/xlsx/po files.'))
+                return uploaded_file
+            raise forms.ValidationError(_('Unexpected file passed. Please upload xls/xlsx/po/zip file.'))
 
 
 class PullResourceForm(forms.Form):
-    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
-                                               required=True)
+    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=())
     target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
                                     )
-    resource_slug = forms.CharField(label=_("Resource Slug"))
+    resource_slug = forms.CharField(label=_("Resource Slug"), required=False,
+                                    help_text=ugettext_lazy("Leave blank to fetch full project")
+                                    )
 
     def __init__(self, domain, *args, **kwargs):
         super(PullResourceForm, self).__init__(*args, **kwargs)

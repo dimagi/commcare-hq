@@ -64,8 +64,10 @@
                     <i data-bind="attr: { 'class': icon }"></i>
                     <span data-bind="text: $root.translate(name)"></span>
                 </div>
-                <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
+                <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"></span></span>
             </h4>
+            <!-- ko template: {name: 'question-attribute', data: { attribute: module_filter, icon: 'fa-code-fork',
+                 visibleObs: $root.showRelevance } }--><!-- /ko -->
             <ul class="fa-ul" data-bind="foreach: forms">
                 <li data-bind="slideVisible: isVisible">
                     <h5>
@@ -77,8 +79,10 @@
                             <i data-bind="attr: { 'class': icon }"></i>
                             <span data-bind="text: $root.translate(name)"></span>
                         </div>
-                        <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
+                        <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"></span></span>
                     </h5>
+                    <!-- ko template: {name: 'question-attribute', data: { attribute: form_filter, icon: 'fa-code-fork',
+                         visibleObs: $root.showRelevance } }--><!-- /ko -->
                     <ol data-bind="foreach: questions">
                         <li data-bind="slideVisible: isVisible">
                             <i data-bind="attr: { 'class': $root.questionIcon($data) }" title="type"></i>
