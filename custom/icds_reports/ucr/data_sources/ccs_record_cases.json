@@ -1173,7 +1173,7 @@
      },
      {
         "transform": {},
-        "datatype": "small_integer",
+        "datatype": "string",
         "type": "expression",
         "is_nullable": true,
         "column_id": "child_name",
