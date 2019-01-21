@@ -640,24 +640,6 @@ class SQLLocation(AdjListModel):
         return '/'.join(self.get_ancestors(include_self=True)
                             .values_list('name', flat=True))
 
-    @classmethod
-    def get_case_sharing_groups_for_locations(cls, locations, for_user_id=None):
-        # safety check to make sure all locations belong to same domain
-        assert len(set([l.domain for l in locations])) < 2
-
-        for location in locations:
-            if location.location_type.shares_cases:
-                yield location.case_sharing_group_object(for_user_id)
-
-        location_ids = [l.pk for l in locations if l.location_type.view_descendants]
-        descendants = []
-        if location_ids:
-            where = Q(domain=locations[0].domain, parent_id__in=location_ids)
-            descendants = cls.objects.get_queryset_descendants(where).filter(
-                location_type__shares_cases=True, is_archived=False)
-        for loc in descendants:
-            yield loc.case_sharing_group_object(for_user_id)
-
     def case_sharing_group_object(self, user_id=None):
         """
         Returns a fake group object that cannot be saved.
@@ -829,6 +811,24 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
             user.unset_location_by_id(location_id, fall_back_to_next=True)
+
+
+def get_case_sharing_groups_for_locations(cls, locations, for_user_id=None):
+    # safety check to make sure all locations belong to same domain
+    assert len(set([l.domain for l in locations])) < 2
+
+    for location in locations:
+        if location.location_type.shares_cases:
+            yield location.case_sharing_group_object(for_user_id)
+
+    location_ids = [l.pk for l in locations if l.location_type.view_descendants]
+    descendants = []
+    if location_ids:
+        where = Q(domain=locations[0].domain, parent_id__in=location_ids)
+        descendants = cls.objects.get_queryset_descendants(where).filter(
+            location_type__shares_cases=True, is_archived=False)
+    for loc in descendants:
+        yield loc.case_sharing_group_object(for_user_id)
 
 
 class LocationRelation(models.Model):
