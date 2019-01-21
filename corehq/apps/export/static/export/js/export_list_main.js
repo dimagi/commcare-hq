@@ -38,6 +38,11 @@ hqDefine("export/js/export_list_main", [
             isDeid: initialPageData.get('is_deid'),
             isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
             isFeed: initialPageData.get('is_feed', true),
+            headers: {
+                my_export_type: initialPageData.get('my_export_type'),
+                shared_export_type: initialPageData.get('shared_export_type'),
+                export_type_caps_plural: initialPageData.get('export_type_caps_plural'),
+            },
             urls: {
                 commitFilters: initialPageData.reverse("commit_filters"),
                 getExportsList: initialPageData.reverse("get_exports_list"),

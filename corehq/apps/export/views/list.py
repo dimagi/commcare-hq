@@ -120,7 +120,7 @@ class ExportListHelper(object):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
-    def get_exports_list(self):
+    def get_exports_list(self, my_exports=False):
         if not self._priv_check():
             raise Http404
 
@@ -130,6 +130,7 @@ class ExportListHelper(object):
             saved_exports = [
                 export for export in saved_exports
                 if export.can_view(self.request.couch_user.user_id)
+                and (export.owner_id == self.request.couch_user.user_id) == my_exports
             ]
         if self.is_deid:
             saved_exports = [x for x in saved_exports if x.is_safe]
@@ -263,7 +264,6 @@ class DailySavedExportListHelper(ExportListHelper):
             'description': export.description,
             'lastBuildDuration': (str(timedelta(milliseconds=export.last_build_duration))
                                   if export.last_build_duration else ''),
-            'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': (
                 WebUser.get_by_user_id(export.owner_id).username
@@ -321,7 +321,6 @@ class FormExportListHelper(ExportListHelper):
             'name': export.name,
             'description': export.description,
             'lastBuildDuration': '',
-            'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': owner_username,
             'can_edit': export.can_edit(self.request.couch_user),
@@ -367,7 +366,6 @@ class CaseExportListHelper(ExportListHelper):
             'case_type': export.case_type,
             'description': export.description,
             'lastBuildDuration': '',
-            'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
             'owner_username': owner_username,
             'can_edit': export.can_edit(self.request.couch_user),
@@ -510,8 +508,9 @@ def get_exports_list(request, domain):
                                   is_daily_saved_export=json.loads(request.GET.get('is_daily_saved_export')),
                                   is_feed=json.loads(request.GET.get('is_feed')),
                                   is_deid=json.loads(request.GET.get('is_deid')))
+    my_exports = json.loads(request.GET.get('my_exports'))
     return json_response({
-        'exports': helper.get_exports_list()
+        'exports': helper.get_exports_list(my_exports=my_exports)
     })
 
 

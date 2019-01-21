@@ -14,14 +14,14 @@
     {% trans "Loading exports..." %}
 </div>
 
-<div class="alert alert-info" data-bind="visible: showEmpty">
+<div class="help-block" data-bind="visible: showEmpty">
     {% if is_deid %}
         {% blocktrans %}
-            No De-Identified {{ export_type_caps_plural }} are available at this time.
+            No De-Identified {{ export_type_caps_plural }} to display
         {% endblocktrans %}
     {% else %}
         {% blocktrans %}
-            No {{ export_type_caps_plural }} Created Yet.
+            No {{ export_type_caps_plural }} to display
             {% endblocktrans %}
     {% endif %}
 </div>
