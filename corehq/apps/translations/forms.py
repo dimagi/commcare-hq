@@ -20,7 +20,8 @@ from corehq.motech.utils import b64_aes_decrypt
 
 
 class ConvertTranslationsForm(forms.Form):
-    upload_file = forms.FileField(label="", required=True)
+    upload_file = forms.FileField(label="", required=True,
+                                  help_text=ugettext_lazy("Upload a xls/xlsx/po/zip file"))
 
     def __init__(self, *args, **kwargs):
         super(ConvertTranslationsForm, self).__init__(*args, **kwargs)
@@ -70,7 +71,9 @@ class PullResourceForm(forms.Form):
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
                                     )
-    resource_slug = forms.CharField(label=_("Resource Slug"), required=False)
+    resource_slug = forms.CharField(label=_("Resource Slug"), required=False,
+                                    help_text=ugettext_lazy("Leave blank to fetch full project")
+                                    )
 
     def __init__(self, domain, *args, **kwargs):
         super(PullResourceForm, self).__init__(*args, **kwargs)
