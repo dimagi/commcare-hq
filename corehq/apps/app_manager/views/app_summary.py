@@ -453,7 +453,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                 form_names[f.unique_id] = _get_translated_form_name(self.app, f.unique_id, language)
                 form_case_types[f.unique_id] = m.case_type
 
-        case_types = [case_type.name] + list(case_type.relationships.values())
+        case_types = [case_type.name] + case_type.child_types
         opened_by = {}
         closed_by = {}
         for t in case_types:
@@ -462,16 +462,18 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
         rows = []
         relationships = case_type.relationships
-        relationships.update({'': case_type.name})
-        for relationship, type in six.iteritems(relationships):
-            if relationship and not opened_by[type] and not closed_by[type]:
-                rows.append((case_type.name, "[{}] {}".format(relationship, type)))
-            for i in range(max(len(opened_by[type]), len(closed_by[type]))):
-                row = [case_type.name]
-                row.append("[{}] {}".format(relationship, type) if relationship else '')
-                row.append(form_names[opened_by[type][i]] if i < len(opened_by[type]) else '')
-                row.append(form_names[closed_by[type][i]] if i < len(closed_by[type]) else '')
-                rows.append(tuple(row))
+        relationships.update({'': [case_type.name]})
+        for relationship, types in six.iteritems(relationships):
+            for type_ in types:
+                if relationship and not opened_by[type_] and not closed_by[type_]:
+                    rows.append((case_type.name, "[{}] {}".format(relationship, type_)))
+                for i in range(max(len(opened_by[type_]), len(closed_by[type_]))):
+                    rows.append((
+                        case_type.name,
+                        "[{}] {}".format(relationship, type_) if relationship else '',
+                        form_names[opened_by[type_][i]] if i < len(opened_by[type_]) else '',
+                        form_names[closed_by[type_][i]] if i < len(closed_by[type_]) else '',
+                    ))
 
         return rows
 

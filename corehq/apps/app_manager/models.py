@@ -5595,8 +5595,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
             seen_types.append(case_type)
             return [
                 type_.name for type_ in meta.case_types
-                if case_type in [child_type for relationship in type_.relationships.values()
-                                 for child_type in relationship]
+                if case_type in type_.child_types
             ]
 
         def get_hierarchy(case_type):
