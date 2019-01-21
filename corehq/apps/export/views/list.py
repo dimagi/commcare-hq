@@ -125,7 +125,7 @@ class ExportListHelper(object):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
-    def get_exports_list(self, page, limit, my_exports=False):
+    def get_exports_page(self, page, limit, my_exports=False):
         if not self._priv_check():
             raise Http404
 
@@ -518,7 +518,7 @@ def _get_task_status_json(export_instance_id):
 @login_and_domain_required
 @require_GET
 @location_safe
-def get_exports_list(request, domain):
+def get_exports_page(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
     permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
@@ -529,7 +529,7 @@ def get_exports_list(request, domain):
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
     my_exports = json.loads(request.GET.get('my_exports'))
-    (exports, total) = helper.get_exports_list(page, limit, my_exports=my_exports)
+    (exports, total) = helper.get_exports_page(page, limit, my_exports=my_exports)
     return json_response({
         'exports': exports,
         'total': total,

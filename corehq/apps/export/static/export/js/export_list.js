@@ -200,7 +200,7 @@ hqDefine("export/js/export_list", [
         self.goToPage = function (page) {
             $.ajax({
                 method: 'GET',
-                url: self.urls.getExportsList,
+                url: self.urls.getExportsPage,
                 data: {
                     is_deid: self.isDeid,
                     model_type: self.modelType,
@@ -251,7 +251,7 @@ hqDefine("export/js/export_list", [
         self.isDailySavedExport = options.isDailySavedExport;
         self.isFeed = options.isFeed;
 
-        assertProperties.assert(options.urls, ['commitFilters', 'getExportsList', 'poll', 'toggleEnabled', 'update']);
+        assertProperties.assert(options.urls, ['commitFilters', 'getExportsPage', 'poll', 'toggleEnabled', 'update']);
         self.urls = options.urls;
 
         assertProperties.assert(options.headers, ['my_export_type', 'shared_export_type', 'export_type_caps_plural']);

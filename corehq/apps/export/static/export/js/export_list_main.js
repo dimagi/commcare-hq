@@ -45,7 +45,7 @@ hqDefine("export/js/export_list_main", [
             },
             urls: {
                 commitFilters: initialPageData.reverse("commit_filters"),
-                getExportsList: initialPageData.reverse("get_exports_list"),
+                getExportsPage: initialPageData.reverse("get_exports_page"),
                 poll: initialPageData.reverse("get_saved_export_progress"),
                 toggleEnabled: initialPageData.reverse("toggle_saved_export_enabled"),
                 update: initialPageData.reverse("update_emailed_export_data"),
