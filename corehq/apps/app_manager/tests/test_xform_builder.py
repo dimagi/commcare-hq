@@ -72,15 +72,18 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
         )
 
     def test_select_question(self):
-        self.xform.new_question('fav_colors', 'What are your favorite colors?', data_type='select', choices={
-            'r': 'Red',
-            'o': 'Orange',
-            'y': 'Yellow',
-            'g': 'Green',
-            'b': 'Blue',
-            'i': 'Indigo',
-            'v': 'Violet',
-        })
+        self.xform.new_question(
+            'fav_colors', 'What are your favorite colors?', data_type='select',
+            choices=OrderedDict([
+                ('r', 'Red'),
+                ('o', 'Orange'),
+                ('y', 'Yellow'),
+                ('g', 'Green'),
+                ('b', 'Blue'),
+                ('i', 'Indigo'),
+                ('v', 'Violet'),
+            ])
+        )
         self.assertXmlEqual(
             self.replace_xmlns(self.get_xml('select_question'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
