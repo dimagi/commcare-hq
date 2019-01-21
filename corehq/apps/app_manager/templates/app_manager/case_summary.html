@@ -44,7 +44,7 @@
     <div class="row">
         <div class="col-sm-12">
             <!-- ko foreach: caseTypes -->
-                <div class="panel panel-appmanager" data-bind="slideVisible: isVisible">
+                <div class="panel panel-appmanager" data-bind="visible: isVisible">
                     <div class="panel-heading">
                         <h4 class="panel-title panel-title-nolink">
                             <i class="fcc fcc-fd-external-case"></i>
@@ -99,7 +99,7 @@
                             </thead>
                             <tbody data-bind="foreach: properties">
                                 <!-- ko foreach: forms -->
-                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, slideVisible: $parent.isVisible">
+                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, visible: $parent.isVisible">
                                         <!-- ko if: !$index() -->
                                         <td data-bind="attr: {rowspan: $parent.forms.length}">
                                             <dl>
@@ -145,7 +145,7 @@
             <li>
                 <span data-bind="html: $root.moduleFormReference(formId)"></span>
                 <!-- ko: if: conditions -->
-                    <ul class="fa-ul" data-bind="slideVisible: $root.showConditions, foreach: conditions">
+                    <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
                         <li>
                             <i class="fa fa-sitemap"></i>
                             <span data-bind="text: question"></span>
@@ -169,7 +169,7 @@
                     <li data-bind="visible: $root.showIds, text: value"></li>
                     <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
                 </ul>
-                <ul class="fa-ul" data-bind="if: condition, slideVisible: $root.showConditions">
+                <ul class="fa-ul" data-bind="if: condition, visible: $root.showConditions">
                     <li>
                         <i class="fa-li fa fa-sitemap text-muted"></i>
                         <span data-bind="text: condition.question"></span>
@@ -177,7 +177,7 @@
                         <span data-bind="text: condition.answer"></span>
                     </li>
                 </ul>
-                <ul class="fa-ul" data-bind="if: question.calculate, slideVisible: $root.showCalculations">
+                <ul class="fa-ul" data-bind="if: question.calculate, visible: $root.showCalculations">
                     <li>
                         <i class="fa-li fa fa-calculator text-muted"></i>
                         <span data-bind="text: question.calculate"></span>
