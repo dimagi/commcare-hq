@@ -195,7 +195,7 @@ hqDefine("export/js/export_list", [
             return !self.isLoading() && !self.hasError() && self.exports().length;
         });
 
-        self.totalItems = ko.observable();
+        self.totalItems = ko.observable(0);
         self.itemsPerPage = ko.observable();
         self.goToPage = function (page) {
             $.ajax({
@@ -293,8 +293,8 @@ hqDefine("export/js/export_list", [
         self.selectNone = function () {
             _.each(self.exports(), function (e) { e.addedToBulk(false); });
         };
-        self.showBulkExportDownload = ko.computed(function () {
-            return _.find(self.exports(), function (e) { return e.addedToBulk(); });
+        self.bulkExportDownloadCount = ko.computed(function () {
+            return _.filter(self.exports(), function (e) { return e.addedToBulk(); }).length;
         });
         self.bulkExportList = ko.observable('');
         self.submitBulkExportDownload = function () {
