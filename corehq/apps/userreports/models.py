@@ -816,7 +816,7 @@ class StaticReportConfiguration(JsonObject):
     def by_ids(cls, config_ids):
         mapping = cls.by_id_mapping()
         config_by_ids = {}
-        for config_id in config_ids:
+        for config_id in set(config_ids):
             try:
                 domain, wrapped = mapping[config_id]
             except KeyError:
@@ -1080,10 +1080,7 @@ def get_report_configs(config_ids, domain):
     for config in dynamic_report_configs:
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
-    # rearrange the configs in the same order as the ids received
-    all_configs = dynamic_report_configs + static_report_config_by_ids.values()
-    id_mapping = {config.get_id: config for config in all_configs}
-    return [id_mapping[config_id] for config_id in config_ids]
+    return dynamic_report_configs + static_report_config_by_ids.values()
 
 
 def get_report_config(config_id, domain):
