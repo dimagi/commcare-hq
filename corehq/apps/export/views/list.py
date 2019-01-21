@@ -42,7 +42,13 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from corehq.util.download import get_download_response
 
-from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT, MAX_EXPORTABLE_ROWS, UNKNOWN_EXPORT_OWNER
+from corehq.apps.export.const import (
+    CASE_EXPORT,
+    FORM_EXPORT,
+    MAX_EXPORTABLE_ROWS,
+    UNKNOWN_EXPORT_OWNER,
+    SharingOption,
+)
 from corehq.apps.export.dbaccessors import (
     get_properly_wrapped_export_instance,
     get_brief_case_exports_by_domain,
@@ -126,10 +132,16 @@ class ExportListHelper(object):
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
         brief_exports = self.get_saved_exports()
         if toggles.EXPORT_OWNERSHIP.enabled(self.domain):
+
+            def _can_view(e, user_id):
+                if not hasattr(e, 'owner_id'):
+                    return True
+                return e['sharing'] != SharingOption.PRIVATE or e['owner_id'] == user_id
+
             brief_exports = [
                 export for export in brief_exports
-                #if export.can_view(self.request.couch_user.user_id)    # TODO
-                if (export.owner_id == self.request.couch_user.user_id) == my_exports
+                if _can_view(export, self.request.couch_user.user_id)
+                and ('owner_id' in export and export['owner_id'] == self.request.couch_user.user_id) == my_exports
             ]
         if self.is_deid:
             brief_exports = [x for x in brief_exports if x['is_safe']]  # TODO: is_deidentified
