@@ -144,7 +144,7 @@ class ExportListHelper(object):
                 and ('owner_id' in export and export['owner_id'] == self.request.couch_user.user_id) == my_exports
             ]
         if self.is_deid:
-            brief_exports = [x for x in brief_exports if x['is_safe']]  # TODO: is_deidentified
+            brief_exports = [x for x in brief_exports if x['is_deidentified']]
 
         docs = [self.fmt_export_data(get_properly_wrapped_export_instance(e['_id']))
                 for e in brief_exports[limit * (page - 1):limit * page]]
@@ -445,7 +445,7 @@ class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
         exports = super(DeIdDailySavedExportListView, self).get_saved_exports()
         return [
             x for x in exports
-            if x['is_safe'] and x['is_daily_saved_export'] and not x['export_format'] == "html"
+            if x['is_deidentified'] and x['is_daily_saved_export'] and not x['export_format'] == "html"
         ]
 
     @property
@@ -458,7 +458,8 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
     def get_saved_exports(self):
         exports = super(DeIdDashboardFeedListView, self).get_saved_exports()
-        return [x for x in exports if x['is_safe'] and x['is_daily_saved_export'] and x['export_format'] == "html"]
+        return [x for x in exports
+                if x['is_deidentified'] and x['is_daily_saved_export'] and x['export_format'] == "html"]
 
     @property
     def create_export_form(self):
