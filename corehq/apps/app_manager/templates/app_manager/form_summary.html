@@ -70,7 +70,7 @@
             <ul class="fa-ul" data-bind="visible: $root.showRelevance">
                 <li>
                     <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
-                    <span data-bind="text: module_filter"></span>
+                    <!-- ko text: module_filter --><!-- /ko -->
                 </li>
             </ul>
             <!-- /ko -->
@@ -98,45 +98,44 @@
                     <ol data-bind="foreach: questions">
                         <li data-bind="visible: isVisible">
                             <i data-bind="attr: { 'class': $root.questionIcon($data) }" title="type"></i>
-                            <span data-bind="visible: $root.showIds, text: value"></span>
-                            <span data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></span>
+                            <!-- ko text: $root.showIds() ? value :  $root.translateQuestion($data) --><!-- /ko -->
                             <!-- ko if: required -->
                             <span title="{% trans "This question is required"|escapejs %}">*</span>
                             <!-- /ko -->
                             <!-- ko if: comment -->
                             <span class="text-muted" data-bind="visible: $root.showComments">
-                                &nbsp; <span data-bind="text: comment"></span>
+                                &nbsp; <!-- ko text: comment --><!-- /ko -->
                             </span>
                             <!-- /ko -->
-                            <!-- ko if: function(){ return calculate() || relevant() || constraint() || setvalue() } -->
+                            <!-- ko if:  calculate || relevant || constraint || setvalue  -->
                             <ul class="fa-ul">
                                 <!-- ko if: calculate -->
                                 <li data-bind="visible: $root.showCalculations">
                                     <i data-bind="attr: {'class': 'fa-li fa text-muted fa-calculator'}"></i>
-                                    <span data-bind="text: calculate"></span>
+                                    <!-- ko text: calculate --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                                 <!-- ko if: relevant -->
                                 <li data-bind="visible: $root.showRelevance">
                                     <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
-                                    <span data-bind="text: relevant"></span>
+                                    <!-- ko text: relevant --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                                 <!-- ko if: constraint -->
                                 <li data-bind="visible: $root.showConstraints">
                                     <i data-bind="attr: {'class': 'fa-li fa text-muted fa-ban'}"></i>
-                                    <span data-bind="text: constraint"></span>
+                                    <!-- ko text: constraint --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                                 <!-- ko if: setvalue -->
                                 <li data-bind="visible: $root.showDefaultValues">
                                     <i data-bind="attr: {'class': 'fa-li fa text-muted fa-home'}"></i>
-                                    <span data-bind="text: setvalue"></span>
+                                    <!-- ko text: setvalue --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                             </ul>
                             <!-- /ko -->
-                            <!-- ko if: options -->
+                            <!-- ko if: options.length -->
                             <ol data-bind="foreach: options">
                                 <li data-bind="visible: $root.showIds, text: value"></li>
                                 <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
