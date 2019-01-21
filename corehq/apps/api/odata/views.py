@@ -32,7 +32,7 @@ class ODataMetadataView(View):
         # todo: should generate this dynamically based on the domain / case schema / data dictionary
         data_file = os.path.join(os.path.dirname(__file__), 'metadata.xml')
         with open(data_file, 'r') as f:
-            return add_odata_headers(HttpResponse(f.read(), content_type='text/xml'))
+            return add_odata_headers(HttpResponse(f.read(), content_type='application/xml'))
 
 
 def add_odata_headers(response):
