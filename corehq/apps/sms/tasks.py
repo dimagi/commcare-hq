@@ -412,7 +412,8 @@ def send_to_sms_queue(queued_sms):
     process_sms.apply_async([queued_sms.pk], **options)
 
 
-@no_result_task(serializer='pickle', default_retry_delay=10 * 60, max_retries=10, bind=True)
+@no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=10 * 60,
+                max_retries=10, bind=True)
 def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
