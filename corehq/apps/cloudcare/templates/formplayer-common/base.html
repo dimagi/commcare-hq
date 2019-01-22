@@ -61,9 +61,12 @@
         {% if CUSTOM_LOGO_URL %}
             <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
         {% else %}
-            <link rel="apple-touch-icon" sizes="38x38" href="/static/hqstyle/images/commcare-flower.png"/>
-            <link rel="apple-touch-icon" sizes="96x96" href="/static/hqstyle/images/commcare-icon-large.png"/>
-            <link rel="apple-touch-icon" sizes="193×144" href="/static/hqstyle/images/commcare-flower-lg.png"/>
+            <link rel="apple-touch-icon" sizes="57x57" href="{% static 'hqstyle/images/commcare-icon-57x57.png' %}"/>
+            <link rel="apple-touch-icon" sizes="76x76" href="{% static 'hqstyle/images/commcare-icon-76x76.png' %}"/>
+            <link rel="apple-touch-icon" sizes="120x120" href="{% static 'hqstyle/images/commcare-icon-120x120.png' %}"/>
+            <link rel="apple-touch-icon" sizes="152x152" href="{% static 'hqstyle/images/commcare-icon-152x152.png' %}"/>
+            <link rel="apple-touch-icon" sizes="167x167" href="{% static 'hqstyle/images/commcare-icon-167x167.png' %}"/>
+            <link rel="apple-touch-icon" sizes="180x180" href="{% static 'hqstyle/images/commcare-icon-180x180.png' %}"/>
         {% endif %}
 
         {% if less_debug %}
