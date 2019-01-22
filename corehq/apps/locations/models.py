@@ -455,6 +455,21 @@ class SQLLocation(AdjListModel):
 
     full_delete = delete
 
+    def get_descendants(self, include_self=False, **kwargs):
+        if include_self:
+            where = Q(domain=self.domain, id=self.id)
+        else:
+            where = Q(domain=self.domain, parent_id=self.id)
+        return SQLLocation.objects.get_descendants(
+            where, **kwargs
+        )
+
+    def get_ancestors(self, include_self=False, **kwargs):
+        where = Q(domain=self.domain, id=self.id if include_self else self.parent_id)
+        return SQLLocation.objects.get_ancestors(
+            where, **kwargs
+        )
+
     @classmethod
     def bulk_delete(cls, locations, ancestor_location_ids):
         """Bulk delete the given locations and update their ancestors
@@ -624,13 +639,6 @@ class SQLLocation(AdjListModel):
     def get_path_display(self):
         return '/'.join(self.get_ancestors(include_self=True)
                             .values_list('name', flat=True))
-
-    def get_case_sharing_groups(self, for_user_id=None):
-        if self.location_type.shares_cases:
-            yield self.case_sharing_group_object(for_user_id)
-        if self.location_type.view_descendants:
-            for sql_loc in self.get_descendants().filter(location_type__shares_cases=True, is_archived=False):
-                yield sql_loc.case_sharing_group_object(for_user_id)
 
     def case_sharing_group_object(self, user_id=None):
         """
@@ -803,6 +811,24 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
             user.unset_location_by_id(location_id, fall_back_to_next=True)
+
+
+def get_case_sharing_groups_for_locations(locations, for_user_id=None):
+    # safety check to make sure all locations belong to same domain
+    assert len(set([l.domain for l in locations])) < 2
+
+    for location in locations:
+        if location.location_type.shares_cases:
+            yield location.case_sharing_group_object(for_user_id)
+
+    location_ids = [l.pk for l in locations if l.location_type.view_descendants]
+    descendants = []
+    if location_ids:
+        where = Q(domain=locations[0].domain, parent_id__in=location_ids)
+        descendants = SQLLocation.objects.get_queryset_descendants(where).filter(
+            location_type__shares_cases=True, is_archived=False)
+    for loc in descendants:
+        yield loc.case_sharing_group_object(for_user_id)
 
 
 class LocationRelation(models.Model):
