@@ -1648,20 +1648,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, fire_signals=True, spawn_task=True, **params):
+    def save(self, fire_signals=True, spawn_task=False, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
-            from corehq.apps.callcenter.tasks import sync_user_cases
+            from corehq.apps.callcenter.tasks import sync_user_cases_if_applicable
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            if spawn_task:
-                sync_user_cases.delay(self._id)
-            else:
-                sync_user_cases(self._id)
+            sync_user_cases_if_applicable(self, spawn_task)
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1820,14 +1817,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             django_user.delete()
         self.save()
 
-    # Todo; temporary fix: Sravan
-    @quickcache(['self._id'], skip_arg=lambda user: user.domain != 'reach-sandbox', timeout=60 * 60 * 4)
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
+        from corehq.apps.locations.models import get_case_sharing_groups_for_locations
         # get faked location group objects
-        groups = []
-        for sql_location in self.get_sql_locations(self.domain):
-            groups.extend(sql_location.get_case_sharing_groups(self._id))
+        groups = list(get_case_sharing_groups_for_locations(
+            self.get_sql_locations(self.domain),
+            self._id
+        ))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups

@@ -92,7 +92,7 @@ celery_task_logger = logging.getLogger('celery.task')
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
 DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney',
-                          'rnegi', 'rjain']
+                          'rnegi', 'rjain', 'btalbot']
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
@@ -136,14 +136,6 @@ SQL_FUNCTION_PATHS = [
                acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6, hour=0, minute=0),
-               acks_late=True, queue='icds_aggregation_queue')
-def run_weekly_aggregation_of_historical_data():
-    date = datetime.utcnow().date().strftime('%Y-%m-%d')
-    res_awc = icds_aggregation_task.delay(date=date, func=_agg_awc_table_weekly)
-    res_awc.get()
 
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
@@ -268,7 +260,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
                 create_mbt_for_month.delay(state_id, first_of_month_string)
-
+        if date.weekday() == 5:
+            icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func=_agg_awc_table_weekly)
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))

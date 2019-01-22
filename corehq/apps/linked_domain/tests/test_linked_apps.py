@@ -214,6 +214,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         copy1.save()
         self.addCleanup(copy1.delete)
 
+        self.linked_app.version = 1
+
         self.linked_app.linked_app_logo_refs = logo_refs
         self.linked_app.create_mapping(image, image_path, save=False)
         self.linked_app.save()

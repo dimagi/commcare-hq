@@ -8,6 +8,7 @@ from datetime import datetime
 
 from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
+from coreqh.blobs.util import set_max_connections
 from corehq.util.decorators import change_log_level
 from corehq.util.teeout import tee_output
 
@@ -131,22 +132,6 @@ class Command(BaseCommand):
             except KeyboardInterrupt:
                 print("stopped by operator")
                 sys.exit(1)
-
-
-def set_max_connections(num_workers):
-    # see botocore.config.Config max_pool_connections
-    # https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
-    from django.conf import settings
-    from corehq.blobs import _db
-
-    def update_config(name):
-        config = getattr(settings, name)["config"]
-        config["max_pool_connections"] = num_workers
-
-    assert not _db, "get_blob_db() has been called"
-    for name in ["S3_BLOB_DB_SETTINGS", "OLD_S3_BLOB_DB_SETTINGS"]:
-        if getattr(settings, name, False):
-            update_config(name)
 
 
 def get_date(value):

@@ -521,6 +521,7 @@ def get_form_data(domain, app, include_shadow_forms=True):
             'short_comment': module.short_comment,
             'module_type': module.module_type,
             'is_surveys': module.is_surveys,
+            'module_filter': module.module_filter,
         }
 
         form_list = module.get_forms()
@@ -532,6 +533,7 @@ def get_form_data(domain, app, include_shadow_forms=True):
                 'name': form.name,
                 'short_comment': form.short_comment,
                 'action_type': form.get_action_type(),
+                'form_filter': form.form_filter,
             }
             try:
                 questions = form.get_questions(

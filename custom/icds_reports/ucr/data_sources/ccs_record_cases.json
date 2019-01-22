@@ -1194,6 +1194,18 @@
           "type": "property_name",
           "property_name": "num_anc_complete"
         }
+     },
+     {
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_nullable": true,
+        "column_id": "child_name",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "child_name"
+        }
      }
     ],
     "named_expressions": {

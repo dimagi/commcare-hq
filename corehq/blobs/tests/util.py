@@ -8,7 +8,7 @@ from django.conf import settings
 
 import corehq.blobs as blobs
 from corehq.blobs.fsdb import FilesystemBlobDB
-from corehq.blobs.models import BlobMeta
+from corehq.blobs.models import BlobMeta, DeletedBlobMeta
 from corehq.blobs.s3db import S3BlobDB
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.util import random_url_id
@@ -29,9 +29,11 @@ def new_meta(**kw):
     return BlobMeta(**kw)
 
 
-def get_meta(meta):
+def get_meta(meta, deleted=False):
     """Fetch a new copy of the given metadata from the database"""
     db = get_db_alias_for_partitioned_doc(meta.parent_id)
+    if deleted:
+        return DeletedBlobMeta.objects.using(db).get(id=meta.id)
     return BlobMeta.objects.using(db).get(id=meta.id)
 
 

@@ -622,6 +622,14 @@ The **name of cases** updated from the Atom feed are set to the display
 name of the *person* (not the display name of patient because it often
 includes punctuation and an identifier).
 
+When a new case is created, its case's owner is determined by the
+CommCare location of the OpenMRS repeater. (You can set the location
+when you create or edit the OpenMRS repeater in *Project Settings* >
+*Data Forwarding*.) The case will be assigned to the first mobile worker
+found at the repeater's location. The intention is that this mobile
+worker would be a supervisor who can pass the case to the appropriate
+person.
+
 
 Import-Only and Export-Only Values
 ----------------------------------

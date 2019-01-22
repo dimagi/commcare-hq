@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.testcases import TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import make_location, LocationType
 from corehq.apps.sms.api import incoming
@@ -91,5 +92,6 @@ class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
         cls.domain_obj.delete()
 
         cls.teardown_subscription()
+        clear_plan_version_cache()
 
         super(UpdateLocationKeywordTest, cls).tearDownClass()

@@ -3957,9 +3957,9 @@ class LazyBlobDoc(BlobMixin):
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
-                if isinstance(attachment, six.string_types):
-                    if isinstance(attachment, six.text_type):
-                        attachment = attachment.encode('utf-8')
+                if isinstance(attachment, six.text_type):
+                    attachment = attachment.encode('utf-8')
+                if isinstance(attachment, bytes):
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"
@@ -4915,6 +4915,10 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
         # Import loop if this is imported at the top
         # TODO: revamp so signal_connections <- models <- signals
         from corehq.apps.app_manager import signals
+        from couchforms.analytics import get_form_analytics_metadata
+        xmlns_list = self.get_xmlns_map().keys()
+        for xmlns in xmlns_list:
+            get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
         signals.app_post_save.send(Application, application=self)
 
     def make_reversion_to_copy(self, copy):
@@ -4963,7 +4967,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     def fetch_xform(self, module_id=None, form_id=None, form=None, build_profile_id=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
-        return form.validate_form().render_xform(build_profile_id).encode('utf-8')
+        return form.validate_form().render_xform(build_profile_id)
 
     def set_form_versions(self):
         """

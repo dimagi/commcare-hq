@@ -43,7 +43,7 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
     def test_admin_restore_counts(self):
         xml_payload = etree.fromstring(self.get_xml('restore'))
         self.assertEqual(AdminRestoreView.get_stats_from_xml(xml_payload), {
-            'restore_id': None,
+            'restore_id': '02bbfb3ea17711e8adb9bc764e203eaf',
             'num_cases': 2,
             'num_locations': 7,
             'num_v1_reports': 2,
