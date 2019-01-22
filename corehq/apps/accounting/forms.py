@@ -806,7 +806,10 @@ class ChangeSubscriptionForm(forms.Form):
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    new_plan_version = forms.CharField(label=ugettext_lazy("New Software Plan"))
+    new_plan_version = forms.CharField(
+        label=ugettext_lazy("New Software Plan"),
+        widget=forms.Select(choices=[]),
+    )
     new_date_end = forms.DateField(
         label=ugettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )

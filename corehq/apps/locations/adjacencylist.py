@@ -149,10 +149,10 @@ class AdjListManager(models.Manager):
                 name="xdups"
             )
             query = query.annotate(
-                _exclude_dups=Exists(xdups.queryset().filter(
+                _exclude_dups=Exists(SubQueryset(xdups.queryset().filter(
                     id=OuterRef("id"),
                     _cte_ordering=OuterRef("_cte_ordering"),
-                ))
+                )))
             ).filter(_exclude_dups=True).with_cte(xdups)
 
         return query.order_by(cte.col._cte_ordering)
@@ -206,3 +206,30 @@ def _is_empty(queryset):
     except EmptyResultSet:
         return True
     return False
+
+
+class SubQueryset(object):
+    """A QuerySet-like object that can be pickled
+
+    Use with `django.db.models.expressions.Subquery` or
+    `django.db.models.expressions.Exists` in combination with a
+    `QuerySet` that references an outer CTE name, which cannot be
+    pickled because the query is evaluated at pickle time.
+    """
+
+    # At the time of writing, Subquery and Exists only referenced two
+    # attributes of QuerySet other than `query`: `all` and `order_by`
+
+    def __init__(self, queryset):
+        self.query = queryset.query.clone()
+
+    def all(self):
+        return SubQueryset(self)
+
+    def order_by(self, *field_names):
+        assert self.query.can_filter(), \
+            "Cannot reorder a query once a slice has been taken."
+        obj = SubQueryset(self)
+        obj.query.clear_ordering(force_empty=False)
+        obj.query.add_ordering(*field_names)
+        return obj

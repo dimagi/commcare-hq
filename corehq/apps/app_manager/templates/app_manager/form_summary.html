@@ -54,7 +54,7 @@
     <!-- /ko -->
 
     <ul class="fa-ul" data-bind="foreach: modules">
-        <li data-bind="slideVisible: isVisible">
+        <li data-bind="visible: isVisible">
             <h4>
                 <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
                     <i data-bind="attr: { 'class': icon }"></i>
@@ -66,10 +66,16 @@
                 </div>
                 <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"></span></span>
             </h4>
-            <!-- ko template: {name: 'question-attribute', data: { attribute: module_filter, icon: 'fa-code-fork',
-                 visibleObs: $root.showRelevance } }--><!-- /ko -->
+            <!-- ko if: module_filter -->
+            <ul class="fa-ul" data-bind="visible: $root.showRelevance">
+                <li>
+                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
+                    <!-- ko text: module_filter --><!-- /ko -->
+                </li>
+            </ul>
+            <!-- /ko -->
             <ul class="fa-ul" data-bind="foreach: forms">
-                <li data-bind="slideVisible: isVisible">
+                <li data-bind="visible: isVisible">
                     <h5>
                         <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
                             <i data-bind="attr: { 'class': icon }"></i>
@@ -81,45 +87,66 @@
                         </div>
                         <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"></span></span>
                     </h5>
-                    <!-- ko template: {name: 'question-attribute', data: { attribute: form_filter, icon: 'fa-code-fork',
-                         visibleObs: $root.showRelevance } }--><!-- /ko -->
+                    <!-- ko if: form_filter -->
+                    <ul class="fa-ul" data-bind="visible: $root.showRelevance">
+                        <li>
+                            <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
+                            <span data-bind="text: form_filter"></span>
+                        </li>
+                    </ul>
+                    <!-- /ko -->
                     <ol data-bind="foreach: questions">
-                        <li data-bind="slideVisible: isVisible">
+                        <li data-bind="visible: isVisible">
                             <i data-bind="attr: { 'class': $root.questionIcon($data) }" title="type"></i>
-                            <span data-bind="visible: $root.showIds, text: value"></span>
-                            <span data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></span>
-                            <span data-bind="visible: required" title="{% trans "This question is required"|escapejs %}">*</span>
+                            <!-- ko text: $root.showIds() ? value :  $root.translateQuestion($data) --><!-- /ko -->
+                            <!-- ko if: required -->
+                            <span title="{% trans "This question is required"|escapejs %}">*</span>
+                            <!-- /ko -->
+                            <!-- ko if: comment -->
                             <span class="text-muted" data-bind="visible: $root.showComments">
-                                &nbsp; <span data-bind="text: comment"></span>
+                                &nbsp; <!-- ko text: comment --><!-- /ko -->
                             </span>
-                            <!-- ko template: {name: 'question-attribute', data: { attribute: calculate, icon: 'fa-calculator',
-                                               visibleObs: $root.showCalculations } }--><!-- /ko -->
-                            <!-- ko template: {name: 'question-attribute', data: { attribute: relevant, icon: 'fa-code-fork',
-                                               visibleObs: $root.showRelevance } }--><!-- /ko -->
-                            <!-- ko template: {name: 'question-attribute', data: { attribute: constraint, icon: 'fa-ban',
-                                               visibleObs: $root.showConstraints } }--><!-- /ko -->
-                            <!-- ko template: {name: 'question-attribute', data: { attribute: setvalue, icon: 'fa-home',
-                                               visibleObs: $root.showDefaultValues } }--><!-- /ko -->
+                            <!-- /ko -->
+                            <!-- ko if:  calculate || relevant || constraint || setvalue  -->
+                            <ul class="fa-ul">
+                                <!-- ko if: calculate -->
+                                <li data-bind="visible: $root.showCalculations">
+                                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-calculator'}"></i>
+                                    <!-- ko text: calculate --><!-- /ko -->
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: relevant -->
+                                <li data-bind="visible: $root.showRelevance">
+                                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
+                                    <!-- ko text: relevant --><!-- /ko -->
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: constraint -->
+                                <li data-bind="visible: $root.showConstraints">
+                                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-ban'}"></i>
+                                    <!-- ko text: constraint --><!-- /ko -->
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: setvalue -->
+                                <li data-bind="visible: $root.showDefaultValues">
+                                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-home'}"></i>
+                                    <!-- ko text: setvalue --><!-- /ko -->
+                                </li>
+                                <!-- /ko -->
+                            </ul>
+                            <!-- /ko -->
+                            <!-- ko if: options.length -->
                             <ol data-bind="foreach: options">
                                 <li data-bind="visible: $root.showIds, text: value"></li>
                                 <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
                             </ol>
+                            <!-- /ko -->
                         </li>
                     </ol>
                 </li>
             </ul>
         </li>
     </ul>
-
-    {# Button to toggle question attribute #}
-    <script type="text/html" id="question-attribute">
-        <ul class="fa-ul" data-bind="if: attribute, slideVisible: visibleObs">
-            <li>
-                <i data-bind="attr: {'class': 'fa-li fa text-muted ' + icon}"></i>
-                <span data-bind="text: attribute"></span>
-            </li>
-        </ul>
-    </script>
 
     {# Button for question attribute #}
     <script type="text/html" id="attribute-toggle">

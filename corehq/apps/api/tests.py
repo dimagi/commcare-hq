@@ -1986,7 +1986,14 @@ class TestConfigurableReportDataResource(APIResourceTest):
         query_dict.update({"some_filter": "bar"})
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
             self.domain.name, "123", 100, 50, 3450, query_dict)
-        self.assertEqual(next, self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
+        single_endpoint = self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"})
+
+        def _get_query_params(url):
+            from six.moves.urllib.parse import parse_qs, urlparse
+            return parse_qs(urlparse(url).query)
+
+        self.assertEqual(next.split('?')[0], single_endpoint.split('?')[0])
+        self.assertEqual(_get_query_params(next), _get_query_params(single_endpoint))
 
         # It's the last page
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
