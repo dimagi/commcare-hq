@@ -48,7 +48,7 @@
                     <div class="panel-heading">
                         <h4 class="panel-title panel-title-nolink">
                             <i class="fcc fcc-fd-external-case"></i>
-                            <span data-bind="text: name"></span>
+                            <!-- ko text: name --><!-- /ko -->
                         </h4>
                     </div>
                     <div class="panel-body">
@@ -59,7 +59,7 @@
                                     <ul class="fa-ul" data-bind="foreach: relationshipList">
                                         <li>
                                             <span class="label label-primary" data-bind="text: relationship"></span>
-                                            <span data-bind="text: caseType"></span>
+                                            <!-- ko text: caseType --><!-- /ko -->
                                         </li>
                                    </ul>
                                 </div>
@@ -72,6 +72,7 @@
                                     <div data-bind="template: {name: 'opened-closed-by', data: closedByList }"></div>
                                 </div>
                             </div>
+                            <!-- ko if:has_errors -->
                             <div class="row" data-bind="visible: has_errors">
                                 <div class="col-md-6">
                                     {% trans "Problems:" %}
@@ -85,6 +86,7 @@
                                     </ul>
                                 </div>
                             </div>
+                            <!-- /ko -->
                         </div>
                         <table class="case-properties table">
                             <thead>
@@ -116,17 +118,78 @@
                                             <!-- /ko -->
                                         </td>
                                         <td>
-                                            <div data-bind="template: {name: 'load-save-questions', data: {questions: load_questions, getIcon: $root.questionIcon}}"></div>
+                                            <ul class="fa-ul" data-bind="foreach: load_questions"><!-- Each of these is an object containing a condition and a question -->
+                                                <li>
+                                                    <i data-bind="attr: {'class': $root.questionIcon(question)}"></i>
+                                                    <!-- ko text: $root.showIds() ? question.value :  $root.translateQuestion(question) --><!-- /ko -->
+                                                    <!-- ko if: question.options -->
+                                                    <ul data-bind="foreach: question.options">
+                                                        <li data-bind="visible: $root.showIds, text: value"></li>
+                                                        <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
+                                                    </ul>
+                                                    <!-- /ko -->
+                                                    <!-- ko if: condition -->
+                                                    <ul class="fa-ul" data-bind="visible: $root.showConditions">
+                                                        <li>
+                                                            <i class="fa-li fa fa-sitemap text-muted"></i>
+                                                            <!-- ko text: condition.question + " " + condition.operator + " " + condition.answer --><!-- /ko -->
+                                                        </li>
+                                                    </ul>
+                                                    <!-- /ko -->
+                                                    <!-- ko if: question.calculate -->
+                                                    <ul class="fa-ul" data-bind="visible: $root.showCalculations">
+                                                        <li>
+                                                            <i class="fa-li fa fa-calculator text-muted"></i>
+                                                            <!-- ko text: question.calculate --><!-- /ko -->
+                                                        </li>
+                                                    </ul>
+                                                    <!-- /ko -->
+                                                </li>
+                                            </ul>
                                         </td>
                                         <td>
-                                            <div data-bind="template: {name: 'load-save-questions', data: {questions: save_questions, getIcon: $root.questionIcon}}"></div>
+                                            <ul class="fa-ul" data-bind="foreach: save_questions"><!-- Each of these is an object containing a condition and a question -->
+                                                <li>
+                                                    <i data-bind="attr: {'class': $root.questionIcon(question)}"></i>
+                                                    <!-- ko text: $root.showIds() ? question.value :  $root.translateQuestion(question) --><!-- /ko -->
+                                                    <!-- ko if: question.options -->
+                                                    <ul data-bind="foreach: question.options">
+                                                        <li data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data)"></li>
+                                                    </ul>
+                                                    <!-- /ko -->
+                                                    <!-- ko if: condition || question.calculate -->
+                                                    <ul class="fa-ul">
+                                                        <!-- ko if: condition -->
+                                                        <li data-bind="visible: $root.showConditions">
+                                                            <i class="fa-li fa fa-sitemap text-muted"></i>
+                                                            <!-- ko text: condition.question + " " + condition.operator + " " + condition.answer --><!-- /ko -->
+                                                        </li>
+                                                        <!-- /ko -->
+                                                        <!-- ko if: question.calculate -->
+                                                        <li data-bind="visible: $root.showCalculations">
+                                                            <i class="fa-li fa fa-calculator text-muted"></i>
+                                                            <!-- ko text: question.calculate --><!-- /ko -->
+                                                        </li>
+                                                        <!-- /ko -->
+                                                    </ul>
+                                                    <!-- /ko -->
+                                                </li>
+                                            </ul>
                                         </td>
                                         <!-- ko if: !$index() -->
                                         <td>
-                                            <div data-bind="template: {name: 'case-details', data: {details: $parent.short_details}}"></div>
+                                            <ul class="list-unstyled" data-bind="foreach: $parent.short_details">
+                                                <li>
+                                                    <span data-bind="html: $root.moduleReference($data.module_id)"></span> "<!-- ko text: $root.translate($data.header) --><!-- /ko -->"
+                                                </li>
+                                            </ul>
                                         </td>
                                         <td>
-                                            <div data-bind="template: {name: 'case-details', data: {details: $parent.long_details}}"></div>
+                                            <ul class="list-unstyled" data-bind="foreach: $parent.long_details">
+                                                <li>
+                                                    <span data-bind="html: $root.moduleReference($data.module_id)"></span> "<!-- ko text: $root.translate($data.header) --><!-- /ko -->"
+                                                </li>
+                                            </ul>
                                         </td>
                                         <!-- /ko -->
                                     </tr>
@@ -145,52 +208,14 @@
             <li>
                 <span data-bind="html: $root.moduleFormReference(formId)"></span>
                 <!-- ko: if: conditions -->
-                    <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
-                        <li>
-                            <i class="fa fa-sitemap"></i>
-                            <span data-bind="text: question"></span>
-                            <span data-bind="text: operator"></span>
-                            <span data-bind="text: answer"></span>
-                        </li>
-                    </ul>
+                    <div class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
+                        <i class="fa fa-sitemap"></i> &nbsp;
+                        <!-- ko text: question --><!-- /ko -->
+                        <!-- ko text: operator --><!-- /ko -->
+                        <!-- ko text: answer --><!-- /ko -->
+                    </div>
                 <!-- /ko -->
             </li>
-        </ul>
-    </script>
-
-    {# List of questions loaded/saved into a case property #}
-    <script type="text/html" id="load-save-questions">
-        <ul class="fa-ul" data-bind="foreach: questions"><!-- Each of these is an object containing a condition and a question -->
-            <li>
-                <i data-bind="attr: {'class': $parent.getIcon(question)}"></i>
-                <span data-bind="visible: $root.showIds, text: question.value"></span>
-                <span data-bind="visible: $root.showLabels, text: $root.translateQuestion(question)"></span>
-                <ul data-bind="foreach: question.options">
-                    <li data-bind="visible: $root.showIds, text: value"></li>
-                    <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
-                </ul>
-                <ul class="fa-ul" data-bind="if: condition, visible: $root.showConditions">
-                    <li>
-                        <i class="fa-li fa fa-sitemap text-muted"></i>
-                        <span data-bind="text: condition.question"></span>
-                        <span data-bind="text: condition.operator"></span>
-                        <span data-bind="text: condition.answer"></span>
-                    </li>
-                </ul>
-                <ul class="fa-ul" data-bind="if: question.calculate, visible: $root.showCalculations">
-                    <li>
-                        <i class="fa-li fa fa-calculator text-muted"></i>
-                        <span data-bind="text: question.calculate"></span>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-    </script>
-
-    {# Case details #}
-    <script type="text/html" id="case-details">
-        <ul class="list-unstyled" data-bind="foreach: details">
-            <li><span data-bind="html: $root.moduleReference($data.module_id)"></span> "<span data-bind="text: $root.translate($data.header)"></span>"</li>
         </ul>
     </script>
 {% endblock content_extra %}
