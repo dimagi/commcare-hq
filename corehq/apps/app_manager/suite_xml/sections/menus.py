@@ -128,8 +128,16 @@ class MenuContributor(SuiteContributorByModule):
                         })
                         menu = LocalizedMenu(**menu_kwargs)
                     else:
+                        if (module.put_in_root
+                                and getattr(module, 'root_module', False)
+                                and not module.root_module.put_in_root):
+                            # Mobile will combine this module with its parent
+                            # Reference the parent's name to avoid ambiguity
+                            locale_id = id_strings.module_locale(module.root_module)
+                        else:
+                            locale_id = id_strings.module_locale(module)
                         menu_kwargs.update({
-                            'locale_id': id_strings.module_locale(module),
+                            'locale_id': locale_id,
                             'media_image': module.default_media_image,
                             'media_audio': module.default_media_audio,
                         })

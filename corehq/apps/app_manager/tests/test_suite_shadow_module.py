@@ -25,14 +25,14 @@ class ShadowModuleWithChildSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def setUp(self):
         self.app = Application.new_app('domain', "Untitled Application")
 
-        self.parent = self.app.add_module(Module.new_module('module', None))
-        self.app.new_form(self.parent.id, "Untitled Form", None)
+        self.parent = self.app.add_module(Module.new_module('Parent Module', None))
+        self.app.new_form(self.parent.id, "Parent Form", None)
 
-        self.child = self.app.add_module(Module.new_module('module', None))
+        self.child = self.app.add_module(Module.new_module('Child Module', None))
         self.child.root_module_id = self.parent.unique_id
+        self.app.new_form(self.child.id, "Child Form", None)
 
-        self.app.new_form(self.child.id, "Untitled Form", None)
-        self.shadow = self.app.add_module(ShadowModule.new_module('module', None))
+        self.shadow = self.app.add_module(ShadowModule.new_module('Shadow Module', None))
 
     def test_shadow_module_source_parent(self):
         self.shadow.source_module_id = self.parent.unique_id
