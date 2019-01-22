@@ -10,16 +10,6 @@
             {% if model_type == "case" %}
             <th class="col-sm-2">{% trans 'Case Type' %}</th>
             {% endif %}
-            {% if has_edit_permissions %}
-            <th class="col-sm-1">
-                {% if is_daily_saved_export %}
-                    {% trans "Edit Columns" %}
-                {% else %}
-                    {% trans 'Edit' %}
-                {% endif %}
-            </th>
-            <th class="col-sm-1">{% trans 'Delete' %}</th>
-            {% endif %}
             <th class="col-sm-1">
                 {% if is_daily_saved_export %}
                     {% if has_edit_permissions %}
@@ -29,9 +19,6 @@
                     {{ export_type_caps }}
                 {% endif %}
             </th>
-            {% if is_daily_saved_export %}
-            <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
-            {% endif %}
             {%  if allow_bulk_export %}
             <th class="col-sm-3">
                 {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
@@ -42,6 +29,19 @@
                     {% trans 'None' %}
                 </button>
             </th>
+            {% endif %}
+            {% if is_daily_saved_export %}
+            <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
+            {% endif %}
+            {% if has_edit_permissions %}
+            <th class="col-sm-1">
+                {% if is_daily_saved_export %}
+                    {% trans "Edit Columns" %}
+                {% else %}
+                    {% trans 'Edit' %}
+                {% endif %}
+            </th>
+            <th class="col-sm-1">{% trans 'Delete' %}</th>
             {% endif %}
             <th class="col-sm-1" data-bind="visible: showOwnership">
                 <span data-bind="visible: myExports">{% trans "Share" %}</span>
@@ -281,6 +281,46 @@
             </td>
             {% endif %}
 
+            <td>
+                <a data-bind="attr: {href: downloadUrl}, visible: !isDailySaved(), click: $root.sendExportAnalytics"
+                   class="btn btn-primary">
+                    {{ export_type_caps }}
+                </a>
+                {% if has_edit_permissions %}
+                <a class="btn btn-default"
+                   data-bind="visible: isDailySaved() && isLocationSafeForUser(), click: function (model) { $root.filterModalExportId(model.id()); }"
+                   href="#setFeedFiltersModal"
+                   data-toggle="modal"
+                >
+                    <i class="fa fa-filter"></i>
+                    {% trans "Edit Filters" %}
+                </a>
+                {% endif %}
+            </td>
+
+            {% if allow_bulk_export %}
+            <td>
+                <div class="checkbox checkbox-table-cell">
+                    <label>
+                        <input type="checkbox" data-bind="checked: addedToBulk" />
+                    </label>
+                </div>
+            </td>
+            {% endif %}
+
+            {% if is_daily_saved_export %}
+                <td>
+                    <a class="btn btn-default"
+                            data-bind="attr: {
+                                'data-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
+                            }"
+                            data-toggle="modal">
+                        <span data-bind="visible: !isAutoRebuildEnabled()">{% trans "Enable" %}</span>
+                        <span data-bind="visible: isAutoRebuildEnabled()">{% trans "Disable" %}</span>
+                    </a>
+                </td>
+            {% endif %}
+
             {% if has_edit_permissions %}
             <td>
                 <div data-bind="if: $parent.showOwnership">
@@ -327,43 +367,7 @@
                 </div>
             </td>
             {% endif %}
-            <td>
-                <a data-bind="attr: {href: downloadUrl}, visible: !isDailySaved(), click: $root.sendExportAnalytics"
-                   class="btn btn-primary">
-                    {{ export_type_caps }}
-                </a>
-                {% if has_edit_permissions %}
-                <a class="btn btn-default"
-                   data-bind="visible: isDailySaved() && isLocationSafeForUser(), click: function (model) { $root.filterModalExportId(model.id()); }"
-                   href="#setFeedFiltersModal"
-                   data-toggle="modal"
-                >
-                    <i class="fa fa-filter"></i>
-                    {% trans "Edit Filters" %}
-                </a>
-                {% endif %}
-            </td>
-            <!-- ko if: hasEmailedExport -->
-                <td>
-                    <a class="btn btn-default"
-                            data-bind="attr: {
-                                'data-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
-                            }"
-                            data-toggle="modal">
-                        <span data-bind="visible: !isAutoRebuildEnabled()">{% trans "Enable" %}</span>
-                        <span data-bind="visible: isAutoRebuildEnabled()">{% trans "Disable" %}</span>
-                    </a>
-                </td>
-            <!-- /ko -->
-            {% if allow_bulk_export %}
-            <td>
-                <div class="checkbox checkbox-table-cell">
-                    <label>
-                        <input type="checkbox" data-bind="checked: addedToBulk" />
-                    </label>
-                </div>
-            </td>
-            {% endif %}
+
             <td data-bind="visible: $parent.showOwnership">
                 <div data-bind="visible: $parent.myExports">
                     <div data-bind="visible: sharing() === 'private'">
