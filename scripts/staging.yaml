@@ -54,7 +54,7 @@ branches:
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
   - cz/odata-poc  # cory jan 8
   - dmr/fix-es-service-check  # Danny Jan 3
-#  - jls/reduce-form-classes  # Jenny Jan 15
+  - jls/reduce-form-classes  # Jenny Jan 15
   - revert-23027-revert-22985-je/variable-landing-page # Emord Jan 17
   - invoice-filters  # Nick P Jan 18
 submodules: {}
