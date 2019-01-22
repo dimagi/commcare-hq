@@ -1293,7 +1293,7 @@ class FormBase(IndexedSchema, CommentMixin, FormMediaMixin, NavMenuItemMediaMixi
         return self.unique_id
 
     def get_app(self):
-        return self._parent._parent
+        return self._app
 
     def get_version(self):
         return self.version if self.version else self.get_app().version
