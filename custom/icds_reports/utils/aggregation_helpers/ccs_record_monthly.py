@@ -218,7 +218,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('person_name', 'case_list.person_name'),
             ('edd', 'case_list.edd'),
             ('delivery_nature', 'case_list.delivery_nature'),
-            ('mobile_number', 'person.phone_number'),
+            ('mobile_number', 'person_cases.phone_number'),
             ('preg_order', 'case_list.preg_order'),
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
             ('last_date_thr', 'case_list.last_date_thr'),
@@ -256,7 +256,6 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 AND agg_cf.month = %(start_date)s AND {valid_in_month}
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id 
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
-            
             ORDER BY case_list.awc_id, case_list.case_id, case_list.modified_on
         )
         """.format(
