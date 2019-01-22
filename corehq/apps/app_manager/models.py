@@ -44,7 +44,6 @@ from corehq.apps.app_manager.helpers.validators import (
     ApplicationValidator,
     FormValidator,
     FormBaseValidator,
-    IndexedFormBaseValidator,
     ModuleValidator,
     ModuleBaseValidator,
     AdvancedModuleValidator,
@@ -913,7 +912,201 @@ class CaseReferences(DocumentSchema):
             yield CaseSaveReferenceWithPath.wrap(ref_copy)
 
 
-class FormBase(DocumentSchema):
+class CustomIcon(DocumentSchema):
+    """
+    A custom icon to display next to a module or a form.
+    The property "form" identifies what kind of icon this would be, for ex: badge
+    One can set either a simple text to display or
+    an xpath expression to be evaluated for example count of cases within.
+    """
+    form = StringProperty()
+    text = DictProperty(six.text_type)
+    xpath = StringProperty()
+
+
+class NavMenuItemMediaMixin(DocumentSchema):
+    """
+        Language-specific icon and audio.
+        Properties are map of lang-code to filepath
+    """
+
+    # These were originally DictProperty(JRResourceProperty),
+    # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
+    # so it was actually wrapping as a StringPropery
+    # too late to retroactively apply that validation,
+    # so now these are DictProperty(StringProperty)
+    media_image = DictProperty(StringProperty)
+    media_audio = DictProperty(StringProperty)
+    custom_icons = ListProperty(CustomIcon)
+
+    # When set to true, all languages use the specific media from the default language
+    use_default_image_for_all = BooleanProperty(default=False)
+    use_default_audio_for_all = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(cls, data):
+        # Lazy migration from single-language media to localizable media
+        for media_attr in ('media_image', 'media_audio'):
+            old_media = data.get(media_attr, None)
+            if old_media:
+                # Single-language media was stored in a plain string.
+                # Convert this to a dict, using a dummy key because we
+                # don't know the app's supported or default lang yet.
+                if isinstance(old_media, six.string_types):
+                    new_media = {'default': old_media}
+                    data[media_attr] = new_media
+                elif isinstance(old_media, dict):
+                    # Once the media has localized data, discard the dummy key
+                    if 'default' in old_media and len(old_media) > 1:
+                        old_media.pop('default')
+
+        return super(NavMenuItemMediaMixin, cls).wrap(data)
+
+    def get_app(self):
+        raise NotImplementedError
+
+    def _get_media_by_language(self, media_attr, lang, strict=False):
+        """
+        Return media-path for given language if one exists, else 1st path in the
+        sorted lang->media-path list
+
+        *args:
+            media_attr: one of 'media_image' or 'media_audio'
+            lang: language code
+        **kwargs:
+            strict: whether to return None if media-path is not set for lang or
+            to return first path in sorted lang->media-path list
+        """
+        assert media_attr in ('media_image', 'media_audio')
+        toggle_enabled = toggles.LANGUAGE_LINKED_MULTIMEDIA.enabled
+        app = self.get_app()
+
+        if self.use_default_image_for_all and media_attr == 'media_image' and toggle_enabled(app.domain):
+            lang = app.default_language
+        if self.use_default_audio_for_all and media_attr == 'media_audio' and toggle_enabled(app.domain):
+            lang = app.default_language
+
+        media_dict = getattr(self, media_attr)
+        if not media_dict:
+            return None
+        if media_dict.get(lang, ''):
+            return media_dict[lang]
+        if not strict:
+            # if the queried lang key doesn't exist,
+            # return the first in the sorted list
+            for lang, item in sorted(media_dict.items()):
+                return item
+
+    @property
+    def default_media_image(self):
+        # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_image')
+        return self.icon_by_language('')
+
+    @property
+    def default_media_audio(self):
+        # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_audio')
+        return self.audio_by_language('')
+
+    def _assert_unexpected_default_media_call(self, media_attr):
+        assert media_attr in ('media_image', 'media_audio')
+        media = getattr(self, media_attr)
+        if isinstance(media, dict) and list(media) == ['default']:
+            from corehq.util.view_utils import get_request
+            request = get_request()
+            url = ''
+            if request:
+                url = request.META.get('HTTP_REFERER')
+            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+            _assert(False, 'Called default_media_image on app with localized media: {}'.format(url))
+
+    def icon_by_language(self, lang, strict=False):
+        return self._get_media_by_language('media_image', lang, strict=strict)
+
+    def audio_by_language(self, lang, strict=False):
+        return self._get_media_by_language('media_audio', lang, strict=strict)
+
+    def custom_icon_form_and_text_by_language(self, lang):
+        custom_icon = self.custom_icon
+        if custom_icon:
+            custom_icon_text = custom_icon.text.get(lang, custom_icon.text.get(self.get_app().default_language))
+            return custom_icon.form, custom_icon_text
+        return None, None
+
+    def _set_media(self, media_attr, lang, media_path):
+        """
+            Caller's responsibility to save doc.
+            Currently only called from the view which saves after all Edits
+        """
+        assert media_attr in ('media_image', 'media_audio')
+
+        media_dict = getattr(self, media_attr) or {}
+        old_value = media_dict.get(lang)
+        media_dict[lang] = media_path or ''
+        setattr(self, media_attr, media_dict)
+        # remove the entry from app multimedia mappings if media is being removed now
+        # This does not remove the multimedia but just it's reference in mapping
+        # Added it here to ensure it's always set instead of getting it only when needed
+        app = self.get_app()
+        if old_value and not media_path:
+            # expire all_media_paths before checking for media path used in Application
+            app.all_media.reset_cache(app)
+            app.all_media_paths.reset_cache(app)
+            if old_value not in app.all_media_paths():
+                app.multimedia_map.pop(old_value, None)
+
+    def set_icon(self, lang, icon_path):
+        self._set_media('media_image', lang, icon_path)
+
+    def set_audio(self, lang, audio_path):
+        self._set_media('media_audio', lang, audio_path)
+
+    def _all_media_paths(self, media_attr):
+        assert media_attr in ('media_image', 'media_audio')
+        media_dict = getattr(self, media_attr) or {}
+        valid_media_paths = {media for media in media_dict.values() if media}
+        return list(valid_media_paths)
+
+    def all_image_paths(self):
+        return self._all_media_paths('media_image')
+
+    def all_audio_paths(self):
+        return self._all_media_paths('media_audio')
+
+    def icon_app_string(self, lang, for_default=False):
+        """
+        Return lang/app_strings.txt translation for given lang
+        if a path exists for the lang
+
+        **kwargs:
+            for_default: whether app_string is for default/app_strings.txt
+        """
+
+        if not for_default and self.icon_by_language(lang, strict=True):
+            return self.icon_by_language(lang, strict=True)
+
+        if for_default:
+            return self.icon_by_language(lang, strict=False)
+
+    def audio_app_string(self, lang, for_default=False):
+        """
+            see note on self.icon_app_string
+        """
+
+        if not for_default and self.audio_by_language(lang, strict=True):
+            return self.audio_by_language(lang, strict=True)
+
+        if for_default:
+            return self.audio_by_language(lang, strict=False)
+
+    @property
+    def custom_icon(self):
+        if self.custom_icons:
+            return self.custom_icons[0]
+
+
+class FormBase(IndexedSchema, CommentMixin, FormMediaMixin, NavMenuItemMediaMixin):
     """
     Part of a Managed Application; configuration for a form.
     Translates to a second-level menu on the phone
@@ -1246,21 +1439,11 @@ class FormBase(DocumentSchema):
             updates_by_case_type[case_type].update(save_to_case_update.properties)
         return updates_by_case_type
 
-
-class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
-
-    def get_app(self):
-        return self._parent._parent
-
     def get_module(self):
         return self._parent
 
     def get_case_type(self):
         return self._parent.case_type
-
-    @property
-    def validator(self):
-        return IndexedFormBaseValidator(self)
 
     def _add_save_to_case_questions(self, form_questions, app_case_meta):
         def _make_save_to_case_question(path):
@@ -1379,201 +1562,7 @@ class JRResourceProperty(StringProperty):
         return value
 
 
-class CustomIcon(DocumentSchema):
-    """
-    A custom icon to display next to a module or a form.
-    The property "form" identifies what kind of icon this would be, for ex: badge
-    One can set either a simple text to display or
-    an xpath expression to be evaluated for example count of cases within.
-    """
-    form = StringProperty()
-    text = DictProperty(six.text_type)
-    xpath = StringProperty()
-
-
-class NavMenuItemMediaMixin(DocumentSchema):
-    """
-        Language-specific icon and audio.
-        Properties are map of lang-code to filepath
-    """
-
-    # These were originally DictProperty(JRResourceProperty),
-    # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
-    # so it was actually wrapping as a StringPropery
-    # too late to retroactively apply that validation,
-    # so now these are DictProperty(StringProperty)
-    media_image = DictProperty(StringProperty)
-    media_audio = DictProperty(StringProperty)
-    custom_icons = ListProperty(CustomIcon)
-
-    # When set to true, all languages use the specific media from the default language
-    use_default_image_for_all = BooleanProperty(default=False)
-    use_default_audio_for_all = BooleanProperty(default=False)
-
-    @classmethod
-    def wrap(cls, data):
-        # Lazy migration from single-language media to localizable media
-        for media_attr in ('media_image', 'media_audio'):
-            old_media = data.get(media_attr, None)
-            if old_media:
-                # Single-language media was stored in a plain string.
-                # Convert this to a dict, using a dummy key because we
-                # don't know the app's supported or default lang yet.
-                if isinstance(old_media, six.string_types):
-                    new_media = {'default': old_media}
-                    data[media_attr] = new_media
-                elif isinstance(old_media, dict):
-                    # Once the media has localized data, discard the dummy key
-                    if 'default' in old_media and len(old_media) > 1:
-                        old_media.pop('default')
-
-        return super(NavMenuItemMediaMixin, cls).wrap(data)
-
-    def get_app(self):
-        raise NotImplementedError
-
-    def _get_media_by_language(self, media_attr, lang, strict=False):
-        """
-        Return media-path for given language if one exists, else 1st path in the
-        sorted lang->media-path list
-
-        *args:
-            media_attr: one of 'media_image' or 'media_audio'
-            lang: language code
-        **kwargs:
-            strict: whether to return None if media-path is not set for lang or
-            to return first path in sorted lang->media-path list
-        """
-        assert media_attr in ('media_image', 'media_audio')
-        toggle_enabled = toggles.LANGUAGE_LINKED_MULTIMEDIA.enabled
-        app = self.get_app()
-
-        if self.use_default_image_for_all and media_attr == 'media_image' and toggle_enabled(app.domain):
-            lang = app.default_language
-        if self.use_default_audio_for_all and media_attr == 'media_audio' and toggle_enabled(app.domain):
-            lang = app.default_language
-
-        media_dict = getattr(self, media_attr)
-        if not media_dict:
-            return None
-        if media_dict.get(lang, ''):
-            return media_dict[lang]
-        if not strict:
-            # if the queried lang key doesn't exist,
-            # return the first in the sorted list
-            for lang, item in sorted(media_dict.items()):
-                return item
-
-    @property
-    def default_media_image(self):
-        # For older apps that were migrated: just return the first available item
-        self._assert_unexpected_default_media_call('media_image')
-        return self.icon_by_language('')
-
-    @property
-    def default_media_audio(self):
-        # For older apps that were migrated: just return the first available item
-        self._assert_unexpected_default_media_call('media_audio')
-        return self.audio_by_language('')
-
-    def _assert_unexpected_default_media_call(self, media_attr):
-        assert media_attr in ('media_image', 'media_audio')
-        media = getattr(self, media_attr)
-        if isinstance(media, dict) and list(media) == ['default']:
-            from corehq.util.view_utils import get_request
-            request = get_request()
-            url = ''
-            if request:
-                url = request.META.get('HTTP_REFERER')
-            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-            _assert(False, 'Called default_media_image on app with localized media: {}'.format(url))
-
-    def icon_by_language(self, lang, strict=False):
-        return self._get_media_by_language('media_image', lang, strict=strict)
-
-    def audio_by_language(self, lang, strict=False):
-        return self._get_media_by_language('media_audio', lang, strict=strict)
-
-    def custom_icon_form_and_text_by_language(self, lang):
-        custom_icon = self.custom_icon
-        if custom_icon:
-            custom_icon_text = custom_icon.text.get(lang, custom_icon.text.get(self.get_app().default_language))
-            return custom_icon.form, custom_icon_text
-        return None, None
-
-    def _set_media(self, media_attr, lang, media_path):
-        """
-            Caller's responsibility to save doc.
-            Currently only called from the view which saves after all Edits
-        """
-        assert media_attr in ('media_image', 'media_audio')
-
-        media_dict = getattr(self, media_attr) or {}
-        old_value = media_dict.get(lang)
-        media_dict[lang] = media_path or ''
-        setattr(self, media_attr, media_dict)
-        # remove the entry from app multimedia mappings if media is being removed now
-        # This does not remove the multimedia but just it's reference in mapping
-        # Added it here to ensure it's always set instead of getting it only when needed
-        app = self.get_app()
-        if old_value and not media_path:
-            # expire all_media_paths before checking for media path used in Application
-            app.all_media.reset_cache(app)
-            app.all_media_paths.reset_cache(app)
-            if old_value not in app.all_media_paths():
-                app.multimedia_map.pop(old_value, None)
-
-    def set_icon(self, lang, icon_path):
-        self._set_media('media_image', lang, icon_path)
-
-    def set_audio(self, lang, audio_path):
-        self._set_media('media_audio', lang, audio_path)
-
-    def _all_media_paths(self, media_attr):
-        assert media_attr in ('media_image', 'media_audio')
-        media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = {media for media in media_dict.values() if media}
-        return list(valid_media_paths)
-
-    def all_image_paths(self):
-        return self._all_media_paths('media_image')
-
-    def all_audio_paths(self):
-        return self._all_media_paths('media_audio')
-
-    def icon_app_string(self, lang, for_default=False):
-        """
-        Return lang/app_strings.txt translation for given lang
-        if a path exists for the lang
-
-        **kwargs:
-            for_default: whether app_string is for default/app_strings.txt
-        """
-
-        if not for_default and self.icon_by_language(lang, strict=True):
-            return self.icon_by_language(lang, strict=True)
-
-        if for_default:
-            return self.icon_by_language(lang, strict=False)
-
-    def audio_app_string(self, lang, for_default=False):
-        """
-            see note on self.icon_app_string
-        """
-
-        if not for_default and self.audio_by_language(lang, strict=True):
-            return self.audio_by_language(lang, strict=True)
-
-        if for_default:
-            return self.audio_by_language(lang, strict=False)
-
-    @property
-    def custom_icon(self):
-        if self.custom_icons:
-            return self.custom_icons[0]
-
-
-class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
+class Form(FormBase):
     form_type = 'module_form'
 
     form_filter = StringProperty()
@@ -2661,7 +2650,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 pass
 
 
-class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
+class AdvancedForm(FormBase):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
