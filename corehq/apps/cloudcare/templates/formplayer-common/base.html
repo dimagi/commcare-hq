@@ -58,17 +58,6 @@
               media="all"
               href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
 
-        {% if CUSTOM_LOGO_URL %}
-            <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
-        {% else %}
-            <link rel="apple-touch-icon" sizes="57x57" href="{% static 'hqstyle/images/commcare-icon-57x57.png' %}"/>
-            <link rel="apple-touch-icon" sizes="76x76" href="{% static 'hqstyle/images/commcare-icon-76x76.png' %}"/>
-            <link rel="apple-touch-icon" sizes="120x120" href="{% static 'hqstyle/images/commcare-icon-120x120.png' %}"/>
-            <link rel="apple-touch-icon" sizes="152x152" href="{% static 'hqstyle/images/commcare-icon-152x152.png' %}"/>
-            <link rel="apple-touch-icon" sizes="167x167" href="{% static 'hqstyle/images/commcare-icon-167x167.png' %}"/>
-            <link rel="apple-touch-icon" sizes="180x180" href="{% static 'hqstyle/images/commcare-icon-180x180.png' %}"/>
-        {% endif %}
-
         {% if less_debug %}
         {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
         <script>
