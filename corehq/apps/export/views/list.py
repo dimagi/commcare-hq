@@ -70,7 +70,7 @@ class ExportListHelper(object):
     allow_bulk_export = True
 
     @classmethod
-    def get(self, request, domain, form_or_case=None, is_daily_saved_export=False, is_feed=False, is_deid=False):
+    def get(self, request, form_or_case=None, is_daily_saved_export=False, is_feed=False, is_deid=False):
         if is_feed:
             if is_deid:
                 return DeIdDashboardFeedListHelper(request)
@@ -521,7 +521,7 @@ def get_exports_page(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
     permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
-    helper = ExportListHelper.get(request, domain, form_or_case=request.GET.get('model_type'),
+    helper = ExportListHelper.get(request, form_or_case=request.GET.get('model_type'),
                                   is_daily_saved_export=json.loads(request.GET.get('is_daily_saved_export')),
                                   is_feed=json.loads(request.GET.get('is_feed')),
                                   is_deid=json.loads(request.GET.get('is_deid')))
