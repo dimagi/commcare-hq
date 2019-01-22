@@ -261,7 +261,7 @@ class DailySavedExportListHelper(ExportListHelper):
         }[model]
 
     def fmt_export_data(self, export):
-        from corehq.apps.export.views.new import CopyExportView
+        from corehq.apps.export.views.new import DeleteNewCustomExportView
         from corehq.apps.export.views.download import DownloadNewCaseExportView, DownloadNewFormExportView
         if isinstance(export, FormExportInstance):
             edit_view = self._get_edit_export_class('form')
@@ -295,7 +295,8 @@ class DailySavedExportListHelper(ExportListHelper):
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': reverse(download_view.urlname, args=(self.domain, export.get_id)),
-            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
+            'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
+                                 args=(self.domain, export.type, export.get_id)),
         }
 
 
@@ -323,7 +324,7 @@ class FormExportListHelper(ExportListHelper):
         return reverse(DownloadNewFormExportView.urlname, args=(self.domain, export_id))
 
     def fmt_export_data(self, export):
-        from corehq.apps.export.views.new import CopyExportView
+        from corehq.apps.export.views.new import DeleteNewCustomExportView
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
         emailed_export = None
         if export.is_daily_saved_export:
@@ -349,7 +350,8 @@ class FormExportListHelper(ExportListHelper):
             'editUrl': reverse(EditNewCustomFormExportView.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export.get_id),
-            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
+            'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
+                                 args=(self.domain, export.type, export.get_id)),
         }
 
 
@@ -370,7 +372,7 @@ class CaseExportListHelper(ExportListHelper):
 
     def fmt_export_data(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
-        from corehq.apps.export.views.new import CopyExportView
+        from corehq.apps.export.views.new import DeleteNewCustomExportView
         emailed_export = None
         if export.is_daily_saved_export:
             emailed_export = self._get_daily_saved_export_metadata(export)
@@ -394,7 +396,8 @@ class CaseExportListHelper(ExportListHelper):
             'emailedExport': emailed_export,
             'editUrl': reverse(EditNewCustomCaseExportView.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export._id),
-            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
+            'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
+                                 args=(self.domain, export.type, export.get_id)),
         }
 
     @property
