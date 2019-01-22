@@ -50,9 +50,9 @@ from corehq.apps.export.const import (
     SharingOption,
 )
 from corehq.apps.export.dbaccessors import (
+    get_case_exports_by_domain,
+    get_form_exports_by_domain,
     get_properly_wrapped_export_instance,
-    get_brief_case_exports_by_domain,
-    get_brief_form_exports_by_domain,
 )
 from corehq.apps.export.forms import CreateExportTagForm, DashboardFeedFilterForm
 from corehq.apps.export.models import FormExportInstance
@@ -243,11 +243,13 @@ class DailySavedExportListHelper(ExportListHelper):
     def get_saved_exports(self):
         combined_exports = []
         if self.permissions.has_form_export_permissions:
-            combined_exports.extend(get_brief_form_exports_by_domain(self.domain,
-                                                                     self.permissions.has_deid_view_permissions))
+            combined_exports.extend(get_form_exports_by_domain(self.domain,
+                                                               self.permissions.has_deid_view_permissions,
+                                                               include_docs=False))
         if self.permissions.has_case_export_permissions:
-            combined_exports.extend(get_brief_case_exports_by_domain(self.domain,
-                                                                     self.permissions.has_deid_view_permissions))
+            combined_exports.extend(get_case_exports_by_domain(self.domain,
+                                                               self.permissions.has_deid_view_permissions,
+                                                               include_docs=False))
         combined_exports = sorted(combined_exports, key=lambda x: x['name'])
         return [x for x in combined_exports if x['is_daily_saved_export'] and not x['export_format'] == "html"]
 
@@ -311,7 +313,9 @@ class FormExportListHelper(ExportListHelper):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_brief_form_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
+        exports = get_form_exports_by_domain(self.domain,
+                                             self.permissions.has_deid_view_permissions,
+                                             include_docs=False)
         return [x for x in exports if not x['is_daily_saved_export']]
 
     def _get_download_url(self, export_id):
@@ -355,7 +359,9 @@ class CaseExportListHelper(ExportListHelper):
 
     @memoized
     def get_saved_exports(self):
-        exports = get_brief_case_exports_by_domain(self.domain, self.permissions.has_deid_view_permissions)
+        exports = get_case_exports_by_domain(self.domain,
+                                             self.permissions.has_deid_view_permissions,
+                                             include_docs=False)
         return [x for x in exports if not x['is_daily_saved_export']]
 
     def _get_download_url(self, export_id):
@@ -406,11 +412,13 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
     def get_saved_exports(self):
         combined_exports = []
         if self.permissions.has_form_export_permissions:
-            combined_exports.extend(get_brief_form_exports_by_domain(self.domain,
-                                                                     self.permissions.has_deid_view_permissions))
+            combined_exports.extend(get_form_exports_by_domain(self.domain,
+                                                               self.permissions.has_deid_view_permissions,
+                                                               include_docs=False))
         if self.permissions.has_case_export_permissions:
-            combined_exports.extend(get_brief_case_exports_by_domain(self.domain,
-                                                                     self.permissions.has_deid_view_permissions))
+            combined_exports.extend(get_case_exports_by_domain(self.domain,
+                                                               self.permissions.has_deid_view_permissions,
+                                                               include_docs=False))
         combined_exports = sorted(combined_exports, key=lambda x: x['name'])
         return [x for x in combined_exports if x['is_daily_saved_export'] and x['export_format'] == "html"]
 
