@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 from __future__ import unicode_literals
 
 import time
@@ -36,4 +36,3 @@ class Command(BaseCommand):
 
         if relevant_ids:
             _build_indicators(config, document_store, relevant_ids)
-
