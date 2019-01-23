@@ -5,6 +5,7 @@ import datetime
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
 
+
 class TestcbeForms(BaseFormsTest):
     ucr_name = "static-icds-cas-static-cbe_form"
 
