@@ -2289,6 +2289,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
+    put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
@@ -2527,7 +2528,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
@@ -3092,7 +3092,6 @@ class AdvancedModule(ModuleBase):
     forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
@@ -3735,6 +3734,7 @@ class ReportModule(ModuleBase):
     report_configs = SchemaListProperty(ReportAppConfig)
     forms = []
     _loaded = False
+    put_in_root = False
 
     @property
     @memoized
@@ -3818,7 +3818,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     excluded_form_ids = SchemaListProperty()
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
