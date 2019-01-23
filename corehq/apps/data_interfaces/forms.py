@@ -11,6 +11,7 @@ from corehq.apps.data_interfaces.models import (
     UpdateCaseDefinition,
     CustomActionDefinition,
 )
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
@@ -232,9 +233,7 @@ class CaseUpdateRuleForm(forms.Form):
         super(CaseUpdateRuleForm, self).__init__(*args, **kwargs)
 
         self.domain = domain
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = Layout(
@@ -359,9 +358,7 @@ class CaseRuleCriteriaForm(forms.Form):
         self.domain = domain
         self.set_case_type_choices(self.initial.get('case_type'))
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset(
@@ -379,11 +376,14 @@ class CaseRuleCriteriaForm(forms.Form):
             ),
         )
 
-        self.case_type_helper = FormHelper()
-        self.case_type_helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.case_type_helper.field_class = 'col-xs-2'
+        self.case_type_helper = HQFormHelper()
         self.case_type_helper.form_tag = False
-        self.case_type_helper.layout = Layout(Field('case_type'))
+        self.case_type_helper.layout = Layout(
+            Fieldset(
+                _("Rule Criteria"),
+                Field('case_type')
+            )
+        )
 
     @property
     @memoized
@@ -624,9 +624,7 @@ class CaseRuleActionsForm(forms.Form):
 
         self.domain = domain
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
         self.helper.form_show_errors = False
         self.helper.layout = Layout(

@@ -26,6 +26,8 @@ from django.forms.formsets import BaseFormSet, formset_factory
 from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, SelectMultiple
 from django.utils.functional import cached_property
 from memoized import memoized
+
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
@@ -960,7 +962,7 @@ class ScheduleForm(Form):
     )
     active = ChoiceField(
         required=True,
-        label='',
+        label=ugettext_lazy('Status'),
         choices=(
             ('Y', ugettext_lazy("Active")),
             ('N', ugettext_lazy("Inactive")),
@@ -1489,11 +1491,8 @@ class ScheduleForm(Form):
 
     @staticmethod
     def create_form_helper():
-        helper = FormHelper()
+        helper = HQFormHelper()
         helper.form_tag = False
-        helper.form_class = 'form form-horizontal'
-        helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
         return helper
 
     @cached_property
@@ -1533,14 +1532,8 @@ class ScheduleForm(Form):
     def get_before_content_layout_fields(self):
         return [
             crispy.Fieldset(
-                '',
-                hqcrispy.B3MultiField(
-                    '',
-                    crispy.Div(
-                        twbscrispy.InlineField('active'),
-                        css_class='col-sm-3',
-                    ),
-                ),
+                _("Scheduling"),
+                crispy.Field('active'),
             ),
             crispy.Fieldset(
                 self.scheduling_fieldset_legend,
@@ -3579,14 +3572,12 @@ class ConditionalAlertForm(Form):
 
         super(ConditionalAlertForm, self).__init__(*args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                "",
+                _("Basic Information"),
                 crispy.Field('name'),
             ),
         )
