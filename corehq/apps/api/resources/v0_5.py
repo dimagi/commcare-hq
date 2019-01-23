@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.forms import ValidationError
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
@@ -19,7 +19,7 @@ from django.urls import reverse
 from tastypie import fields
 from tastypie.bundle import Bundle
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
 from corehq.apps.api.odata.views import add_odata_headers
@@ -938,6 +938,11 @@ ODATA_CASE_RESOURCE_NAME = 'Cases'
 
 
 class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
+
+    def dispatch(self, request_type, request, **kwargs):
+        if not toggles.ODATA.enabled_for_request(request):
+            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        return super(ODataCommCareCaseResource, self).dispatch(request_type, request, **kwargs)
 
     def determine_format(self, request):
         # json only
