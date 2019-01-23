@@ -367,7 +367,7 @@ class CaseRuleCriteriaForm(forms.Form):
             Fieldset(
                 _("Case Filters") if self.show_fieldset_title else "",
                 HTML(
-                    '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
+                    '<p class="help-block alert alert-info"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
                 ),
                 hidden_bound_field('filter_on_server_modified', 'filterOnServerModified'),
                 hidden_bound_field('server_modified_boundary', 'serverModifiedBoundary'),
