@@ -90,7 +90,7 @@ class AppCaseSummaryView(AppSummaryView):
         has_form_errors = False
         try:
             metadata = self.app.get_case_metadata().to_json()
-        except XFormException as e:
+        except XFormException:
             metadata = {}
             has_form_errors = True
         context.update({
