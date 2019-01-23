@@ -1744,12 +1744,10 @@ class ScheduleForm(Form):
 
     def get_recipients_layout_fields(self):
         return [
-            hqcrispy.B3MultiField(
-                _("Recipient(s)"),
-                crispy.Field(
-                    'recipient_types',
-                    template='scheduling/partials/recipient_types_picker.html',
-                ),
+            crispy.Field(
+                'recipient_types',
+                data_bind="selectedOptions: recipient_types",
+                style="width: 100%;"
             ),
             crispy.Div(
                 crispy.Field(
