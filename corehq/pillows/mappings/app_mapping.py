@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-APP_INDEX = es_index("hqapps_2017-05-22_1426")
+APP_INDEX = es_index("hqapps_2019-01-23")
 APP_MAPPING = {
     "date_formats": [
         "yyyy-MM-dd",
