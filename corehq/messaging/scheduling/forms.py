@@ -5,10 +5,8 @@ import re
 from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
 from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
-from crispy_forms.helper import FormHelper
 from datetime import datetime, timedelta
 from dateutil import parser
 from django.conf import settings
