@@ -117,7 +117,7 @@ APP_MAPPING = {
         "use_custom_suite": {"type": "boolean"},
         "cached_properties": {"type": "object", "dynamic": False},
         "modules": {
-            "type": "object",
+            "type": "nested",
             "dynamic": False,
             "properties": {
                 "case_list": {
@@ -152,7 +152,7 @@ APP_MAPPING = {
                     }
                 },
                 "forms": {
-                    "type": "object",
+                    "type": "nested",
                     "dynamic": False,
                     "properties": {
                         "unique_id": {"type": "string"},
@@ -168,7 +168,7 @@ APP_MAPPING = {
                             "dynamic": False,
                             "properties": {
                                 "subcases": {
-                                    "type": "object",
+                                    "type": "nested",
                                     "dynamic": False,
                                     "properties": {
                                         "doc_type": {"index": "not_analyzed", "type": "string"},
