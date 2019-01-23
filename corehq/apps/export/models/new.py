@@ -809,9 +809,6 @@ class ExportInstance(BlobMixin, Document):
 
         return instance
 
-    def can_view(self, user_id):
-        return self.owner_id is None or self.sharing != SharingOption.PRIVATE or self.owner_id == user_id
-
     def can_edit(self, user):
         return self.owner_id is None or self.owner_id == user.get_id or (
             self.sharing == SharingOption.EDIT_AND_EXPORT
