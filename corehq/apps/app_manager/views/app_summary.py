@@ -13,6 +13,7 @@ from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.const import WORKFLOW_FORM
+from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
@@ -86,9 +87,16 @@ class AppCaseSummaryView(AppSummaryView):
     @property
     def page_context(self):
         context = super(AppCaseSummaryView, self).page_context
+        has_form_errors = False
+        try:
+            metadata = self.app.get_case_metadata().to_json()
+        except XFormException as e:
+            metadata = {}
+            has_form_errors = True
         context.update({
             'is_case_summary': True,
-            'case_metadata': self.app.get_case_metadata().to_json(),
+            'case_metadata': metadata,
+            'has_form_errors': has_form_errors,
         })
         return context
 
