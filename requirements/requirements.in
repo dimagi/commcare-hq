@@ -35,7 +35,7 @@ python-dateutil==2.6.1
 python-Levenshtein
 python-magic==0.4.13
 pytz==2017.2
-PyYAML==3.13
+PyYAML>=4.2b1
 requests~=2.20
 suds-jurko==0.6
 tropo-webapi-python==0.1.3

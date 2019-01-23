@@ -163,7 +163,7 @@ python-magic==0.4.13
 python-mimeparse==1.6.0
 python-termstyle==0.1.10  # via sniffer
 pytz==2017.2
-pyyaml==3.13
+pyyaml==4.2b4
 pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache==0.5.1
