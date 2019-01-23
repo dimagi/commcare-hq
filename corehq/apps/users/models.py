@@ -618,7 +618,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.delete_domain_membership(domain, create_record=create_record)
 
     @memoized
-    def is_domain_admin(self, domain=None, restrict_global_admin=False):
+    def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template
             if hasattr(self, 'current_domain'):
@@ -626,8 +626,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if (not restrict_global_admin and self.is_global_admin() and
-                (domain is None or not domain_restricts_superusers(domain))):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -644,15 +643,18 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     @memoized
     def has_permission(self, domain, permission, data=None, restrict_global_admin=False):
-        # is_admin is the same as having all the permissions set
-        if (not restrict_global_admin and self.is_global_admin() and
-                (domain is None or not domain_restricts_superusers(domain))):
-            return True
-        elif self.is_domain_admin(domain, restrict_global_admin):
-            return True
+        if not restrict_global_admin:
+            # is_admin is the same as having all the permissions set
+            if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+                return True
+            elif self.is_domain_admin(domain):
+                return True
 
         dm = self.get_domain_membership(domain)
         if dm:
+            # an admin has access to all features by default, restrict that if needed
+            if dm.is_admin and restrict_global_admin:
+                return False
             return dm.has_permission(permission, data)
         else:
             return False
@@ -1646,15 +1648,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, fire_signals=True, **params):
+    def save(self, fire_signals=True, spawn_task=False, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
+            from corehq.apps.callcenter.tasks import sync_user_cases_if_applicable
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+            sync_user_cases_if_applicable(self, spawn_task)
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1668,7 +1672,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    def is_domain_admin(self, domain=None, restrict_global_admin=False):
+    def is_domain_admin(self, domain=None):
         # cloudcare workaround
         return False
 
@@ -1815,10 +1819,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
+        from corehq.apps.locations.models import get_case_sharing_groups_for_locations
         # get faked location group objects
-        groups = []
-        for sql_location in self.get_sql_locations(self.domain):
-            groups.extend(sql_location.get_case_sharing_groups(self._id))
+        groups = list(get_case_sharing_groups_for_locations(
+            self.get_sql_locations(self.domain),
+            self._id
+        ))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
@@ -1958,7 +1964,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if commit:
             self.save()
 
-    def unset_location(self, fall_back_to_next=False):
+    def unset_location(self, fall_back_to_next=False, commit=True):
         """
         Resets primary location to next available location from assigned_location_ids.
             If there are no more locations in assigned_location_ids,
@@ -1990,7 +1996,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.update_fixture_status(UserFixtureType.LOCATION)
             self.get_domain_membership(self.domain).location_id = None
             self.get_sql_location.reset_cache(self)
-            self.save()
+            if commit:
+                self.save()
 
     def unset_location_by_id(self, location_id, fall_back_to_next=False):
         """
@@ -2029,7 +2036,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'location_id': location_id
             })
 
-    def reset_locations(self, location_ids):
+    def reset_locations(self, location_ids, commit=True):
         """
         Reset user's assigned_locations to given location_ids and update user data.
             This should be called after updating primary location via set_location/unset_location
@@ -2049,8 +2056,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
-            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]))
-        else:
+            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]), commit=False)
+
+        if commit:
             self.save()
 
     def supply_point_index_mapping(self, supply_point, clear=False):
@@ -2090,7 +2098,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         submit_case_blocks(
             ElementTree.tostring(
                 caseblock.as_xml()
-            ),
+            ).decode('utf-8'),
             self.domain,
             device_id=__name__ + ".CommCareUser." + source,
         )

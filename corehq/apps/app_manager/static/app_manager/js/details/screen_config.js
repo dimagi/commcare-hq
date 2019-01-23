@@ -377,12 +377,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     that.nodeset = uiElement.input().val(that.original.nodeset);
                     that.relevant = uiElement.input().val(that.original.relevant);
                     if (that.isTab) {
-                        // hack to wait until the input's there to prepend the Tab: label.
-                        setTimeout(function () {
-                            that.header.ui.addClass('input-group').prepend($('<span class="input-group-addon">Tab</span>'));
-                            that.nodeset.ui.addClass('input-group').prepend($('<span class="input-group-addon">Nodeset</span>'));
-                            that.relevant.ui.addClass('input-group').prepend($('<span class="input-group-addon">Display Condition</span>'));
-                        }, 0);
+                        that.header.ui.find("input[type='text']").attr("placeholder", gettext("Tab Name"));
+                        that.nodeset.ui.find("input[type='text']").attr("placeholder", gettext("Nodeset"));
+                        that.relevant.ui.find("input[type='text']").attr("placeholder", gettext("Display Condition"));
 
                         // Observe nodeset values for the sake of validation
                         if (that.hasNodeset) {

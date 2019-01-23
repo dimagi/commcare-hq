@@ -155,9 +155,11 @@
     </button>
     <p class="lead">{% trans 'New Add-ons tab' %}</p>
     <p>
+        {% blocktrans %}
         Intermediate functionality, such as child cases, can now be enabled or disabled using the
         <strong>Add-Ons</strong> tab below. Several feature previews, such as icons in the case list,
         are also now accessible in this tab.
+        {% endblocktrans %}
     </p>
 </div>
 {% endif %}
@@ -184,11 +186,19 @@
             <div class="panel panel-appmanager panel-appmanager-form">
                 <form action="{% url "pull_master_app" domain app.id %}" method="POST">
                     {% csrf_token %}
-                    <legend>Update from master application</legend>
+                    <legend>
+                        {% if upstream_url %}
+                            {% blocktrans %}Update from <a href="{{ upstream_url }}">master application</a>{% endblocktrans %}
+                        {% else %}
+                            {% trans "Update from master application" %}
+                        {% endif %}
+                    </legend>
                     <div class="panel-body">
-                        <p> Your app is at version {{ app.version }}.
-                            {% if master_version %}The master app is at version {{ master_version }}.
-                            {% else %}Unable to get master version.
+                        <p>{% blocktrans with version=app.version %}Your app is at version {{ version }}.{% endblocktrans %}
+                            {% if master_version %}
+                                {% blocktrans %}The master app is at version {{ master_version }}.{% endblocktrans %}
+                            {% else %}
+                                {% trans "Unable to get master version." %}
                             {% endif %}
                         </p>
                         <div class="checkbox">

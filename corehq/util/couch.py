@@ -87,7 +87,7 @@ def get_classes_by_doc_type():
             # exclude abstract base classes (which don't have an app_label)
             pass
         else:
-            # a base class (e.g. CommCareCase) wins over a subclass (e.g. BiharCase)
+            # a base class (e.g. CommCareCase) wins over a subclass (e.g. SupplyPointCase)
             if klass._doc_type not in classes_by_doc_type:
                 classes_by_doc_type[klass._doc_type] = klass
         queue.extend(klass.__subclasses__())

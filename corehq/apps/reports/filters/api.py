@@ -139,7 +139,8 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         size = int(self.request.GET.get('page_limit', DEFAULT_PAGE_LIMIT))
         start = size * (page - 1)
         count, options = paginate_options(self.data_sources, self.q, start, size)
-        return count, [{'id': id_, 'text': text} for id_, text in options]
+        return count, [{'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
+                       {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in options]
 
     def get_static_options_size(self, query):
         return len(self.get_all_static_options(query))

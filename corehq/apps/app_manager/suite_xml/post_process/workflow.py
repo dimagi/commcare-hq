@@ -26,7 +26,7 @@ class WorkflowHelper(PostProcessor):
     @property
     @memoized
     def root_module_datums(self):
-        root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
+        root_modules = [module for module in self.modules if module.put_in_root]
         return [
             datum for module in root_modules
             for datum in self.get_module_datums('m{}'.format(module.id)).values()
@@ -245,7 +245,7 @@ class EndOfFormNavigationWorkflow(object):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        from corehq.apps.app_manager.models import (
+        from corehq.apps.app_manager.const import (
             WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
 
@@ -453,7 +453,7 @@ class CaseListFormWorkflow(object):
         :param source_form_datums: List of datum from the case list form
         :return: CaseListFormStackFrames object
         """
-        from corehq.apps.app_manager.models import WORKFLOW_CASE_LIST
+        from corehq.apps.app_manager.const import WORKFLOW_CASE_LIST
         source_session_var = self._get_source_session_var(form, target_module.case_type)
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()

@@ -206,6 +206,8 @@ class UserRegistrationView(BasePageView):
         if settings.IS_SAAS_ENVIRONMENT:
             ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, request).update_response(
                 response)
+            ab_tests.SessionAbTest(ab_tests.SIGNUP_ALT_UX, request).update_response(
+                response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -238,6 +240,8 @@ class UserRegistrationView(BasePageView):
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab'] = ab_tests.SessionAbTest(
                 ab_tests.DEMO_WORKFLOW, self.request).context
+            context['signup_ux_ab'] = ab_tests.SessionAbTest(
+                ab_tests.SIGNUP_ALT_UX, self.request).context
         return context
 
     @property

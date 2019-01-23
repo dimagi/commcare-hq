@@ -102,9 +102,6 @@ class OTARestoreUser(object):
     def get_fixture_data_items(self):
         raise NotImplementedError()
 
-    def get_groups(self):
-        raise NotImplementedError()
-
     def get_commtrack_location_id(self):
         raise NotImplementedError()
 
@@ -144,9 +141,6 @@ class OTARestoreWebUser(OTARestoreUser):
     def get_fixture_data_items(self):
         return []
 
-    def get_groups(self):
-        return []
-
     def get_commtrack_location_id(self):
         return None
 
@@ -181,11 +175,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import FixtureDataItem
 
         return FixtureDataItem.by_user(self._couch_user)
-
-    def get_groups(self):
-        # this call is only used by bihar custom code and can be removed when that project is inactive
-        from corehq.apps.groups.models import Group
-        return Group.by_user(self._couch_user)
 
     def get_commtrack_location_id(self):
         from corehq.apps.commtrack.util import get_commtrack_location_id

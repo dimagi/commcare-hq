@@ -74,6 +74,18 @@
       <br />
       {% endif %}
 
+      {% if creates_new_location and not form.is_valid and request.method == 'POST' %}
+        <div class="alert alert-warning">
+          <p>
+          {% url 'location_types' domain as levels_url %}
+            {% blocktrans %}
+              <strong>There was an issue creating this location.</strong><br />
+              Please make sure that at least one <a href="{{ levels_url }}">Organization Level</a>
+              has been created.
+            {% endblocktrans %}
+          </p>
+        </div>
+      {% endif %}
       <div class="tab-content">
         <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
 

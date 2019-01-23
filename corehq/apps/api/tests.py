@@ -376,7 +376,7 @@ class TestXFormInstanceResource(APIResourceTest):
             CaseBlock(
                 case_id=case_id,
                 create=True,
-            ).as_string(),
+            ).as_text(),
             self.domain.name
         )[0]
 
@@ -442,7 +442,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 case_id=parent_case_id,
                 create=True,
                 case_type=parent_type,
-            ).as_string(),
+            ).as_string().decode('utf-8'),
             self.domain.name
         )[1][0]
         child_case_id = uuid.uuid4().hex
@@ -451,7 +451,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 case_id=child_case_id,
                 create=True,
                 index={'parent': (parent_type, parent_case_id)}
-            ).as_string(),
+            ).as_string().decode('utf-8'),
             self.domain.name
         )[1][0]
 
@@ -1818,7 +1818,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
         return endpoint
 
     def setUp(self):
-        credentials = base64.b64encode("{}:{}".format(self.username, self.password))
+        credentials = base64.b64encode(
+            "{}:{}".format(self.username, self.password).encode('utf-8')
+        ).decode('utf-8')
         self.client.defaults['HTTP_AUTHORIZATION'] = 'Basic ' + credentials
 
     @classmethod
@@ -1984,7 +1986,14 @@ class TestConfigurableReportDataResource(APIResourceTest):
         query_dict.update({"some_filter": "bar"})
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
             self.domain.name, "123", 100, 50, 3450, query_dict)
-        self.assertEqual(next.decode('utf-8'), self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
+        single_endpoint = self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"})
+
+        def _get_query_params(url):
+            from six.moves.urllib.parse import parse_qs, urlparse
+            return parse_qs(urlparse(url).query)
+
+        self.assertEqual(next.split('?')[0], single_endpoint.split('?')[0])
+        self.assertEqual(_get_query_params(next), _get_query_params(single_endpoint))
 
         # It's the last page
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(

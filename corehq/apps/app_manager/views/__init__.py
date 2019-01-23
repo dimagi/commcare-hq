@@ -75,6 +75,7 @@ from corehq.apps.app_manager.views.forms import (
     view_form_legacy,
     view_form,
     get_form_questions,
+    FormHasSubmissionsView,
 )
 from corehq.apps.app_manager.views.modules import (
     delete_module,
@@ -106,6 +107,7 @@ from corehq.apps.app_manager.views.releases import (
     short_odk_url,
     short_url,
     update_build_comment,
+    toggle_build_profile,
 )
 from corehq.apps.app_manager.views.schedules import (
     edit_schedule_phases,

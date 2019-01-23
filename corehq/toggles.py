@@ -1532,13 +1532,13 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
 
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
-    'Allow linking domains (successor to linked apps)',
-    TAG_INTERNAL,
+    'Allow linking project spaces (successor to linked apps)',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
-    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
+    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
@@ -1678,4 +1678,29 @@ RESTRICT_APP_RELEASE = StaticToggle(
     'ICDS: Show permission to manage app releases on user roles',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+RELEASE_BUILDS_PER_PROFILE = StaticToggle(
+    'release_builds_per_profile',
+    'Do not release builds for all app profiles by default. Then manage via Source files view',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
+    'set_scheduled_report_start_date',
+    'Allow users to set an effective start date for scheduled reports.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
+)
+
+
+HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
+    'hide_hq_on_mobile_experience',
+    'Do not show modal on mobile that mobile hq experience is bad',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN]
 )

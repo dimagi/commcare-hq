@@ -584,6 +584,58 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'Woman'
         )
 
+    def test_case_detail_calculated_conditional_enum(self):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Unititled Module', None))
+        module.case_type = 'patient'
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Gender'},
+                model='case',
+                field="if(gender = 'male', 'boy', 'girl')",
+                format='enum',
+                enum=[
+                    MappingItem(key="boy", value={'en': 'Boy'}),
+                    MappingItem(key="girl", value={'en': 'Girl'}),
+                ],
+            ),
+        ]
+
+        icon_mapping_spec = """
+        <partial>
+          <template>
+            <text>
+              <xpath function="if(if(gender = 'male', 'boy', 'girl') = 'boy', $kboy, if(if(gender = 'male', 'boy', 'girl') = 'girl', $kgirl, ''))">
+                <variable name="kboy">
+                  <locale id="m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kboy"/>
+                </variable>
+                <variable name="kgirl">
+                  <locale id="m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kgirl"/>
+                </variable>
+              </xpath>
+            </text>
+          </template>
+        </partial>
+        """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            icon_mapping_spec,
+            app.create_suite(),
+            './detail[@id="m0_case_short"]/field/template'
+        )
+        # check app strings mapped correctly
+        app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(
+            app_strings["m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kboy"],
+            'Boy'
+        )
+        self.assertEqual(
+            app_strings["m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kgirl"],
+            'Girl'
+        )
+
     def test_case_detail_icon_mapping(self):
         app = Application.new_app('domain', 'Untitled Application')
 
@@ -1134,7 +1186,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         fr_app_strings = commcare_translations.loads(module.get_app().create_app_strings('fr'))
         self.assertEqual(fr_app_strings['custom_assertion.m0.f0.0'], "fr-0")
         self.assertEqual(fr_app_strings['custom_assertion.m0.f0.1'], "fr-1")
-
 
     def test_custom_variables(self):
         factory = AppFactory()

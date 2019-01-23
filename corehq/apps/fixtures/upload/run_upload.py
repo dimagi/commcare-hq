@@ -196,23 +196,33 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                         old_data_item.add_location(location_cache.location,
                                                    transaction=transaction)
 
-    clear_fixture_quickcache(data_types)
+    clear_fixture_quickcache(domain, data_types)
     clear_fixture_cache(domain)
     return return_val
 
 
-def clear_fixture_quickcache(data_types):
+def clear_fixture_quickcache(domain, data_types):
     """
     Clears quickcache for fixtures.dbaccessors
 
     Args:
-        List of FixtureDataType objects in a domain
+        :domain: The domain that has been updated
+        :data_types: List of FixtureDataType objects with stale cache
     """
     if not data_types:
         return
-    type_ids = []
+
+    type_ids = set()
     for data_type in data_types:
+        type_ids.add(data_type.get_id)
         data_type.clear_caches()
-        type_ids.append(data_type.get_id)
+
     from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_types
-    get_fixture_items_for_data_types.clear(data_types[0].domain, set(type_ids))
+    get_fixture_items_for_data_types.clear(domain, type_ids)
+
+    # We always call get_fixture_items_for_data_types with a list of all global
+    # type ids when doing a restore (i.e. the cache key is a set of all global
+    # type ids) So when updating just a subset of types, we still need to clear
+    # the cache key that contains all types.
+    global_type_ids = {dt.get_id for dt in FixtureDataType.by_domain(domain) if dt.is_global}
+    get_fixture_items_for_data_types.clear(domain, global_type_ids)

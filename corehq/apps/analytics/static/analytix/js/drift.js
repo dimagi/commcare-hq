@@ -86,6 +86,13 @@ hqDefine('analytix/js/drift', [
                 });
             });
 
+            $('#start-chat-cta-btn').click(function () {
+                _drift.api.startInteraction({
+                    interactionId: 51834,
+                    goToConversation: true,
+                });
+            });
+
         });
     });
 

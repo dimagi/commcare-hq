@@ -247,7 +247,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
                 bulk_start = datetime.utcnow()
 
             try:
-                self.es.bulk(payload)
+                self.es.bulk(payload.decode('utf-8'))
                 success = True
                 break
             except Exception:

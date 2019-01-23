@@ -5,12 +5,12 @@ from distutils.version import LooseVersion
 
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.const import APP_V1
-from corehq.apps.app_manager.util import all_apps_by_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.builds.utils import get_default_build_spec
 
 
 def turn_on_secure_submissions_for_all_apps(domain):
-    for app in all_apps_by_domain(domain):
+    for app in get_apps_in_domain(domain):
         save = False
         if app.application_version == APP_V1:
             continue

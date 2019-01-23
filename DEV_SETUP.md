@@ -206,6 +206,12 @@ Formplayer is a Java service that allows us to use applications on the web inste
 In `localsettings.py`:
 ```
 FORMPLAYER_URL = 'http://localhost:8010'
+LOCAL_APPS += ('django_extensions',)
+```
+
+When running HQ, be sure to use `runserver_plus`:
+```
+python manage.py runserver_plus
 ```
 
 Then you need to have formplayer running. There are a few options as described below.

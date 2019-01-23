@@ -65,9 +65,22 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         m3f0.actions.open_cases.append(AdvancedOpenCaseAction(
             name_path='/data/question1',
             case_type='other grand child',
-            case_indices=[CaseIndex(tag='child')]
+            case_indices=[CaseIndex(tag='child', reference_id='father')]
         ))
         m3f0.actions.open_cases[0].open_condition.type = 'always'
+
+        m4 = app.add_module(AdvancedModule.new_module('Module4', lang='en'))
+        m4.case_type = 'extension'
+        m4f0 = m4.new_form('other form', 'en')
+        m4f0.actions.load_update_cases.append(LoadUpdateAction(
+            case_type='child',
+            case_tag='child'))
+        m4f0.actions.open_cases.append(AdvancedOpenCaseAction(
+            name_path='/data/question1',
+            case_type='extension',
+            case_indices=[CaseIndex(tag='child', relationship='extension', reference_id='host')]
+        ))
+        m4f0.actions.open_cases[0].open_condition.type = 'always'
 
         m2.parent_select = ParentSelect(active=True, module_id=m1.unique_id)
         m1.parent_select = ParentSelect(active=True, module_id=m0.unique_id)
@@ -76,7 +89,8 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
             'parent': {
                 'child': {
                     'grand child': {},
-                    'other grand child': {}
+                    'other grand child': {},
+                    'extension': {},
                 }
             }
         }

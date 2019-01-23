@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url, include
-from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import (
     DownloadCCZ,
     AppCaseSummaryView,
@@ -12,6 +11,7 @@ from corehq.apps.app_manager.views import (
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
     DownloadAppSummaryView,
+    FormHasSubmissionsView,
     PromptSettingsUpdateView,
     view_app,
     multimedia_ajax, current_app_version, paginate_releases,
@@ -27,8 +27,9 @@ from corehq.apps.app_manager.views import (
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
-    update_linked_whitelist, overwrite_module_case_list, app_settings
+    update_linked_whitelist, overwrite_module_case_list, app_settings, toggle_build_profile,
 )
+from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
 from corehq.apps.translations.views import (
     download_bulk_ui_translations, download_bulk_app_translations, upload_bulk_ui_translations,
     upload_bulk_app_translations
@@ -76,6 +77,8 @@ app_urls = [
         name='update_build_comment'),
     url(r'^copy/gzip$', export_gzip, name='gzip_app'),
     url(r'^update_prompts/$', PromptSettingsUpdateView.as_view(), name=PromptSettingsUpdateView.urlname),
+    url(r'^form_has_submissions/(?P<form_unique_id>[\w-]+)/$', FormHasSubmissionsView.as_view(),
+        name=FormHasSubmissionsView.urlname),
 ]
 
 
@@ -180,6 +183,8 @@ urlpatterns = [
     url(r'^api/list_apps/$', list_apps, name='list_apps'),
     url(r'^api/download_ccz/$', direct_ccz, name='direct_ccz'),
     url(r'^download/(?P<app_id>[\w-]+)/$', download_index, name='download_index'),
+    url(r'^build_profile/(?P<build_id>[\w-]+)/toggle/(?P<build_profile_id>[\w-]+)$', toggle_build_profile,
+        name='toggle_build_profile'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),
@@ -188,9 +193,9 @@ urlpatterns = [
         name='app_download_file'),
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
-    url(r'^ng_template/(?P<template>[\w-]+)', DynamicTemplateView.as_view(), name='ng_template'),
 
     url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),
+    url(r'existing_case_types', ExistingCaseTypesView.as_view(), name=ExistingCaseTypesView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
 ]

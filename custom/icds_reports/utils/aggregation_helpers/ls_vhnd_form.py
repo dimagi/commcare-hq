@@ -32,7 +32,7 @@ class LSVhndFormAggHelper(BaseICDSAggregationHelper):
                 %(start_date)s::DATE AS month,
                 count(*) as vhnd_observed
                 FROM "{ucr_tablename}"
-                WHERE vhnd_date > %(start_date)s AND vhnd_date < %(end_date)s
+                WHERE vhnd_date >= %(start_date)s AND vhnd_date < %(end_date)s
                 AND state_id=%(state_id)s
                 GROUP BY state_id,location_id
         )

@@ -143,7 +143,8 @@ class TestViews(TestCase):
         send_to_elasticsearch('apps', app.to_json())
         self.es.indices.refresh(APP_INDEX_INFO.index)
 
-    def test_basic_app(self, mock):
+    @patch('corehq.apps.app_manager.views.formdesigner.form_has_submissions', return_value=True)
+    def test_basic_app(self, mock1, mock2):
         module = self.app.add_module(Module.new_module("Module0", "en"))
         form = self.app.new_form(module.id, "Form0", "en", attachment=BLANK_TEMPLATE.format(xmlns='xmlns-0.0'))
         self.app.save()

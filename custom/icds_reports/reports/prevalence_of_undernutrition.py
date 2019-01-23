@@ -15,7 +15,7 @@ from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations
+    get_child_locations, format_decimal
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -113,7 +113,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % average,
+            "average": format_decimal(average),
             "info": underweight_children_help_text(age_label=age_label, html=True),
             "extended_info": [
                 {

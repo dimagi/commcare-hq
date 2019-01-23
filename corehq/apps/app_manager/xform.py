@@ -8,6 +8,7 @@ import itertools
 from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xml import V2_NAMESPACE
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
@@ -15,9 +16,11 @@ from corehq.apps.app_manager.const import (
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
 )
+from corehq.apps.app_manager.xpath import XPath
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
+from corehq.toggles import DONT_INDEX_SAME_CASETYPE
 from corehq.util.view_utils import get_request
 from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
@@ -427,7 +430,7 @@ class CaseBlock(object):
         )
 
         if not autoset_owner_id:
-            owner_id_node.text = '-'
+            owner_id_node.text = UNOWNED_EXTENSION_OWNER_ID
         elif has_case_sharing:
             self.xform.add_instance('groups', src='jr://fixture/user-groups')
             add_setvalue_or_bind(
@@ -525,12 +528,18 @@ class CaseBlock(object):
         if index_node is None:
             index_node = make_case_elem('index')
             self.elem.append(index_node)
-        if relationship not in ('child', 'extension'):
-            raise CaseError('Valid values for an index relationship are "child" and "extension"')
+
+        valid_relationships = ['child', 'extension', 'question']
+        if relationship not in valid_relationships:
+            raise CaseError('Valid values for an index relationship are: {}'.format(
+                ', '.join(['"{}"'.format(r) for r in valid_relationships])))
         if relationship == 'child':
             case_index = make_case_elem(reference_id, {'case_type': case_type})
-        else:
+        elif relationship == 'extension':
             case_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': relationship})
+        elif relationship == 'question':
+            case_index = make_case_elem(reference_id, {'case_type': case_type, 'relationship': '@relationship'})
+
         index_node.append(case_index)
 
         self.xform.add_bind(
@@ -562,10 +571,14 @@ def autoset_owner_id_for_advanced_action(action):
     if not len(action.case_indices):
         return True
 
-    for index in action.case_indices:
-        if index.relationship == 'child':
-            # if there is a child relationship, autoset
-            return True
+    relationships = [i.relationship for i in action.case_indices]
+    if 'question' in relationships:
+        # if there is a dynamically-determined relationship, don't autoset, the owner_id
+        # bind will be added when the index is created rather than in add_create_block
+        return False
+    if 'child' in relationships:
+        # if there is a child relationship, autoset
+        return True
     # if there are only extension indices, don't autoset
     return False
 
@@ -587,8 +600,10 @@ def validate_xform(domain, source):
         )
 
 
-ControlNode = collections.namedtuple('ControlNode', ['node', 'path', 'repeat', 'group', 'items',
+ControlNode = collections.namedtuple('ControlNode', ['node', 'bind_node', 'path', 'repeat', 'group', 'items',
                                      'is_leaf', 'data_type', 'relevant', 'required', 'constraint'])
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -687,6 +702,14 @@ class XForm(WrappedNode):
         inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
         expanded_audio = self.media_references_by_lang(lang=lang, form="expanded-audio")
         return images + video + audio + inline_video + expanded_audio
+
+    def rename_media(self, old_path, new_path):
+        update_count = 0
+        for node in self.itext_node.findall('{f}translation/{f}text/{f}value'):
+            if node.text == old_path:
+                node.xml.text = new_path
+                update_count += 1
+        return update_count
 
     def _get_instance_ids(self):
         def _get_instances():
@@ -983,7 +1006,8 @@ class XForm(WrappedNode):
                 raise XFormException(_("<item> ({}) has no <value>").format(translation))
             option = {
                 'label': translation,
-                'value': value
+                'label_ref': self._get_label_ref(item),
+                'value': value,
             }
             if include_translations:
                 option['translations'] = self._get_label_translations(item, langs)
@@ -1037,6 +1061,11 @@ class XForm(WrappedNode):
 
             if cnode.items is not None:
                 question['options'] = [_get_select_question_option(item) for item in cnode.items]
+
+            constraint_ref_xml = '{jr}constraintMsg'
+            if cnode.constraint and cnode.bind_node.attrib.get(constraint_ref_xml):
+                constraint_jr_itext = cnode.bind_node.attrib.get(constraint_ref_xml)
+                question['constraintMsg_ref'] = self._normalize_itext_id(constraint_jr_itext)
 
             questions.append(question)
 
@@ -1210,6 +1239,7 @@ class XForm(WrappedNode):
                     if not skip:
                         control_nodes.append(ControlNode(
                             node=node,
+                            bind_node=bind,
                             path=path,
                             repeat=repeat_context,
                             group=group_context,
@@ -1218,7 +1248,7 @@ class XForm(WrappedNode):
                             data_type=data_type,
                             relevant=relevant,
                             required=required,
-                            constraint=constraint
+                            constraint=constraint,
                         ))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)
@@ -1619,7 +1649,8 @@ class XForm(WrappedNode):
                 if subcase.close_condition.is_active():
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
-                if case_block is not None and subcase.case_type != form.get_case_type():
+                index_same_casetype = not DONT_INDEX_SAME_CASETYPE.enabled(form.get_app().domain)
+                if case_block is not None and (index_same_casetype or subcase.case_type != form.get_case_type()):
                     reference_id = subcase.reference_id or 'parent'
 
                     subcase_block.add_index_ref(
@@ -1895,6 +1926,18 @@ class XForm(WrappedNode):
                     ref,
                     case_index.relationship,
                 )
+
+                if case_index.relationship == 'question':
+                    self.add_bind(
+                        nodeset="{path}case/index/{ref}/@relationship".format(path=path, ref=reference_id),
+                        calculate=self.resolve_path(case_index.relationship_question),
+                    )
+                    self.add_bind(
+                        nodeset="%scase/create/owner_id" % path,
+                        calculate=XPath.if_(XPath(case_index.relationship_question).eq(XPath.string('extension')),
+                                            XPath.string(UNOWNED_EXTENSION_OWNER_ID),
+                                            self.resolve_path("meta/userID")),
+                    )
 
             if action.close_condition.type != 'never':
                 open_case_block.add_close_block(self.action_relevance(action.close_condition))

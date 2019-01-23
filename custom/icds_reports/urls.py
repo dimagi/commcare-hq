@@ -11,7 +11,7 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
-    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, LadySupervisorView
+    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, LadySupervisorView, CasDataExport
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
@@ -143,4 +143,5 @@ urlpatterns = [
     url(r'^have_access_to_location/', HaveAccessToLocation.as_view(), name='have_access_to_location'),
     url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww'),
     url(r'^health_indicators', DishaAPIView.as_view(), name='disha_api'),
+    url(r'^cas_export', CasDataExport.as_view(), name='cas_export'),
 ]

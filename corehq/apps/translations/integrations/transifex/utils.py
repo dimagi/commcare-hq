@@ -1,11 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.conf import settings
+from corehq.apps.translations.models import TransifexProject
 
 
 def transifex_details_available_for_domain(domain):
-    return (
-        settings.TRANSIFEX_DETAILS and
-        settings.TRANSIFEX_DETAILS.get('project', {}).get(domain)
-    )
+    return TransifexProject.objects.filter(domain=domain).exists()

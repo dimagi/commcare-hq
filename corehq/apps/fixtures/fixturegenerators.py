@@ -87,7 +87,7 @@ class ItemListsProvider(FixtureProvider):
                 return [data.replace(global_id, b_user_id)] if data else []
             except NotFound:
                 pass
-        global_items = self._get_global_items(global_types, domain)
+        global_items = self._get_global_items(global_types, domain, bypass_cache=restore_state.overwrite_cache)
         io = BytesIO()
         io.write(ITEMS_COMMENT_PREFIX)
         io.write(bytes(len(global_items)))
@@ -114,9 +114,9 @@ class ItemListsProvider(FixtureProvider):
         db.put(io, **kw)
         return global_items
 
-    def _get_global_items(self, global_types, domain):
+    def _get_global_items(self, global_types, domain, bypass_cache):
         items_by_type = defaultdict(list)
-        for item in FixtureDataItem.by_data_types(domain, global_types):
+        for item in FixtureDataItem.by_data_types(domain, global_types, bypass_cache):
             data_type = global_types[item.data_type_id]
             self._set_cached_type(item, data_type)
             items_by_type[data_type].append(item)

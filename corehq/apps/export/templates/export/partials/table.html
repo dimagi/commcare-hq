@@ -3,30 +3,15 @@
 {% load hq_shared_tags %}
 {% load humanize %}
 
-{% comment %}
-    This template renders a table of exports, with three slight variations.
-    If the EXPORT_OWNERSHIP flag is off, it displays the standard "Exports" table.
-    If the EXPORT_OWNERSHIP flag is on, it accepts a MY_EXPORTS boolean that determines
-    whether to show the "My Exports" table or the "Exports Shared with Me" table.
-{% endcomment %}
-
-<table class="table table-striped" data-bind="visible: exports.length">
+<table class="table table-striped" data-bind="visible: exports().length">
     <thead>
         <tr>
             <th class="col-sm-4">{% trans 'Name' %}</th>
+
             {% if model_type == "case" %}
-            <th class="col-sm-2">{% trans 'Case Type' %}</th>
+                <th class="col-sm-2">{% trans 'Case Type' %}</th>
             {% endif %}
-            {% if has_edit_permissions %}
-            <th class="col-sm-1">
-                {% if is_daily_saved_export %}
-                    {% trans "Edit Columns" %}
-                {% else %}
-                    {% trans 'Edit' %}
-                {% endif %}
-            </th>
-            <th class="col-sm-1">{% trans 'Copy' %}</th>
-            {% endif %}
+
             <th class="col-sm-1">
                 {% if is_daily_saved_export %}
                     {% if has_edit_permissions %}
@@ -36,38 +21,45 @@
                     {{ export_type_caps }}
                 {% endif %}
             </th>
+
+            {%  if allow_bulk_export %} {# form exports only #}
+                <th class="col-sm-1">
+                    {% blocktrans %}Bulk {{ export_type_caps }}{% endblocktrans %}
+                    <br>
+                    <button type="button" class="btn btn-xs btn-default" data-bind="click: $root.selectAll">
+                        {% trans 'All' %}
+                    </button> {% trans 'or' %}
+                    <button type="button" class="btn btn-xs btn-default" data-bind="click: $root.selectNone">
+                        {% trans 'None' %}
+                    </button>
+                </th>
+            {% endif %}
+
             {% if is_daily_saved_export %}
-            <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
+                <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
             {% endif %}
-            {%  if allow_bulk_export %}
-            <th class="col-sm-3">
-                {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
-                <button type="button" class="btn btn-xs btn-default" data-bind="click: selectAll">
-                    {% trans 'All' %}
-                </button> {% trans 'or' %}
-                <button type="button" class="btn btn-xs btn-default" data-bind="click: selectNone">
-                    {% trans 'None' %}
-                </button>
-            </th>
+
+            {% if has_edit_permissions %}
+                <th class="col-sm-1">
+                    {% if is_daily_saved_export %}
+                        {% trans "Edit Columns" %}
+                    {% else %}
+                        {% trans 'Edit' %}
+                    {% endif %}
+                </th>
+                <th class="col-sm-1">{% trans 'Delete' %}</th>
             {% endif %}
+
             {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                {% if MY_EXPORTS %}
-                    <th class="col-sm-1">{% trans 'Share' %}</th>
-                {% else %}
-                    <th class="col-sm-1">{% trans 'Shared By' %}</th>
-                {% endif %}
+                <th class="col-sm-1" data-bind="visible: showOwnership">
+                    <span data-bind="visible: myExports">{% trans "Share" %}</span>
+                    <span data-bind="visible: !myExports">{% trans "Shared By" %}</span>
+                </th>
             {% endif %}
         </tr>
     </thead>
-    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-        {% if MY_EXPORTS %}
-            <tbody data-bind="foreach: myExports">
-        {% else %}
-            <tbody data-bind="foreach: notMyExports">
-        {% endif %}
-    {% else %}
-        <tbody data-bind="foreach: exports">
-    {% endif %}
+    <tbody data-bind="foreach: exports()">
+        <tr>
             <td>
                 <h4 data-bind="css: {'text-muted': hasEmailedExport && !isAutoRebuildEnabled()}">
                     <span data-bind="text: name"></span>
@@ -104,11 +96,11 @@
                                 <span data-bind="text: emailedExport.fileData.size()"></span>
                                 &nbsp;&nbsp;&nbsp;
                                 <strong>{% trans "Last Updated:" %}</strong>
-                                <span data-bind="if: !emailedExport.taskStatus.justFinished()">
+                                <span data-bind="if: !justUpdated()">
                                     <span data-bind="text: emailedExport.fileData.lastUpdated()"></span>
                                     &nbsp;&nbsp;&nbsp;
                                 </span>
-                                <span data-bind="if: emailedExport.taskStatus.justFinished()">
+                                <span data-bind="if: justUpdated()">
                                     {% trans "Just now" %}&nbsp;&nbsp;&nbsp;
                                 </span>
                                 <strong>{% trans "Last Downloaded:" %}</strong>
@@ -125,7 +117,7 @@
                                 <button type="button"
                                         class="btn btn-default btn-xs"
                                         data-bind="
-                                            visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.inProgress()),
+                                            visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
                                             attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}
                                         "
                                         data-toggle="modal">
@@ -139,7 +131,7 @@
                                     <i class="fa fa-refresh fa-spin"></i>
                                     {% trans "Updating Data, please wait..." %}
                                 </button>
-                                <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.inProgress()">
+                                <div data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.started()">
                                     <div class="progress">
                                         <div class="progress-bar progress-bar-striped active"
                                              role="progressbar"
@@ -147,7 +139,7 @@
                                              aria-valuemax="100"
                                              data-bind="attr: {
                                                 'aria-valuenow': emailedExport.taskStatus.percentComplete(),
-                                                'style': 'width: ' + emailedExport.taskStatus.percentComplete(),
+                                                'style': 'width: ' + emailedExport.taskStatus.percentComplete() + '%',
                                              }">
                                         </div>
                                     </div>
@@ -188,11 +180,18 @@
                                     button and download the file.
                                 {% endblocktrans %}
                             </p>
-                            <p data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished()">
+
+                            <p class="text-success" data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.success()">
                                 <i class="fa fa-check"></i>
-                                <strong>{% trans "Data update started." %}</strong><br />
-                                {% trans "Please check back later for updates. (Page refresh required)" %}
+                                <strong>{% trans "Data update complete" %}</strong>
                             </p>
+
+                            <p class="text-danger" data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.failed()">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <strong>{% trans "Data update failed!" %}</strong>
+                                {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.{% endblocktrans %}
+                            </p>
+
                         </div>
 
                         <div data-bind="if: isLocationSafeForUser">
@@ -285,60 +284,9 @@
                     </div>
                 <!-- /ko -->
             </td>
-
             {% if model_type == "case" %}
             <td>
                 <h4 data-bind="text: case_type"></h4>
-            </td>
-            {% endif %}
-
-            {% if has_edit_permissions %}
-
-            <td>
-                {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                    <div data-bind="if: can_edit()">
-                        <div data-bind="if: isLocationSafeForUser">
-                            <a data-bind="attr: {href: editUrl}" class="btn btn-default">
-                                <i class="fa fa-pencil"></i>
-                                <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
-                                <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
-                            </a>
-                        </div>
-                    </div>
-                    <div data-bind="ifnot: can_edit()">
-                        <div data-bind="if: isLocationSafeForUser">
-                            {% if MY_EXPORTS %}
-                                <a class="btn btn-default disabled">
-                                    <i class="fa fa-pencil"></i>
-                                    <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
-                                    <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
-                                </a>
-                            {% else %}
-                                <a data-bind="attr: {href: editUrl}" class="btn btn-default">
-                                    <span data-bind="visible: !isDailySaved()">{% trans 'View' %}</span>
-                                    <span data-bind="visible: isDailySaved()">{% trans 'View Columns' %}</span>
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% else %}
-                    <div data-bind="if: isLocationSafeForUser">
-                        <a data-bind="attr: {href: editUrl}" class="btn btn-default">
-                            <i class="fa fa-pencil"></i>
-                            <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
-                            <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
-                        </a>
-                    </div>
-                {% endif %}
-            </td>
-
-            <td>
-                <div data-bind="if: isLocationSafeForUser()">
-                    <a data-bind="attr: {href: copyUrl}" class="btn btn-default">
-                        <i class="fa fa-copy"></i>
-                        <span>{% trans 'Copy' %}</span>
-                    </a>
-                </div>
             </td>
             {% endif %}
 
@@ -358,7 +306,18 @@
                 </a>
                 {% endif %}
             </td>
-            <!-- ko if: hasEmailedExport -->
+
+            {% if allow_bulk_export %}
+            <td>
+                <div class="checkbox checkbox-table-cell">
+                    <label>
+                        <input type="checkbox" data-bind="checked: addedToBulk" />
+                    </label>
+                </div>
+            </td>
+            {% endif %}
+
+            {% if is_daily_saved_export %}
                 <td>
                     <a class="btn btn-default"
                             data-bind="attr: {
@@ -369,19 +328,58 @@
                         <span data-bind="visible: isAutoRebuildEnabled()">{% trans "Disable" %}</span>
                     </a>
                 </td>
-            <!-- /ko -->
-            {% if allow_bulk_export %}
+            {% endif %}
+
+            {% if has_edit_permissions %}
             <td>
-                <div class="checkbox checkbox-table-cell">
-                    <label>
-                        <input type="checkbox" data-bind="checked: addedToBulk" />
-                    </label>
+                <div data-bind="if: $parent.showOwnership">
+                    <div data-bind="if: can_edit()">
+                        <div data-bind="if: isLocationSafeForUser">
+                            <a data-bind="attr: {href: editUrl}" class="btn btn-default">
+                                <i class="fa fa-pencil"></i>
+                                <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                                <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div data-bind="ifnot: can_edit()">
+                        <div data-bind="if: isLocationSafeForUser">
+                            <a class="btn btn-default disabled" data-bind="visible: $parent.myExports">
+                                <i class="fa fa-pencil"></i>
+                                <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                                <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                            </a>
+                            <a data-bind="attr: {href: editUrl}, visible: !$parent.myExports" class="btn btn-default">
+                                <span data-bind="visible: !isDailySaved()">{% trans 'View' %}</span>
+                                <span data-bind="visible: isDailySaved()">{% trans 'View Columns' %}</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div data-bind="ifnot: $parent.showOwnership">
+                    <div data-bind="if: isLocationSafeForUser">
+                        <a data-bind="attr: {href: editUrl}" class="btn btn-default">
+                            <i class="fa fa-pencil"></i>
+                            <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                            <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                        </a>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div data-bind="if: isLocationSafeForUser()">
+                    <a class="btn btn-danger" data-toggle="modal" data-bind="attr: {href: '#delete-export-modal-' + id()}">
+                        <i class="fa fa-remove"></i>
+                        <span>{% trans 'Delete' %}</span>
+                    </a>
+                    {% include "export/dialogs/delete_custom_export_dialog.html" %}
                 </div>
             </td>
             {% endif %}
-        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-            {% if MY_EXPORTS %}
-                <td>
+
+            {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+            <td>
+                <div data-bind="visible: $parent.myExports">
                     <div data-bind="visible: sharing() === 'private'">
                         {% trans 'Private' %}
                     </div>
@@ -391,16 +389,15 @@
                     <div data-bind="visible: sharing() === 'edit_and_export'">
                         {% trans 'Edit & Export' %}
                     </div>
-                </td-->
-            {% else %}
-                <td>
+                </div>
+                <div data-bind="visible: !$parent.myExports">
                     <div data-bind="visible: owner_username === 'unknown'">
                         <div class="label label-default">{% trans 'Unknown' %}</div>
                     </div>
                     <div data-bind="visible: owner_username !== 'unknown', text: owner_username"></div>
-                </td>
+                </div>
+            </td>
             {% endif %}
-        {% endif %}
         </tr>
     </tbody>
 </table>

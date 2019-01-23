@@ -129,6 +129,8 @@ if __name__ == "__main__":
         GeventCommand('mvp_force_update'),
         GeventCommand('run_gunicorn'),
         GeventCommand('run_sql'),
+        GeventCommand('run_blob_migration'),
+        GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),

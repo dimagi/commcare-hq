@@ -1,9 +1,8 @@
 attrs==18.1.0
-# used to build jsonobject from source
-cython>=0.29.1,<1.0.0
 iso8601==0.1.12
-jsonobject==0.9.4
-jsonobject-couchdbkit==0.9.12
+jsonobject==0.9.8
+jsonobject-couchdbkit==0.9.15
+cloudant==2.7.0  # Remove after version is released containg bugfix https://github.com/cloudant/python-cloudant/pull/415
 celery==3.1.25
 # required by django-digest
 decorator==4.0.11
@@ -25,7 +24,6 @@ gunicorn
 lxml==3.4.4
 kafka-python~=1.4
 mock==2.0.0
-openpyxl~=2.5
 Pillow==5.2.0
 phonenumberslite==8.8.9
 psycopg2~=2.7
@@ -112,3 +110,4 @@ werkzeug==0.11.15
 # but once they're in requirements.txt we will strip the -e
 
 -e git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+-e git+git://github.com/nickpell/openpyxl@master#egg=openpyxl_hyperlink

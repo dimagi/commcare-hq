@@ -16,6 +16,7 @@ from django.contrib import messages
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
 from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
+from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
 from corehq.apps.domain.decorators import track_domain_request
 
 from dimagi.utils.logging import notify_exception
@@ -26,7 +27,7 @@ from corehq.apps.app_manager.views.notifications import get_facility_for_form, n
 from corehq.apps.app_manager.exceptions import AppManagerException, \
     FormNotFoundException
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail
+from corehq.apps.app_manager.views.utils import back_to_main, bail, form_has_submissions
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
@@ -250,6 +251,9 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
                                  'xform']),
         'patchUrl': reverse('patch_xform',
                             args=[domain, app.id, form.get_unique_id()]),
+        'hasSubmissions': form_has_submissions(domain, app.id, form.get_unique_id()),
+        'hasSubmissionsUrl': reverse(FormHasSubmissionsView.urlname,
+                                     args=[domain, app.id, form.get_unique_id()]),
         'allowedDataNodeReferences': [
             "meta/deviceID",
             "meta/instanceID",

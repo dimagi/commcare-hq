@@ -1,36 +1,43 @@
 from __future__ import absolute_import
-
-from __future__ import division
 from __future__ import unicode_literals
+
+import json
 from datetime import date
 
-from django.urls import reverse
+from couchdbkit import ResourceNotFound
+from couchexport.writers import XlsLengthException
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.http import HttpResponseBadRequest, Http404, HttpResponse, \
     HttpResponseServerError
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_GET, require_POST
+from memoized import memoized
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import get_download_context, process_email_request
 
-from couchdbkit import ResourceNotFound
-
-from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
-from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
+from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, track_workflow
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.exceptions import ExportFormValidationException
-from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import EmailExportWhenDoneRequest
-from corehq.apps.export.views.utils import ExportsPermissionsManager, get_timezone
+from corehq.apps.hqwebapp.decorators import use_select2, use_daterangepicker
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
-from django.utils.decorators import method_decorator
-import json
-
-from couchexport.writers import XlsLengthException
-
+from corehq.apps.reports.util import datespan_from_beginning
+from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.users.models import CouchUser
 from corehq.couchapps.dbaccessors import forms_have_multimedia
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.exceptions import ExportAsyncException
+from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
+
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.exceptions import ExportFormValidationException, ExportAsyncException
+from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
@@ -43,20 +50,8 @@ from corehq.apps.export.models import (
     SMSExportInstance,
     ExportInstance,
 )
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
-from corehq.apps.reports.util import datespan_from_beginning
-from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import use_select2, use_daterangepicker
-from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
-from corehq.apps.users.models import CouchUser
-from corehq.apps.analytics.tasks import track_workflow
-from memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, process_email_request
+from corehq.apps.export.models.new import EmailExportWhenDoneRequest
+from corehq.apps.export.views.utils import ExportsPermissionsManager, get_timezone
 
 
 class DownloadExportViewHelper(object):
@@ -283,6 +278,7 @@ def _check_deid_permissions(permissions, export_instances):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def prepare_custom_export(request, domain):
     """Uses the current exports download framework (with some nasty filters)
     to return the current download id to POLL for the download status.
@@ -346,6 +342,7 @@ def prepare_custom_export(request, domain):
 
 @require_GET
 @login_and_domain_required
+@location_safe
 def poll_custom_export_download(request, domain):
     """Polls celery to see how the export download task is going.
     :return: final response: {
@@ -361,9 +358,9 @@ def poll_custom_export_download(request, domain):
     download_id = request.GET.get('download_id')
     try:
         context = get_download_context(download_id)
-    except TaskFailedError:
+    except TaskFailedError as e:
         notify_exception(request, "Export download failed",
-                         details={'download_id': download_id})
+                         details={'download_id': download_id, 'errors': e.errors})
         return json_response({
             'error': _("Download task failed to start."),
         })

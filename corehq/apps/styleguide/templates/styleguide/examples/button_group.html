@@ -1,0 +1,15 @@
+<div id='button-group-example'>
+    <div class='btn-group btn-group-separated'>
+        <button class='btn btn-default active'>alpha</button>
+        <button class='btn btn-default'>beta</button>
+        <button class='btn btn-default'>delta</button>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('#button-group-example button').focus(function () {
+            $(this).toggleClass("active");
+        });
+    });
+</script>

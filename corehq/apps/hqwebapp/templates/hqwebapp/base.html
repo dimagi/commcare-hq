@@ -36,6 +36,8 @@
               href="{% url 'osdd' %}"
               title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
 
+        <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
         {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
         {% block stylesheets %}{% endblock stylesheets %}
@@ -181,7 +183,7 @@
         <!-- End Google Tag Manager (noscript) -->
         {% endif %}
         {% block background_content %}{% endblock %}
-        {% maintenance_alert %}
+        {% maintenance_alert request %}
         {% if request.user.is_authenticated and is_demo_visible %}
           {% include "hqwebapp/partials/get_demo_banner.html" %}
         {% endif %}
@@ -385,7 +387,9 @@
                     requirejs([
                         'hqwebapp/js/base_main',
                     ], function () {
-                        requirejs(['{{ requirejs_main }}']);
+                        requirejs(['{{ requirejs_main }}'], function () {
+                            console.log("Loaded requirejs main module: {{ requirejs_main }}");
+                        });
                     });
                 });
             </script>

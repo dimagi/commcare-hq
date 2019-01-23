@@ -298,6 +298,13 @@ class DashboardFeedFilterForm(forms.Form):
             ("since", ugettext_lazy("Since a date")),
             ("range", ugettext_lazy("From a date to a date")),
         ],
+        help_text='''
+            <span data-bind='visible: showEmwfFormFilter'>{}</span>
+            <span data-bind='visible: showEmwfCaseFilter'>{}</span>
+        '''.format(
+            ugettext_lazy("Export forms received in this date range."),
+            ugettext_lazy("Export cases modified in this date range."),
+        )
     )
     days = forms.IntegerField(
         label=ugettext_lazy("Number of Days"),

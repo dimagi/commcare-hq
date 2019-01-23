@@ -17,6 +17,7 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_trial, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
+from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
@@ -56,6 +57,7 @@ from corehq.messaging.scheduling.views import (
     CreateConditionalAlertView,
     EditConditionalAlertView,
 )
+from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
@@ -1832,9 +1834,8 @@ class AdminTab(UITab):
         except Exception:
             pass
         submenu_context.extend([
-            dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
-            dropdown_dict(_("CommCare Builds"), url="/builds/edit_menu"),
+            dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("Django Admin"), url="/admin"),
             dropdown_dict(_("View All"), url=self.url),
@@ -1853,12 +1854,17 @@ class AdminTab(UITab):
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = []
+        admin_operations = [
+            {'title': _('Style Guide'),
+             'url': reverse(MainStyleGuideView.urlname),
+             'icon': 'fa fa-paint-brush'},
+        ]
         data_operations = []
         system_operations = []
         user_operations = [
             {'title': _('Look up user by email'),
-             'url': reverse('web_user_lookup')},
+             'url': reverse('web_user_lookup'),
+             'icon': 'fa fa-address-book'},
         ]
 
         if self.couch_user and self.couch_user.is_staff:
@@ -1885,23 +1891,33 @@ class AdminTab(UITab):
             ]
             user_operations = [
                 {'title': _('Login as another user'),
-                 'url': reverse(AuthenticateAs.urlname)},
+                 'url': reverse(AuthenticateAs.urlname),
+                 'icon': 'fa fa-user-secret'},
             ] + user_operations + [
                 {'title': _('Grant superuser privileges'),
-                 'url': reverse('superuser_management')},
+                 'url': reverse('superuser_management'),
+                 'icon': 'fa fa-magic'},
             ]
-            admin_operations += [
-                {'title': _('Check Call Center UCR tables'),
-                 'url': reverse('callcenter_ucr_check')},
-                {'title': _('Reprocess Messaging Case Updates'),
-                 'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
+            admin_operations = [
+                {'title': _('CommCare Builds'),
+                 'url': reverse(EditMenuView.urlname),
+                 'icon': 'fa fa-wrench'},
                 {'title': _('Manage Notifications'),
-                 'url': reverse(ManageNotificationView.urlname)},
+                 'url': reverse(ManageNotificationView.urlname),
+                 'icon': 'fa fa-bell'},
                 {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email')},
+                 'url': reverse('mass_email'),
+                 'icon': 'fa fa-envelope'},
                 {'title': _('Maintenance Alerts'),
-                 'url': reverse('alerts')},
-            ]
+                 'url': reverse('alerts'),
+                 'icon': 'fa fa-warning'},
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check'),
+                 'icon': 'fa fa-table'},
+                {'title': _('Reprocess Messaging Case Updates'),
+                 'url': reverse(ReprocessMessagingCaseUpdatesView.urlname),
+                 'icon': 'fa fa-refresh'},
+            ] + admin_operations
         sections = [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),

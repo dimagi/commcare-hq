@@ -22,6 +22,8 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
 from io import open
 
+from corehq.util.test_utils import softer_assert
+
 
 class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     file_path = ('data',)
@@ -212,6 +214,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         copy1.save()
         self.addCleanup(copy1.delete)
 
+        self.linked_app.version = 1
+
         self.linked_app.linked_app_logo_refs = logo_refs
         self.linked_app.create_mapping(image, image_path, save=False)
         self.linked_app.save()
@@ -290,6 +294,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         image = CommCareImage.get(self.image._id)
         self.assertIn(self.master_app_with_report_modules.domain, image.valid_domains)
 
+    @softer_assert()
     def test_fetch_missing_media(self):
         image_path = 'jr://file/commcare/case_list_image.jpg'
         self.master_app_with_report_modules.get_module(0).set_icon('en', image_path)
@@ -298,7 +303,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         remote_details = RemoteLinkDetails(
             'http://localhost:8000', 'user', 'key'
         )
-        data = 'this is a test'
+        data = b'this is a test'
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'

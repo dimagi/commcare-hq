@@ -24,7 +24,7 @@
         <span data-bind="visible: onlyShowReleased()">
             {% trans 'Released versions only' %}
         </span>
-        <a href="#" data-bind="click: toggleLimitToReleased, visible: onlyShowReleased()" class="label label-info">{% trans 'show all' %}</a>
+        <a href="#" data-bind="click: toggleLimitToReleased, visible: onlyShowReleased()" class="btn btn-default btn-xs">{% trans 'show all' %}</a>
 
         <span class="hq-help-template"
             data-title="Released Versions"
@@ -41,9 +41,9 @@
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
             css: {disabled: !buildButtonEnabled()}">
+            <i class="fa fa-spin fa-spinner" data-bind="visible: buildState() === 'pending'"></i>
             {% trans 'Make New Version' %}
         </button>
-
         {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
             <button class="btn btn-default"
                 id="recent-changes-btn"
@@ -53,6 +53,9 @@
             </button>
         {% endif %}
     </p>
+
+    <div id="build-errors-wrapper"></div>
+
     <div class="row">
         <div class="col-md-3 col-md-offset-9">
             <span class="input-group input-group-sm">
@@ -70,14 +73,6 @@
         </div>
     </div>
 
-
-    <div id="build-errors-wrapper"></div>
-
-    <div class="label label-success label-lg hide"
-         data-bind="visible: buildState() === 'pending', css: {hide: false}">
-      <i class="fa fa-spin fa-spinner"></i> {% trans "Please wait while your CommCare Application builds..." %}
-    </div>
-
     <div class="alert alert-danger hide"
          data-bind="visible: buildState() == 'error', css: {hide: false}">
         <span data-bind="visible: buildErrorCode() === 403">
@@ -88,10 +83,11 @@
         </span>
     </div>
 
-    <div class="label label-primary label-lg hide"
-         data-bind="visible: fetchState() === 'pending', css: {hide: false}">
-        <i class="fa fa-spin fa-spinner"></i> {% trans "Loading Versions..." %}
-    </div>
+    <h4 id="loading" class="hide"
+        data-bind="visible: fetchState() === 'pending', css: {hide: false}">
+        <i class="fa fa-spin fa-spinner"></i>
+        {% trans "Loading versions..." %}
+    </h4>
 
     <div class="alert alert-danger hide"
          data-bind="visible: fetchState() === 'error', css: {hide: false}">

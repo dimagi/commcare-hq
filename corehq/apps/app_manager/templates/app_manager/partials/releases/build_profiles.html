@@ -1,4 +1,6 @@
 {% load i18n %}
+{% load hq_shared_tags %}
+
 <div data-bind="saveButton: saveButton"></div>
 <div class="panel panel-appmanager">
   <div class="panel-heading">
@@ -46,7 +48,19 @@
         </thead>
         <tbody data-bind="foreach: app_profiles">
             <tr class="row form-group">
-                <td class="col-sm-3"><span class="form-inline"><input class="form-control" data-bind="value: $data.name"/></span></td>
+                <td class="col-sm-3">
+                    <span class="form-inline">
+                        <input class="form-control" data-bind="value: $data.name"/>
+                        {% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+                        <div data-bind="visible: $data.latestEnabledVersion">
+                            <b>
+                            {% trans "Latest Enabled Version:" %}
+                            <span data-bind="text: $data.latestEnabledVersion"></span>
+                            </b>
+                        </div>
+                        {% endif %}
+                    </span>
+                </td>
                 <td class="col-sm-3">
                     <select class="language-select form-control"
                             multiple="true"

@@ -7,6 +7,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Fieldset, Layout, Submit
 import datetime
+import json
 
 from corehq.apps.hqwebapp.widgets import Select2AjaxV4
 from dimagi.utils.django.fields import TrimmedCharField
@@ -173,7 +174,10 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             role = self.cleaned_data['role']
             try:
                 self.existing_user.set_role(self.domain, role)
-                self.existing_user.save()
+                if self.existing_user.is_commcare_user():
+                    self.existing_user.save(spawn_task=True)
+                else:
+                    self.existing_user.save()
                 is_update_successful = True
             except KeyError:
                 pass
@@ -976,7 +980,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -987,7 +992,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, '')),
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
                 crispy.HTML(

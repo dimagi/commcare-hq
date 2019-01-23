@@ -403,6 +403,28 @@ class BillingAccount(ValidateModelMixin, models.Model):
         return self.auto_pay_user is not None
 
     @classmethod
+    def create_account_for_domain(cls, domain,
+                                  created_by=None, account_type=None,
+                                  entry_point=None, last_payment_method=None,
+                                  pre_or_post_pay=None):
+        account_type = account_type or BillingAccountType.INVOICE_GENERATED
+        entry_point = entry_point or EntryPoint.NOT_SET
+        last_payment_method = last_payment_method or LastPayment.NONE
+        pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
+        default_name = DEFAULT_ACCOUNT_FORMAT % domain
+        name = get_account_name_from_default_name(default_name)
+        return BillingAccount.objects.create(
+            name=name,
+            created_by=created_by,
+            created_by_domain=domain,
+            currency=Currency.get_default(),
+            account_type=account_type,
+            entry_point=entry_point,
+            last_payment_method=last_payment_method,
+            pre_or_post_pay=pre_or_post_pay
+        )
+
+    @classmethod
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
                                         entry_point=None, last_payment_method=None,
@@ -411,28 +433,17 @@ class BillingAccount(ValidateModelMixin, models.Model):
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
         """
-        is_new = False
         account = cls.get_account_by_domain(domain)
-        if account is None:
-            is_new = True
-            account_type = account_type or BillingAccountType.INVOICE_GENERATED
-            entry_point = entry_point or EntryPoint.NOT_SET
-            last_payment_method = last_payment_method or LastPayment.NONE
-            pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
-            default_name = DEFAULT_ACCOUNT_FORMAT % domain
-            name = get_account_name_from_default_name(default_name)
-            account = BillingAccount(
-                name=name,
-                created_by=created_by,
-                created_by_domain=domain,
-                currency=Currency.get_default(),
-                account_type=account_type,
-                entry_point=entry_point,
-                last_payment_method=last_payment_method,
-                pre_or_post_pay=pre_or_post_pay
-            )
-            account.save()
-        return account, is_new
+        if account:
+            return account, False
+        return cls.create_account_for_domain(
+            domain,
+            created_by=created_by,
+            account_type=account_type,
+            entry_point=entry_point,
+            last_payment_method=last_payment_method,
+            pre_or_post_pay=pre_or_post_pay,
+        ), True
 
     @classmethod
     def get_account_by_domain(cls, domain):
@@ -822,6 +833,10 @@ class SoftwarePlanVersion(models.Model):
             'version_num': self.version,
         }
 
+    def save(self, *args, **kwargs):
+        super(SoftwarePlanVersion, self).save(*args, **kwargs)
+        SoftwarePlan.get_version.clear(self.plan)
+
     @property
     def version(self):
         return (self.plan.softwareplanversion_set.count() -
@@ -1110,8 +1125,8 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         super(Subscription, self).save(*args, **kwargs)
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception:
@@ -1120,8 +1135,8 @@ class Subscription(models.Model):
             pass
 
     def delete(self, *args, **kwargs):
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         super(Subscription, self).delete(*args, **kwargs)
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
 
     @property
     def allowed_attr_changes(self):
@@ -3132,7 +3147,7 @@ class CreditLine(models.Model):
                     'feature': (' for Feature %s' % self.feature_type
                                 if self.feature_type is not None else ""),
                     'product': (' for Product'
-                                if self.is_product is not None else ""),
+                                if self.is_product else ""),
                     'balance': self.balance,
                 })
 

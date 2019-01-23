@@ -32,7 +32,7 @@ class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
                 %(start_date)s::DATE AS month,
                 count(*) as beneficiary_vists
                 FROM "{ucr_tablename}"
-                WHERE submitted_on > %(start_date)s AND  submitted_on< %(end_date)s
+                WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
                 AND visit_type_entered is not null AND visit_type_entered <> ''
                 AND  state_id=%(state_id)s
                 GROUP BY state_id,location_id

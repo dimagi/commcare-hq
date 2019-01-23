@@ -113,6 +113,7 @@
                 </nav>
             </div>
             <div id="hq-content" class="appmanager-main-container">
+                <div class="appmanager-loading-bg"></div>
                 <div class="appmanager-settings-content ko-template" id="js-appmanager-body">
                   {% block content_extra %}{% endblock %}
                 </div>
@@ -122,7 +123,7 @@
 
     {# Question label/id switcher #}
     <script type="text/html" id="label-id-toggle">
-        <div class="btn-group" role="group" >
+        <div class="btn-group btn-group-separated" role="group" >
             <button type="button" class="btn btn-default" data-bind="click: turnLabelsOn, css: { 'active': showLabels }">
                 {% trans "Labels" %}
             </button>

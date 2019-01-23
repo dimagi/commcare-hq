@@ -18,6 +18,7 @@ from celery import Celery
 import requests
 
 from corehq.util.timer import TimingContext
+from dimagi.utils.make_uuid import random_hex
 from soil import heartbeat
 
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
@@ -93,15 +94,18 @@ def check_elasticsearch():
     if cluster_health != 'green':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
-    doc = {'_id': 'elasticsearch-service-check',
+    doc = {'_id': 'elasticsearch-service-check-{}'.format(random_hex()[:7]),
            'date': datetime.datetime.now().isoformat()}
-    send_to_elasticsearch('groups', doc)
-    refresh_elasticsearch_index('groups')
-    hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
-    send_to_elasticsearch('groups', doc, delete=True)  # clean up
-    if doc in hits:
-        return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
-    return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    try:
+        send_to_elasticsearch('groups', doc)
+        refresh_elasticsearch_index('groups')
+        hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
+        if doc in hits:
+            return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
+        else:
+            return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    finally:
+        send_to_elasticsearch('groups', doc, delete=True)  # clean up
 
 
 def check_blobdb():

@@ -379,7 +379,7 @@ class CouchSqlDomainMigrator(object):
 
         self._diff_ledgers(case_ids)
 
-        self.processed_docs += 1
+        self.processed_docs += len(case_ids)
         self._log_case_diff_count(throttled=True)
 
     def _rebuild_couch_case_and_re_diff(self, couch_case, sql_case_json):
@@ -438,7 +438,7 @@ class CouchSqlDomainMigrator(object):
             return iterable
 
     def _log_processed_docs_count(self, tags, throttled=False):
-        if throttled and self.processed_docs % 100 != 0:
+        if throttled and self.processed_docs < 100:
             return
 
         processed_docs = self.processed_docs
