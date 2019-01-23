@@ -859,6 +859,12 @@ hr {
     padding: 20px 50px;
 }
 
+#pregnantDetailsTable {
+    margin: 0 auto;
+    min-width: 50%;
+    width: auto;
+}
+
 .pregnantDetailsColumn {
     min-width: 150px;
 }
