@@ -130,6 +130,7 @@ APP_MAPPING = {
                     }
                 },
                 "put_in_root": {"type": "boolean"},
+                "root_module_id": {"index": "not_analyzed", "type": "string"},
                 "doc_type": {"index": "not_analyzed", "type": "string"},
                 "name": {"type": "object", "dynamic": False},
                 "referral_list": {
