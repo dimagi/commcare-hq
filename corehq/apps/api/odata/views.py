@@ -4,6 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 
+from corehq import toggles
 from corehq.apps.domain.decorators import api_auth
 from corehq.util.view_utils import absolute_reverse
 
@@ -11,6 +12,7 @@ from corehq.util.view_utils import absolute_reverse
 class ODataServiceView(View):
 
     @method_decorator(api_auth)
+    @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         data = {
             '@odata.context': absolute_reverse('odata_meta', args=[domain]),
@@ -28,6 +30,7 @@ class ODataServiceView(View):
 class ODataMetadataView(View):
 
     @method_decorator(api_auth)
+    @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         # todo: should generate this dynamically based on the domain / case schema / data dictionary
         data_file = os.path.join(os.path.dirname(__file__), 'metadata.xml')

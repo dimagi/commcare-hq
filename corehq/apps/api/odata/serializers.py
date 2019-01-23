@@ -24,7 +24,7 @@ class ODataCommCareCaseSerializer(Serializer):
             raise Exception(
                 'API requires resource_name to be set! Did you add it in a custom create_response function?'
             )
-        api_path = data.get('api_path')
+        api_path = data.pop('api_path', None)
         if not api_path:
             raise Exception(
                 'API requires api_path to be set! Did you add it in a custom create_response function?'
