@@ -26,7 +26,7 @@ class WorkflowHelper(PostProcessor):
     @property
     @memoized
     def root_module_datums(self):
-        root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
+        root_modules = [module for module in self.modules if module.put_in_root]
         return [
             datum for module in root_modules
             for datum in self.get_module_datums('m{}'.format(module.id)).values()
