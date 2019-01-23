@@ -335,7 +335,6 @@ class FormExportListHelper(ExportListHelper):
     def fmt_export_data(self, export):
         data = super(FormExportListHelper, self).fmt_export_data(export)
 
-        from corehq.apps.export.views.edit import EditNewCustomFormExportView
         emailed_export = None
         if export.is_daily_saved_export:
             emailed_export = self._get_daily_saved_export_metadata(export)
