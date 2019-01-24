@@ -251,8 +251,10 @@
                                 this question has been renamed or deleted. Please update or delete this question
                                 reference before you make a new version.
                             {% else %}
-                                You're loading or saving a case property but have not chosen a question
-                                from the form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
+                                The case management
+                                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
+                                in the form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
+                                is missing a question.
                                 Please choose a question from the dropdown next to the case property.
                             {% endif %}
                         {% case "multimedia case property not supported" %}
