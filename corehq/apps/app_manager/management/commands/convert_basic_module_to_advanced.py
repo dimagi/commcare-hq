@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 
-import json
-
 from django.core.management.base import BaseCommand
 
-from corehq.apps.app_manager.dbaccessors import get_current_app
+from corehq.apps.app_manager.dbaccessors import get_current_app, get_latest_build_id
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -36,6 +34,14 @@ class Command(BaseCommand):
         assert module.ref_details.short.columns == [], "Doesn't support ref details"
         assert module.ref_details.long.columns == [], "Doesn't support ref details"
         assert module.task_list.show is False, "Doesn't support task lists"
+
+        latest_build = get_latest_build_id(domain, app_id)
+        if latest_build.version != app.version:
+            app.validate_app()
+            copy = app.make_build(
+                comment="Build before moving {} to an advanced module".format(module.name),
+            )
+            copy.save(increment_version=False)
 
         module.module_type = 'advanced'
         module.doc_type = 'AdvancedModule'
@@ -129,3 +135,7 @@ class Command(BaseCommand):
         modules[mod_index] = new_module
         app.modules = modules
         app.save()
+        copy = app.make_build(
+            comment="{} moved to an advanced module".format(module.name),
+        )
+        copy.save(increment_version=False)
