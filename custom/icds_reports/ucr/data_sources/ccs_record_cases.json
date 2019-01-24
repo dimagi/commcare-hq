@@ -526,7 +526,6 @@
         "type": "raw",
         "property_name": "pnc1_date"
       },
-
       {
         "filter": {
           "type": "named",

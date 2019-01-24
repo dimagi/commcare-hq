@@ -1218,7 +1218,7 @@ class TestLedgerESAccessors(BaseESAccessorsTest):
         result = []
         for row in get_aggregated_ledger_values(self.domain, 'case', 'section', entry_ids):
             result.append(row._asdict())
-        self.assertEqual(result, expected)
+        self.assertItemsEqual(result, expected)
 
     def test_one_ledger(self):
         self._send_ledger_to_es('section', 'case', 'entry_id', 1)

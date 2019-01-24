@@ -161,12 +161,18 @@ class CaseProperty(JsonObject):
 
 class CaseTypeMeta(JsonObject):
     name = StringProperty(required=True)
-    relationships = DictProperty()  # relationship name -> case type
+    relationships = DictProperty()  # relationship name -> [child type 1, ...]
     properties = ListProperty(CaseProperty)  # property -> CaseProperty
     opened_by = DictProperty(ConditionList)  # form_ids -> [FormActionCondition, ...]
     closed_by = DictProperty(ConditionList)  # form_ids -> [FormActionCondition, ...]
     error = StringProperty()
     has_errors = BooleanProperty()
+
+    @property
+    def child_types(self):
+        """ A list of all child types
+        """
+        return [child_type for relationship in self.relationships.values() for child_type in relationship]
 
     def get_property(self, name, allow_parent=False):
         if not allow_parent:
