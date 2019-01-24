@@ -47,4 +47,8 @@ class ODataCommCareCaseSerializer(Serializer):
         for i, case_json in enumerate(data['value']):
             case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
 
+        data.pop('domain')
+        data.pop('meta')
+        data.pop('resource_name')
+
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
