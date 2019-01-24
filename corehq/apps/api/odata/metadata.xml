@@ -18,7 +18,6 @@
                 <Property Name="closed" Type="Edm.Boolean" />
                 <Property Name="domain" Type="Edm.String" Nullable="false"/>
                 <Property Name="date_modified" Type="Edm.DateTimeOffset" />
-                <Property Name="properties" Type="CommCare.CaseProperties" Nullable="false"/>
                 <Property Name="server_date_modified" Type="Edm.DateTimeOffset" />
                 <Property Name="user_id" Type="Edm.String" />
                 <!-- todo: this isn't working - may be a tableau limitation on list properties -->

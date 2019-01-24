@@ -59,5 +59,6 @@ class ODataCommCareCaseSerializer(Serializer):
             value.pop('opened_by')
             value.pop('resource_uri')
             value.pop('server_date_opened')
+            value.pop('properties')
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
