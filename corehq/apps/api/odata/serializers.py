@@ -54,5 +54,10 @@ class ODataCommCareCaseSerializer(Serializer):
         for value in data['value']:
             value.pop('date_closed')
             value.pop('id')
+            value.pop('indexed_on')
+            value.pop('indices')
+            value.pop('opened_by')
+            value.pop('resource_uri')
+            value.pop('server_date_opened')
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
