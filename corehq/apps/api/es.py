@@ -706,7 +706,7 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
     # ?q=<lucene>
     if 'q' in search_params:
         payload['query'] = payload.get('query', {})
-        payload['query']['query_string'] = {'query': search_params['q']} # A bit indirect?
+        payload['query']['query_string'] = {'query': search_params['q']}  # A bit indirect?
 
     # filters are actually going to be a more common case
     reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])

@@ -97,7 +97,7 @@ class LocalCommCareHqClient(object):
         from commcare_export.cli import logger
         logger.debug("Fetching batch: {}-{}".format(start, limit))
         # logger.debug("Fetching batch: %s", params)
-        return es_query_set[start:start+limit]
+        return es_query_set[start:start + limit]
 
     def iterate(self, resource, paginator, params=None):
         """
@@ -106,7 +106,8 @@ class LocalCommCareHqClient(object):
         from commcare_export.cli import logger
 
         # resource is either 'form' or 'case'
-        # params are api params (e.g. {'limit': 1000, u'type': u'pregnant_mother', 'order_by': 'server_date_modified'})
+        # params are api params
+        # (e.g. {'limit': 1000, u'type': u'pregnant_mother', 'order_by': 'server_date_modified'})
         params = dict(params or {})
         mock_api = _get_mock_api(resource, self.project, params)
 
@@ -163,7 +164,7 @@ class Command(BaseCommand):
         try:
             # local development only
             sys.path.append(os.path.join(os.getcwd(), 'lib', 'commcare-export'))
-            import commcare_export
+            import commcare_export  # noqa
         except ImportError:
             raise CommandError(
                 'This command requires commcare-export to be installed! '
