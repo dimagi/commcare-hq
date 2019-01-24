@@ -21,7 +21,7 @@
                     </a>
                 </li>
                 <!-- ko foreach: pagesShown -->
-                <li data-bind="css: { active: $data == $parent.currentPage()}">
+                <li class="text-center" data-bind="css: { active: $data == $parent.currentPage()}">
                     <a href="#" data-bind="click: $parent.goToPage">
                         <i class="fa fa-spin fa-spinner" data-bind="visible: $parent.showSpinner() && $data == $parent.currentPage()"></i>
                         <span data-bind="text: $data, visible: !$parent.showSpinner() || $data != $parent.currentPage()"></span>
