@@ -4,6 +4,10 @@
     "_meta": {"created": null},
     "date_detection": false,
     "properties": {
+        "@indexed_on": {
+            "format": "__DATE_FORMATS_STRING__",
+            "type": "date"
+        },
         "short_url": {"type": "string"},
         "build_broken": {"type": "boolean"},
         "copy_of": {"type": "string"},
