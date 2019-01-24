@@ -93,7 +93,7 @@ jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==3.0.37
 laboratory==0.2.0
-lxml==3.4.4
+lxml==4.3.0
 mako==1.0.7
 markdown==2.2.1
 markupsafe==1.1.0
