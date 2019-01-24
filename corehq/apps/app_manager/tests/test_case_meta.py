@@ -1,12 +1,25 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import uuid
+
 from django.test.testcases import SimpleTestCase
-from mock import patch, MagicMock
+from mock import MagicMock, patch
 from nose.tools import nottest
 
-from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
-    AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction, CaseIndex, CaseReferences
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    AdvancedOpenCaseAction,
+    Application,
+    CaseIndex,
+    CaseReferences,
+    DetailColumn,
+    LoadUpdateAction,
+    Module,
+    OpenCaseAction,
+    OpenSubCaseAction,
+    ParentSelect,
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
@@ -45,10 +58,10 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app._id = uuid.uuid4().hex
         app.version = 1
         m0 = self._make_module(app, 0, 'parent')
-        m0.get_form(0).actions.subcases.append(OpenSubCaseAction(
-            case_type='child',
-            reference_id='parent'
-        ))
+        m0.get_form(0).actions.subcases.extend([
+            OpenSubCaseAction(case_type='child', reference_id='parent'),
+            OpenSubCaseAction(case_type='other_child', reference_id='parent')
+        ])
         m1 = self._make_module(app, 1, 'child')
         m1.get_form(0).actions.subcases.append(OpenSubCaseAction(
             case_type='grand child',
@@ -71,16 +84,27 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
 
         m4 = app.add_module(AdvancedModule.new_module('Module4', lang='en'))
         m4.case_type = 'extension'
+        self._make_module(app, 5, 'other_child')
+
         m4f0 = m4.new_form('other form', 'en')
-        m4f0.actions.load_update_cases.append(LoadUpdateAction(
-            case_type='child',
-            case_tag='child'))
-        m4f0.actions.open_cases.append(AdvancedOpenCaseAction(
-            name_path='/data/question1',
-            case_type='extension',
-            case_indices=[CaseIndex(tag='child', relationship='extension', reference_id='host')]
-        ))
+        m4f0.actions.load_update_cases.extend([
+            LoadUpdateAction(case_type='child', case_tag='child'),
+            LoadUpdateAction(case_type='other_child', case_tag='other_child'),
+        ])
+        m4f0.actions.open_cases.extend([
+            AdvancedOpenCaseAction(
+                name_path='/data/question1',
+                case_type='extension',
+                case_indices=[CaseIndex(tag='child', relationship='extension', reference_id='host')]
+            ),
+            AdvancedOpenCaseAction(  # 'extension' case has 2 parents
+                name_path='/data/question1',
+                case_type='extension',
+                case_indices=[CaseIndex(tag='other_child', relationship='extension', reference_id='host')]
+            )
+        ])
         m4f0.actions.open_cases[0].open_condition.type = 'always'
+        m4f0.actions.open_cases[1].open_condition.type = 'always'
 
         m2.parent_select = ParentSelect(active=True, module_id=m1.unique_id)
         m1.parent_select = ParentSelect(active=True, module_id=m0.unique_id)
@@ -91,8 +115,11 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                     'grand child': {},
                     'other grand child': {},
                     'extension': {},
-                }
-            }
+                },
+                'other_child': {
+                    'extension': {},
+                },
+            },
         }
         return app, expected_hierarchy
 
@@ -193,3 +220,48 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         meta_type = app.get_case_metadata().get_type('save_to_case')
         self.assertEqual({}, meta_type.opened_by)
         self.assertTrue(m0f1.unique_id in meta_type.closed_by)
+
+    def test_multiple_parents_case_lists(self):
+        """If the case has multiple parents, and you reference a parent property in the
+        case list, we can't tell which parent will be shown """
+        app, _ = self.get_test_app()
+        # module 1 has case type 'child' which has a single parent, 'parent'
+        app.modules[1].case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Parent prop reference'},
+                model='case',
+                field='parent/from_child',
+                format='plain',
+                case_tile_field='header'
+            ),
+        ]
+
+        # module 4 has type "extension" which has 2 relationships with the
+        # reference 'host': 'child' and 'other_child'
+        app.modules[4].case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Parent prop reference'},
+                model='case',
+                field='host/parent_property_reference',
+                format='plain',
+                case_tile_field='header'
+            ),
+        ]
+
+        metadata = app.get_case_metadata()
+        self.assertEqual(
+            (metadata
+             .get_type('parent')
+             .get_property('from_child')
+             .short_details[0].module_id),
+            app.modules[1].unique_id
+        )
+
+        for type_ in ('other_child', 'child'):
+            self.assertEqual(
+                (metadata
+                 .get_type(type_)
+                 .get_property('parent_property_reference')
+                 .short_details[0].module_id),
+                app.modules[4].unique_id
+            )
