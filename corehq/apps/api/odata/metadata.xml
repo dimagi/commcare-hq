@@ -7,6 +7,7 @@
                 <Property Name="casetype" Type="Edm.String" Nullable="false" />
                 <Property Name="dateopened" Type="Edm.DateTimeOffset" />
                 <Property Name="ownerid" Type="Edm.String" Nullable="false" />
+                <Property Name="backendid" Type="Edm.String" />
                 <!-- todo: this needs to be generated dynamically to include custom properties -->
             </ComplexType>
             <EntityType Name="Case" >
