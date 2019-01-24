@@ -51,7 +51,7 @@ class ODataCommCareCaseSerializer(Serializer):
         data.pop('meta')
         data.pop('resource_name')
 
-        for value in data['values']:
+        for value in data['value']:
             value.pop('date_closed')
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
