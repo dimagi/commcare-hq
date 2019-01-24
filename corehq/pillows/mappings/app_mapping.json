@@ -1,18 +1,5 @@
 {
-    "date_formats": [
-        "yyyy-MM-dd",
-        "yyyy-MM-dd'T'HH:mm:ssZZ",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss'Z'",
-        "yyyy-MM-dd'T'HH:mm:ssZ",
-        "yyyy-MM-dd'T'HH:mm:ssZZ'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSZZ",
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd' 'HH:mm:ss",
-        "yyyy-MM-dd' 'HH:mm:ss.SSSSSS",
-        "mm/dd/yy' 'HH:mm:ss"
-    ],
+    "date_formats": "__DATE_FORMATS_ARR__",
     "dynamic": false,
     "_meta": {"created": null},
     "date_detection": false,
@@ -54,7 +41,7 @@
         "translations": {"type": "object", "dynamic": false},
         "built_on": {
             "type": "date",
-            "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss"
+            "format": "__DATE_FORMATS_STRING__"
         },
         "built_with": {
             "type": "object",
@@ -65,7 +52,7 @@
                 "signed": {"type": "boolean"},
                 "datetime": {
                     "type": "date",
-                    "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss"
+                    "format": "__DATE_FORMATS_STRING__"
                 },
                 "version": {"type": "string"},
                 "latest": {"type": "boolean"}
@@ -96,7 +83,7 @@
         "build_langs": {"type": "string"},
         "deployment_date": {
             "type": "date",
-            "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss"
+            "format": "__DATE_FORMATS_STRING__"
         },
         "user_type": {"type": "string"},
         "text_input": {"type": "string"},
@@ -448,7 +435,7 @@
         "admin_password_charset": {"type": "string"},
         "date_created": {
             "type": "date",
-            "format": "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss"
+            "format": "__DATE_FORMATS_STRING__"
         },
         "cp_is_active": {"type": "boolean"}
     }
