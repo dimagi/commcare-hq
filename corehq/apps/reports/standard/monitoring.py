@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 import datetime
 import math
 from collections import defaultdict, namedtuple
@@ -52,6 +52,7 @@ from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xm
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
@@ -1075,7 +1076,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to {}.".format(settings.COMMCARE_HQ_NAME))
+                                "sent to {}.".format(commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
