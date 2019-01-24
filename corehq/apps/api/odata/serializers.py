@@ -24,7 +24,7 @@ class ODataCommCareCaseSerializer(Serializer):
             raise Exception(
                 'API requires resource_name to be set! Did you add it in a custom create_response function?'
             )
-        api_path = data.get('api_path')
+        api_path = data.pop('api_path', None)
         if not api_path:
             raise Exception(
                 'API requires api_path to be set! Did you add it in a custom create_response function?'
@@ -46,5 +46,13 @@ class ODataCommCareCaseSerializer(Serializer):
 
         for i, case_json in enumerate(data['value']):
             case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
+
+        data.pop('domain')
+        data.pop('meta')
+        data.pop('resource_name')
+        data.pop('id')
+
+        for value in data['value']:
+            value.pop('date_closed')
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
