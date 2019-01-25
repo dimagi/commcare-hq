@@ -952,7 +952,9 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
     def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
         # populate the domain which is required by the serializer
         data['domain'] = request.domain
-        data['resource_name'] = ODATA_CASE_RESOURCE_NAME
+        data['case_type'] = [
+            path_segment for path_segment in request.build_absolute_uri().split('/') if path_segment
+        ][-1]
         data['api_path'] = request.path
         response = super(ODataCommCareCaseResource, self).create_response(request, data, response_class,
                                                                           **response_kwargs)

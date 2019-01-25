@@ -18,9 +18,9 @@ class ODataServiceView(View):
             '@odata.context': absolute_reverse('odata_meta', args=[domain]),
             'value': [
                 {
-                    'name': 'Cases',
+                    'name': 'case',
                     'kind': 'EntitySet',
-                    'url': 'Cases',
+                    'url': 'case',
                 }
             ]
         }

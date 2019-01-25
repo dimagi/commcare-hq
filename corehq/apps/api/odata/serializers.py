@@ -19,10 +19,10 @@ class ODataCommCareCaseSerializer(Serializer):
         domain = data.pop('domain', None)
         if not domain:
             raise Exception('API requires domain to be set! Did you add it in a custom create_response function?')
-        resource_name = data.pop('resource_name', None)
-        if not resource_name:
+        case_type = data.pop('case_type', None)
+        if not case_type:
             raise Exception(
-                'API requires resource_name to be set! Did you add it in a custom create_response function?'
+                'API requires case_type to be set! Did you add it in a custom create_response function?'
             )
         api_path = data.pop('api_path', None)
         if not api_path:
@@ -30,7 +30,7 @@ class ODataCommCareCaseSerializer(Serializer):
                 'API requires api_path to be set! Did you add it in a custom create_response function?'
             )
         data = self.to_simple(data, options)
-        data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), resource_name)
+        data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), case_type)
 
         next_url = data.pop('meta', {}).get('next')
         if next_url:

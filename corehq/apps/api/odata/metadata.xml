@@ -10,7 +10,7 @@
                 <Property Name="backendid" Type="Edm.String" />
                 <!-- todo: this needs to be generated dynamically to include custom properties -->
             </ComplexType>
-            <EntityType Name="Case" >
+            <EntityType Name="case" >
                 <Key>
                     <PropertyRef Name="case_id" />
                 </Key>
@@ -28,7 +28,7 @@
                 <Property Name="xform_ids" Type="Collection(Edm.String)" />
             </EntityType>
             <EntityContainer Name="Container" >
-                <EntitySet Name="Cases" EntityType="CommCare.Case"/>
+                <EntitySet Name="case" EntityType="CommCare.Case"/>
             </EntityContainer>
         </Schema>
     </edmx:DataServices>
