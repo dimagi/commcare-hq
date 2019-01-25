@@ -10,7 +10,9 @@
                 <Property Name="backendid" Type="Edm.String" />
                 <!-- todo: this needs to be generated dynamically to include custom properties -->
             </ComplexType>
-            <EntityType Name="case" >
+
+            {% for case_type in case_types %}
+            <EntityType Name="{{ case_type }}" >
                 <Key>
                     <PropertyRef Name="case_id" />
                 </Key>
@@ -27,6 +29,8 @@
                 <!-- todo: this isn't working - may be a tableau limitation on list properties -->
                 <Property Name="xform_ids" Type="Collection(Edm.String)" />
             </EntityType>
+            {% endfor %}
+
             <EntityContainer Name="Container" >
                 <EntitySet Name="case" EntityType="CommCare.Case"/>
             </EntityContainer>
