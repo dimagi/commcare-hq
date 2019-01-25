@@ -4,6 +4,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from tastypie.serializers import Serializer
 
+from corehq.apps.api.odata.views import get_case_type_to_properties
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
@@ -54,7 +55,9 @@ class ODataCommCareCaseSerializer(Serializer):
             value.pop('resource_uri')
             properties = value.get('properties')
             for property_name in list(properties):
-                if property_name not in ['casename', 'casetype', 'dateopened', 'ownerid', 'backendid']:
+                if property_name not in [
+                    'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
+                ] + get_case_type_to_properties(domain)[case_type]:
                     properties.pop(property_name)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
