@@ -1,11 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 import os
 from django.http import HttpResponse, JsonResponse
+from django.template import Context, Template
 from django.utils.decorators import method_decorator
 from django.views import View
 
 from corehq import toggles
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -18,10 +20,11 @@ class ODataServiceView(View):
             '@odata.context': absolute_reverse('odata_meta', args=[domain]),
             'value': [
                 {
-                    'name': 'Cases',
+                    'name': case_type,
                     'kind': 'EntitySet',
-                    'url': 'Cases',
+                    'url': case_type,
                 }
+                for case_type in get_case_types_for_domain_es(domain)
             ]
         }
         return add_odata_headers(JsonResponse(data))
@@ -34,8 +37,11 @@ class ODataMetadataView(View):
     def get(self, request, domain):
         # todo: should generate this dynamically based on the domain / case schema / data dictionary
         data_file = os.path.join(os.path.dirname(__file__), 'metadata.xml')
+        case_types = get_case_types_for_domain_es(domain)
         with open(data_file, 'r') as f:
-            return add_odata_headers(HttpResponse(f.read(), content_type='application/xml'))
+            metadata_template = Template(f.read())
+            metadata = metadata_template.render(Context({'case_types': case_types}))
+            return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
 def add_odata_headers(response):
