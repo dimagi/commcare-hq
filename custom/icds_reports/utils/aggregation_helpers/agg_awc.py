@@ -314,7 +314,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         FROM (
             SELECT
                 awc_id,
-                count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s) AS vhsnd_done_in_month
+                count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s) 
+                AS vhsnd_done_in_month
                 from "{vhnd_table}"
                 GROUP BY awc_id
             ) ut
@@ -332,7 +333,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         FROM (
             SELECT
                 awc_id,
-                count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s) AS cbe_done_in_month
+                count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s) 
+                AS cbe_done_in_month
                 from "{cbe_table}"
                 GROUP BY awc_id
             ) ut

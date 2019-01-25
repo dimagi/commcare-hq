@@ -7,6 +7,7 @@ from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
