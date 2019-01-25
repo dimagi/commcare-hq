@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from django.conf.urls import url
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.forms import ValidationError
 from tastypie import http
@@ -951,7 +952,9 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
     def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
         # populate the domain which is required by the serializer
         data['domain'] = request.domain
-        data['resource_name'] = ODATA_CASE_RESOURCE_NAME
+        data['case_type'] = [
+            path_segment for path_segment in request.build_absolute_uri().split('/') if path_segment
+        ][-1]
         data['api_path'] = request.path
         response = super(ODataCommCareCaseResource, self).create_response(request, data, response_class,
                                                                           **response_kwargs)
@@ -961,3 +964,9 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
     class Meta(v0_4.CommCareCaseResource.Meta):
         resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
         serializer = ODataCommCareCaseSerializer()
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<case_type>[\w\d_.-]+)/$" % self._meta.resource_name,
+                self.wrap_view('dispatch_list'))
+        ]
