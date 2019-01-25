@@ -169,7 +169,7 @@ class Command(BaseCommand):
             raise CommandError(
                 'This command requires commcare-export to be installed! '
                 'Please run: pip install commcare-export. You may also need to run: '
-                'pip install openpyxl==2.6.0b1'
+                'pip install openpyxl==2.6.0b1 '
                 'afterwards to run CommCare due to version incompatibilities.'
             )
         from commcare_export import misc
