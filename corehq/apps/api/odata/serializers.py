@@ -16,23 +16,23 @@ class ODataCommCareCaseSerializer(Serializer):
     """
     def to_json(self, data, options=None):
         options = options or {}
-        domain = data.get('domain')
+        domain = data.pop('domain', None)
         if not domain:
             raise Exception('API requires domain to be set! Did you add it in a custom create_response function?')
-        resource_name = data.get('resource_name')
-        if not resource_name:
+        case_type = data.pop('case_type', None)
+        if not case_type:
             raise Exception(
-                'API requires resource_name to be set! Did you add it in a custom create_response function?'
+                'API requires case_type to be set! Did you add it in a custom create_response function?'
             )
-        api_path = data.get('api_path')
+        api_path = data.pop('api_path', None)
         if not api_path:
             raise Exception(
                 'API requires api_path to be set! Did you add it in a custom create_response function?'
             )
         data = self.to_simple(data, options)
-        data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), resource_name)
+        data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), case_type)
 
-        next_url = data.get('meta', {}).get('next')
+        next_url = data.pop('meta', {}).get('next')
         if next_url:
             data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
         # move "objects" to "value"
@@ -46,5 +46,15 @@ class ODataCommCareCaseSerializer(Serializer):
 
         for i, case_json in enumerate(data['value']):
             case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
+
+        for value in data['value']:
+            value.pop('id')
+            value.pop('indexed_on')
+            value.pop('indices')
+            value.pop('resource_uri')
+            properties = value.get('properties')
+            for property_name in list(properties):
+                if property_name not in ['casename', 'casetype', 'dateopened', 'ownerid', 'backendid']:
+                    properties.pop(property_name)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
