@@ -135,7 +135,7 @@ class LocalCommCareHqClient(object):
                     else:
                         more_to_fetch = False
 
-                self.checkpoint(paginator, batch)
+                self.checkpoint(paginator, batch_list)
 
         from commcare_export.repeatable_iterator import RepeatableIterator
         return RepeatableIterator(iterate_resource)
@@ -143,7 +143,7 @@ class LocalCommCareHqClient(object):
     def checkpoint(self, paginator, batch):
         from commcare_export.commcare_minilinq import DatePaginator
         if self._checkpoint_manager and isinstance(paginator, DatePaginator):
-            since_date = paginator.get_since_date(batch)
+            since_date = paginator.get_since_date({"objects": batch})
             self._checkpoint_manager.set_batch_checkpoint(checkpoint_time=since_date)
 
 
