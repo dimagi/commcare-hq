@@ -52,7 +52,6 @@ class ODataCommCareCaseSerializer(Serializer):
         data.pop('resource_name')
 
         for value in data['value']:
-            value.pop('date_closed')
             value.pop('id')
             value.pop('indexed_on')
             value.pop('indices')
