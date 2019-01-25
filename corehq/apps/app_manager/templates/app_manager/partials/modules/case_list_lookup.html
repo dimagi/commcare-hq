@@ -70,7 +70,7 @@
                           </div>
                           <div class="col-sm-2">
                               <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
-                                 data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.remove_item('extras', item) }">
+                                 data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.removeItem('extras', item) }">
                                   <i class="fa fa-remove"></i>
                               </a>
                           </div>
@@ -78,7 +78,7 @@
                       <!-- /ko -->
                       <a href="#"
                          class="btn btn-default fd-kv-add-pair"
-                         data-bind="visible: show_add_extra(), click: function(){ add_item('extras') }">
+                         data-bind="visible: show_add_extra(), click: function(){ addItem('extras') }">
                           <i class="fa fa-plus"></i> Add Key &rarr; Value Pair
                       </a>
                       <span class="help-block" style="display: none;">
@@ -96,7 +96,7 @@
                           </div>
                           <div class="col-sm-1">
                               <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
-                                 data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.remove_item('responses', item) }">
+                                 data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.removeItem('responses', item) }">
                                   <i class="fa fa-remove"></i>
                               </a>
                           </div>
@@ -104,7 +104,7 @@
                       <!-- /ko -->
                       <a href="#"
                          class="btn btn-default fd-kv-add-pair"
-                         data-bind="visible: show_add_response(), click: function(){ add_item('responses') }">
+                         data-bind="visible: show_add_response(), click: function(){ addItem('responses') }">
                           <i class="fa fa-plus"></i> Add Key
                       </a>
                       <span class="help-block" style="display: none;">{% trans "At least one response required" %}</span>
