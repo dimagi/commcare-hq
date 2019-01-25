@@ -36,7 +36,7 @@ class ODataMetadataView(View):
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         # todo: should generate this dynamically based on the domain / case schema / data dictionary
-        data_file = os.path.join(os.path.dirname(__file__), 'templates/odata/metadata.xml')
+        data_file = os.path.join(os.path.dirname(__file__), 'metadata.xml')
         case_types = get_case_types_for_domain_es(domain)
         with open(data_file, 'r') as f:
             metadata_template = Template(f.read())
