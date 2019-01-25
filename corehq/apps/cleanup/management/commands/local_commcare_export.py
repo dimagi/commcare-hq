@@ -96,8 +96,7 @@ class LocalCommCareHqClient(object):
         """
         """
         from commcare_export.cli import logger
-        logger.debug("Fetching batch: {}-{}".format(start, self.limit))
-        # logger.debug("Fetching batch: %s", params)
+        logger.info("Fetching batch: {}-{}".format(start, start + self.limit))
         return es_query_set[start:start + self.limit]
 
     def iterate(self, resource, paginator, params=None):
@@ -121,7 +120,7 @@ class LocalCommCareHqClient(object):
             while more_to_fetch:
                 batch = self.get(mock_api.query_set, count, params)
                 batch_list = [mock_api.serialize(obj) for obj in batch]
-                logger.debug('Received {}-{} of {}', count, count + self.limit, total_count)
+                logger.info('Received {}-{} of {}'.format(count, count + self.limit, total_count))
 
                 if not batch_list:
                     more_to_fetch = False
