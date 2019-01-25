@@ -32,7 +32,9 @@
             {% endfor %}
 
             <EntityContainer Name="Container" >
-                <EntitySet Name="case" EntityType="CommCare.Case"/>
+                {% for case_type in case_types %}
+                <EntitySet Name="{{ case_type }}" EntityType="CommCare.{{ case_type }}"/>
+                {% endfor %}
             </EntityContainer>
         </Schema>
     </edmx:DataServices>
