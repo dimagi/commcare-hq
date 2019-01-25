@@ -233,7 +233,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
         self.fetchState.subscribe(function (newValue) {
-            if (newValue == 'pending') {
+            if (newValue === 'pending') {
                 self.showPaginationSpinner(true);
             } else {
                 self.showLoadingSpinner(false);
