@@ -80,9 +80,10 @@ class LocalCommCareHqClient(object):
     """
     Like CommCareHqClient but for a local environment
     """
-    def __init__(self, url, project, checkpoint_manager=None):
+    def __init__(self, url, project, limit, checkpoint_manager=None):
         self.url = url
         self.project = project
+        self.limit = limit
         self._checkpoint_manager = checkpoint_manager
 
     # todo: backoff?
@@ -91,13 +92,13 @@ class LocalCommCareHqClient(object):
     #     max_time=300, giveup=is_client_error,
     #     on_backoff=on_backoff, on_giveup=on_giveup
     # )
-    def get(self, es_query_set, start, limit, params=None):
+    def get(self, es_query_set, start, params=None):
         """
         """
         from commcare_export.cli import logger
-        logger.debug("Fetching batch: {}-{}".format(start, limit))
+        logger.debug("Fetching batch: {}-{}".format(start, self.limit))
         # logger.debug("Fetching batch: %s", params)
-        return es_query_set[start:start + limit]
+        return es_query_set[start:start + self.limit]
 
     def iterate(self, resource, paginator, params=None):
         """
@@ -116,12 +117,11 @@ class LocalCommCareHqClient(object):
             last_batch_ids = set()
 
             count = 0
-            limit = params['limit']
             total_count = mock_api.query_set.count()
             while more_to_fetch:
-                batch = self.get(mock_api.query_set, count, limit, params)
+                batch = self.get(mock_api.query_set, count, params)
                 batch_list = [mock_api.serialize(obj) for obj in batch]
-                logger.debug('Received {}-{} of {}', count, count + limit, total_count)
+                logger.debug('Received {}-{} of {}', count, count + self.limit, total_count)
 
                 if not batch_list:
                     more_to_fetch = False
@@ -132,7 +132,7 @@ class LocalCommCareHqClient(object):
 
                     if count < total_count:
                         last_batch_ids = {obj['id'] for obj in batch_list}
-                        count += limit
+                        count += self.limit
                     else:
                         more_to_fetch = False
 
@@ -157,8 +157,9 @@ class Command(BaseCommand):
         parser.add_argument('--query')
         parser.add_argument('--output-format')
         parser.add_argument('--output')
+        parser.add_argument('--limit', type=int, default=200)
 
-    def handle(self, project, query, output_format, output, **options):
+    def handle(self, project, query, output_format, output, limit, **options):
         # note: this is heavily copy/paste/modified from commcare_export.cli
         commcare_hq = 'local_commcare_export'
         try:
@@ -207,6 +208,7 @@ class Command(BaseCommand):
         api_client = LocalCommCareHqClient(
             url=commcarehq_base_url,
             project=project,
+            limit=limit,
             checkpoint_manager=checkpoint_manager
         )
         env = (
