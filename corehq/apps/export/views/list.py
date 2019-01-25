@@ -322,7 +322,7 @@ class FormExportListHelper(ExportListHelper):
         exports = get_form_exports_by_domain(self.domain,
                                              self.permissions.has_deid_view_permissions,
                                              include_docs=False)
-        return [x for x in exports if not x['is_daily_saved_export']]
+        return sorted([x for x in exports if not x['is_daily_saved_export']], key=lambda x: x['name'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
@@ -354,7 +354,7 @@ class CaseExportListHelper(ExportListHelper):
         exports = get_case_exports_by_domain(self.domain,
                                              self.permissions.has_deid_view_permissions,
                                              include_docs=False)
-        return [x for x in exports if not x['is_daily_saved_export']]
+        return sorted([x for x in exports if not x['is_daily_saved_export']], key=lambda x: x['name'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
@@ -400,7 +400,8 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
                                                                self.permissions.has_deid_view_permissions,
                                                                include_docs=False))
         combined_exports = sorted(combined_exports, key=lambda x: x['name'])
-        return [x for x in combined_exports if x['is_daily_saved_export'] and x['export_format'] == "html"]
+        return sorted([x for x in combined_exports if x['is_daily_saved_export'] and x['export_format'] == "html"],
+                      key=lambda x: x['name'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
@@ -435,10 +436,10 @@ class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
 
     def get_saved_exports(self):
         exports = super(DeIdDailySavedExportListView, self).get_saved_exports()
-        return [
+        return sorted([
             x for x in exports
             if x['is_deidentified'] and x['is_daily_saved_export'] and not x['export_format'] == "html"
-        ]
+        ], key=lambda x: x['name'])
 
     @property
     def create_export_form(self):
@@ -450,8 +451,9 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
     def get_saved_exports(self):
         exports = super(DeIdDashboardFeedListView, self).get_saved_exports()
-        return [x for x in exports
-                if x['is_deidentified'] and x['is_daily_saved_export'] and x['export_format'] == "html"]
+        return sorted([x for x in exports
+                if x['is_deidentified'] and x['is_daily_saved_export'] and x['export_format'] == "html"],
+                key=lambda x: x['name'])
 
     @property
     def create_export_form(self):
