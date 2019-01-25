@@ -22,7 +22,11 @@ hqDefine("users/js/web_users",[
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
         self.showUsers = ko.computed(function () {
-            return !self.showLoadingSpinner() && !self.error();
+            return !self.showLoadingSpinner() && !self.error() && self.users().length > 0;
+        });
+
+        self.showNoUsersMessage = ko.computed(function () {
+            return !self.showLoadingSpinner() && !self.error() && self.users().length === 0;
         });
 
         self.goToPage = function (page) {

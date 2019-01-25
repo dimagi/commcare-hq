@@ -41,6 +41,16 @@
         </div>
     </div>
 
+    {% if has_form_errors %}
+    <div class="alert alert-danger">
+        {% url 'app_form_summary' domain latest_app_id as form_summary_url %}
+        {% blocktrans %}
+            Your app's forms contain errors.
+            Please visit the <a href='{{ form_summary_url }}'>form summary</a> for more details.
+        {% endblocktrans %}
+    </div>
+    {% endif %}
+
     <div class="row">
         <div class="col-sm-12">
             <!-- ko foreach: caseTypes -->
