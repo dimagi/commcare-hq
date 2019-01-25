@@ -55,7 +55,6 @@ class ODataCommCareCaseSerializer(Serializer):
             value.pop('id')
             value.pop('indexed_on')
             value.pop('indices')
-            value.pop('opened_by')
             value.pop('resource_uri')
             value.pop('properties')
 
