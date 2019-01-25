@@ -17,7 +17,9 @@
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "invalid xml" %}
                             {% if not error.message %}
-                                If you don't know why this happened, please report an issue.
+                                {% blocktrans %}
+                                    If you don't know why this happened, please report an issue.
+                                {% endblocktrans %}
                             {% endif %}
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "validation error" %}
@@ -25,202 +27,264 @@
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "no form links" %}
                             {% blocktrans %}
-                            Link to other form is selected, but no form links have been provided.
+                                Link to other form is selected, but no form links have been provided.
                             {% endblocktrans %}
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "bad form link" %}
                             {% blocktrans %}
-                            Link to other form is selected, but we don't recognize the form you provided.
+                                Link to other form is selected, but we don't recognize the form you provided.
                             {% endblocktrans %}
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "form link to missing root" %}
                             {% blocktrans %}
-                            Please check that end of form navigation is correct. It appears to be pointing
-                            to a parent menu form, but the menu doesn't have a parent.
+                                Please check that end of form navigation is correct. It appears to be pointing
+                                to a parent menu form, but the menu doesn't have a parent.
                             {% endblocktrans %}
                             {% include "app_manager/partials/form_error_message.html" %}
                         {% case "no ref detail" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            uses referrals but doesn't have
-                            detail screens configured for referrals.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                uses referrals but doesn't have detail screens configured for referrals.
+                            {% endblocktrans %}
                         {% case "no case detail" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            uses cases but doesn't have
-                            detail screens configured for cases.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                uses cases but doesn't have detail screens configured for cases.
+                            {% endblocktrans %}
                         {% case "no product detail" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            uses CommCare Supply products but doesn't have
-                            detail screens configured for products.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                uses CommCare Supply products but doesn't have detail screens configured for products.
+                            {% endblocktrans %}
                         {% case "invalid id key" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            has an incorrectly formatted ID key ({{ error.key }}).
-                            Make sure your key has only letters, numbers, space characters, underscores, and dashes.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs key=error.key %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                has an incorrectly formatted ID key ({{ error_key }}).
+                                Make sure your key has only letters, numbers, space characters, underscores, and dashes.
+                            {% endblocktrans %}
                         {% case "no modules" %}
-                            No menus are available. <br />
-                            <i class="fa fa-arrow-left"></i>
-                            Please click
-                            <i class="fa fa-plus"></i> <strong>Add...</strong> to create
-                            some menus.
+                            {% blocktrans %}
+                                No menus are available. <br />
+                                <i class="fa fa-arrow-left"></i>
+                                Please click
+                                <i class="fa fa-plus"></i> <strong>Add...</strong> to create
+                                some menus.
+                            {% endblocktrans %}
                         {% case "missing module" %}
                             {% include "app_manager/partials/module_error_message.html" %} references a missing menu.
                             {% if error.message %}
                                 {% trans "Details:" %}
                             {% endif %}
                         {% case "no forms" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            has no forms.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                has no forms.
+                            {% endblocktrans %}
                         {% case "no forms or case list" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            has no forms or case list.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                has no forms or case list.
+                            {% endblocktrans %} 
                         {% case "training module parent" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            cannot have a training module as a parent module.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                cannot have a training module as a parent module.
+                            {% endblocktrans %}
                         {% case "training module child" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            is a training module and therefore cannot have a parent module.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                is a training module and therefore cannot have a parent module.
+                            {% endblocktrans %}
                         {% case "no reports" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            has no reports.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                has no reports.
+                            {% endblocktrans %}
                         {% case "circular case hierarchy" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}
-                            The case hierarchy for <a href="{{ module_url }}">{{ module_name }}</a> contains a circular reference.
+                                The case hierarchy for <a href="{{ module_url }}">{{ module_name }}</a> contains a circular reference.
                             {% endblocktrans %}
                         {% case "no case type" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            uses cases but doesn't have a
-                            case type defined.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                uses cases but doesn't have a case type defined.
+                            {% endblocktrans %}
                         {% case "case list form not registration" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% url "view_form" domain app.id error.form.unique_id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                            You have selected the <a href="{{ form_url }}">{{ form_name }}</a> form
-                            as the case registration form for <a href="{{ module_url }}">{{ module_name }}</a>.
-                            This form is not a registration form. You need to select a form which opens a case and
-                            does not update an existing case. Please select a different form.
+                                You have selected the <a href="{{ form_url }}">{{ form_name }}</a> form
+                                as the case registration form for <a href="{{ module_url }}">{{ module_name }}</a>.
+                                This form is not a registration form. You need to select a form which opens a case and
+                                does not update an existing case. Please select a different form.
                             {% endblocktrans %}
                         {% case "case list form missing" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}
-                            The form you have selected as the case registration form for
-                            <a href="{{ module_url }}">{{ module_name }}</a> does not exist.
-                            Please select another form.
+                                The form you have selected as the case registration form for
+                                <a href="{{ module_url }}">{{ module_name }}</a> does not exist.
+                                Please select another form.
                             {% endblocktrans %}
                         {% case "report config ref invalid" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}
-                            There are references to reports that are deleted in
-                            <a href="{{ module_url }}">{{ module_name }}</a>.
-                            You may re-save <a href="{{ module_url }}">{{ module_name }}</a> to delete them.
+                                There are references to reports that are deleted in
+                                <a href="{{ module_url }}">{{ module_name }}</a>.
+                                You may re-save <a href="{{ module_url }}">{{ module_name }}</a> to delete them.
                             {% endblocktrans %}
                         {% case "report config id duplicated" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}
-                            There are multiple reports with the same report code in
-                            <a href="{{ module_url }}">{{ module_name }}</a>.
-                            These codes must be unique.
+                                There are multiple reports with the same report code in
+                                <a href="{{ module_url }}">{{ module_name }}</a>.
+                                These codes must be unique.
                             {% endblocktrans %}
                         {% case "module filter has xpath error" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}
-                            The filter for <a href="{{ module_url }}">{{ module_name }}</a> has errors.
+                                The filter for <a href="{{ module_url }}">{{ module_name }}</a> has errors.
                             {% endblocktrans %}
                         {% case "form filter has xpath error" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% url "view_form" domain app.id error.form.unique_id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                            Display Condition has syntax errors
-                            in the <a href="{{ form_url }}">{{ form_name }}</a> form
-                            in <a href="{{ module_url }}">{{ module_name }}</a>.
+                                Display Condition has syntax errors
+                                in the <a href="{{ form_url }}">{{ form_name }}</a> form
+                                in <a href="{{ module_url }}">{{ module_name }}</a>.
                             {% endblocktrans %}
                         {% case "all forms in case list module must load the same cases" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% url "view_form" domain app.id error.form.unique_id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                            The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
-                            loads different case types from the other forms. All forms in a case list that has a case registration form
-                            selected must load the same case types.
+                                The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
+                                loads different case types from the other forms. All forms in a case list that has a case registration form
+                                selected must load the same case types.
                             {% endblocktrans %}
                         {% case "case list module form must require case" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% url "view_form" domain app.id error.form.unique_id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                            The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
-                            must update a case. All forms in a case list that has a case registration form selected must update a case.
+                                The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
+                                must update a case. All forms in a case list that has a case registration form selected must update a case.
                             {% endblocktrans %}
                         {% case "case list module form can only load parent cases" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% url "view_form" domain app.id error.form.unique_id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                            The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
-                            can only load or update a single case and its parents. All forms in a case list that
-                            has a case registration form selected can only update a single case and its parents.
+                                The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
+                                can only load or update a single case and its parents. All forms in a case list that
+                                has a case registration form selected can only update a single case and its parents.
                             {% endblocktrans %}
                         {% case "case list module form must match module case type" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% url "view_form" domain app.id error.form.unique_id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                            The <a href="{{ form_url }}">{{ form_name }}</a> form loads a different case type than
-                            <a href="{{ module_url }}">{{ module_name }}</a>. All forms in a case list that has a case registration form
-                            selected must load a case of the same type as the case list.
+                                The <a href="{{ form_url }}">{{ form_name }}</a> form loads a different case type than
+                                <a href="{{ module_url }}">{{ module_name }}</a>. All forms in a case list that has a case registration form
+                                selected must load a case of the same type as the case list.
                             {% endblocktrans %}
                         {% case "all forms in case list module must have same case management" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% url "view_form" domain app.id error.form.unique_id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs expected_tag=error.expected_tag %}
-                            The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
-                            loads a case with a different case tag to the other forms in the case list.
-                            All forms in a case list that has a case registration form selected must use the same case tag.
-                            Expected case tag: <strong>{{ expected_tag }}</strong>
+                                The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
+                                loads a case with a different case tag to the other forms in the case list.
+                                All forms in a case list that has a case registration form selected must use the same case tag.
+                                Expected case tag: <strong>{{ expected_tag }}</strong>
                             {% endblocktrans %}
                         {% case "forms in case list module must use modules details" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}
                             {% url "view_form" domain app.id error.form.unique_id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                            The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
-                            uses a details screen from another case list. All forms in a case list that has a case
-                            registration form selected must use the details screen from that case list.
+                                The <a href="{{ form_url }}">{{ form_name }}</a> form in <a href="{{ module_url }}">{{ module_name }}</a>
+                                uses a details screen from another case list. All forms in a case list that has a case
+                                registration form selected must use the details screen from that case list.
                             {% endblocktrans %}
                         {% case "invalid filter xpath" %}
                             {% if error.filter %}
-                                Case List has invalid filter xpath <code>{{ error.filter }}</code> in
+                                {% url "view_module" domain app.id error.module.unique_id as module_url error_filter=error.filter %}
+                                {% blocktrans with module_name=error.module.name|trans:langs %}
+                                    Case List has invalid filter xpath <code>{{ error_filter }}</code> in
+                                    <a href="{{ module_url }}">{{ module_name }}</a>
+                                {% endblocktrans %}
                             {% else %}
-                                Case List has blank filter in
+                                {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                                {% blocktrans with module_name=error.module.name|trans:langs %}
+                                    Case List has blank filter in
+                                    <a href="{{ module_url }}">{{ module_name }}</a>
+                                {% endblocktrans %}
                             {% endif %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
                         {% case "invalid sort field" %}
                             {% if error.field %}
-                                Case List has invalid sort field <code>{{ error.field }}</code> in
+                                {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                                {% blocktrans with module_name=error.module.name|trans:langs error_field=error.field %}
+                                    Case List has invalid sort field <code>{{ error_field }}</code> in
+                                    <a href="{{ module_url }}">{{ module_name }}</a>
+                                {% endblocktrans %}
                             {% else %}
-                                Case List has blank sort field in
+                                {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                                {% blocktrans with module_name=error.module.name|trans:langs %}
+                                    Case List has blank sort field in
+                                    <a href="{{ module_url }}">{{ module_name }}</a>
+                                {% endblocktrans %}
                             {% endif %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
                         {% case "invalid tile configuration" %}
-                            The case list in
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            has an invalid case tile configuration. Reason: {{ error.reason }}
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs error_reason=error.reason %}
+                                The case list in
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                has an invalid case tile configuration. Reason: {{ error_reason }}
+                            {% endblocktrans %}
                         {% case "no source module id" %}
-                            Shadow module
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            doesn't have a source module specified.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                Shadow module
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                doesn't have a source module specified.
+                            {% endblocktrans %}
                         {% case "no parent select id" %}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
-                            uses parent case selection but doesn't have a parent case list specified.
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                                <a href="{{ module_url }}">{{ module_name }}</a>
+                                uses parent case selection but doesn't have a parent case list specified.
+                            {% endblocktrans %}
                         {% case "parent cycle" %}
-                            The app's parent child case selection graph contains a cycle.
+                            {% blocktrans %}
+                                The app's parent child case selection graph contains a cycle.
+                            {% endblocktrans %}
                         {% case "root cycle" %}
-                            The app's parent child graph contains a cycle.
+                            {% blocktrans %}
+                                The app's parent child graph contains a cycle.
+                            {% endblocktrans %}
                         {% case "unknown root" %}
-                            A menu points to an unknown Parent Menu.
+                            {% blocktrans %}
+                                A menu points to an unknown Parent Menu.
+                            {% endblocktrans %}
                         {% case "invalid location xpath" %}
-                            Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
-                            Details: {{ error.details }}
-                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs property=error.column.field_property details=error.details %}
+                                Case List has invalid location reference <code>{{ property }}</code>.
+                                Details: {{ details }}
+                            <a href="{{ module_url }}">{{ module_name }}</a>
+                            {% endblocktrans %}
                         {% case "subcase has no case type" %}
                             Child case specifies no case list
                             in form {% include "app_manager/partials/form_error_message.html" %}
                         {% case "form error" %}
-                            One or more forms are invalid: check all your forms for error messages.
+                            {% blocktrans %}
+                                One or more forms are invalid: check all your forms for error messages.
+                            {% endblocktrans %}
                         {% case "missing languages" %}
                             {% include "app_manager/partials/form_error_message.html" %} missing languages:
                             {% for lang in error.missing_languages %}
@@ -228,7 +292,9 @@
                             {% endfor %}
                         {% case "duplicate xmlns" %}
                             {% if error.xmlns %}
-                              You have two forms with the xmlns "{{ error.xmlns }}"
+                                {% blocktrans with xmlns=error.xmlns %}
+                                    You have two forms with the xmlns "{{ xmlns }}"
+                                {% endblocktrans %}
                             {% endif %}
                         {% case "update_case uses reserved word" %}
                             Case Update uses reserved word "{{ error.word }}"
@@ -258,11 +324,18 @@
                                 Please choose a question from the dropdown next to the case property.
                             {% endif %}
                         {% case "multimedia case property not supported" %}
-                            Multimedia case property "{{ error.path }}" is not supported on apps on or before v2.5
+                            {% blocktrans with path=error.path %}
+                                Multimedia case property "{{ path }}" is not supported on apps on or before v2.5.
+                            {% endblocktrans %}
                         {% case "remote error" %}
-                            Remote Error:
+                            {% blocktrans %}
+                                Remote Error:
+                            {% endblocktrans %}
                         {% case "empty lang" %}
-                            One of your languages is empty. Check your <a href="{% url "view_app" domain app.id %}">app settings</a>.
+                            {% url "app_settings" domain app.id as app_url %}
+                            {% blocktrans %}
+                                One of your languages is empty. Check your <a href="{{ app_url }}">app settings</a>.
+                            {% endblocktrans %}
                         {% case "missing parent tag" %}
                             A subcase is referencing a parent case tag that does not exist: "{{ error.case_tag }}"
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
@@ -331,9 +404,12 @@
                         {% case "error" %}
                             Details: {{ error.message }}
                         {% case "subscription" %}
-                            Your application uses a feature that is not available in your current subscription. You
-                            can <a href="{% url 'domain_select_plan' domain %}">change your subscription</a>, or
-                            remove the feature as follows.
+                            {% url 'domain_select_plan' domain as domain_url %}
+                            {% blocktrans %}
+                                Your application uses a feature that is not available in your current subscription. You
+                                can <a href="{{ domain_url }}">change your subscription</a>, or
+                                remove the feature as follows.
+                            {% endblocktrans %}
                         {% case "missing shadow parent" %}
                             A shadow parent must be specified
                             {% if not not_actual_build %}for form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
@@ -361,14 +437,5 @@
                 </li>
             {% endfor %}
         </ul>
-{#        <p class="help-block">#}
-{#            {% if not_actual_build %}#}
-{#                {% trans "Build errors prevent you from creating a new version of your application." %}#}
-{#            {% endif %}#}
-{#            {% trans "For more information on build errors, please see" %}#}
-{#            <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">#}
-{#                {% trans "Errors Building an Application" %}#}
-{#            </a>#}
-{#        </p>#}
     </div>
 {% endif %}
