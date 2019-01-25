@@ -183,21 +183,23 @@ hqDefine("export/js/export_list", [
 
         // Loading/error handling UI
         self.loadingErrorMessage = ko.observable('');
-        self.isLoading = ko.observable(true);
+        self.isLoadingPanel = ko.observable(true);
+        self.isLoadingPage = ko.observable(false);
         self.hasError = ko.observable(false);
         self.showError = ko.computed(function () {
-            return !self.isLoading() && self.hasError();
+            return !self.isLoadingPanel() && self.hasError();
         });
         self.showEmpty = ko.computed(function () {
-            return !self.isLoading() && !self.hasError() && !self.exports().length;
+            return !self.isLoadingPanel() && !self.hasError() && !self.exports().length;
         });
         self.showPagination = ko.computed(function () {
-            return !self.isLoading() && !self.hasError() && self.exports().length;
+            return !self.isLoadingPanel() && !self.hasError() && self.exports().length;
         });
 
         self.totalItems = ko.observable(0);
         self.itemsPerPage = ko.observable(25);
         self.goToPage = function (page) {
+            self.isLoadingPage(true);
             $.ajax({
                 method: 'GET',
                 url: self.urls.getExportsPage,
@@ -211,7 +213,8 @@ hqDefine("export/js/export_list", [
                     limit: self.itemsPerPage(),
                 },
                 success: function (data) {
-                    self.isLoading(false);
+                    self.isLoadingPanel(false);
+                    self.isLoadingPage(false);
                     self.totalItems(data.total);
 
                     self.exports(_.map(data.exports, function (e) {
@@ -230,7 +233,7 @@ hqDefine("export/js/export_list", [
                     });
                 },
                 error: function () {
-                    self.isLoading(false);
+                    self.isLoadingPanel(false);
                     self.hasError(true);
                 },
             });
