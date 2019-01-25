@@ -52,6 +52,9 @@ class ODataCommCareCaseSerializer(Serializer):
             value.pop('indexed_on')
             value.pop('indices')
             value.pop('resource_uri')
-            value.pop('properties')
+            properties = value.get('properties')
+            for property_name in list(properties):
+                if property_name not in ['casename', 'casetype', 'dateopened', 'ownerid', 'backendid']:
+                    properties.pop(property_name)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
