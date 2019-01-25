@@ -452,8 +452,8 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
     def get_saved_exports(self):
         exports = super(DeIdDashboardFeedListView, self).get_saved_exports()
         return sorted([x for x in exports
-                if x['is_deidentified'] and x['is_daily_saved_export'] and x['export_format'] == "html"],
-                key=lambda x: x['name'])
+                      if x['is_deidentified'] and x['is_daily_saved_export'] and x['export_format'] == "html"],
+                      key=lambda x: x['name'])
 
     @property
     def create_export_form(self):
