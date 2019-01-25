@@ -9,9 +9,8 @@
                 <Property Name="dateopened" Type="Edm.DateTimeOffset" />
                 <Property Name="ownerid" Type="Edm.String" Nullable="false" />
                 <Property Name="backendid" Type="Edm.String" />
-                <!-- todo: this needs to be generated dynamically to include custom properties -->
                 {% for property in properties %}
-                    <Property Name="{{ property }}" Type="Edm.String" />
+                <Property Name="{{ property }}" Type="Edm.String" />
                 {% endfor %}
             </ComplexType>
             {% endfor %}
