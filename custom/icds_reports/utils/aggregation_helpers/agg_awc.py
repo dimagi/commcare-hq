@@ -310,6 +310,42 @@ class AggAwcHelper(BaseICDSAggregationHelper):
 
         yield """
         UPDATE "{tablename}" agg_awc SET
+            num_awcs_conducted_vhnd = CASE WHEN ut.vhsnd_done_in_month>0 THEN 1 else 0 END
+        FROM (
+            SELECT
+                awc_id,
+                count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s) AS vhsnd_done_in_month
+                from "{vhnd_table}"
+                GROUP BY awc_id
+            ) ut
+        WHERE agg_awc.month = %(start_date)s AND ut.awc_id = agg_awc.awc_id
+        """.format(
+            tablename=self.tablename,
+            vhnd_table=self._ucr_tablename('static-vhnd_form')
+        ), {
+            'start_date': self.month_start
+        }
+
+        yield """
+        UPDATE "{tablename}" agg_awc SET
+            num_awcs_conducted_cbe = CASE WHEN ut.cbe_done_in_month>0 THEN 1 ELSE 0 END
+        FROM (
+            SELECT
+                awc_id,
+                count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s) AS cbe_done_in_month
+                from "{cbe_table}"
+                GROUP BY awc_id
+            ) ut
+        WHERE agg_awc.month = %(start_date)s AND ut.awc_id = agg_awc.awc_id
+        """.format(
+            tablename=self.tablename,
+            cbe_table=self._ucr_tablename('static-cbe_form')
+        ), {
+            'start_date': self.month_start
+        }
+
+        yield """
+        UPDATE "{tablename}" agg_awc SET
             is_launched = 'yes',
             num_launched_awcs = 1
         FROM (
@@ -487,6 +523,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('num_launched_blocks', lambda col: _launched_col(col)),
             ('num_launched_supervisors', lambda col: _launched_col(col)),
             ('num_launched_awcs', lambda col: _launched_col(col)),
+            ('num_awcs_conducted_vhnd',),
+            ('num_awcs_conducted_cbe',),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),
