@@ -473,6 +473,8 @@ class SQLLocation(AdjListModel):
         for the given `locations`.
         """
         from .tasks import update_users_at_locations
+        from .document_store import publish_location_saved
+
         if not locations:
             return
         if len(set(loc.domain for loc in locations)) != 1:
