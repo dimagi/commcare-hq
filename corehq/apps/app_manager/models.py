@@ -3184,7 +3184,8 @@ class AdvancedModule(ModuleBase):
                 name=form.name,
                 form_filter=form.form_filter,
                 media_image=form.media_image,
-                media_audio=form.media_audio
+                media_audio=form.media_audio,
+                comment=form.comment,
             )
             new_form._parent = self
             form._parent = self

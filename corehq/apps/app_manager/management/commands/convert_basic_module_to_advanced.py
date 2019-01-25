@@ -3,7 +3,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.app_manager.dbaccessors import get_current_app, get_latest_build_id
+from corehq.apps.app_manager.dbaccessors import get_current_app, get_latest_build_version
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -35,8 +35,8 @@ class Command(BaseCommand):
         assert module.ref_details.long.columns == [], "Doesn't support ref details"
         assert module.task_list.show is False, "Doesn't support task lists"
 
-        latest_build = get_latest_build_id(domain, app_id)
-        if latest_build.version != app.version:
+        latest_build = get_latest_build_version(domain, app_id)
+        if latest_build != app.version:
             app.validate_app()
             copy = app.make_build(
                 comment="Build before moving {} to an advanced module".format(module.name),
@@ -54,7 +54,8 @@ class Command(BaseCommand):
                 name=form.name,
                 form_filter=form.form_filter,
                 media_image=form.media_image,
-                media_audio=form.media_audio
+                media_audio=form.media_audio,
+                comment=form.comment,
             )
             new_form._parent = module
             form._parent = module
