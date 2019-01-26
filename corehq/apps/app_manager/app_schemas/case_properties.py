@@ -422,13 +422,10 @@ class ParentCasePropertyBuilder(object):
             include_parent_properties=self.include_parent_properties
         )
 
-    def get_parent_type_map(self, case_types, if_multiple_parents_arbitrarily_pick_one=False):
+    def get_parent_type_map(self, case_types):
         """
         :param case_types: Case types to filter on. Setting to None will include all.
                todo: including all should be the default behavior since it isn't more work.
-        :param if_multiple_parents_arbitrarily_pick_one: whether to include a list of parent types
-               or arbitrarily pick one. todo: remove this argument
-               since True behavior is of dubious utility and correctness.
         :return: {<case_type>: {<relationship>: [<parent_type>], ...}, ...}
                  if allow_multiple_parents; otherwise
                  {<case_type>: {<relationship>: <parent_type>, ...}, ...}
@@ -444,15 +441,7 @@ class ParentCasePropertyBuilder(object):
                 rel_map[relationship].append(parent_type)
 
             for relationship, types in rel_map.items():
-                if if_multiple_parents_arbitrarily_pick_one:
-                    if len(types) > 1:
-                        logger.error(
-                            "Case Type '%s' in has multiple parents for relationship '%s': %s",
-                            case_type, relationship, types
-                        )
-                    parent_map[case_type][relationship] = types[0]
-                else:
-                    parent_map[case_type][relationship] = types
+                parent_map[case_type][relationship] = types
 
         if case_types is not None:
             return {case_type: rel_map for case_type, rel_map in parent_map.items()
@@ -477,11 +466,9 @@ class ParentCasePropertyBuilder(object):
         }
 
 
-def get_parent_type_map(app, if_multiple_parents_arbitrarily_pick_one=False):
+def get_parent_type_map(app):
     builder = ParentCasePropertyBuilder.for_app(app)
-    return builder.get_parent_type_map(
-        app.get_case_types(),
-        if_multiple_parents_arbitrarily_pick_one=if_multiple_parents_arbitrarily_pick_one)
+    return builder.get_parent_type_map(app.get_case_types())
 
 
 def get_case_properties(app, case_types, defaults=(), include_parent_properties=True,

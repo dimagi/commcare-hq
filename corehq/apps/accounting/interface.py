@@ -526,7 +526,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Total"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Hidden from Client"),
         )
 
     @property
@@ -689,7 +689,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Total Credits"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Hidden from Client"),
         )
 
         if not self.is_rendered_as_email:
@@ -983,7 +983,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Total Credits"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Hidden from Client"),
         )
 
         if not self.is_rendered_as_email:

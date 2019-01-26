@@ -2289,6 +2289,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
+    put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
@@ -2527,7 +2528,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
@@ -3092,7 +3092,6 @@ class AdvancedModule(ModuleBase):
     forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
@@ -3185,7 +3184,8 @@ class AdvancedModule(ModuleBase):
                 name=form.name,
                 form_filter=form.form_filter,
                 media_image=form.media_image,
-                media_audio=form.media_audio
+                media_audio=form.media_audio,
+                comment=form.comment,
             )
             new_form._parent = self
             form._parent = self
@@ -3735,6 +3735,7 @@ class ReportModule(ModuleBase):
     report_configs = SchemaListProperty(ReportAppConfig)
     forms = []
     _loaded = False
+    put_in_root = False
 
     @property
     @memoized
@@ -3818,7 +3819,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     excluded_form_ids = SchemaListProperty()
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
@@ -5580,9 +5580,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        # todo: fix this to expect a list of parent types
-        # todo: and get rid of if_multiple_parents_arbitrarily_pick_one arg
-        case_relationships = get_parent_type_map(self, if_multiple_parents_arbitrarily_pick_one=True)
+        case_relationships = get_parent_type_map(self)
         meta = AppCaseMetadata()
         descriptions_dict = get_case_property_description_dict(self.domain)
 
@@ -5599,7 +5597,10 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
 
         def get_children(case_type):
             seen_types.append(case_type)
-            return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]
+            return [
+                type_.name for type_ in meta.case_types
+                if case_type in type_.child_types
+            ]
 
         def get_hierarchy(case_type):
             return {child: get_hierarchy(child) for child in get_children(case_type)}

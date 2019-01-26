@@ -71,7 +71,7 @@ class MenuContributor(SuiteContributorByModule):
             if hasattr(module, 'case_list') and module.case_list.show:
                 yield Command(id=id_strings.case_list_command(module))
 
-        supports_module_filter = self.app.enable_module_filtering and getattr(module, 'module_filter', None)
+        supports_module_filter = self.app.enable_module_filtering and module.module_filter
 
         menus = []
         if hasattr(module, 'get_menus'):
@@ -84,15 +84,14 @@ class MenuContributor(SuiteContributorByModule):
 
             shadow_modules = [m for m in self.app.get_modules()
                               if isinstance(m, ShadowModule) and m.source_module_id]
-            put_in_root = getattr(module, 'put_in_root', False)
-            if not put_in_root and getattr(module, 'root_module', False):
+            if not module.put_in_root and module.root_module:
                 root_modules.append(module.root_module)
                 for shadow in shadow_modules:
                     if module.root_module.unique_id == shadow.source_module_id:
                         root_modules.append(shadow)
             else:
                 root_modules.append(None)
-                if put_in_root and getattr(module, 'root_module', False):
+                if module.put_in_root and module.root_module:
                     for shadow in shadow_modules:
                         if module.root_module.unique_id == shadow.source_module_id:
                             id_modules.append(shadow)
@@ -128,8 +127,16 @@ class MenuContributor(SuiteContributorByModule):
                         })
                         menu = LocalizedMenu(**menu_kwargs)
                     else:
+                        if (module.put_in_root
+                                and module.root_module
+                                and not module.root_module.put_in_root):
+                            # Mobile will combine this module with its parent
+                            # Reference the parent's name to avoid ambiguity
+                            locale_id = id_strings.module_locale(module.root_module)
+                        else:
+                            locale_id = id_strings.module_locale(module)
                         menu_kwargs.update({
-                            'locale_id': id_strings.module_locale(module),
+                            'locale_id': locale_id,
                             'media_image': module.default_media_image,
                             'media_audio': module.default_media_audio,
                         })

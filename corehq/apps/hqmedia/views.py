@@ -146,6 +146,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             raise Http404(self)
         context.update({
             "references": self.app.get_references(),
+            "multimedia_state": self.app.check_media_state(),
             "object_map": self.app.get_object_map(),
             "totals": self.app.get_reference_totals(),
             "sessionid": self.request.COOKIES.get('sessionid'),

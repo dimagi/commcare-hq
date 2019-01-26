@@ -1157,7 +1157,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
 
     # Show only the report configs that have started their reporting period
     if send_only_active:
-        configs = filter(lambda c: c.is_active, configs)
+        configs = [c for c in configs if c.is_active]
 
     # Don't send an email if none of the reports configs have started
     if len(configs) == 0:

@@ -1704,3 +1704,11 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+
+ODATA = StaticToggle(
+    'odata',
+    'Enable Odata feed.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
