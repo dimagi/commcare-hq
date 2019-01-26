@@ -281,6 +281,8 @@ class FluffTest(TestCase):
                                      values=[dict(date=None, value=3, group_by=None)])
                             ],
                             all_indicators=self.all_indicators())
+            self.assertItemsEqual(expected.pop('all_indicators'), diff.pop('all_indicators'))
+            self.assertItemsEqual(expected.pop('indicator_changes'), diff.pop('indicator_changes'))
             self.assertEqual(expected, diff)
 
     def test_indicator_diff_same(self):
@@ -365,6 +367,8 @@ class FluffTest(TestCase):
                                      values=[dict(date=None, value=2, group_by=None)])
                             ],
                             all_indicators=self.all_indicators())
+            self.assertItemsEqual(expected.pop('all_indicators'), diff.pop('all_indicators'))
+            self.assertItemsEqual(expected.pop('indicator_changes'), diff.pop('indicator_changes'))
             self.assertEqual(expected, diff)
 
     def test_indicator_diff_dict(self):
@@ -430,6 +434,8 @@ class FluffTest(TestCase):
                                      emitter_type='null',
                                      reduce_type='max'),
                             ])
+            self.assertItemsEqual(expected.pop('all_indicators'), diff.pop('all_indicators'))
+            self.assertItemsEqual(expected.pop('indicator_changes'), diff.pop('indicator_changes'))
             self.assertEqual(expected, diff)
 
     def test_flat_field_types(self):
