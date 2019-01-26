@@ -2,6 +2,9 @@
     "date_formats": "__DATE_FORMATS_ARR__",
     "dynamic": false,
     "_meta": {"created": null},
+    "_all": {
+        "enabled": false
+    },
     "date_detection": false,
     "properties": {
         "@indexed_on": {
