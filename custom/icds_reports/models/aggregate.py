@@ -695,6 +695,7 @@ class AggChildHealth(models.Model):
     rations_21_plus_distributed = models.IntegerField()
     pse_eligible = models.IntegerField()
     pse_attended_16_days = models.IntegerField()
+    pse_attended_21_days = models.IntegerField()
     born_in_month = models.IntegerField()
     low_birth_weight_in_month = models.IntegerField()
     bf_at_birth = models.IntegerField()
