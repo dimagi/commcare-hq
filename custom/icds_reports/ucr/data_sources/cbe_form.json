@@ -84,24 +84,21 @@
         "column_id": "date_cbe_organise"
       },
       {
-        "display_name": null,
+        "display_name": "Submission Date",
         "transform": {},
         "datatype": "datetime",
-        "expression": {
-          "expression": {
-            "datatype": "datetime",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "meta",
-              "timeEnd"
-            ]
-          },
-          "type": "root_doc"
-        },
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "submitted_on",
+        "expression": {
+          "datatype": "datetime",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        },
         "type": "expression"
       }
     ],
