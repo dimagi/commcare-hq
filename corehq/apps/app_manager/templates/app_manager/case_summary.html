@@ -208,12 +208,14 @@
             <li>
                 <span data-bind="html: $root.moduleFormReference(formId)"></span>
                 <!-- ko: if: conditions -->
-                    <div class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
-                        <i class="fa fa-sitemap"></i> &nbsp;
-                        <!-- ko text: question --><!-- /ko -->
-                        <!-- ko text: operator --><!-- /ko -->
-                        <!-- ko text: answer --><!-- /ko -->
-                    </div>
+                    <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
+                        <li>
+                            <i class="fa fa-sitemap"></i>
+                            <!-- ko text: question --><!-- /ko -->
+                            <!-- ko text: operator --><!-- /ko -->
+                            <!-- ko text: answer --><!-- /ko -->
+                        </li>
+                    </ul>
                 <!-- /ko -->
             </li>
         </ul>
