@@ -303,7 +303,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         remote_details = RemoteLinkDetails(
             'http://localhost:8000', 'user', 'key'
         )
-        data = b'this is a test'  # Real data will be a binary multimedia file, so mock it with bytes, not unicode
+        data = b'this is a test: \255'  # Real data will be a binary multimedia file, so mock it with bytes, not unicode
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
