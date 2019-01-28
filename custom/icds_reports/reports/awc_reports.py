@@ -1215,8 +1215,9 @@ def get_pregnant_details(case_id, awc_id):
             }
     if not config.get('pregnant', None):
         row_data = CcsRecordMonthlyView.objects.filter(
+            case_id=case_id,
             awc_id=awc_id,
-            pregnant_all=1,
+            month__gte=ten_months_ago,
         ).order_by('case_id', '-month').distinct('case_id').values(
             'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on',
             'preg_order', 'home_visit_date'
