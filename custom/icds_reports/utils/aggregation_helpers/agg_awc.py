@@ -43,7 +43,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}"
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
-            is_launched, aggregation_level
+            is_launched, aggregation_level, num_awcs_conducted_cbe, num_awcs_conducted_vhnd
         )
         (
             SELECT
@@ -55,7 +55,9 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             %(start_date)s,
             1,
             'no',
-            5
+            5,
+            0,
+            0
             FROM "{ucr_table}"
         )
         """.format(

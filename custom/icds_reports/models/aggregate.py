@@ -438,8 +438,8 @@ class AggAwc(models.Model):
     num_launched_supervisors = models.IntegerField(null=True)
     num_launched_awcs = models.IntegerField(null=True)
 
-    num_awcs_conducted_cbe = models.IntegerField(default=0)
-    num_awcs_conducted_vhnd = models.IntegerField(default=0)
+    num_awcs_conducted_cbe = models.IntegerField(null=True)
+    num_awcs_conducted_vhnd = models.IntegerField(null=True)
 
     cases_household = models.IntegerField(null=True)
     cases_person = models.IntegerField(null=True)
