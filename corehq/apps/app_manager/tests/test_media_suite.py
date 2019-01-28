@@ -102,9 +102,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_form_media_with_app_profile(self, dom_has_priv):
-        # Test that form media for languages not in the profile are removed from the media suite
-        # Media outside of forms is still included in the suite file even for langs not in the profile
-        #    See note as to why that's the case: https://github.com/dimagi/commcare-hq/pull/11295#discussion_r126147881
+        # Test that media for languages not in the profile are removed from the media suite
 
         app = Application.wrap(self.get_json('app'))
         app.build_profiles['profid'] = BuildProfile(
