@@ -449,7 +449,6 @@ class HQMediaMapItem(DocumentSchema):
     output_size = DictProperty()
     version = IntegerProperty()
     unique_id = StringProperty()
-    form_media = BooleanProperty(default=False)
 
     @property
     def url(self):
@@ -933,7 +932,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         deleted_media = []
         allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
         for path, map_item in list(self.multimedia_map.items()):
-            if not filter_multimedia or not map_item.form_media or path in requested_media:
+            if not filter_multimedia or path in requested_media:
                 media_item = raw_docs.get(map_item.multimedia_id)
                 if media_item:
                     media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
