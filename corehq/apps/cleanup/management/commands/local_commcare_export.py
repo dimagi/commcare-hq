@@ -8,6 +8,7 @@ import sys
 import os
 from collections import namedtuple
 
+import dateutil
 from django.core.management.base import BaseCommand, CommandError
 from tastypie.bundle import Bundle
 
@@ -200,6 +201,7 @@ class Command(BaseCommand):
                 commcare_hq,
             )
             since = checkpoint_manager.get_time_of_last_checkpoint()
+
         else:
             since = None
 
@@ -210,6 +212,9 @@ class Command(BaseCommand):
             limit=limit,
             checkpoint_manager=checkpoint_manager
         )
+        if since is not None:
+            since = dateutil.parser.parse(since)
+
         env = (
             BuiltInEnv({'commcarehq_base_url': commcarehq_base_url})
             | CommCareHqEnv(api_client, since=since)
