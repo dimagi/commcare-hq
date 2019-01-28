@@ -118,63 +118,10 @@
                                             <!-- /ko -->
                                         </td>
                                         <td>
-                                            <ul class="fa-ul" data-bind="foreach: load_questions"><!-- Each of these is an object containing a condition and a question -->
-                                                <li>
-                                                    <i data-bind="attr: {'class': $root.questionIcon(question)}"></i>
-                                                    <!-- ko text: $root.showIds() ? question.value :  $root.translateQuestion(question) --><!-- /ko -->
-                                                    <!-- ko if: question.options -->
-                                                    <ul data-bind="foreach: question.options">
-                                                        <li data-bind="visible: $root.showIds, text: value"></li>
-                                                        <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
-                                                    </ul>
-                                                    <!-- /ko -->
-                                                    <!-- ko if: condition -->
-                                                    <ul class="fa-ul" data-bind="visible: $root.showConditions">
-                                                        <li>
-                                                            <i class="fa-li fa fa-sitemap text-muted"></i>
-                                                            <!-- ko text: condition.question + " " + condition.operator + " " + condition.answer --><!-- /ko -->
-                                                        </li>
-                                                    </ul>
-                                                    <!-- /ko -->
-                                                    <!-- ko if: question.calculate -->
-                                                    <ul class="fa-ul" data-bind="visible: $root.showCalculations">
-                                                        <li>
-                                                            <i class="fa-li fa fa-calculator text-muted"></i>
-                                                            <!-- ko text: question.calculate --><!-- /ko -->
-                                                        </li>
-                                                    </ul>
-                                                    <!-- /ko -->
-                                                </li>
-                                            </ul>
+                                            {% include 'app_manager/load_save_questions.html' with questions='load_questions' %}
                                         </td>
                                         <td>
-                                            <ul class="fa-ul" data-bind="foreach: save_questions"><!-- Each of these is an object containing a condition and a question -->
-                                                <li>
-                                                    <i data-bind="attr: {'class': $root.questionIcon(question)}"></i>
-                                                    <!-- ko text: $root.showIds() ? question.value :  $root.translateQuestion(question) --><!-- /ko -->
-                                                    <!-- ko if: question.options -->
-                                                    <ul data-bind="foreach: question.options">
-                                                        <li data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data)"></li>
-                                                    </ul>
-                                                    <!-- /ko -->
-                                                    <!-- ko if: condition || question.calculate -->
-                                                    <ul class="fa-ul">
-                                                        <!-- ko if: condition -->
-                                                        <li data-bind="visible: $root.showConditions">
-                                                            <i class="fa-li fa fa-sitemap text-muted"></i>
-                                                            <!-- ko text: condition.question + " " + condition.operator + " " + condition.answer --><!-- /ko -->
-                                                        </li>
-                                                        <!-- /ko -->
-                                                        <!-- ko if: question.calculate -->
-                                                        <li data-bind="visible: $root.showCalculations">
-                                                            <i class="fa-li fa fa-calculator text-muted"></i>
-                                                            <!-- ko text: question.calculate --><!-- /ko -->
-                                                        </li>
-                                                        <!-- /ko -->
-                                                    </ul>
-                                                    <!-- /ko -->
-                                                </li>
-                                            </ul>
+                                            {% include 'app_manager/load_save_questions.html' with questions='save_questions' %}
                                         </td>
                                         <!-- ko if: !$index() -->
                                         <td>
