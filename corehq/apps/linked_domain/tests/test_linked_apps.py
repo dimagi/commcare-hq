@@ -313,7 +313,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)
-        content = media.fetch_attachment(list(media.blobs.keys())[0], return_bytes=True).decode('utf-8')
+        content = media.fetch_attachment(list(media.blobs.keys())[0], return_bytes=True)
         self.assertEqual(data, content)
 
 
