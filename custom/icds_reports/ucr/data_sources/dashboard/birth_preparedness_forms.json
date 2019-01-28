@@ -480,9 +480,21 @@
         "argument_expression": {
           "type": "array_index",
           "array_expression": {
+          "type": "filter_items",
+          "items_expression": {
 	        "type": "property_path",
 	        "property_path": ["form", "bp1", "iteration", "item"]
           },
+          "filter_expression": {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "@id"
+            },
+            "operator": "eq",
+            "property_value": "b1be1892fd8ad911c80e41b8769af294"
+            }
+        },
           "index_expression": {
             "type": "constant",
             "constant": 0
