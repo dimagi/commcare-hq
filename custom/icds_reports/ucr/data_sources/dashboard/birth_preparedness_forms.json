@@ -480,21 +480,24 @@
         "argument_expression": {
           "type": "array_index",
           "array_expression": {
-          "type": "filter_items",
-          "items_expression": {
-	        "type": "property_path",
-	        "property_path": ["form", "bp1", "iteration", "item"]
-          },
-          "filter_expression": {
-            "type": "boolean_expression",
-            "expression": {
-                "type": "property_name",
-                "property_name": "@id"
+            "type": "filter_items",
+            "items_expression": {
+	          "type": "property_path",
+	          "property_path": ["form", "bp1", "iteration", "item"]
             },
-            "operator": "eq",
-            "property_value": "b1be1892fd8ad911c80e41b8769af294"
+            "filter_expression": {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "property_path",
+                  "property_path": ["filter", "anc_details"]
+                },
+                "operator": "in",
+                "property_value": ["", null]
+              }
             }
-        },
+          },
           "index_expression": {
             "type": "constant",
             "constant": 0
