@@ -5,19 +5,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
-        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'font-awesome/css/font-awesome.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'font-awesome/css/font-awesome.css' %}"/>
 
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'reach/css/reach_dashboard.css' %}"/>
-        {% include 'analytics/google.html' %}
-        {% javascript_libraries underscore=True hq=True %}
-         <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'reach/css/reach_dashboard.css' %}"/>
+    {% javascript_libraries underscore=True hq=True %}
+    <script src="{% static 'reach/js/utils/reach_utils.js' %}"></script>
+
 </head>
 <body>
 <div class="wrapper">
@@ -26,8 +26,11 @@
         {% include 'reach/menus/top_menu.html' %}
 
         <div class="row no-margin">
-            <div class=""></div>
+            {% block content %}
+
+            {% endblock %}
         </div>
+        {% registerurl 'program_overview_api' domain %}
     </div>
 </div>
 
@@ -43,8 +46,15 @@
 {% block initial_analytics_data %}
      do not override this block, use initial_analytics_data template tag to populate
 {% endblock %}
+
+<div class="initial-page-data" class="hide">
+{% block initial_page_data %}
+    {# do not override this block, use initial_page_data template tag to populate #}
+{% endblock %}
 </div>
 
-{% block js-inline %}{% endblock js-inline %}
+{% block js-inline %}
+{% endblock %}
+</div>
 </body>
 </html>

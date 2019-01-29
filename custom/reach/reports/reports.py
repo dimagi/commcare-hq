@@ -13,7 +13,7 @@ class DashboardReport(CustomProjectReport):
 
     @classmethod
     def get_url(cls, domain=None, **kwargs):
-        return reverse('reach_dashboard', args=[domain])
+        return reverse('program_overview', args=[domain])
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

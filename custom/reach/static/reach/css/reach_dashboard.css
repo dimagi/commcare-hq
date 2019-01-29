@@ -1,6 +1,7 @@
 html, body{
     margin: 0;
     padding: 0;
+    background: #f5f5f5;
 }
 
 .wrapper {
@@ -21,6 +22,7 @@ html, body{
     padding-right: 0;
     padding-left: 0;
     color: #004ebc;
+    background: #ffffff;
 }
 
 .left-menu li {
@@ -68,4 +70,58 @@ li.auto-width {
     height: auto;
     position: absolute;
     right: 0;
+}
+
+.program-overview {
+    padding: 30px;
+}
+
+.program-overview > .row {
+    margin-bottom: 30px;
+}
+
+.no-padding {
+    padding: 0;
+}
+
+.indicator {
+    background: #ffffff;
+    text-align: center;
+    padding: 10px;
+}
+
+.indicator-bottom {
+    text-align: center;
+    color: white;
+    padding: 10px;
+}
+
+.main-value {
+    font-size: 35px;
+}
+
+.second-value {
+    font-size: 20px;
+}
+
+.line {
+    width: 80px;
+    margin: 0 auto;
+}
+
+.line > hr {
+    margin-bottom: 0;
+    margin-top: 0;
+    border-top: 1px solid #9c9c9c;
+}
+
+.shadow {
+    box-shadow: 0 0 5px 0 #00000036;
+}
+
+.navbar-default {
+    background-color: #ffffff;
+    border-color: #e7e7e7;
+    border-radius: 0;
+    margin-bottom: 0;
 }
