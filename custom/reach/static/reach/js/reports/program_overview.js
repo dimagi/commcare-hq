@@ -2,19 +2,20 @@ hqDefine("reach/js/reports/program_overview", [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/initial_page_data'
+    'hqwebapp/js/initial_page_data',
+    'reach/js/utils/reach_utils'
 ], function(
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    reachUtils
 ) {
     $(function () {
         var indicatorModel = function (options) {
             var self = {};
 
-            self.reachUtils = hqImport('reach/js/utils/reach_utils').reachUtils();
-
+            self.reachUtils = reachUtils.reachUtils();
             self.indicator = options.indicator;
             self.color = options.color;
             self.format = options.format;
@@ -54,12 +55,12 @@ hqDefine("reach/js/reports/program_overview", [
         var programOverviewModel = function(options) {
             var self = {};
             self.sections = ko.observableArray();
-            self.qwert = 'Program Overview';
+            self.title = 'Program Overview';
+            self.postData = reachUtils.postData({});
 
-            var getData = function () {
-                var params = {
-                };
-                $.post(initialPageData.reverse('program_overview_api'), params, function (data) {
+            var getData = function (postData) {
+                $.post(initialPageData.reverse('program_overview_api'), postData, function (data) {
+                    self.sections([]);
                     data.data.forEach(function (element) {
                         var section = [];
                         element.forEach(function (indicator) {
@@ -69,10 +70,14 @@ hqDefine("reach/js/reports/program_overview", [
                     })
                 })
             };
-            getData();
+
+            self.callback = function(postData) {
+                getData(postData)
+            };
+
+            getData(self.postData);
             return self;
         };
-
-        $('#program-overview').koApplyBindings(programOverviewModel());
+        $('#reach-dashboard').koApplyBindings(programOverviewModel());
     })
 });

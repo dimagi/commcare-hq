@@ -37,6 +37,8 @@ class ProgramOverviewReport(ReachDashboardView):
 class ProgramOverviewReportAPI(View):
     def post(self, request, *args, **kwargs):
         # TODO add query to database
+        selected_month = int(self.request.POST.get('selectedMonth'))
+        selected_year = int(self.request.POST.get('selectedYear'))
         return JsonResponse(data={'data': [
             [
                 {

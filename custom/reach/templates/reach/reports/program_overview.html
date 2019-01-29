@@ -5,7 +5,7 @@
 {% block content %}
     <div id="program-overview" class="program-overview" >
         <div class="title">
-            <h2 data-bind="text: qwert"></h2>
+            <h2 data-bind="text: title"></h2>
         </div>
         <div class="indicators" data-bind="foreach: sections">
             <div class="row" data-bind="foreach: $data">
@@ -42,5 +42,6 @@
 {% endblock content %}
 
 {% block js-inline %}
+    {{ block.super }}
     <script src="{% static 'reach/js/reports/program_overview.js' %}"></script>
 {% endblock %}

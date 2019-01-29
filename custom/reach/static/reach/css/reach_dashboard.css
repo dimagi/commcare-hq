@@ -125,3 +125,20 @@ li.auto-width {
     border-radius: 0;
     margin-bottom: 0;
 }
+
+.pointer {
+    cursor: pointer;
+}
+
+.modal-title {
+    font-size: 30px;
+    color: #004ebc;
+}
+
+.required {
+    color: #ce0500;
+}
+
+.form-group {
+    text-align: left;
+}

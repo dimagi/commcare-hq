@@ -1,5 +1,7 @@
 hqDefine("reach/js/utils/reach_utils", [
+    'moment/moment'
 ], function(
+    moment
 ) {
     var reachUtils = function () {
         var self = {};
@@ -32,7 +34,15 @@ hqDefine("reach/js/utils/reach_utils", [
         return self
     };
 
+    var postData = function(options) {
+        var self  = {};
+        self.selectedYear = options.selectedYear || moment().year();
+        self.selectedMonth = options.selectedMonth || moment().month() + 1;
+        return self;
+    };
+
     return {
-        reachUtils: reachUtils
+        reachUtils: reachUtils,
+        postData: postData,
     }
 });
