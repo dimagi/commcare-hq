@@ -20,7 +20,7 @@ def pillow_datadog_metrics():
 
     pillow_meta = get_all_pillows_json()
 
-    active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES')
+    active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
     if active_pillows:
         pillow_meta = [pillow for pillow in pillow_meta if pillow['name'] in active_pillows]
 
