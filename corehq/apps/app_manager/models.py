@@ -1532,10 +1532,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def _all_media_paths(self, media_attr, lang=None):
         assert media_attr in ('media_image', 'media_audio')
         media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = []
+        valid_media_paths = set()
         for key, value in media_dict.items():
             if value and (lang is None or key == lang):
-                valid_media_paths.append(value)
+                valid_media_paths.add(value)
         return valid_media_paths
 
     def all_image_paths(self, lang=None):
