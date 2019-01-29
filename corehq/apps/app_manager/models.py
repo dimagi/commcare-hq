@@ -4243,10 +4243,6 @@ class BuildProfile(DocumentSchema):
         return not self.__eq__(other)
 
 
-class MediaList(DocumentSchema):
-    media_refs = StringListProperty()
-
-
 class ApplicationBase(VersionedDoc, SnapshotMixin,
                       CommCareFeatureSupportMixin,
                       CommentMixin):
