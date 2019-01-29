@@ -130,7 +130,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
             app.create_mapping(CommCareImage(_id='form_image_{}'.format(i)), path, save=False)
 
         app.set_media_versions()
-        app.update_mm_map()
+        app.update_media_language_map()
         app.remove_unused_mappings()
 
         # includes all media

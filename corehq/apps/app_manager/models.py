@@ -4745,7 +4745,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         copy.is_released = False
 
         if not copy.is_remote_app():
-            copy.update_mm_map()
+            copy.update_media_language_map()
 
         prune_auto_generated_builds.delay(self.domain, self._id)
 
@@ -4797,7 +4797,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def set_media_versions(self):
         pass
 
-    def update_mm_map(self):
+    def update_media_language_map(self):
         self.media_language_map = {}
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             for lang in self.langs:
