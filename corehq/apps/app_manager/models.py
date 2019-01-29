@@ -1529,17 +1529,20 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def set_audio(self, lang, audio_path):
         self._set_media('media_audio', lang, audio_path)
 
-    def _all_media_paths(self, media_attr):
+    def _all_media_paths(self, media_attr, lang=None):
         assert media_attr in ('media_image', 'media_audio')
         media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = {media for media in media_dict.values() if media}
-        return list(valid_media_paths)
+        valid_media_paths = []
+        for key, value in media_dict.items():
+            if value and (lang is None or key == lang):
+                valid_media_paths.append(value)
+        return valid_media_paths
 
-    def all_image_paths(self):
-        return self._all_media_paths('media_image')
+    def all_image_paths(self, lang=None):
+        return self._all_media_paths('media_image', lang=lang)
 
-    def all_audio_paths(self):
-        return self._all_media_paths('media_audio')
+    def all_audio_paths(self, lang=None):
+        return self._all_media_paths('media_audio', lang=lang)
 
     def icon_app_string(self, lang, for_default=False):
         """

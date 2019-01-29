@@ -678,21 +678,25 @@ class XForm(WrappedNode):
         nodes = self.findall('{h}head/{odk}intent')
         return list(set(n.attrib.get('class') for n in nodes))
 
-    @property
-    def text_references(self):
+    def text_references(self, lang=None):
+        # Accepts lang param for consistency with image_references, etc.,
+        # but current text references aren't language-specific
         nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]/{f}extra[@key="cc:print_template_reference"]')
         return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
-    @property
-    def image_references(self):
+    def image_references(self, lang=None):
+        if lang:
+            return self.media_references_by_lang(lang=lang, form="image")
         return self.media_references(form="image")
 
-    @property
-    def audio_references(self):
+    def audio_references(self, lang=None):
+        if lang:
+            return self.media_references_by_lang(lang=lang, form="audio") + self.media_references_by_lang(lang=lang, form="expanded-audio")
         return self.media_references(form="audio") + self.media_references(form="expanded-audio")
 
-    @property
-    def video_references(self):
+    def video_references(self, lang=None):
+        if lang:
+            return self.media_references_by_lang(lang=lang, form="video")
         return self.media_references(form="video") + self.media_references(form="video-inline")
 
     def all_media_references(self, lang):
