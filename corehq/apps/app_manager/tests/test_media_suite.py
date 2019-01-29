@@ -100,8 +100,9 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
-    def test_form_media_with_app_profile(self, dom_has_priv):
+    def test_form_media_with_app_profile(self, *args):
         # Test that media for languages not in the profile are removed from the media suite
 
         app = Application.wrap(self.get_json('app'))
