@@ -4798,23 +4798,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         pass
 
     def update_mm_map(self):
+        self.media_language_map = {}
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             for lang in self.langs:
-                self.media_language_map[lang] = MediaList()
-            for form in self.get_forms():
-                xml = form.wrapped_xform()
-                for lang in self.langs:
-                    media = []
-                    for path in xml.all_media_references(lang):
-                        if path is not None:
-                            media.append(path)
-                            map_item = self.multimedia_map.get(path)
-                            #dont break if multimedia is missing
-                            if map_item:
-                                map_item.form_media = True
-                    self.media_language_map[lang].media_refs.extend(media)
-        else:
-            self.media_language_map = {}
+                self.media_language_map.update({
+                    lang: MediaList(media_refs=list(self.all_media_paths(lang=lang)))
+                })
 
     def get_build_langs(self, build_profile_id=None):
         if build_profile_id is not None:
