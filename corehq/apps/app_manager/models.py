@@ -493,6 +493,21 @@ class LoadCaseFromFixture(DocumentSchema):
     arbitrary_datum_function = StringProperty()
 
 
+class ArbitraryDatum(DocumentSchema):
+    """
+    fixture_nodeset:    FixtureDataType.tag
+    fixture_tag:        name of the column to display in the list
+    fixture_variable:   boolean if display_column actually contains the key for the localized string
+    case_property:      name of the column whose value should be saved when the user selects an item
+    arbitrary_datum_*:  adds an arbitrary datum with function before the action
+    """
+    id = StringProperty()
+    nodeset = StringProperty()
+    value = StringProperty()
+    detail_select = StringProperty()
+    detail_confirm = StringProperty()
+
+
 class LoadUpdateAction(AdvancedAction):
     """
     details_module:           Use the case list configuration from this module to show the cases.
@@ -513,6 +528,7 @@ class LoadUpdateAction(AdvancedAction):
     show_product_stock = BooleanProperty(default=False)
     product_program = StringProperty()
     case_index = SchemaProperty(CaseIndex)
+    arbitrary_datum = SchemaProperty(ArbitraryDatum)
 
     @property
     def case_indices(self):
