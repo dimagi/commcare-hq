@@ -21,8 +21,8 @@
     </resource>
   </media>
   <media path="../../commcare">
-    <resource id="media-368ef7fc202767c37b58490885314cb5-q1_en.mp3" version="1">
-      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/form_audio_2/q1_en.mp3</location>
+    <resource id="media-dff20aa3d67d9af32f7cd00d95839173-q1_en.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/form_audio_0/q1_en.mp3</location>
     </resource>
   </media>
   <media path="../../commcare">
