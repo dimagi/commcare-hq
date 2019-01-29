@@ -4340,9 +4340,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     build_profiles = SchemaDictProperty(BuildProfile)
     practice_mobile_worker_id = StringProperty()
 
-    # each language is a key and the value is a list of multimedia referenced in that language
-    media_language_map = SchemaDictProperty(MediaList)
-
     use_j2me_endpoint = BooleanProperty(default=False)
 
     target_commcare_flavor = StringProperty(
@@ -4817,7 +4814,7 @@ class SavedAppBuild(ApplicationBase):
         # ignore details that are not used
         for key in ('modules', 'user_registration', 'external_blobs',
                     '_attachments', 'profile', 'translations',
-                    'description', 'short_description', 'multimedia_map', 'media_language_map'):
+                    'description', 'short_description', 'multimedia_map'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         data.update({
@@ -4876,6 +4873,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     @classmethod
     def wrap(cls, data):
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
+        data.pop('media_language_map', None)
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)

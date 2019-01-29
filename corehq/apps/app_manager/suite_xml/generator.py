@@ -7,8 +7,6 @@ import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import MediaResourceError
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
 from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
@@ -121,7 +119,7 @@ class MediaSuiteGenerator(object):
         self.app.remove_unused_mappings()
         if self.app.multimedia_map is None:
             self.app.multimedia_map = {}
-        filter_multimedia = self.build_profile and domain_has_privilege(self.app.domain, privileges.BUILD_PROFILES)
+        filter_multimedia = self.build_profile
         if filter_multimedia:
             requested_media = set()
             for lang in self.build_profile.langs:
