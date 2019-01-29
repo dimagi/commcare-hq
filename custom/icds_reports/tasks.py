@@ -669,8 +669,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             block_id=location,
             aggregation_level=3
         ).first()
-        if file_format == 'xlsx':
-            if beta:
+        if file_format == 'xlsx' and beta:
                 cache_key = create_aww_performance_excel_file(
                     excel_data,
                     data_type,
@@ -679,12 +678,10 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                     location_object.district_name,
                     location_object.block_name,
                 )
-            else:
-                cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
     if indicator != AWW_INCENTIVE_REPORT:
-        if file_format == 'xlsx':
+        if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
