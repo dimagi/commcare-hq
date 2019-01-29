@@ -89,9 +89,9 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('valid_visits', 'sum(crm.valid_visits)'),
             ('expected_visits', 'sum( '
              'CASE '
-             'WHEN ucr.pregnant=1 THEN 0.44 '
-             'WHEN ucr.month - ucr.add <= 0 THEN 6 '
-             'WHEN ucr.month - ucr.add < 182 THEN 1 '
+             'WHEN crm.pregnant=1 THEN 0.44 '
+             'WHEN crm.month - crm.add <= 0 THEN 6 '
+             'WHEN crm.month - crm.add < 182 THEN 1 '
              'ELSE 0.39 END'
              ')'),
         )
