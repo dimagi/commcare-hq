@@ -664,13 +664,9 @@ class XForm(WrappedNode):
             return self.data_node.find('{x}case')
 
     @requires_itext(list)
-    def media_references(self, form):
-        nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
-        return list(set([n.text for n in nodes]))
-
-    @requires_itext(list)
-    def media_references_by_lang(self, lang, form):
-        nodes = self.itext_node.findall('{f}translation[@lang="%s"]/{f}text/{f}value[@form="%s"]' % (lang, form))
+    def media_references(self, form, lang=None):
+        lang_condition = '[@lang="%s"]' % lang if lang else ''
+        nodes = self.itext_node.findall('{f}translation%s/{f}text/{f}value[@form="%s"]' % (lang_condition, form))
         return list(set([n.text for n in nodes]))
 
     @property
@@ -685,19 +681,13 @@ class XForm(WrappedNode):
         return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
     def image_references(self, lang=None):
-        if lang:
-            return self.media_references_by_lang(lang=lang, form="image")
-        return self.media_references(form="image")
+        return self.media_references("image", lang=lang)
 
     def audio_references(self, lang=None):
-        if lang:
-            return self.media_references_by_lang(lang=lang, form="audio") + self.media_references_by_lang(lang=lang, form="expanded-audio")
-        return self.media_references(form="audio") + self.media_references(form="expanded-audio")
+        return self.media_references("audio", lang=lang) + self.media_references("expanded-audio", lang=lang)
 
     def video_references(self, lang=None):
-        if lang:
-            return self.media_references_by_lang(lang=lang, form="video")
-        return self.media_references(form="video") + self.media_references(form="video-inline")
+        return self.media_references("video", lang=lang) + self.media_references("video-inline", lang=lang)
 
     def rename_media(self, old_path, new_path):
         update_count = 0
