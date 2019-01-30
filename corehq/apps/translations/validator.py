@@ -12,6 +12,7 @@ from corehq.apps.translations.app_translations import (
     get_unicode_dicts,
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING
 
 COLUMNS_TO_COMPARE = {
     'module_and_form': ['Type', 'sheet_name'],
@@ -37,7 +38,11 @@ class UploadedTranslationsValidator(object):
 
     def _generate_expected_headers_and_rows(self):
         self.headers = {h[0]: h[1] for h in expected_bulk_app_sheet_headers(self.app)}
-        self.expected_rows = expected_bulk_app_sheet_rows(self.app)
+        self.expected_rows = expected_bulk_app_sheet_rows(
+            self.app,
+            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
+            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
+        )
 
     @memoized
     def _get_header_index(self, sheet_name, header):
