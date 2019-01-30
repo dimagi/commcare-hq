@@ -1087,6 +1087,34 @@ def get_pregnant_details(case_id, awc_id):
                 tt_date=get_tt_dates(row_data),
             )
         )
+        if not config.get('pregnant', None):
+            config['pregnant'] = {
+                'person_name': row_data['person_name'] if row_data['person_name'] else DATA_NOT_ENTERED,
+                'age': row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+                'mobile_number': row_data['mobile_number'] if row_data['mobile_number'] else DATA_NOT_ENTERED,
+                'edd': row_data['edd'] if row_data['edd'] else DATA_NOT_ENTERED,
+                'opened_on': row_data['opened_on'] if row_data['opened_on'] else DATA_NOT_ENTERED,
+                'trimester': row_data['trimester'] if row_data['trimester'] else DATA_NOT_ENTERED,
+                'preg_order': row_data['preg_order'] if row_data['preg_order'] else DATA_NOT_ENTERED,
+            }
+    if not config.get('pregnant', None):
+        row_data = CcsRecordMonthlyView.objects.filter(
+            case_id=case_id,
+            awc_id=awc_id,
+            month__gte=ten_months_ago,
+        ).order_by('case_id', '-month').distinct('case_id').values(
+            'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on',
+            'preg_order', 'home_visit_date'
+        ).first()
+        config['pregnant'] = {
+            'person_name': row_data['person_name'] if row_data['person_name'] else DATA_NOT_ENTERED,
+            'age': row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+            'mobile_number': row_data['mobile_number'] if row_data['mobile_number'] else DATA_NOT_ENTERED,
+            'edd': row_data['edd'] if row_data['edd'] else DATA_NOT_ENTERED,
+            'opened_on': row_data['opened_on'] if row_data['opened_on'] else DATA_NOT_ENTERED,
+            'trimester': row_data['trimester'] if row_data['trimester'] else DATA_NOT_ENTERED,
+            'preg_order': row_data['preg_order'] if row_data['preg_order'] else DATA_NOT_ENTERED,
+        }
     return config
 
 
