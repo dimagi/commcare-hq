@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
 from django.test import TestCase
 from mock import patch
 
@@ -136,7 +137,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             'form.case.update.last_name', "count",
         ]
 
-        self.assertEqual(expected_property_names, list(reference.data_source_properties.keys()))
+        self.assertItemsEqual(expected_property_names, six.iterkeys(reference.data_source_properties))
         user_id_prop = reference.data_source_properties['userID']
         self.assertEqual('userID', user_id_prop.get_id())
         self.assertEqual('userID', user_id_prop.get_text())
