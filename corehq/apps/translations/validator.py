@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import six
-from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 from six.moves import zip
 
@@ -19,8 +17,6 @@ COLUMNS_TO_COMPARE = {
     'module': ['case_property', 'list_or_detail'],
     'form': ['label'],
 }
-LESS_ROW_COUNT_MISMATCH_MESSAGE = _("We found less rows than expected. Validating what was uploaded.")
-MORE_ROW_COUNT_MISMATCH_MESSAGE = _("We found more rows than expected. Validating what was uploaded.")
 
 
 class UploadedTranslationsValidator(object):
@@ -76,39 +72,20 @@ class UploadedTranslationsValidator(object):
         :param for_type: type of sheet, module_and_forms, module, form
         :return: list of errors messages if any
         """
-        columns_to_compare = COLUMNS_TO_COMPARE[for_type]
-        expected_rows = self.expected_rows[sheet_name]
-        msgs = []
-        number_of_uploaded_rows = len(uploaded_rows)
-        number_of_expected_rows = len(expected_rows)
-        if number_of_uploaded_rows < number_of_expected_rows:
-            msgs.append(six.text_type(LESS_ROW_COUNT_MISMATCH_MESSAGE))
-        elif number_of_uploaded_rows > number_of_expected_rows:
-            msgs.append(six.text_type(MORE_ROW_COUNT_MISMATCH_MESSAGE))
+        columns_to_compare = COLUMNS_TO_COMPARE[for_type] + [self.default_language_column]
         expected_rows = self._filter_rows(for_type, self.expected_rows[sheet_name], sheet_name)
 
         iterate_on = [expected_rows, uploaded_rows]
-        # 2 to account for the sheet header as well
+        parsed_expected_rows = []
+        parsed_uploaded_rows = []
         for i, (expected_row, uploaded_row) in enumerate(zip(*iterate_on), 2):
-            matched = True
-            for column_name in columns_to_compare:
-                uploaded_value = uploaded_row.get(column_name)
-                expected_value = expected_row[self._get_header_index(sheet_name, column_name)]
-                if expected_value != uploaded_value:
-                    matched = False
-                    msgs.append("For {}:{}  uploaded '{}' but expected '{}'.".format(
-                        i, column_name, uploaded_value, expected_value
-                    ))
-            # check for default language column in case the rest matched
-            if matched:
-                column_name = self.default_language_column
-                uploaded_value = uploaded_row.get(column_name)
-                expected_value = expected_row[self._get_header_index(sheet_name, column_name)]
-                if expected_value != uploaded_value:
-                    msgs.append("For {}:{}  uploaded '{}' but expected '{}'.".format(
-                        i, column_name, uploaded_value, expected_value
-                    ))
-        return msgs
+            parsed_expected_row = [uploaded_row.get(column_name) for column_name in columns_to_compare]
+            parsed_uploaded_row = [expected_row[self._get_header_index(sheet_name, column_name)]
+                                   for column_name in columns_to_compare]
+            parsed_expected_rows.append(parsed_expected_row)
+            parsed_uploaded_rows.append(parsed_uploaded_row)
+        expected_rows_as_string = '\n'.join([', '.join(row) for row in parsed_expected_rows])
+        uploaded_rows_as_string = '\n'.join([', '.join(row) for row in parsed_uploaded_rows])
 
     def compare(self):
         msgs = {}
