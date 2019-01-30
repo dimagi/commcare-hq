@@ -18,6 +18,9 @@ class Command(AppMigrationCommandBase):
                 for action in load_actions:
                     if action['load_case_from_fixture'] is not None:
                         old_fixture_variable = action['load_case_from_fixture']['fixture_variable']
+                        if old_fixture_variable.startswith("./@"):
+                            # Assume that this means this was already migrated
+                            continue
                         action['load_case_from_fixture']['fixture_variable'] = "./@{}".format(old_fixture_variable)
                         should_save = True
 
