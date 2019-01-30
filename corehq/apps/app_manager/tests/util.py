@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
-from collections import OrderedDict
-
 import lxml
 from lxml.doctestcompare import LXMLOutputChecker, LHTMLOutputChecker
 import mock
@@ -34,7 +32,6 @@ class TestXmlMixin(TestFileMixin):
         if normalize:
             expected = parse_normalize(expected)
             actual = parse_normalize(actual)
-        print(expected == actual)
         _check_shared(expected, actual, LXMLOutputChecker(), "xml")
 
     def assertXmlHasXpath(self, element, xpath):
@@ -75,14 +72,6 @@ class SuiteMixin(TestFileMixin):
     def _test_generic_suite(self, app_tag, suite_tag=None):
         suite_tag = suite_tag or app_tag
         app = Application.wrap(self.get_json(app_tag))
-
-        # make dictionary iteration order deterministic for tests
-        for module in app.modules:
-            for column in module.case_details.long.columns:
-                if column.graph_configuration:
-                    for series in column.graph_configuration.series:
-                        series.locale_specific_config = OrderedDict(sorted(series.locale_specific_config.items()))
-
         self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
     def _test_generic_suite_partial(self, app_tag, xpath, suite_tag=None):
