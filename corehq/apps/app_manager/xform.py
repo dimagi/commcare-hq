@@ -666,7 +666,7 @@ class XForm(WrappedNode):
     @requires_itext(list)
     def media_references(self, form):
         nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
-        return sorted(set([n.text for n in nodes]))
+        return list(set([n.text for n in nodes]))
 
     @requires_itext(list)
     def media_references_by_lang(self, lang, form):
