@@ -38,7 +38,12 @@ class TestESQuery(ElasticTestMixin, TestCase):
                     'query': {'match_all': {}}}},
             'size': 1000000
         }
-        self.checkQuery(query, json_output)
+        raw_query = query.raw_query
+        self.assertItemsEqual(
+            raw_query['query']['filtered']['filter'].pop('and'),
+            json_output['query']['filtered']['filter'].pop('and')
+        )
+        self.checkQuery(raw_query, json_output)
 
     def test_basic_query(self):
         json_output = {
@@ -54,7 +59,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
             },
             "size": SIZE_LIMIT
         }
-        self.checkQuery(HQESQuery('forms'), json_output)
+        self.checkQuery(HQESQuery('forms').raw_query, json_output)
 
     def test_query_size(self):
         json_output = {
@@ -71,12 +76,11 @@ class TestESQuery(ElasticTestMixin, TestCase):
             "size": 0
         }
         # use `is not None`; 0 or 1000000 == 1000000
-        self.checkQuery(HQESQuery('forms').size(0), json_output)
+        self.checkQuery(HQESQuery('forms').size(0).raw_query, json_output)
         json_output['size'] = 123
-        self.checkQuery(HQESQuery('forms').size(123), json_output)
+        self.checkQuery(HQESQuery('forms').size(123).raw_query, json_output)
 
     def test_form_query(self):
-        return
         json_output = {
             "query": {
                 "filtered": {
@@ -97,10 +101,14 @@ class TestESQuery(ElasticTestMixin, TestCase):
             "size": SIZE_LIMIT
         }
         query = forms.FormES()
-        self.checkQuery(query, json_output)
+        raw_query = query.raw_query
+        self.assertItemsEqual(
+            raw_query['query']['filtered']['filter'].pop('and'),
+            json_output['query']['filtered']['filter'].pop('and')
+        )
+        self.checkQuery(raw_query, json_output)
 
     def test_user_query(self):
-        return
         json_output = {
             "query": {
                 "filtered": {
@@ -116,10 +124,14 @@ class TestESQuery(ElasticTestMixin, TestCase):
             "size": SIZE_LIMIT
         }
         query = users.UserES()
-        self.checkQuery(query, json_output)
+        raw_query = query.raw_query
+        self.assertItemsEqual(
+            raw_query['query']['filtered']['filter'].pop('and'),
+            json_output['query']['filtered']['filter'].pop('and')
+        )
+        self.checkQuery(raw_query, json_output)
 
     def test_filtered_forms(self):
-        return
         json_output = {
             "query": {
                 "filtered": {
@@ -144,10 +156,14 @@ class TestESQuery(ElasticTestMixin, TestCase):
         query = forms.FormES()\
                 .filter(filters.domain("zombocom"))\
                 .xmlns('banana')
-        self.checkQuery(query, json_output)
+        raw_query = query.raw_query
+        self.assertItemsEqual(
+            raw_query['query']['filtered']['filter'].pop('and'),
+            json_output['query']['filtered']['filter'].pop('and')
+        )
+        self.checkQuery(raw_query, json_output)
 
     def test_users_at_locations(self):
-        return
         location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
         query = users.UserES().location(location_ids)
         self._check_user_location_query(query, location_ids)
@@ -232,16 +248,16 @@ class TestESQuery(ElasticTestMixin, TestCase):
             HQESQuery('forms')
             .sort('timeEnd')
         )
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
         json_output['sort'] = [
             {"timeStart": {"order": "asc"}},
         ]
-        self.checkQuery(query.sort('timeStart'), json_output)
+        self.checkQuery(query.sort('timeStart').raw_query, json_output)
         json_output['sort'] = [
             {"timeEnd": {"order": "asc"}},
             {"timeStart": {"order": "asc"}},
         ]
-        self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
+        self.checkQuery(query.sort('timeStart', reset_sort=False).raw_query, json_output)
 
     def test_cleanup_before_run(self):
         json_output = {
@@ -269,8 +285,8 @@ class TestESQuery(ElasticTestMixin, TestCase):
         expected_output = deepcopy(json_output)
         expected_output['size'] = 0
         query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
-        self.checkQuery(query, json_output)
-        self.checkQuery(query._clean_before_run(), expected_output)
+        self.checkQuery(query.raw_query, json_output)
+        self.checkQuery(query._clean_before_run().raw_query, expected_output)
 
     def test_exclude_source(self):
         json_output = {
@@ -297,4 +313,4 @@ class TestESQuery(ElasticTestMixin, TestCase):
             "size": SIZE_LIMIT,
         }
         query = HQESQuery('forms').domain('test-exclude').exclude_source()
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
