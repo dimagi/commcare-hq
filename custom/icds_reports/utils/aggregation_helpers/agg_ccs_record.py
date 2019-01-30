@@ -65,7 +65,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('anemic_moderate', 'sum(ucr.anemic_moderate)'),
             ('anemic_severe', 'sum(ucr.anemic_severe)'),
             ('anemic_unknown', 'sum(ucr.anemic_unknown)'),
-            ('extra_meal', 'sum(ucr.extra_meal)'),
+            ('extra_meal', 'sum(COALESCE(crm.extra_meal,0))'),
             ('resting_during_pregnancy', 'sum(COALESCE(crm.resting_during_pregnancy,0))'),
             ('bp1_complete', 'sum(ucr.bp1_complete)'),
             ('bp2_complete', 'sum(ucr.bp2_complete)'),
