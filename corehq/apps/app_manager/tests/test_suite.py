@@ -13,6 +13,7 @@ from corehq.util.test_utils import flag_enabled
 from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
+    ArbitraryDatum,
     Application,
     CaseSearch,
     CaseSearchProperty,
@@ -21,6 +22,7 @@ from corehq.apps.app_manager.models import (
     FormActionCondition,
     GraphConfiguration,
     GraphSeries,
+    LoadUpdateAction,
     MappingItem,
     Module,
     OpenCaseAction,
@@ -409,6 +411,35 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module.fixture_select.xpath = 'date(scheduled_date) <= date(today() + $fixture_value)'
 
         factory.form_requires_case(form)
+
+        self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
+
+    def test_fixture_to_case_selection_with_arbitrary_datum(self):
+        factory = AppFactory(build_version='2.9.0')
+
+        module, form = factory.new_advanced_module('my_module', 'cases')
+        module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        module.case_details.long.custom_xml = '<detail id="m0_case_long"></detail>'
+        form.actions.load_update_cases = [
+            LoadUpdateAction(
+                arbitrary_datum=ArbitraryDatum(
+                    id="fixture_value_m0",
+                    nodeset="instance('item-list:days')/days_list/days",
+                    value="my_variable_column",
+                    detail_select="m0_fixture_select",
+                )),
+            LoadUpdateAction(
+                detail_module=module.unique_id,
+                arbitrary_datum=ArbitraryDatum(
+                    id="case_id",
+                    nodeset="instance('casedb')/casedb/case[@case_type='cases'][@status='open'][date(scheduled_date) <= date(today() + instance('commcaresession')/session/data/fixture_value_m0)]",
+                    value="./@case_id",
+                    detail_select="m0_fixture_select",
+                    detail_confirm="m0_case_long",
+                )),
+        ]
+
+        # factory.form_requires_case(form)
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
 

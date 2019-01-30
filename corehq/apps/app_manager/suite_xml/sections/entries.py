@@ -652,6 +652,7 @@ class EntriesHelper(object):
         for action in form.actions.get_load_update_actions():
             auto_select = action.auto_select
             load_case_from_fixture = action.load_case_from_fixture
+            arbitrary_datum = action.arbitrary_datum
             if auto_select and auto_select.mode:
                 datum, assertions = EntriesHelper.get_auto_select_datums_and_assertions(action, auto_select, form)
                 datums.append(FormDatumMeta(
@@ -663,6 +664,19 @@ class EntriesHelper(object):
             elif load_case_from_fixture:
                 target_module = get_target_module(action.case_type, action.details_module)
                 datums.extend(self.get_load_case_from_fixture_datums(action, target_module, form))
+            elif arbitrary_datum:
+                datums.append(FormDatumMeta(
+                    datum=SessionDatum(
+                        id=arbitrary_datum.id,
+                        nodeset=arbitrary_datum.nodeset,
+                        value=arbitrary_datum.value,
+                        detail_select=arbitrary_datum.detail_select,
+                        detail_confirm=arbitrary_datum.detail_confirm,
+                    ),
+                    case_type=action.case_type,
+                    requires_selection=arbitrary_datum.requires_selection,
+                    action=action,
+                ))
             else:
                 if action.case_index.tag:
                     parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']

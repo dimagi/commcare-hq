@@ -506,6 +506,8 @@ class ArbitraryDatum(DocumentSchema):
     value = StringProperty()
     detail_select = StringProperty()
     detail_confirm = StringProperty()
+    detail_persistent = StringProperty()
+    requires_selection = BooleanProperty(default=True)
 
 
 class LoadUpdateAction(AdvancedAction):
@@ -528,7 +530,7 @@ class LoadUpdateAction(AdvancedAction):
     show_product_stock = BooleanProperty(default=False)
     product_program = StringProperty()
     case_index = SchemaProperty(CaseIndex)
-    arbitrary_datum = SchemaProperty(ArbitraryDatum)
+    arbitrary_datum = SchemaProperty(ArbitraryDatum, default=None)
 
     @property
     def case_indices(self):
