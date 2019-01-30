@@ -12,7 +12,7 @@ from corehq.apps.translations.app_translations import (
     get_unicode_dicts,
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
-from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING
+from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
 
 COLUMNS_TO_COMPARE = {
     'module_and_form': ['Type', 'sheet_name'],
@@ -35,6 +35,9 @@ class UploadedTranslationsValidator(object):
         self.expected_rows = None
         self.lang_prefix = lang_prefix
         self.default_language_column = self.lang_prefix + self.app.default_language
+        self.app_translation_generator = AppTranslationsGenerator(
+            self.app.domain, self.app.get_id, None, self.app.default_language, self.app.default_language,
+            self.lang_prefix)
 
     def _generate_expected_headers_and_rows(self):
         self.headers = {h[0]: h[1] for h in expected_bulk_app_sheet_headers(self.app)}
@@ -49,6 +52,23 @@ class UploadedTranslationsValidator(object):
         for index, _column_name in enumerate(self.headers[sheet_name]):
             if _column_name == header:
                 return index
+
+    def _filter_rows(self, for_type, expected_rows, sheet_name):
+        if for_type == 'form':
+            return self.app_translation_generator._filter_invalid_rows_for_form(
+                expected_rows,
+                self.app_translation_generator.sheet_name_to_module_or_form_type_and_id[sheet_name].id,
+                self._get_header_index(sheet_name, 'label')
+            )
+        elif for_type == 'module':
+            return self.app_translation_generator._filter_invalid_rows_for_module(
+                expected_rows,
+                self.app_translation_generator.sheet_name_to_module_or_form_type_and_id[sheet_name].id,
+                self._get_header_index(sheet_name, 'case_property'),
+                self._get_header_index(sheet_name, 'list_or_detail'),
+                self._get_header_index(sheet_name, self.default_language_column)
+            )
+        assert False, "Unexpected type"
 
     def _compare_sheet(self, sheet_name, uploaded_rows, for_type):
         """
@@ -65,6 +85,7 @@ class UploadedTranslationsValidator(object):
             msgs.append(six.text_type(LESS_ROW_COUNT_MISMATCH_MESSAGE))
         elif number_of_uploaded_rows > number_of_expected_rows:
             msgs.append(six.text_type(MORE_ROW_COUNT_MISMATCH_MESSAGE))
+        expected_rows = self._filter_rows(for_type, self.expected_rows[sheet_name], sheet_name)
 
         iterate_on = [expected_rows, uploaded_rows]
         # 2 to account for the sheet header as well
