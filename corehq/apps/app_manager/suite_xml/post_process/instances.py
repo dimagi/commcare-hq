@@ -60,7 +60,6 @@ class EntryInstances(PostProcessor):
                     for datum in frame.datums:
                         xpaths.add(datum.value)
         xpaths.discard(None)
-        assert all(isinstance(xpath, six.text_type) for xpath in xpaths)
         return xpaths
 
     @memoized
@@ -191,7 +190,6 @@ def get_all_instances_referenced_in_xpaths(domain, xpaths):
     instances = set()
     unknown_instance_ids = set()
     for xpath in xpaths:
-        assert isinstance(xpath, six.text_type)
         instance_names = re.findall(instance_re, xpath)
         for instance_name in instance_names:
             try:
