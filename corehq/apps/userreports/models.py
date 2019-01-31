@@ -1056,7 +1056,7 @@ def get_report_configs(config_ids, domain):
 
     static_report_config_ids = []
     dynamic_report_config_ids = []
-    for config_id in config_ids:
+    for config_id in set(config_ids):
         if report_config_id_is_static(config_id):
             static_report_config_ids.append(config_id)
         else:

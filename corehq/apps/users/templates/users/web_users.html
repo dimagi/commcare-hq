@@ -103,7 +103,7 @@
         </div>
         <div class="panel-body">
             <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
-            <div data-bind="visible: showSpinner">
+            <div data-bind="visible: showLoadingSpinner">
                 <i class="fa fa-spin fa-spinner"></i>
                 {% trans "Loading Users..." %}
             </div>
@@ -198,7 +198,8 @@
                         params="goToPage: goToPage,
                                 perPage: itemsPerPage,
                                 maxPagesShown: 10,
-                                totalItems: totalItems"></pagination>
+                                totalItems: totalItems,
+                                showSpinner: showPaginationSpinner"></pagination>
 
         </div><!-- end .panel-body -->
     </div><!-- end .panel -->
