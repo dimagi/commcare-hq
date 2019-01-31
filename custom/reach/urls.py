@@ -2,7 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url, include
 
-from custom.reach.views import ProgramOverviewReport, UnifiedBeneficiaryReport, ProgramOverviewReportAPI
+from custom.reach.views import ProgramOverviewReport, UnifiedBeneficiaryReport, ProgramOverviewReportAPI, \
+    LocationFilterAPI
 
 dashboardurls = [
     url('^program_overview/', ProgramOverviewReport.as_view(), name='program_overview'),
@@ -11,6 +12,7 @@ dashboardurls = [
 
 dataurls = [
     url('^program_overview/', ProgramOverviewReportAPI.as_view(), name='program_overview_api'),
+    url('^location_api/', LocationFilterAPI.as_view(), name='location_api'),
 ]
 
 urlpatterns = [

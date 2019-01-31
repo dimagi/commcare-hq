@@ -1,7 +1,9 @@
 hqDefine("reach/js/utils/reach_utils", [
-    'moment/moment'
+    'moment/moment',
+    'hqwebapp/js/initial_page_data',
 ], function(
-    moment
+    moment,
+    initialPageData
 ) {
     var reachUtils = function () {
         var self = {};
@@ -36,8 +38,10 @@ hqDefine("reach/js/utils/reach_utils", [
 
     var postData = function(options) {
         var self  = {};
+        var userLocationId = initialPageData.get('user_location_id');
         self.selectedYear = options.selectedYear || moment().year();
         self.selectedMonth = options.selectedMonth || moment().month() + 1;
+        self.selectedLocation = options.selectedLocation || userLocationId;
         return self;
     };
 
@@ -46,9 +50,15 @@ hqDefine("reach/js/utils/reach_utils", [
         MWCD: 'MWCD',
     };
 
+    var DEFAULTLOCATION = {
+            id: 'all',
+            name: 'All'
+        };
+
     return {
         reachUtils: reachUtils,
         postData: postData,
-        USERROLETYPES: USERROLETYPES
+        USERROLETYPES: USERROLETYPES,
+        DEFAULTLOCATION: DEFAULTLOCATION,
     }
 });

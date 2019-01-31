@@ -62,7 +62,7 @@ hqDefine("reach/js/reports/program_overview", [
             var getData = function (postData) {
                 $.post(initialPageData.reverse('program_overview_api'), postData, function (data) {
                     self.sections([]);
-                    data.data.forEach(function (element) {
+                    _.each(data.data, function (element) {
                         var section = [];
                         element.forEach(function (indicator) {
                             section.push(indicatorModel(indicator))

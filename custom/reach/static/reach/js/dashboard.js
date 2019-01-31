@@ -20,5 +20,24 @@ hqDefine("reach/js/dashboard", [
         _.each(components, function (moduleName, elementName) {
             ko.components.register(elementName, moduleName);
         });
+
+        ko.bindingHandlers.select2 = {
+            init: function (element, valueAccessor) {
+                $(element).select2(valueAccessor());
+                ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
+                    $(element).select2('destroy');
+                });
+            },
+            update:function(element, valueAccessor, allBindingsAccessor) {
+                var allBindings = allBindingsAccessor(),
+                value = ko.utils.unwrapObservable(allBindings.value || allBindings.selectedOptions);
+                if (value) {
+                    $(element).select2('val', value).trigger('change');
+                } else {
+                    $(element).select2();
+                }
+            }
+        };
+
     });
 });

@@ -10,70 +10,18 @@
                     <span class="modal-title"><strong><i class="fa fa-map-marker icon-bar"></i> Location</strong></span>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
+                    <div class="row" data-bind="foreach: { data: hierarchyConfig, as: 'location' }">
                         <div class="col-md-6">
                              <div class="form-group">
-                                <label for="year">State <span class="required">*</span></label>
-        {#                        <select class="form-control" data-bind="options: availableYears,#}
-        {#                            optionsText: 'name',#}
-        {#                            optionsValue: 'id',#}
-        {#                            value: selectedYear">#}
-        {#                        </select>#}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="year">District <span class="required">*</span></label>
-        {#                        <select class="form-control" data-bind="options: availableYears,#}
-        {#                            optionsText: 'name',#}
-        {#                            optionsValue: 'id',#}
-        {#                            value: selectedYear">#}
-        {#                        </select>#}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="year">Taluka <span class="required">*</span></label>
-        {#                        <select class="form-control" data-bind="options: availableYears,#}
-        {#                            optionsText: 'name',#}
-        {#                            optionsValue: 'id',#}
-        {#                            value: selectedYear">#}
-        {#                        </select>#}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="year">Primary Health Centre (PHC) <span class="required">*</span></label>
-        {#                        <select class="form-control" data-bind="options: availableYears,#}
-        {#                            optionsText: 'name',#}
-        {#                            optionsValue: 'id',#}
-        {#                            value: selectedYear">#}
-        {#                        </select>#}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="year">Sub-centre (SC) <span class="required">*</span></label>
-        {#                        <select class="form-control" data-bind="options: availableYears,#}
-        {#                            optionsText: 'name',#}
-        {#                            optionsValue: 'id',#}
-        {#                            value: selectedYear">#}
-        {#                        </select>#}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="year"> Village  <span class="required">*</span></label>
-        {#                        <select class="form-control" data-bind="options: availableYears,#}
-        {#                            optionsText: 'name',#}
-        {#                            optionsValue: 'id',#}
-        {#                            value: selectedYear">#}
-        {#                        </select>#}
+                                <label for="year" data-bind="text: location.name">State <span class="required">*</span></label>
+                                <select class="form-control" data-bind="
+                                    options: location.locations,
+                                    optionsText: 'name',
+                                    optionsValue: 'id',
+                                    value: location.selectedLocation,
+                                    disable: location.isDisabled(),
+                                    select2: {}">
+                                </select>
                             </div>
                         </div>
                     </div>
