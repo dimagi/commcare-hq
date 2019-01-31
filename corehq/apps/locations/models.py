@@ -386,7 +386,7 @@ class SQLLocation(AdjListModel):
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
-
+    restricted_app_releases = jsonfield.JSONField(default=dict, blank=True)
     # Use getter and setter below to access this value
     # since stocks_all_products can cause an empty list to
     # be what is stored for a location that actually has
