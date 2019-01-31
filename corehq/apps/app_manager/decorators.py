@@ -76,8 +76,8 @@ def safe_cached_download(f):
 
         latest_enabled_build = None
         if latest and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            if request.GET.get('user_id', '6a31cb9e30bb4202ab199cad63d81be7'):
-                location_id = get_user_location_id(request.GET.get('user_id', '6a31cb9e30bb4202ab199cad63d81be7'))
+            if request.GET.get('user_id'):
+                location_id = get_user_location_id(request.GET.get('user_id'))
                 if location_id:
                     _app_id = get_build_app_id(app_id)
                     latest_enabled_build = get_latest_enabled_build_for_location(domain, location_id, _app_id)
