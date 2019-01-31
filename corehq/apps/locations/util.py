@@ -13,6 +13,7 @@ from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, \
     LOCATION_SHEET_HEADERS_BASE, LOCATION_SHEET_HEADERS_OPTIONAL
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product
+from corehq.apps.users.models import CommCareUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.files import safe_filename_header
@@ -321,3 +322,9 @@ def get_locations_from_ids(location_ids, domain, base_queryset=None):
     if len(locations) != expected_count:
         raise SQLLocation.DoesNotExist('One or more of the locations was not found.')
     return locations
+
+
+def get_user_location_id(user_id):
+    user = CommCareUser.get_by_user_id(user_id)
+    if user:
+        return user.location_id

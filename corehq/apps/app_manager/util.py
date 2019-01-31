@@ -25,12 +25,14 @@ from django.db.models import Max
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
-    get_apps_in_domain, get_app
+    get_apps_in_domain, get_app,
+    get_version_build_id,
 )
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
 from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.locations.models import SQLLocation
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
@@ -690,6 +692,23 @@ def get_latest_enabled_build_for_profile(domain, profile_id):
                             .first())
     if latest_enabled_build:
         return get_app(domain, latest_enabled_build.build_id)
+
+
+@quickcache(['app_or_build_id'], timeout=24 * 60 * 60)
+def get_build_app_id(app_or_build_id):
+    from corehq.apps.app_manager.models import Application
+    # if its a build id, get the application id
+    app_or_release = Application.get_db().get(app_or_build_id)
+    return app_or_release.get('copy_of', app_or_build_id)
+
+
+@quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
+def get_latest_enabled_build_for_location(domain, location_id, app_id):
+    location = SQLLocation.active_objects.get(location_id=location_id)
+    version_to_update = location.restricted_app_releases.get(app_id)
+    if version_to_update:
+        build_id = get_version_build_id(domain, app_id, version_to_update)
+        return get_app(domain, build_id)
 
 
 @quickcache(['build_id', 'version'], timeout=24 * 60 * 60)
