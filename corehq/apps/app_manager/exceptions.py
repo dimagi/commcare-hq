@@ -167,3 +167,7 @@ class AppLinkError(AppManagerException):
 
 class SavedAppBuildException(AppManagerException):
     pass
+
+
+class BuildNotFoundException(Exception):
+    pass
