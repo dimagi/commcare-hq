@@ -6,6 +6,9 @@ from __future__ import absolute_import
 from django.db import migrations, models
 
 
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -18,4 +21,5 @@ class Migration(migrations.Migration):
             name='lunch_count',
             field=models.PositiveSmallIntegerField(help_text='Number of days the child had the lunch', null=True),
         ),
+        migrator.get_migration('update_tables38.sql')
     ]
