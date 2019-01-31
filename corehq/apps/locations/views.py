@@ -760,6 +760,13 @@ class EditLocationView(NewLocationView):
             name=self.location.name, type=self.location.location_type_name
         ))
 
+    def _restricted_app_releases(self):
+        restricted_app_releases = {}
+        for app_id, app_name in self.app_restriction_form.fields['app_id'].choices:
+            if app_id in self.location.restricted_app_releases:
+                restricted_app_releases[app_name] = self.location.restricted_app_releases[app_id]
+        return restricted_app_releases
+
     @property
     def page_context(self):
         context = super(EditLocationView, self).page_context
@@ -768,6 +775,7 @@ class EditLocationView(NewLocationView):
             'users_per_location_form': self.users_form,
             'related_location_form': self.related_location_form,
             'app_restriction_form': self.app_restriction_form,
+            'restricted_app_releases': self._restricted_app_releases(),
         })
         return context
 

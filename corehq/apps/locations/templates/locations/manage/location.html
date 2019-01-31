@@ -70,6 +70,12 @@
           </li>
         {% endif %}
 
+        {% if app_restriction_form %}
+          <li class="{% if form_tab == "restrict_apps" %}active{% endif %}">
+            <a href="#restrict_apps" data-toggle="tab">{% trans "Restrict App Releases" %}</a>
+          </li>
+        {% endif %}
+
       </ul>
       <br />
       {% endif %}
@@ -161,6 +167,42 @@
             </div>
           </div>
         {% endif %}
+
+        {% if app_restriction_form %}
+          <div class="tab-pane {% if form_tab == "restrict_apps" %}active{% endif %}" id="restrict_apps">
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="panel panel-modern-gray panel-form-only">
+                  <div class="panel-body">
+                    <form class="form-horizontal disable-on-submit" id="edit_app_restrictions" action="" method='post'>
+                      {% crispy app_restriction_form %}
+                      <input type="hidden" name="form_type" value="restrict_apps" />
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if restricted_app_releases %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                      <th>App</th>
+                      <th>Restricted to</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for app_name, version in restricted_app_releases.items %}
+                  <tr>
+                    <td>{{ app_name }}</td>
+                    <td>{{ version }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+          {% endif %}
+        {% endif %}
+
 
         {% if products_per_location_form %}
           <div class="tab-pane" id="products">
