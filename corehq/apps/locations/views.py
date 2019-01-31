@@ -51,7 +51,7 @@ from .permissions import (
     can_edit_location_types,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
-from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm
+from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm, RestrictAppUpdateForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config
 import six
@@ -723,6 +723,19 @@ class EditLocationView(NewLocationView):
 
     @property
     @memoized
+    def app_restriction_form(self):
+        if not toggles.RELEASE_BUILDS_PER_PROFILE.enabled(self.domain_object.name):
+            return None
+        form = RestrictAppUpdateForm(
+            domain_object=self.domain_object,
+            location=self.location,
+            data=self.request.POST if self.request.method == "POST" else None,
+        )
+        return form
+
+
+    @property
+    @memoized
     def related_location_form(self):
         if not toggles.RELATED_LOCATIONS.enabled(self.request.domain):
             return None
@@ -754,6 +767,7 @@ class EditLocationView(NewLocationView):
             'products_per_location_form': self.products_form,
             'users_per_location_form': self.users_form,
             'related_location_form': self.related_location_form,
+            'app_restriction_form': self.app_restriction_form,
         })
         return context
 
@@ -764,6 +778,15 @@ class EditLocationView(NewLocationView):
         else:
             self.request.method = "GET"
             self.form_tab = 'users'
+            return self.get(request, *args, **kwargs)
+
+    def app_restriction_form_post(self, request, *args, **kwargs):
+        if self.app_restriction_form and self.app_restriction_form.is_valid():
+            self.app_restriction_form.save()
+            return self.form_valid()
+        else:
+            self.request.method = "GET"
+            self.form_tab = 'restrict_apps'
             return self.get(request, *args, **kwargs)
 
     def products_form_post(self, request, *args, **kwargs):
@@ -795,6 +818,9 @@ class EditLocationView(NewLocationView):
         elif (self.request.POST['form_type'] == "related_location"
               and toggles.RELATED_LOCATIONS.enabled(request.domain)):
             return self.related_location_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "restrict_apps"
+              and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(request.domain)):
+            return self.app_restriction_form_post(request, *args, **kwargs)
         else:
             raise Http404()
 
