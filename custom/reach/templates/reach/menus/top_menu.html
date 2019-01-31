@@ -5,6 +5,7 @@
 
 {# Knockout component templates #}
 {% include 'reach/filters/month_year_filter.html' %}
+{% include 'reach/filters/location_filter.html' %}
 
 <div class="row fixed-title">
     <nav class="navbar navbar-default">
@@ -16,7 +17,9 @@
                 <li>
                     <month-year-filter params="postData: postData, callback: callback"></month-year-filter>
                 </li>
-                <li><i class="fa fa-2x fa-map-marker light-grey icon-bar"></i></li>
+                <li>
+                    <location-filter></location-filter>
+                </li>
                 <li class="no-padding auto-width">
                     <form class="navbar-form">
                         <div class="input-group">

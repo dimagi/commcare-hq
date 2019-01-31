@@ -19,6 +19,7 @@
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'reach/js/utils/reach_utils.js' %}"></script>
     <script src="{% static 'reach/js/filters/month_year_filter.js' %}"></script>
+    <script src="{% static 'reach/js/filters/location_filter.js' %}"></script>
     <script src="{% static 'reach/js/dashboard.js' %}"></script>
 </head>
 <body>
@@ -34,6 +35,7 @@
             {% endblock %}
         </div>
         {% registerurl 'program_overview_api' domain %}
+        {% initial_page_data 'user_role_type' user_role_type %}
     </div>
 </div>
 

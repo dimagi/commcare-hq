@@ -23,6 +23,8 @@ class ReachDashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs['domain'] = self.domain
+        # TODO add logic for user role type possible options should be MoHFW or MWCD
+        kwargs['user_role_type'] = 'MoHFW'
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
 

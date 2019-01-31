@@ -142,3 +142,19 @@ li.auto-width {
 .form-group {
     text-align: left;
 }
+
+.nav > li > a {
+    padding: 0;
+}
+
+.nav > li > a:hover {
+    background: none;
+}
+
+.modal-footer {
+    text-align: center;
+}
+
+.modal-header {
+    text-align: left;
+}

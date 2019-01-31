@@ -8,8 +8,8 @@
     </div>
     <div>
         <ul class="nav nav-list" >
-            <li><a href="{% url 'program_overview' domain %}">Program Overview</a></li>
-            <li><a href="{% url 'unified_beneficiary' domain %}">Unified Beneficiary Report</a></li>
+            <li data-bind="css: {'active': isActive('program_overview')}"><a href="{% url 'program_overview' domain %}">Program Overview</a></li>
+            <li data-bind="css: {'active': isActive('unified_beneficiary')}"><a href="{% url 'unified_beneficiary' domain %}">Unified Beneficiary Report</a></li>
         </ul>
     </div>
 </div>

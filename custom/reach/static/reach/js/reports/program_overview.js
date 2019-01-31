@@ -56,6 +56,7 @@ hqDefine("reach/js/reports/program_overview", [
             var self = {};
             self.sections = ko.observableArray();
             self.title = 'Program Overview';
+            self.slug = 'program_overview';
             self.postData = reachUtils.postData({});
 
             var getData = function (postData) {
@@ -73,6 +74,10 @@ hqDefine("reach/js/reports/program_overview", [
 
             self.callback = function(postData) {
                 getData(postData)
+            };
+
+            self.isActive = function(slug) {
+                return self.slug === slug;
             };
 
             getData(self.postData);

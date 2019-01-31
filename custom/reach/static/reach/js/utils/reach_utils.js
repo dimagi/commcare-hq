@@ -41,8 +41,14 @@ hqDefine("reach/js/utils/reach_utils", [
         return self;
     };
 
+    var USERROLETYPES = {
+        MOHFW: 'MoHFW',
+        MWCD: 'MWCD',
+    };
+
     return {
         reachUtils: reachUtils,
         postData: postData,
+        USERROLETYPES: USERROLETYPES
     }
 });
