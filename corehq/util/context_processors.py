@@ -2,16 +2,18 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
+
+import six
 from django.conf import settings
-from django.urls import resolve, reverse
 from django.http import Http404
+from django.urls import resolve, reverse
 from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq import privileges
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name
-from corehq.apps.accounting.models import BillingAccount
 
+from corehq import privileges
+from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -148,13 +150,35 @@ def enterprise_mode(request):
     }
 
 
-def commcare_hq_names(request):
+def commcare_hq_names(request=None):
     return {
         'commcare_hq_names': {
-            'COMMCARE_NAME': settings.COMMCARE_NAME,
-            'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
-        }
+            'COMMCARE_NAME': _get_cc_name(request, 'COMMCARE_NAME'),
+            'COMMCARE_HQ_NAME': _get_cc_name(request, 'COMMCARE_HQ_NAME'),
+        },
     }
+
+
+def _get_cc_name(request, var):
+    value = getattr(settings, var)
+    if isinstance(value, six.string_types):
+        return value
+
+    if request is None:
+        # There are a few places where we do not have access to a request,
+        # for these we return the default name for the enviroment.
+        return value['default']
+
+    try:
+        host = request.get_host()
+    except KeyError:
+        # In reporting code we create an HttpRequest object inside python which
+        # does not have an HTTP_HOST attribute. Its unclear what host would be
+        # expected in that scenario, so we're showing the default.
+        # The true fix for this lies in removing fake requests from scheduled reports
+        host = 'default'
+
+    return value.get(host) or value['default']
 
 
 def mobile_experience(request):

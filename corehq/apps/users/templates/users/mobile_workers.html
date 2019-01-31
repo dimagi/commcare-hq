@@ -393,7 +393,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <div class="alert alert-info" data-bind="visible: showSpinner">
+                <div class="alert alert-info" data-bind="visible: showLoadingSpinner() && !hasError()">
                     <i class="fa fa-spin fa-spinner"></i>
                     {% trans "Loading Workers..." %}
                 </div>
@@ -408,7 +408,8 @@
                 <pagination data-apply-bindings="false"
                             params="goToPage: goToPage,
                                     perPage: itemsPerPage,
-                                    totalItems: totalItems"></pagination>
+                                    totalItems: totalItems,
+                                    showSpinner: showPaginationSpinner"></pagination>
             </div>
         </div-->
     </div>

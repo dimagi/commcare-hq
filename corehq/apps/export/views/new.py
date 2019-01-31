@@ -330,5 +330,13 @@ class CopyExportView(View):
                 new_export.owner_id = request.couch_user.user_id
                 new_export.sharing = SharingOption.PRIVATE
             new_export.save()
-        referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
-        return HttpResponseRedirect(referer)
+            messages.success(
+                request,
+                mark_safe(
+                    _("Export <strong>{}</strong> created.").format(
+                        new_export.name
+                    )
+                )
+            )
+        redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
+        return HttpResponseRedirect(redirect)

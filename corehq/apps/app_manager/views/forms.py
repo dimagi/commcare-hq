@@ -36,7 +36,7 @@ from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException, XFormValidationFailed)
-from corehq.apps.app_manager.templatetags.xforms_extras import trans, clean_trans
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.es import FormES
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
@@ -577,7 +577,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
             'is_current': app.id == current_app_id,
             'modules': [{
                 'module_id': module.id,
-                'name': clean_trans(module.name, app.langs),
+                'name': trans(module.name, app.langs),
                 'is_current': module.unique_id == current_module_id,
             } for module in app.modules]
         }

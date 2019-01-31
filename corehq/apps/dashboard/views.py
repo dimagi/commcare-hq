@@ -26,6 +26,7 @@ from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
+from corehq.util.context_processors import commcare_hq_names
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 
@@ -160,6 +161,8 @@ def _get_default_tiles(request):
         else reverse(urlname, args=[request.domain])
     )
 
+    commcare_name = commcare_hq_names(request)['commcare_hq_names']['COMMCARE_NAME']
+
     return [
         Tile(
             request,
@@ -184,12 +187,12 @@ def _get_default_tiles(request):
         ),
         Tile(
             request,
-            title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
+            title=_('{cc_name} Supply Setup').format(cc_name=commcare_name),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
             urlname='default_commtrack_setup',
             visibility_check=can_view_commtrack_setup,
-            help_text=_("Update {cc_name} Supply Settings").format(cc_name=settings.COMMCARE_NAME),
+            help_text=_("Update {cc_name} Supply Settings").format(cc_name=commcare_name),
         ),
         Tile(
             request,
