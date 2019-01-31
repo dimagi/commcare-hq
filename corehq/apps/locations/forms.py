@@ -14,6 +14,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, get_version_build_id
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.hqwebapp.widgets import Select2AjaxV4
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
@@ -537,6 +539,55 @@ class LocationFormSet(object):
             prefix='user_data',
         )
         return user_data
+
+
+class RestrictAppUpdateForm(forms.Form):
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
+    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False,
+                                 help_text=ugettext_lazy('Leave empty to remove restriction'))
+
+    def __init__(self, domain_object, location, *args, **kwargs):
+        self.domain_object = domain_object
+        self.location = location
+        super(RestrictAppUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].choices = tuple(
+            (app.id, app.name) for app in get_brief_apps_in_domain(domain_object.name))
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Field('app_id'),
+            crispy.Field('version'),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', ugettext_lazy("Add/Update App Restriction"))
+                )
+            )
+        )
+
+    def clean(self):
+        app_id = self.cleaned_data['app_id']
+        version = self.cleaned_data['version']
+        if app_id and not version and app_id not in self.location.restricted_app_releases:
+            raise forms.ValidationError(_("No restriction present for this app"))
+        if app_id and version:
+            try:
+                get_version_build_id(self.domain_object.name, app_id, version)
+            except BuildNotFoundException as e:
+                self.add_error('version', e)
+
+    def save(self):
+        version = self.cleaned_data['version']
+        app_id = self.cleaned_data['app_id']
+        if app_id and not version and app_id in self.location.restricted_app_releases:
+            self.location.restricted_app_releases.pop(app_id)
+            self.location.save()
+        elif app_id and version:
+            self.location.restricted_app_releases[app_id] = version
+            self.location.save()
 
 
 class UsersAtLocationForm(forms.Form):
