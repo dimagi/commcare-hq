@@ -16,6 +16,7 @@ from crispy_forms.bootstrap import StrictButton
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, get_version_build_id
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.app_manager.util import get_latest_enabled_build_for_location
 from corehq.apps.hqwebapp.widgets import Select2AjaxV4
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
@@ -582,11 +583,15 @@ class RestrictAppUpdateForm(forms.Form):
     def save(self):
         version = self.cleaned_data['version']
         app_id = self.cleaned_data['app_id']
+        save = False
         if app_id and not version and app_id in self.location.restricted_app_releases:
             self.location.restricted_app_releases.pop(app_id)
-            self.location.save()
+            save = True
         elif app_id and version:
             self.location.restricted_app_releases[app_id] = version
+            save = True
+        if save:
+            get_latest_enabled_build_for_location.clear(self.domain_object.name, self.location.location_id, app_id)
             self.location.save()
 
 
