@@ -670,7 +670,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             block_id=location,
             aggregation_level=3
         ).first()
-        if file_format == 'xlsx' and beta:
+        if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
                 excel_data,
                 data_type,
