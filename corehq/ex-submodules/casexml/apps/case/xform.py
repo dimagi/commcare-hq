@@ -110,9 +110,13 @@ class CaseProcessingResult(object):
 
 
 def process_cases_with_casedb(xforms, case_db, config=None):
+    print('process_cases_with_casedb')
+    print('xforms')
+    print(xforms)
     config = config or CaseProcessingConfig()
     case_processing_result = _get_or_update_cases(xforms, case_db)
     cases = case_processing_result.cases
+    print([case.case_id for case in cases])
     xform = xforms[0]
 
     _update_sync_logs(xform, case_db, config, cases)
@@ -141,6 +145,7 @@ def _update_sync_logs(xform, case_db, config, cases):
     if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
+        print('here 2')
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
 
@@ -166,12 +171,17 @@ def _get_or_update_cases(xforms, case_db):
     """
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
+    print('touched_cases - values')
+    values = [update.case for update in touched_cases.values()]
+    # values = sorted([update.case for update in values], key=lambda case: case.case_id)
+    print([case.case_id for case in values])
+    # raise Exception
     _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
     dirtiness_flags = _get_all_dirtiness_flags_from_cases(case_db, touched_cases)
     extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
     return CaseProcessingResult(
         domain,
-        [update.case for update in touched_cases.values()],
+        values,
         dirtiness_flags,
         extensions_to_close
     )

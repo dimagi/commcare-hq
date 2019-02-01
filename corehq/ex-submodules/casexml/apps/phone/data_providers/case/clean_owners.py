@@ -150,6 +150,8 @@ class CleanOwnerSyncPayload(object):
                 self.restore_state.last_sync_log.dependent_case_ids_on_phone -
                 primary_cases_syncing
             )
+        print('case_ids_on_phone')
+        print(case_ids_on_phone)
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = self.all_dependencies_syncing
         self.restore_state.current_sync_log.closed_cases = self.closed_cases

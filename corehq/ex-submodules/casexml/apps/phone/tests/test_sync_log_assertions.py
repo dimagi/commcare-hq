@@ -32,6 +32,7 @@ class SyncLogAssertionTest(TestCase):
             # before this test was added, the following call raised a SyncLogAssertionError on legacy logs.
             # this test just ensures it doesn't still do that.
             for log in [sync_log, SimplifiedSyncLog.from_other_format(sync_log)]:
+                print('A')
                 log.update_phone_lists(xform, [parent_case])
 
     def test_update_dependent_case_owner_still_present(self):
@@ -54,6 +55,7 @@ class SyncLogAssertionTest(TestCase):
             parent_case = CommCareCase(_id='d1')
             # before this test was added, the following call raised a ValueError on legacy logs.
             for log in [sync_log, SimplifiedSyncLog.from_other_format(sync_log)]:
+                print('B')
                 log.update_phone_lists(xform, [parent_case])
                 self.assertIn(dependent_case_state, log.test_only_get_dependent_cases_on_phone())
 

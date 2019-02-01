@@ -120,6 +120,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
 
     case_id_blacklist = case_id_blacklist or []
     try:
+        print('C')
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError as e:
         soft_assert('@'.join(['skelly', 'dimagi.com']))(
@@ -147,7 +148,7 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                             )
                         )
             updated_log = get_properly_wrapped_sync_log(sync_log._id)
-
+            print('here 1')
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
 

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import uuid
+from collections import OrderedDict
 
 import redis
 from contextlib2 import ExitStack
@@ -211,7 +212,7 @@ class FormProcessorSQL(object):
     def get_cases_from_forms(case_db, xforms):
         """Get all cases affected by the forms. Includes new cases, updated cases.
         """
-        touched_cases = {}
+        touched_cases = OrderedDict()
         if len(xforms) > 1:
             domain = xforms[0].domain
             affected_cases = set()
@@ -239,6 +240,7 @@ class FormProcessorSQL(object):
                     case, rebuild_detail, updated_xforms=xforms
                 )
                 if case:
+                    print(case.case_id)
                     touched_cases[case.case_id] = CaseUpdateMetadata(
                         case=case, is_creation=is_creation, previous_owner_id=previous_owner,
                     )
@@ -247,6 +249,7 @@ class FormProcessorSQL(object):
             for case_update in get_case_updates(xform):
                 case_update_meta = case_db.get_case_from_case_update(case_update, xform)
                 if case_update_meta.case:
+                    print(case_update_meta.case.case_id)
                     touched_cases[case_update_meta.case.case_id] = case_update_meta
                 else:
                     logging.error(

@@ -853,7 +853,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         - it is owned and available or,
         - it has a live child or,
         - it has a live extension or,
-        - it is the exension of a live case.
+        - it is the extension of a live case.
 
         Algorithm:
         ----------
@@ -872,12 +872,23 @@ class SimplifiedSyncLog(AbstractSyncLog):
             extension indexes which don't lead to closed cases, mark all touched
             cases as live.
         """
+        print('*************purge*')
+        print('case_id')
+        print(case_id)
         _get_logger().debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
         relevant = self._get_relevant_cases(case_id)
         available = self._get_available_cases(relevant)
         live = self._get_live_cases(available)
+        print('relevant')
+        print(relevant)
+        print('self.purged_cases')
+        print(self.purged_cases)
+        print('live')
+        print(live)
         to_remove = (relevant - self.purged_cases) - live
+        print('to_remove')
+        print(to_remove)
         self._remove_cases_purge_indices(to_remove, case_id, xform_id)
 
     def _get_relevant_cases(self, case_id):
@@ -949,7 +960,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, xform_id):
         """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
-
+        print('_remove_cases_purge_indices')
         _get_logger().debug("cases to to_remove: {}".format(all_to_remove))
         for to_remove in all_to_remove:
             indices = self.index_tree.indices.get(to_remove, {})
@@ -970,6 +981,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id, xform_id)
 
         try:
+            print('to_remove')
+            print(to_remove)
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
             should_fail_softly = not xform_id or _domain_has_legacy_toggle_set()
@@ -1006,6 +1019,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         #                 "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
+        print('case_id')
+        print(case_id)
         self.case_ids_on_phone.add(case_id)
         if case_id in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(case_id)
@@ -1013,6 +1028,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def _add_index(self, index, case_update):
         _get_logger().debug('adding index {} --<{}>--> {} ({}).'.format(
             index.case_id, index.relationship, index.referenced_id, index.identifier))
+        print('_add_index')
+        print(index.relationship)
+        print(const.CASE_INDEX_EXTENSION)
         if index.relationship == const.CASE_INDEX_EXTENSION:
             self._add_extension_index(index, case_update)
         else:
@@ -1023,6 +1041,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
 
         if index.referenced_id not in self.case_ids_on_phone:
+            print('index.referenced_id')
+            print(index.referenced_id)
             self.case_ids_on_phone.add(index.referenced_id)
             self.dependent_case_ids_on_phone.add(index.referenced_id)
 
@@ -1034,9 +1054,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
             self.dependent_case_ids_on_phone.add(index.case_id)
 
     def _add_child_index(self, index):
+        print('_add_child_index')
         assert index.relationship == const.CASE_INDEX_CHILD
         self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
         if index.referenced_id not in self.case_ids_on_phone:
+            print('index.referenced_id')
+            print(index.referenced_id)
             self.case_ids_on_phone.add(index.referenced_id)
             self.dependent_case_ids_on_phone.add(index.referenced_id)
 
@@ -1125,6 +1148,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     case_update.is_closed = True
 
         non_live_updates = []
+        print('case_list')
+        print([case.case_id for case in case_list])
         for case in case_list:
             case_update = all_updates[case.case_id]
             if case_update.is_live:
@@ -1149,10 +1174,15 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if case_update.is_closed:
                     self.closed_cases.add(case_update.case_id)
 
+        print('non_live_updates')
+        print([update.case_id for update in non_live_updates])
+
         for update in non_live_updates:
             _get_logger().debug('case {} is NOT live.'.format(update.case_id))
             if update.has_extension_indices_to_add():
                 # non-live cases with extension indices should be added and processed
+                print('update.case_id')
+                print(update.case_id)
                 self.case_ids_on_phone.add(update.case_id)
                 for index in update.indices_to_add:
                     self._add_index(index, update)
@@ -1165,8 +1195,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
         _get_logger().debug('extension index tree mid update: {}'.format(self.extension_index_tree))
 
         for update in non_live_updates:
+            print('update in non_live_updates')
+            print(update.case_id)
+            print(self.case_ids_on_phone)
             if update.case_id in self.case_ids_on_phone:
                 # try purging the case
+                print('-other-')
                 self.purge(update.case_id, xform_id=xform.form_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
@@ -1198,6 +1232,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         Attempt to purge any dependent cases from the sync log.
         """
+        print('purge_dependent_cases')
         # this is done when migrating from old formats or during initial sync
         # to purge non-relevant dependencies
         for dependent_case_id in list(self.dependent_case_ids_on_phone):
@@ -1221,6 +1256,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
             def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
                 if case_state.case_id in previous_log_footprint:
+                    print('_add_state_contributions')
+                    print(case_state.case_id)
                     new_sync_log.case_ids_on_phone.add(case_state.case_id)
                     for index in case_state.indices:
                         new_sync_log.index_tree.set_index(case_state.case_id, index.identifier,

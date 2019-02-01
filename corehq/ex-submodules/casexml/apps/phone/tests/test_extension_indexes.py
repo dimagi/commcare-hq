@@ -44,6 +44,10 @@ def test_generator(skip=False, **test):
             for case in self.get_all_case_names(test)
             if case not in desired_cases}
         sync_log = self.device.last_sync.get_log()
+        print(sync_log.case_ids_on_phone)
+        print(set(desired_cases))
+        print(undesired_cases)
+        # self.assertTrue(False)
         self.assertEqual(sync_log.case_ids_on_phone, set(desired_cases))
         sync = self.device.sync(restore_id='')
         self.assertEqual(desired_cases, set(sync.cases))
