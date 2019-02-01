@@ -85,8 +85,8 @@ class CouchCaseRebuildTest(TestCase, CaseRebuildTestMixin):
         self.assertTrue(case.actions[0] != case.actions[1])
         self.assertTrue(case.actions[1] == case.actions[1])
 
-        orig = case.actions[1]
-        copy = CommCareCaseAction.wrap(orig._doc.copy())
+        orig = case.actions[2]
+        copy = CommCareCaseAction.wrap(deepcopy(orig._doc))
         self.assertTrue(copy != case.actions[0])
         self.assertTrue(copy == orig)
 
