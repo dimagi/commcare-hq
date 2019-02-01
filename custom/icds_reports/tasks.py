@@ -75,9 +75,9 @@ from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
-from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
+from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport, NUM_LAUNCHED_AWCS
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
-    create_excel_file, create_aww_performance_excel_file
+    create_excel_file, create_aww_performance_excel_file, DATA_NOT_ENTERED
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
 from dimagi.utils.chunked import chunked
@@ -641,6 +641,12 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             loc_level=aggregation_level,
             show_test=include_test
         ).get_excel_data(location)
+        # as DatabaseColumn from corehq.apps.reports.sqlreport doesn't format None
+        if aggregation_level > 4 and NUM_LAUNCHED_AWCS in excel_data[0][1][0]:
+            num_launched_awcs_column = excel_data[0][1][0].index(NUM_LAUNCHED_AWCS)
+            for record in [record for n, record in enumerate(excel_data[0][1]) if n > 0]:
+                if record[num_launched_awcs_column] == DATA_NOT_ENTERED:
+                    record[num_launched_awcs_column] = 'Not Launched'
     elif indicator == AWC_INFRASTRUCTURE_EXPORT:
         data_type = 'AWC_Infrastructure'
         excel_data = AWCInfrastructureExport(
