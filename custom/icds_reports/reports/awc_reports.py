@@ -1242,11 +1242,13 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         month__gte=one_month_ago,
-    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'lactating', 'open_in_month').filter(
-        lactating=1).exclude(open_in_month=False)
+    ).order_by('case_id', '-month').distinct('case_id').values(
+        'case_id', 'lactating', 'open_in_month', 'date_death'
+    ).filter(lactating=1, date_death=None).exclude(open_in_month=False)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         month__gte=one_month_ago,
+        date_death=None,
         case_id__in=[case['case_id'] for case in data],
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
