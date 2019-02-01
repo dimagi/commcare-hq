@@ -80,7 +80,6 @@ jinja2==2.10
 jmespath==0.9.3           # via boto3, botocore
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.15
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==3.0.37             # via celery
@@ -112,7 +111,6 @@ pypdf2==1.26.0            # via xhtml2pdf
 pystache==0.5.4           # via pycco
 python-dateutil==2.6.1
 python-editor==1.0.3      # via alembic
-python-levenshtein==0.12.0
 python-magic==0.4.13
 python-mimeparse==1.6.0   # via django-tastypie
 pytz==2017.2
