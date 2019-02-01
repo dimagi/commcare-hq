@@ -125,9 +125,9 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         form_xml = self.get_xml('form_with_media_refs').decode('utf-8')
         form = app.get_module(0).new_form('form_with_media', 'en', attachment=form_xml)
         xform = form.wrapped_xform()
-        for i, path in enumerate(xform.media_references(form="audio")):
+        for i, path in enumerate(reversed(sorted(xform.media_references(form="audio")))):
             app.create_mapping(CommCareAudio(_id='form_audio_{}'.format(i)), path, save=False)
-        for i, path in enumerate(xform.media_references(form="image")):
+        for i, path in enumerate(sorted(xform.media_references(form="image"))):
             app.create_mapping(CommCareImage(_id='form_image_{}'.format(i)), path, save=False)
 
         app.set_media_versions()
