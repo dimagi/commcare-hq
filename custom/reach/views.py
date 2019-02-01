@@ -140,4 +140,3 @@ class LocationFilterAPI(View):
                 parent_id=loc.parent.location_id if loc.parent else None
             ) for loc in locations]
         })
-

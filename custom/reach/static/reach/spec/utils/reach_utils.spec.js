@@ -7,6 +7,6 @@ describe('Reach Utils', function () {
 
     it('test india format', function () {
         var number = reachUtils.toIndiaFormat('123456789');
-        assert.equal(number, '12,34,56,789')
+        assert.equal(number, '12,34,56,789');
     });
 });

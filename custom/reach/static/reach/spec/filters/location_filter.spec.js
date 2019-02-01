@@ -6,6 +6,6 @@ describe('Reach Location Filter', function () {
     });
 
     it('test template', function () {
-        assert.equal(locationModel.template, '<div data-bind="template: { name: \'location-template\' }"></div>')
+        assert.equal(locationModel.template, '<div data-bind="template: { name: \'location-template\' }"></div>');
     });
 });

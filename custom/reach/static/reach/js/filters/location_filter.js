@@ -4,7 +4,7 @@ hqDefine('reach/js/filters/location_filter', [
     'underscore',
     'moment/moment',
     'hqwebapp/js/initial_page_data',
-    'reach/js/utils/reach_utils'
+    'reach/js/utils/reach_utils',
 ], function (
     $,
     ko,
@@ -33,14 +33,14 @@ hqDefine('reach/js/filters/location_filter', [
                 self.locations([reachUtils.DEFAULTLOCATION].concat(data.data));
                 if (self.userLocationId !== void(0) && self.selectedLocation() === reachUtils.DEFAULTLOCATION.id) {
                     var location = _.find(self.locations(), function (item) {
-                        return item.id === self.userLocationId
+                        return item.id === self.userLocationId;
                     });
                     self.selectedLocation(location.id);
                 }
-            })
+            });
         };
 
-        self.setChild = function(child) {
+        self.setChild = function (child) {
             self.child = child;
         };
 
@@ -104,7 +104,7 @@ hqDefine('reach/js/filters/location_filter', [
                     phc,
                     sc,
                     village,
-                ])
+                ]);
             } else {
                 var block = locationModel({slug: 'block', name: 'Block', parent: district, userLocationId: userLocationIds[2], postData: params.postData});
                 var sector = locationModel({slug: 'sector', name: 'Sector (Project)', parent: block, userLocationId: userLocationIds[3], postData: params.postData});
@@ -124,14 +124,14 @@ hqDefine('reach/js/filters/location_filter', [
             self.resetFilter = function () {
                 _.each(self.hierarchyConfig(), function (location) {
                     location.setDefaultOption();
-                })
+                });
             };
 
-            self.applyFilters = function() {
+            self.applyFilters = function () {
                 self.showFilter(false);
-                params.callback()
+                params.callback();
             };
-            return self
+            return self;
         },
         template: '<div data-bind="template: { name: \'location-template\' }"></div>',
     };

@@ -10,7 +10,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                         numerator: 71682,
                         denominator: 140098,
                         past_month_numerator: 69354,
-                        past_month_denominator: 130098
+                        past_month_denominator: 130098,
                     },
                     {
                         indicator: 'Registered Pregnancies',
@@ -19,7 +19,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                         numerator: 9908,
                         denominator: 128990,
                         past_month_numerator: 12458,
-                        past_month_denominator: 115800
+                        past_month_denominator: 115800,
                     },
                     {
                         indicator: 'Registered Children',
@@ -28,7 +28,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                         numerator: 21630,
                         denominator: 890743,
                         past_month_numerator: 40687,
-                        past_month_denominator: 715486
+                        past_month_denominator: 715486,
                     }
                 ],
                 [
@@ -39,7 +39,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                         numerator: 65028,
                         denominator: 928103,
                         past_month_numerator: 60486,
-                        past_month_denominator: 914384
+                        past_month_denominator: 914384,
                     },
                     {
                         indicator: 'High Risk Pregnancies',
@@ -48,7 +48,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                         numerator: 207,
                         denominator: 9908,
                         past_month_numerator: 204,
-                        past_month_denominator: 9837
+                        past_month_denominator: 9837,
                     },
                     {
                         indicator: 'Institutional Deliveries',
@@ -57,10 +57,10 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                         numerator: 14311,
                         denominator: 21837,
                         past_month_numerator: 16486,
-                        past_month_denominator: 21648
-                    }
-                ]
-            ]
+                        past_month_denominator: 21648,
+                    },
+                ],
+            ],
         },
         expectedValues: [
             {
@@ -74,7 +74,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                 isNumeric: true,
                 isPercent: false,
                 indiaFormat: '71,682',
-                diffBetweenMonths: '(-4.02% from last month)'
+                diffBetweenMonths: '(-4.02% from last month)',
             },
             {
                 indicator: 'Registered Pregnancies',
@@ -87,7 +87,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                 isNumeric: true,
                 isPercent: false,
                 indiaFormat: '9,908',
-                diffBetweenMonths: '(-28.60% from last month)'
+                diffBetweenMonths: '(-28.60% from last month)',
             },
             {
                 indicator: 'Registered Children',
@@ -100,7 +100,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                 isNumeric: true,
                 isPercent: false,
                 indiaFormat: '21,630',
-                diffBetweenMonths: '(-57.30% from last month)'
+                diffBetweenMonths: '(-57.30% from last month)',
             },
             {
                 indicator: 'Couples using Family Planning Method',
@@ -114,7 +114,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                 isPercent: true,
                 percentFormat: '7.01 %',
                 secondValueFormat: '65,028 / 9,28,103',
-                diffBetweenMonths: '(+5.92% from last month)'
+                diffBetweenMonths: '(+5.92% from last month)',
             },
             {
                 indicator: 'High Risk Pregnancies',
@@ -128,7 +128,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                 isPercent: true,
                 percentFormat: '2.09 %',
                 secondValueFormat: '207 / 9,908',
-                diffBetweenMonths: '(+0.74% from last month)'
+                diffBetweenMonths: '(+0.74% from last month)',
             },
             {
                 indicator: 'Institutional Deliveries',
@@ -142,8 +142,8 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                 isPercent: true,
                 percentFormat: '65.54 %',
                 secondValueFormat: '14,311 / 21,837',
-                diffBetweenMonths: '(-13.94% from last month)'
-            }
-        ]
+                diffBetweenMonths: '(-13.94% from last month)',
+            },
+        ],
     }
 });

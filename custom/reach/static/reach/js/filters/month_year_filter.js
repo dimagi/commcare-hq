@@ -2,12 +2,12 @@ hqDefine('reach/js/filters/month_year_filter', [
     'jquery',
     'knockout',
     'underscore',
-    'moment/moment'
+    'moment/moment',
 ], function (
     $,
     ko,
     _,
-    moment,
+    moment
 ) {
     return {
         viewModel: function (params) {

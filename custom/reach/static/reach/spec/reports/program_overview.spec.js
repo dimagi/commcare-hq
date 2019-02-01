@@ -13,9 +13,9 @@ describe('Reach Program Overview', function () {
         assert.equal(indicator.pastMonthDenominator, expectedValues.pastMonthDenominator);
         assert.equal(indicator.isNumeric(), expectedValues.isNumeric);
         assert.equal(indicator.isPercent(), expectedValues.isPercent);
-        if(indicator.isPercent()) {
+        if (indicator.isPercent()) {
             assert.equal(indicator.percentFormat(), expectedValues.percentFormat);
-            var secondValueFormat = indicator.reachUtils.toIndiaFormat(indicator.numerator) + ' / ' + indicator.reachUtils.toIndiaFormat(indicator.denominator)
+            var secondValueFormat = indicator.reachUtils.toIndiaFormat(indicator.numerator) + ' / ' + indicator.reachUtils.toIndiaFormat(indicator.denominator);
             assert.equal(secondValueFormat, expectedValues.secondValueFormat);
         } else {
             assert.equal(indicator.reachUtils.toIndiaFormat(indicator.numerator), expectedValues.indiaFormat);
@@ -28,11 +28,11 @@ describe('Reach Program Overview', function () {
     });
 
     it('check title', function () {
-        assert.equal(programOverviewModel.title, 'Program Overview')
+        assert.equal(programOverviewModel.title, 'Program Overview');
     });
 
     it('check slug', function () {
-        assert.equal(programOverviewModel.slug, 'program_overview')
+        assert.equal(programOverviewModel.slug, 'program_overview');
     });
 
     it('update sections', function () {
@@ -47,8 +47,8 @@ describe('Reach Program Overview', function () {
         var indicators = [];
         _.each(programOverviewModel.sections(), function (section) {
             _.each(section, function (indicator) {
-                indicators.push(indicator)
-            })
+                indicators.push(indicator);
+            });
         });
         assert.equal(indicators.length, 6);
     });
@@ -58,11 +58,11 @@ describe('Reach Program Overview', function () {
         programOverviewModel.updateSections(data.indicators);
         _.each(programOverviewModel.sections(), function (section) {
             _.each(section, function (indicator) {
-                indicators.push(indicator)
-            })
+                indicators.push(indicator);
+            });
         });
         _.each(indicators, function (indicator, idx) {
-            verifyIndicator(indicator, data.expectedValues[idx])
-        })
-    })
+            verifyIndicator(indicator, data.expectedValues[idx]);
+        });
+    });
 });

@@ -1,7 +1,7 @@
 hqDefine("reach/js/utils/reach_utils", [
     'moment/moment',
     'hqwebapp/js/initial_page_data',
-], function(
+], function (
     moment,
     initialPageData
 ) {
@@ -19,7 +19,7 @@ hqDefine("reach/js/utils/reach_utils", [
             if (numbers.length === 2) {
                 lastThree = numbers[0].substring(numbers[0].length - 3);
                 otherNumbers = numbers[0].substring(0, numbers[0].length - 3);
-                if(otherNumbers !== '')
+                if (otherNumbers !== '')
                     lastThree = ',' + lastThree;
 
                 return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + "." + numbers[1];
@@ -27,16 +27,16 @@ hqDefine("reach/js/utils/reach_utils", [
             else {
                 lastThree = number.substring(number.length - 3);
                 otherNumbers = number.substring(0, number.length - 3);
-                if(otherNumbers !== '')
+                if (otherNumbers !== '')
                     lastThree = ',' + lastThree;
 
                 return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
             }
         };
-        return self
+        return self;
     };
 
-    var postData = function(options) {
+    var postData = function (options) {
         var self  = {};
         var userLocationId = initialPageData.get('user_location_id');
         self.selectedYear = options.selectedYear || moment().year();
@@ -52,7 +52,7 @@ hqDefine("reach/js/utils/reach_utils", [
 
     var DEFAULTLOCATION = {
         id: 'all',
-        name: 'All'
+        name: 'All',
     };
 
     return {
@@ -60,5 +60,5 @@ hqDefine("reach/js/utils/reach_utils", [
         postData: postData,
         USERROLETYPES: USERROLETYPES,
         DEFAULTLOCATION: DEFAULTLOCATION,
-    }
+    };
 });

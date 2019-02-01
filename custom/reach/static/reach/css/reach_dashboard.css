@@ -1,165 +1,153 @@
-html, body{
-    margin: 0;
-    padding: 0;
-    background: #f5f5f5;
-}
-
-.wrapper {
-    display: flex;
-    width: 100%;
-    align-items: stretch;
-}
-
-.left-menu {
-    height: 100%;
-    position: fixed;
-    z-index: 1;
-    top: 0;
-    left: 0;
-    overflow-x: hidden;
-    border-right: solid 1px #9d9d9d;
-    font-size: 14px;
-    padding-right: 0;
-    padding-left: 0;
-    color: #004ebc;
-    background: #ffffff;
-}
-
-.left-menu li {
-    padding: 10px;
-}
-
-.left-menu li.active {
-    background-color: #d3d3d3;
-    border-left: 4px solid #004ebc;
-}
-
-.logo {
-    vertical-align: middle;
-    margin: 15px auto;
-    width: 190px;
-}
-
-ul {
-  list-style-type: none;
-}
-
-.light-grey {
-    color: #9d9d9d;
-}
-
-.navbar-nav > li {
-    float: left;
-    border-left: solid 1px #9d9d9d;
-    padding: 10px;
-    width: 75px;
-    display: inline-block;
-    vertical-align: middle;
-    text-align: center;
-}
-
-li.no-padding {
-    padding: 0;
-}
-
-li.auto-width {
-    width: auto;
-}
-
-.main-container {
-    height: auto;
-    position: absolute;
-    right: 0;
-}
-
-.program-overview {
-    padding: 30px;
-}
-
-.program-overview > .row {
-    margin-bottom: 30px;
-}
-
-.no-padding {
-    padding: 0;
+.form-group,.modal-header {
+    text-align:left;
 }
 
 .indicator {
-    background: #ffffff;
-    text-align: center;
-    padding: 10px;
+    background:#fff;
+    text-align:center;
+    padding:10px;
 }
 
 .indicator-bottom {
-    text-align: center;
-    color: white;
-    padding: 10px;
+    text-align:center;
+    color:#FFF;
+    padding:10px;
 }
 
-.main-value {
-    font-size: 35px;
+.left-menu {
+    height:100%;
+    position:fixed;
+    z-index:1;
+    top:0;
+    left:0;
+    overflow-x:hidden;
+    border-right:solid 1px #9d9d9d;
+    font-size:14px;
+    padding-right:0;
+    padding-left:0;
+    color:#004ebc;
+    background:#fff;
 }
 
-.second-value {
-    font-size: 20px;
+.left-menu li {
+    padding:10px;
+}
+
+.left-menu li.active {
+    background-color:#d3d3d3;
+    border-left:4px solid #004ebc;
+}
+
+.light-grey {
+    color:#9d9d9d;
 }
 
 .line {
-    width: 80px;
-    margin: 0 auto;
+    width:80px;
+    margin:0 auto;
 }
 
 .line > hr {
-    margin-bottom: 0;
-    margin-top: 0;
-    border-top: 1px solid #9c9c9c;
+    margin-bottom:0;
+    margin-top:0;
+    border-top:1px solid #9c9c9c;
 }
 
-.select2-container {
-    display: block !important;
-    width: 100% !important;
+.logo {
+    vertical-align:middle;
+    width:190px;
+    margin:15px auto;
 }
 
-.shadow {
-    box-shadow: 0 0 5px 0 #00000036;
+.main-container {
+    height:auto;
+    position:absolute;
+    right:0;
 }
 
-.navbar-default {
-    background-color: #ffffff;
-    border-color: #e7e7e7;
-    border-radius: 0;
-    margin-bottom: 0;
-}
-
-.pointer {
-    cursor: pointer;
-}
-
-.modal-title {
-    font-size: 30px;
-    color: #004ebc;
-}
-
-.required {
-    color: #ce0500;
-}
-
-.form-group {
-    text-align: left;
-}
-
-.nav > li > a {
-    padding: 0;
-}
-
-.nav > li > a:hover {
-    background: none;
+.main-value {
+    font-size:35px;
 }
 
 .modal-footer {
-    text-align: center;
+    text-align:center;
 }
 
-.modal-header {
-    text-align: left;
+.modal-title {
+    font-size:30px;
+color:#004ebc;
+}
+
+.nav > li > a:hover {
+    background:none;
+}
+
+.navbar-default {
+    background-color:#fff;
+    border-radius:0;
+    margin-bottom:0;
+    border-color:#e7e7e7;
+}
+
+.navbar-nav > li {
+    float:left;
+    border-left:solid 1px #9d9d9d;
+    width:75px;
+    display:inline-block;
+    vertical-align:middle;
+    text-align:center;
+    padding:10px;
+}
+
+.pointer {
+    cursor:pointer;
+}
+
+.program-overview {
+    padding:30px;
+}
+
+.program-overview > .row {
+    margin-bottom:30px;
+}
+
+.required {
+    color:#ce0500;
+}
+
+.second-value {
+    font-size:20px;
+}
+
+.select2-container {
+    display:block!important;
+    width:100%!important;
+}
+
+.shadow {
+    box-shadow:0 0 5px 0 #00000036;
+}
+
+.wrapper {
+    display:flex;
+    width:100%;
+    align-items:stretch;
+}
+
+html,body {
+    background:#f5f5f5;
+    margin:0;
+    padding:0;
+}
+
+li.auto-width {
+    width:auto;
+}
+
+li.no-padding,.no-padding,.nav > li > a {
+    padding:0;
+}
+
+ul {
+    list-style-type:none;
 }

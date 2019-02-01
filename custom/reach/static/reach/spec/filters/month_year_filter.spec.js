@@ -1,4 +1,4 @@
-/* global moment, simon */
+/* global moment, sinon */
 
 describe('Reach Month Year Filter', function () {
     var monthYearModel, reachUtils, clock;
@@ -15,22 +15,22 @@ describe('Reach Month Year Filter', function () {
     });
 
     it('test template', function () {
-        assert.equal(monthYearModel.template, '<div data-bind="template: { name: \'month-year-template\' }"></div>')
+        assert.equal(monthYearModel.template, '<div data-bind="template: { name: \'month-year-template\' }"></div>');
     });
 
-    it('test month year model initialization', function() {
+    it('test month year model initialization', function () {
         var params = {
             postData: reachUtils.postData({}),
-            callback: function () {}
+            callback: function () {},
         };
         var model = monthYearModel.viewModel(params);
 
         assert.equal(model.showFilter(), false);
 
         var expectedYears = [
-            {id: 2017, name:2017},
-            {id: 2018, name:2018},
-            {id: 2019, name:2019}
+            {id: 2017, name: 2017},
+            {id: 2018, name: 2018},
+            {id: 2019, name: 2019},
         ];
         _.each(expectedYears, function (year, idx) {
             assert.equal(model.availableYears()[idx].id, year.id);
@@ -39,7 +39,7 @@ describe('Reach Month Year Filter', function () {
 
         // only one month because now is set to the '2019-01-01'
         var expectedMonths = [
-            {id: 1, name: "January"}
+            {id: 1, name: "January"},
         ];
 
         assert.equal(model.availableMonths().length, 1);
@@ -52,19 +52,19 @@ describe('Reach Month Year Filter', function () {
         assert.equal(model.selectedYear(), 2019);
     });
 
-    it('test month year selected year subscribe method', function() {
+    it('test month year selected year subscribe method', function () {
         var params = {
             postData: reachUtils.postData({}),
-            callback: function () {}
+            callback: function () {},
         };
         var model = monthYearModel.viewModel(params);
 
         assert.equal(model.showFilter(), false);
 
         var expectedYears = [
-            {id: 2017, name:2017},
-            {id: 2018, name:2018},
-            {id: 2019, name:2019}
+            {id: 2017, name: 2017},
+            {id: 2018, name: 2018},
+            {id: 2019, name: 2019},
         ];
         _.each(expectedYears, function (year, idx) {
             assert.equal(model.availableYears()[idx].id, year.id);
@@ -73,7 +73,7 @@ describe('Reach Month Year Filter', function () {
 
         // only one month because now is set to the '2019-01-01'
         var expectedMonths = [
-            {id: 1, name: "January"}
+            {id: 1, name: "January"},
         ];
 
         assert.equal(model.availableMonths().length, 1);
@@ -91,9 +91,9 @@ describe('Reach Month Year Filter', function () {
         assert.equal(model.selectedYear(), 2018);
 
         expectedYears = [
-            {id: 2017, name:2017},
-            {id: 2018, name:2018},
-            {id: 2019, name:2019}
+            {id: 2017, name: 2017},
+            {id: 2018, name: 2018},
+            {id: 2019, name: 2019},
         ];
         _.each(expectedYears, function (year, idx) {
             assert.equal(model.availableYears()[idx].id, year.id);
@@ -112,7 +112,7 @@ describe('Reach Month Year Filter', function () {
             {id: 9, name: "September"},
             {id: 10, name: "October"},
             {id: 11, name: "November"},
-            {id: 12, name: "December"}
+            {id: 12, name: "December"},
         ];
 
         assert.equal(model.availableMonths().length, 12);
@@ -122,10 +122,10 @@ describe('Reach Month Year Filter', function () {
         });
     });
 
-    it('test resetFilter', function() {
+    it('test resetFilter', function () {
         var params = {
             postData: reachUtils.postData({}),
-            callback: function () {}
+            callback: function () {},
         };
         var model = monthYearModel.viewModel(params);
 
@@ -143,11 +143,11 @@ describe('Reach Month Year Filter', function () {
         assert.equal(model.selectedMonth(), 1);
     });
 
-    it('test applyFilters', function() {
+    it('test applyFilters', function () {
         var postData = reachUtils.postData({});
         var params = {
             postData: postData,
-            callback: function () {}
+            callback: function () {},
         };
         var model = monthYearModel.viewModel(params);
 
