@@ -1,18 +1,19 @@
 hqDefine('reports_core/js/choice_list_utils_v4', ['underscore'], function (_) {
     var module = {};
+    // todo: we may need to support configuring this in the future
     var pageSize = 20;
 
-    module.getApiQueryParams = function (params) {
+    module.getApiQueryParams = function (term, page) {
         return {
-            q: params.term, // search term
-            page: params.page,
+            q: term, // search term
+            page: page,
             limit: pageSize,
         };
     };
     module.formatValueForSelect2 = function (val) {
         return {'id': val.value, 'text': val.display || ''};
     };
-    module.formatPageForSelect2 = function (data, params) {
+    module.formatPageForSelect2 = function (data) {
         // parse the results into the format expected by Select2.
         var formattedData = _.map(data, module.formatValueForSelect2);
         return {
