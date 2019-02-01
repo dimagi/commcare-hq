@@ -618,6 +618,9 @@ class CcsRecordMonthlyView(models.Model):
     closed = models.SmallIntegerField(blank=True, null=True)
     anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
     date_death = models.DateField(blank=True, null=True)
+    eating_extra = models.SmallIntegerField(blank=True, null=True)
+    resting = models.SmallIntegerField(blank=True, null=True)
+    immediate_breastfeeding = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'

@@ -1161,8 +1161,7 @@ def get_pregnant_details(case_id, awc_id):
         'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
         'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
         'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
-        'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
-        'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
+        'eating_extra', 'resting', 'immediate_breastfeeding', 'using_ifa',
         'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month', 'anc_abnormalities'
     )
 
