@@ -522,7 +522,7 @@ class EntriesHelper(object):
             datum=SessionDatum(
                 id=load_case_from_fixture.fixture_tag,
                 nodeset=load_case_from_fixture.fixture_nodeset,
-                value="./@" + load_case_from_fixture.fixture_variable,
+                value=load_case_from_fixture.fixture_variable,
                 detail_select=self.details_helper.get_detail_id_safe(target_module, 'case_short'),
                 detail_confirm=self.details_helper.get_detail_id_safe(target_module, 'case_long'),
             ),
