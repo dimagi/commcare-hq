@@ -102,6 +102,12 @@ class CouchCaseRebuildTest(TestCase, CaseRebuildTestMixin):
         copy.updated_unknown_properties['pnew'] = ''
         self.assertTrue(copy != orig)
 
+    def test_couch_action_not_equals(self):
+        orig = CommCareCaseAction()
+        copy = CommCareCaseAction.wrap(deepcopy(orig._doc))
+        self.assertTrue(orig == copy)
+        self.assertFalse(orig != copy)
+
     def test_couch_soft_rebuild(self):
         user_id = 'test-basic-rebuild-user'
         now = datetime.utcnow()
