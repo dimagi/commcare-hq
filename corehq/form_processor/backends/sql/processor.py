@@ -257,7 +257,9 @@ class FormProcessorSQL(object):
                         "This usually means it had a missing ID" % xform.get_id
                     )
 
-        return touched_cases
+        return OrderedDict([
+            (k, v) for k, v in reversed(touched_cases.items())
+        ])
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True):
