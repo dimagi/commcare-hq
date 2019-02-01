@@ -11,8 +11,6 @@ import magic
 from couchdbkit.exceptions import ResourceConflict
 from django.template.defaultfilters import filesizeformat
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
@@ -919,16 +917,13 @@ class ApplicationMediaMixin(Document, MediaMixin):
             Gets all the media objects stored in the multimedia map.
             If passed a profile, will only get those that are used
             in a language in the profile.
-
-            Returns a generator of tuples, where the first item in the tuple is
-            the path (jr://...) and the second is the object (CommCareMultimedia or a subclass)
         """
         found_missing_mm = False
-        filter_multimedia = languages and domain_has_privilege(self.domain, privileges.BUILD_PROFILES)
+        filter_multimedia = languages and self.media_language_map
         if filter_multimedia:
             requested_media = set()
             for lang in languages:
-                requested_media |= self.all_media_paths(lang=lang)
+                requested_media.update(self.media_language_map[lang].media_refs)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
