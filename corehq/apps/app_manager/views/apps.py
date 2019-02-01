@@ -163,9 +163,7 @@ def get_app_view_context(request, app):
     This is where additional app or domain specific context can be added to any individual
     commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
     """
-    context = {
-        'legacy_select2': True,
-    }
+    context = {}
 
     settings_layout = copy.deepcopy(
         get_commcare_settings_layout(app.get_doc_type())
