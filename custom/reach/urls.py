@@ -16,6 +16,6 @@ dataurls = [
 ]
 
 urlpatterns = [
-    url(r'^reach_dashboard/', include(dashboardurls)),
-    url(r'^reach_dashboard_data/', include(dataurls)),
+    url(r'^aaa_dashboard/', include(dashboardurls)),
+    url(r'^aaa_dashboard_data/', include(dataurls)),
 ]

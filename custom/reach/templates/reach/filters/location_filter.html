@@ -2,7 +2,7 @@
     <div class="location-filter">
         <i class="fa fa-2x fa-map-marker light-grey icon-bar pointer" data-bind="click: function() {showFilter(true)}"></i>
     </div>
-    <div class="modal fade" tabindex="-1" role="dialog" data-bind="modal: showFilter">
+    <div class="modal fade" role="dialog" data-bind="modal: showFilter">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -13,7 +13,7 @@
                     <div class="row" data-bind="foreach: { data: hierarchyConfig, as: 'location' }">
                         <div class="col-md-6">
                              <div class="form-group">
-                                <label for="year" data-bind="text: location.name">State <span class="required">*</span></label>
+                                <label data-bind="text: location.name"></label>
                                 <select class="form-control" data-bind="
                                     options: location.locations,
                                     optionsText: 'name',

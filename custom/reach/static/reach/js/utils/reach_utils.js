@@ -51,9 +51,9 @@ hqDefine("reach/js/utils/reach_utils", [
     };
 
     var DEFAULTLOCATION = {
-            id: 'all',
-            name: 'All'
-        };
+        id: 'all',
+        name: 'All'
+    };
 
     return {
         reachUtils: reachUtils,

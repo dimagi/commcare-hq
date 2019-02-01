@@ -41,4 +41,11 @@
 {% block js-inline %}
     {{ block.super }}
     <script src="{% static 'reach/js/reports/program_overview.js' %}"></script>
+    <script>
+        $(function () {
+            var programOverviewModel = hqImport('reach/js/reports/program_overview').programOverviewModel();
+            $('#reach-dashboard').koApplyBindings(programOverviewModel);
+            programOverviewModel.callback();
+        })
+    </script>
 {% endblock %}

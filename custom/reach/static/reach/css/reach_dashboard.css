@@ -115,6 +115,11 @@ li.auto-width {
     border-top: 1px solid #9c9c9c;
 }
 
+.select2-container {
+    display: block !important;
+    width: 100% !important;
+}
+
 .shadow {
     box-shadow: 0 0 5px 0 #00000036;
 }

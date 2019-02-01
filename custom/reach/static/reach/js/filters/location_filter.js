@@ -53,7 +53,6 @@ hqDefine('reach/js/filters/location_filter', [
 
         if (self.parent !== '') {
             self.parent.selectedLocation.subscribe(function (parentSelectedId) {
-                console.log(self.name);
                 self.getLocations(parentSelectedId);
             });
         } else {
@@ -130,7 +129,7 @@ hqDefine('reach/js/filters/location_filter', [
 
             self.applyFilters = function() {
                 self.showFilter(false);
-                params.callback(params.postData)
+                params.callback()
             };
             return self
         },

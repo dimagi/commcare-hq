@@ -59,7 +59,7 @@ hqDefine('reach/js/filters/month_year_filter', [
                 params.postData.selectedMonth = self.selectedMonth();
                 params.postData.selectedYear = self.selectedYear();
                 self.showFilter(false);
-                params.callback(params.postData)
+                params.callback()
             };
             return self
         },

@@ -6,31 +6,17 @@
 <html>
 <head>
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
-    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
-    <link type="text/css"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'font-awesome/css/font-awesome.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
 
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'reach/css/reach_dashboard.css' %}"/>
-    <link type="text/css"
-                   rel="stylesheet"
-                   media="all"
-                   href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
-    <link type="text/css"
-           rel="stylesheet"
-           media="all"
-           href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
     {% javascript_libraries underscore=True hq=True %}
     <script src="{% static 'moment/moment.js' %}"></script>
 
-    <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
+    <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
     <script src="{% static 'reach/js/utils/reach_utils.js' %}"></script>
     <script src="{% static 'reach/js/filters/month_year_filter.js' %}"></script>
     <script src="{% static 'reach/js/filters/location_filter.js' %}"></script>
-    <script src="{% static 'reach/js/dashboard.js' %}"></script>
 </head>
 <body>
 
@@ -72,6 +58,7 @@
 </div>
 
 {% block js-inline %}
+    <script src="{% static 'reach/js/dashboard.js' %}"></script>
 {% endblock %}
 </div>
 </body>
