@@ -5,8 +5,6 @@ import six
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 
-from dimagi.utils.mixins import UnicodeMixIn
-
 
 class CaseNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
@@ -25,7 +23,7 @@ class LedgerValueNotFound(Exception):
 
 
 @six.python_2_unicode_compatible
-class AttachmentNotFound(UnicodeMixIn, ResourceNotFound, ObjectDoesNotExist):
+class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist):
 
     def __init__(self, attachment_name):
         self.attachment_name = attachment_name

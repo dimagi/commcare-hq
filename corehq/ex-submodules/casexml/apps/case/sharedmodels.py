@@ -4,8 +4,6 @@ import mimetypes
 
 from corehq.form_processor.abstract_models import IsImageMixin
 from dimagi.ext.couchdbkit import StringProperty, IntegerProperty, DictProperty
-
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 import six
 
@@ -16,7 +14,7 @@ Shared models live here to avoid cyclical import issues
 
 
 @six.python_2_unicode_compatible
-class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
+class CommCareCaseIndex(LooselyEqualDocumentSchema):
     """
     In CaseXML v2 we support indices, which link a case to other cases.
     """
@@ -65,7 +63,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
         return str(self)
 
 
-class CommCareCaseAttachment(LooselyEqualDocumentSchema, IsImageMixin, UnicodeMixIn):
+class CommCareCaseAttachment(LooselyEqualDocumentSchema, IsImageMixin):
     identifier = StringProperty()
     attachment_src = StringProperty()
     attachment_from = StringProperty()

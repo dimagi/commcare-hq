@@ -18,7 +18,6 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from memoized import memoized
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case import const
@@ -249,7 +248,7 @@ class UCRSyncLog(Document):
     datetime = DateTimeProperty()
 
 
-class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
+class AbstractSyncLog(SafeSaveDocument):
     date = DateTimeProperty()
     domain = StringProperty()  # this is only added as of 11/2016 - not guaranteed to be set
     user_id = StringProperty()

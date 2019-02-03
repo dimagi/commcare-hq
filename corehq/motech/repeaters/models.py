@@ -46,7 +46,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 from .const import (
@@ -94,7 +93,7 @@ DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 
 
-class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
+class Repeater(QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
     other properties of the configuration.
