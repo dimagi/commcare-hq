@@ -114,6 +114,7 @@ class XFormOperation(DocumentSchema):
     operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
+@six.python_2_unicode_compatible
 class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                     ComputedDocumentMixin, CouchDocLockableMixIn,
                     AbstractXFormInstance):
@@ -243,7 +244,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def app_version(self):
         return None
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s)" % (self.type, self.xmlns)
 
     def save(self, **kwargs):
@@ -481,6 +482,7 @@ class XFormArchived(XFormError):
         return True
 
 
+@six.python_2_unicode_compatible
 class SubmissionErrorLog(XFormError):
     """
     When a hard submission error (typically bad XML) is received we save it
@@ -488,7 +490,7 @@ class SubmissionErrorLog(XFormError):
     """
     md5 = StringProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "Doc id: %s, Error %s" % (self.get_id, self.problem)
 
     def get_xml(self):
@@ -524,6 +526,7 @@ class DefaultAuthContext(DocumentSchema):
         return True
 
 
+@six.python_2_unicode_compatible
 class UnfinishedSubmissionStub(models.Model):
     xform_id = models.CharField(max_length=200)
     timestamp = models.DateTimeField(db_index=True)
@@ -532,7 +535,7 @@ class UnfinishedSubmissionStub(models.Model):
     date_queued = models.DateTimeField(null=True, db_index=True)
     attempts = models.IntegerField(default=0)
 
-    def __unicode__(self):
+    def __str__(self):
         return six.text_type(
             "UnfinishedSubmissionStub("
             "xform_id={s.xform_id},"
@@ -545,6 +548,7 @@ class UnfinishedSubmissionStub(models.Model):
         app_label = 'couchforms'
 
 
+@six.python_2_unicode_compatible
 class UnfinishedArchiveStub(models.Model):
     xform_id = models.CharField(max_length=200)
     user_id = models.CharField(max_length=200, default=None, blank=True, null=True)
@@ -553,7 +557,7 @@ class UnfinishedArchiveStub(models.Model):
     history_updated = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
 
-    def __unicode__(self):
+    def __str__(self):
         return six.text_type(
             "UnfinishedArchiveStub("
             "xform_id={s.xform_id},"

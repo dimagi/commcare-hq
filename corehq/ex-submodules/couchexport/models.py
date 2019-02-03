@@ -115,6 +115,7 @@ class Format(object):
         return cls(format, **cls.FORMAT_DICT[format])
 
 
+@six.python_2_unicode_compatible
 class ExportSchema(Document, UnicodeMixIn):
     """
     An export schema that can store intermittent contents of the export so
@@ -124,7 +125,7 @@ class ExportSchema(Document, UnicodeMixIn):
     schema = DictProperty()
     timestamp = TimeStampProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (json.dumps(self.index), self.timestamp)
 
     @classmethod
@@ -594,6 +595,7 @@ class DefaultExportSchema(BaseSavedExportSchema):
         return None
 
 
+@six.python_2_unicode_compatible
 class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     """
     Lets you save an export format with a schema and list of columns
@@ -620,7 +622,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     # ID of  the new style export that it was converted to
     converted_saved_export_id = StringProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s)" % (self.name, self.index)
 
     def transform(self, doc):

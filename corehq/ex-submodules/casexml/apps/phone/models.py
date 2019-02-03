@@ -441,6 +441,7 @@ class SyncLogSQL(models.Model):
             )
 
 
+@six.python_2_unicode_compatible
 class SyncLog(AbstractSyncLog):
     """
     A log of a single sync operation.
@@ -668,7 +669,7 @@ class SyncLog(AbstractSyncLog):
                 return True
             return False
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
 
     def tests_only_get_cases_on_phone(self):

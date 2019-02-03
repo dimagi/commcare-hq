@@ -15,6 +15,7 @@ Shared models live here to avoid cyclical import issues
 """
 
 
+@six.python_2_unicode_compatible
 class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
     """
     In CaseXML v2 we support indices, which link a case to other cases.
@@ -47,7 +48,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
                    referenced_id=index.referenced_id,
                    relationship=index.relationship,)
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "CommCareCaseIndex("
             "identifier='{index.identifier}', "

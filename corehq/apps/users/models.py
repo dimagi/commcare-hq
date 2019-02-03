@@ -941,6 +941,7 @@ class ReportingMetadata(DocumentSchema):
     last_build_for_user = SchemaProperty(LastBuild)
 
 
+@six.python_2_unicode_compatible
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
@@ -1067,7 +1068,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     user_id = userID
 
-    def __unicode__(self):
+    def __str__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):

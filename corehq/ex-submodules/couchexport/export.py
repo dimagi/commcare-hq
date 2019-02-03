@@ -212,12 +212,13 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
     return config, updated_schema, export_schema_checkpoint
 
 
+@six.python_2_unicode_compatible
 class Constant(UnicodeMixIn):
 
     def __init__(self, message):
         self.message = message
 
-    def __unicode__(self):
+    def __str__(self):
         return self.message
 
 SCALAR_NEVER_WAS = settings.COUCHEXPORT_SCALAR_NEVER_WAS \

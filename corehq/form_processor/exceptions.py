@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -22,12 +24,13 @@ class LedgerValueNotFound(Exception):
     pass
 
 
+@six.python_2_unicode_compatible
 class AttachmentNotFound(UnicodeMixIn, ResourceNotFound, ObjectDoesNotExist):
 
     def __init__(self, attachment_name):
         self.attachment_name = attachment_name
 
-    def __unicode__(self):
+    def __str__(self):
         return "Attachment '{}' not found".format(self.attachment_name)
 
 
