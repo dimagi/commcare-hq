@@ -69,7 +69,6 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
-from dimagi.utils.mixins import UnicodeMixIn
 
 from dimagi.utils.modules import to_function
 from io import open
@@ -481,7 +480,7 @@ class ReportMeta(DocumentSchema):
 
 
 @six.python_2_unicode_compatible
-class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
+class ReportConfiguration(QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
     """

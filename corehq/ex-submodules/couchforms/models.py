@@ -25,7 +25,6 @@ from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.indicators import ComputedDocumentMixin
-from dimagi.utils.mixins import UnicodeMixIn
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import WrappingAttributeError
 from lxml import etree
@@ -115,7 +114,7 @@ class XFormOperation(DocumentSchema):
 
 
 @six.python_2_unicode_compatible
-class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
+class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
                     ComputedDocumentMixin, CouchDocLockableMixIn,
                     AbstractXFormInstance):
     """An XForms instance."""

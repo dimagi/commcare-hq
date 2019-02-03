@@ -7,7 +7,6 @@ from couchexport.exceptions import SchemaMismatchException,\
 from couchexport.schema import extend_schema
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
 from memoized import memoized
@@ -213,7 +212,7 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
 
 
 @six.python_2_unicode_compatible
-class Constant(UnicodeMixIn):
+class Constant(object):
 
     def __init__(self, message):
         self.message = message

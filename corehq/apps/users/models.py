@@ -69,7 +69,6 @@ from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_case
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from xml.etree import cElementTree as ElementTree
 
@@ -942,7 +941,7 @@ class ReportingMetadata(DocumentSchema):
 
 
 @six.python_2_unicode_compatible
-class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
+class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     """
     A user (for web and commcare)
     """
