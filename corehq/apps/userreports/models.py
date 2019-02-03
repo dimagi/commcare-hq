@@ -480,6 +480,7 @@ class ReportMeta(DocumentSchema):
     builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
 
+@six.python_2_unicode_compatible
 class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
@@ -501,7 +502,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     report_meta = SchemaProperty(ReportMeta)
     custom_query_provider = StringProperty(required=False)
 
-    def __unicode__(self):
+    def __str__(self):
         return '{} - {}'.format(self.domain, self.title)
 
     def save(self, *args, **kwargs):

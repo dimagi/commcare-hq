@@ -927,6 +927,7 @@ class SubscriberManager(models.Manager):
             return None
 
 
+@six.python_2_unicode_compatible
 class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
@@ -939,7 +940,7 @@ class Subscriber(models.Model):
     class Meta(object):
         app_label = 'accounting'
 
-    def __unicode__(self):
+    def __str__(self):
         return "DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
