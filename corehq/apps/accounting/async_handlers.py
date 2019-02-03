@@ -214,7 +214,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__icontains=self.search_string)
-        return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]
+        return [(p.id, six.text_type(p)) for p in plan_versions.order_by('plan__name')]
 
     @property
     def new_plan_version_response(self):
