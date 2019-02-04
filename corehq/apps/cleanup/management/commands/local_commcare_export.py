@@ -62,7 +62,7 @@ def _get_form_mock(project, params):
         payload=es_query,
         model=ESXFormInstance,
         es_client=XFormES(project),
-    ).order_by('-received_on')
+    ).order_by('received_on')
     return MockApi(
         query_set, XFormInstanceResource(), XFormInstanceSerializer()
     )
