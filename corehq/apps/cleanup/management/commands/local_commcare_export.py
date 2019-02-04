@@ -18,6 +18,7 @@ from corehq.apps.api.resources.v0_3 import CaseListFilters
 from corehq.apps.api.resources.v0_4 import CommCareCaseResource, XFormInstanceResource
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
 from corehq.apps.cloudcare.api import ElasticCaseQuery
+from corehq.elastic import ESError
 
 
 class MockApi(namedtuple('MockApi', 'query_set resource serializer')):
@@ -77,6 +78,16 @@ def _get_mock_api(resource, project, params):
         raise ValueError("Unknown/unsupported resource type '{}'".format(resource))
 
 
+def local_on_backoff(details):
+    from commcare_export.commcare_hq_client import on_backoff
+    on_backoff(details)
+
+
+def local_on_giveup(details):
+    from commcare_export.commcare_hq_client import on_giveup
+    on_giveup(details)
+
+
 class LocalCommCareHqClient(object):
     """
     Like CommCareHqClient but for a local environment
@@ -87,18 +98,19 @@ class LocalCommCareHqClient(object):
         self.limit = limit
         self._checkpoint_manager = checkpoint_manager
 
-    # todo: backoff?
-    # @backoff.on_exception(
-    #     backoff.expo, requests.exceptions.RequestException,
-    #     max_time=300, giveup=is_client_error,
-    #     on_backoff=on_backoff, on_giveup=on_giveup
-    # )
     def get(self, es_query_set, start, params=None):
-        """
-        """
-        from commcare_export.cli import logger
-        logger.info("Fetching batch: {}-{}".format(start, start + self.limit))
-        return es_query_set[start:start + self.limit]
+        import backoff
+
+        @backoff.on_exception(
+            backoff.expo, ESError,
+            max_time=300, on_backoff=local_on_backoff, on_giveup=local_on_giveup,
+        )
+        def _inner(es_query_set, start, params):
+            from commcare_export.cli import logger
+            logger.info("Fetching batch: {}-{}".format(start, start + self.limit))
+            return es_query_set[start:start + self.limit]
+
+        return _inner(es_query_set, start, params)
 
     def iterate(self, resource, paginator, params=None):
         """
