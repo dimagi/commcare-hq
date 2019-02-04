@@ -3,6 +3,19 @@ Setting up CommCare HQ for Developers
 
 Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI. Common issues and their solutions can be found at the end of this document.
 
+### (Optional) Copying data from an existing HQ install
+
+If you're setting up HQ on a new computer, you may have an old, functional environment around.  If you don't want to start from scratch, back up your postgres and couch data.
+
+* PostgreSQL
+  * Create a pg dump.  You'll need to verify the host IP address:
+    `pg_dump -h 0.0.0.0 -U commcarehq commcare_hq > /path/to/backup_hq_db.sql`
+* Couchdb
+  * From a non-docker install: Copy `/var/lib/couchdb2/`
+  * From a docker install: Copy `~/.local/share/dockerhq/couchdb2`.
+
+Save those backups to somewhere you'll be able to access from the new environment.
+
 ### Downloading and configuring CommCare HQ
 
 #### Prerequisites
@@ -77,10 +90,25 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
 
+### (Optional) Copying data from an existing HQ install
+
+If you previously created backups of another HQ install's data, you can now copy that to the new install.
+
+* Postgres
+  * Make sure postgres is running: `./scripts/docker ps`
+  * Make sure `psql` is installed
+    * Ubuntu: `$ sudo apt install postgresql postgresql-contrib`
+  * Restore the backup: `psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql`
+* Couchdb
+  * Stop couch `./scripts/docker stop couch`
+  * Copy the `couchdb2/` dir to `~/.local/share/dockerhq/couchdb2`.
+  * Start couch `./scripts/docker start couch`
+  * Fire up fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
+
 ### Set up your django environment
 
 Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
-The easiest way to do this is using the docker instructions below.
+The easiest way to do this is using the docker instructions above.
 
 Populate your database:
 

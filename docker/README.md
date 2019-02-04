@@ -85,11 +85,6 @@ directly.
   $ ./scripts/docker runserver
 ```
 
-Notes
------
-**copying old data**
-If you don't want to start fresh, Farid wrote up some notes on copying data from an old dev environment [here](https://gist.github.com/proteusvacuum/a3884ce8b65681ebaf95).
-
 Caveats
 -------
 
