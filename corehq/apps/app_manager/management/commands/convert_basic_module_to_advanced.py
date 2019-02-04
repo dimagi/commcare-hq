@@ -14,6 +14,10 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 
+DUE_LIST_XMLNS = "http://openrosa.org/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4"
+IMMUNIZATION_XMLNS = "http://openrosa.org/formdesigner/58C65452-D21D-4935-A746-256E7C22224D"
+ELIGIBLE_COUPLE_XMLNS = "http://openrosa.org/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647"
+
 
 class Command(BaseCommand):
     help = """
@@ -29,6 +33,7 @@ class Command(BaseCommand):
         app = get_current_app(domain, app_id)
         module = app.get_module_by_unique_id(module_id)
 
+        assert module.doc_type == 'Module', "Only support modules"
         assert module.display_style == 'list', "Doesn't support grid case lists"
         assert module.referral_list.show is False, "Doesn't support referral lists"
         assert module.ref_details.short.columns == [], "Doesn't support ref details"
@@ -59,7 +64,9 @@ class Command(BaseCommand):
             )
             new_form._parent = module
             form._parent = module
+
             new_form.source = form.source
+
             actions = form.active_actions()
             open = actions.get('open_case', None)
             update = actions.get('update_case', None)
@@ -135,6 +142,23 @@ class Command(BaseCommand):
         mod_index = [i for i, mod in enumerate(modules) if mod.unique_id == module_id][0]
         modules[mod_index] = new_module
         app.modules = modules
+        app.save()
+
+        # update xml
+        app = get_current_app(domain, app_id)
+        module = app.get_module_by_unique_id(module_id)
+        for form in module.forms:
+            real_form = app.get_form(form.unique_id)
+            if form.xmlns in (DUE_LIST_XMLNS, IMMUNIZATION_XMLNS):
+                new_form_source = form.source.replace(
+                    "instance('commcaresession')/session/data/case_id",
+                    "instance('commcaresession')/session/data/case_id_load_tasks_0")
+                real_form.source = new_form_source
+            elif form.xmlns == ELIGIBLE_COUPLE_XMLNS:
+                new_form_source = form.source.replace(
+                    "instance('commcaresession')/session/data/case_id",
+                    "instance('commcaresession')/session/data/case_id_load_person_0")
+                real_form.source = new_form_source
         app.save()
         copy = app.make_build(
             comment="{} moved to an advanced module".format(module.name),

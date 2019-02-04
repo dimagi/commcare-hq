@@ -213,8 +213,8 @@
                             {% endblocktrans %}
                         {% case "invalid filter xpath" %}
                             {% if error.filter %}
-                                {% url "view_module" domain app.id error.module.unique_id as module_url error_filter=error.filter %}
-                                {% blocktrans with module_name=error.module.name|trans:langs %}
+                                {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                                {% blocktrans with module_name=error.module.name|trans:langs error_filter=error.filter %}
                                     Case List has invalid filter xpath <code>{{ error_filter }}</code> in
                                     <a href="{{ module_url }}">{{ module_name }}</a>
                                 {% endblocktrans %}

@@ -14,6 +14,9 @@ requirements: scripts/_vendor/pip-post-compile.sh
 	pip-compile -o requirements/docs-requirements.txt requirements/docs-requirements.in
 	bash scripts/pip-post-compile.sh requirements/*requirements.txt
 
+	cp requirements/*requirements.txt requirements-python3_6/
+	grep -v "futures==" requirements-python3_6/requirements.txt > temp && mv temp requirements-python3_6/requirements.txt
+
 upgrade-requirements: export CUSTOM_COMPILE_COMMAND=`make requirements` or `make upgrade-requirements`
 upgrade-requirements: scripts/_vendor/pip-post-compile.sh
 	pip-compile --upgrade -o requirements/requirements.txt requirements/requirements.in
@@ -22,3 +25,6 @@ upgrade-requirements: scripts/_vendor/pip-post-compile.sh
 	pip-compile --upgrade -o requirements/dev-requirements.txt requirements/dev-requirements.in
 	pip-compile --upgrade -o requirements/docs-requirements.txt requirements/docs-requirements.in
 	bash scripts/pip-post-compile.sh requirements/*requirements.txt
+
+	cp requirements/*requirements.txt requirements-python3_6/
+	grep -v "futures==" requirements-python3_6/requirements.txt > temp && mv temp requirements-python3_6/requirements.txt

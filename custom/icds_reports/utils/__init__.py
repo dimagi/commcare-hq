@@ -414,20 +414,12 @@ def get_symptoms(value):
 
 def get_counseling(value):
     counseling = []
-    if value['counsel_immediate_bf']:
-        counseling.append('Immediate breast feeding')
-    if value['counsel_bp_vid']:
-        counseling.append('BP vid')
-    if value['counsel_preparation']:
-        counseling.append('Preparation')
-    if value['counsel_fp_vid']:
-        counseling.append('Family planning vid')
-    if value['counsel_immediate_conception']:
-        counseling.append('Immediate conception')
-    if value['counsel_accessible_postpartum_fp']:
-        counseling.append('Accessible postpartum family planning')
-    if value['counsel_fp_methods']:
-        counseling.append('Family planning methods')
+    if value['eating_extra']:
+        counseling.append('Eating Extra')
+    if value['resting']:
+        counseling.append('Taking Rest')
+    if value['immediate_breastfeeding']:
+        counseling.append('Counsel on Immediate Breastfeeding')
     if counseling:
         return ', '.join(counseling)
     else:
