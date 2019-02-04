@@ -72,12 +72,10 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 
     $ mkdir sharedfiles
 
+### Set up docker services
+
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
-Note that if you want to run everything except for riakcs (which you often do not need for a development environment),
-the command to run is
-
-    $ ./scripts/docker up -d postgres couch redis elasticsearch kafka
 
 ### Set up your django environment
 
