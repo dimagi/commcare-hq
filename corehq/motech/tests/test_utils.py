@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import doctest
+import six
 from django.test import SimpleTestCase
 import corehq.motech.utils
 from corehq.motech.utils import pad, pformat_json
@@ -29,11 +30,11 @@ class PFormatJSONTests(SimpleTestCase):
     def test_valid_json(self):
         self.assertEqual(
             pformat_json('{"ham": "spam", "eggs": "spam"}'),
-            '{\n  "eggs": "spam",\n  "ham": "spam"\n}'
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}' if six.PY3 else '{\n  "eggs": "spam", \n  "ham": "spam"\n}'
         )
         self.assertEqual(
             pformat_json({'ham': 'spam', 'eggs': 'spam'}),
-            '{\n  "eggs": "spam",\n  "ham": "spam"\n}'
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}' if six.PY3 else '{\n  "eggs": "spam", \n  "ham": "spam"\n}'
         )
 
     def test_invalid_json(self):
