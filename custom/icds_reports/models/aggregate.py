@@ -1525,10 +1525,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
         null=True,
         help_text="Number of days the child has attended this month"
     )
-    lunch_count = models.PositiveSmallIntegerField(
-        null=True,
-        help_text="Number of days the child had the lunch"
-    )
+
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
 
