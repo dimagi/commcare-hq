@@ -221,6 +221,23 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual({}, meta_type.opened_by)
         self.assertTrue(m0f1.unique_id in meta_type.closed_by)
 
+    def test_non_existant_parent(self):
+        """If you reference a parent property in the case list but the case type has no parent, we should tell you
+        """
+        app, _ = self.get_test_app()
+        app.modules[0].case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Parent prop reference'},
+                model='case',
+                field='parent/doesnt_exist',
+                format='plain',
+                case_tile_field='header'
+            ),
+        ]
+        metadata = app.get_case_metadata()
+        prop = metadata.get_type('parent').get_property('parent/doesnt_exist', allow_parent=True)
+        self.assertIsNotNone(prop.short_details[0].error)
+
     def test_multiple_parents_case_lists(self):
         """If the case has multiple parents, and you reference a parent property in the
         case list, we can't tell which parent will be shown """
