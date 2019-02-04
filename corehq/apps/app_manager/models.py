@@ -4869,7 +4869,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     @classmethod
     def wrap(cls, data):
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
-        data.pop('media_language_map', None)
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
