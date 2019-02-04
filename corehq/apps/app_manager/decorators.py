@@ -66,18 +66,18 @@ def safe_cached_download(f):
         app_id = args[1] if len(args) > 1 else kwargs["app_id"]
         latest = True if request.GET.get('latest') == 'true' else False
         target = request.GET.get('target') or None
-
         # make endpoints that call the user fail hard
         from django.contrib.auth.models import AnonymousUser
         request.user = AnonymousUser()
+        username = request.GET.get('username', None)
         if request.GET.get('username'):
             request.GET = request.GET.copy()
             request.GET.pop('username')
 
         latest_enabled_build = None
         if latest and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            if request.GET.get('user_id'):
-                location_id = get_user_location_id(request.GET.get('user_id'))
+            if domain and username:
+                location_id = get_user_location_id(domain, username)
                 if location_id:
                     _app_id = get_build_app_id(app_id)
                     latest_enabled_build = get_latest_enabled_build_for_location(domain, location_id, _app_id)

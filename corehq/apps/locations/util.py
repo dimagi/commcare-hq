@@ -324,7 +324,11 @@ def get_locations_from_ids(location_ids, domain, base_queryset=None):
     return locations
 
 
-def get_user_location_id(user_id):
-    user = CommCareUser.get_by_user_id(user_id)
+def get_user_location_id(domain, username):
+    if '@' in username:
+        full_username = username
+    else:
+        full_username = "{}@{}.commcarehq.org".format(username, domain)
+    user = CommCareUser.get_by_username(full_username)
     if user:
         return user.location_id
