@@ -41,17 +41,18 @@ Once all the dependencies are in order, please do the following:
     $ cd commcare-hq
     $ git submodule update --init --recursive
     $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
-    $ pip install -r requirements/requirements.txt
+    $ setvirtualenvproject  # optional - sets this directory as the project root
 
-(If the last command fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
+Next, install the appropriate requirements (only one is necessary).
 
-There is also a separate collection of Dimagi dev oriented tools that you can install:
+* Recommended for those developing CommCareHQ
+  * `$ pip install -r requirements/dev-requirements.txt`
+* For production environments
+  * `$ pip install -r requirements/prod-requirements.txt`
+* Minimum required packages
+  * `$ pip install -r requirements/requirements.txt`
 
-    $ pip install -r requirements/dev-requirements.txt
-
-And for production environments you may want:
-
-    $ pip install -r requirements/prod-requirements.txt
+(If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
