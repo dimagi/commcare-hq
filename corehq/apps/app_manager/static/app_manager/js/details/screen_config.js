@@ -229,7 +229,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         return self;
     };
 
-    module.portRows = function (init) {
+    module.parentSelect = function (init) {
         var self = {};
         var defaultModule = _(init.parentModules).findWhere({
             is_parent: true,
@@ -267,10 +267,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
             }
             return options;
         });
+        return self;
     };
 
     var fixtureSelect = function (init) {
-        var self = this;
+        var self = {};
         self.active = ko.observable(init.active);
         self.fixtureType = ko.observable(init.fixtureType);
         self.displayColumn = ko.observable(init.displayColumn);
@@ -282,6 +283,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 default_option = [gettext("Select One")];
             return default_option.concat(columns_for_type);
         });
+        return self;
     };
 
     module.detailScreenConfig = (function () {
@@ -999,7 +1001,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.multimedia = spec.multimedia || {};
                 self.module_id = spec.module_id || '';
                 if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
-                    self.parentSelect = module.portRows({
+                    self.parentSelect = module.parentSelect({
                         active: spec.parentSelect.active,
                         moduleId: spec.parentSelect.module_id,
                         parentModules: spec.parentModules,
