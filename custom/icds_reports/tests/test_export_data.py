@@ -1859,7 +1859,7 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a1', '91555555',
-                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a17', 'Data Not Entered',
@@ -1871,15 +1871,15 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a33', 'Data Not Entered',
-                        12, 'Not Launched', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
+                        12, 'Data Not Entered', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
-                        16, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
+                        16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered',
-                        14, 'Launched', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
+                        14, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a9', 'Data Not Entered',
@@ -1887,11 +1887,11 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered',
-                        8, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        8, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered',
-                        17, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        17, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a2', 'Data Not Entered',
@@ -1907,11 +1907,11 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
-                        7, 'Not Launched', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0
+                        7, 'Data Not Entered', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a50', 'Data Not Entered',
-                        19, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        19, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ]
                 ]],
                 ['Export Info', [

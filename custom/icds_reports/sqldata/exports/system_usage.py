@@ -47,9 +47,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 NUM_LAUNCHED_AWCS,
                 SumColumn('num_launched_awcs'),
-                format_fn=lambda x: (
-                    'Launched' if x else 'Not Launched'
-                ) if self.loc_level > 4 else (x or 0),
+                format_fn=lambda x: (x or 0),
                 slug='num_launched_awcs'
             ),
             DatabaseColumn(
