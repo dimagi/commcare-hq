@@ -252,6 +252,13 @@ class AppCaseMetadata(JsonObject):
         return prop
 
     def add_property_detail(self, detail_type, root_case_type, module_id, column):
+        if column.field == '#owner_name':
+            return None
+
+        parts = column.field.split('/')
+        if parts and parts[0] == 'user':
+            return None
+
         if column.useXpathExpression:
             return column.field
         try:

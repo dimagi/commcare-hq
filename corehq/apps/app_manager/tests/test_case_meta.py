@@ -282,3 +282,32 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                  .short_details[0].module_id),
                 app.modules[4].unique_id
             )
+
+    def test_non_case_props(self):
+        """We have special syntax in case lists and case details which shouldn't show up in the view for case types
+        """
+        app, _ = self.get_test_app()
+        app.modules[0].case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Owner Name'},
+                model='case',
+                field='#owner_name',
+                format='plain',
+                case_tile_field='header'
+            ),
+            DetailColumn(
+                header={'en': 'Username'},
+                model='case',
+                field='user/username',
+                format='plain',
+                case_tile_field='header'
+            ),
+        ]
+        metadata = app.get_case_metadata()
+        prop = metadata.get_type('parent').get_property('#owner_name')
+        self.assertFalse(prop.short_details)
+        self.assertFalse(prop.long_details)
+
+        prop = metadata.get_type('parent').get_property('user/username', allow_parent=True)
+        self.assertFalse(prop.short_details)
+        self.assertFalse(prop.long_details)
