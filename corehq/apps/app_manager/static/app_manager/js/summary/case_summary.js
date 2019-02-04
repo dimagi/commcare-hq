@@ -64,12 +64,12 @@ hqDefine('app_manager/js/summary/case_summary',[
             return caseTypeModel(caseType);
         });
 
-        self.showConditions = ko.observable(true);
+        self.showConditions = ko.observable(false);
         self.toggleConditions = function () {
             self.showConditions(!self.showConditions());
         };
 
-        self.showCalculations = ko.observable(true);
+        self.showCalculations = ko.observable(false);
         self.toggleCalculations = function () {
             self.showCalculations(!self.showCalculations());
         };
