@@ -101,7 +101,7 @@ msgpack-python==0.5.6
 numpy==1.7.1
 openpyxl==2.6.0b1
 packaging==19.0           # via sphinx
-pbr==5.1.1
+pbr==5.1.2
 phonenumberslite==8.8.9
 pillow==5.2.0
 ply==3.11
@@ -121,7 +121,7 @@ pyparsing==2.3.1          # via packaging
 pypdf2==1.26.0
 pystache==0.5.4
 python-dateutil==2.6.1
-python-editor==1.0.3
+python-editor==1.0.4
 python-levenshtein==0.12.0
 python-magic==0.4.13
 python-mimeparse==1.6.0
@@ -150,7 +150,7 @@ sphinx==1.7.2
 sphinxcontrib-django==0.3.1
 sphinxcontrib-websupport==1.1.0  # via sphinx
 sqlagg==0.12.0
-sqlalchemy==1.2.16
+sqlalchemy==1.2.17
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2

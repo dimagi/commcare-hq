@@ -97,7 +97,7 @@ mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
 numpy==1.7.1
 openpyxl==2.6.0b1
-pbr==5.1.1                # via mock
+pbr==5.1.2                # via mock
 phonenumberslite==8.8.9
 pillow==5.2.0
 ply==3.11                 # via eulxml, jsonpath-rw
@@ -116,7 +116,7 @@ pyopenssl==19.0.0         # via requests
 pypdf2==1.26.0            # via xhtml2pdf
 pystache==0.5.4           # via pycco
 python-dateutil==2.6.1
-python-editor==1.0.3      # via alembic
+python-editor==1.0.4      # via alembic
 python-levenshtein==0.12.0
 python-magic==0.4.13
 python-mimeparse==1.6.0   # via django-tastypie
@@ -140,7 +140,7 @@ six==1.11.0
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3
 sqlagg==0.12.0
-sqlalchemy==1.2.16
+sqlalchemy==1.2.17
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2       # via faker
