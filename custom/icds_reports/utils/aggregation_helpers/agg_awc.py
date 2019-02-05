@@ -10,6 +10,7 @@ from six.moves import map
 
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, \
     month_formatter
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):
@@ -141,6 +142,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
             cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating
+            valid_home_visits = ut.valid_home_visits,
+            expected_home_visits = ut.expected_home_visits
         FROM (
             SELECT
                 awc_id,
@@ -148,13 +151,41 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(pregnant) AS cases_ccs_pregnant,
                 sum(lactating) AS cases_ccs_lactating,
                 sum(pregnant_all) AS cases_ccs_pregnant_all,
-                sum(lactating_all) AS cases_ccs_lactating_all
+                sum(lactating_all) AS cases_ccs_lactating_all,
+                sum(valid_visits) AS valid_home_visits,
+                sum(expected_visits) AS expected_home_visits
             FROM agg_ccs_record
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
+        ), {
+            'start_date': self.month_start
+        }
+
+        yield """
+        UPDATE "{tablename}" agg_awc SET
+        valid_home_visits = valid_home_visits + ut.valid_home_visits,
+        expected_home_visits = expected_home_visits + ut.expected_home_visits
+        FROM (
+        SELECT
+        agg_cf.month as month,
+        SUM(0.39) as expected_home_visits,
+        SUM(COALESCE(agg_cf.valid_visits, 0)) as valid_home_visits,
+        ucr.awc_id
+        FROM "{ccs_record_case_ucr}" ucr
+        LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND agg_cf.month = %(start_date)s
+        WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (closed_on IS NULL OR
+         date_trunc('month', closed_on)::DATE > %(start_date)s) AND
+         date_trunc('month', opened_on) <= %(start_date)s
+        GROUP BY ucr.awc_id
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id AND ut.month = agg_awc.month AND agg_awc.aggregation_level = 5
+        """.format(
+            tablename=self.tablename,
+            ccs_record_case_ucr=self._ucr_tablename('static-ccs_record_cases'),
+            agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             'start_date': self.month_start
         }
