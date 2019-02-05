@@ -170,14 +170,7 @@
                 <!-- /ko -->
         </div>
     </div>
-    <script type="text/html" id="detail-errors">
-        <ul class="list-unstyled" data-bind="foreach: $data">
-            <li>
-                <span data-bind="html: $root.moduleReference($data.module_id)"></span> "<!-- ko text: $root.translate($data.header) --><!-- /ko -->"
 
-            </li>
-        </ul>
-    </script>
     {# List of forms that open/close a case type #}
     <script type="text/html" id="opened-closed-by">
         <ul data-bind="foreach: $data">
