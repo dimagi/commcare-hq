@@ -454,6 +454,8 @@ class AggAwc(models.Model):
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
+    valid_home_visits = models.IntegerField(null=True)
+    expected_home_visits = models.IntegerField(null=True)
 
     class Meta:
         managed = False
