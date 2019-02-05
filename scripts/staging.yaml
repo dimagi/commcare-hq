@@ -52,5 +52,5 @@ branches:
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
   - dmr/fix-es-service-check  # Danny Jan 3
   - np/edit-feed  # Nick P Jan 23
-  - jls/select2-accept-csv  # Jenny Feb 1
+#  - jls/select2-accept-csv  # Jenny Feb 1
 submodules: {}
