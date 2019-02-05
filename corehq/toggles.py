@@ -20,6 +20,9 @@ from toggle.models import Toggle
 from toggle.shortcuts import toggle_enabled, set_toggle
 import six
 
+some_tuple=(   1,2, 3,'a'  );
+
+
 Tag = namedtuple('Tag', 'name css_class description')
 TAG_CUSTOM = Tag(
     name='One-Off / Custom',
