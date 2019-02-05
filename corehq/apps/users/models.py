@@ -109,6 +109,11 @@ class Permissions(DocumentSchema):
     view_roles = BooleanProperty(default=False)
 
     edit_commcare_users = BooleanProperty(default=False)
+    view_commcare_users = BooleanProperty(default=False)
+
+    edit_groups = BooleanProperty(default=False)
+    view_groups = BooleanProperty(default=False)
+
     edit_locations = BooleanProperty(default=False)
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
@@ -208,6 +213,9 @@ class Permissions(DocumentSchema):
             edit_roles=True,
             view_roles=True,
             edit_commcare_users=True,
+            view_commcare_users=True,
+            edit_groups=True,
+            view_groups=True,
             edit_locations=True,
             edit_motech=True,
             edit_data=True,
@@ -243,6 +251,9 @@ class UserRolePresets(object):
             cls.READ_ONLY_NO_REPORTS: lambda: Permissions(),
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
+                                                       view_commcare_users=True,
+                                                       edit_groups=True,
+                                                       view_groups=True,
                                                        edit_locations=True,
                                                        edit_shared_exports=True,
                                                        view_reports=True),
@@ -400,6 +411,9 @@ PERMISSIONS_PRESETS = {
         'name': 'Field Implementer',
         'permissions': Permissions(
             edit_commcare_users=True,
+            view_commcare_users=True,
+            edit_groups=True,
+            view_groups=True,
             edit_locations=True,
             edit_shared_exports=True,
             view_reports=True,
@@ -2704,6 +2718,15 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_commcare_users(self):
+        return False
+
+    def can_view_commcare_users(self):
+        return False
+
+    def can_edit_groups(self):
+        return False
+
+    def can_view_groups(self):
         return False
 
     def can_edit_locations(self):

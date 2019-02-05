@@ -136,6 +136,9 @@ def restrict_user_by_location(domain, user):
         domain=domain,
         name='Regional Supervisor',
         permissions=Permissions(edit_commcare_users=True,
+                                view_commcare_users=True,
+                                edit_groups=True,
+                                view_groups=True,
                                 edit_locations=True,
                                 access_all_locations=False),
     )

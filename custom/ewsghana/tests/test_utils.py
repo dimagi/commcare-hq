@@ -231,6 +231,9 @@ def _create_or_edit_facility_manager_role(domain):
             edit_roles=True,
             view_roles=True,
             edit_commcare_users=True,
+            view_commcare_users=True,
+            edit_groups=True,
+            view_groups=True,
             edit_locations=True,
             view_reports=False,
             view_report_list=reports_list
@@ -248,6 +251,9 @@ def _create_or_edit_facility_manager_role(domain):
                 edit_roles=True,
                 view_roles=True,
                 edit_commcare_users=True,
+                view_commcare_users=True,
+                edit_groups=True,
+                view_groups=True,
                 edit_locations=True,
                 view_report_list=reports_list
             ),
@@ -280,6 +286,9 @@ def _create_or_edit_administrator_role(domain):
             edit_roles=True,
             view_roles=True,
             edit_commcare_users=True,
+            view_commcare_users=True,
+            edit_groups=True,
+            view_groups=True,
             edit_locations=True,
             view_reports=False,
             view_report_list=reports_list
@@ -296,6 +305,9 @@ def _create_or_edit_administrator_role(domain):
                 edit_roles=True,
                 view_roles=True,
                 edit_commcare_users=True,
+                view_commcare_users=True,
+                edit_groups=True,
+                view_groups=True,
                 edit_locations=True,
                 view_report_list=reports_list
             ),

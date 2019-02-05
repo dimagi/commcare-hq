@@ -159,7 +159,9 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             user_role.permissions = Permissions(
                 view_reports=True,
                 edit_commcare_users=True,
+                view_commcare_users=True,
                 edit_groups=True,
+                view_groups=True,
                 edit_locations=True,
                 edit_apps=True,
                 edit_data=True

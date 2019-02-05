@@ -26,5 +26,11 @@ class Command(BaseCommand):
                 role.permissions.view_roles = True
                 save_role = True
 
+            if role.permissions.edit_commcare_users:
+                role.permissions.view_commcare_users = True
+                role.permissions.edit_groups = True
+                role.permissions.view_groups = True
+                save_role = True
+
             if save_role:
                 role.save()
