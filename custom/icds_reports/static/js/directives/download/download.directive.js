@@ -318,7 +318,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
         var levels = [];
         window.angular.forEach(vm.levels, function (value) {
-            if (value.id > selectedLocationIndex()) {
+            if (value.id > selectedLocationIndex() || ((level === 4) && value.id >= selectedLocationIndex())) {
                 levels.push(value);
             }
         });
