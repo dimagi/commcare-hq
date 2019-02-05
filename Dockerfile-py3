@@ -1,4 +1,8 @@
 # Based on Dockerfile. Use diff to compare them.
+RUN ls requirements/
+
+RUN ls requirements-python3_6/
+
 FROM python:3.6-jessie
 MAINTAINER Dimagi <devops@dimagi.com>
 
@@ -14,8 +18,6 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
 RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
-
-ls requirements-python3_6/
 
 COPY requirements-python3_6/requirements.txt \
      requirements-python3_6/test-requirements.txt \
