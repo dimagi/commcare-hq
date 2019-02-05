@@ -41,14 +41,24 @@
         </div>
     </div>
 
+    {% if has_form_errors %}
+    <div class="alert alert-danger">
+        {% url 'app_form_summary' domain latest_app_id as form_summary_url %}
+        {% blocktrans %}
+            Your app's forms contain errors.
+            Please visit the <a href='{{ form_summary_url }}'>form summary</a> for more details.
+        {% endblocktrans %}
+    </div>
+    {% endif %}
+
     <div class="row">
         <div class="col-sm-12">
             <!-- ko foreach: caseTypes -->
-                <div class="panel panel-appmanager" data-bind="slideVisible: isVisible">
+                <div class="panel panel-appmanager" data-bind="visible: isVisible">
                     <div class="panel-heading">
                         <h4 class="panel-title panel-title-nolink">
                             <i class="fcc fcc-fd-external-case"></i>
-                            <span data-bind="text: name"></span>
+                            <!-- ko text: name --><!-- /ko -->
                         </h4>
                     </div>
                     <div class="panel-body">
@@ -59,7 +69,7 @@
                                     <ul class="fa-ul" data-bind="foreach: relationshipList">
                                         <li>
                                             <span class="label label-primary" data-bind="text: relationship"></span>
-                                            <span data-bind="text: caseType"></span>
+                                            <!-- ko text: caseType --><!-- /ko -->
                                         </li>
                                    </ul>
                                 </div>
@@ -72,7 +82,8 @@
                                     <div data-bind="template: {name: 'opened-closed-by', data: closedByList }"></div>
                                 </div>
                             </div>
-                            <div class="row" data-bind="visible: has_errors">
+                            <!-- ko if:has_errors -->
+                            <div class="row">
                                 <div class="col-md-6">
                                     {% trans "Problems:" %}
                                     <ul>
@@ -85,6 +96,7 @@
                                     </ul>
                                 </div>
                             </div>
+                            <!-- /ko -->
                         </div>
                         <table class="case-properties table">
                             <thead>
@@ -99,7 +111,7 @@
                             </thead>
                             <tbody data-bind="foreach: properties">
                                 <!-- ko foreach: forms -->
-                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, slideVisible: $parent.isVisible">
+                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, visible: $parent.isVisible">
                                         <!-- ko if: !$index() -->
                                         <td data-bind="attr: {rowspan: $parent.forms.length}">
                                             <dl>
@@ -116,17 +128,25 @@
                                             <!-- /ko -->
                                         </td>
                                         <td>
-                                            <div data-bind="template: {name: 'load-save-questions', data: {questions: load_questions, getIcon: $root.questionIcon}}"></div>
+                                            {% include 'app_manager/partials/load_save_questions.html' with questions='load_questions' %}
                                         </td>
                                         <td>
-                                            <div data-bind="template: {name: 'load-save-questions', data: {questions: save_questions, getIcon: $root.questionIcon}}"></div>
+                                            {% include 'app_manager/partials/load_save_questions.html' with questions='save_questions' %}
                                         </td>
                                         <!-- ko if: !$index() -->
                                         <td>
-                                            <div data-bind="template: {name: 'case-details', data: {details: $parent.short_details}}"></div>
+                                            <ul class="list-unstyled" data-bind="foreach: $parent.short_details">
+                                                <li>
+                                                    <span data-bind="html: $root.moduleReference($data.module_id)"></span> "<!-- ko text: $root.translate($data.header) --><!-- /ko -->"
+                                                </li>
+                                            </ul>
                                         </td>
                                         <td>
-                                            <div data-bind="template: {name: 'case-details', data: {details: $parent.long_details}}"></div>
+                                            <ul class="list-unstyled" data-bind="foreach: $parent.long_details">
+                                                <li>
+                                                    <span data-bind="html: $root.moduleReference($data.module_id)"></span> "<!-- ko text: $root.translate($data.header) --><!-- /ko -->"
+                                                </li>
+                                            </ul>
                                         </td>
                                         <!-- /ko -->
                                     </tr>
@@ -145,52 +165,16 @@
             <li>
                 <span data-bind="html: $root.moduleFormReference(formId)"></span>
                 <!-- ko: if: conditions -->
-                    <ul class="fa-ul" data-bind="slideVisible: $root.showConditions, foreach: conditions">
+                    <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
                         <li>
                             <i class="fa fa-sitemap"></i>
-                            <span data-bind="text: question"></span>
-                            <span data-bind="text: operator"></span>
-                            <span data-bind="text: answer"></span>
+                            <!-- ko text: question --><!-- /ko -->
+                            <!-- ko text: operator --><!-- /ko -->
+                            <!-- ko text: answer --><!-- /ko -->
                         </li>
                     </ul>
                 <!-- /ko -->
             </li>
-        </ul>
-    </script>
-
-    {# List of questions loaded/saved into a case property #}
-    <script type="text/html" id="load-save-questions">
-        <ul class="fa-ul" data-bind="foreach: questions"><!-- Each of these is an object containing a condition and a question -->
-            <li>
-                <i data-bind="attr: {'class': $parent.getIcon(question)}"></i>
-                <span data-bind="visible: $root.showIds, text: question.value"></span>
-                <span data-bind="visible: $root.showLabels, text: $root.translateQuestion(question)"></span>
-                <ul data-bind="foreach: question.options">
-                    <li data-bind="visible: $root.showIds, text: value"></li>
-                    <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
-                </ul>
-                <ul class="fa-ul" data-bind="if: condition, slideVisible: $root.showConditions">
-                    <li>
-                        <i class="fa-li fa fa-sitemap text-muted"></i>
-                        <span data-bind="text: condition.question"></span>
-                        <span data-bind="text: condition.operator"></span>
-                        <span data-bind="text: condition.answer"></span>
-                    </li>
-                </ul>
-                <ul class="fa-ul" data-bind="if: question.calculate, slideVisible: $root.showCalculations">
-                    <li>
-                        <i class="fa-li fa fa-calculator text-muted"></i>
-                        <span data-bind="text: question.calculate"></span>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-    </script>
-
-    {# Case details #}
-    <script type="text/html" id="case-details">
-        <ul class="list-unstyled" data-bind="foreach: details">
-            <li><span data-bind="html: $root.moduleReference($data.module_id)"></span> "<span data-bind="text: $root.translate($data.header)"></span>"</li>
         </ul>
     </script>
 {% endblock content_extra %}

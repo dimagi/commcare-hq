@@ -92,7 +92,7 @@ celery_task_logger = logging.getLogger('celery.task')
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
 DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney',
-                          'rnegi', 'rjain']
+                          'rnegi', 'rjain', 'btalbot']
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
@@ -121,7 +121,8 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
     {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
     {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
-    {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'}
+    {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'},
+    {'type': 'cbe_form', 'name': 'static-cbe_form'}
 ]
 
 SQL_FUNCTION_PATHS = [

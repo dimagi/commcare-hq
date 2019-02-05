@@ -9,13 +9,17 @@
 {% block page_content %}
     {% initial_page_data 'bulk_download_url' bulk_download_url %}
     {% initial_page_data 'exports' exports %}
+    {% initial_page_data 'export_type_caps_plural' export_type_caps_plural %}
     {% initial_page_data 'is_daily_saved_export' is_daily_saved_export|default:False %}
     {% initial_page_data 'is_deid' is_deid %}
     {% initial_page_data 'is_feed' is_feed|default:False %}
     {% initial_page_data 'model_type' model_type %}
+    {% initial_page_data 'my_export_type' my_export_type %}
+    {% initial_page_data 'shared_export_type' shared_export_type %}
     {% initial_page_data 'static_model_type' static_model_type %}
     {% registerurl 'commit_filters' domain %}
     {% registerurl 'get_app_data_drilldown_values' domain %}
+    {% registerurl 'get_exports_page' domain %}
     {% registerurl 'get_saved_export_progress' domain %}
     {% registerurl 'submit_app_data_drilldown_form' domain %}
     {% registerurl 'toggle_saved_export_enabled' domain %}

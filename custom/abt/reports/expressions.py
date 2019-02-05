@@ -218,6 +218,12 @@ class AbtExpressionSpec(JsonObject):
             # Iterate over the repeat items, or the single submission
             for partial in repeat_items:
 
+                if not names:
+                    # Update inspector names if don't find by _get_inspector_names because in
+                    # app for 2019 we have new place for this data there is already a string
+                    # with all names joined by ','
+                    names = self._get_val(item, ['supervisor_group', 'join_supervisor_name'])
+
                 form_value = self._get_val(partial, spec['question'])
                 warning_type = spec.get("warning_type", None)
 

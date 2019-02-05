@@ -1730,7 +1730,7 @@ class DishaAPIView(View):
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
         data_type = int(request.POST.get('indicator', None))
-        state_id = request.GET.get('location', None)
+        state_id = request.POST.get('location', None)
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')

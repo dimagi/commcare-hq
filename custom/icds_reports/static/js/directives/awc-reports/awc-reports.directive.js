@@ -1751,7 +1751,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('anemic').withTitle('Anemia during last ANC (Y/N)').renderWith(renderAnemic).withClass('medium-col'),
             DTColumnBuilder.newColumn('num_anc_complete').withTitle('Number of ANC visits').renderWith(renderNumAncComplete).withClass('medium-col'),
             DTColumnBuilder.newColumn('beneficiary').withTitle('Beneficiary Status').renderWith(renderBeneficiary).withClass('medium-col'),
-            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given to date').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
+            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given in current month').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
             DTColumnBuilder.newColumn('last_date_thr').withTitle('Date of last THR').renderWith(renderLastDateThr).withClass('medium-col'),
         ];
     } else if (vm.step === 'lactating') {
@@ -1764,7 +1764,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('num_pnc_visits').withTitle('Number of PNC visits').renderWith(renderNumPncVisits).withClass('medium-col'),
             DTColumnBuilder.newColumn('breastfed_at_birth').withTitle('Breastfed within hour of birth').renderWith(renderBreastfedAtBirth).withClass('medium-col'),
             DTColumnBuilder.newColumn('is_ebf').withTitle('Exclusively breastfeeding at last home visit').renderWith(renderIsEbf).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given').renderWith(renderNumRationsDistributed).withClass('medium-col'),
+            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given in current month').renderWith(renderNumRationsDistributed).withClass('medium-col'),
         ];
     }
 
@@ -2510,13 +2510,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             function (response) {
                 vm.pregnantData = response.data['data'];
                 vm.showTable = false;
-                if (vm.pregnantData[0].length > 0) {
-                    vm.pregnant = vm.pregnantData[0][0];
-                } else if (vm.pregnantData[1].length > 0) {
-                    vm.pregnant = vm.pregnantData[1][0];
-                } else {
-                    vm.pregnant = vm.pregnantData[2][0];
-                }
+                vm.pregnant = response.data['pregnant'];
                 vm.showPregnant = true;
             },
             function (error) {

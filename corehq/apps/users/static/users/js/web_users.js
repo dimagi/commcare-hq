@@ -19,14 +19,18 @@ hqDefine("users/js/web_users",[
         self.totalItems = ko.observable();
 
         self.error = ko.observable();
-        self.showSpinner = ko.observable(true);
+        self.showLoadingSpinner = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
         self.showUsers = ko.computed(function () {
-            return !self.showSpinner() && !self.error();
+            return !self.showLoadingSpinner() && !self.error() && self.users().length > 0;
+        });
+
+        self.showNoUsersMessage = ko.computed(function () {
+            return !self.showLoadingSpinner() && !self.error() && self.users().length === 0;
         });
 
         self.goToPage = function (page) {
-            self.users.removeAll();
-            self.showSpinner(true);
+            self.showPaginationSpinner(true);
             self.error('');
             $.ajax({
                 method: 'GET',
@@ -37,15 +41,17 @@ hqDefine("users/js/web_users",[
                     limit: self.itemsPerPage(),
                 },
                 success: function (data) {
-                    self.showSpinner(false);
+                    self.showLoadingSpinner(false);
+                    self.showPaginationSpinner(false);
                     self.totalItems(data.total);
-                    self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
+                    self.users.removeAll();
                     _.each(data.users, function (user) {
                         self.users.push(user);
                     });
                 },
                 error: function () {
-                    self.showSpinner(false);
+                    self.showLoadingSpinner(false);
+                    self.showPaginationSpinner(false);
                     self.error(gettext("Could not load users. Please try again later or report an issue if this problem persists."));
                 },
             });

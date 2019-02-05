@@ -229,6 +229,18 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
 
+        // Spinner behavior
+        self.showLoadingSpinner = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
+        self.fetchState.subscribe(function (newValue) {
+            if (newValue === 'pending') {
+                self.showPaginationSpinner(true);
+            } else {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+            }
+        });
+
         self.download_application_zip = function (appId, multimediaOnly, buildProfile, download_targeted_version) {
             var urlSlug = multimediaOnly ? 'download_multimedia_zip' : 'download_ccz';
             var url = self.reverse(urlSlug, appId);

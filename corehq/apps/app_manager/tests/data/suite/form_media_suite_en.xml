@@ -11,11 +11,6 @@
     </resource>
   </media>
   <media path="../../commcare">
-    <resource id="media-3827580cd02c0bc38ccfe9e28f0b3a0e-module0_hin.mp3" version="1">
-      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/789/module0_hin.mp3</location>
-    </resource>
-  </media>
-  <media path="../../commcare">
     <resource id="media-947716527b2fc7772737f1bae597930b-q1_en.jpg" version="1">
       <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/form_image_0/q1_en.jpg</location>
     </resource>

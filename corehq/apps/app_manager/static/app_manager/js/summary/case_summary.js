@@ -1,4 +1,3 @@
-// knockout_bindings.ko is a part of this dependency because page uses 'slideVisible' binding in case_summary.html
 hqDefine('app_manager/js/summary/case_summary',[
     'jquery',
     'underscore',
@@ -6,7 +5,6 @@ hqDefine('app_manager/js/summary/case_summary',[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'app_manager/js/summary/models',
-    'hqwebapp/js/knockout_bindings.ko',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
 ], function ($, _, ko, initialPageData, assertProperties, models) {
 
@@ -66,12 +64,12 @@ hqDefine('app_manager/js/summary/case_summary',[
             return caseTypeModel(caseType);
         });
 
-        self.showConditions = ko.observable(true);
+        self.showConditions = ko.observable(false);
         self.toggleConditions = function () {
             self.showConditions(!self.showConditions());
         };
 
-        self.showCalculations = ko.observable(true);
+        self.showCalculations = ko.observable(false);
         self.toggleCalculations = function () {
             self.showCalculations(!self.showCalculations());
         };

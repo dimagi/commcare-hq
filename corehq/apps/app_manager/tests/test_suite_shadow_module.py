@@ -18,39 +18,35 @@ class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_shadow_module_cases(self):
         self._test_generic_suite('shadow_module_cases')
 
-    def _get_family_app(self):
-        app = Application.new_app('domain', "Untitled Application")
 
-        parent = app.add_module(Module.new_module('module', None))
-        app.new_form(parent.id, "Untitled Form", None)
+class ShadowModuleWithChildSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
+    file_path = ('data', 'suite')
 
-        child = app.add_module(Module.new_module('module', None))
-        child.root_module_id = parent.unique_id
+    def setUp(self):
+        self.app = Application.new_app('domain', "Untitled Application")
 
-        app.new_form(child.id, "Untitled Form", None)
-        shadow = app.add_module(ShadowModule.new_module('module', None))
+        self.parent = self.app.add_module(Module.new_module('Parent Module', None))
+        self.app.new_form(self.parent.id, "Parent Form", None)
 
-        return (app, shadow)
+        self.child = self.app.add_module(Module.new_module('Child Module', None))
+        self.child.root_module_id = self.parent.unique_id
+        self.app.new_form(self.child.id, "Child Form", None)
+
+        self.shadow = self.app.add_module(ShadowModule.new_module('Shadow Module', None))
 
     def test_shadow_module_source_parent(self):
-        (app, shadow) = self._get_family_app()
-        parent = [m for m in app.get_modules() if m.doc_type == 'Module' and m.root_module_id is None][0]
-        shadow.source_module_id = parent.unique_id
+        self.shadow.source_module_id = self.parent.unique_id
         self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent'),
-                                   app.create_suite(), "./menu")
+                                   self.app.create_suite(), "./menu")
 
     def test_shadow_module_source_parent_forms_only(self):
-        (app, shadow) = self._get_family_app()
-        parent = [m for m in app.get_modules() if m.doc_type == 'Module' and m.root_module_id is None][0]
-        shadow.source_module_id = parent.unique_id
-        for m in app.get_modules():
+        self.shadow.source_module_id = self.parent.unique_id
+        for m in self.app.get_modules():
             m.put_in_root = True
         self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent_forms_only'),
-                                   app.create_suite(), "./menu")
+                                   self.app.create_suite(), "./menu")
 
     def test_shadow_module_source_child(self):
-        (app, shadow) = self._get_family_app()
-        child = [m for m in app.get_modules() if m.doc_type == 'Module' and m.root_module_id is not None][0]
-        shadow.source_module_id = child.unique_id
+        self.shadow.source_module_id = self.child.unique_id
         self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_child'),
-                                   app.create_suite(), "./menu")
+                                   self.app.create_suite(), "./menu")
