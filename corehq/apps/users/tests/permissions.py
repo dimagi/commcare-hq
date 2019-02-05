@@ -14,6 +14,9 @@ class PermissionsTest(TestCase):
     def test_OR(self):
         p1 = Permissions(
             edit_web_users=True,
+            view_web_users=True,
+            edit_roles=True,
+            view_roles=True,
             view_reports=True,
             view_report_list=['report1'],
         )
@@ -25,6 +28,9 @@ class PermissionsTest(TestCase):
         self.assertEqual(dict(p1 | p2), dict(Permissions(
             edit_apps=True,
             edit_web_users=True,
+            view_web_users=True,
+            edit_roles=True,
+            view_roles=True,
             view_reports=True,
             view_report_list=['report1', 'report2'],
         )))

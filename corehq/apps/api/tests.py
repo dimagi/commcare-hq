@@ -693,6 +693,9 @@ class TestWebUserResource(APIResourceTest):
             "edit_locations": True,
             "edit_data": True,
             "edit_web_users": True,
+            "view_web_users": True,
+            "edit_roles": True,
+            "view_roles": True,
             "view_reports": True
         },
         "phone_numbers": [
@@ -705,8 +708,17 @@ class TestWebUserResource(APIResourceTest):
         role = user.get_role(self.domain.name)
         self.assertEqual(role.name, json_user['role'])
         self.assertEqual(user.is_domain_admin(self.domain.name), json_user['is_admin'])
-        for perm in ['edit_web_users', 'edit_commcare_users', 'edit_locations',
-                     'edit_data', 'edit_apps', 'view_reports']:
+        for perm in [
+            'edit_web_users',
+            'view_web_users',
+            'edit_roles',
+            'view_roles',
+            'edit_commcare_users',
+            'edit_locations',
+            'edit_data',
+            'edit_apps',
+            'view_reports',
+        ]:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
     def test_get_list(self):

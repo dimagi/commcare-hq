@@ -103,6 +103,11 @@ def _get_default(list):
 
 class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
+    view_web_users = BooleanProperty(default=False)
+
+    edit_roles = BooleanProperty(default=False)
+    view_roles = BooleanProperty(default=False)
+
     edit_commcare_users = BooleanProperty(default=False)
     edit_locations = BooleanProperty(default=False)
     edit_motech = BooleanProperty(default=False)
@@ -199,6 +204,9 @@ class Permissions(DocumentSchema):
     def max(cls):
         return Permissions(
             edit_web_users=True,
+            view_web_users=True,
+            edit_roles=True,
+            view_roles=True,
             edit_commcare_users=True,
             edit_locations=True,
             edit_motech=True,
@@ -2702,4 +2710,13 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_web_users(self):
+        return False
+
+    def can_view_web_uers(self):
+        return False
+
+    def can_edit_roles(self):
+        return False
+
+    def can_view_roles(self):
         return False

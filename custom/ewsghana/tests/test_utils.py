@@ -227,6 +227,9 @@ def _create_or_edit_facility_manager_role(domain):
     if facility_manager_role:
         permissions = Permissions(
             edit_web_users=True,
+            view_web_users=True,
+            edit_roles=True,
+            view_roles=True,
             edit_commcare_users=True,
             edit_locations=True,
             view_reports=False,
@@ -241,6 +244,9 @@ def _create_or_edit_facility_manager_role(domain):
             permissions=Permissions(
                 view_reports=False,
                 edit_web_users=True,
+                view_web_users=True,
+                edit_roles=True,
+                view_roles=True,
                 edit_commcare_users=True,
                 edit_locations=True,
                 view_report_list=reports_list
@@ -270,6 +276,9 @@ def _create_or_edit_administrator_role(domain):
     if administrator_role:
         permissions = Permissions(
             edit_web_users=True,
+            view_web_users=True,
+            edit_roles=True,
+            view_roles=True,
             edit_commcare_users=True,
             edit_locations=True,
             view_reports=False,
@@ -283,6 +292,9 @@ def _create_or_edit_administrator_role(domain):
             permissions=Permissions(
                 view_reports=False,
                 edit_web_users=True,
+                view_web_users=True,
+                edit_roles=True,
+                view_roles=True,
                 edit_commcare_users=True,
                 edit_locations=True,
                 view_report_list=reports_list

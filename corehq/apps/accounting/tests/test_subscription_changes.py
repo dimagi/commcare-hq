@@ -64,7 +64,13 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.user_roles = UserRole.by_domain(self.domain.name)
         self.custom_role = UserRole.get_or_create_with_permissions(
             self.domain.name,
-            Permissions(edit_apps=True, edit_web_users=True),
+            Permissions(
+                edit_apps=True,
+                edit_web_users=True,
+                view_web_users=True,
+                edit_roles=True,
+                view_roles=True,
+            ),
             "Custom Role"
         )
         self.custom_role.save()
@@ -151,8 +157,12 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         for u in self.user_roles:
             user_role = UserRole.get(u.get_id)
             user_role.permissions = Permissions(
-                view_reports=True, edit_commcare_users=True, edit_locations=True,
-                edit_apps=True, edit_data=True
+                view_reports=True,
+                edit_commcare_users=True,
+                edit_groups=True,
+                edit_locations=True,
+                edit_apps=True,
+                edit_data=True
             )
             user_role.save()
 
