@@ -9,12 +9,6 @@ ENV PYTHONUNBUFFERED=1 \
 
 RUN mkdir /vendor
 
-RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
-  && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
-  && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
-
-RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
-
 RUN ls
 
 COPY . /vendor/
@@ -22,5 +16,7 @@ COPY . /vendor/
 RUN ls
 
 RUN ls /vendor/
+
+RUN ls /vendor/requirements/
 
 
