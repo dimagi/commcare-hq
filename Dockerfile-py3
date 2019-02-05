@@ -17,4 +17,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
 
 RUN ls
 
+COPY . /vendor/
+
+RUN ls
+
+RUN ls /vendor/
+
 
