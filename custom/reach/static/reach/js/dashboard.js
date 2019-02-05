@@ -16,6 +16,17 @@ hqDefine("reach/js/dashboard", [
         'location-filter': locationFilter,
     };
 
+    ko.subscribable.fn.subscribeChanged = function (callback) {
+         var oldValue;
+         this.subscribe(function (_oldValue) {
+             oldValue = _oldValue;
+         }, this, 'beforeChange');
+
+         this.subscribe(function (newValue) {
+             callback(newValue, oldValue);
+         });
+    };
+
     $(function () {
         _.each(components, function (moduleName, elementName) {
             ko.components.register(elementName, moduleName);
