@@ -163,6 +163,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 edit_groups=True,
                 view_groups=True,
                 edit_locations=True,
+                view_locations=True,
                 edit_apps=True,
                 edit_data=True
             )

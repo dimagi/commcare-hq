@@ -235,6 +235,7 @@ def _create_or_edit_facility_manager_role(domain):
             edit_groups=True,
             view_groups=True,
             edit_locations=True,
+            view_locations=True,
             view_reports=False,
             view_report_list=reports_list
         )
@@ -255,6 +256,7 @@ def _create_or_edit_facility_manager_role(domain):
                 edit_groups=True,
                 view_groups=True,
                 edit_locations=True,
+                view_locations=True,
                 view_report_list=reports_list
             ),
             name='Facility manager'
@@ -290,6 +292,7 @@ def _create_or_edit_administrator_role(domain):
             edit_groups=True,
             view_groups=True,
             edit_locations=True,
+            view_locations=True,
             view_reports=False,
             view_report_list=reports_list
         )
@@ -309,6 +312,7 @@ def _create_or_edit_administrator_role(domain):
                 edit_groups=True,
                 view_groups=True,
                 edit_locations=True,
+                view_locations=True,
                 view_report_list=reports_list
             ),
             name='Administrator'

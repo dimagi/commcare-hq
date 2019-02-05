@@ -6,7 +6,7 @@ Normal Access
 -------------
 
 Location Types - Users who can edit apps on the domain can edit location types.
-Locations - There is an "edit_locations" permission.
+Locations - There is an "edit_locations" and a "view_locations" permission.
 
 
 Restricted Access and Whitelist

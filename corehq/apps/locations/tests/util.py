@@ -140,6 +140,7 @@ def restrict_user_by_location(domain, user):
                                 edit_groups=True,
                                 view_groups=True,
                                 edit_locations=True,
+                                view_locations=True,
                                 access_all_locations=False),
     )
     role.save()

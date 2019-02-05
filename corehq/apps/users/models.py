@@ -115,6 +115,8 @@ class Permissions(DocumentSchema):
     view_groups = BooleanProperty(default=False)
 
     edit_locations = BooleanProperty(default=False)
+    view_locations = BooleanProperty(default=False)
+
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
@@ -217,6 +219,7 @@ class Permissions(DocumentSchema):
             edit_groups=True,
             view_groups=True,
             edit_locations=True,
+            view_locations=True,
             edit_motech=True,
             edit_data=True,
             edit_apps=True,
@@ -255,6 +258,7 @@ class UserRolePresets(object):
                                                        edit_groups=True,
                                                        view_groups=True,
                                                        edit_locations=True,
+                                                       view_locations=True,
                                                        edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
@@ -415,6 +419,7 @@ PERMISSIONS_PRESETS = {
             edit_groups=True,
             view_groups=True,
             edit_locations=True,
+            view_locations=True,
             edit_shared_exports=True,
             view_reports=True,
         ),
@@ -2730,6 +2735,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_locations(self):
+        return False
+
+    def can_view_locations(self):
         return False
 
     def can_edit_web_users(self):

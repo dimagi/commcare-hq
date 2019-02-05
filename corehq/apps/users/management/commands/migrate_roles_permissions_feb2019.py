@@ -32,5 +32,9 @@ class Command(BaseCommand):
                 role.permissions.view_groups = True
                 save_role = True
 
+            if role.permissions.edit_locations:
+                role.permissions.view_locations = True
+                save_role = True
+
             if save_role:
                 role.save()
