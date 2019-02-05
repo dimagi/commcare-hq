@@ -265,7 +265,9 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         return MOCK_CASE_ES or CaseES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        filters = v0_3.CaseListFilters(bundle.request.GET).filters
+        request_filters = dict(bundle.request.GET)
+        request_filters.update(kwargs)
+        filters = v0_3.CaseListFilters(request_filters).filters
 
         # Since tastypie handles the "from" and "size" via slicing, we have to wipe them out here
         # since ElasticCaseQuery adds them. I believe other APIs depend on the behavior of ElasticCaseQuery

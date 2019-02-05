@@ -73,8 +73,8 @@ class CommCareHqApi(Api):
 
 def api_url_patterns():
     # todo: these have to come first to short-circuit tastypie's matching
-    yield url(r'v0.5/odata/$', ODataServiceView.as_view(), name='odata_service')
-    yield url(r'v0.5/odata/\$metadata$', ODataMetadataView.as_view(), name='odata_meta')
+    yield url(r'v0.5/odata/Cases/$', ODataServiceView.as_view(), name='odata_service')
+    yield url(r'v0.5/odata/Cases/\$metadata$', ODataMetadataView.as_view(), name='odata_meta')
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
