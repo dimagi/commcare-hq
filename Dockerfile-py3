@@ -15,26 +15,6 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 
 RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
 
-COPY requirements/requirements.txt \
-     requirements/test-requirements.txt \
-     package.json \
-     /vendor/
+RUN ls
 
-# prefer https for git checkouts made by pip
-RUN git config --global url."https://".insteadOf git:// \
- && pip install --upgrade pip \
- && pip install \
-    -r /vendor/requirements.txt \
-    -r /vendor/test-requirements.txt \
-    --user --upgrade \
- && rm -rf /root/.cache/pip
 
-RUN npm -g install \
-    bower \
-    grunt-cli \
-    uglify-js \
- && echo '{ "allow_root": true }' > /root/.bowerrc \
- && cd /vendor \
- && npm shrinkwrap \
- && npm -g install \
- && npm cache clean
