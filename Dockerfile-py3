@@ -9,14 +9,32 @@ ENV PYTHONUNBUFFERED=1 \
 
 RUN mkdir /vendor
 
-RUN ls
+RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
+  && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
+  && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-COPY . /vendor/
+RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
 
-RUN ls
+COPY requirements-python3_6/requirements.txt \
+     requirements-python3_6/test-requirements.txt \
+     package.json \
+     /vendor/
 
-RUN ls /vendor/
+# prefer https for git checkouts made by pip
+RUN git config --global url."https://".insteadOf git:// \
+ && pip install --upgrade pip \
+ && pip install \
+    -r /vendor/requirements.txt \
+    -r /vendor/test-requirements.txt \
+    --user --upgrade \
+ && rm -rf /root/.cache/pip
 
-RUN ls /vendor/requirements/
-
-
+RUN npm -g install \
+    bower \
+    grunt-cli \
+    uglify-js \
+ && echo '{ "allow_root": true }' > /root/.bowerrc \
+ && cd /vendor \
+ && npm shrinkwrap \
+ && npm -g install \
+ && npm cache clean
