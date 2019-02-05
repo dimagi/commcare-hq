@@ -21,6 +21,7 @@ hqDefine("hqwebapp/js/widgets", [
             var $input = $(input);
             $input.select2(_.extend({
                 multiple: true,
+                placeholder: ' ',
                 tags: true,
                 tokenSeparators: [",", " "],
                 createTag: function (params) {
