@@ -14,8 +14,8 @@ function setup() {
 
     scripts/uninstall-requirements.sh
     pip install \
-        -r requirements/requirements.txt \
-        -r requirements/test-requirements.txt
+        -r requirements-python3_6/requirements.txt \
+        -r requirements-python3_6/test-requirements.txt
 
     # compile pyc files
     python -m compileall -q corehq custom submodules testapps *.py
