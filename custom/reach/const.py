@@ -16,10 +16,10 @@ NUMERIC = 'numeric'
 PERCENT = 'percent'
 
 COLORS = {
-    'violet': '#8A2BE2',
-    'blue': '#00BFFF',
-    'mediumblue': '#0000CD',
-    'aqua': '#05EDFF',
-    'orange': '#FFA500',
-    'darkorange': '#FF8C00',
+    'violet': '#725CA4',
+    'blue': '#04AEE6',
+    'mediumblue': '#004EBC',
+    'aqua': '#1CC6CC',
+    'orange': '#F5BB5D',
+    'darkorange': '#FF8300',
 }

@@ -6,7 +6,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                     {
                         indicator: 'Registered Eligible Couples',
                         format: 'numeric',
-                        color: '#8A2BE2',
+                        color: '#725CA4',
                         numerator: 71682,
                         denominator: 140098,
                         past_month_numerator: 69354,
@@ -15,7 +15,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                     {
                         indicator: 'Registered Pregnancies',
                         format: 'numeric',
-                        color: '#00BFFF',
+                        color: '#04AEE6',
                         numerator: 9908,
                         denominator: 128990,
                         past_month_numerator: 12458,
@@ -24,7 +24,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                     {
                         indicator: 'Registered Children',
                         format: 'numeric',
-                        color: '#FFA500',
+                        color: '#F5BB5D',
                         numerator: 21630,
                         denominator: 890743,
                         past_month_numerator: 40687,
@@ -35,7 +35,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                     {
                         indicator: 'Couples using Family Planning Method',
                         format: 'percent',
-                        color: '#05EDFF',
+                        color: '#1CC6CC',
                         numerator: 65028,
                         denominator: 928103,
                         past_month_numerator: 60486,
@@ -44,7 +44,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                     {
                         indicator: 'High Risk Pregnancies',
                         format: 'percent',
-                        color: '#FF8C00',
+                        color: '#FF8300',
                         numerator: 207,
                         denominator: 9908,
                         past_month_numerator: 204,
@@ -53,7 +53,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
                     {
                         indicator: 'Institutional Deliveries',
                         format: 'percent',
-                        color: '#0000CD',
+                        color: '#004EBC',
                         numerator: 14311,
                         denominator: 21837,
                         past_month_numerator: 16486,
@@ -66,7 +66,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
             {
                 indicator: 'Registered Eligible Couples',
                 format: 'numeric',
-                color: '#8A2BE2',
+                color: '#725CA4',
                 numerator: 71682,
                 denominator: 140098,
                 pastMonthNumerator: 69354,
@@ -79,7 +79,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
             {
                 indicator: 'Registered Pregnancies',
                 format: 'numeric',
-                color: '#00BFFF',
+                color: '#04AEE6',
                 numerator: 9908,
                 denominator: 128990,
                 pastMonthNumerator: 12458,
@@ -92,7 +92,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
             {
                 indicator: 'Registered Children',
                 format: 'numeric',
-                color: '#FFA500',
+                color: '#F5BB5D',
                 numerator: 21630,
                 denominator: 890743,
                 pastMonthNumerator: 40687,
@@ -105,7 +105,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
             {
                 indicator: 'Couples using Family Planning Method',
                 format: 'percent',
-                color: '#05EDFF',
+                color: '#1CC6CC',
                 numerator: 65028,
                 denominator: 928103,
                 pastMonthNumerator: 60486,
@@ -119,7 +119,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
             {
                 indicator: 'High Risk Pregnancies',
                 format: 'percent',
-                color: '#FF8C00',
+                color: '#FF8300',
                 numerator: 207,
                 denominator: 9908,
                 pastMonthNumerator: 204,
@@ -133,7 +133,7 @@ hqDefine('reach/spec/fixture/program_overview_fixture', function () {
             {
                 indicator: 'Institutional Deliveries',
                 format: 'percent',
-                color: '#0000CD',
+                color: '#004EBC',
                 numerator: 14311,
                 denominator: 21837,
                 pastMonthNumerator: 16486,

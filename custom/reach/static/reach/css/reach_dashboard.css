@@ -59,6 +59,10 @@
     margin:15px auto;
 }
 
+.logo > img {
+    width: 100%;
+}
+
 .main-container {
     height:auto;
     position:absolute;
