@@ -64,7 +64,7 @@ class MPR6bChildHealth(ChildHealthMonthlyUCR):
             self._column_helper('F').label('pse_daily_attendance_female'),
         )
         if not total_row:
-            columns = (self.table.c.awc_id.label("awc_id"),) + columns
+            columns = (self.table.c.awc_id.label("owner_id"),) + columns
         return columns
 
     def _get_query_object(self, total_row=False):
@@ -129,7 +129,7 @@ class MPR6acChildHealth(ChildHealthMonthlyUCR):
         )
 
         if not total_row:
-            return (self.table.c.awc_id.label("awc_id"),) + columns
+            return (self.table.c.awc_id.label("owner_id"),) + columns
 
         return columns
 
@@ -213,7 +213,7 @@ class MPR5ChildHealth(ChildHealthMonthlyUCR):
         )
 
         if not total_row:
-            return (self.table.c.awc_id.label("awc_id"),) + columns
+            return (self.table.c.awc_id.label("owner_id"),) + columns
 
         return columns
 
