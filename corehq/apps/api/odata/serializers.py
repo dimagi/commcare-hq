@@ -49,6 +49,8 @@ class ODataCommCareCaseSerializer(Serializer):
         for i, case_json in enumerate(data['value']):
             case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
 
+        case_type_to_properties = get_case_type_to_properties(domain)
+
         for value in data['value']:
             value.pop('id')
             value.pop('indexed_on')
@@ -58,7 +60,7 @@ class ODataCommCareCaseSerializer(Serializer):
             for property_name in list(properties):
                 if property_name not in [
                     'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
-                ] + get_case_type_to_properties(domain).get(case_type, []):
+                ] + case_type_to_properties.get(case_type, []):
                     properties.pop(property_name)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
