@@ -115,7 +115,7 @@ def _export_data_dictionary(domain):
     )
     export_data = {}
     for case_type in queryset:
-        export_data[case_type.name] = [{
+        export_data[case_type.name or "No Name"] = [{
             'Case Property': prop.name,
             'Group': prop.group,
             'Data Type': prop.data_type,
