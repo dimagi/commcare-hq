@@ -17,10 +17,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='aggregatechildhealthdailyfeedingforms',
-            name='lunch_count',
-            field=models.PositiveSmallIntegerField(help_text='Number of days the child had the lunch', null=True),
-        ),
         migrator.get_migration('update_tables38.sql')
     ]
