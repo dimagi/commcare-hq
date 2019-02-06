@@ -141,7 +141,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_lactating = ut.cases_ccs_lactating,
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
-            cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating
+            cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
             valid_home_visits = ut.valid_home_visits,
             expected_home_visits = ut.expected_home_visits
         FROM (
@@ -166,20 +166,20 @@ class AggAwcHelper(BaseICDSAggregationHelper):
 
         yield """
         UPDATE "{tablename}" agg_awc SET
-        valid_home_visits = valid_home_visits + ut.valid_home_visits,
-        expected_home_visits = expected_home_visits + ut.expected_home_visits
+        valid_home_visits = valid_home_visits + ut.valid_visits,
+        expected_home_visits = expected_home_visits + ut.expected_visits
         FROM (
         SELECT
         agg_cf.month as month,
-        SUM(0.39) as expected_home_visits,
-        SUM(COALESCE(agg_cf.valid_visits, 0)) as valid_home_visits,
+        SUM(0.39) as expected_visits,
+        SUM(COALESCE(agg_cf.valid_visits, 0)) as valid_visits,
         ucr.awc_id
         FROM "{ccs_record_case_ucr}" ucr
         LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND agg_cf.month = %(start_date)s
         WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (closed_on IS NULL OR
          date_trunc('month', closed_on)::DATE > %(start_date)s) AND
          date_trunc('month', opened_on) <= %(start_date)s
-        GROUP BY ucr.awc_id
+        GROUP BY ucr.awc_id, agg_cf.month
         ) ut
         WHERE ut.awc_id = agg_awc.awc_id AND ut.month = agg_awc.month AND agg_awc.aggregation_level = 5
         """.format(
@@ -485,6 +485,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),
+            ('valid_home_visits',),
+            ('expected_home_visits',),
             ('usage_num_pse',),
             ('usage_num_gmp',),
             ('usage_num_thr',),
