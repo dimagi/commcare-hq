@@ -13,11 +13,13 @@ function setup() {
     rm *.log *.lock || true
 
     scripts/uninstall-requirements.sh
-    if [ "PYTHON_VERSION" = "py3" ]; then
+    if [ "$PYTHON_VERSION" = "py3" ]; then
+        echo "installing py3 requirements"
         pip install \
             -r requirements-python3_6/requirements.txt \
             -r requirements-python3_6/test-requirements.txt
     else
+        echo "installing py2 requirements"
         pip install \
             -r requirements/requirements.txt \
             -r requirements/test-requirements.txt
