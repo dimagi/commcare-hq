@@ -11,7 +11,7 @@ hqDefine('app_manager/js/summary/form_summary',[
 ], function ($, _, ko, initialPageData, assertProperties, models, utils) {
     var formSummaryModel = function (options) {
         var self = models.contentModel(_.extend(options, {
-            query_label: gettext("Filter questions"),
+            query_label: gettext("Filter questions or cases"),
             onQuery: function (query) {
                 var match = function (needle, haystack) {
                     return !needle || haystack.toLowerCase().indexOf(needle.toLowerCase()) !== -1;
@@ -25,6 +25,11 @@ hqDefine('app_manager/js/summary/form_summary',[
                             questionIsVisible = questionIsVisible || _.find(question.options, function (option) {
                                 return match(query, option.value + self.translateQuestion(option));
                             });
+                            var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
+                                return match(query, prop[0] + prop[1]);
+                            });
+                            self.showCaseProperties(self.showCaseProperties() || casePropsVisible);
+                            questionIsVisible = questionIsVisible || casePropsVisible;
                             question.matchesQuery(questionIsVisible);
                             formIsVisible = formIsVisible || questionIsVisible;
                         });
