@@ -616,6 +616,19 @@ def post_user_role(request, domain):
         old_role = UserRole.get(role.get_id)
         assert(old_role.doc_type == UserRole.__name__)
         assert(old_role.domain == domain)
+
+    # temporarily assign new permissions until migration has finished, then we
+    # can update the UI accordingly.
+    role.permissions.view_web_users = role.permissions.edit_web_users
+    role.permissions.edit_roles = role.permissions.edit_web_users
+    role.permissions.view_roles = role.permissions.edit_web_users
+
+    role.permissions.view_commcare_users = role.permissions.edit_commcare_users
+    role.permissions.edit_groups = role.permissions.edit_commcare_users
+    role.permissions.view_groups = role.permissions.edit_commcare_users
+
+    role.permissions.view_locations = role.permissions.edit_locations
+
     role.save()
     role.__setattr__('hasUsersAssigned',
                      True if len(role.ids_of_assigned_users) > 0 else False)
