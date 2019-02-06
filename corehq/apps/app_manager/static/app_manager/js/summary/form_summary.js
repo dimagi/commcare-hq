@@ -14,7 +14,7 @@ hqDefine('app_manager/js/summary/form_summary',[
             query_label: gettext("Filter questions or cases"),
             onQuery: function (query) {
                 var match = function (needle, haystack) {
-                    return !needle || haystack.toLowerCase().indexOf(needle.toLowerCase()) !== -1;
+                    return !needle || haystack.toLowerCase().indexOf(needle.trim().toLowerCase()) !== -1;
                 };
                 _.each(self.modules, function (module) {
                     var moduleIsVisible = match(query, self.translate(module.name));
