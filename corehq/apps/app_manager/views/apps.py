@@ -731,10 +731,14 @@ def edit_app_attr(request, domain, app_id, attr):
     """
     app = get_app(domain, app_id)
 
+    resp = {"update": {}}
     try:
         hq_settings = json.loads(request.body)['hq']
     except ValueError:
         hq_settings = request.POST
+    except KeyError:
+        # No hq settings are present, this is likely a linked app
+        return HttpResponse(json.dumps(resp))
 
     attributes = [
         'all',
@@ -766,7 +770,6 @@ def edit_app_attr(request, domain, app_id, attr):
         except ValueError:
             pass
 
-    resp = {"update": {}}
     # For either type of app
     easy_attrs = (
         ('build_spec', BuildSpec.from_string),

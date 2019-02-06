@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 import io
 import logging
 import os
+import tempfile
 
 from celery import chain, group
 from celery.schedules import crontab
@@ -91,9 +92,7 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney',
-                          'rnegi', 'rjain', 'btalbot']
-DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
+DASHBOARD_TEAM_EMAILS = ['{}@{}'.format('dashboard-aggregation-script', 'dimagi.com')]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
@@ -121,7 +120,8 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
     {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
     {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
-    {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'}
+    {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'},
+    {'type': 'cbe_form', 'name': 'static-cbe_form'}
 ]
 
 SQL_FUNCTION_PATHS = [
@@ -438,8 +438,8 @@ def _update_months_table(day):
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
 
 
-def get_cursor(model):
-    db = db_for_read_write(model)
+def get_cursor(model, write=True):
+    db = db_for_read_write(model, write)
     return connections[db].cursor()
 
 
@@ -964,7 +964,7 @@ def create_mbt_for_month(state_id, month):
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
         helper = helper_class(state_id, month)
-        with get_cursor(helper.base_class) as cursor, open(helper.output_file, 'w+b') as f:
+        with get_cursor(helper.base_class, write=False) as cursor, tempfile.TemporaryFile() as f:
             cursor.copy_expert(helper.query(), f)
             f.seek(0)
             icds_file, _ = IcdsFile.objects.get_or_create(blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month), data_type='mbt_{}'.format(helper.base_tablename))
