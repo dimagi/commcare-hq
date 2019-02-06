@@ -16,6 +16,7 @@ class ODataCommCareCaseSerializer(Serializer):
     # todo: should maybe be generalized into a mixin paired with the resource to support both cases and forms
     """
     def to_json(self, data, options=None):
+        data_copy = data
         options = options or {}
         domain = data.pop('domain', None)
         if not domain:
