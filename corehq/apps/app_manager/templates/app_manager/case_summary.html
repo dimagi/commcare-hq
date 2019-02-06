@@ -89,9 +89,11 @@
                                     <ul>
                                         <li data-bind="visible: error, text: error"></li>
                                         <!-- ko foreach: properties -->
-                                            <li data-bind="if: has_errors">
-                                                <a data-bind="attr: {href: '#' + $parent.name + ':' + name}, text: name"></a>
+                                        <!-- ko if: has_errors -->
+                                            <li>
+                                                <a data-bind="attr: {href: '#' + $parent.name + ':' + encodeURIComponent(name)}, text: name"></a>
                                             </li>
+                                        <!-- /ko -->
                                         <!-- /ko -->
                                     </ul>
                                 </div>
@@ -135,27 +137,37 @@
                                         </td>
                                         <!-- ko if: !$index() -->
                                         <td>
-                                            <ul class="list-unstyled" data-bind="foreach: $parent.short_details">
-                                                <li>
-                                                    <span data-bind="html: $root.moduleReference($data.module_id)"></span> "<!-- ko text: $root.translate($data.header) --><!-- /ko -->"
-                                                </li>
-                                            </ul>
+                                            {% include 'app_manager/partials/case_summary_case_details.html' with detail='$parent.short_details' %}
                                         </td>
                                         <td>
-                                            <ul class="list-unstyled" data-bind="foreach: $parent.long_details">
-                                                <li>
-                                                    <span data-bind="html: $root.moduleReference($data.module_id)"></span> "<!-- ko text: $root.translate($data.header) --><!-- /ko -->"
-                                                </li>
-                                            </ul>
+                                            {% include 'app_manager/partials/case_summary_case_details.html' with detail='$parent.long_details' %}
                                         </td>
                                         <!-- /ko -->
+                                    </tr>
+                                <!-- /ko -->
+                                <!-- ko if: !forms.length && (short_details.length || long_details.length) -->
+                                    {# There is a property referenced in the case details screen that isn't referenced in any form #}
+                                    <tr data-bind="attr: {id: $parent.name + ':' + encodeURIComponent(name)}, css: {'danger': has_errors}, visible: isVisible">
+                                        <td>
+                                            <dl>
+                                                <dt data-bind="text: name"></dt>
+                                                <dd data-bind="text: description"></dd>
+                                            </dl>
+                                        </td>
+                                        <td></td><td></td><td></td>
+                                        <td>
+                                            {% include 'app_manager/partials/case_summary_case_details.html' with detail='short_details' %}
+                                        </td>
+                                        <td>
+                                            {% include 'app_manager/partials/case_summary_case_details.html' with detail='long_details' %}
+                                        </td>
                                     </tr>
                                 <!-- /ko -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-            <!-- /ko -->
+                <!-- /ko -->
         </div>
     </div>
 
