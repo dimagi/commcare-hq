@@ -73,7 +73,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
              ucr.awc_id
              FROM "{ccs_record_case_ucr}" ucr
              LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND agg_cf.month = %(month)s
-             WHERE %(month)s - add > 183 AND (closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s) AND date_trunc('month', opened_on) <= %(month)s
+             WHERE %(month)s - add BETWEEN 184 AND 548 AND (closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s) AND date_trunc('month', opened_on) <= %(month)s
              GROUP BY ucr.awc_id
              ) cf_data
         WHERE cf_data.awc_id = perf.awc_id

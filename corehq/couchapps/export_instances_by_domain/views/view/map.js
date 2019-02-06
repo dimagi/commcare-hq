@@ -9,6 +9,7 @@ function(doc) {
             export_format: doc.export_format,
             name: doc.name,
             owner_id: doc.owner_id,
+            sharing: doc.sharing,
         });
     }
 }

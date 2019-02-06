@@ -33,7 +33,6 @@ from corehq.messaging.smsbackends.smsgh.models import SQLSMSGHBackend
 from corehq.messaging.smsbackends.start_enterprise.models import StartEnterpriseBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
@@ -75,13 +74,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             hq_api_id=SQLMachBackend.get_api_id()
         )
         cls.mach_backend.save()
-
-        cls.tropo_backend = SQLTropoBackend(
-            name='TROPO',
-            is_global=True,
-            hq_api_id=SQLTropoBackend.get_api_id()
-        )
-        cls.tropo_backend.save()
 
         cls.http_backend = SQLHttpBackend(
             name='HTTP',
@@ -210,7 +202,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.domain_obj.delete()
         cls.unicel_backend.delete()
         cls.mach_backend.delete()
-        cls.tropo_backend.delete()
         cls.http_backend.delete()
         cls.telerivet_backend.delete()
         cls.test_backend.delete()
@@ -304,7 +295,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @patch('corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend.send')
     @patch('corehq.messaging.smsbackends.mach.models.SQLMachBackend.send')
-    @patch('corehq.messaging.smsbackends.tropo.models.SQLTropoBackend.send')
     @patch('corehq.messaging.smsbackends.http.models.SQLHttpBackend.send')
     @patch('corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend.send')
     @patch('corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send')
@@ -341,12 +331,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             test_send,
             telerivet_send,
             http_send,
-            tropo_send,
             mach_send,
             unicel_send):
         self._test_outbound_backend(self.unicel_backend, 'unicel test', unicel_send)
         self._test_outbound_backend(self.mach_backend, 'mach test', mach_send)
-        self._test_outbound_backend(self.tropo_backend, 'tropo test', tropo_send)
         self._test_outbound_backend(self.http_backend, 'http test', http_send)
         self._test_outbound_backend(self.telerivet_backend, 'telerivet test', telerivet_send)
         self._test_outbound_backend(self.test_backend, 'test test', test_send)
@@ -375,14 +363,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
 
         self._verify_inbound_request(self.unicel_backend.get_api_id(), 'unicel test')
-
-    @run_with_all_backends
-    def test_tropo_inbound_sms(self):
-        tropo_data = {'session': {'from': {'id': self.test_phone_number}, 'initialText': 'tropo test'}}
-        self._simulate_inbound_request_with_payload('/tropo/sms/%s/' % self.tropo_backend.inbound_api_key,
-            content_type='text/json', payload=json.dumps(tropo_data))
-
-        self._verify_inbound_request(self.tropo_backend.get_api_id(), 'tropo test')
 
     @run_with_all_backends
     def test_telerivet_inbound_sms(self):

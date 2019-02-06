@@ -815,8 +815,7 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def by_ids(cls, config_ids):
         mapping = cls.by_id_mapping()
-
-        return_configs = []
+        config_by_ids = {}
         for config_id in set(config_ids):
             try:
                 domain, wrapped = mapping[config_id]
@@ -824,8 +823,8 @@ class StaticReportConfiguration(JsonObject):
                 raise ReportConfigurationNotFoundError(_(
                     "The following report configuration could not be found: {}".format(config_id)
                 ))
-            return_configs.append(cls._get_report_config(wrapped, domain))
-        return return_configs
+            config_by_ids[config_id] = cls._get_report_config(wrapped, domain)
+        return config_by_ids
 
     @classmethod
     def report_class_by_domain_and_id(cls, domain, config_id):
@@ -1057,12 +1056,15 @@ def get_report_configs(config_ids, domain):
 
     static_report_config_ids = []
     dynamic_report_config_ids = []
-    for config_id in config_ids:
+    for config_id in set(config_ids):
         if report_config_id_is_static(config_id):
             static_report_config_ids.append(config_id)
         else:
             dynamic_report_config_ids.append(config_id)
-    static_report_configs = StaticReportConfiguration.by_ids(static_report_config_ids)
+    static_report_config_by_ids = StaticReportConfiguration.by_ids(static_report_config_ids)
+    static_report_configs = list(static_report_config_by_ids.values())
+    if len(static_report_configs) != len(static_report_config_ids):
+        raise ReportConfigurationNotFoundError
     for config in static_report_configs:
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
@@ -1079,7 +1081,6 @@ def get_report_configs(config_ids, domain):
     for config in dynamic_report_configs:
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
-
     return dynamic_report_configs + static_report_configs
 
 

@@ -214,6 +214,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         copy1.save()
         self.addCleanup(copy1.delete)
 
+        self.linked_app.version = 1
+
         self.linked_app.linked_app_logo_refs = logo_refs
         self.linked_app.create_mapping(image, image_path, save=False)
         self.linked_app.save()
@@ -301,7 +303,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         remote_details = RemoteLinkDetails(
             'http://localhost:8000', 'user', 'key'
         )
-        data = 'this is a test'
+        data = b'this is a test: \255'  # Real data will be a binary multimedia file, so mock it with bytes, not unicode
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
@@ -311,7 +313,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)
-        content = media.fetch_attachment(list(media.blobs.keys())[0], return_bytes=True).decode('utf-8')
+        content = media.fetch_attachment(list(media.blobs.keys())[0], return_bytes=True)
         self.assertEqual(data, content)
 
 

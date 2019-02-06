@@ -7,7 +7,6 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 
 from corehq.apps.app_manager.views.phone import get_app_list_xml
-import six
 
 
 class ListAppsTest(SimpleTestCase, TestXmlMixin):
@@ -16,9 +15,9 @@ class ListAppsTest(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         super(ListAppsTest, self).setUp()
 
-        self.domains = ['angmar', 'rohan', 'mordor']
-        self.factories = {domain: AppFactory(domain, build_version='2.9.0') for domain in self.domains}
-        for factory in six.itervalues(self.factories):
+        self.domains = ['rohan', 'angmar', 'mordor']
+        self.factories = [AppFactory(domain, build_version='2.9.0') for domain in self.domains]
+        for factory in self.factories:
             factory.new_basic_module('register', 'orc')
             factory.app._id = 'app_id'  # force an ID so we don't have to save the apps
 
@@ -27,5 +26,5 @@ class ListAppsTest(SimpleTestCase, TestXmlMixin):
     def test_get_app_list_xml(self):
         self.assertXmlEqual(
             self.get_xml('list_apps'),
-            get_app_list_xml([factory.app for factory in six.itervalues(self.factories)]).serializeDocument()
+            get_app_list_xml([factory.app for factory in self.factories]).serializeDocument()
         )

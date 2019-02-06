@@ -34,11 +34,18 @@ hqDefine("export/js/export_list_main", [
 
         var modelType = initialPageData.get("model_type");
         $("#export-list").koApplyBindings(listModels.exportListModel({
-            exports: initialPageData.get("exports"),
             modelType: modelType,
             isDeid: initialPageData.get('is_deid'),
+            isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
+            isFeed: initialPageData.get('is_feed', true),
+            headers: {
+                my_export_type: initialPageData.get('my_export_type'),
+                shared_export_type: initialPageData.get('shared_export_type'),
+                export_type_caps_plural: initialPageData.get('export_type_caps_plural'),
+            },
             urls: {
                 commitFilters: initialPageData.reverse("commit_filters"),
+                getExportsPage: initialPageData.reverse("get_exports_page"),
                 poll: initialPageData.reverse("get_saved_export_progress"),
                 toggleEnabled: initialPageData.reverse("toggle_saved_export_enabled"),
                 update: initialPageData.reverse("update_emailed_export_data"),

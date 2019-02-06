@@ -54,9 +54,11 @@
                         You can manage multimedia by uploading files individually below.
                     {% endblocktrans %}
                 </p>
-                <p>
-                    <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
-                </p>
+                {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
+                    <p>
+                        <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
+                    </p>
+                {% endif %}
             {% else %}
                 <div class="alert alert-info">
                     {% blocktrans %}This application references no multimedia.{% endblocktrans %}
@@ -66,13 +68,7 @@
         <div class="col-sm-5">
             {% if totals|length %}
             <div class="well">
-                <p>
-                    <a class="btn btn-primary download-zip"
-                        href="#multimedia-zip-modal"
-                        data-toggle="modal">
-                        <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
-                    </a>
-                </p>
+                {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True is_multimedia_reference_checker=True %}
                 <ul class="media-totals-list" data-bind="foreach: totals">
                     <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}">
                         <i data-bind="attr: {class: icon_class}"></i>
@@ -150,9 +146,4 @@
     {% endif %}
 </div>
 
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}

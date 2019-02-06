@@ -8,12 +8,12 @@
     <thead>
         <tr>
             {% if not is_owner %}
-            <th>{% trans "Owner" %}</th>
+                <th class="col-sm-2">{% trans "Owner" %}</th>
             {% endif %}
-            <th>{% trans "Reports" %}</th>
-            <th>{% trans "Day and Time" %}</th>
-            <th>{% trans "Recipients" %}</th>
-            <th>{% trans "Actions" %}</th>
+            <th class="{% if is_owner %}col-sm-4{% else %}col-sm-2{% endif %}">{% trans "Reports" %}</th>
+            <th class="col-sm-2">{% trans "Day and Time" %}</th>
+            <th class="col-sm-2">{% trans "Recipients" %}</th>
+            <th class="col-sm-4">{% trans "Actions" %}</th>
         </tr>
     </thead>
     <tbody>

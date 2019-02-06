@@ -1529,17 +1529,20 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def set_audio(self, lang, audio_path):
         self._set_media('media_audio', lang, audio_path)
 
-    def _all_media_paths(self, media_attr):
+    def _all_media_paths(self, media_attr, lang=None):
         assert media_attr in ('media_image', 'media_audio')
         media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = {media for media in media_dict.values() if media}
-        return list(valid_media_paths)
+        valid_media_paths = set()
+        for key, value in media_dict.items():
+            if value and (lang is None or key == lang):
+                valid_media_paths.add(value)
+        return valid_media_paths
 
-    def all_image_paths(self):
-        return self._all_media_paths('media_image')
+    def all_image_paths(self, lang=None):
+        return self._all_media_paths('media_image', lang=lang)
 
-    def all_audio_paths(self):
-        return self._all_media_paths('media_audio')
+    def all_audio_paths(self, lang=None):
+        return self._all_media_paths('media_audio', lang=lang)
 
     def icon_app_string(self, lang, for_default=False):
         """
@@ -2289,6 +2292,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
     module_filter = StringProperty()
+    put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
@@ -2527,7 +2531,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
@@ -3092,7 +3095,6 @@ class AdvancedModule(ModuleBase):
     forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
@@ -3185,7 +3187,8 @@ class AdvancedModule(ModuleBase):
                 name=form.name,
                 form_filter=form.form_filter,
                 media_image=form.media_image,
-                media_audio=form.media_audio
+                media_audio=form.media_audio,
+                comment=form.comment,
             )
             new_form._parent = self
             form._parent = self
@@ -3735,6 +3738,7 @@ class ReportModule(ModuleBase):
     report_configs = SchemaListProperty(ReportAppConfig)
     forms = []
     _loaded = False
+    put_in_root = False
 
     @property
     @memoized
@@ -3818,7 +3822,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     excluded_form_ids = SchemaListProperty()
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
@@ -3957,9 +3960,9 @@ class LazyBlobDoc(BlobMixin):
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
-                if isinstance(attachment, six.string_types):
-                    if isinstance(attachment, six.text_type):
-                        attachment = attachment.encode('utf-8')
+                if isinstance(attachment, six.text_type):
+                    attachment = attachment.encode('utf-8')
+                if isinstance(attachment, bytes):
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"
@@ -4742,7 +4745,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         copy.is_released = False
 
         if not copy.is_remote_app():
-            copy.update_mm_map()
+            copy.update_media_language_map()
 
         prune_auto_generated_builds.delay(self.domain, self._id)
 
@@ -4794,24 +4797,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def set_media_versions(self):
         pass
 
-    def update_mm_map(self):
+    def update_media_language_map(self):
+        self.media_language_map = {}
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             for lang in self.langs:
-                self.media_language_map[lang] = MediaList()
-            for form in self.get_forms():
-                xml = form.wrapped_xform()
-                for lang in self.langs:
-                    media = []
-                    for path in xml.all_media_references(lang):
-                        if path is not None:
-                            media.append(path)
-                            map_item = self.multimedia_map.get(path)
-                            #dont break if multimedia is missing
-                            if map_item:
-                                map_item.form_media = True
-                    self.media_language_map[lang].media_refs.extend(media)
-        else:
-            self.media_language_map = {}
+                self.media_language_map.update({
+                    lang: MediaList(media_refs=list(self.all_media_paths(lang=lang)))
+                })
 
     def get_build_langs(self, build_profile_id=None):
         if build_profile_id is not None:
@@ -4915,6 +4907,10 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
         # Import loop if this is imported at the top
         # TODO: revamp so signal_connections <- models <- signals
         from corehq.apps.app_manager import signals
+        from couchforms.analytics import get_form_analytics_metadata
+        xmlns_list = self.get_xmlns_map().keys()
+        for xmlns in xmlns_list:
+            get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
         signals.app_post_save.send(Application, application=self)
 
     def make_reversion_to_copy(self, copy):
@@ -5576,9 +5572,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        # todo: fix this to expect a list of parent types
-        # todo: and get rid of if_multiple_parents_arbitrarily_pick_one arg
-        case_relationships = get_parent_type_map(self, if_multiple_parents_arbitrarily_pick_one=True)
+        case_relationships = get_parent_type_map(self)
         meta = AppCaseMetadata()
         descriptions_dict = get_case_property_description_dict(self.domain)
 
@@ -5595,7 +5589,10 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
 
         def get_children(case_type):
             seen_types.append(case_type)
-            return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]
+            return [
+                type_.name for type_ in meta.case_types
+                if case_type in type_.child_types
+            ]
 
         def get_hierarchy(case_type):
             return {child: get_hierarchy(child) for child in get_children(case_type)}

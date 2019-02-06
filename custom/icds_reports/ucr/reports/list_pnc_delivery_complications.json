@@ -90,7 +90,7 @@
         "type": "field",
         "display": {
           "en": "AWC",
-          "hin": "\u090f\u0921\u092c\u094d\u0932\u094d\u092f\u0942\u0938\u0940"
+          "hin": "एडब्ल्यूसी"
         },
         "aggregation": "simple"
       },
@@ -106,7 +106,7 @@
         "type": "field",
         "display": {
           "en": "Mother",
-          "hin": "\u092e\u093e\u0901"
+          "hin": "माँ"
         }
       },
       {
@@ -121,7 +121,7 @@
         "type": "field",
         "display": {
           "en": "Date of Delivery",
-          "hin": "\u091c\u0928\u094d\u092e \u0924\u093f\u0925\u093f"
+          "hin": "जन्म तिथि"
         }
       },
       {
@@ -136,7 +136,7 @@
         "type": "field",
         "display": {
           "en": "Complication",
-          "hin": "\u091c\u091f\u093f\u0932\u0924\u093e\u090f\u0902"
+          "hin": "जटिलताएं"
         }
       }
     ],

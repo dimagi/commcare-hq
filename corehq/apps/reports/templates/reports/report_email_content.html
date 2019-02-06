@@ -25,6 +25,15 @@
         {% if report.startdate %}
         <p>
             {% trans "Date range" %}: {{ report.startdate }} - {{ report.enddate }}
+            {% if not report.is_active %}
+              <br />
+              <strong>
+                {% blocktrans %}
+                  Note: This report will not appear in emails because the start
+                  date for the report is still in the future.
+                {% endblocktrans %}
+              </strong>
+            {% endif %}
         </p>
         {% endif %}
         {{ report.content|safe }}

@@ -2404,6 +2404,15 @@
           "type": "named",
           "name": "parent_id"
         }
+      },
+      {
+        "column_id": "phone_number",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "phone_number"
+        }
       }
     ],
     "named_expressions": {

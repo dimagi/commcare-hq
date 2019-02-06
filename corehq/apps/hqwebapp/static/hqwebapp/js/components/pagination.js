@@ -9,6 +9,10 @@
  *      totalItems: A knockout observable that returns the total number of items
  *      inlinePageListOnly: Optional. True or false. If true, leave off the "Showing X to Y of Z entries"
  *          text and the associated dropdown.
+ *      showSpinner: Optional. An observable. If provided, the widget will replace the current page number
+ *          with a spinner when this observable's value is truthy. Useful for ajax-based pagination
+ *          (calling code should set the observable to true before kicking off ajax request, then false
+ *          in the success and error callbacks).
  *
  *  See releases_table.html for an example.
  */
@@ -38,6 +42,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             });
             self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.maxPagesShown = params.maxPagesShown || 9;
+            self.showSpinner = params.showSpinner || ko.observable(false);
 
             self.nextPage = function (model, e) {
                 self.goToPage(Math.min(self.currentPage() + 1, self.numPages()), e);
