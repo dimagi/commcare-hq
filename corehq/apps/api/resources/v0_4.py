@@ -265,7 +265,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         return MOCK_CASE_ES or CaseES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        request_filters = dict(bundle.request.GET)
+        request_filters = {k: v for k, v in bundle.request.GET.items()}
         request_filters.update(kwargs)
         filters = v0_3.CaseListFilters(request_filters).filters
 
