@@ -37,6 +37,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('--dest')
         parser.add_argument('--MIGRATE', action='store_true', default=False)
         parser.add_argument('--COMMIT', action='store_true', default=False)
         parser.add_argument('--blow-away', action='store_true', default=False)
@@ -80,6 +81,8 @@ class Command(BaseCommand):
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('no-input only allowed for unit testing')
 
+        dst_domain = options.pop('dest', None) or domain
+
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
 
@@ -91,6 +94,7 @@ class Command(BaseCommand):
 
             do_couch_to_sql_migration(
                 domain,
+                dst_domain=dst_domain,
                 with_progress=not self.no_input,
                 debug=self.debug,
                 run_timestamp=options.get('run_timestamp'))
@@ -104,10 +108,10 @@ class Command(BaseCommand):
             if not self.no_input:
                 _confirm(
                     "This will delete all SQL forms and cases for the domain {}. "
-                    "Are you sure you want to continue?".format(domain)
+                    "Are you sure you want to continue?".format(dst_domain)
                 )
             set_couch_sql_migration_not_started(domain)
-            _blow_away_migration(domain)
+            _blow_away_migration(dst_domain)
 
         if options['stats_short'] or options['stats_long']:
             self.print_stats(domain, short=options['stats_short'])
@@ -115,12 +119,15 @@ class Command(BaseCommand):
             self.show_diffs(domain)
 
         if options['COMMIT']:
+            # This is not applicable when domain != dst_domain. Once
+            # domain has been migrated, it should continue to prevent
+            # form submissions.
             self.require_only_option('COMMIT', options)
             if not couch_sql_migration_in_progress(domain, include_dry_runs=False):
                 raise CommandError("cannot commit a migration that is not in state in_progress")
             if not self.no_input:
                 _confirm(
-                    "This will allow convert the domain to use the SQL backend and"
+                    "This will convert the domain to use the SQL backend and"
                     "allow new form submissions to be processed. "
                     "Are you sure you want to do this for domain '{}'?".format(domain)
                 )

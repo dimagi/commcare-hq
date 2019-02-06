@@ -68,10 +68,13 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
 
-def do_couch_to_sql_migration(domain, with_progress=True, debug=False, run_timestamp=None):
-    set_local_domain_sql_backend_override(domain)
+def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True, debug=False, run_timestamp=None):
+    if dst_domain is None:
+        dst_domain = src_domain
+    set_local_domain_sql_backend_override(src_domain)
     CouchSqlDomainMigrator(
-        domain,
+        src_domain,
+        dst_domain,
         with_progress=with_progress,
         debug=debug,
         run_timestamp=run_timestamp
@@ -79,14 +82,15 @@ def do_couch_to_sql_migration(domain, with_progress=True, debug=False, run_times
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True, debug=False, run_timestamp=None):
+    def __init__(self, src_domain, dst_domain, with_progress=True, debug=False, run_timestamp=None):
         from corehq.apps.tzmigration.planning import DiffDB
-        self._assert_no_migration_restrictions(domain)
+        self._assert_no_migration_restrictions(src_domain)
         self.with_progress = with_progress
         self.debug = debug
-        self.domain = domain
+        self.src_domain = src_domain
+        self.dst_domain = dst_domain
         self.run_timestamp = run_timestamp or int(time())
-        db_filepath = get_diff_db_filepath(domain)
+        db_filepath = get_diff_db_filepath(src_domain)
         self.diff_db = DiffDB.init(db_filepath)
 
         self.errors_with_normal_doc_type = []
@@ -106,7 +110,10 @@ class CouchSqlDomainMigrator(object):
         print('[INFO] {}'.format(message))
 
     def migrate(self):
-        self.log_info('migrating domain {}'.format(self.domain))
+        if self.src_domain == self.dst_domain:
+            self.log_info('migrating domain {}'.format(self.src_domain))
+        else:
+            self.log_info('migrating domain {} to {}'.format(self.src_domain, self.dst_domain))
         self.log_info('run timestamp is {}'.format(self.run_timestamp))
 
         self.processed_docs = 0
@@ -122,7 +129,7 @@ class CouchSqlDomainMigrator(object):
                 self._calculate_case_diffs()
 
         self._send_timings(timing_context)
-        self.log_info('migrated domain {}'.format(self.domain))
+        self.log_info('migrated domain {}'.format(self.src_domain))
 
     def _process_main_forms(self):
         last_received_on = datetime.min
@@ -133,7 +140,7 @@ class CouchSqlDomainMigrator(object):
 
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(
-            self.domain).iter_all_changes(
+            self.src_domain).iter_all_changes(
                 resumable_key=self._get_resumable_iterator_key('main_forms'))
 
         # form_id needs to be on self to release appropriately
@@ -195,7 +202,7 @@ class CouchSqlDomainMigrator(object):
         self._try_to_process_queues(pool)
 
     def _migrate_form_and_associated_models_async(self, wrapped_form):
-        set_local_domain_sql_backend_override(self.domain)
+        set_local_domain_sql_backend_override(self.src_domain)
         try:
             self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
@@ -207,7 +214,7 @@ class CouchSqlDomainMigrator(object):
             self._log_main_forms_processed_count(throttled=True)
 
     def _migrate_form_and_associated_models(self, couch_form):
-        sql_form = _migrate_form(self.domain, couch_form)
+        sql_form = _migrate_form(couch_form, self.dst_domain)
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
 
@@ -245,7 +252,7 @@ class CouchSqlDomainMigrator(object):
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
         changes = _get_unprocessed_form_iterator(
-            self.domain).iter_all_changes(
+            self.src_domain).iter_all_changes(
                 resumable_key=self._get_resumable_iterator_key('unprocessed_forms'))
         for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
@@ -264,7 +271,7 @@ class CouchSqlDomainMigrator(object):
             xmlns=couch_form.xmlns,
             user_id=couch_form.user_id,
         )
-        _copy_form_properties(self.domain, sql_form, couch_form)
+        _copy_form_properties(self.src_domain, sql_form, couch_form)
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
 
@@ -280,7 +287,7 @@ class CouchSqlDomainMigrator(object):
         doc_types = ['CommCareCase-Deleted']
         pool = Pool(10)
         changes = _get_case_iterator(
-            self.domain, doc_types=doc_types).iter_all_changes(
+            self.src_domain, doc_types=doc_types).iter_all_changes(
                 resumable_key=self._get_resumable_iterator_key('unprocessed_cases'))
         for change in self._with_progress(doc_types, changes):
             pool.spawn(self._copy_unprocessed_case, change)
@@ -300,7 +307,7 @@ class CouchSqlDomainMigrator(object):
 
         sql_case = CommCareCaseSQL(
             case_id=couch_case.case_id,
-            domain=self.domain,
+            domain=self.src_domain,
             type=couch_case.type or '',
             name=couch_case.name,
             owner_id=couch_case.owner_id or couch_case.user_id or '',
@@ -326,7 +333,7 @@ class CouchSqlDomainMigrator(object):
         except IntegrityError:
             # case re-created by form processing so just mark the case as deleted
             CaseAccessorSQL.soft_delete_cases(
-                self.domain,
+                self.src_domain,
                 [sql_case.case_id],
                 sql_case.deleted_on,
                 sql_case.deletion_id
@@ -340,7 +347,7 @@ class CouchSqlDomainMigrator(object):
         batch_size = 100
         pool = Pool(10)
         changes = _get_case_iterator(
-            self.domain).iter_all_changes(
+            self.src_domain).iter_all_changes(
                 resumable_key=self._get_resumable_iterator_key("case_diffs"))
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
@@ -387,7 +394,7 @@ class CouchSqlDomainMigrator(object):
         from corehq.apps.tzmigration.timezonemigration import json_diff
 
         rebuilt_case = FormProcessorCouch.hard_rebuild_case(
-            self.domain, couch_case['_id'], None, save=False, lock=False
+            self.src_domain, couch_case['_id'], None, save=False, lock=False
         )
         rebuilt_case_json = rebuilt_case.to_json()
         diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
@@ -423,7 +430,7 @@ class CouchSqlDomainMigrator(object):
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         doc_count = sum([
-            get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
+            get_doc_count_in_domain_by_type(self.src_domain, doc_type, XFormInstance.get_db())
             for doc_type in doc_types
         ])
         if self.timing_context:
@@ -461,7 +468,7 @@ class CouchSqlDomainMigrator(object):
         self._log_processed_docs_count(['type:case_diffs'], throttled)
 
     def _get_resumable_iterator_key(self, source):
-        return "%s.%s.%s" % (self.domain, source, self.run_timestamp)
+        return "%s.%s.%s" % (self.src_domain, source, self.run_timestamp)
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"
@@ -489,14 +496,14 @@ def _wrap_form(doc):
         return XFormInstance.wrap(doc)
 
 
-def _migrate_form(domain, couch_form):
+def _migrate_form(couch_form, dst_domain):
     """
     This copies the couch form into a new sql form but does not save it.
 
     See form_processor.parsers.form._create_new_xform
     and SubmissionPost._set_submission_properties for what this should do.
     """
-    interface = FormProcessorInterface(domain)
+    interface = FormProcessorInterface(dst_domain)
 
     form_data = couch_form.form
     with force_phone_timezones_should_be_processed():
@@ -505,7 +512,7 @@ def _migrate_form(domain, couch_form):
     sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
     if sql_form.xmlns is None:
         sql_form.xmlns = ''
-    return _copy_form_properties(domain, sql_form, couch_form)
+    return _copy_form_properties(dst_domain, sql_form, couch_form)
 
 
 def _copy_form_properties(domain, sql_form, couch_form):
