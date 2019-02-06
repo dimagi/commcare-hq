@@ -323,7 +323,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
 
             self.relevancy = scheduleRelevancy.wrap(data.schedule);
             var xmlRe = /\s+|<+|>+|&+|"+|'+/g;
-            self.schedule_form_id = ko.observable(data.schedule_form_id).snakeCase(xmlRe);
+            self.schedule_form_id = ko.observable(data.schedule_form_id || '').snakeCase(xmlRe);
 
             self.addVisit = function () {
                 self.visits.push(scheduleVisit.wrap({
