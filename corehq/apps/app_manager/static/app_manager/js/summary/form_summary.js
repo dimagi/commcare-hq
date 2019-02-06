@@ -73,6 +73,11 @@ hqDefine('app_manager/js/summary/form_summary',[
             self.showDefaultValues(!self.showDefaultValues());
         };
 
+        self.showCaseProperties = ko.observable(false);
+        self.toggleCaseProperties = function () {
+            self.showCaseProperties(!self.showCaseProperties());
+        };
+
         return self;
     };
 
