@@ -695,6 +695,20 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
             related=True
         )
 
+    def test_related_locations_parent_location(self, *args):
+        # verify that being assigned to a parent location pulls in sub location's relations
+        self.user._couch_user.add_to_assigned_locations(self.locations['Middlesex'])
+        self._assert_fixture_matches_file(
+            'related_location_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
+            'related_location',
+            ['Boston', 'Cambridge'],
+            related=True
+        )
+
     def test_related_locations_with_distance(self, *args):
         self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
         self.relation.distance = 5
