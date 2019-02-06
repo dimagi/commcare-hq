@@ -57,7 +57,7 @@ class ODataCommCareCaseSerializer(Serializer):
             for property_name in list(properties):
                 if property_name not in [
                     'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
-                ] + get_case_type_to_properties(domain)[case_type]:
+                ] + get_case_type_to_properties(domain).get(case_type, []):
                     properties.pop(property_name)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
