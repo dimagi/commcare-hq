@@ -177,7 +177,7 @@ else
 fi
 # export variables for compose file (they must be set or it complains)
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
-export PYTHON_VERSION="$PYTHON_VERSION:-py2"
+export PYTHON_VERSION="${PYTHON_VERSION:-py2}"
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
