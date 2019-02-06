@@ -1147,7 +1147,7 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    feature_id = forms.CharField(
+    select2_feature_id = forms.CharField(
         required=False,
         label="Search for or Create Feature",
         widget=forms.Select(choices=[]),
@@ -1290,7 +1290,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
                 hqcrispy.B3MultiField(
                     "Add Feature",
-                    InlineField('feature_id', css_class="input-xxlarge",
+                    InlineField('select2_feature_id', css_class="input-xxlarge",
                                 data_bind="value: featureRates.select2.value"),
                     StrictButton(
                         "Select Feature",
@@ -1403,7 +1403,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'currentValue': self['feature_rates'].value(),
             'handlerSlug': FeatureRateAsyncHandler.slug,
             'select2Options': {
-                'fieldName': 'feature_id',
+                'fieldName': 'select2_feature_id',
             }
         }
 
