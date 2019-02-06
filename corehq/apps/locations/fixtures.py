@@ -5,13 +5,14 @@ from collections import defaultdict
 from itertools import groupby
 from xml.etree.cElementTree import Element, SubElement
 
-from django.db.models import IntegerField, Q
 from django.contrib.postgres.fields.array import ArrayField
+from django.db.models import IntegerField, Q
 from django_cte import With
 from django_cte.raw import raw_cte_sql
 import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     DEFAULT_LOCATION_FIXTURE_OPTION, SYNC_FLAT_FIXTURES, SYNC_HIERARCHICAL_FIXTURE
 )
@@ -23,7 +24,6 @@ from corehq.apps.locations.models import (
     LocationType,
     SQLLocation,
 )
-from corehq import toggles
 
 
 class LocationSet(object):
@@ -231,10 +231,28 @@ flat_location_fixture_generator = LocationFixtureProvider(
 
 
 class RelatedLocationsFixtureProvider(FixtureProvider):
-    """This fixture is under active development for REACH, and is expected to change.
+    """This fixture returns the ids of all location relations, and if there is a defined distance.
 
-    - Relations do not nest. Meaning that a location needs a direct relation
-      to another location for it be included in this fixture.
+    The attribute id is indexed.
+
+    Specification details:
+
+    * If a user is assigned to a location and its children have related locations, their relations are included.
+    * If a user is assigned to a child location and its parent has related locations, the parent's relations are not included.
+    * This fixture will not contain any location specific data than the location's id
+    * Relations are two way
+
+    Example:
+    <fixture id="related_locations">
+      <locations>
+        <location id="location_a">
+          <related_location distance="X">location_b</related_location>
+        </location>
+        <location id="location_b">
+          <related_location distance="X">location_a</related_location>
+        </location>
+      </locations>
+    </fixture>
     """
     id = 'related_locations'
 
@@ -260,6 +278,15 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
         return [get_index_schema_node(self.id, ['@id']), root_node]
 
     def _users_related_locations(self, restore_user):
+        """Returns a sorted list of location relations:
+            [
+                (location_a, [(location_b, distance), ...]),
+                (location_b, [(location_a, distance), ...])
+            ]
+
+        Sorted by the location's name, and each associated list is sorted by its location names.
+        This is purely for deterministicly ordered outputs, and can be changed if needed.
+        """
         user_location_ids = restore_user.get_location_ids(restore_user.domain)
         user_locations_with_descendants = SQLLocation.objects.get_descendants(
             Q(domain=restore_user.domain, location_id__in=user_location_ids)
@@ -301,6 +328,8 @@ def get_location_fixture_queryset(user):
     user_location_ids = list(user_locations.order_by().values_list("id", flat=True))
 
     if toggles.RELATED_LOCATIONS.enabled(user.domain):
+        # Retrieve all of the locations related to a user's location and child
+        # location and add them to the flat fixture
         related_location_ids = LocationRelation.from_locations(
             SQLLocation.objects.get_descendants(Q(domain=user.domain, id__in=user_location_ids))
         )
