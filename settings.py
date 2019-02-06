@@ -373,6 +373,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
+    'custom.reach',
 )
 
 # also excludes any app starting with 'django.'
@@ -2104,7 +2105,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
-    'reach-test': 'custom.icds_reports',
+    'reach-test': 'custom.reach',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
