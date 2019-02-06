@@ -452,7 +452,8 @@ class SQLLocation(AdjListModel):
             [loc.supply_point_id for loc in to_delete if loc.supply_point_id],
             list(self.get_ancestors().location_ids()),
         )
-        publish_location_saved(self.domain, self.location_id, is_deletion=True)
+        for loc in to_delete:
+            publish_location_saved(loc.domain, loc.location_id, is_deletion=True)
 
     full_delete = delete
 
@@ -488,6 +489,8 @@ class SQLLocation(AdjListModel):
         for the given `locations`.
         """
         from .tasks import update_users_at_locations
+        from .document_store import publish_location_saved
+
         if not locations:
             return
         if len(set(loc.domain for loc in locations)) != 1:
@@ -502,6 +505,8 @@ class SQLLocation(AdjListModel):
             [loc.supply_point_id for loc in locations if loc.supply_point_id],
             ancestor_location_ids,
         )
+        for loc in locations:
+            publish_location_saved(loc.domain, loc.location_id, is_deletion=True)
 
     def to_json(self, include_lineage=True):
         json_dict = {
