@@ -46,7 +46,7 @@ class ChildHealthMonthlyUCR(ConfigurableReportCustomQueryProvider):
 
     def get_total_row(self):
         query_obj = self._get_query_object(total_row=True)
-        return ["Total"] + [r for r in query_obj.first()]
+        return ["Total"] + [r or 0 for r in query_obj.first()]
 
     def get_total_records(self):
         return self._get_query_object().count()
