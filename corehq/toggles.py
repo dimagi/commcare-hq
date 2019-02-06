@@ -1279,6 +1279,7 @@ BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'Add a page to update multimedia paths in bulk',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager"
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(

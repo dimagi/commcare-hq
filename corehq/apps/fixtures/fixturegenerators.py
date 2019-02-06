@@ -4,6 +4,7 @@ from collections import defaultdict
 from xml.etree import cElementTree as ElementTree
 from io import BytesIO
 
+import six
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FIXTURE_BUCKET
@@ -90,7 +91,7 @@ class ItemListsProvider(FixtureProvider):
         global_items = self._get_global_items(global_types, domain, bypass_cache=restore_state.overwrite_cache)
         io = BytesIO()
         io.write(ITEMS_COMMENT_PREFIX)
-        io.write(bytes(len(global_items)))
+        io.write(six.text_type(len(global_items)).encode('utf-8'))
         io.write(b'-->')
         for element in global_items:
             io.write(ElementTree.tostring(element, encoding='utf-8'))
