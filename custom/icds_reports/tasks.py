@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 import io
 import logging
 import os
+import tempfile
 
 from celery import chain, group
 from celery.schedules import crontab
@@ -437,8 +438,8 @@ def _update_months_table(day):
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
 
 
-def get_cursor(model):
-    db = db_for_read_write(model)
+def get_cursor(model, write=True):
+    db = db_for_read_write(model, write)
     return connections[db].cursor()
 
 
@@ -963,7 +964,7 @@ def create_mbt_for_month(state_id, month):
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
         helper = helper_class(state_id, month)
-        with get_cursor(helper.base_class) as cursor, open(helper.output_file, 'w+b') as f:
+        with get_cursor(helper.base_class, write=False) as cursor, tempfile.TemporaryFile() as f:
             cursor.copy_expert(helper.query(), f)
             f.seek(0)
             icds_file, _ = IcdsFile.objects.get_or_create(blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month), data_type='mbt_{}'.format(helper.base_tablename))
