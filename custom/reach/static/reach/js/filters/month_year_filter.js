@@ -39,7 +39,7 @@ hqDefine('reach/js/filters/month_year_filter', [
 
             updateMonths(self.selectedYear());
 
-            for (var year=2017; year <= moment().year(); year++ ) {
+            for (var year=2019; year <= moment().year(); year++ ) {
                 self.availableYears.push({
                     name: year,
                     id: year,

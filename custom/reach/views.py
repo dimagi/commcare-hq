@@ -57,28 +57,22 @@ class ProgramOverviewReportAPI(View):
                     'indicator': INDICATOR_LIST['registered_eligible_couples'],
                     'format': NUMERIC,
                     'color': COLORS['violet'],
-                    'numerator': 71682,
-                    'denominator': 140098,
-                    'past_month_numerator': 69354,
-                    'past_month_denominator': 130098
+                    'value': 71682,
+                    'past_month_value': 69354,
                 },
                 {
                     'indicator': INDICATOR_LIST['registered_pregnancies'],
                     'format': NUMERIC,
                     'color': COLORS['blue'],
-                    'numerator': 9908,
-                    'denominator': 128990,
-                    'past_month_numerator': 12458,
-                    'past_month_denominator': 115800
+                    'value': 9908,
+                    'past_month_value': 12458,
                 },
                 {
                     'indicator': INDICATOR_LIST['registered_children'],
                     'format': NUMERIC,
                     'color': COLORS['orange'],
-                    'numerator': 21630,
-                    'denominator': 890743,
-                    'past_month_numerator': 40687,
-                    'past_month_denominator': 715486
+                    'value': 21630,
+                    'past_month_value': 40687,
                 }
             ],
             [
@@ -86,28 +80,25 @@ class ProgramOverviewReportAPI(View):
                     'indicator': INDICATOR_LIST['couples_family_planning'],
                     'format': PERCENT,
                     'color': COLORS['aqua'],
-                    'numerator': 65028,
-                    'denominator': 928103,
-                    'past_month_numerator': 60486,
-                    'past_month_denominator': 914384
+                    'value': 65028,
+                    'total': 928103,
+                    'past_month_value': 60486,
                 },
                 {
                     'indicator': INDICATOR_LIST['high_risk_pregnancies'],
                     'format': PERCENT,
                     'color': COLORS['darkorange'],
-                    'numerator': 207,
-                    'denominator': 9908,
-                    'past_month_numerator': 204,
-                    'past_month_denominator': 9837
+                    'value': 207,
+                    'total': 9908,
+                    'past_month_value': 204,
                 },
                 {
                     'indicator': INDICATOR_LIST['institutional_deliveries'],
                     'format': PERCENT,
                     'color': COLORS['mediumblue'],
-                    'numerator': 14311,
-                    'denominator': 21837,
-                    'past_month_numerator': 16486,
-                    'past_month_denominator': 21648
+                    'value': 14311,
+                    'total': 21837,
+                    'past_month_value': 16486,
                 }
             ]
         ]})

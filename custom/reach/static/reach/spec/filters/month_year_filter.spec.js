@@ -6,7 +6,7 @@ describe('Reach Month Year Filter', function () {
     beforeEach(function () {
         monthYearModel = hqImport('reach/js/filters/month_year_filter');
         reachUtils = hqImport('reach/js/utils/reach_utils');
-        var today = moment('2019-01-01').toDate();
+        var today = moment('2020-01-01').toDate();
         clock = sinon.useFakeTimers(today.getTime());
     });
 
@@ -28,16 +28,15 @@ describe('Reach Month Year Filter', function () {
         assert.equal(model.showFilter(), false);
 
         var expectedYears = [
-            {id: 2017, name: 2017},
-            {id: 2018, name: 2018},
             {id: 2019, name: 2019},
+            {id: 2020, name: 2020},
         ];
         _.each(expectedYears, function (year, idx) {
             assert.equal(model.availableYears()[idx].id, year.id);
             assert.equal(model.availableYears()[idx].name, year.name);
         });
 
-        // only one month because now is set to the '2019-01-01'
+        // only one month because now is set to the '2020-01-01'
         var expectedMonths = [
             {id: 1, name: "January"},
         ];
@@ -49,7 +48,7 @@ describe('Reach Month Year Filter', function () {
         });
 
         assert.equal(model.selectedMonth(), 1);
-        assert.equal(model.selectedYear(), 2019);
+        assert.equal(model.selectedYear(), 2020);
     });
 
     it('test month year selected year subscribe method', function () {
@@ -62,16 +61,15 @@ describe('Reach Month Year Filter', function () {
         assert.equal(model.showFilter(), false);
 
         var expectedYears = [
-            {id: 2017, name: 2017},
-            {id: 2018, name: 2018},
             {id: 2019, name: 2019},
+            {id: 2020, name: 2020},
         ];
         _.each(expectedYears, function (year, idx) {
             assert.equal(model.availableYears()[idx].id, year.id);
             assert.equal(model.availableYears()[idx].name, year.name);
         });
 
-        // only one month because now is set to the '2019-01-01'
+        // only one month because now is set to the '2020-01-01'
         var expectedMonths = [
             {id: 1, name: "January"},
         ];
@@ -83,17 +81,16 @@ describe('Reach Month Year Filter', function () {
         });
 
         assert.equal(model.selectedMonth(), 1);
-        assert.equal(model.selectedYear(), 2019);
+        assert.equal(model.selectedYear(), 2020);
 
-        model.selectedYear(2018);
+        model.selectedYear(2019);
 
         assert.equal(model.selectedMonth(), 1);
-        assert.equal(model.selectedYear(), 2018);
+        assert.equal(model.selectedYear(), 2019);
 
         expectedYears = [
-            {id: 2017, name: 2017},
-            {id: 2018, name: 2018},
             {id: 2019, name: 2019},
+            {id: 2020, name: 2020},
         ];
         _.each(expectedYears, function (year, idx) {
             assert.equal(model.availableYears()[idx].id, year.id);
@@ -129,17 +126,17 @@ describe('Reach Month Year Filter', function () {
         };
         var model = monthYearModel.viewModel(params);
 
-        assert.equal(model.selectedYear(), 2019);
+        assert.equal(model.selectedYear(), 2020);
         assert.equal(model.selectedMonth(), 1);
 
-        model.selectedYear(2018);
+        model.selectedYear(2019);
         model.selectedMonth(9);
 
-        assert.equal(model.selectedYear(), 2018);
+        assert.equal(model.selectedYear(), 2019);
         assert.equal(model.selectedMonth(), 9);
 
         model.resetFilter();
-        assert.equal(model.selectedYear(), 2019);
+        assert.equal(model.selectedYear(), 2020);
         assert.equal(model.selectedMonth(), 1);
     });
 
@@ -151,17 +148,17 @@ describe('Reach Month Year Filter', function () {
         };
         var model = monthYearModel.viewModel(params);
 
-        assert.equal(postData.selectedYear, 2019);
+        assert.equal(postData.selectedYear, 2020);
         assert.equal(postData.selectedMonth, 1);
 
-        model.selectedYear(2018);
+        model.selectedYear(2019);
         model.selectedMonth(9);
 
         model.applyFilters();
-        assert.equal(model.selectedYear(), 2018);
+        assert.equal(model.selectedYear(), 2019);
         assert.equal(model.selectedMonth(), 9);
 
-        assert.equal(postData.selectedYear, 2018);
+        assert.equal(postData.selectedYear, 2019);
         assert.equal(postData.selectedMonth, 9);
     });
 });

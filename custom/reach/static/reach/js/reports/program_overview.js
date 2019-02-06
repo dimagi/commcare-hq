@@ -18,10 +18,9 @@ hqDefine("reach/js/reports/program_overview", [
         self.indicator = options.indicator;
         self.color = options.color;
         self.format = options.format;
-        self.numerator = options.numerator;
-        self.denominator = options.denominator || 1;
-        self.pastMonthNumerator = options.past_month_numerator || 0;
-        self.pastMonthDenominator = options.past_month_denominator || 0;
+        self.value = options.value;
+        self.total = options.total || 0;
+        self.pastMonthValue = options.past_month_value || 0;
 
         self.isNumeric = function () {
             return self.format === 'numeric';
@@ -32,15 +31,12 @@ hqDefine("reach/js/reports/program_overview", [
         };
 
         self.percentFormat = function () {
-            var value = self.numerator * 100 / (self.denominator || 1);
+            var value = self.value * 100 / (self.total || 1);
             return value.toFixed(2) + " %";
         };
 
         self.diffBetweenMonths = function () {
-            var thisMonth = self.numerator * 100 / (self.denominator || 1);
-            var prevMonth = self.pastMonthNumerator * 100 / (self.pastMonthDenominator || 1);
-
-            var diff = ((thisMonth - prevMonth) * 100) / (prevMonth || 1);
+            var diff = ((self.value - self.pastMonthValue) * 100) / (self.pastMonthValue || 1);
             if (diff > 0) {
                 return '(+' + diff.toFixed(2) + '% from last month)';
             } else {
@@ -81,6 +77,12 @@ hqDefine("reach/js/reports/program_overview", [
 
         return self;
     };
+
+    $(function () {
+        var model = programOverviewModel();
+        $('#reach-dashboard').koApplyBindings(model);
+        model.callback();
+    });
 
     return {
         programOverviewModel: programOverviewModel,

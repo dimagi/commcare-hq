@@ -1704,3 +1704,11 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+
+DASHBOARD_REACH_REPORT = StaticToggle(
+    'dashboard_reach_reports',
+    'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)

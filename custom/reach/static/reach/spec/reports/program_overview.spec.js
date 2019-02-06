@@ -7,18 +7,17 @@ describe('Reach Program Overview', function () {
         assert.equal(indicator.indicator, expectedValues.indicator);
         assert.equal(indicator.color, expectedValues.color);
         assert.equal(indicator.format, expectedValues.format);
-        assert.equal(indicator.numerator, expectedValues.numerator);
-        assert.equal(indicator.denominator, expectedValues.denominator);
-        assert.equal(indicator.pastMonthNumerator, expectedValues.pastMonthNumerator);
-        assert.equal(indicator.pastMonthDenominator, expectedValues.pastMonthDenominator);
+        assert.equal(indicator.value, expectedValues.value);
+        assert.equal(indicator.total, expectedValues.total);
+        assert.equal(indicator.pastMonthValue, expectedValues.pastMonthValue);
         assert.equal(indicator.isNumeric(), expectedValues.isNumeric);
         assert.equal(indicator.isPercent(), expectedValues.isPercent);
         if (indicator.isPercent()) {
             assert.equal(indicator.percentFormat(), expectedValues.percentFormat);
-            var secondValueFormat = indicator.reachUtils.toIndiaFormat(indicator.numerator) + ' / ' + indicator.reachUtils.toIndiaFormat(indicator.denominator);
+            var secondValueFormat = indicator.reachUtils.toIndiaFormat(indicator.value) + ' / ' + indicator.reachUtils.toIndiaFormat(indicator.total);
             assert.equal(secondValueFormat, expectedValues.secondValueFormat);
         } else {
-            assert.equal(indicator.reachUtils.toIndiaFormat(indicator.numerator), expectedValues.indiaFormat);
+            assert.equal(indicator.reachUtils.toIndiaFormat(indicator.value), expectedValues.indiaFormat);
         }
         assert.equal(indicator.diffBetweenMonths(), expectedValues.diffBetweenMonths);
     };

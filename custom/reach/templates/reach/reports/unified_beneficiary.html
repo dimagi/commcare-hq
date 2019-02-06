@@ -2,10 +2,11 @@
 {% load hq_shared_tags %}
 {% load menu_tags %}
 
+{% block js %}
+    {{ block.super }}
+    {# in this place import javascript with knockout model #}
+{% endblock %}
+
 {% block content %}
     <div>Unified Beneficiary</div>
 {% endblock content %}
-
-{% block js-inline %}
-    {{ block.super }}
-{% endblock %}
