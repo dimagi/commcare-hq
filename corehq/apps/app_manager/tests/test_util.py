@@ -1,22 +1,61 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test.testcases import SimpleTestCase, TestCase
+
 from django.http import Http404
+from django.test.testcases import TestCase
 
 import corehq.apps.app_manager.util as util
-from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     LoadUpdateAction,
-    ReportModule, ReportAppConfig, Module)
+    Module,
+)
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.util import LatestAppInfo
-from corehq.apps.app_manager.views.utils import overwrite_app
-from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
+from corehq.apps.app_manager.xform_builder import XFormBuilder
+from corehq.apps.domain.models import Domain
 
 
-class TestGetFormData(SimpleTestCase):
+class TestGetFormData(TestCase):
+
+    def test_form_data_with_case_properties(self):
+        factory = AppFactory()
+        app = factory.app
+        module1, form1 = factory.new_basic_module('open_case', 'household')
+        form1_builder = XFormBuilder(form1.name)
+
+        # question 0
+        form1_builder.new_question('name', 'Name')
+        # question 1
+        form1_builder.new_group('demographics', 'Demographics')
+        # question 2 (a group)
+        form1_builder.new_question('age', 'Age', group='demographics')
+        # question 3 (a question in a group)
+        form1_builder.new_question('polar_bears_seen', 'Number of polar bears seen')
+        form1.source = form1_builder.tostring(pretty_print=True).decode('utf-8')
+        factory.form_requires_case(form1, case_type='household', update={
+            'name': '/data/name',
+            'age': '/data/demographics/age',
+        }, preload={
+            '/data/polar_bears_seen': 'polar_bears_seen',
+        })
+        app.save()
+
+        modules, errors = util.get_form_data(app.domain, app)
+
+        q1_saves = modules[0]['forms'][0]['questions'][0]['save_properties'][0]
+        self.assertEqual(q1_saves.case_type, 'household')
+        self.assertEqual(q1_saves.property, 'name')
+
+        group_saves = modules[0]['forms'][0]['questions'][2]['save_properties'][0]
+        self.assertEqual(group_saves.case_type, 'household')
+        self.assertEqual(group_saves.property, 'age')
+
+        q3_loads = modules[0]['forms'][0]['questions'][3]['load_properties'][0]
+        self.assertEqual(q3_loads.case_type, 'household')
+        self.assertEqual(q3_loads.property, 'polar_bears_seen')
 
     def test_advanced_form_get_action_type(self):
         app = Application.new_app('domain', "Untitled Application")
@@ -33,7 +72,7 @@ class TestGetFormData(SimpleTestCase):
         self.assertEqual(modules[0]['forms'][0]['action_type'], 'load (load_0)')
 
 
-class TestGetDefaultFollowupForm(SimpleTestCase):
+class TestGetDefaultFollowupForm(TestCase):
     def test_default_followup_form(self):
         app = Application.new_app('domain', "Untitled Application")
 

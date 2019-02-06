@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from copy import deepcopy
+from collections import namedtuple
 import datetime
 from pydoc import html
 from django.http import Http404
@@ -199,10 +200,56 @@ class CaseTypeMeta(JsonObject):
             closers.conditions.append(condition)
         self.closed_by[form_id] = closers
 
+    def loads_to_question(self, form_id, path):
+        """returns a filtered list of properties which load into a particular form question
+        """
+        return self._properties_for_save_load_questions(form_id, path, 'load')
+
+    def saves_from_question(self, form_id, path):
+        """returns a filtered list of properties which load into a particular form question
+        """
+        return self._properties_for_save_load_questions(form_id, path, 'save')
+
+    def _properties_for_save_load_questions(self, form_id, path, save_or_load):
+        properties = []
+        for case_property in self.properties:
+            relevant_forms = [form for form in case_property.forms if form_id == form.form_id]
+            for form in relevant_forms:
+                relevant_questions = (
+                    question.question for question in
+                    (form.save_questions if save_or_load == 'save' else form.load_questions)
+                    if question.question.value == path
+                )
+                if any(relevant_questions):
+                    properties.append(case_property)
+        return properties
+
 
 class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
     type_hierarchy = DictProperty()  # case_type -> {child_case -> {}}
+
+    def loads_to_question(self, form_id, path):
+        """gets all case types with a filtered list of properties which load into a form question
+        """
+        return self._case_types_for_save_load_question(form_id, path, 'load')
+
+    def saves_from_question(self, form_id, path):
+        """gets all case types with a filtered list of properties which are saved from a form question
+        """
+        return self._case_types_for_save_load_question(form_id, path, 'save')
+
+    def _case_types_for_save_load_question(self, form_id, path, save_or_load):
+        LoadSaveProperty = namedtuple('LoadSaveProperty', 'case_type property')
+        types = []
+        for case_type in self.case_types:
+            types.extend(
+                LoadSaveProperty(case_type.name, prop.name)
+                for prop in
+                (case_type.saves_from_question(form_id, path) if save_or_load == "save"
+                 else case_type.loads_to_question(form_id, path))
+            )
+        return types
 
     def get_property_list(self, root_case_type, name):
         type_ = self.get_type(root_case_type)
