@@ -7,7 +7,7 @@ from dimagi.utils.couch.database import iter_docs
 
 
 class Command(BaseCommand):
-    help = """"Migrate UserRole to accommodate additional view options and 
+    help = """"Migrate UserRole to accommodate additional view options and
     permissions splits"""
 
     def handle(self, **options):
