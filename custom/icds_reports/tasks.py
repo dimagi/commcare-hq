@@ -644,7 +644,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         # as DatabaseColumn from corehq.apps.reports.sqlreport doesn't format None
         if aggregation_level > 4 and NUM_LAUNCHED_AWCS in excel_data[0][1][0] and beta:
             num_launched_awcs_column = excel_data[0][1][0].index(NUM_LAUNCHED_AWCS)
-            for record in [record for n, record in enumerate(excel_data[0][1]) if n > 0]:
+            for record in excel_data[0][1][1:]:
                 if record[num_launched_awcs_column] == DATA_NOT_ENTERED:
                     record[num_launched_awcs_column] = 'Not Launched'
                 else:
