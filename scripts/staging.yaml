@@ -54,4 +54,5 @@ branches:
   - np/edit-feed # Nick P Jan 23
   - jls/select2-accept-csv  # Jenny Feb 1
   - jls/widen-app-preview-bar   # Jenny Feb 6
+  - es/child-module-metrics  # Ethan Feb 7
 submodules: {}
