@@ -575,9 +575,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         else:
             module["root_module_id"] = request.POST.get("root_module_id")
         if not old_root and module['root_module_id']:
-            track_workflow(request.couch_user.username, "User added a child module")
+            track_workflow(request.couch_user.username, "User associated module with a parent")
         elif old_root and not module['root_module_id']:
-            track_workflow(request.couch_user.username, "User removed a child module")
+            track_workflow(request.couch_user.username, "User orphaned a child module")
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
