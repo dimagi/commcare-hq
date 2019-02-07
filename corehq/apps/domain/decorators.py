@@ -124,7 +124,7 @@ def login_and_domain_required(view_func):
         ):
             return view_func(req, domain_name, *args, **kwargs)
         else:
-            login_url = reverse('domain_login', kwargs={'domain': domain})
+            login_url = reverse('domain_login', kwargs={'domain': domain_name})
             return redirect_for_login_or_domain(req, login_url=login_url)
 
     return _inner

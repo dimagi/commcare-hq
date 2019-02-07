@@ -20,7 +20,6 @@ from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
     get_schema_index_view_keys, force_tag_to_list
 from memoized import memoized
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
@@ -115,7 +114,8 @@ class Format(object):
         return cls(format, **cls.FORMAT_DICT[format])
 
 
-class ExportSchema(Document, UnicodeMixIn):
+@six.python_2_unicode_compatible
+class ExportSchema(Document):
     """
     An export schema that can store intermittent contents of the export so
     that the entire doc list doesn't have to be used to generate the export
@@ -124,7 +124,7 @@ class ExportSchema(Document, UnicodeMixIn):
     schema = DictProperty()
     timestamp = TimeStampProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (json.dumps(self.index), self.timestamp)
 
     @classmethod
@@ -594,7 +594,8 @@ class DefaultExportSchema(BaseSavedExportSchema):
         return None
 
 
-class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
+@six.python_2_unicode_compatible
+class SavedExportSchema(BaseSavedExportSchema):
     """
     Lets you save an export format with a schema and list of columns
     and display names.
@@ -620,7 +621,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     # ID of  the new style export that it was converted to
     converted_saved_export_id = StringProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s)" % (self.name, self.index)
 
     def transform(self, doc):

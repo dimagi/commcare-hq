@@ -266,7 +266,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         )
 
         # apply an update
-        xml_data = self.get_xml('update_short')
+        xml_data = self.get_xml('update_short').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
 

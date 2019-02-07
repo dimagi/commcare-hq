@@ -299,12 +299,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
                     locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
-                    vm.selectedLevel = selectedLocationIndex() + 1;
                     vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
                     vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
                 } else {
                     locationsCache[$item.location_id] = data.locations;
-                    vm.selectedLevel = selectedLocationIndex() + 1;
                     vm.selectedLocations[level + 1] = data.locations[0].location_id;
                     vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
                     if (level === 2 && vm.isISSNIPMonthlyRegisterSelected()) {
@@ -317,6 +315,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
         }
         var levels = [];
+        vm.selectedLevel = selectedLocationIndex() + 1;
         window.angular.forEach(vm.levels, function (value) {
             if (value.id > selectedLocationIndex()) {
                 levels.push(value);

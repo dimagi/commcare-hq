@@ -2587,7 +2587,7 @@ class EnterpriseSettingsForm(forms.Form):
         label="Signup Restriction Message",
         required=False,
         help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
-        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 128}),
+        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 512}),
     )
 
     def __init__(self, *args, **kwargs):

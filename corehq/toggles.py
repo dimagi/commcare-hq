@@ -1279,6 +1279,7 @@ BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'Add a page to update multimedia paths in bulk',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager"
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1711,4 +1712,12 @@ ODATA = StaticToggle(
     'Enable Odata feed.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+DASHBOARD_REACH_REPORT = StaticToggle(
+    'dashboard_reach_reports',
+    'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

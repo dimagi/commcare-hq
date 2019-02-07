@@ -14,6 +14,7 @@ from corehq.apps.app_manager.models import Application, Module, GraphConfigurati
     GraphSeries, ReportModule, ReportAppConfig, CustomIcon, BuildProfile
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import parse_normalize
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 from corehq.util.test_utils import flag_enabled, softer_assert
@@ -23,6 +24,13 @@ import commcare_translations
 
 class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
+
+    def _assertMediaSuiteResourcesEqual(self, expectedXml, actualXml):
+        parsedExpected = parse_normalize(expectedXml, to_string=False)
+        expectedResources = {node.text for node in parsedExpected.findall("media/resource/location")}
+        parsedActual = parse_normalize(actualXml, to_string=False)
+        actualResources = {node.text for node in parsedActual.findall("media/resource/location")}
+        self.assertSetEqual(expectedResources, actualResources)
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths(self, mock):
@@ -96,15 +104,14 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         app.set_media_versions()
 
-        self.assertXmlEqual(self.get_xml('case_list_media_suite'), app.create_media_suite())
+        self._assertMediaSuiteResourcesEqual(self.get_xml('case_list_media_suite'), app.create_media_suite())
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
-    def test_form_media_with_app_profile(self, dom_has_priv):
-        # Test that form media for languages not in the profile are removed from the media suite
-        # Media outside of forms is still included in the suite file even for langs not in the profile
-        #    See note as to why that's the case: https://github.com/dimagi/commcare-hq/pull/11295#discussion_r126147881
+    def test_form_media_with_app_profile(self, *args):
+        # Test that media for languages not in the profile are removed from the media suite
 
         app = Application.wrap(self.get_json('app'))
         app.build_profiles['profid'] = BuildProfile(
@@ -132,14 +139,13 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
             app.create_mapping(CommCareImage(_id='form_image_{}'.format(i)), path, save=False)
 
         app.set_media_versions()
-        app.update_mm_map()
         app.remove_unused_mappings()
 
         # includes all media
-        self.assertXmlEqual(self.get_xml('form_media_suite'), app.create_media_suite())
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite'), app.create_media_suite())
 
         # includes all app media and only form media for 'en'
-        self.assertXmlEqual(self.get_xml('form_media_suite_en'), app.create_media_suite('profid'))
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_en'), app.create_media_suite('profid'))
 
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version')
     def test_update_image_id(self, get_previous_version):

@@ -298,6 +298,7 @@ class ChildHealthMonthly(models.Model):
     mother_phone_number = models.TextField(blank=True, null=True)
     date_death = models.DateField(blank=True, null=True)
     mother_case_id = models.TextField(blank=True, null=True)
+    lunch_count = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -741,6 +742,7 @@ class AggChildHealth(models.Model):
     ebf_no_info_recorded = models.IntegerField(null=True)
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
+    lunch_count_21_days = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1557,7 +1559,10 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
         null=True,
         help_text="Number of days the child has attended this month"
     )
-
+    lunch_count = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of days the child had the lunch"
+    )
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
 
