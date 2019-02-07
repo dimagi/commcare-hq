@@ -256,7 +256,7 @@ def generate_invoices(based_on_date=None):
         if not domain_obj.is_active:
             continue
         try:
-            invoice_factory = DomainInvoiceFactory( invoice_start, invoice_end, domain_obj)
+            invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain_obj)
             invoice_factory.create_invoices()
             log_accounting_info("Sent invoices for domain %s" % domain_obj.name)
         except CreditLineError as e:
