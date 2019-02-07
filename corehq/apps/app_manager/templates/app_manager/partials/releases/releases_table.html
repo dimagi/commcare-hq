@@ -84,7 +84,7 @@
     </div>
 
     <h4 id="loading" class="hide"
-        data-bind="visible: fetchState() === 'pending', css: {hide: false}">
+        data-bind="visible: showLoadingSpinner(), css: {hide: false}">
         <i class="fa fa-spin fa-spinner"></i>
         {% trans "Loading versions..." %}
     </h4>
@@ -236,7 +236,8 @@
     <pagination data-apply-bindings="false"
                 params="goToPage: goToPage,
                         perPage: fetchLimit,
-                        totalItems: totalItems"></pagination>
+                        totalItems: totalItems,
+                        showSpinner: showPaginationSpinner"></pagination>
     <script type="text/html" id="delete-build-modal-template">
         <div class="modal-dialog">
             <div class="modal-content">

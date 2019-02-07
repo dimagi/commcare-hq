@@ -1147,7 +1147,7 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    feature_id = forms.CharField(
+    select2_feature_id = forms.CharField(
         required=False,
         label="Search for or Create Feature",
         widget=forms.Select(choices=[]),
@@ -1290,7 +1290,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
                 hqcrispy.B3MultiField(
                     "Add Feature",
-                    InlineField('feature_id', css_class="input-xxlarge",
+                    InlineField('select2_feature_id', css_class="input-xxlarge",
                                 data_bind="value: featureRates.select2.value"),
                     StrictButton(
                         "Select Feature",
@@ -1403,7 +1403,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'currentValue': self['feature_rates'].value(),
             'handlerSlug': FeatureRateAsyncHandler.slug,
             'select2Options': {
-                'fieldName': 'feature_id',
+                'fieldName': 'select2_feature_id',
             }
         }
 
@@ -2587,7 +2587,7 @@ class EnterpriseSettingsForm(forms.Form):
         label="Signup Restriction Message",
         required=False,
         help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
-        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 128}),
+        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 512}),
     )
 
     def __init__(self, *args, **kwargs):

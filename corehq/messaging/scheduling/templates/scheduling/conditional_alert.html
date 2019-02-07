@@ -27,8 +27,11 @@
 {% block page_content %}{{ block.super }}
 {% initial_page_data 'read_only_mode' read_only_mode %}
 
+<p class="lead">
+    {{ current_page.page_name }}
+</p>
+
 <p class="help-block">
-    <i class="fa fa-info-circle"></i>
     {% blocktrans %}
     For information on Conditional Alerts, see the
     <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">Conditional Alerts</a>
@@ -37,7 +40,7 @@
 </p>
 
 {% if is_system_admin %}
-<p class="help-block">
+<p class="help-block alert alert-info">
     <i class="fa fa-info-circle"></i>
     {% blocktrans %}
     Since you are a Superuser, you will see additional options. See
@@ -46,7 +49,6 @@
     {% endblocktrans %}
 </p>
 {% endif %}
-
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 
 <div class="row">
@@ -60,31 +62,44 @@
         {% endif %}
         {% include 'scheduling/partials/custom_event_templates.html' %}
         <form id="conditional-alert-form" class="form form-horizontal main-form" method="POST" action="#">
-            {% crispy basic_info_form %}
             <ul class="nav nav-tabs">
+                <li class="{% if not criteria_form_active and not schedule_form_active %}active{% endif %}">
+                    <a href="#basic" data-toggle="tab">{% trans "Basic Information" %}</a>
+                </li>
                 <li class="{% if criteria_form.errors %}has-error{% endif %} {% if criteria_form_active %}active{% endif %}">
                     <a href="#rule" data-toggle="tab">{% trans "Rule Criteria" %}</a>
                 </li>
                 <li class="{% if schedule_form.errors %}has-error{% endif %} {% if schedule_form_active %}active{% endif %}">
-                    <a href="#schedule" data-toggle="tab">{% trans "Schedule" %}</a>
+                    <a href="#schedule" data-toggle="tab">{% trans "Schedule & Recipients" %}</a>
                 </li>
             </ul>
             <div class="tab-content">
+                <div class="tab-pane {% if not criteria_form_active and not schedule_form_active %}active{% endif %}" id="basic">
+                    <div class="row">
+                        <div class="panel-body">
+                            {% crispy basic_info_form %}
+                        </div>
+                    </div>
+                </div>
                 <div class="tab-pane {% if criteria_form_active %}active{% endif %}" id="rule">
                     <div class="row">
-                        <div class="col-sm-12">
+                        <div class="panel-body">
                             {% crispy criteria_form %}
                         </div>
                     </div>
                 </div>
                 <div class="tab-pane {% if schedule_form_active %}active{% endif %}" id="schedule">
-                    <div class="row">
+                    <div class="panel-body">
                         {% include 'scheduling/partials/schedule_form.html' %}
                     </div>
                 </div>
             </div>
-            <div class="col-xs-1">
-                <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+
+            <div class="form-actions">
+                <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
+                    <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                    <a href="{% url 'conditional_alert_list' domain %}" class="btn btn-default">Cancel</a>
+                </div>
             </div>
         </form>
     </div>

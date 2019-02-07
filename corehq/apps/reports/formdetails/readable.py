@@ -120,6 +120,7 @@ class CaseDetailMeta(JsonObject):
     module_id = StringProperty()
     header = DictProperty()
     format = StringProperty()
+    error = StringProperty()
 
 
 class CaseProperty(JsonObject):
@@ -152,11 +153,11 @@ class CaseProperty(JsonObject):
             condition=(condition if condition and condition.type == 'if' else None)
         ))
 
-    def add_detail(self, type_, module_id, header, format):
+    def add_detail(self, type_, module_id, header, format, error=None):
         {
             "short": self.short_details,
             "long": self.long_details,
-        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, format=format))
+        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, format=format, error=error))
 
 
 class CaseTypeMeta(JsonObject):
@@ -203,51 +204,72 @@ class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
     type_hierarchy = DictProperty()  # case_type -> {child_case -> {}}
 
-    def get_property(self, root_case_type, name):
+    def get_property_list(self, root_case_type, name):
         type_ = self.get_type(root_case_type)
         if '/' in name:
             # find the case property from the correct case type
             parent_rel, name = name.split('/', 1)
-            parent_case_type = type_.relationships.get(parent_rel)
-            if parent_case_type:
-                return self.get_property(parent_case_type, name)
+            parent_case_types = type_.relationships.get(parent_rel)
+            if parent_case_types:
+                parent_props = [
+                    prop for parent_case_type in parent_case_types
+                    for prop in self.get_property_list(parent_case_type, name)
+                ]
+                if parent_props:
+                    return parent_props
             else:
                 params = {'case_type': root_case_type, 'relationship': parent_rel}
                 raise CaseMetaException(_(
                     "Case type '%(case_type)s' has no '%(relationship)s' "
                     "relationship to any other case type.") % params)
 
-        return type_.get_property(name)
+        return [type_.get_property(name)]
 
     def add_property_load(self, root_case_type, name, form_id, question):
         try:
-            prop = self.get_property(root_case_type, name)
+            props = self.get_property_list(root_case_type, name)
         except CaseMetaException as e:
-            prop = self.add_property_error(root_case_type, name, form_id, str(e))
+            props = [self.add_property_error(root_case_type, name, form_id, str(e))]
 
-        prop.add_load(form_id, question)
+        for prop in props:
+            prop.add_load(form_id, question)
 
     def add_property_save(self, root_case_type, name, form_id, question, condition=None):
         try:
-            prop = self.get_property(root_case_type, name)
+            props = self.get_property_list(root_case_type, name)
         except CaseMetaException as e:
-            prop = self.add_property_error(root_case_type, name, form_id, str(e))
+            props = [self.add_property_error(root_case_type, name, form_id, str(e))]
 
-        prop.add_save(form_id, question, condition)
+        for prop in props:
+            prop.add_save(form_id, question, condition)
 
     def add_property_error(self, case_type, case_property, form_id, message):
         prop = self.get_error_property(case_type, case_property)
         prop.has_errors = True
-        form = prop.get_form(form_id)
-        form.errors.append(message)
+        if form_id is not None:
+            form = prop.get_form(form_id)
+            form.errors.append(message)
         return prop
 
     def add_property_detail(self, detail_type, root_case_type, module_id, column):
+        if column.field == '#owner_name':
+            return None
+
+        parts = column.field.split('/')
+        if parts and parts[0] == 'user':
+            return None
+
         if column.useXpathExpression:
             return column.field
-        prop = self.get_property(root_case_type, column.field)
-        prop.add_detail(detail_type, module_id, column.header, column.format)
-        return prop
+        try:
+            props = self.get_property_list(root_case_type, column.field)
+        except CaseMetaException as e:
+            props = [self.add_property_error(root_case_type, column.field, form_id=None, message=None)]
+            error = six.text_type(e)
+        else:
+            error = None
+        for prop in props:
+            prop.add_detail(detail_type, module_id, column.header, column.format, error)
 
     def get_error_property(self, case_type, name):
         type_ = self.get_type(case_type)

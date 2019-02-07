@@ -373,6 +373,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
+    'custom.reach',
 )
 
 # also excludes any app starting with 'django.'
@@ -854,10 +855,12 @@ KAFKA_API_VERSION = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
-# CommCare HQ - To indicate server
-COMMCARE_HQ_NAME = "CommCare HQ"
-# CommCare - To Indicate mobile
-COMMCARE_NAME = "CommCare"
+COMMCARE_HQ_NAME = {
+    "default": "CommCare HQ",
+}
+COMMCARE_NAME = {
+    "default": "CommCare",
+}
 
 ENTERPRISE_MODE = False
 
@@ -876,6 +879,8 @@ SENTRY_API_KEY = None
 OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
 RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+# Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
@@ -890,6 +895,14 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+# used for providing separate landing pages for different URLs
+# default will be used if no hosts match
+CUSTOM_LANDING_TEMPLATE = {
+    # "icds-cas.gov.in": 'icds/login.html',
+    # "default": 'login_and_password/login.html',
+}
+
 from env_settings import *
 
 try:
@@ -1970,7 +1983,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
-
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
@@ -2094,7 +2107,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
-    'reach-test': 'custom.icds_reports',
+    'reach-test': 'custom.reach',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

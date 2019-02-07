@@ -15,6 +15,10 @@
         <div class="row">
             <div class="col-xs-12">
                 <h3>Response Status Code: {{ status_code }}</h3>
+                <div class="alert alert-info">
+                    A lot of caching happens on restore.
+                    If you want timings for a cold cache, click Overwrite cache and run again.
+                </div>
                 <ul class="list-inline">
                     <li><a href="https://help.commcarehq.org/display/commcarepublic/CommCare+Sync+Data" target="_blank">Docs</a></li>
                     <li><a href="{{request.get_full_path}}&raw=true">Raw</a></li>

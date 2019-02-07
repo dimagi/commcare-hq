@@ -26,7 +26,6 @@ from corehq.apps.export.views.list import (
     DeIdFormExportListView,
     DeIdDailySavedExportListView,
     DeIdDashboardFeedListView,
-    _DeidMixin,
     download_daily_saved_export,
 )
 from corehq.apps.export.views.new import (
