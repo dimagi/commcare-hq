@@ -223,10 +223,10 @@ def redirect_to_default(req, domain=None):
 
 def _two_factor_needed(domain_name, request):
     domain_name = normalize_domain_name(domain_name)
-    domain = Domain.get_by_name(domain_name)
-    if domain:
+    domain_obj = Domain.get_by_name(domain_name)
+    if domain_obj:
         return (
-            domain.two_factor_auth
+            domain_obj.two_factor_auth
             and not request.couch_user.two_factor_disabled
             and not request.user.is_verified()
         )
@@ -374,14 +374,14 @@ def _login(req, domain_name):
             if template_name is None:
                 template_name = custom_landing_page.get('default', template_name)
     elif domain_name:
-        domain = Domain.get_by_name(domain_name)
+        domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
             'domain': domain_name,
-            'hr_name': domain.display_name() if domain else domain_name,
-            'next': req_params.get('next', '/a/%s/' % domain),
-            'allow_domain_requests': domain.allow_domain_requests,
-            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()},
+            'hr_name': domain_obj.display_name() if domain_obj else domain_name,
+            'next': req_params.get('next', '/a/%s/' % domain_name),
+            'allow_domain_requests': domain_obj.allow_domain_requests,
+            'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
         })
     else:
         commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
