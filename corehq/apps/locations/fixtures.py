@@ -1,16 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from collections import defaultdict
 from itertools import groupby
-from xml.etree.cElementTree import Element
+from xml.etree.cElementTree import Element, SubElement
 
-from django.db.models import IntegerField
 from django.contrib.postgres.fields.array import ArrayField
+from django.db.models import IntegerField, Q
 from django_cte import With
 from django_cte.raw import raw_cte_sql
 import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     DEFAULT_LOCATION_FIXTURE_OPTION, SYNC_FLAT_FIXTURES, SYNC_HIERARCHICAL_FIXTURE
 )
@@ -22,7 +24,6 @@ from corehq.apps.locations.models import (
     LocationType,
     SQLLocation,
 )
-from corehq import toggles
 
 
 class LocationSet(object):
@@ -229,57 +230,83 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
-class RelatedLocationSerializer(FlatLocationSerializer):
-
-    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
-        all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
-            'code', flat=True
-        )
-        location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
-        attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
-        attrs_to_index.extend(_get_indexed_field_name(field.slug) for field in data_fields
-                              if field.index_in_fixture)
-        attrs_to_index.extend(['@id', '@type', 'name', '@distance'])
-
-        xml_nodes = self._get_fixture_node(fixture_id, restore_user, locations_queryset,
-                                           location_type_attrs, data_fields)
-
-        user_locations = restore_user.get_sql_locations(restore_user.domain)
-        distance_dict = LocationRelation.relation_distance_dictionary(user_locations)
-
-        child_node = xml_nodes.getchildren()[0]
-        for grandchild_node in child_node.getchildren():
-            location_id = grandchild_node.get('id')
-            if location_id in distance_dict:
-                minimum_distance = min(six.itervalues(distance_dict[location_id]))
-                grandchild_node.set('distance', str(minimum_distance))
-
-        return [get_index_schema_node(fixture_id, attrs_to_index), xml_nodes]
-
-
 class RelatedLocationsFixtureProvider(FixtureProvider):
-    """This fixture is under active development for REACH, and is expected to change.
+    """This fixture returns the ids of all location relations, and if there is a defined distance.
 
-    - Relations do not nest. Meaning that a location needs a direct relation
-      to another location for it be included in this fixture.
+    The attribute id is indexed.
+
+    Specification details:
+
+    * If a user is assigned to a location and its children have related locations, their relations are included.
+    * If a user is assigned to a child location and its parent has related locations, the parent's relations are not included.
+    * This fixture will not contain any location specific data than the location's id
+    * Relations are two way
+
+    Example:
+    <fixture id="related_locations">
+      <locations>
+        <location id="location_a">
+          <related_location distance="X">location_b</related_location>
+        </location>
+        <location id="location_b">
+          <related_location distance="X">location_a</related_location>
+        </location>
+      </locations>
+    </fixture>
     """
     id = 'related_locations'
-    serializer = RelatedLocationSerializer()
 
     def __call__(self, restore_state):
         if not toggles.RELATED_LOCATIONS.enabled(restore_state.domain):
             return []
 
-        restore_user = restore_state.restore_user
-        user_locations = restore_user.get_sql_locations(restore_user.domain)
-        related_location_ids = LocationRelation.from_locations(user_locations)
-        related_location_pks = (
-            SQLLocation.objects.filter(location_id__in=related_location_ids)
-            .values_list('pk', flat=True)
+        location_relations = self._users_related_locations(restore_state.restore_user)
+
+        root_node = Element('fixture', {'id': self.id,
+                                        'user_id': restore_state.restore_user.user_id,
+                                        'indexed': 'true'})
+        outer_node = SubElement(root_node, 'locations')
+
+        for location, relations in location_relations:
+            location_node = SubElement(outer_node, 'location', {'id': location.location_id})
+            for location, distance in relations:
+                node = SubElement(location_node, 'related_location')
+                node.text = location.location_id
+                if distance:
+                    node.attrib['distance'] = str(distance)
+
+        return [get_index_schema_node(self.id, ['@id']), root_node]
+
+    def _users_related_locations(self, restore_user):
+        """Returns a sorted list of location relations:
+            [
+                (location_a, [(location_b, distance), ...]),
+                (location_b, [(location_a, distance), ...])
+            ]
+
+        Sorted by the location's name, and each associated list is sorted by its location names.
+        This is purely for deterministicly ordered outputs, and can be changed if needed.
+        """
+        user_location_ids = restore_user.get_location_ids(restore_user.domain)
+        user_locations_with_descendants = SQLLocation.objects.get_descendants(
+            Q(domain=restore_user.domain, location_id__in=user_location_ids)
         )
-        locations_queryset = _location_queryset_helper(restore_user.domain, list(related_location_pks))
-        data_fields = _get_location_data_fields(restore_user.domain)
-        return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
+        location_relations = LocationRelation.objects.filter(
+            Q(location_a__in=user_locations_with_descendants) | Q(location_b__in=user_locations_with_descendants)
+        ).prefetch_related('location_a', 'location_a__location_type', 'location_b', 'location_b__location_type')
+
+        related_location_dict = defaultdict(list)
+
+        for relation in location_relations:
+            related_location_dict[relation.location_a].append((relation.location_b, relation.distance))
+            related_location_dict[relation.location_b].append((relation.location_a, relation.distance))
+
+        for loc in related_location_dict:
+            related_location_dict[loc].sort(key=lambda tup: tup[0].name)
+
+        related_locations = list(related_location_dict.items())
+        related_locations.sort(key=lambda tup: tup[0].name)
+        return related_locations
 
 
 related_locations_fixture_generator = RelatedLocationsFixtureProvider()
@@ -298,7 +325,19 @@ def get_location_fixture_queryset(user):
     if user_locations.query.is_empty():
         return user_locations
 
-    return _location_queryset_helper(user.domain, list(user_locations.order_by().values_list("id", flat=True)))
+    user_location_ids = list(user_locations.order_by().values_list("id", flat=True))
+
+    if toggles.RELATED_LOCATIONS.enabled(user.domain):
+        # Retrieve all of the locations related to a user's location and child
+        # location and add them to the flat fixture
+        related_location_ids = LocationRelation.from_locations(
+            SQLLocation.objects.get_descendants(Q(domain=user.domain, id__in=user_location_ids))
+        )
+        user_location_ids.extend(
+            list(SQLLocation.objects.filter(location_id__in=related_location_ids).values_list('id', flat=True))
+        )
+
+    return _location_queryset_helper(user.domain, user_location_ids)
 
 
 def _location_queryset_helper(domain, location_pks):
