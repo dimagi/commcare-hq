@@ -444,7 +444,7 @@ def process_sms_registration(msg):
                 if (
                         keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS
                         and domain_obj.sms_mobile_worker_registration_enabled
-                   ):
+                ):
                     if keyword4 != '':
                         username = keyword4
                     else:
