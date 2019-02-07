@@ -1472,8 +1472,7 @@ class AggregateCcsRecordDeliveryForms(models.Model):
     )
     where_born = models.PositiveSmallIntegerField(
         null=True,
-        help_text="Where the child is born",
-        default=0
+        help_text="Where the child is born"
     )
 
     class Meta(object):

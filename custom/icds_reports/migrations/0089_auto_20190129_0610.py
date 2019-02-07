@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='aggregateccsrecorddeliveryforms',
             name='where_born',
-            field=models.PositiveSmallIntegerField(default=0, help_text='Where the child is born', null=True),
+            field=models.PositiveSmallIntegerField(help_text='Where the child is born', null=True),
         ),
         migrations.AlterField(
             model_name='aggls',
