@@ -547,8 +547,8 @@ def get_form_data(domain, app, include_shadow_forms=True):
 
                 for q in questions:
                     response = FormQuestionResponse(q).to_json()
-                    response['load_properties'] = case_meta.loads_to_question(form.unique_id, q['value'])
-                    response['save_properties'] = case_meta.saves_from_question(form.unique_id, q['value'])
+                    response['load_properties'] = case_meta.get_load_properties(form.unique_id, q['value'])
+                    response['save_properties'] = case_meta.get_save_properties(form.unique_id, q['value'])
                     form_meta['questions'].append(response)
 
             except XFormException as e:

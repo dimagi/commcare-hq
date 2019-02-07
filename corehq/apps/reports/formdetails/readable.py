@@ -125,6 +125,7 @@ class CaseDetailMeta(JsonObject):
 
 
 class CaseProperty(JsonObject):
+    case_type = StringProperty()
     name = StringProperty()
     forms = ListProperty(CaseFormMeta)
     short_details = ListProperty(CaseDetailMeta)
@@ -170,6 +171,10 @@ class CaseTypeMeta(JsonObject):
     error = StringProperty()
     has_errors = BooleanProperty()
 
+    # store where this case type gets loaded so that we can look it up more easily later
+    load_properties = DictProperty()  # {"form_id:question_path" -> [CaseProperty, ...]}
+    save_properties = DictProperty()  # {"form_id:question_path" -> [CaseProperty, ...]}
+
     @property
     def child_types(self):
         """ A list of all child types
@@ -182,7 +187,7 @@ class CaseTypeMeta(JsonObject):
         try:
             prop = next(prop for prop in self.properties if prop.name == name)
         except StopIteration:
-            prop = CaseProperty(name=name)
+            prop = CaseProperty(name=name, case_type=self.name)
             self.properties.append(prop)
         return prop
 
@@ -200,56 +205,55 @@ class CaseTypeMeta(JsonObject):
             closers.conditions.append(condition)
         self.closed_by[form_id] = closers
 
-    def loads_to_question(self, form_id, path):
-        """returns a filtered list of properties which load into a particular form question
-        """
-        return self._properties_for_save_load_questions(form_id, path, 'load')
+    def add_save(self, form_id, question_path, property_):
+        property_key = "{}:{}".format(form_id, question_path)
+        if self.save_properties.get(property_key):
+            self.save_properties[property_key].append(property_)
+        else:
+            self.save_properties[property_key] = [property_]
 
-    def saves_from_question(self, form_id, path):
-        """returns a filtered list of properties which load into a particular form question
-        """
-        return self._properties_for_save_load_questions(form_id, path, 'save')
+    def add_load(self, form_id, question_path, property_):
+        property_key = "{}:{}".format(form_id, question_path)
+        if self.load_properties.get(property_key):
+            self.load_properties[property_key].append(property_)
+        else:
+            self.load_properties[property_key] = [property_]
 
-    def _properties_for_save_load_questions(self, form_id, path, save_or_load):
-        properties = []
-        for case_property in self.properties:
-            relevant_forms = [form for form in case_property.forms if form_id == form.form_id]
-            for form in relevant_forms:
-                relevant_questions = (
-                    question.question for question in
-                    (form.save_questions if save_or_load == 'save' else form.load_questions)
-                    if question.question.value == path
-                )
-                if any(relevant_questions):
-                    properties.append(case_property)
-        return properties
+    def get_load_properties(self, form_id, path):
+        """returns a list of properties which load into a particular form question
+        """
+        return self.load_properties.get("{}:{}".format(form_id, path), [])
+
+    def get_save_properties(self, form_id, path):
+        """returns a list of properties which load into a particular form question
+        """
+        return self.save_properties.get("{}:{}".format(form_id, path), [])
+
+
+LoadSaveProperty = namedtuple('LoadSaveProperty', 'case_type property')
 
 
 class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
     type_hierarchy = DictProperty()  # case_type -> {child_case -> {}}
 
-    def loads_to_question(self, form_id, path):
-        """gets all case types with a filtered list of properties which load into a form question
+    def get_load_properties(self, form_id, path):
+        """gets all case types with a list of properties which load into a form question
         """
-        return self._case_types_for_save_load_question(form_id, path, 'load')
+        return [
+            LoadSaveProperty(case_type.name, prop)
+            for case_type in self.case_types
+            for prop in case_type.get_load_properties(form_id, path)
+        ]
 
-    def saves_from_question(self, form_id, path):
-        """gets all case types with a filtered list of properties which are saved from a form question
+    def get_save_properties(self, form_id, path):
+        """gets all case types with a list of properties which are saved from a form question
         """
-        return self._case_types_for_save_load_question(form_id, path, 'save')
-
-    def _case_types_for_save_load_question(self, form_id, path, save_or_load):
-        LoadSaveProperty = namedtuple('LoadSaveProperty', 'case_type property')
-        types = []
-        for case_type in self.case_types:
-            types.extend(
-                LoadSaveProperty(case_type.name, prop.name)
-                for prop in
-                (case_type.saves_from_question(form_id, path) if save_or_load == "save"
-                 else case_type.loads_to_question(form_id, path))
-            )
-        return types
+        return [
+            LoadSaveProperty(case_type.name, prop)
+            for case_type in self.case_types
+            for prop in case_type.get_save_properties(form_id, path)
+        ]
 
     def get_property_list(self, root_case_type, name):
         type_ = self.get_type(root_case_type)
@@ -279,6 +283,7 @@ class AppCaseMetadata(JsonObject):
             props = [self.add_property_error(root_case_type, name, form_id, str(e))]
 
         for prop in props:
+            self.get_type(prop.case_type).add_load(form_id, question.value, prop.name)
             prop.add_load(form_id, question)
 
     def add_property_save(self, root_case_type, name, form_id, question, condition=None):
@@ -288,6 +293,7 @@ class AppCaseMetadata(JsonObject):
             props = [self.add_property_error(root_case_type, name, form_id, str(e))]
 
         for prop in props:
+            self.get_type(prop.case_type).add_save(form_id, question.value, prop.name)
             prop.add_save(form_id, question, condition)
 
     def add_property_error(self, case_type, case_property, form_id, message):
