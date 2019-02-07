@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
-import logging
 from functools import wraps
 
-from corehq.util.datadog import statsd, COMMON_TAGS, datadog_logger
 from datadog import api
+from django.conf import settings
 
+from corehq.util.datadog import statsd, COMMON_TAGS, datadog_logger
 from corehq.util.datadog.const import ALERT_INFO
 
 WILDCARD = '*'
@@ -100,3 +100,9 @@ def bucket_value(value, buckets, unit=''):
         if value < bucket:
             return "lt_{:03}{}".format(bucket, unit)
     return "over_{:03}{}".format(buckets[-1], unit)
+
+
+def maybe_add_domain_tag(domain_name, tags):
+    """Conditionally add a domain tag to the given list of tags"""
+    if (settings.SERVER_ENVIRONMENT, domain_name) in settings.DATADOG_DOMAINS:
+        tags.append('domain:{}'.format(domain_name))
