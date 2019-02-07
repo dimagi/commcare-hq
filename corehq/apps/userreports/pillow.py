@@ -288,6 +288,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         pool = Pool(10)
         for adapter, rows in six.iteritems(rows_to_save_by_adapter):
             pool.spawn(_save_change, adapter, rows)
+        pool.join()
 
         if async_configs_by_doc_id:
             doc_type_by_id = {
