@@ -25,8 +25,14 @@ hqDefine("users/js/web_users",[
             return !self.showLoadingSpinner() && !self.error() && self.users().length > 0;
         });
 
-        self.showNoUsersMessage = ko.computed(function () {
-            return !self.showLoadingSpinner() && !self.error() && self.users().length === 0;
+        self.noUsersMessage = ko.computed(function () {
+            if (!self.showLoadingSpinner() && !self.error() && self.users().length === 0) {
+                if (self.query()) {
+                    return gettext("No users matched your search.");
+                }
+                return gettext("This project has no web users. Please invite a web user above.");
+            }
+            return "";
         });
 
         self.goToPage = function (page) {
