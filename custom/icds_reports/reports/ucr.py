@@ -122,10 +122,10 @@ class MPR6acChildHealth(ChildHealthMonthlyUCR):
             self._column_helper("16_days", "female", "minority"),
             self._column_helper("absent", "male"),
             self._column_helper("absent", "female"),
-            self._column_helper("partial", "male"),
-            self._column_helper("partial", "female"),
-            func.count(self.table.c.case_id).filter(self.table.c.sex == 'M').label("child_count_male"),
             func.count(self.table.c.case_id).filter(self.table.c.sex == 'F').label("child_count_female"),
+            func.count(self.table.c.case_id).filter(self.table.c.sex == 'M').label("child_count_male"),
+            self._column_helper("partial", "female"),
+            self._column_helper("partial", "male"),
         )
 
         if not total_row:
