@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+import json
 from functools import wraps
 from django.contrib import messages
 from django.http import HttpResponseRedirect, HttpResponse
@@ -76,6 +77,10 @@ def safe_cached_download(f):
 
         latest_enabled_build = None
         if latest and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+            if not username:
+                content_response = dict(error="app.update.not.allowed.user.logged_out",
+                                        default_response="Please log in the app to check for update.")
+                return HttpResponse(status=406, content=json.dumps(content_response))
             if domain and username:
                 location_id = get_user_location_id(domain, username)
                 if location_id:
