@@ -269,9 +269,9 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
 
         for location, relations in location_relations:
             location_node = SubElement(outer_node, 'location', {'id': location.location_id})
-            for location, distance in relations:
+            for related_location, distance in relations:
                 node = SubElement(location_node, 'related_location')
-                node.text = location.location_id
+                node.text = related_location.location_id
                 if distance:
                     node.attrib['distance'] = str(distance)
 
