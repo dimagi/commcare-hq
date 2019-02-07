@@ -1683,7 +1683,8 @@ RESTRICT_APP_RELEASE = StaticToggle(
 
 RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     'release_builds_per_profile',
-    'Do not release builds for all app profiles by default. Then manage via Source files view',
+    'Do not release builds for all app profiles by default. Then manage via Source files view. '
+    'This also allows to release specific versions for a location.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
