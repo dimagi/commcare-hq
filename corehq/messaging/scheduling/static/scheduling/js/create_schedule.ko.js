@@ -163,6 +163,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
+        $('#id_schedule-recipient_types').select2();
 
         self.user_recipients = new recipientsSelect2Handler(select2_user_recipients,
             initial_values.user_recipients, 'schedule-user_recipients');
@@ -226,14 +227,6 @@ hqDefine("scheduling/js/create_schedule.ko", [
 
         self.recipientTypeSelected = function (value) {
             return self.recipient_types().indexOf(value) !== -1;
-        };
-
-        self.toggleRecipientType = function (value) {
-            if (self.recipientTypeSelected(value)) {
-                self.recipient_types.remove(value);
-            } else {
-                self.recipient_types.push(value);
-            }
         };
 
         self.setRepeatOptionText = function (newValue) {

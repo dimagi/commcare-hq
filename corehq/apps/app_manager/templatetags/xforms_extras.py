@@ -128,10 +128,3 @@ def _input_trans(template, name, langs=None, allow_blank=True):
             break
     options = {key: html.escapejs(value) for (key, value) in six.iteritems(options)}
     return mark_safe(template % options)
-
-
-@register.filter
-def clean_trans(name, langs=None):
-    if langs is None:
-        langs = ["default"]
-    return trans(name, langs, False)

@@ -359,15 +359,9 @@
                 "datatype": "string",
                 "display_name": "inspector_names",
                 "expression": {
-                    "expression": {
-                        "datatype": null,
-                        "property_path": [
-                            "form",
-                            "inspector_names"
-                        ],
-                        "type": "property_path"
-                    },
-                    "type": "root_doc"
+                    "datatype": null,
+                    "property_name": "names",
+                    "type": "property_name"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,

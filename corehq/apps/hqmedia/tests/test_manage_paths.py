@@ -164,7 +164,7 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
             )
 
             # Form media
-            form_images = app.modules[1].forms[0].wrapped_xform().image_references
+            form_images = app.modules[1].forms[0].wrapped_xform().image_references()
             self.assertTrue('jr://file/commcare/nin/ghosts.jpg' in form_images)
             self.assertTrue('jr://file/commcare/nin/sin.jpg' in form_images)
 
