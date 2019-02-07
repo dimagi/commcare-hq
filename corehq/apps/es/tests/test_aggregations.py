@@ -78,7 +78,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 .add_filter('closed', filters.term('closed', True))
                 .add_filter('open', filters.term('closed', False))
         ])
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_result_parsing_basic(self):
         query = HQESQuery('cases').aggregations([
@@ -202,7 +202,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             ])
         )
 
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_stats_aggregation(self):
         json_output = {
@@ -229,7 +229,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         query = HQESQuery('cases').aggregation(
             StatsAggregation('name_stats', 'name', script='MY weird script')
         )
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_extended_stats_aggregation(self):
         json_output = {
@@ -256,7 +256,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         query = HQESQuery('cases').aggregation(
             ExtendedStatsAggregation('name_stats', 'name', script='MY weird script')
         )
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_top_hits_aggregation(self):
         json_output = {
@@ -297,7 +297,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 size=2,
                 include=['title'])
         )
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_missing_aggregation(self):
         json_output = {
@@ -326,7 +326,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 'user_id',
             )
         )
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_date_histogram(self):
         json_output = {
@@ -352,7 +352,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         }
         query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_histogram_aggregation(self):
         example_response = {
@@ -404,7 +404,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 'actions',
             )
         )
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_nested_terms_helper(self):
         json_output = {
@@ -450,7 +450,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             ],
             inner_most_aggregation=SumAggregation('balance', 'balance')
         ).query
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
 
     def test_terms_aggregation_with_order(self):
         json_output = {
@@ -480,4 +480,4 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         query = HQESQuery('cases').aggregation(
             TermsAggregation('name', 'name').order('sort_field')
         )
-        self.checkQuery(query, json_output)
+        self.checkQuery(query.raw_query, json_output)
