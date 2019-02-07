@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 
 import six
 from alembic.autogenerate.api import compare_metadata
+from gevent.pool import Pool
+
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
@@ -272,7 +274,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                         ids=delete_ids, ex=ex))
                 retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
         # bulk update by adapter
-        for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+
+        def _save_change(adapter, row):
             try:
                 adapter.save_rows(rows)
             except Exception as ex:
@@ -281,6 +284,11 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     "Error in saving changes chunk {ids}: {ex}".format(
                         ids=[c.id for c in to_update], ex=repr(ex)))
                 retry_changes.update(to_update)
+
+        pool = Pool(10)
+        for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+            pool.spawn(_save_change, adapter, rows)
+
         if async_configs_by_doc_id:
             doc_type_by_id = {
                 _id: changes_by_id[_id].metadata.document_type
