@@ -364,8 +364,8 @@ def process_pre_registration(msg):
     if any_migrations_in_progress(invitation.domain):
         raise DelayProcessing()
 
-    domain = Domain.get_by_name(invitation.domain, strict=True)
-    if not domain.sms_mobile_worker_registration_enabled:
+    domain_obj = Domain.get_by_name(invitation.domain, strict=True)
+    if not domain_obj.sms_mobile_worker_registration_enabled:
         return False
 
     text = msg.text.strip()
@@ -437,11 +437,14 @@ def process_sms_registration(msg):
         if any_migrations_in_progress(domain_name):
             raise DelayProcessing()
 
-        domain = Domain.get_by_name(domain_name, strict=True)
+        domain_obj = Domain.get_by_name(domain_name, strict=True)
 
-        if domain is not None:
-            if domain_has_privilege(domain, privileges.INBOUND_SMS):
-                if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
+        if domain_obj is not None:
+            if domain_has_privilege(domain_obj, privileges.INBOUND_SMS):
+                if (
+                        keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS
+                        and domain_obj.sms_mobile_worker_registration_enabled
+                   ):
                     if keyword4 != '':
                         username = keyword4
                     else:
@@ -454,9 +457,9 @@ def process_sms_registration(msg):
                             invitation.completed()
                             user_data = invitation.custom_user_data
 
-                        username = process_username(username, domain)
+                        username = process_username(username, domain_obj)
                         password = random_password()
-                        new_user = CommCareUser.create(domain.name, username, password, user_data=user_data)
+                        new_user = CommCareUser.create(domain_obj.name, username, password, user_data=user_data)
                         new_user.add_phone_number(cleaned_phone_number)
                         new_user.save()
 
@@ -466,27 +469,27 @@ def process_sms_registration(msg):
                         entry.save()
                         registration_processed = True
 
-                        if domain.enable_registration_welcome_sms_for_mobile_worker:
-                            send_sms(domain.name, None, cleaned_phone_number,
-                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain.name))
+                        if domain_obj.enable_registration_welcome_sms_for_mobile_worker:
+                            send_sms(domain_obj.name, None, cleaned_phone_number,
+                                     get_message(MSG_REGISTRATION_WELCOME_MOBILE_WORKER, domain=domain_obj.name))
                     except ValidationError as e:
-                        send_sms(domain.name, None, cleaned_phone_number, e.messages[0])
+                        send_sms(domain_obj.name, None, cleaned_phone_number, e.messages[0])
 
-                elif domain.sms_case_registration_enabled:
+                elif domain_obj.sms_case_registration_enabled:
                     register_sms_contact(
-                        domain=domain.name,
-                        case_type=domain.sms_case_registration_type,
+                        domain=domain_obj.name,
+                        case_type=domain_obj.sms_case_registration_type,
                         case_name="unknown",
-                        user_id=domain.sms_case_registration_user_id,
+                        user_id=domain_obj.sms_case_registration_user_id,
                         contact_phone_number=cleaned_phone_number,
                         contact_phone_number_is_verified="1",
-                        owner_id=domain.sms_case_registration_owner_id,
+                        owner_id=domain_obj.sms_case_registration_owner_id,
                     )
                     registration_processed = True
-                    if domain.enable_registration_welcome_sms_for_case:
-                        send_sms(domain.name, None, cleaned_phone_number,
-                                 get_message(MSG_REGISTRATION_WELCOME_CASE, domain=domain.name))
-            msg.domain = domain.name
+                    if domain_obj.enable_registration_welcome_sms_for_case:
+                        send_sms(domain_obj.name, None, cleaned_phone_number,
+                                 get_message(MSG_REGISTRATION_WELCOME_CASE, domain=domain_obj.name))
+            msg.domain = domain_obj.name
             msg.save()
 
     return registration_processed
