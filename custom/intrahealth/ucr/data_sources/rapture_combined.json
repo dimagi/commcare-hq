@@ -4,7 +4,7 @@
     "test-pna",
     "testing-ipm-senegal"
   ],
-  "server_environment": ["production", "pna"],
+  "server_environment": ["production", "pna", "localdev"],
   "config": {
     "table_id": "rapture_combined",
     "display_name": "Rapture Combined",

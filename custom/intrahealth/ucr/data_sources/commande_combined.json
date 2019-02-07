@@ -4,7 +4,7 @@
     "ipm-senegal",
     "testing-ipm-senegal"
   ],
-  "server_environment": ["production", "pna"],
+  "server_environment": ["production", "pna", "localdev"],
   "config": {
     "table_id": "commande_combined",
     "display_name": "Commande Combined",
