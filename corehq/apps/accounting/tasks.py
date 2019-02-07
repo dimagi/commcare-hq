@@ -252,29 +252,28 @@ def generate_invoices(based_on_date=None):
     })
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
-        domain = Domain.wrap(domain_doc)
-        if not domain.is_active:
+        domain_obj = Domain.wrap(domain_doc)
+        if not domain_obj.is_active:
             continue
         try:
-            invoice_factory = DomainInvoiceFactory(
-                invoice_start, invoice_end, domain)
+            invoice_factory = DomainInvoiceFactory( invoice_start, invoice_end, domain_obj)
             invoice_factory.create_invoices()
-            log_accounting_info("Sent invoices for domain %s" % domain.name)
+            log_accounting_info("Sent invoices for domain %s" % domain_obj.name)
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                "Could not create invoice for domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
     all_customer_billing_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
@@ -295,18 +294,18 @@ def generate_invoices(based_on_date=None):
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                "Could not create invoice for domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
 
