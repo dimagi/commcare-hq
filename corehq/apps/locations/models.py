@@ -372,6 +372,7 @@ class OnlyArchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
+@six.python_2_unicode_compatible
 class SQLLocation(AdjListModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
@@ -609,7 +610,7 @@ class SQLLocation(AdjListModel):
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
 
-    def __unicode__(self):
+    def __str__(self):
         return "{} ({})".format(self.name, self.domain)
 
     def __repr__(self):

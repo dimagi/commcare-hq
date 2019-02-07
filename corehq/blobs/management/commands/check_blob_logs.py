@@ -73,6 +73,7 @@ class Command(BaseCommand):
                 "Expected to find migrating blob db backend (got %r)" % blob_db)
         old_db = blob_db.old_db
         new_db = blob_db.new_db
+        ignored = 0
 
         try:
             pool = Pool(size=num_workers)
@@ -85,10 +86,8 @@ class Command(BaseCommand):
                         try:
                             rec = json.loads(line)
                         except ValueError:
+                            ignored += 1
                             print(("Ignore {}", line))
-                            continue
-                        if rec.get("error") != "not found":
-                            print("Ignore {}".format(json.dumps(rec)))
                             continue
                         pool.spawn(process, rec, old_db, new_db, migrate)
 
@@ -98,6 +97,8 @@ class Command(BaseCommand):
         except KeyboardInterrupt:
             pass
 
+        if ignored:
+            print("Ignored {} malformed records".format(ignored))
         for type_code, stats in sorted(Stats.items.items()):
             try:
                 group = BLOB_MIXIN_MODELS[type_code].__name__
@@ -127,10 +128,10 @@ def check_blob(rec, old_db, new_db, migrate=False):
         if migrate:
             with old_db.get(key=key) as content:
                 new_db.copy_blob(content, key=key)
-            migrated = " migrated"
+            action = "Migrated from"
         else:
-            migrated = ""
-        print("Found in old db: {}{}".format(key, migrated))
+            action = "Found in"
+        print("{} old db: {}".format(action, key))
         return "old"
 
     doc_type = BLOB_MIXIN_MODELS.get(rec["type_code"])

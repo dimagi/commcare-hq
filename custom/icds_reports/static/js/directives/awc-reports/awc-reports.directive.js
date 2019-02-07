@@ -2201,12 +2201,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartTwoData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartTwoData.length; i++) {
+                        if (vm.lineChartTwoData[i].x === d.value) {
+                            tooltipData = vm.lineChartTwoData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Height: <strong>" + tooltip_data.y + "</strong> cm</p>";
+                    if (tooltipData) {
+                        html = "<p>Height: <strong>" + tooltipData.y + "</strong> cm</p>";
                     } else {
                         html = "<p>Height: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2261,12 +2264,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartOneData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartOneData.length; i++) {
+                        if (vm.lineChartOneData[i].x === d.value) {
+                            tooltipData = vm.lineChartOneData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
+                    if (tooltipData) {
+                        html = "<p>Weight: <strong>" + tooltipData.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2321,12 +2327,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartThreeData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartThreeData.length; i++) {
+                        if (vm.lineChartThreeData[i].x === d.value) {
+                            tooltipData = vm.lineChartThreeData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
+                    if (tooltipData) {
+                        html = "<p>Weight: <strong>" + tooltipData.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
