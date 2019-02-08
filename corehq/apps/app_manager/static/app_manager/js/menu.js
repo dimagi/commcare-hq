@@ -36,7 +36,7 @@ hqDefine("app_manager/js/menu", [
     // Avoid checking if the user is active, which here is defined by the browser tab having focus.
     var initPublishStatus = function () {
         var frequency = 20000,
-            isIdle = false;
+            isIdle = false,
             lastActivity = (new Date()).getTime(),
             msSinceLastActivity = function () {
                 return (new Date()).getTime() - lastActivity;
