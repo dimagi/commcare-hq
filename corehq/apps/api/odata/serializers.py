@@ -4,6 +4,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from tastypie.serializers import Serializer
 
+from corehq.apps.api.odata.utils import get_case_type_to_properties
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
@@ -16,7 +17,7 @@ class ODataCommCareCaseSerializer(Serializer):
     """
     def to_json(self, data, options=None):
         options = options or {}
-        domain = data.get('domain')
+        domain = data.pop('domain', None)
         if not domain:
             raise Exception('API requires domain to be set! Did you add it in a custom create_response function?')
         case_type = data.pop('case_type', None)
@@ -24,7 +25,7 @@ class ODataCommCareCaseSerializer(Serializer):
             raise Exception(
                 'API requires case_type to be set! Did you add it in a custom create_response function?'
             )
-        api_path = data.get('api_path')
+        api_path = data.pop('api_path', None)
         if not api_path:
             raise Exception(
                 'API requires api_path to be set! Did you add it in a custom create_response function?'
@@ -32,7 +33,7 @@ class ODataCommCareCaseSerializer(Serializer):
         data = self.to_simple(data, options)
         data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), case_type)
 
-        next_url = data.get('meta', {}).get('next')
+        next_url = data.pop('meta', {}).get('next')
         if next_url:
             data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
         # move "objects" to "value"
@@ -46,5 +47,23 @@ class ODataCommCareCaseSerializer(Serializer):
 
         for i, case_json in enumerate(data['value']):
             case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
+
+        case_type_to_properties = get_case_type_to_properties(domain)
+        properties_to_include = [
+            'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
+        ] + case_type_to_properties.get(case_type, [])
+
+        for value in data['value']:
+            for remove_property in [
+                'id',
+                'indexed_on',
+                'indices',
+                'resource_uri',
+            ]:
+                value.pop(remove_property)
+            properties = value.get('properties')
+            for property_name in list(properties):
+                if property_name not in properties_to_include:
+                    properties.pop(property_name)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
