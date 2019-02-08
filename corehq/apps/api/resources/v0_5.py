@@ -940,9 +940,12 @@ ODATA_CASE_RESOURCE_NAME = 'Cases'
 
 class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
 
+    case_type = None
+
     def dispatch(self, request_type, request, **kwargs):
         if not toggles.ODATA.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        self.case_type = kwargs['case_type']
         return super(ODataCommCareCaseResource, self).dispatch(request_type, request, **kwargs)
 
     def determine_format(self, request):
@@ -952,9 +955,7 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
     def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
         # populate the domain which is required by the serializer
         data['domain'] = request.domain
-        data['case_type'] = [
-            path_segment for path_segment in request.build_absolute_uri().split('/') if path_segment
-        ][-1]
+        data['case_type'] = self.case_type
         data['api_path'] = request.path
         response = super(ODataCommCareCaseResource, self).create_response(request, data, response_class,
                                                                           **response_kwargs)
