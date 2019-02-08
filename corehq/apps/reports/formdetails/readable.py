@@ -20,6 +20,7 @@ from dimagi.ext.jsonobject import (
     StringProperty,
 )
 from jsonobject.base import DefaultProperty
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
@@ -305,19 +306,21 @@ class AppCaseMetadata(JsonObject):
         return prop
 
     def add_property_detail(self, detail_type, root_case_type, module_id, column):
-        if column.field == '#owner_name':
+        field = column.field
+        if field == '#owner_name':
             return None
 
-        parts = column.field.split('/')
+        parts = field.split('/')
         if parts and parts[0] == 'user':
-            return None
+            root_case_type = USERCASE_TYPE
+            field = field.split('user/')[1]
 
         if column.useXpathExpression:
             return column.field
         try:
-            props = self.get_property_list(root_case_type, column.field)
+            props = self.get_property_list(root_case_type, field)
         except CaseMetaException as e:
-            props = [self.add_property_error(root_case_type, column.field, form_id=None, message=None)]
+            props = [self.add_property_error(root_case_type, field, form_id=None, message=None)]
             error = six.text_type(e)
         else:
             error = None
