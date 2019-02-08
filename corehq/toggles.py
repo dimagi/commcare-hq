@@ -1639,7 +1639,7 @@ ICDS_DISHA_API = StaticToggle(
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
-    'eCHIS: Allow blank case tags',
+    'eCHIS/ICDS: Allow blank case tags',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
