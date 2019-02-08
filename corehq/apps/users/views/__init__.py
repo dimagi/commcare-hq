@@ -951,7 +951,7 @@ class DomainRequestView(BasePageView):
             self.request_form = DomainRequestForm(initial=initial)
         return {
             'domain': domain_obj.name,
-            'domain_name': domain_obj.display_name(),
+            'hr_name': domain_obj.display_name(),
             'request_form': self.request_form,
         }
 
