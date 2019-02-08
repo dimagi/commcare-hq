@@ -345,6 +345,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
             vm.selectedYear = latest.getFullYear();
             vm.selectedMonth = 12;
+        } else if (year.id < latest.getFullYear()) {
+            vm.years =  _.filter(vm.yearsCopy, function (y) {
+                return y.id <= latest.getFullYear();
+            });
         }
         if (year.id === latest.getFullYear()) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
