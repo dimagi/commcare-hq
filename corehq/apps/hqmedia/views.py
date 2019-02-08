@@ -95,6 +95,8 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
         views = [MultimediaReferencesView, BulkUploadMultimediaView]
         if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
             views.append(ManageMultimediaPathsView)
+            if len(self.app.langs) > 1:
+                views.append(MultimediaTranslationsCoverageView)
         context.update({
             "domain": self.domain,
             "app": self.app,
@@ -287,6 +289,21 @@ def update_multimedia_paths(request, domain, app_id):
         'successes': successes,
         'warnings': warnings,
     })
+
+
+@method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
+class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
+    urlname = "multimedia_translations_coverage"
+    template_name = "hqmedia/translations_coverage.html"
+    page_title = ugettext_noop("Translations Coverage")
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Multimedia Reference Checker"),
+            'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+        }]
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
