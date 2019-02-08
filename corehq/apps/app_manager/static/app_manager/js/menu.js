@@ -32,19 +32,39 @@ hqDefine("app_manager/js/menu", [
         });
     };
 
+    // Frequently poll for changes to app, for the sake of showing the "Updates available to puiblish" banner.
+    // Avoid checking if the user is idle, which here is defined by mouse or keyboard activity.
     var initPublishStatus = function () {
+        var frequency = 20000,
+            lastActivity = undefined,
+            msSinceLastActivity = function () {
+                return (new Date()).getTime() - lastActivity;
+            },
+            updateLastActivity = function () {
+                if (msSinceLastActivity() > frequency) {
+                    // If they're coming back after long inactivity, do an immediate check
+                    _checkPublishStatus(true);
+                }
+                lastActivity = (new Date()).getTime();
+            };
+
+        updateLastActivity();
+        $(document).on('mousemove keydown', _.throttle(updateLastActivity, 5000));
+
         var currentAppVersionUrl = initialPageData.reverse('current_app_version');
-        var _checkPublishStatus = function () {
-            $.ajax({
-                url: currentAppVersionUrl,
-                success: function (data) {
-                    setPublishStatus((!data.latestBuild && data.currentVersion > 1) || (data.latestBuild !== null && data.latestBuild < data.currentVersion));
-                },
-            });
+        var _checkPublishStatus = function (force) {
+            if (force || msSinceLastActivity() < frequency) {
+                $.ajax({
+                    url: currentAppVersionUrl,
+                    success: function (data) {
+                        setPublishStatus((!data.latestBuild && data.currentVersion > 1) || (data.latestBuild !== null && data.latestBuild < data.currentVersion));
+                    },
+                });
+            }
         };
         _checkPublishStatus();
-        // check publish status every 20 seconds
-        setInterval(_checkPublishStatus, 20000);
+
+        setInterval(_checkPublishStatus, frequency);
 
         // sniff ajax calls to other urls that make app changes
         utils.handleAjaxAppChange(function () {
