@@ -8,11 +8,46 @@ hqDefine("hqwebapp/js/widgets", [
 ], function ($) {
     var init = function (additionalConfig) {
         additionalConfig = additionalConfig || {};
+
         _.each($(".hqwebapp-autocomplete"), function (input) {
             var $input = $(input);
             $input.select2(_.extend({
                 multiple: true,
                 tags: true,
+            }, additionalConfig));
+        });
+
+        _.each($(".hqwebapp-autocomplete-email"), function (input) {
+            var $input = $(input);
+            $input.select2(_.extend({
+                multiple: true,
+                placeholder: ' ',
+                tags: true,
+                createTag: function (params) {
+                    // Support pasting in comma-separated values
+                    var terms = $.trim(params.term).split(/[, ]\s*/);
+                    if (terms.length === 1) {
+                        return {
+                            id: terms[0],
+                            text: terms[0],
+                        };
+                    }
+
+                    $input.select2('close');
+                    var values = $input.val() || [];
+                    if (!_.isArray(values)) {
+                        values = [values];
+                    }
+                    _.each(terms, function (term) {
+                        if (!_.contains(values, term)) {
+                            $input.append(new Option(term, term));
+                            values.push(term);
+                        }
+                    });
+                    $input.val(values).trigger("change");
+
+                    return null;
+                },
             }, additionalConfig));
         });
 
