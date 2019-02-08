@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from six.moves import map
-
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
