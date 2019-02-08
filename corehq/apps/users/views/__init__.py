@@ -969,7 +969,7 @@ class DomainRequestView(BasePageView):
                     domain_request.save()
                     domain_obj = Domain.get_by_name(domain_request.domain)
                     return render(request, "users/confirmation_sent.html", {
-                        'hr_name': domain_obj.display_name() if domain_obj else domain_request.domain_obj,
+                        'hr_name': domain_obj.display_name() if domain_obj else domain_request.domain,
                         'url': reverse("appstore"),
                     })
         return self.get(request, *args, **kwargs)
