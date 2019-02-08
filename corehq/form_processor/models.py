@@ -313,6 +313,7 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
+@six.python_2_unicode_compatible
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
@@ -595,7 +596,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
                 xform_unarchived.send(sender="form_processor", xform=self)
             publish_form_saved(self)
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "XFormInstance("
             "form_id='{f.form_id}', "
@@ -724,6 +725,7 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
+@six.python_2_unicode_compatible
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
@@ -1028,7 +1030,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
         return result[0] if result else None
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "CommCareCase("
             "case_id='{c.case_id}', "
@@ -1049,6 +1051,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
+@six.python_2_unicode_compatible
 class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
@@ -1127,7 +1130,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     def new(cls, name):
         return cls(name=name, attachment_id=uuid.uuid4())
 
-    def __unicode__(self):
+    def __str__(self):
         return six.text_type(
             "CaseAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
@@ -1159,6 +1162,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         ]
 
 
+@six.python_2_unicode_compatible
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1222,7 +1226,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     def __hash__(self):
         return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "CaseIndex("
             "case_id='{i.case_id}', "
@@ -1243,6 +1247,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
+@six.python_2_unicode_compatible
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1475,7 +1480,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             details=detail.to_json()
         )
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "CaseTransaction("
             "case_id='{self.case_id}', "
@@ -1617,6 +1622,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         unique_together = ("case", "section_id", "entry_id")
 
 
+@six.python_2_unicode_compatible
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1698,7 +1704,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def stock_on_hand(self):
         return self.updated_balance
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "LedgerTransaction("
             "form_id='{self.form_id}', "

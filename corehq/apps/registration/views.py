@@ -415,7 +415,7 @@ def confirm_domain(request, guid=''):
 
         requested_domain = Domain.get_by_name(req.domain)
         view_name = "dashboard_default"
-        view_args = [requested_domain]
+        view_args = [requested_domain.name]
         if not domain_has_apps(req.domain):
             if False and settings.IS_SAAS_ENVIRONMENT and domain_is_on_trial(req.domain):
                 view_name = "app_from_template"

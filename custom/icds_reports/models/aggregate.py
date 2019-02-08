@@ -298,6 +298,7 @@ class ChildHealthMonthly(models.Model):
     mother_phone_number = models.TextField(blank=True, null=True)
     date_death = models.DateField(blank=True, null=True)
     mother_case_id = models.TextField(blank=True, null=True)
+    lunch_count = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -745,6 +746,7 @@ class AggChildHealth(models.Model):
     ebf_no_info_recorded = models.IntegerField(null=True)
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
+    lunch_count_21_days = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1390,6 +1392,34 @@ class AggregateBirthPreparednesForms(models.Model):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
+    play_birth_preparedness_vid = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Case has ever been counseled about birth preparedness with a video"
+    )
+    play_family_planning_vid = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Case has ever been counseled about family planning with a video"
+    )
+    counsel_preparation = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/bp2/counsel_preparation = 'yes'"
+    )
+    conceive = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/conceive = 'yes'"
+    )
+    counsel_accessible_ppfp = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/family_planning_group/counsel_accessible_ppfp='yes'"
+    )
+    ifa_last_seven_days = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of ifa taken in last seven days"
+    )
+    using_ifa = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/bp1/using_ifa='yes'"
+    )
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
@@ -1445,6 +1475,10 @@ class AggregateCcsRecordDeliveryForms(models.Model):
     valid_visits = models.PositiveSmallIntegerField(
         help_text="number of qualified visits for the incentive report",
         default=0
+    )
+    where_born = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Where the child is born"
     )
 
     class Meta(object):
@@ -1529,7 +1563,10 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
         null=True,
         help_text="Number of days the child has attended this month"
     )
-
+    lunch_count = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of days the child had the lunch"
+    )
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
 

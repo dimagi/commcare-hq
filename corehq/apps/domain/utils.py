@@ -53,10 +53,10 @@ def get_domain_from_url(path):
 
 @quickcache(['domain'])
 def domain_restricts_superusers(domain):
-    domain = Domain.get_by_name(domain)
-    if not domain:
+    domain_obj = Domain.get_by_name(domain)
+    if not domain_obj:
         return False
-    return domain.restrict_superusers
+    return domain_obj.restrict_superusers
 
 
 def user_has_custom_top_menu(domain_name, couch_user):
@@ -107,8 +107,8 @@ def guess_domain_language(domain_name):
     A domain does not have a default language, but its apps do. Return
     the language code of the most common default language across apps.
     """
-    domain = Domain.get_by_name(domain_name)
-    counter = Counter([app.default_language for app in domain.applications() if not app.is_remote_app()])
+    domain_obj = Domain.get_by_name(domain_name)
+    counter = Counter([app.default_language for app in domain_obj.applications() if not app.is_remote_app()])
     return counter.most_common(1)[0][0] if counter else 'en'
 
 
