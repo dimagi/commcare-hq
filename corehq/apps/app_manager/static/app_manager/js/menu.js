@@ -32,7 +32,7 @@ hqDefine("app_manager/js/menu", [
         });
     };
 
-    // Frequently poll for changes to app, for the sake of showing the "Updates available to puiblish" banner.
+    // Frequently poll for changes to app, for the sake of showing the "Updates available to publish" banner.
     // Avoid checking if the user is idle, which here is defined by mouse or keyboard activity.
     var initPublishStatus = function () {
         var frequency = 20000,
