@@ -5,8 +5,12 @@ from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 
-def get_case_upload_records(domain, limit):
-    return CaseUploadRecord.objects.filter(domain=domain).order_by('-created')[:limit]
+def get_case_upload_records(domain, limit, skip=0):
+    return CaseUploadRecord.objects.filter(domain=domain).order_by('-created')[skip:skip + limit]
+
+
+def get_case_upload_record_count(domain):
+    return CaseUploadRecord.objects.filter(domain=domain).count()
 
 
 def get_case_ids_for_case_upload(case_upload):
