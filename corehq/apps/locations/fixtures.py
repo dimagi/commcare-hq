@@ -281,9 +281,14 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
 
     def _query_users_related_locations(self, restore_user, last_sync_log):
         user_location_ids = restore_user.get_location_ids(restore_user.domain)
+        if len(user_location_ids) == 0:
+            # If a user doesn't have any locations, force empty the fixture
+            return True, []
+
         user_locations_with_descendants = SQLLocation.objects.get_descendants(
             Q(domain=restore_user.domain, location_id__in=user_location_ids)
         )
+
         location_relations = LocationRelation.objects.filter(
             Q(location_a__in=user_locations_with_descendants) | Q(location_b__in=user_locations_with_descendants)
         ).prefetch_related('location_a', 'location_a__location_type', 'location_b', 'location_b__location_type')
