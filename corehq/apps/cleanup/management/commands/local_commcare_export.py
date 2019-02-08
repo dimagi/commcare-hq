@@ -10,6 +10,7 @@ from collections import namedtuple
 
 import dateutil
 from django.core.management.base import BaseCommand, CommandError
+from requests import ConnectionError
 from tastypie.bundle import Bundle
 
 from corehq.apps.api.es import ElasticAPIQuerySet, CaseES, es_search_by_params, XFormES
@@ -102,7 +103,7 @@ class LocalCommCareHqClient(object):
         import backoff
 
         @backoff.on_exception(
-            backoff.expo, ESError,
+            backoff.expo, (ESError, ConnectionError),
             max_time=300, on_backoff=local_on_backoff, on_giveup=local_on_giveup,
         )
         def _inner(es_query_set, start, params):
