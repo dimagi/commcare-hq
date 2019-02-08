@@ -6,6 +6,7 @@ from django.views import View
 
 from corehq import toggles
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
 from io import open
 
@@ -19,10 +20,11 @@ class ODataServiceView(View):
             '@odata.context': absolute_reverse('odata_meta', args=[domain]),
             'value': [
                 {
-                    'name': 'Cases',
+                    'name': case_type,
                     'kind': 'EntitySet',
-                    'url': 'Cases',
+                    'url': case_type,
                 }
+                for case_type in get_case_types_for_domain_es(domain)
             ]
         }
         return add_odata_headers(JsonResponse(data))
