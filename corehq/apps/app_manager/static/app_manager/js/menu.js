@@ -36,7 +36,7 @@ hqDefine("app_manager/js/menu", [
     // Avoid checking if the user is idle, which here is defined by mouse or keyboard activity.
     var initPublishStatus = function () {
         var frequency = 20000,
-            lastActivity = undefined,
+            lastActivity = (new Date()).getTime(),
             msSinceLastActivity = function () {
                 return (new Date()).getTime() - lastActivity;
             },
