@@ -23,10 +23,9 @@ hqDefine("hqwebapp/js/widgets", [
                 multiple: true,
                 placeholder: ' ',
                 tags: true,
-                tokenSeparators: [",", " "],
                 createTag: function (params) {
                     // Support pasting in comma-separated values
-                    var terms = $.trim(params.term).split(/,\s*/);
+                    var terms = $.trim(params.term).split(/[, ]\s*/);
                     if (terms.length === 1) {
                         return {
                             id: terms[0],
