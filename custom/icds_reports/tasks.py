@@ -108,7 +108,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
-    {'type': 'person', 'name': 'static-person_cases_v2'},
+    {'type': 'person', 'name': 'static-person_cases_v3'},
     {'type': 'usage', 'name': 'static-usage_forms'},
     {'type': 'vhnd', 'name': 'static-vhnd_form'},
     {'type': 'complementary_feeding', 'is_ucr': False, 'name': 'icds_dashboard_comp_feed_form'},
