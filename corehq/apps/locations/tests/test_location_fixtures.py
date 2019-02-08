@@ -725,6 +725,13 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
             related=True
         )
 
+    def test_should_sync_when_changed(self, *args):
+        last_sync_time = datetime.utcnow()
+        locations_queryset = SQLLocation.objects.filter(pk=self.locations['Boston'].pk)
+        self.assertFalse(should_sync_locations(SyncLog(date=last_sync_time), locations_queryset, self.user))
+        LocationRelation.objects.create(location_a=self.locations["Revere"], location_b=self.locations["Boston"])
+        self.assertTrue(should_sync_locations(SyncLog(date=last_sync_time), locations_queryset, self.user))
+
 
 class ShouldSyncLocationFixturesTest(TestCase):
 
