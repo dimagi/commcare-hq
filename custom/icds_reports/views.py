@@ -755,6 +755,7 @@ class ExportIndicatorView(View):
         if indicator == BENEFICIARY_LIST_EXPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
+            config = beneficiary_config
         if indicator == AWW_INCENTIVE_REPORT:
             if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
                 return HttpResponseBadRequest()
