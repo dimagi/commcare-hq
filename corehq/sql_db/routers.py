@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 from django.db import connections
 from django.conf import settings
 
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
+from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, \
+    get_icds_ucr_db_alias, get_icds_ucr_non_dashboard_db_alias
 from .config import partition_config
 
 PROXY_APP = 'sql_proxy_accessors'
@@ -55,7 +56,8 @@ def allow_migrate(db, app_label):
     """
     if app_label == ICDS_REPORTS_APP:
         db_alias = get_icds_ucr_db_alias()
-        return bool(db_alias and db_alias == db)
+        non_dashboard_alias = get_icds_ucr_non_dashboard_db_alias()
+        return bool(db_alias and db_alias == db) or bool(non_dashboard_alias and non_dashboard_alias == db)
     elif app_label == SYNCLOGS_APP:
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == WAREHOUSE_APP:
