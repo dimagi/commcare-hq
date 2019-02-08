@@ -572,12 +572,12 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, location_id=None, program_id=None):
-        project = Domain.get_by_name(domain)
+        domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
-        if project.commtrack_enabled:
+        if domain_obj.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if project.uses_locations and location_id:
+        if domain_obj.uses_locations and location_id:
             self.set_location(domain, location_id)
         self.save()
 

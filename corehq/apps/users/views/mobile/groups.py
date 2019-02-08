@@ -226,5 +226,5 @@ class EditGroupMembersView(BaseGroupsView):
 
     @property
     def domain_uses_case_sharing(self):
-        domain = Domain.get_by_name(Group.get(self.group_id).domain)
-        return domain.case_sharing_included()
+        domain_obj = Domain.get_by_name(Group.get(self.group_id).domain)
+        return domain_obj.case_sharing_included()
