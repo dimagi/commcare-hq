@@ -7,8 +7,6 @@ from django.views import View
 
 from corehq import toggles
 from corehq.apps.api.odata.utils import get_case_type_to_properties
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
