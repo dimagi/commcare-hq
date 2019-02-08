@@ -863,13 +863,13 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
 
 def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name, strict=True)
-    if domain and domain.commtrack_enabled != toggle_is_enabled:
+    domain_obj = Domain.get_by_name(domain_name, strict=True)
+    if domain_obj and domain_obj.commtrack_enabled != toggle_is_enabled:
         if toggle_is_enabled:
-            domain.convert_to_commtrack()
+            domain_obj.convert_to_commtrack()
         else:
-            domain.commtrack_enabled = False
-            domain.save()
+            domain_obj.commtrack_enabled = False
+            domain_obj.save()
 
 
 COMMTRACK = StaticToggle(
