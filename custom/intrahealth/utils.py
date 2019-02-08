@@ -360,9 +360,21 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
 
     @property
     def export_table(self):
-        reports = [r['report_table'] for r in self.report_context['reports']]
-        # This should return a different thing depending on whether it includes html formatting
-        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row']) for r in reports]
+        reports = [inidividual_report['report_table'] for inidividual_report in self.report_context['reports']]
+        export_tables = []
+        for inidividual_report in reports:
+            # The keys contain html info, so only the values get exported to excel
+            total_row = [row_value.items()[0][1] for row_value in inidividual_report['total_row']]
+            export_tables.append(self._export_table(inidividual_report['title'],
+                                                     inidividual_report['headers'],
+                                                     inidividual_report['rows'],
+                                                     total_row))
+        return export_tables
+
+    # @property
+    # def export_table(self):
+    #     reports = [r['report_table'] for r in self.report_context['reports']]
+    #     return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row']) for r in reports]
 
     def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
         def _unformat_row(row):
