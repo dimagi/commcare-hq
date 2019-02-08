@@ -202,7 +202,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         """.format(
             tablename=self.tablename,
             ucr_tablename=self._ucr_tablename('static-person_cases_v3'),
-            seeking_services="(CASE WHEN registered_status != 0 AND migration_status != 1 THEN 1 ELSE 0 END)"
+            seeking_services="(CASE WHEN registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END)"
         ), {
             'start_date': self.month_start,
             'end_date': self.month_end,
