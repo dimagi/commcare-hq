@@ -13,7 +13,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 
-from memoized import memoized
 from django.views.generic import View
 
 from corehq import toggles
