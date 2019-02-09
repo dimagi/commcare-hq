@@ -91,7 +91,7 @@
                             <div class="checkbox">
                                   <label>
                                       <input type="checkbox"
-                                             data-bind="checked: permissions.edit_roles" />
+                                             data-bind="checked: permissions.edit_groups" />
                                   </label>
                               </div>
                         </div>
@@ -99,14 +99,13 @@
                             <div class="checkbox">
                                   <label>
                                       <input type="checkbox"
-                                             data-bind="checked: permissions.view_roles" />
+                                             data-bind="checked: permissions.view_groups" />
                                   </label>
                               </div>
                         </div>
                         <div class="col-sm-8 control-label">
                             {% blocktrans %}
-                                <strong>Roles &amp; Permissions</strong> &mdash; create and update
-                                web user and mobile worker roles &amp; permissions
+                                <strong>Groups</strong> &mdash; manage groups of Mobile Workers
                             {% endblocktrans %}
                         </div>
                     </div>
@@ -131,6 +130,30 @@
                             {% blocktrans %}
                                 <strong>Locations</strong> &mdash; create, update, and delete locations
                                 in the Organization Hierarchy
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.edit_roles" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.view_roles" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-8 control-label">
+                            {% blocktrans %}
+                                <strong>Roles &amp; Permissions</strong> &mdash; create and update
+                                web user and mobile worker roles &amp; permissions
                             {% endblocktrans %}
                         </div>
                     </div>
