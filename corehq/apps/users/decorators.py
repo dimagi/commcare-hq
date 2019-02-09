@@ -9,7 +9,9 @@ from django.utils.translation import ugettext as _
 from corehq.apps.users.dbaccessors.all_commcare_users import get_deleted_user_by_username
 
 
-def require_permission_raw(permission_check, login_decorator=login_and_domain_required):
+def require_permission_raw(permission_check,
+                           login_decorator=login_and_domain_required,
+                           view_only_permission_check=None):
     """
     A way to do more fine-grained permissions via decorator. The permission_check should be
     a function that takes in a couch_user and a domain and returns True if that user can access
@@ -21,6 +23,10 @@ def require_permission_raw(permission_check, login_decorator=login_and_domain_re
             if not hasattr(request, "couch_user"):
                 return redirect_for_login_or_domain(request)
             elif request.user.is_superuser or permission_check(request.couch_user, domain):
+                return view_func(request, domain, *args, **kwargs)
+            elif (view_only_permission_check is not None
+                  and view_only_permission_check(request.couch_user, domain)):
+                request.is_view_only = True
                 return view_func(request, domain, *args, **kwargs)
             else:
                 if request.is_ajax():
@@ -45,10 +51,25 @@ def get_permission_name(permission):
             return None
 
 
-def require_permission(permission, data=None, login_decorator=login_and_domain_required):
+def require_permission(permission,
+                       data=None,
+                       login_decorator=login_and_domain_required,
+                       view_only_permission=None):
+
     permission = get_permission_name(permission) or permission
     permission_check = lambda couch_user, domain: couch_user.has_permission(domain, permission, data=data)
-    return require_permission_raw(permission_check, login_decorator)
+
+    view_only_check = None
+    if view_only_permission is not None:
+        view_only_permission = (get_permission_name(view_only_permission)
+                                or view_only_permission)
+        view_only_check = lambda couch_user, domain: couch_user.has_permission(
+            domain, view_only_permission, data=data)
+
+    return require_permission_raw(
+        permission_check, login_decorator,
+        view_only_permission_check=view_only_check
+    )
 
 
 require_can_edit_web_users = require_permission('edit_web_users')
