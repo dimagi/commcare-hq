@@ -1,0 +1,199 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'users/js/roles_and_permissions' %}
+{% block page_content %}
+    {% registerurl "post_user_role" domain %}
+    {% registerurl "delete_user_role" domain %}
+    {% initial_page_data "user_roles" user_roles %}
+    {% initial_page_data "can_edit_roles" can_edit_roles %}
+    {% initial_page_data "default_role" default_role %}
+    {% initial_page_data "report_list" report_list %}
+    {% initial_page_data "web_apps_list" web_apps_list %}
+    {% initial_page_data "apps_list" apps_list %}
+    {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
+    {% initial_page_data "landing_page_choices" landing_page_choices %}
+
+    <p class="lead">
+        {% blocktrans %}
+            Set roles and permissions or add new custom roles.
+        {% endblocktrans %}
+    </p>
+
+    <div class="panel panel-default" id="user-roles-table" style="display: none;">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans 'Roles' %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <table class="table table-striped table-responsive">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>
+                          {% trans "Edit Web Users" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans "Edit Web Users" %}"
+                                data-content="{% trans "Specify web user access permissions; invite new web users to the domain; manage account settings for web users." %}"></span>
+                        </th>
+                        <th>
+                          {% trans "Edit Mobile Workers" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans "Edit Mobile Workers" %}"
+                                data-content="{% trans "Manage account settings for mobile workers; create accounts for mobile workers; archive and/or delete mobile users." %}"></span>
+                        </th>
+                        <th>
+                          {% trans "Edit Locations" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans "Edit Locations"%}"
+                                data-content="{% trans "Create, update, and delete Locations in the Organization Hierarchy." %}"></span>
+                        </th>
+                        {% if show_integration %}
+                        <th>
+                          {% trans "Edit Integration" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans 'Edit Integration' %}"
+                                data-content="{% trans 'Manage integration with other systems.' %}"></span>
+                        </th>
+                        {% endif %}
+                        <th>
+                          {% trans "Edit Data" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans "Edit Data" %}"
+                                data-content="{% trans "View, export, and edit form and case data; reassign cases." %}"></span>
+                        </th>
+                        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+                            <th>
+                              {% trans "Edit Shared Exports" %}
+                              <span class="hq-help-template"
+                                    data-title="{% trans "Edit Shared Exports" %}"
+                                    data-content="{% trans "Access and edit the content and structure of shared exports." %}"></span>
+                            </th>
+                        {% endif %}
+                        <th>
+                          {% trans "Edit Apps" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans "Edit Apps" %}"
+                                data-content="{% trans "Modify the structure and configuration of the application." %}"></span>
+                        </th>
+                        <th>
+                          {% trans "View Reports" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans "View Reports" %}"
+                                data-content="{% trans "See all CommCareHQ performance reports." %}"></span>
+                        </th>
+                        <th>
+                          {% trans "Edit Subscription Info" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans "Edit Subscription Info" %}"
+                                data-content="{% trans "Edit the subscription information for this domain." %}"></span>
+                        </th>
+                        <th data-bind="visible: allowEdit">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: userRoles">
+                    <tr>
+                        <th>
+                            <span data-bind="visible: name, text: name"></span>
+                            <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
+                        </th>
+                        <td><i data-bind="staticChecked: permissions.edit_web_users"></i></td>
+                        <td><i data-bind="staticChecked: permissions.edit_commcare_users"></i></td>
+                        <td><i data-bind="staticChecked: permissions.edit_locations"></i></td>
+                        {% if show_integration %}
+                        <td><i data-bind="staticChecked: permissions.edit_motech"></i></td>
+                        {% endif %}
+                        <td><i data-bind="staticChecked: permissions.edit_data"></i></td>
+                        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+                            <td><i data-bind="staticChecked: permissions.edit_shared_exports"></i></td>
+                        {% endif %}
+                        <td><i data-bind="staticChecked: permissions.edit_apps"></i></td>
+                        <td>
+                            <span data-bind="visible: reportPermissions.all(), staticChecked: true"></span>
+                            <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
+                                {% trans "Only" %}
+                                <ul data-bind="foreach: reportPermissions.specific">
+                                    <li data-bind="html: name, visible: value"></li>
+                                </ul>
+                            </div>
+                            <span data-bind="visible: !reportPermissions.all() && !reportPermissions.specific().length, staticChecked: false"></span>
+                        </td>
+                        <td><i data-bind="staticChecked: permissions.edit_billing"></i></td>
+                        <td data-bind="visible: $root.allowEdit">
+                            <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
+                                <i class="fa fa-edit"></i>
+                                {% trans "Edit Role" %}
+                            </button>
+                            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.hasUsersAssigned, click: $data._id ? $root.setRoleBeingDeleted : null">
+                                <i class="fa fa-trash"></i>
+                                {% trans "Delete Role" %}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            {% if can_edit_roles %}
+                <button class="btn btn-default"
+                        data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Add Role" %}
+                </button>
+                <div data-bind="modal: roleBeingDeleted" tabindex="-1" role="dialog">
+                    <div data-bind="with: roleBeingDeleted"
+                         class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button"
+                                        class="close"
+                                        data-bind="click: $root.unsetRoleBeingDeleted">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">{% trans "Close" %}</span>
+                                </button>
+                                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
+                            </div>
+                            <div class="modal-body">
+                                <h4 data-bind="text: modalConfirmation"></h4>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-default"
+                                        data-bind="click: $root.unsetRoleBeingDeleted">
+                                    {% trans "Cancel" %}
+                                </button>
+                                <div data-bind="deleteButton: $root.modalDeleteButton.state, saveOptions: $root.modalDeleteButton.saveOptions"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% include 'users/partials/edit_role_modal.html' %}
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+<div id="modal-deletion" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button"
+                        class="close"
+                        data-bind="click: $root.unsetRoleBeingDeleted">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">{% trans "Close" %}</span>
+                </button>
+                <h4 class="modal-title"></h4>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
