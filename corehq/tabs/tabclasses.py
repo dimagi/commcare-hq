@@ -1220,6 +1220,7 @@ class ProjectUsersTab(UITab):
             from corehq.apps.users.views import (
                 EditWebUserView,
                 ListWebUsersView,
+                ListRolesView,
             )
             items.append((_('Project Users'), [
                 {
@@ -1237,6 +1238,15 @@ class ProjectUsersTab(UITab):
                         }
                     ],
                     'show_in_dropdown': True,
+                },
+                {
+                    'title': _(ListRolesView.page_title),
+                    'url': reverse(ListRolesView.urlname,
+                                   args=[self.domain]),
+                    'description': _(
+                        "View and manage user roles."),
+                    'subpages': [],
+                    'show_in_dropdown': False,
                 }
             ]))
 

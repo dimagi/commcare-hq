@@ -65,7 +65,11 @@ from corehq.apps.hqwebapp.decorators import (
     use_angular_js,
     use_select2)
 from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
+from corehq.apps.users.decorators import (
+    require_can_edit_web_users,
+    require_permission_to_edit_user,
+    require_can_edit_roles,
+)
 
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
@@ -493,6 +497,100 @@ class ListWebUsersView(BaseUserSettingsView):
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
         }
+
+
+@location_safe_for_ews_ils
+class ListRolesView(BaseUserSettingsView):
+    template_name = 'users/roles_and_permissions.html'
+    page_title = ugettext_lazy("Roles & Permissions")
+    urlname = 'roles_and_permissions'
+
+    @method_decorator(require_can_edit_roles)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ListRolesView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def can_restrict_access_by_location(self):
+        return self.domain_object.has_privilege(
+            privileges.RESTRICT_ACCESS_BY_LOCATION)
+
+    @property
+    @memoized
+    def user_roles(self):
+        user_roles = [AdminUserRole(domain=self.domain)]
+        user_roles.extend(sorted(
+            UserRole.by_domain(self.domain),
+            key=lambda role: role.name if role.name else '\uFFFF'
+        ))
+
+        show_es_issue = False
+        # skip the admin role since it's not editable
+        for role in user_roles[1:]:
+            try:
+                role.hasUsersAssigned = bool(role.ids_of_assigned_users)
+            except TypeError:
+                # when query_result['hits'] returns None due to an ES issue
+                show_es_issue = True
+            role.has_unpermitted_location_restriction = (
+                    not self.can_restrict_access_by_location
+                    and not role.permissions.access_all_locations
+            )
+        if show_es_issue:
+            messages.error(
+                self.request,
+                mark_safe(_(
+                    "We might be experiencing issues fetching the entire list "
+                    "of user roles right now. This issue is likely temporary and "
+                    "nothing to worry about, but if you keep seeing this for "
+                    "more than a day, please <a href='#modalReportIssue' "
+                    "data-toggle='modal'>Report an Issue</a>."
+                ))
+            )
+        return user_roles
+
+    @property
+    def can_edit_roles(self):
+        return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
+               and self.couch_user.is_domain_admin
+
+    @property
+    def landing_page_choices(self):
+        return [
+                   {'id': None, 'name': _('Use Default')}
+               ] + [
+                   {'id': page.id, 'name': _(page.name)}
+                   for page in get_allowed_landing_pages(self.domain)
+               ]
+
+    @property
+    def page_context(self):
+        if (not self.can_restrict_access_by_location
+                and any(not role.permissions.access_all_locations
+                        for role in self.user_roles)
+        ):
+            messages.warning(self.request, _(
+                "This project has user roles that restrict data access by "
+                "organization, but the software plan no longer supports that. "
+                "Any users assigned to roles that are restricted in data access "
+                "by organization can no longer access this project.  Please "
+                "update the existing roles."))
+        return {
+            'user_roles': self.user_roles,
+            'can_edit_roles': self.can_edit_roles,
+            'default_role': UserRole.get_default(),
+            'report_list': get_possible_reports(self.domain),
+            'web_apps_list': get_cloudcare_apps(self.domain),
+            'apps_list': get_brief_apps_in_domain(self.domain),
+            'domain_object': self.domain_object,
+            'uses_locations': self.domain_object.uses_locations,
+            'can_restrict_access_by_location': self.can_restrict_access_by_location,
+            'landing_page_choices': self.landing_page_choices,
+            'show_integration': (
+                    toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
+                    toggles.DHIS2_INTEGRATION.enabled(self.domain)
+            ),
+    }
 
 
 @require_can_edit_web_users
