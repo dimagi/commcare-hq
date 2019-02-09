@@ -320,6 +320,22 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
         return context
 
 
+@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
+@require_can_edit_apps
+@require_GET
+def check_translations_coverage(request, domain, app_id):
+    app = get_app(domain, app_id)
+    langs = request.POST.getlist('langs')
+    media_types = request.POST.getlist('media_types')
+
+    langs = {lang: [] for lang in langs}
+
+    return json_response({
+        'complete': 1,
+        'langs': langs,
+    })
+
+
 class BaseProcessUploadedView(BaseMultimediaView):
 
     @property
