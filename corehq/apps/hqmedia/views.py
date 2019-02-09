@@ -52,6 +52,7 @@ from corehq.apps.hqmedia.controller import (
 )
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -298,12 +299,25 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
     template_name = "hqmedia/translations_coverage.html"
     page_title = ugettext_noop("Translations Coverage")
 
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(MultimediaTranslationsCoverageView, self).dispatch(request, *args, **kwargs)
+
     @property
     def parent_pages(self):
         return [{
             'title': _("Multimedia Reference Checker"),
             'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
         }]
+
+    @property
+    def page_context(self):
+        context = super(MultimediaTranslationsCoverageView, self).page_context
+        context.update({
+            "media_types": {t: CommCareMultimedia.get_doc_class(t).get_nice_name()
+                            for t in CommCareMultimedia.get_doc_types()},
+        })
+        return context
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
