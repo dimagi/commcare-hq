@@ -1225,8 +1225,10 @@ class ProjectUsersTab(UITab):
             items.append((_('Project Users'), [
                 {
                     'title': _(ListWebUsersView.page_title),
-                    'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
-                    'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
+                    'url': reverse(ListWebUsersView.urlname,
+                                   args=[self.domain]),
+                    'description': _(
+                        "Grant other CommCare HQ users access to your project."),
                     'subpages': [
                         {
                             'title': _("Invite Web User"),
