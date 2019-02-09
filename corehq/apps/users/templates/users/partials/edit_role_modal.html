@@ -1,7 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog">
+<div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog"
+     class="modal fade">
     <div data-bind="with: roleBeingEdited"
          class="modal-dialog">
         <div class="modal-content">
@@ -28,48 +29,154 @@
                                    class="form-control" />
                         </div>
                     </div>
+                    <hr />
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">
-                            {% trans "Edit Web Users" %}
-                        </label>
-                        <div class="col-sm-8 controls">
+                      <div class="col-sm-2">
+                        {% trans "Can Edit" %}
+                      </div>
+                      <div class="col-sm-2">
+                        {% trans "Can View" %}
+                      </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-2 controls">
                             <div class="checkbox">
-                                <label>
-                                    <input type="checkbox"
-                                           data-bind="checked: permissions.edit_web_users" />
-                                    {% trans "Allow role to edit Web Users." %}
-                                </label>
-                            </div>
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.edit_web_users" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.view_web_users" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-8 control-label">
+                            {% blocktrans %}
+                                <strong>Web Users</strong> &mdash; specify access permissions,
+                              invite new web users to the domain, manage account settings
+                            {% endblocktrans %}
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">
-                            {% trans "Edit Mobile Workers" %}
-                        </label>
-                        <div class="col-sm-8 controls">
+                        <div class="col-sm-2 controls">
                             <div class="checkbox">
-                                <label>
-                                    <input type="checkbox"
-                                           data-bind="checked: permissions.edit_commcare_users" />
-                                    {% trans "Allow role to edit Mobile Workers." %}
-                                </label>
-                            </div>
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.edit_commcare_users" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.view_commcare_users" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-8 control-label">
+                            {% blocktrans %}
+                                <strong>Mobile Workers</strong> &mdash; manage account settings,
+                                create new accounts, archive or delete accounts
+                            {% endblocktrans %}
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">
-                            {% trans "Edit Locations" %}
-                        </label>
-                        <div class="col-sm-8 controls">
+                        <div class="col-sm-2 controls">
                             <div class="checkbox">
-                                <label>
-                                    <input type="checkbox"
-                                           data-bind="checked: permissions.edit_locations" />
-                                    {% trans "Allow role to edit Locations." %}
-                                </label>
-                            </div>
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.edit_roles" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.view_roles" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-8 control-label">
+                            {% blocktrans %}
+                                <strong>Roles &amp; Permissions</strong> &mdash; create and update
+                                web user and mobile worker roles &amp; permissions
+                            {% endblocktrans %}
                         </div>
                     </div>
+                    <div class="form-group">
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.edit_locations" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.view_locations" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-8 control-label">
+                            {% blocktrans %}
+                                <strong>Locations</strong> &mdash; create, update, and delete locations
+                                in the Organization Hierarchy
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.edit_data" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-2 controls">
+                            &mdash;
+                        </div>
+                        <div class="col-sm-8 control-label">
+                            {% blocktrans %}
+                                <strong>Data</strong> &mdash; view, export, and edit form and
+                                case data, reassign cases
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-2 controls">
+                            <div class="checkbox">
+                                  <label>
+                                      <input type="checkbox"
+                                             data-bind="checked: permissions.edit_apps" />
+                                  </label>
+                              </div>
+                        </div>
+                        <div class="col-sm-2 controls">
+                            &mdash;
+                        </div>
+                        <div class="col-sm-8 control-label">
+                            {% blocktrans %}
+                                <strong>Applications</strong> &mdash; modify or view the structure
+                                and configuration of all applications.
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+
+                    <legend>
+                      {% trans "Other Settings" %}
+                    </legend>
+
                     {% if show_integration %}
                     <div class="form-group">
                         <label class="col-sm-4 control-label">
@@ -86,20 +193,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">
-                            {% trans "Edit Data" %}
-                        </label>
-                        <div class="col-sm-8 controls">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox"
-                                           data-bind="checked: permissions.edit_data" />
-                                    {% trans "Allow role to edit Data." %}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+
                     {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
                         <div class="form-group">
                             <label class="col-sm-4 control-label">
@@ -116,20 +210,6 @@
                             </div>
                         </div>
                     {% endif %}
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">
-                            {% trans "Edit Applications" %}
-                        </label>
-                        <div class="col-sm-8 controls">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox"
-                                           data-bind="checked: permissions.edit_apps" />
-                                    {% trans "Allow role to edit Applications." %}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
                     <div class="form-group">
                         <label class="col-sm-4 control-label">
                             {% trans "Edit Subscription Info" %}
@@ -167,14 +247,14 @@
                     </div>
                     <div class="form-group">
                         <label class="col-sm-4 control-label">
-                            {% trans "View All Reports" %}
+                            {% trans "Access All Reports" %}
                         </label>
                         <div class="col-sm-8 controls">
                             <div class="checkbox">
                                 <label>
                                     <input type="checkbox"
                                            data-bind="checked: reportPermissions.all" />
-                                    {% trans "Allow role to view all reports." %}
+                                    {% trans "Allow role to access all reports." %}
                                 </label>
                             </div>
                         </div>
@@ -182,12 +262,12 @@
                     <div class="form-group"
                          data-bind="visible: !reportPermissions.all()">
                         <label class="col-sm-4 control-label">
-                            {% trans "View Specific Reports" %}
+                            {% trans "Access Specific Reports" %}
                         </label>
                         <div class="col-sm-8 controls">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    {% trans "Select which reports the role can view:" %}
+                                    {% trans "Select which reports the role can access:" %}
                                 </div>
                                 <div class="panel-body"
                                      data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
