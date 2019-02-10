@@ -134,6 +134,129 @@ class Child(LocationDenormalizedModel):
     sex = models.TextField(null=True)
     migration_status = models.TextField(null=True)
 
+    @classmethod
+    def agg_from_child_health_case_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-child_health_cases')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        INSERT INTO "{child_tablename}" AS child (
+            domain, person_case_id, child_health_case_id, opened_on, closed_on
+        ) (
+            SELECT
+                %(domain)s AS domain,
+                child_health.person_case_id AS person_case_id,
+                child_health.doc_id AS child_health_case_id,
+                child_health.opened_on AS opened_on,
+                child_health.closed_on AS closed_on
+            FROM "{child_health_cases_ucr_tablename}" child_health
+            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
+        )
+        ON CONFLICT (person_case_id) DO UPDATE SET
+           closed_on = EXCLUDED.closed_on
+        """.format(
+            child_tablename=cls._meta.db_table,
+            child_health_cases_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_person_case_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-person_cases')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{child_tablename}" AS child SET
+            household_case_id = person.household_case_id,
+            dob = person.dob,
+            sex = person.sex,
+            migration_status = person.migration_status
+        FROM (
+            SELECT
+                household_case_id,
+                doc_id,
+                dob,
+                sex,
+                migration_status
+            FROM "{person_cases_ucr_tablename}"
+            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
+        ) person
+        WHERE child.person_case_id = person.doc_id
+        """.format(
+            child_tablename=cls._meta.db_table,
+            person_cases_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_household_case_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-household_cases')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{child_tablename}" AS child SET
+            awc_id = household.awc_owner_id,
+            village_id = household.village_owner_id
+        FROM (
+            SELECT
+                doc_id,
+                awc_owner_id,
+                village_owner_id
+            FROM "{household_cases_ucr_tablename}"
+            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
+        ) household
+        WHERE child.household_case_id = household.doc_id
+        """.format(
+            child_tablename=cls._meta.db_table,
+            household_cases_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_village_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-village_location')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{child_tablename}" AS child SET
+            sc_id = village.sc_id,
+            phc_id = village.phc_id,
+            taluka_id = village.taluka_id,
+            district_id = village.district_id,
+            state_id = village.state_id
+        FROM (
+            SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
+            FROM "{village_location_ucr_tablename}"
+            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
+        ) village
+        WHERE child.village_id = village.doc_id
+        """.format(
+            child_tablename=cls._meta.db_table,
+            village_location_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_awc_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-awc_location')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{child_tablename}" AS child SET
+            supervisor_id = awc.supervisor_id,
+            block_id = awc.block_id
+        FROM (
+            SELECT doc_id, supervisor_id, block_id
+            FROM "{awc_location_ucr_tablename}"
+            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
+        ) awc
+        WHERE child.awc_id = awc.doc_id
+        """.format(
+            child_tablename=cls._meta.db_table,
+            awc_location_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
 
 class AggregationInformation(models.Model):
     """Used to track the performance and timings of our data aggregations"""
