@@ -27,7 +27,7 @@ mock==2.0.0
 Pillow~=5.2
 phonenumberslite==8.8.9
 psycopg2~=2.7
-psycogreen==1.0
+psycogreen~=1.0
 pycryptodome>=3.6.6  # security update
 py-KISSmetrics==1.0.1
 pygooglechart==0.4.0
