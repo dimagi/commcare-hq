@@ -14,7 +14,6 @@ ipython==5.2.2
 ipdb==0.11
 wheel==0.29.0
 graphviz==0.7
--e git+git://github.com/nickpell/django-package-monitor@np/handle-no-semver#egg=django-package-monitor
 transifex-client==0.12.4
 modernize==0.6
 Fabric==1.14.0
