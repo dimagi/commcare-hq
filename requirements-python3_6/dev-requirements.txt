@@ -133,7 +133,7 @@ pbr==5.1.2
 pexpect==4.6.0            # via ipython
 phonenumberslite==8.8.9
 pickleshare==0.7.5        # via ipython
-pillow==5.2.0
+pillow==5.4.1
 pip-tools==2.0.2
 ply==3.11
 polib==1.1.0
