@@ -81,7 +81,7 @@ pyzxcvbn==0.8.0
 django-statici18n==1.3.0
 django-simple-captcha==0.5.9
 httpagentparser==1.7.8
-boto3==1.4.4
+boto3~=1.9
 simpleeval~=0.9
 laboratory==0.2.0
 ConcurrentLogHandler==0.9.1
