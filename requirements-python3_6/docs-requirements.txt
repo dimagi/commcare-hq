@@ -144,9 +144,9 @@ six==1.11.0
 smartypants==2.0.1
 snowballstemmer==1.2.1    # via sphinx
 socketpool==0.5.3
-sphinx-rtd-theme==0.3.0
-sphinx==1.7.2
-sphinxcontrib-django==0.3.1
+sphinx-rtd-theme==0.4.2
+sphinx==1.8.4
+sphinxcontrib-django==0.4
 sphinxcontrib-websupport==1.1.0  # via sphinx
 sqlagg==0.12.0
 sqlalchemy==1.2.17
