@@ -9,7 +9,7 @@ alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
 asn1crypto==0.24.0
-attrs==18.1.0
+attrs==18.2.0
 babel==2.6.0
 backports-abc==0.5        # via tornado
 backports.shutil-get-terminal-size==1.0.0  # via ipython
@@ -104,7 +104,7 @@ monotonic==1.5            # via eventlet
 msgpack-python==0.5.6
 ndg-httpsclient==0.5.1
 numpy==1.7.1
-openpyxl==2.6.0b1
+openpyxl==2.6.0
 pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.1.2
 pexpect==4.6.0            # via ipython
@@ -150,9 +150,9 @@ s3transfer==0.1.13
 scandir==1.9.0            # via pathlib2
 setproctitle==1.1.9
 sh==1.09
-simpleeval==0.9.5
+simpleeval==0.9.8
 simplegeneric==0.8.1      # via ipython
-simplejson==3.11.1
+simplejson==3.16.0
 singledispatch==3.4.0.3   # via tornado
 six==1.11.0
 smartypants==2.0.1

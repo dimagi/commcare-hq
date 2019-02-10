@@ -9,7 +9,7 @@ alembic==0.8.6
 amqp==1.4.9               # via kombu
 anyjson==0.3.3            # via kombu
 asn1crypto==0.24.0        # via cryptography
-attrs==18.1.0
+attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
 billiard==3.3.0.23        # via celery
 boto3==1.4.4
@@ -96,7 +96,7 @@ markupsafe==1.1.0         # via jinja2, mako
 mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
 numpy==1.7.1
-openpyxl==2.6.0b1
+openpyxl==2.6.0
 pbr==5.1.2                # via mock
 phonenumberslite==8.8.9
 pillow==5.2.0
@@ -134,8 +134,8 @@ requests[security]==2.21.0
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.1.13        # via boto3
 sh==1.09
-simpleeval==0.9.5
-simplejson==3.11.1
+simpleeval==0.9.8
+simplejson==3.16.0
 six==1.11.0
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3
