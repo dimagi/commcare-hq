@@ -1853,6 +1853,7 @@ class ActiveMobileBackendManager(models.Manager):
         return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
 
 
+@six.python_2_unicode_compatible
 class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     SMS = 'SMS'
     IVR = 'IVR'
@@ -1935,7 +1936,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     class ExpectedDomainLevelBackend(Exception):
         pass
 
-    def __unicode__(self):
+    def __str__(self):
         if self.is_global:
             return "Global Backend '%s'" % self.name
         else:

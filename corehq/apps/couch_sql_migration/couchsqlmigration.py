@@ -811,15 +811,15 @@ def delete_diff_db(domain):
 
 
 def commit_migration(domain_name):
-    domain = Domain.get_by_name(domain_name, strict=True)
-    domain.use_sql_backend = True
-    domain.save()
+    domain_obj = Domain.get_by_name(domain_name, strict=True)
+    domain_obj.use_sql_backend = True
+    domain_obj.save()
     clear_local_domain_sql_backend_override(domain_name)
     if not should_use_sql_backend(domain_name):
         Domain.get_by_name.clear(Domain, domain_name)
         assert should_use_sql_backend(domain_name)
     datadog_counter("commcare.couch_sql_migration.total_committed")
-    _logger.info("committed migration for {}".format(domain))
+    _logger.info("committed migration for {}".format(domain_name))
 
 
 class PartiallyLockingQueue(object):
