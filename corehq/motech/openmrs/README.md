@@ -5,6 +5,25 @@ See the [MOTECH README](../README.md#openMRS----bahmni--module) for a
 brief introduction to OpenMRS and Bahmni in the context of MOTECH.
 
 
+Contents
+--------
+
+1. [The OpenmrsRepeater](#the-openmrsrepeater)
+2. [OpenMRS Repeater Location](#openmrs-repeater-location)
+3. [OpenmrsConfig](#openmrsconfig)
+4. [An OpenMRS Patient](#an-openmrs-patient)
+5. [OpenmrsCaseConfig](#openmrscaseconfig)
+6. [PatientFinders](#patientfinders)
+   1. [Creating Missing Patients](#creating-missing-patients)
+   2. [WeightedPropertyPatientFinder](#weightedpropertypatientfinder)
+7. [OpenmrsFormConfig](#openmrsformconfig)
+8. [Provider](#provider)
+9. [Atom Feed Integration](#atom-feed-integration)
+   1. [Adding cases for OpenMRS patients](#adding-cases-for-openmrs-patients)
+10. [Import-Only and Export-Only Values](#import-only-and-export-only-values)
+11. [Data Types](#data-types)
+
+
 The OpenmrsRepeater
 -------------------
 
