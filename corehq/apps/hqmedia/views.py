@@ -317,6 +317,8 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
         context.update({
             "media_types": {t: CommCareMultimedia.get_doc_class(t).get_nice_name()
                             for t in CommCareMultimedia.get_doc_types()},
+            "selected_langs": self.request.POST.getlist('langs', []),
+            "selected_media_types": self.request.POST.getlist('media_types', ['CommCareAudio', 'CommCareVideo']),
         })
         return context
 

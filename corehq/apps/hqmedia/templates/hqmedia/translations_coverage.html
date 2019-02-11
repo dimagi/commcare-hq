@@ -35,7 +35,7 @@
                 <select multiple name="langs" class="form-control ko-select2">
                     {% for lang in app.langs %}
                         {% if lang != app.default_language %}
-                            <option>{{ lang }}</option>
+                            <option{% if lang in selected_langs %} selected{% endif %}>{{ lang }}</option>
                         {% endif %}
                     {% endfor %}
                 </select>
@@ -48,7 +48,7 @@
             <div class="{% css_field_class %} controls">
                 <select multiple name="media_types" class="form-control ko-select2">
                     {% for type, name in media_types.items %}
-                        <option value="{{ type }}">{{ name }}</option>
+                        <option{% if type in selected_media_types %} selected{% endif %} value="{{ type }}">{{ name }}</option>
                     {% endfor %}
                 </select>
             </div>
