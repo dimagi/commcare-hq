@@ -106,3 +106,39 @@ def maybe_add_domain_tag(domain_name, tags):
     """Conditionally add a domain tag to the given list of tags"""
     if (settings.SERVER_ENVIRONMENT, domain_name) in settings.DATADOG_DOMAINS:
         tags.append('domain:{}'.format(domain_name))
+
+
+def load_counter(load_type, source, domain_name, extra_tags=None):
+    """Make a function to track load by counting touched items
+
+    :param load_type: Load type (`"case"`, `"form"`, `"sms"`). Use one
+    of the convenience functions below (e.g., `case_load_counter`)
+    rather than passing a string literal.
+    :param source: Load source string. Example: `"form_submission"`.
+    :param domain_name: Domain name string.
+    :param extra_tags: Optional list of extra datadog tags.
+    :returns: Function that adds load when called: `add_load(value=1)`.
+    """
+    from corehq.util.datadog.gauges import datadog_counter
+    tags = ["src:%s" % source]
+    if extra_tags:
+        tags.extend(extra_tags)
+    maybe_add_domain_tag(domain_name, tags)
+    metric = "commcare.load.%s" % load_type
+
+    def add_load(value=1):
+        datadog_counter(metric, value, tags)
+
+    return add_load
+
+
+def case_load_counter(*args, **kw):
+    return load_counter("case", *args, **kw)
+
+
+def form_load_counter(*args, **kw):
+    return load_counter("form", *args, **kw)
+
+
+def sms_load_counter(*args, **kw):
+    return load_counter("sms", *args, **kw)
