@@ -102,6 +102,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('lactating', 'ucr.lactating'),
             ('lactating_all', 'ucr.lactating_all'),
             ('institutional_delivery_in_month', 'ucr.institutional_delivery_in_month'),
+            ('institutional_delivery', 'case_list.institutional_delivery'),
             ('add', 'ucr.add'),
             ('caste', 'ucr.caste'),
             ('disabled', 'ucr.disabled'),
