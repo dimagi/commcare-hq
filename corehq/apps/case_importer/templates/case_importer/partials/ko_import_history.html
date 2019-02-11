@@ -103,6 +103,11 @@
     </tr>
     <!--/ko-->
 </table>
+<pagination data-apply-bindings="false"
+            params="goToPage: goToPage,
+                    perPage: perPage,
+                    totalItems: totalItems,
+                    showSpinner: showPaginationSpinner"></pagination>
 <!--/ko-->
 <!--ko if: state() === states.SUCCESS && _.isEmpty(case_uploads())-->
 <div class="alert alert-info">
