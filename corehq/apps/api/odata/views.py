@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
-import os
 from django.http import HttpResponse, JsonResponse
-from django.template import Context, Template
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views import View
 
@@ -10,7 +9,6 @@ from corehq.apps.api.odata.utils import get_case_type_to_properties
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
-from io import open
 
 
 class ODataServiceView(View):
@@ -37,12 +35,9 @@ class ODataMetadataView(View):
     @method_decorator(api_auth)
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
-        data_file = os.path.join(os.path.dirname(__file__), 'metadata.xml')
-        with open(data_file, 'r') as f:
-            metadata_template = Template(f.read())
-        metadata = metadata_template.render(Context({
-            'case_type_to_properties': get_case_type_to_properties(domain)
-        }))
+        metadata = render_to_string('api/odata_metadata.xml', {
+            'case_type_to_properties': get_case_type_to_properties(domain),
+        })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
