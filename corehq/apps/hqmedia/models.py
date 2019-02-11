@@ -976,7 +976,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
             Returns a list of totals of each type of media in the application and total matches.
         """
         totals = []
-        for mm in [CommCaseMultimedia.get_doc_class(t) for t in CommCareMultimedia.get_doc_types()]:
+        for mm in [CommCareMultimedia.get_doc_class(t) for t in CommCareMultimedia.get_doc_types()]:
             paths = self.get_all_paths_of_type(mm.__name__)
             matched_paths = [p for p in self.multimedia_map.keys() if p in paths]
             if len(paths) > 0:
