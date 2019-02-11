@@ -363,11 +363,21 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
         export_tables = []
         for individual_report in self.report_context['reports']:
             report_table = individual_report['report_table']
-            # The keys contain html info, so only the values get exported to excel
-            total_row = [row_value.items()[0][1] for row_value in report_table['total_row']]
+            total_row = self._extract_value_from_report_table_row_value(report_table)
             export_tables.append(self._export_table(report_table['title'], report_table['headers'],
                                                     report_table['rows'], total_row))
         return export_tables
+
+    def _extract_value_from_report_table_row_value(self, report_table):
+        extracted_row_values = []
+        for row_value in report_table['total_row']:
+            if isinstance(row_value, dict):
+                # If keys are dicts, they contain html info (ie: row_value = {'html': 'title'})
+                extracted_row_values.append(row_value.items()[0][1])
+            else:
+                extracted_row_values = report_table['total_row']
+                break
+        return extracted_row_values
 
     def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
         def _unformat_row(row):
