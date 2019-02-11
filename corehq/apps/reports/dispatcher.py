@@ -76,13 +76,13 @@ class ReportDispatcher(View):
         attr_name = self.map_name
         from corehq import reports
         if domain:
-            project = Domain.get_by_name(domain)
+            domain_obj = Domain.get_by_name(domain)
         else:
-            project = None
+            domain_obj = None
 
         def process(reports):
             if callable(reports):
-                reports = reports(project) if project else tuple()
+                reports = reports(domain_obj) if domain_obj else tuple()
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))

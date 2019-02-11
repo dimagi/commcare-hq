@@ -185,7 +185,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                     };
                     _prependTemplateToSelector(
                         '.fd-form-actions',
-                        $('#js-fd-manage-case').html(),
+                        $('#js-fd-form-actions').html(),
                         0,
                         function () {
                         }

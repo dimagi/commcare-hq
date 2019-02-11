@@ -13,10 +13,10 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0089_death_date_in_css_record_monthly_view'),
+        ('icds_reports', '0094_cbe_vhnd_columns'),
     ]
 
     operations = [
-        migrator.get_migration('update_tables38.sql')
+        migrator.get_migration('update_tables41.sql')
     ]
     operations.extend(get_view_migrations())

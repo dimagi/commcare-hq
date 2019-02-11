@@ -1,1 +1,2 @@
-ALTER TABLE ccs_record_monthly ADD COLUMN institutional_delivery integer;
+ALTER TABLE child_health_monthly ADD COLUMN lunch_count integer;
+ALTER TABLE agg_child_health ADD COLUMN lunch_count_21_days integer;
