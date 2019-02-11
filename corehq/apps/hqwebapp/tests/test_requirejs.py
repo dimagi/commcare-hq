@@ -108,7 +108,6 @@ class TestRequireJSBuild(SimpleTestCase):
                 if not line:
                     continue
                 if line.startswith('---'):
-                    print "{} contains v3? {} v4? {}".format(module_name, has_v3, has_v4)
                     module_name = previous_line
                     has_v3 = False
                     has_v4 = False
