@@ -698,7 +698,6 @@ class TestWebUserResource(APIResourceTest):
             "edit_data": True,
             "edit_web_users": True,
             "view_web_users": True,
-            "edit_roles": True,
             "view_roles": True,
             "view_reports": True
         },
@@ -715,7 +714,6 @@ class TestWebUserResource(APIResourceTest):
         for perm in [
             'edit_web_users',
             'view_web_users',
-            'edit_roles',
             'view_roles',
             'edit_commcare_users',
             'view_commcare_users',

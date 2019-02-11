@@ -105,7 +105,7 @@ class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     view_web_users = BooleanProperty(default=False)
 
-    edit_roles = BooleanProperty(default=False)
+    # only domain admins can edit roles, due to security issues.
     view_roles = BooleanProperty(default=False)
 
     edit_commcare_users = BooleanProperty(default=False)
@@ -212,7 +212,6 @@ class Permissions(DocumentSchema):
         return Permissions(
             edit_web_users=True,
             view_web_users=True,
-            edit_roles=True,
             view_roles=True,
             edit_commcare_users=True,
             view_commcare_users=True,
@@ -2744,9 +2743,6 @@ class AnonymousCouchUser(object):
         return False
 
     def can_view_web_uers(self):
-        return False
-
-    def can_edit_roles(self):
         return False
 
     def can_view_roles(self):

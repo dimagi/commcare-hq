@@ -620,7 +620,6 @@ def post_user_role(request, domain):
     # temporarily assign new permissions until migration has finished, then we
     # can update the UI accordingly.
     role.permissions.view_web_users = role.permissions.edit_web_users
-    role.permissions.edit_roles = role.permissions.edit_web_users
     role.permissions.view_roles = role.permissions.edit_web_users
 
     role.permissions.view_commcare_users = role.permissions.edit_commcare_users

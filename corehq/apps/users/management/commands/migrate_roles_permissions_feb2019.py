@@ -22,7 +22,6 @@ class Command(BaseCommand):
 
             if role.permissions.edit_web_users:
                 role.permissions.view_web_users = True
-                role.permissions.edit_roles = True
                 role.permissions.view_roles = True
                 save_role = True
 

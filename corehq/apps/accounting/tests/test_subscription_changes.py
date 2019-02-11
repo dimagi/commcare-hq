@@ -68,7 +68,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 edit_apps=True,
                 edit_web_users=True,
                 view_web_users=True,
-                edit_roles=True,
                 view_roles=True,
             ),
             "Custom Role"
