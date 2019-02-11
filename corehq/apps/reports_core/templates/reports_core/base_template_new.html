@@ -11,6 +11,7 @@
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v3.ko.js' %}"></script>
     <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
