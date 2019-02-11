@@ -15,5 +15,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('update_tables38.sql')
+        migrator.get_migration('update_tables40.sql')
     ]
