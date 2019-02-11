@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 import io
 import logging
 import os
+import tempfile
 
 from celery import chain, group
 from celery.schedules import crontab
@@ -77,7 +78,7 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
-    create_excel_file, create_aww_performance_excel_file
+    create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
 from dimagi.utils.chunked import chunked
@@ -91,9 +92,7 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari', 'h.heena', 'avarshney',
-                          'rnegi', 'rjain', 'btalbot']
-DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
+DASHBOARD_TEAM_EMAILS = ['{}@{}'.format('dashboard-aggregation-script', 'dimagi.com')]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
@@ -109,7 +108,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
-    {'type': 'person', 'name': 'static-person_cases_v2'},
+    {'type': 'person', 'name': 'static-person_cases_v3'},
     {'type': 'usage', 'name': 'static-usage_forms'},
     {'type': 'vhnd', 'name': 'static-vhnd_form'},
     {'type': 'complementary_feeding', 'is_ucr': False, 'name': 'icds_dashboard_comp_feed_form'},
@@ -439,8 +438,8 @@ def _update_months_table(day):
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
 
 
-def get_cursor(model):
-    db = db_for_read_write(model)
+def get_cursor(model, write=True):
+    db = db_for_read_write(model, write)
     return connections[db].cursor()
 
 
@@ -682,7 +681,10 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
     if indicator != AWW_INCENTIVE_REPORT:
-        cache_key = create_excel_file(excel_data, data_type, file_format)
+        if file_format == 'xlsx' and beta:
+            cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
     params = {
         'domain': domain,
         'uuid': cache_key,
@@ -965,7 +967,7 @@ def create_mbt_for_month(state_id, month):
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
         helper = helper_class(state_id, month)
-        with get_cursor(helper.base_class) as cursor, open(helper.output_file, 'w+b') as f:
+        with get_cursor(helper.base_class, write=False) as cursor, tempfile.TemporaryFile() as f:
             cursor.copy_expert(helper.query(), f)
             f.seek(0)
             icds_file, _ = IcdsFile.objects.get_or_create(blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month), data_type='mbt_{}'.format(helper.base_tablename))

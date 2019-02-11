@@ -393,7 +393,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     # Settings visible to external users
     restrict_domain_creation = models.BooleanField(default=False)
     restrict_signup = models.BooleanField(default=False, db_index=True)
-    restrict_signup_message = models.CharField(max_length=128, null=True, blank=True)
+    restrict_signup_message = models.CharField(max_length=512, null=True, blank=True)
 
     class Meta(object):
         app_label = 'accounting'
@@ -615,6 +615,7 @@ class BillingContactInfo(models.Model):
             return "%s %s" % (self.first_name, self.last_name)
 
 
+@six.python_2_unicode_compatible
 class SoftwareProductRate(models.Model):
     """
     Represents the monthly fixed fee for a software product.
@@ -670,6 +671,7 @@ class Feature(models.Model):
             return FeatureRate() if default_instance else None  # the defaults
 
 
+@six.python_2_unicode_compatible
 class FeatureRate(models.Model):
     """
     Links a feature to a monthly fee, monthly limit, and a per-excess fee for exceeding the monthly limit.
@@ -810,6 +812,7 @@ class DefaultProductPlan(models.Model):
         return None if return_plan else SoftwarePlanEdition.ENTERPRISE
 
 
+@six.python_2_unicode_compatible
 class SoftwarePlanVersion(models.Model):
     """
     Links a plan to its rates and provides versioning information.
@@ -901,16 +904,15 @@ class SoftwarePlanVersion(models.Model):
         if self.user_feature is not None:
             return "USD %d" % self.user_feature.per_excess_fee
 
-    def feature_charges_exist_for_domain(self, domain,
-                                         start_date=None, end_date=None):
-        domain = ensure_domain_instance(domain)
-        if domain is None:
+    def feature_charges_exist_for_domain(self, domain, start_date=None, end_date=None):
+        domain_obj = ensure_domain_instance(domain)
+        if domain_obj is None:
             return False
         from corehq.apps.accounting.usage import FeatureUsageCalculator
         for feature_rate in self.feature_rates.all():
             if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE:
                 calc = FeatureUsageCalculator(
-                    feature_rate, domain.name, start_date=start_date,
+                    feature_rate, domain_obj.name, start_date=start_date,
                     end_date=end_date
                 )
                 if calc.get_usage() > feature_rate.monthly_limit:
@@ -927,6 +929,7 @@ class SubscriberManager(models.Manager):
             return None
 
 
+@six.python_2_unicode_compatible
 class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
@@ -939,7 +942,7 @@ class Subscriber(models.Model):
     class Meta(object):
         app_label = 'accounting'
 
-    def __unicode__(self):
+    def __str__(self):
         return "DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
@@ -3119,6 +3122,7 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
+@six.python_2_unicode_compatible
 class CreditLine(models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
@@ -3332,7 +3336,7 @@ class CreditLine(models.Model):
             if not permit_inactive and not credit_line.is_active and not invoice:
                 raise CreditLineError(
                     "Could not add credit to CreditLine %s because it is "
-                    "inactive." % credit_line.__str__()
+                    "inactive." % six.text_type(credit_line)
                 )
             is_new = False
         except cls.MultipleObjectsReturned as e:

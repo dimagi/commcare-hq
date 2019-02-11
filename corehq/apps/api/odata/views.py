@@ -7,6 +7,7 @@ from django.views import View
 from corehq import toggles
 from corehq.apps.domain.decorators import api_auth
 from corehq.util.view_utils import absolute_reverse
+from io import open
 
 
 class ODataServiceView(View):

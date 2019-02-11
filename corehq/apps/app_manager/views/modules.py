@@ -17,6 +17,7 @@ from django.views import View
 from django.views.decorators.http import require_GET
 from django.contrib import messages
 
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
@@ -228,7 +229,6 @@ def _get_report_module_context(app, module):
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
             'filter_structure': report.filters_without_prefilters,
-            'legacy_select2': False,
         }
 
     all_reports = ReportConfiguration.by_domain(app.domain) + \
@@ -272,6 +272,7 @@ def _get_report_module_context(app, module):
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
         'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
+        'legacy_select2': True,
     }
     return context
 
@@ -568,10 +569,15 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             module[SLUG].label[lang] = request.POST[label]
 
     if should_edit("root_module_id"):
+        old_root = module['root_module_id']
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
         else:
             module["root_module_id"] = request.POST.get("root_module_id")
+        if not old_root and module['root_module_id']:
+            track_workflow(request.couch_user.username, "User associated module with a parent")
+        elif old_root and not module['root_module_id']:
+            track_workflow(request.couch_user.username, "User orphaned a child module")
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')

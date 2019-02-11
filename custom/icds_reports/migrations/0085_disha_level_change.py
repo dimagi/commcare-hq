@@ -8,9 +8,18 @@ from django.db import migrations
 from corehq.sql_db.operations import RawSQLMigration
 
 
-def get_disha_migration():
+def get_all_disha_migrations():
+    sql_views = [
+        'agg_awc_monthly.sql',
+        'agg_ccs_record_monthly.sql',
+        'agg_child_health_monthly.sql',
+        'disha_indicators.sql',
+    ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
-    return migrator.get_migration('disha_indicators.sql')
+    operations = []
+    for view in sql_views:
+        operations.append(migrator.get_migration(view))
+    return operations
 
 
 class Migration(migrations.Migration):
@@ -19,8 +28,8 @@ class Migration(migrations.Migration):
         ('icds_reports', '0084_anc_abnormalities'),
     ]
 
-    operations = [
-        get_disha_migration(),
+    operations = get_all_disha_migrations()
+    operations.extend([
         migrations.RemoveField(
             model_name='dishaindicatorview',
             name='awc_id',
@@ -37,4 +46,4 @@ class Migration(migrations.Migration):
             model_name='dishaindicatorview',
             name='supervisor_name',
         )
-    ]
+    ])

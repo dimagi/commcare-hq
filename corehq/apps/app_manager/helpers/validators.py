@@ -382,9 +382,9 @@ class ModuleBaseValidator(object):
         for column in columns:
             if column.field_type == FIELD_TYPE_LOCATION:
                 domain = self.module.get_app().domain
-                project = Domain.get_by_name(domain)
+                domain_obj = Domain.get_by_name(domain)
                 try:
-                    if not should_sync_hierarchical_fixture(project, self.module.get_app()):
+                    if not should_sync_hierarchical_fixture(domain_obj, self.module.get_app()):
                         # discontinued feature on moving to flat fixture format
                         raise LocationXpathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'

@@ -85,6 +85,7 @@ def _try_date_conversion(date_or_string):
     return date_or_string
 
 
+@six.python_2_unicode_compatible
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
@@ -121,7 +122,7 @@ class AutomaticUpdateRule(models.Model):
     class RuleError(Exception):
         pass
 
-    def __unicode__(self):
+    def __str__(self):
         return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
 
     @property

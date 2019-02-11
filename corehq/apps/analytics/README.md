@@ -44,6 +44,8 @@ Used primarily by product team.
 
 No server component, just [google.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/google.js). We track events using `<module>.track.click` and `<module>.track.event`. We also use the default tracking (page views, etc.). Google has a few tracking options; we use their [gtag.js](https://developers.google.com/analytics/devguides/collection/gtagjs/).
 
+You can also add the `.track-usage-link` class to a link to track it in Google Analytics if it includes `hqwebapp/js/main.js`.
+
 ### Kissmetrics
 
 Used primarily by product team.
