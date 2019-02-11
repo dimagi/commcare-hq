@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<div class="alert alert-warning alert-trial">
+<div class="alert alert-warning alert-trial" id="cta-get-demo-bannder">
   <i class="fa fa-info-circle"></i>
   {% url 'domain_subscription_view' domain as url_sub %}
   {% with num_trial_days_remaining|pluralize as days_plural %}
