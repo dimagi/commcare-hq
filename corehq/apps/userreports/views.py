@@ -300,8 +300,8 @@ def paywall_home(domain):
     Return the url for the page in the report builder paywall that users
     in the given domain should be directed to upon clicking "+ Create new report"
     """
-    project = Domain.get_by_name(domain, strict=True)
-    if project.requested_report_builder_subscription:
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if domain_obj.requested_report_builder_subscription:
         return reverse(ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
     else:
         return reverse(ReportBuilderPaywallPricing.urlname, args=[domain])

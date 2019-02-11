@@ -24,8 +24,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain_name, **options):
-        domain = Domain.get_by_name(domain_name)
-        if not domain:
+        domain_obj = Domain.get_by_name(domain_name)
+        if not domain_obj:
             print('domain with name "{}" not found'.format(domain_name))
             return
         if not options['noinput']:
@@ -41,5 +41,5 @@ class Command(BaseCommand):
                 print("\n\t\tDomain deletion cancelled.")
                 return
         print("Deleting domain {}".format(domain_name))
-        domain.delete()
+        domain_obj.delete()
         print("Operation completed")

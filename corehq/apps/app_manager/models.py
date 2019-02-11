@@ -4243,10 +4243,6 @@ class BuildProfile(DocumentSchema):
         return not self.__eq__(other)
 
 
-class MediaList(DocumentSchema):
-    media_refs = StringListProperty()
-
-
 class ApplicationBase(VersionedDoc, SnapshotMixin,
                       CommCareFeatureSupportMixin,
                       CommentMixin):
@@ -4339,9 +4335,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     build_profiles = SchemaDictProperty(BuildProfile)
     practice_mobile_worker_id = StringProperty()
-
-    # each language is a key and the value is a list of multimedia referenced in that language
-    media_language_map = SchemaDictProperty(MediaList)
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
@@ -4744,9 +4737,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         copy.comment_from = user_id
         copy.is_released = False
 
-        if not copy.is_remote_app():
-            copy.update_media_language_map()
-
         prune_auto_generated_builds.delay(self.domain, self._id)
 
         return copy
@@ -4796,14 +4786,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def set_media_versions(self):
         pass
-
-    def update_media_language_map(self):
-        self.media_language_map = {}
-        if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
-            for lang in self.langs:
-                self.media_language_map.update({
-                    lang: MediaList(media_refs=list(self.all_media_paths(lang=lang)))
-                })
 
     def get_build_langs(self, build_profile_id=None):
         if build_profile_id is not None:

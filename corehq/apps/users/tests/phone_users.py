@@ -24,9 +24,9 @@ class PhoneUsersTestCase(TestCase):
         if user:
             user.delete()
 
-        domain = Domain.get_by_name(self.domain)
-        if domain:
-            domain.delete()
+        domain_obj = Domain.get_by_name(self.domain)
+        if domain_obj:
+            domain_obj.delete()
 
     def testPhoneUsersViewNoNumberSet(self):
         phone_users_count = CouchUser.view("users/phone_users_by_domain", 
