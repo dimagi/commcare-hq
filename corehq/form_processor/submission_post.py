@@ -239,7 +239,10 @@ class SubmissionPost(object):
                 case_db_cache = self.case_db
                 case_db_cache.cached_xforms.extend(xforms)
             else:
-                case_db_cache = self.interface.casedb_cache(domain=self.domain, lock=True, deleted_ok=True, xforms=xforms)
+                case_db_cache = self.interface.casedb_cache(
+                    domain=self.domain, lock=True, deleted_ok=True,
+                    xforms=xforms, load_src="form_submission",
+                )
 
             with case_db_cache as case_db:
                 instance = xforms[0]

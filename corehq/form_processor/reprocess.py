@@ -69,7 +69,8 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
 def _perfom_post_save_actions(form, save=True):
     interface = FormProcessorInterface(form.domain)
     cache = interface.casedb_cache(
-        domain=form.domain, lock=False, deleted_ok=True, xforms=[form]
+        domain=form.domain, lock=False, deleted_ok=True, xforms=[form],
+        load_src="reprocess_post_save",
     )
     with cache as casedb:
         case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
@@ -129,7 +130,8 @@ def reprocess_form(form, save=True, lock_form=True):
             form.doc_type = 'XFormInstance'
 
         cache = interface.casedb_cache(
-            domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
+            domain=form.domain, lock=True, deleted_ok=True, xforms=[form],
+            load_src="reprocess",
         )
         with cache as casedb:
             try:
