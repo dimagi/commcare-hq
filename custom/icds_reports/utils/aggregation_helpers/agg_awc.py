@@ -44,24 +44,35 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}"
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
-            is_launched, aggregation_level
+            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe
         )
         (
             SELECT
-            state_id,
-            district_id,
-            block_id,
-            supervisor_id,
-            doc_id AS awc_id,
+            awc_location.state_id,
+            awc_location.district_id,
+            awc_location.block_id,
+            awc_location.supervisor_id,
+            awc_location.doc_id AS awc_id,
             %(start_date)s,
             1,
             'no',
-            5
-            FROM "{ucr_table}"
+            5,
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END 
+            FROM "{ucr_table}" awc_location
+            LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
+            LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            group by awc_location.state_id,
+            awc_location.district_id,
+            awc_location.block_id,
+            awc_location.supervisor_id,
+            awc_location.doc_id
         )
         """.format(
             tablename=self.tablename,
-            ucr_table=self.ucr_tablename
+            ucr_table=self.ucr_tablename,
+            cbe_table=self._ucr_tablename('static-cbe_form'),
+            vhnd_table=self._ucr_tablename('static-vhnd_form')
         ), {
             'start_date': self.month_start
         }
@@ -142,8 +153,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
             cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
-            valid_home_visits = ut.valid_home_visits,
-            expected_home_visits = ut.expected_home_visits
+            valid_visits = ut.valid_visits,
+            expected_visits = ut.expected_visits
         FROM (
             SELECT
                 agg_ccs_record.awc_id,
@@ -152,9 +163,9 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(agg_ccs_record.lactating) AS cases_ccs_lactating,
                 sum(agg_ccs_record.pregnant_all) AS cases_ccs_pregnant_all,
                 sum(agg_ccs_record.lactating_all) AS cases_ccs_lactating_all,
-                sum(agg_ccs_record.valid_visits) + SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_home_visits,
+                sum(agg_ccs_record.valid_visits) + SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
                 sum(agg_ccs_record.expected_visits) + sum(CASE WHEN agg_cf.valid_visits IS NOT NULL 
-                                                          THEN 0.39 ELSE 0 END) AS expected_home_visits
+                                                          THEN 0.39 ELSE 0 END) AS expected_visits
             FROM agg_ccs_record
             LEFT OUTER JOIN "{ccs_record_case_ucr}" ucr ON agg_ccs_record.awc_id = ucr.awc_id AND (
                 %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
@@ -469,8 +480,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),
-            ('valid_home_visits',),
-            ('expected_home_visits',),
+            ('valid_visits',),
+            ('expected_visits',),
             ('usage_num_pse',),
             ('usage_num_gmp',),
             ('usage_num_thr',),
@@ -504,6 +515,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('num_launched_blocks', lambda col: _launched_col(col)),
             ('num_launched_supervisors', lambda col: _launched_col(col)),
             ('num_launched_awcs', lambda col: _launched_col(col)),
+            ('num_awcs_conducted_vhnd',),
+            ('num_awcs_conducted_cbe',),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),

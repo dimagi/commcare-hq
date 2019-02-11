@@ -373,6 +373,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
+    'custom.reach',
 )
 
 # also excludes any app starting with 'django.'
@@ -878,6 +879,8 @@ SENTRY_API_KEY = None
 OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
 RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+# Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
@@ -2104,7 +2107,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
-    'reach-test': 'custom.icds_reports',
+    'reach-test': 'custom.reach',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
