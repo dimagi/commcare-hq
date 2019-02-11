@@ -43,24 +43,35 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}"
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
-            is_launched, aggregation_level
+            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe
         )
         (
             SELECT
-            state_id,
-            district_id,
-            block_id,
-            supervisor_id,
-            doc_id AS awc_id,
+            awc_location.state_id,
+            awc_location.district_id,
+            awc_location.block_id,
+            awc_location.supervisor_id,
+            awc_location.doc_id AS awc_id,
             %(start_date)s,
             1,
             'no',
-            5
-            FROM "{ucr_table}"
+            5,
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END 
+            FROM "{ucr_table}" awc_location
+            LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
+            LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            group by awc_location.state_id,
+            awc_location.district_id,
+            awc_location.block_id,
+            awc_location.supervisor_id,
+            awc_location.doc_id
         )
         """.format(
             tablename=self.tablename,
-            ucr_table=self.ucr_tablename
+            ucr_table=self.ucr_tablename,
+            cbe_table=self._ucr_tablename('static-cbe_form'),
+            vhnd_table=self._ucr_tablename('static-vhnd_form')
         ), {
             'start_date': self.month_start
         }
@@ -487,6 +498,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('num_launched_blocks', lambda col: _launched_col(col)),
             ('num_launched_supervisors', lambda col: _launched_col(col)),
             ('num_launched_awcs', lambda col: _launched_col(col)),
+            ('num_awcs_conducted_vhnd',),
+            ('num_awcs_conducted_cbe',),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),
