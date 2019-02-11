@@ -6,11 +6,12 @@ import zipfile
 import io
 import logging
 import os
-from django.contrib.auth.decorators import login_required
 import json
 import itertools
 from collections import defaultdict
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -319,21 +320,38 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
         })
         return context
 
+    def post(self, request, *args, **kwargs):
+        error = False
 
-@toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator()
-@require_can_edit_apps
-@require_GET
-def check_translations_coverage(request, domain, app_id):
-    app = get_app(domain, app_id)
-    langs = request.POST.getlist('langs')
-    media_types = request.POST.getlist('media_types')
+        langs = request.POST.getlist('langs')
+        if not langs:
+            error = True
+            messages.error(request, "Please select a language.")
 
-    langs = {lang: [] for lang in langs}
+        media_types = request.POST.getlist('media_types')
+        if not media_types:
+            error = True
+            messages.error(request, "Please select a media type.")
 
-    return json_response({
-        'complete': 1,
-        'langs': langs,
-    })
+        if not error:
+            default_paths = self.app.all_media_paths(lang=self.app.default_language)
+            default_paths = {p for p in default_paths
+                             if p in self.app.multimedia_map
+                             and self.app.multimedia_map[p].media_type in media_types}
+            for lang in langs:
+                fallbacks = default_paths.intersection(self.app.all_media_paths(lang=lang))
+                if fallbacks:
+                    messages.warning(request,
+                                     "The following paths do not have references in <strong>{}</strong>:"
+                                     "<ul>{}</ul>".format(lang,
+                                                          "".join(["<li>{}</li>".format(f) for f in fallbacks])),
+                                     extra_tags='html')
+                else:
+                    messages.success(request,
+                                     "All paths checked have a <strong>{}</strong> reference.".format(lang),
+                                     extra_tags='html')
+
+        return self.get(request, *args, **kwargs)
 
 
 class BaseProcessUploadedView(BaseMultimediaView):

@@ -3,12 +3,11 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqmedia/js/translations_coverage.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
 {% endblock js %}
 
 {% block page_content %}
-    {% registerurl 'check_translations_coverage' domain app.get_id %}
-
     <p class="lead">{{ current_page.page_name }}</p>
 
     {% url "hqmedia_references" domain app.get_id as checker_url %}
@@ -26,13 +25,14 @@
         </p>
     {% endblocktrans %}
 
-    <form action="#" class="form-horizontal" method="post">
+    <form class="form-horizontal" method="post">
+        {% csrf_token %}
         <div class="form-group">
             <label for="id_first_name" class="{% css_label_class %} control-label">
                 {% trans "Language(s)" %}
             </label>
             <div class="{% css_field_class %} controls">
-                <select multiple name="langs" class="form-control">
+                <select multiple name="langs" class="form-control ko-select2">
                     {% for lang in app.langs %}
                         {% if lang != app.default_language %}
                             <option>{{ lang }}</option>
@@ -46,7 +46,7 @@
                 {% trans "Media Type(s)" %}
             </label>
             <div class="{% css_field_class %} controls">
-                <select multiple name="media_types" class="form-control">
+                <select multiple name="media_types" class="form-control ko-select2">
                     {% for type, name in media_types.items %}
                         <option value="{{ type }}">{{ name }}</option>
                     {% endfor %}
@@ -55,7 +55,7 @@
         </div>
         <div class="form-group">
             <div class="{% css_action_class %} controls">
-                <button class="btn btn btn-primary" type="submit">
+                <button class="btn btn btn-primary disable-on-submit" type="submit">
                     <i class="fa fa-check"></i>
                     Check
                 </button>
