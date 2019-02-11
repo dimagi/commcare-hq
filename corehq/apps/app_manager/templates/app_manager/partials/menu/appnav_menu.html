@@ -32,12 +32,7 @@
                                 data-indexvar="formid"
                                 {% if form.get_action_type == 'open' %}data-appear="first"{% endif %}
                             >
-                                <!--[F]-->
-                                <div class="appnav-item {% ifequal form selected_form %} active{% if not formdesigner %} settings-view{% endif %}{% endifequal %}">
-                                    {% include 'app_manager/partials/menu/confirm_delete_form.html' %}
-                                    {% include 'app_manager/partials/menu/form_link_primary.html' %}
-                                    {% include 'app_manager/partials/menu/form_link_secondary.html' %}
-                                </div>
+                                {% include 'app_manager/partials/menu/form_link.html' %}
                             </li>
                         {% endfor %}
                     {% endwith %}
