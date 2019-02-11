@@ -21,6 +21,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.util.datadog.utils import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 import uuid
@@ -78,6 +79,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     name_cache = {}
     caseblocks = []
     ids_seen = set()
+    add_load = case_load_counter("case_importer", domain)
 
     def _submit_caseblocks(domain, case_type, caseblocks):
         err = False
@@ -170,6 +172,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         )
 
         if case:
+            add_load()
             if case.type != config.case_type:
                 continue
         elif error == LookupErrors.NotFound:
@@ -213,6 +216,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         if parent_id:
             try:
                 parent_case = CaseAccessors(domain).get_case(parent_id)
+                add_load()
 
                 if parent_case.domain == domain:
                     extras['index'] = {
@@ -229,6 +233,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 parent_type
             )
             if parent_case:
+                add_load()
                 extras['index'] = {
                     parent_ref: (parent_type, parent_case.case_id)
                 }
@@ -261,6 +266,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 )
                 caseblocks.append(RowAndCase(i, caseblock))
                 created_count += 1
+                add_load()
                 if external_id:
                     ids_seen.add(external_id)
             except CaseBlockError:
