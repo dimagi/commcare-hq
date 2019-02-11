@@ -13,13 +13,60 @@ changes made to cases in CommCare. It is also responsible for creating
 OpenMRS "visits", "encounters" and "observations" when a corresponding
 visit form is submitted in CommCare.
 
-It is different from other repeaters in two important details:
+It is different from other repeaters in three important details:
 
 1. It updates the OpenMRS equivalent of cases like a CaseRepeater, but
 it reads forms like a FormRepeater. So it subclasses CaseRepeater, but
 its payload format is form_json.
 
 2. It makes many API calls for each payload.
+
+3. It can have a location.
+
+
+OpenMRS Repeater Location
+-------------------------
+
+Assigning an OpenMRS Repeater to a location allows a project to
+integrate with multiple OpenMRS/Bahmni servers.
+
+(A project's locations or organization structure can be managed by
+opening the "User" menu, and choosing "View All". On the left, under the
+heading "Organization", are links to define organization levels, and to
+build the organization structure. You can also build the organization
+structure in a spreadsheet and upload it.)
+
+Imagine a location hierarchy like the following:
+
+* (country) South Africa
+  * (province) Gauteng
+  * (province) Western Cape
+    * (district) City of Cape Town
+    * (district) Central Karoo
+      * (municipality) Laingsburg
+
+Imagine we had an OpenMRS server to store medical records for the city
+of Cape Town, and a second OpenMRS server to store medical records for
+the central Karoo.
+
+When a mobile worker whose primary location is set to Laingburg submits
+data, MOTECH will search their location and the locations above it until
+it finds an OpenMRS server. That will be the server that their data is
+forwarded to.
+
+When patients are imported from OpenMRS, either using its Atom Feed API
+or its Reporting API, and new cases are created in CommCare, those new
+cases must be assigned an owner.
+
+The owner will be the *first* mobile worker found in the OpenMRS
+server's location. If no mobile workers are found, the case's owner will
+be set to the location itself. A good way to manage new cases is to have
+just one mobile worker, like a supervisor, assigned to the same location
+as the OpenMRS server. In the example above, in terms of organization
+levels, it would make sense to have a supervisor at the district level
+and other mobile workers at the municipality level.
+
+See also: PatientFinders: [Creating Missing Patients](#creating-missing-patients)
 
 
 OpenmrsConfig
