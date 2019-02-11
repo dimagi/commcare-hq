@@ -47,6 +47,7 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."home_visit_date" AS "home_visit_date",
         "ccs_record_monthly"."ifa_consumed_last_seven_days" AS "ifa_consumed_last_seven_days",
         "ccs_record_monthly"."institutional_delivery_in_month" AS "institutional_delivery_in_month",
+        "ccs_record_monthly"."institutional_delivery" AS "institutional_delivery",
         "ccs_record_monthly"."is_ebf" AS "is_ebf",
         "ccs_record_monthly"."last_date_thr" AS "last_date_thr",
         "ccs_record_monthly"."mobile_number" AS "mobile_number",
