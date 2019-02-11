@@ -51,8 +51,8 @@ name: autostaging
 branches:
   - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
   - dmr/fix-es-service-check  # Danny Jan 3
-  - np/edit-feed # Nick P Jan 23
+  - odata-updates # Nick P Feb 8
   - jls/select2-accept-csv  # Jenny Feb 1
-  - jls/widen-app-preview-bar   # Jenny Feb 6
+  - jls/paginate-case-importer-uploads  # Jenny Feb 8
   - es/child-module-metrics  # Ethan Feb 7
 submodules: {}

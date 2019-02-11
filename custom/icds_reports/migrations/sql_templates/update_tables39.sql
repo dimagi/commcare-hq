@@ -1,2 +1,1 @@
-ALTER TABLE agg_awc ADD COLUMN num_awcs_conducted_cbe integer;
-ALTER TABLE agg_awc ADD COLUMN num_awcs_conducted_vhnd integer;
+ALTER TABLE agg_child_health ADD COLUMN pse_attended_21_days integer;
