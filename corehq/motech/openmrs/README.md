@@ -518,7 +518,7 @@ it into a given name ("CommCare") and a family name ("Provider").
 CommCare HQ's first Git commit is dated 2009-03-10, so that seems close
 enough to a date of birth. OpenMRS equates gender with sex, and is quite
 binary about it. You will have to decided whether CommCare is male or
-female. When you are done, click "Create Person". On the next page, 
+female. When you are done, click "Create Person". On the next page,
 "City/Village" is a required field. You can set "State/Province" to
 "Other" and set "City/Village" to "Cambridge". Then click "Save Person".
 
@@ -548,7 +548,7 @@ Atom Feed Integration
 ---------------------
 
 The [OpenMRS Atom Feed Module](https://wiki.openmrs.org/display/docs/Atom+Feed+Module)
-allows MOTECH to poll feeds of updates to patients and encounters. The 
+allows MOTECH to poll feeds of updates to patients and encounters. The
 feed adheres to the
 [Atom syndication format](https://validator.w3.org/feed/docs/rfc4287.html).
 
@@ -649,7 +649,7 @@ start of the feed. A `<link rel="next-archive" ...` tag indicates that
 there is a next page.
 
 MOTECH stores the last page number polled in the
-`OpenmrsRepeater.patients_last_page` and 
+`OpenmrsRepeater.patients_last_page` and
 `OpenmrsRepeater.encounters_last_page`  properties. When it polls again,
 it starts at this page, and iterates "next-archive" links until all have
 been fetched.
