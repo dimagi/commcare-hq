@@ -56,7 +56,7 @@ django-transfer==0.4
 django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
 django-websocket-redis==0.5.2
-django==1.11.18
+django==1.11.20
 djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14
@@ -96,7 +96,7 @@ jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==3.0.37
 laboratory==0.2.0
-lxml==4.3.0
+lxml==4.3.1
 mako==1.0.7
 markdown==2.2.1
 markupsafe==1.1.0
@@ -182,5 +182,5 @@ xlrd==1.0.0
 xlwt==1.3.0
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==19.0.1
-setuptools==40.7.3        # via django-websocket-redis, ipython, python-levenshtein
+pip==19.0.2
+setuptools==40.8.0        # via django-websocket-redis, ipython, python-levenshtein
