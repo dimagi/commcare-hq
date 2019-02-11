@@ -47,7 +47,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(anemia) OVER w as anemia,
         LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities,
         LAST_VALUE(using_ifa) OVER w as using_ifa,
-        LAST_VALUE(ifa_last_seven_days) OVER w as ifa_last_seven_days,
+        MAX(LAST_VALUE(ifa_last_seven_days) OVER w, 0) as ifa_last_seven_days,
         SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
