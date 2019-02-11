@@ -60,7 +60,9 @@ class AllowMigrateTest(SimpleTestCase):
         self.assertIs(True, allow_migrate('synclogs', SYNCLOGS_APP))
 
     @patch('corehq.sql_db.routers.get_icds_ucr_db_alias')
-    def test_icds_db(self, mock):
+    @patch('corehq.sql_db.routers.get_icds_ucr_non_dashboard_db_alias')
+    def test_icds_db(self, mock_non_dashboard, mock):
+        mock_non_dashboard.return_value = None
         mock.return_value = None
         self.assertIs(False, allow_migrate('default', ICDS_REPORTS_APP))
         mock.return_value = 'icds'
