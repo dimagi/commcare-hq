@@ -67,6 +67,8 @@ class UploadedTranslationsValidator(object):
                 self._get_header_index(sheet_name, 'list_or_detail'),
                 self._get_header_index(sheet_name, self.default_language_column)
             )
+        elif for_type == 'module_and_form':
+            return expected_rows
         assert False, "Unexpected type"
 
     def _compare_sheet(self, sheet_name, uploaded_rows, for_type):
