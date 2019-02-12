@@ -28,12 +28,15 @@ class TestGetFormData(TestCase):
 
         # question 0
         form1_builder.new_question('name', 'Name')
-        # question 1
+
+        # question 1 (a group)
         form1_builder.new_group('demographics', 'Demographics')
-        # question 2 (a group)
+        # question 2 (a question in a group)
         form1_builder.new_question('age', 'Age', group='demographics')
-        # question 3 (a question in a group)
+
+        # question 3 (a question that has a load property)
         form1_builder.new_question('polar_bears_seen', 'Number of polar bears seen')
+
         form1.source = form1_builder.tostring(pretty_print=True).decode('utf-8')
         factory.form_requires_case(form1, case_type='household', update={
             'name': '/data/name',
