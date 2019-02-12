@@ -68,7 +68,7 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_permission_to_edit_user,
-    require_can_edit_roles,
+    require_can_view_roles,
 )
 
 from corehq.apps.users.forms import (
@@ -471,7 +471,7 @@ class ListRolesView(BaseRoleAccessView):
     page_title = ugettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
 
-    @method_decorator(require_can_edit_roles)
+    @method_decorator(require_can_view_roles)
     def dispatch(self, request, *args, **kwargs):
         return super(ListRolesView, self).dispatch(request, *args, **kwargs)
 
