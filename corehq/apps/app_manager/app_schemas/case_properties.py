@@ -70,9 +70,9 @@ class _CaseRelationshipManager(object):
     You can then ask "what are the different ways a `patient` can be referred to?":
 
     >>> expansions = case_relationship_manager.expand_case_type('patient')
-    >>> case_type_ref == {
+    >>> expansions == {
     ...     _CaseTypeRef(case_type='patient', relationship_path=()),
-    ...     _CaseTypeRef(case_type='referral', relationship_path=('parent',)
+    ...     _CaseTypeRef(case_type='referral', relationship_path=('parent',))
     ... }
     True
 
