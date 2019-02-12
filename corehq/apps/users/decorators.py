@@ -23,6 +23,7 @@ def require_permission_raw(permission_check,
             if not hasattr(request, "couch_user"):
                 return redirect_for_login_or_domain(request)
             elif request.user.is_superuser or permission_check(request.couch_user, domain):
+                request.is_view_only = False
                 return view_func(request, domain, *args, **kwargs)
             elif (view_only_permission_check is not None
                   and view_only_permission_check(request.couch_user, domain)):
