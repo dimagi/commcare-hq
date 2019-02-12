@@ -5,10 +5,10 @@ describe('widgets', function () {
     var widgets = hqImport('hqwebapp/js/widgets');
     describe('parseEmail', function () {
         it('should parse comma-separated input into individual emails', function () {
-            assert.notStrictEqual(widgets.parseEmails("abcdefghi"), ["abcdefghi"]);
-            assert.notStrictEqual(widgets.parseEmails("a@b.com, x@y.com"), ["a@b.com", "x@y.com"]);
-            assert.notStrictEqual(widgets.parseEmails("a@b.com,x@y.com"), ["a@b.com", "x@y.com"]);
-            assert.notStrictEqual(widgets.parseEmails("a@b.com  x@y.com"), ["a@b.com", "x@y.com"]);
+            assert.deepEqual(widgets.parseEmails("abcdefghi"), ["abcdefghi"]);
+            assert.deepEqual(widgets.parseEmails("a@b.com, x@y.com"), ["a@b.com", "x@y.com"]);
+            assert.deepEqual(widgets.parseEmails("a@b.com,x@y.com"), ["a@b.com", "x@y.com"]);
+            assert.deepEqual(widgets.parseEmails("a@b.com  x@y.com"), ["a@b.com", "x@y.com"]);
         });
     });
 });
