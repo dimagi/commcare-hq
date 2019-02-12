@@ -368,7 +368,8 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
                                                     report_table['rows'], total_row))
         return export_tables
 
-    def _extract_value_from_report_table_row_value(self, report_table):
+    @staticmethod
+    def _extract_value_from_report_table_row_value(report_table):
         extracted_row_values = []
         for row_value in report_table['total_row']:
             if isinstance(row_value, dict):
