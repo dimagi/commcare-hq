@@ -19,6 +19,7 @@ CREATE VIEW child_health_monthly_view AS
       child_health_monthly.caste,
       child_health_monthly.disabled,
       child_health_monthly.minority,
+      child_health_monthly.resident,
       awc_location_months.month,
       child_health_monthly.age_in_months,
       child_health_monthly.open_in_month,

@@ -103,6 +103,7 @@ class CcsRecordMonthly(models.Model):
     lactating = models.IntegerField(blank=True, null=True)
     lactating_all = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    institutional_delivery = models.IntegerField(blank=True, null=True)
     add = models.DateField(blank=True, null=True)
     anc_in_month = models.SmallIntegerField(blank=True, null=True)
     caste = models.TextField(blank=True, null=True)
