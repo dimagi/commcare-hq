@@ -88,12 +88,16 @@
   background-color: white;
   padding-top: 9px;
   padding-left: 20px;
-  padding-right: 20px;
+  padding-right: @preview-toggler-width + 20px;
   padding-bottom: 60px;
   min-height:  100%;
   position: absolute;
   width: 100%;
   top: 0;
+
+  &.offset-for-preview {
+    padding-right: 20px;
+  }
 }
 
 .appmanager-loading-container {

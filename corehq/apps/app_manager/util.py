@@ -216,8 +216,8 @@ def module_case_hierarchy_has_circular_reference(module):
 
 
 def is_usercase_in_use(domain_name):
-    domain = Domain.get_by_name(domain_name) if domain_name else None
-    return domain and domain.usercase_enabled
+    domain_obj = Domain.get_by_name(domain_name) if domain_name else None
+    return domain_obj and domain_obj.usercase_enabled
 
 
 def get_settings_values(app):
@@ -238,7 +238,7 @@ def get_settings_values(app):
     # convert int to string
     hq_settings['mobile_ucr_restore_version'] = str(hq_settings.get('mobile_ucr_restore_version', '1.0'))
 
-    domain = Domain.get_by_name(app.domain)
+    domain_obj = Domain.get_by_name(app.domain)
     return {
         'properties': profile.get('properties', {}),
         'features': profile.get('features', {}),
@@ -247,7 +247,7 @@ def get_settings_values(app):
             'doc_type': app.get_doc_type(),
             '_id': app.get_id,
             'domain': app.domain,
-            'commtrack_enabled': domain.commtrack_enabled,
+            'commtrack_enabled': domain_obj.commtrack_enabled,
         }
     }
 
@@ -348,12 +348,12 @@ def advanced_actions_use_usercase(actions):
 
 def enable_usercase(domain_name):
     with CriticalSection(['enable_usercase_' + domain_name]):
-        domain = Domain.get_by_name(domain_name, strict=True)
-        if not domain:  # copying domains passes in an id before name is saved
-            domain = Domain.get(domain_name)
-        if not domain.usercase_enabled:
-            domain.usercase_enabled = True
-            domain.save()
+        domain_obj = Domain.get_by_name(domain_name, strict=True)
+        if not domain_obj:  # copying domains passes in an id before name is saved
+            domain_obj = Domain.get(domain_name)
+        if not domain_obj.usercase_enabled:
+            domain_obj.usercase_enabled = True
+            domain_obj.save()
             create_user_cases.delay(domain_name)
 
 

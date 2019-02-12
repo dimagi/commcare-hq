@@ -102,8 +102,20 @@ def _get_default(list):
 
 class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
+    view_web_users = BooleanProperty(default=False)
+
+    # only domain admins can edit roles, due to security issues.
+    view_roles = BooleanProperty(default=False)
+
     edit_commcare_users = BooleanProperty(default=False)
+    view_commcare_users = BooleanProperty(default=False)
+
+    edit_groups = BooleanProperty(default=False)
+    view_groups = BooleanProperty(default=False)
+
     edit_locations = BooleanProperty(default=False)
+    view_locations = BooleanProperty(default=False)
+
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
@@ -198,8 +210,14 @@ class Permissions(DocumentSchema):
     def max(cls):
         return Permissions(
             edit_web_users=True,
+            view_web_users=True,
+            view_roles=True,
             edit_commcare_users=True,
+            view_commcare_users=True,
+            edit_groups=True,
+            view_groups=True,
             edit_locations=True,
+            view_locations=True,
             edit_motech=True,
             edit_data=True,
             edit_apps=True,
@@ -234,7 +252,11 @@ class UserRolePresets(object):
             cls.READ_ONLY_NO_REPORTS: lambda: Permissions(),
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
+                                                       view_commcare_users=True,
+                                                       edit_groups=True,
+                                                       view_groups=True,
                                                        edit_locations=True,
+                                                       view_locations=True,
                                                        edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
@@ -391,7 +413,11 @@ PERMISSIONS_PRESETS = {
         'name': 'Field Implementer',
         'permissions': Permissions(
             edit_commcare_users=True,
+            view_commcare_users=True,
+            edit_groups=True,
+            view_groups=True,
             edit_locations=True,
+            view_locations=True,
             edit_shared_exports=True,
             view_reports=True,
         ),
@@ -572,12 +598,12 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, location_id=None, program_id=None):
-        project = Domain.get_by_name(domain)
+        domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
-        if project.commtrack_enabled:
+        if domain_obj.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if project.uses_locations and location_id:
+        if domain_obj.uses_locations and location_id:
             self.set_location(domain, location_id)
         self.save()
 
@@ -2698,8 +2724,26 @@ class AnonymousCouchUser(object):
     def can_edit_commcare_users(self):
         return False
 
+    def can_view_commcare_users(self):
+        return False
+
+    def can_edit_groups(self):
+        return False
+
+    def can_view_groups(self):
+        return False
+
     def can_edit_locations(self):
         return False
 
+    def can_view_locations(self):
+        return False
+
     def can_edit_web_users(self):
+        return False
+
+    def can_view_web_uers(self):
+        return False
+
+    def can_view_roles(self):
         return False

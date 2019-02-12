@@ -370,7 +370,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
     can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
     if can_assign_locations:
         location_cache = SiteCodeToLocationCache(domain)
-    project = Domain.get_by_name(domain)
+    domain_obj = Domain.get_by_name(domain)
     usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
 
     try:
@@ -440,7 +440,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     else:
                         user = CommCareUser.get_by_username(username)
 
-                    if project.strong_mobile_passwords and is_password(password):
+                    if domain_obj.strong_mobile_passwords and is_password(password):
                         if raw_username(username) in usernames_with_dupe_passwords:
                             raise UserUploadError(_("Provide a unique password for each mobile worker"))
 

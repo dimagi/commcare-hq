@@ -470,8 +470,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     @staticmethod
     @quickcache(['name'], timeout=24 * 60 * 60)
     def is_secure_session_required(name):
-        domain = Domain.get_by_name(name)
-        return domain and domain.secure_sessions
+        domain_obj = Domain.get_by_name(name)
+        return domain_obj and domain_obj.secure_sessions
 
     @staticmethod
     @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)

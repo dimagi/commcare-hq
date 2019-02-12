@@ -12,7 +12,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
 
 
-def download_multimedia_paths_rows(app):
+def download_multimedia_paths_rows(app, only_missing=False):
     paths = defaultdict(list)
     for ref in app.all_media():
         paths[ref.path].append(ref)
@@ -25,7 +25,8 @@ def download_multimedia_paths_rows(app):
 
     rows = []
     for path, refs in six.iteritems(paths):
-        rows.append((_("Paths"), [path, ''] + [_readable_ref(r) for r in refs]))
+        if not only_missing or path not in app.multimedia_map:
+            rows.append((_("Paths"), [path, ''] + [_readable_ref(r) for r in refs]))
 
     return rows
 
