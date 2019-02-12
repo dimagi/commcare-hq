@@ -277,12 +277,12 @@ hqDefine('app_manager/js/app_manager', function () {
 
                     var to = -1,
                         from = -1,
-                        toModuleId = parseInt($sortable.parents('.edit-module-li').data('index'), 10),
+                        toModuleUid = $sortable.parents('.edit-module-li').data('uid'),
                         movingToNewModule = false,
                         $form;
 
                     // if you're moving modules or moving forms within the same module, use this logic to find to and from
-                    if (!sortingForms || toModuleId === parseInt(ui.item.data('moduleid'), 10)) {
+                    if (!sortingForms || toModuleUid === ui.item.data('moduleuid')) {
                         $(this).children().not('.sort-disabled').each(function (i) {
                             var index = parseInt($(this).data('index'), 10);
                             if (from !== -1) {
@@ -303,7 +303,7 @@ hqDefine('app_manager/js/app_manager', function () {
                         });
                     } else { //moving forms to a new submodule
                         $(this).children().not('.sort-disabled').each(function (i) {
-                            if (parseInt($(this).data('moduleid'), 10) !== toModuleId) {
+                            if ($(this).data('moduleuid') !== toModuleUid) {
                                 movingToNewModule = true;
                                 to = i;
                                 from = parseInt(ui.item.data('index'), 10);
@@ -313,20 +313,20 @@ hqDefine('app_manager/js/app_manager', function () {
                     }
 
                     if (movingToNewModule || to !== from) {
-                        var fromModuleId = parseInt(ui.item.data('moduleid'), 10);
+                        var fromModuleUid = ui.item.data('moduleuid');
                         $form = $(this).find('> .sort-action form');
                         $form.find('[name="from"], [name="to"]').remove();
                         $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
                         $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
                         if (sortingForms) {
-                            $form.append('<input type="hidden" name="from_module_id" value="' + fromModuleId.toString() + '" />');
-                            $form.append('<input type="hidden" name="to_module_id"   value="' + toModuleId.toString() + '" />');
+                            $form.append('<input type="hidden" name="from_module_uid" value="' + fromModuleUid + '" />');
+                            $form.append('<input type="hidden" name="to_module_uid"   value="' + toModuleUid + '" />');
                         }
 
                         resetIndexes($sortable);
-                        if (fromModuleId !== toModuleId) {
+                        if (fromModuleUid !== toModuleUid) {
                             var $parentSortable = $sortable.parents(".sortable"),
-                                $fromSortable = $parentSortable.find("[data-index=" + fromModuleId + "] .sortable");
+                                $fromSortable = $parentSortable.find("[data-uid=" + fromModuleUid + "] .sortable");
                             resetIndexes($fromSortable);
                         }
                         $.ajax($form.attr('action'), {

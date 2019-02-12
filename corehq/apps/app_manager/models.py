@@ -5410,14 +5410,14 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+    def rearrange_forms(self, to_module_uid, from_module_uid, i, j):
         """
         The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
-        to_module = self.get_module(to_module_id)
-        from_module = self.get_module(from_module_id)
+        to_module = self.get_module_by_unique_id(to_module_uid)
+        from_module = self.get_module_by_unique_id(from_module_uid)
         try:
             from_module.forms[j].pre_move_hook(from_module, to_module)
         except NotImplementedError:

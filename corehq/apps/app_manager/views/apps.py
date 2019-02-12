@@ -874,9 +874,9 @@ def rearrange(request, domain, app_id, key):
 
     try:
         if "forms" == key:
-            to_module_id = int(request.POST['to_module_id'])
-            from_module_id = int(request.POST['from_module_id'])
-            app.rearrange_forms(to_module_id, from_module_id, i, j)
+            to_module_uid = request.POST['to_module_uid']
+            from_module_uid = request.POST['from_module_uid']
+            app.rearrange_forms(to_module_uid, from_module_uid, i, j)
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException as e:
