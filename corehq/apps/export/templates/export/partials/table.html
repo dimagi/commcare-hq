@@ -196,6 +196,10 @@
 
                         <div data-bind="if: isLocationSafeForUser">
                             <p data-bind="if: !emailedExport.hasFile() && emailedExport.taskStatus && !emailedExport.taskStatus.justFinished()">
+                                <div class="alert alert-warning" data-bind="visible: prepareExportError()">
+                                    <i class="fa fa-exclamation-triangle"></i>
+                                    <span data-bind="text: prepareExportError"></span>
+                                </div>
                                 {% blocktrans %}
                                     <strong>No data is available yet.</strong><br />
                                     Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.

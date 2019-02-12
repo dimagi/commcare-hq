@@ -45,6 +45,7 @@ hqDefine("export/js/export_list", [
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
         var self = ko.mapping.fromJS(options);
+        self.prepareExportError = ko.observable('');
         self.hasEmailedExport = !!options.emailedExport;
 
         // Unwrap the values in the EMWF filters, turning them into plain {id: ..., text: ...} objects for use with select2
@@ -140,9 +141,15 @@ hqDefine("export/js/export_list", [
                         var exportType = utils.capitalize(model.exportType());
                         googleAnalytics.track.event(exportType + " Exports", "Update Saved Export", "Saved");
                         model.pollProgressBar();
+                    } else {
+                        self.handleExportError(data);
                     }
                 },
             });
+        };
+
+        self.handleExportError = function (data) {
+            self.prepareExportError(gettext(data.error));
         };
 
         self.updateDisabledState = function (model, e) {
