@@ -12,7 +12,7 @@
     </li>
     {% with module as selected_module %}
         {% for module in app.get_modules %}
-            <li class="edit-module-li js-sorted-li" data-index="{{ module.id }}" data-uid="{{ module.unique_id }}" data-indexvar="moduleid">
+            <li class="edit-module-li js-sorted-li {% if module.root_module_id %}child-module{% endif %}" data-index="{{ module.id }}" data-uid="{{ module.unique_id }}" data-indexvar="moduleid">
 
                 {% include 'app_manager/partials/menu/module_link.html' %}
 
