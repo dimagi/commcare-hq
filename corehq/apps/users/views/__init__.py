@@ -144,14 +144,44 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
         redirect = None
         user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
         if user:
-            if user.has_permission(self.domain, 'edit_commcare_users'):
+            if (user.has_permission(self.domain, 'edit_commcare_users')
+                    or user.has_permission(self.domain, 'view_commcare_users')):
                 from corehq.apps.users.views.mobile import MobileWorkerListView
-                redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
-            elif user.has_permission(self.domain, 'edit_web_users'):
+                redirect = reverse(
+                    MobileWorkerListView.urlname,
+                    args=[self.domain]
+                )
+
+            elif (user.has_permission(self.domain, 'edit_groups')
+                    or user.has_permission(self.domain, 'view_groups')):
+                from corehq.apps.users.views.mobile import GroupsListView
+                redirect = reverse(
+                    GroupsListView.urlname,
+                    args=[self.domain]
+                )
+
+            elif (user.has_permission(self.domain, 'edit_web_users')
+                    or user.has_permission(self.domain, 'view_web_users')):
                 redirect = reverse(
                     ListWebUsersView.urlname,
                     args=[self.domain]
                 )
+
+            elif user.has_permission(self.domain, 'view_roles'):
+                from corehq.apps.users.views import ListRolesView
+                redirect = reverse(
+                    ListRolesView.urlname,
+                    args=[self.domain]
+                )
+
+            elif (user.has_permission(self.domain, 'edit_locations')
+                    or user.has_permission(self.domain, 'view_locations')):
+                from corehq.apps.locations.views import LocationsListView
+                redirect = reverse(
+                    LocationsListView.urlname,
+                    args=[self.domain]
+                )
+
         return redirect
 
     def get(self, request, *args, **kwargs):
