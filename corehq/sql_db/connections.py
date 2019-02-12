@@ -31,13 +31,6 @@ def get_icds_ucr_db_alias():
         return None
 
 
-def get_icds_ucr_non_dashboard_db_alias():
-    try:
-        return connection_manager.get_django_db_alias(ICDS_UCR_NON_DASHBOARD_ENGINE_ID)
-    except KeyError:
-        return None
-
-
 def create_engine(connection_string):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
