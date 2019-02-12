@@ -19,7 +19,6 @@ from custom.icds_reports.messages import wasting_help_text, stunting_help_text, 
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.models.views import CcsRecordMonthlyView
-from custom.icds_reports.reports.utils import get_color_with_green_positive, get_color_with_red_positive
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
@@ -445,22 +444,6 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
         default_interval=default_age_interval(icds_feature_flag)
     )
 
-    percent_underweight = percent_diff('underweight', this_month_data, prev_month_data, 'valid_weighed')
-    percent_wasting = percent_diff('wasting', this_month_data, prev_month_data, 'weighed_and_height_measured_in_month')
-    percent_stunting = percent_diff('stunting', this_month_data, prev_month_data, 'height_measured_in_month')
-    percent_wer_weight = percent_diff('wer_weight', this_month_data_we, prev_month_data_we, 'wer_eli')
-    percent_low_birth = percent_diff('low_birth', this_month_data, prev_month_data, 'weighed_and_born_in_month')
-    percent_birth = percent_diff('birth', this_month_data, prev_month_data, 'born')
-    percent_month_ebf = percent_diff('month_ebf', this_month_data, prev_month_data, 'ebf')
-    percent_month_cf = percent_diff('month_cf', this_month_data, prev_month_data, 'cf')
-    percent_immunized = percent_diff('immunized', this_month_data, prev_month_data, 'eligible')
-    percent_institutional_delivery = percent_diff(
-        'institutional_delivery_in_month_sum',
-        this_month_institutional_delivery_data,
-        prev_month_institutional_delivery_data,
-        'delivered_in_month_sum'
-    )
-
     return {
         'kpi': [
             [
@@ -471,8 +454,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         "moderately/severely underweight in the current month. Children who are moderately or "
                         "severely underweight have a higher risk of mortality. "
                     )),
-                    'percent': percent_underweight,
-                    'color': get_color_with_red_positive(percent_underweight),
+                    'percent': percent_diff(
+                        'underweight',
+                        this_month_data,
+                        prev_month_data,
+                        'valid_weighed'
+                    ),
+                    'color': 'red' if percent_diff(
+                        'underweight',
+                        this_month_data,
+                        prev_month_data,
+                        'valid_weighed'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid_weighed'),
                     'format': 'percent_and_div',
@@ -481,8 +474,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Wasting (Weight-for-Height)'),
                     'help_text': wasting_help_text(age_label),
-                    'percent': percent_wasting,
-                    'color': get_color_with_red_positive(percent_wasting),
+                    'percent': percent_diff(
+                        'wasting',
+                        this_month_data,
+                        prev_month_data,
+                        'weighed_and_height_measured_in_month'
+                    ),
+                    'color': 'red' if percent_diff(
+                        'wasting',
+                        this_month_data,
+                        prev_month_data,
+                        'weighed_and_height_measured_in_month'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
                     'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
@@ -493,8 +496,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Stunting (Height-for-Age)'),
                     'help_text': stunting_help_text(age_label),
-                    'percent': percent_stunting,
-                    'color': get_color_with_red_positive(percent_stunting),
+                    'percent': percent_diff(
+                        'stunting',
+                        this_month_data,
+                        prev_month_data,
+                        'height_measured_in_month'
+                    ),
+                    'color': 'red' if percent_diff(
+                        'stunting',
+                        this_month_data,
+                        prev_month_data,
+                        'height_measured_in_month'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
@@ -506,8 +519,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         "Of the children between the ages of 0-5 years who are enrolled for Anganwadi Services, "
                         "the percentage who were weighed in the given month. "
                     ),
-                    'percent': percent_wer_weight,
-                    'color': get_color_with_green_positive(percent_wer_weight),
+                    'percent': percent_diff(
+                        'wer_weight',
+                        this_month_data_we,
+                        prev_month_data_we,
+                        'wer_eli'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'wer_weight',
+                        this_month_data_we,
+                        prev_month_data_we,
+                        'wer_eli'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data_we, 'wer_weight'),
                     'all': get_value(this_month_data_we, 'wer_eli'),
                     'format': 'percent_and_div',
@@ -521,8 +544,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'help_text': _(
                         new_born_with_low_weight_help_text(html=False)
                     ),
-                    'percent': percent_low_birth,
-                    'color': get_color_with_red_positive(percent_low_birth),
+                    'percent': percent_diff(
+                        'low_birth',
+                        this_month_data,
+                        prev_month_data,
+                        'weighed_and_born_in_month'
+                    ),
+                    'color': 'red' if percent_diff(
+                        'low_birth',
+                        this_month_data,
+                        prev_month_data,
+                        'weighed_and_born_in_month'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth'),
                     'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
@@ -531,8 +564,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Early Initiation of Breastfeeding'),
                     'help_text': early_initiation_breastfeeding_help_text(),
-                    'percent': percent_birth,
-                    'color': get_color_with_green_positive(percent_birth),
+                    'percent': percent_diff(
+                        'birth',
+                        this_month_data,
+                        prev_month_data,
+                        'born'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'birth',
+                        this_month_data,
+                        prev_month_data,
+                        'born'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'birth'),
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
@@ -543,8 +586,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Exclusive breastfeeding'),
                     'help_text': exclusive_breastfeeding_help_text(),
-                    'percent': percent_month_ebf,
-                    'color': get_color_with_green_positive(percent_month_ebf),
+                    'percent': percent_diff(
+                        'month_ebf',
+                        this_month_data,
+                        prev_month_data,
+                        'ebf'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'month_ebf',
+                        this_month_data,
+                        prev_month_data,
+                        'ebf'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'month_ebf'),
                     'all': get_value(this_month_data, 'ebf'),
                     'format': 'percent_and_div',
@@ -553,8 +606,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': children_initiated_appropriate_complementary_feeding_help_text(),
-                    'percent': percent_month_cf,
-                    'color': get_color_with_red_positive(percent_month_cf),
+                    'percent': percent_diff(
+                        'month_cf',
+                        this_month_data,
+                        prev_month_data,
+                        'cf'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'month_cf',
+                        this_month_data,
+                        prev_month_data,
+                        'cf'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'month_cf'),
                     'all': get_value(this_month_data, 'cf'),
                     'format': 'percent_and_div',
@@ -573,8 +636,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
                         "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
                     )),
-                    'percent': percent_immunized,
-                    'color': get_color_with_green_positive(percent_immunized),
+                    'percent': percent_diff(
+                        'immunized',
+                        this_month_data,
+                        prev_month_data,
+                        'eligible'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'immunized',
+                        this_month_data,
+                        prev_month_data,
+                        'eligible'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'immunized'),
                     'all': get_value(this_month_data, 'eligible'),
                     'format': 'percent_and_div',
@@ -583,8 +656,18 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Institutional Deliveries'),
                     'help_text': institutional_deliveries_help_text(),
-                    'percent': percent_institutional_delivery,
-                    'color': get_color_with_green_positive(percent_institutional_delivery),
+                    'percent': percent_diff(
+                        'institutional_delivery_in_month_sum',
+                        this_month_institutional_delivery_data,
+                        prev_month_institutional_delivery_data,
+                        'delivered_in_month_sum'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'institutional_delivery_in_month_sum',
+                        this_month_institutional_delivery_data,
+                        prev_month_institutional_delivery_data,
+                        'delivered_in_month_sum'
+                    ) > 0 else 'red',
                     'value': get_value(
                         this_month_institutional_delivery_data,
                         'institutional_delivery_in_month_sum'
@@ -669,13 +752,6 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
         prev_data = get_data_for(AggAwcMonthly, config)
         frequency = 'month'
 
-    percent_increase_household = percent_increase('household', data, prev_data)
-    percent_diff_person_aadhaar = percent_diff('person_aadhaar', data, prev_data, 'all_persons')
-    percent_diff_child_health = percent_diff('child_health', data, prev_data, 'child_health_all')
-    percent_diff_ccs_pregnant = percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all')
-    percent_diff_ccs_lactating = percent_diff('css_lactating', data, prev_data, 'css_lactating_all')
-    percent_diff_person_adolescent = percent_diff('person_adolescent', data, prev_data, 'person_adolescent_all')
-
     return {
         'chart': [
             {
@@ -689,8 +765,15 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 {
                     'label': _('Registered Households'),
                     'help_text': _("Total number of households registered"),
-                    'percent': percent_increase_household,
-                    'color': get_color_with_green_positive(percent_increase_household),
+                    'percent': percent_increase(
+                        'household',
+                        data,
+                        prev_data,
+                    ),
+                    'color': 'green' if percent_increase(
+                        'household',
+                        data,
+                        prev_data) > 0 else 'red',
                     'value': get_value(data, 'household'),
                     'all': '',
                     'format': 'number',
@@ -702,8 +785,18 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                         'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification '
                         'has been captured. '
                     ),
-                    'percent': percent_diff_person_aadhaar,
-                    'color': get_color_with_green_positive(percent_diff_person_aadhaar),
+                    'percent': percent_diff(
+                        'person_aadhaar',
+                        data,
+                        prev_data,
+                        'all_persons'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'person_aadhaar',
+                        data,
+                        prev_data,
+                        'all_persons'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
@@ -714,8 +807,11 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 {
                     'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
                     'help_text': percent_children_enrolled_help_text(),
-                    'percent': percent_diff_child_health,
-                    'color': get_color_with_green_positive(percent_diff_child_health),
+                    'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
+                    'color': 'green' if percent_diff(
+                        'child_health_all',
+                        data,
+                        prev_data, 'child_health_all') > 0 else 'red',
                     'value': get_value(data, 'child_health'),
                     'all': get_value(data, 'child_health_all'),
                     'format': 'percent_and_div',
@@ -725,8 +821,13 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'label': _('Percent pregnant women enrolled for Anganwadi Services'),
                     'help_text': _('Of the total number of pregnant women, the percentage of pregnant '
                                    'women enrolled for Anganwadi Services'),
-                    'percent': percent_diff_ccs_pregnant,
-                    'color': get_color_with_green_positive(percent_diff_ccs_pregnant),
+                    'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
+                    'color': 'green' if percent_diff(
+                        'ccs_pregnant',
+                        data,
+                        prev_data,
+                        'ccs_pregnant_all'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': get_value(data, 'ccs_pregnant_all'),
                     'format': 'percent_and_div',
@@ -739,8 +840,13 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'label': _('Percent lactating women enrolled for Anganwadi Services'),
                     'help_text': _('Of the total number of lactating women, the percentage of '
                                    'lactating women enrolled for Anganwadi Services'),
-                    'percent': percent_diff_ccs_lactating,
-                    'color': get_color_with_green_positive(percent_diff_ccs_lactating),
+                    'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
+                    'color': 'green' if percent_diff(
+                        'css_lactating',
+                        data,
+                        prev_data,
+                        'css_lactating_all'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'css_lactating'),
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
@@ -752,8 +858,18 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                         "Of the total number of adolescent girls (aged 11-14 years), the percentage "
                         "of girls enrolled for Anganwadi Services"
                     )),
-                    'percent': percent_diff_person_adolescent,
-                    'color': get_color_with_green_positive(percent_diff_person_adolescent),
+                    'percent': percent_diff(
+                        'person_adolescent',
+                        data,
+                        prev_data,
+                        'person_adolescent_all'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'person_adolescent',
+                        data,
+                        prev_data,
+                        'person_adolescent_all'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'person_adolescent'),
                     'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
