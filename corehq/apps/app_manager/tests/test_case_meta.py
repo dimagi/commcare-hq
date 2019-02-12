@@ -7,6 +7,7 @@ from django.test.testcases import SimpleTestCase
 from mock import MagicMock, patch
 from nose.tools import nottest
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
@@ -284,7 +285,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
             )
 
     def test_non_case_props(self):
-        """We have special syntax in case lists and case details which shouldn't show up in the view for case types
+        """We have special syntax in case lists and case details which should be hidden or shown for the usercase
         """
         app, _ = self.get_test_app()
         app.modules[0].case_details.short.columns = [
@@ -308,6 +309,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         self.assertFalse(prop.short_details)
         self.assertFalse(prop.long_details)
 
-        prop = metadata.get_type('parent').get_property('user/username', allow_parent=True)
-        self.assertFalse(prop.short_details)
+        # user properties should be shown under the usercase type
+        prop = metadata.get_type(USERCASE_TYPE).get_property('username')
+        self.assertTrue(prop.short_details)
         self.assertFalse(prop.long_details)

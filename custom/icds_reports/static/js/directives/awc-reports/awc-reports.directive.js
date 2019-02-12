@@ -1760,7 +1760,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
             DTColumnBuilder.newColumn('add').withTitle('Date of Delivery').renderWith(renderAdd).withClass('medium-col'),
             DTColumnBuilder.newColumn('delivery_nature').withTitle('Type of Delivery').renderWith(renderDeliveryNature).withClass('medium-col'),
-            DTColumnBuilder.newColumn('institutional_delivery_in_month').withTitle('Institutional Delivery (Y/N)').renderWith(renderInstitutionalDeliveryInMonth).withClass('medium-col'),
+            DTColumnBuilder.newColumn('institutional_delivery').withTitle('Institutional Delivery (Y/N)').renderWith(renderInstitutionalDeliveryInMonth).withClass('medium-col'),
             DTColumnBuilder.newColumn('num_pnc_visits').withTitle('Number of PNC visits').renderWith(renderNumPncVisits).withClass('medium-col'),
             DTColumnBuilder.newColumn('breastfed_at_birth').withTitle('Breastfed within hour of birth').renderWith(renderBreastfedAtBirth).withClass('medium-col'),
             DTColumnBuilder.newColumn('is_ebf').withTitle('Exclusively breastfeeding at last home visit').renderWith(renderIsEbf).withClass('medium-col'),
@@ -1843,7 +1843,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderInstitutionalDeliveryInMonth(data, type, full) {
-        return full.institutional_delivery_in_month || vm.dataNotEntered;
+        return full.institutional_delivery || vm.dataNotEntered;
     }
 
     function renderDeliveryNature(data, type, full) {

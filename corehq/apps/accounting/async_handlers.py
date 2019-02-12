@@ -122,12 +122,12 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     """
     slug = 'select2_rate'
     allowed_actions = [
-        'feature_id',
+        'select2_feature_id',
         'product_rate_id',
     ]
 
     @property
-    def feature_id_response(self):
+    def select2_feature_id_response(self):
         features = Feature.objects
         if self.existing:
             features = features.exclude(name__in=self.existing)

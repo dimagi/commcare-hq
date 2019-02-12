@@ -18,14 +18,18 @@ hqDefine("cloudcare/js/formplayer/main", function () {
         FormplayerFrontend.start(options);
 
         var $menuToggle = $('#commcare-menu-toggle'),
-            $navbar = $('#hq-navigation');
+            $navbar = $('#hq-navigation'),
+            $trialBanner = $('#cta-get-demo-banner');
         var hideMenu = function () {
             $menuToggle.data('minimized', 'yes');
-            $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+            $navbar.hide();
+            $trialBanner.hide();
             $menuToggle.text(gettext('Show Full Menu'));
         };
         var showMenu = function () {
             $menuToggle.data('minimized', 'no');
+            $navbar.show();
+            $trialBanner.show();
             $navbar.css('margin-top', '');
             $menuToggle.text(gettext('Hide Full Menu'));
         };

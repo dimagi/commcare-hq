@@ -41,7 +41,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     @property
     def person_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
@@ -102,6 +102,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('lactating', 'ucr.lactating'),
             ('lactating_all', 'ucr.lactating_all'),
             ('institutional_delivery_in_month', 'ucr.institutional_delivery_in_month'),
+            ('institutional_delivery', 'case_list.institutional_delivery'),
             ('add', 'ucr.add'),
             ('caste', 'ucr.caste'),
             ('disabled', 'ucr.disabled'),

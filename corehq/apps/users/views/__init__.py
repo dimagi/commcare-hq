@@ -616,6 +616,18 @@ def post_user_role(request, domain):
         old_role = UserRole.get(role.get_id)
         assert(old_role.doc_type == UserRole.__name__)
         assert(old_role.domain == domain)
+
+    # temporarily assign new permissions until migration has finished, then we
+    # can update the UI accordingly.
+    role.permissions.view_web_users = role.permissions.edit_web_users
+    role.permissions.view_roles = role.permissions.edit_web_users
+
+    role.permissions.view_commcare_users = role.permissions.edit_commcare_users
+    role.permissions.edit_groups = role.permissions.edit_commcare_users
+    role.permissions.view_groups = role.permissions.edit_commcare_users
+
+    role.permissions.view_locations = role.permissions.edit_locations
+
     role.save()
     role.__setattr__('hasUsersAssigned',
                      True if len(role.ids_of_assigned_users) > 0 else False)
@@ -940,9 +952,9 @@ class DomainRequestView(BasePageView):
 
     @property
     def page_context(self):
-        domain = Domain.get_by_name(self.request.domain)
+        domain_obj = Domain.get_by_name(self.request.domain)
         if self.request_form is None:
-            initial = {'domain': domain.name}
+            initial = {'domain': domain_obj.name}
             if self.request.user.is_authenticated:
                 initial.update({
                     'email': self.request.user.get_username(),
@@ -950,8 +962,8 @@ class DomainRequestView(BasePageView):
                 })
             self.request_form = DomainRequestForm(initial=initial)
         return {
-            'domain': domain.name,
-            'domain_name': domain.display_name(),
+            'domain': domain_obj.name,
+            'hr_name': domain_obj.display_name(),
             'request_form': self.request_form,
         }
 
@@ -967,9 +979,9 @@ class DomainRequestView(BasePageView):
                     domain_request = DomainRequest(**data)
                     domain_request.send_request_email()
                     domain_request.save()
-                    domain = Domain.get_by_name(domain_request.domain)
+                    domain_obj = Domain.get_by_name(domain_request.domain)
                     return render(request, "users/confirmation_sent.html", {
-                        'hr_name': domain.display_name() if domain else domain_request.domain,
+                        'hr_name': domain_obj.display_name() if domain_obj else domain_request.domain,
                         'url': reverse("appstore"),
                     })
         return self.get(request, *args, **kwargs)

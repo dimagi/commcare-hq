@@ -750,12 +750,12 @@ class SubscriptionForm(forms.Form):
         return transfer_account
 
     def clean_domain(self):
-        domain_name = self.cleaned_data['domain']
+        domain = self.cleaned_data['domain']
         if self.fields['domain'].required:
-            domain = Domain.get_by_name(domain_name)
-            if domain is None:
+            domain_obj = Domain.get_by_name(domain)
+            if domain_obj is None:
                 raise forms.ValidationError(_("A valid project space is required."))
-        return domain_name
+        return domain
 
     def clean(self):
         if not self.cleaned_data.get('active_accounts') and not self.cleaned_data.get('account'):
@@ -1147,7 +1147,7 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    feature_id = forms.CharField(
+    select2_feature_id = forms.CharField(
         required=False,
         label="Search for or Create Feature",
         widget=forms.Select(choices=[]),
@@ -1290,7 +1290,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
                 hqcrispy.B3MultiField(
                     "Add Feature",
-                    InlineField('feature_id', css_class="input-xxlarge",
+                    InlineField('select2_feature_id', css_class="input-xxlarge",
                                 data_bind="value: featureRates.select2.value"),
                     StrictButton(
                         "Select Feature",
@@ -1403,7 +1403,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'currentValue': self['feature_rates'].value(),
             'handlerSlug': FeatureRateAsyncHandler.slug,
             'select2Options': {
-                'fieldName': 'feature_id',
+                'fieldName': 'select2_feature_id',
             }
         }
 
@@ -1891,10 +1891,10 @@ class TriggerInvoiceForm(forms.Form):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
         invoice_start, invoice_end = get_first_last_days(year, month)
-        domain = Domain.get_by_name(self.cleaned_data['domain'])
-        self.clean_previous_invoices(invoice_start, invoice_end, domain.name)
+        domain_obj = Domain.get_by_name(self.cleaned_data['domain'])
+        self.clean_previous_invoices(invoice_start, invoice_end, domain_obj.name)
         invoice_factory = DomainInvoiceFactory(
-            invoice_start, invoice_end, domain, recipients=[settings.ACCOUNTS_EMAIL]
+            invoice_start, invoice_end, domain_obj, recipients=[settings.ACCOUNTS_EMAIL]
         )
         invoice_factory.create_invoices()
 
