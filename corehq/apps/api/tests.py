@@ -1964,7 +1964,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.assertIn("expand_column_value", c)
         self.assertSetEqual(set(self.case_property_values), {c['expand_column_value'] for c in columns})
 
-
     def test_page_size(self):
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id, {"limit": 1}))
@@ -2032,9 +2031,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
             "{}:{}".format(
                 user_in_wrong_domain_name, user_in_wrong_domain_password
             ).encode('utf-8')
-        )
+        ).decode('utf-8')
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
-            HTTP_AUTHORIZATION=b'Basic ' + credentials
+            HTTP_AUTHORIZATION='Basic ' + credentials
         )
         self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
