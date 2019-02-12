@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import jsonfield
 from django.db import models
 from django.utils.functional import cached_property
-from django.contrib import admin
 from corehq.motech.utils import b64_aes_decrypt
 
 
@@ -13,9 +12,9 @@ class CCZHosting(models.Model):
     username = models.CharField(null=False, max_length=255)
     password = models.CharField(null=False, max_length=255)
 
+    def __str__(self):
+        return self.identifier
+
     @cached_property
     def get_password(self):
         return b64_aes_decrypt(self.password)
-
-
-admin.site.register(CCZHosting)
