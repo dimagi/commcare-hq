@@ -9,10 +9,8 @@ from django.db import migrations
 from corehq.sql_db.operations import HqRunPython
 
 
-def migrate_roles_permissions_feb2019(*args, **kwargs):
-    def _migrate_roles_permissions_feb2019():
-        return call_command('migrate_roles_permissions_feb2019', noinput=True)
-    return _migrate_roles_permissions_feb2019
+def _migrate_roles_permissions(apps, schema_editor):
+    call_command('migrate_roles_permissions_feb2019', noinput=True)
 
 
 class Migration(migrations.Migration):
@@ -22,5 +20,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(migrate_roles_permissions_feb2019)
+        HqRunPython(_migrate_roles_permissions)
     ]
