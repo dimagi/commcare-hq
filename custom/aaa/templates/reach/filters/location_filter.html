@@ -1,35 +1,29 @@
 <script type="text/html" id="location-template">
-    <div class="location-filter">
-        <i class="fa fa-2x fa-map-marker light-grey icon-bar pointer" data-bind="click: function() {showFilter(true)}"></i>
+    <h3 class="filter-title"><strong><i class="fa fa-map-marker icon-bar"></i> Location</strong></h3>
+    <div class="row" data-bind="css: {hide: !showMinistryFilter()}">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label>Ministry</label>
+                <select class="form-control" data-bind="
+                    options: ministryList,
+                    value: selectedMinistry,
+                    select2: {}">
+                </select>
+            </div>
+        </div>
     </div>
-    <div class="modal fade" role="dialog" data-bind="modal: showFilter">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-bind="click : function() {showFilter(false)}">&times;</button>
-                    <span class="modal-title"><strong><i class="fa fa-map-marker icon-bar"></i> Location</strong></span>
-                </div>
-                <div class="modal-body">
-                    <div class="row" data-bind="foreach: { data: hierarchyConfig, as: 'location' }">
-                        <div class="col-md-6">
-                             <div class="form-group">
-                                <label data-bind="text: location.name"></label>
-                                <select class="form-control" data-bind="
-                                    options: location.locations,
-                                    optionsText: 'name',
-                                    optionsValue: 'id',
-                                    value: location.selectedLocation,
-                                    disable: location.isDisabled(),
-                                    select2: {}">
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-bind="click : function() {resetFilter()}">Reset</button>
-                    <button type="button" class="btn btn-primary" data-bind="click : function() {applyFilters()}">Apply</button>
-                </div>
+    <div class="row" data-bind="foreach: { data: hierarchyConfig, as: 'location' }">
+        <div class="col-md-6">
+             <div class="form-group">
+                <label data-bind="text: location.name"></label>
+                <select class="form-control" data-bind="
+                    options: location.locations,
+                    optionsText: 'name',
+                    optionsValue: 'id',
+                    value: location.selectedLocation,
+                    disable: location.isDisabled(),
+                    select2: {}">
+                </select>
             </div>
         </div>
     </div>

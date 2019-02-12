@@ -3,13 +3,14 @@
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Reach Location Filter', function () {
-    var locationFilter, locationModel, reachUtils;
+    var locationFilter, locationModel, reachUtils, localStorage;
 
     beforeEach(function () {
         locationFilter = hqImport('reach/js/filters/location_filter');
         locationModel = hqImport('reach/js/filters/location_model');
         reachUtils = hqImport('reach/js/utils/reach_utils');
         pageData.registerUrl('location_api', 'location_api');
+        localStorage = reachUtils.localStorage();
     });
 
     it('test template', function () {
@@ -30,7 +31,10 @@ describe('Reach Location Filter', function () {
         });
 
         it('test filter initialization', function () {
-            var model = locationFilter.viewModel({});
+            var model = locationFilter.viewModel({
+                filters: {'location-filter': {}},
+                localStorage: localStorage,
+            });
             assert.equal(model.userRoleType, reachUtils.USERROLETYPES.MWCD);
             assert.deepEqual(model.userLocationIds, []);
             var state = locationModel.locationModel({slug: 'state', name: 'State', parent: '', userLocationId: void(0), postData: {}});
@@ -79,7 +83,10 @@ describe('Reach Location Filter', function () {
         });
 
         it('test filter initialization', function () {
-            var model = locationFilter.viewModel({});
+            var model = locationFilter.viewModel({
+                filters: {'location-filter': {}},
+                localStorage: localStorage,
+            });
             assert.equal(model.userRoleType, reachUtils.USERROLETYPES.MOHFW);
             assert.deepEqual(model.userLocationIds, ['s1', 'd1', 't1']);
             var state = locationModel.locationModel({slug: 'state', name: 'State', parent: '', userLocationId: 's1', postData: {}});

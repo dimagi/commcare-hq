@@ -33,15 +33,26 @@ hqDefine("reach/js/utils/reach_utils", [
                 return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
             }
         };
+
+        self.monthName = function (month) {
+            return moment.months()[month - 1]
+        };
+
         return self;
     };
 
     var postData = function (options) {
         var self  = {};
         var userLocationId = initialPageData.get('user_location_id');
-        self.selectedYear = options.selectedYear || moment().year();
-        self.selectedMonth = options.selectedMonth || moment().month() + 1;
+        self.selectedYear = ko.observable(options.selectedYear || moment().year());
+        self.selectedMonth = ko.observable(options.selectedMonth || moment().month() + 1);
         self.selectedLocation = options.selectedLocation || userLocationId;
+        return self;
+    };
+
+    var localStorage = function () {
+        var self = {};
+        self.locationHierarchy = ko.observableArray([]);
         return self;
     };
 
@@ -58,6 +69,7 @@ hqDefine("reach/js/utils/reach_utils", [
     return {
         reachUtils: reachUtils,
         postData: postData,
+        localStorage: localStorage,
         USERROLETYPES: USERROLETYPES,
         DEFAULTLOCATION: DEFAULTLOCATION,
     };

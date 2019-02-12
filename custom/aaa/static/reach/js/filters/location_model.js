@@ -77,6 +77,20 @@ hqDefine('reach/js/filters/location_model', [
             self.selectedLocation(self.userLocationId || reachUtils.DEFAULTLOCATION.id);
         };
 
+        self.locationName = ko.computed(function() {
+            var location = _.find(self.locations(), function (location) {
+                return location.id === self.selectedLocation();
+            });
+            return location.name;
+        }, self);
+
+        self.hideName = ko.computed(function () {
+            if (self.parent === '' || self.parent.selectedLocation() !== reachUtils.DEFAULTLOCATION.id) {
+                return false
+            }
+            return self.selectedLocation() === reachUtils.DEFAULTLOCATION.id;
+        }, self);
+
         return self;
     };
 

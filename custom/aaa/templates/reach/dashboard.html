@@ -16,6 +16,7 @@
     <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
     <script src="{% static 'reach/js/utils/reach_utils.js' %}"></script>
     <script src="{% static 'reach/js/filters/month_year_filter.js' %}"></script>
+    <script src="{% static 'reach/js/filters/filters_modal.js' %}"></script>
     <script src="{% static 'reach/js/filters/location_model.js' %}"></script>
     <script src="{% static 'reach/js/filters/location_filter.js' %}"></script>
     <script src="{% static 'reach/js/dashboard.js' %}"></script>
@@ -31,6 +32,8 @@
         {% include 'reach/menus/top_menu.html' %}
 
         <div class="row no-margin">
+            {% include 'reach/menus/selected_filters.html' %}
+
             {% block content %}
 
             {% endblock %}
@@ -40,6 +43,7 @@
         {% initial_page_data 'user_role_type' user_role_type %}
         {% initial_page_data 'user_location_id' user_location_id %}
         {% initial_page_data 'user_location_ids' user_location_ids %}
+        {% initial_page_data 'is_web_user' is_web_user %}
     </div>
 </div>
 

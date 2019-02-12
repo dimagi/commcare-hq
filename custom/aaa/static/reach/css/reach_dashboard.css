@@ -1,3 +1,8 @@
+.filter-title {
+    text-align: left;
+    color:#004ebc;
+}
+
 .form-group,.modal-header {
     text-align:left;
 }
@@ -77,11 +82,6 @@
     text-align:center;
 }
 
-.modal-title {
-    font-size:30px;
-    color:#004ebc;
-}
-
 .nav > li > a:hover {
     background:none;
 }
@@ -126,6 +126,29 @@
 .select2-container {
     display:block!important;
     width:100%!important;
+}
+
+.selected-box {
+    padding: 10px;
+    background: #ffffff;
+    box-shadow: 0 0 5px 0 #00000036;
+    min-width: 10%;
+    margin: 5px;
+}
+
+.selected-filters {
+    padding: 30px 30px 0 30px;
+}
+
+.selected-filters-block > div, .selected-filters-block > i {
+    display: inline-block;
+}
+
+.selected-filters-icon {
+    width: 30px;
+    text-align: center;
+    vertical-align: middle;
+    color: #004ebc;
 }
 
 .shadow {

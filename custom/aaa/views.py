@@ -40,6 +40,7 @@ class ReachDashboardView(TemplateView):
         ).distinct() if user_location else []
         parent_ids = [loc.location_id for loc in user_locations_with_parents]
         kwargs['user_location_ids'] = parent_ids
+        kwargs['is_web_user'] = self.couch_user.is_web_user
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
 

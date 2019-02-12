@@ -22,10 +22,9 @@ describe('Reach Month Year Filter', function () {
         var params = {
             postData: reachUtils.postData({}),
             callback: function () {},
+            filters: {'month-year-filter': {}},
         };
         var model = monthYearModel.viewModel(params);
-
-        assert.equal(model.showFilter(), false);
 
         var expectedYears = [
             {id: 2019, name: 2019},
@@ -55,10 +54,9 @@ describe('Reach Month Year Filter', function () {
         var params = {
             postData: reachUtils.postData({}),
             callback: function () {},
+            filters: {'month-year-filter': {}},
         };
         var model = monthYearModel.viewModel(params);
-
-        assert.equal(model.showFilter(), false);
 
         var expectedYears = [
             {id: 2019, name: 2019},
@@ -117,48 +115,5 @@ describe('Reach Month Year Filter', function () {
             assert.equal(model.availableMonths()[idx].id, year.id);
             assert.equal(model.availableMonths()[idx].name, year.name);
         });
-    });
-
-    it('test resetFilter', function () {
-        var params = {
-            postData: reachUtils.postData({}),
-            callback: function () {},
-        };
-        var model = monthYearModel.viewModel(params);
-
-        assert.equal(model.selectedYear(), 2020);
-        assert.equal(model.selectedMonth(), 1);
-
-        model.selectedYear(2019);
-        model.selectedMonth(9);
-
-        assert.equal(model.selectedYear(), 2019);
-        assert.equal(model.selectedMonth(), 9);
-
-        model.resetFilter();
-        assert.equal(model.selectedYear(), 2020);
-        assert.equal(model.selectedMonth(), 1);
-    });
-
-    it('test applyFilters', function () {
-        var postData = reachUtils.postData({});
-        var params = {
-            postData: postData,
-            callback: function () {},
-        };
-        var model = monthYearModel.viewModel(params);
-
-        assert.equal(postData.selectedYear, 2020);
-        assert.equal(postData.selectedMonth, 1);
-
-        model.selectedYear(2019);
-        model.selectedMonth(9);
-
-        model.applyFilters();
-        assert.equal(model.selectedYear(), 2019);
-        assert.equal(model.selectedMonth(), 9);
-
-        assert.equal(postData.selectedYear, 2019);
-        assert.equal(postData.selectedMonth, 9);
     });
 });

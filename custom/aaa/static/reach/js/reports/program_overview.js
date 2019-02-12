@@ -53,6 +53,12 @@ hqDefine("reach/js/reports/program_overview", [
         self.title = 'Program Overview';
         self.slug = 'program_overview';
         self.postData = reachUtils.postData({});
+        self.localStorage = reachUtils.localStorage();
+        self.reachUtils = reachUtils.reachUtils();
+        self.filters = {
+            'month-year-filter': {},
+            'location-filter': {},
+        };
 
         self.updateSections = function (data) {
             self.sections([]);
