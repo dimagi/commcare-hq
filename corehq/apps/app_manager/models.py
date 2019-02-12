@@ -1529,17 +1529,20 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def set_audio(self, lang, audio_path):
         self._set_media('media_audio', lang, audio_path)
 
-    def _all_media_paths(self, media_attr):
+    def _all_media_paths(self, media_attr, lang=None):
         assert media_attr in ('media_image', 'media_audio')
         media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = {media for media in media_dict.values() if media}
-        return list(valid_media_paths)
+        valid_media_paths = set()
+        for key, value in media_dict.items():
+            if value and (lang is None or key == lang):
+                valid_media_paths.add(value)
+        return valid_media_paths
 
-    def all_image_paths(self):
-        return self._all_media_paths('media_image')
+    def all_image_paths(self, lang=None):
+        return self._all_media_paths('media_image', lang=lang)
 
-    def all_audio_paths(self):
-        return self._all_media_paths('media_audio')
+    def all_audio_paths(self, lang=None):
+        return self._all_media_paths('media_audio', lang=lang)
 
     def icon_app_string(self, lang, for_default=False):
         """
@@ -4240,10 +4243,6 @@ class BuildProfile(DocumentSchema):
         return not self.__eq__(other)
 
 
-class MediaList(DocumentSchema):
-    media_refs = StringListProperty()
-
-
 class ApplicationBase(VersionedDoc, SnapshotMixin,
                       CommCareFeatureSupportMixin,
                       CommentMixin):
@@ -4336,9 +4335,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     build_profiles = SchemaDictProperty(BuildProfile)
     practice_mobile_worker_id = StringProperty()
-
-    # each language is a key and the value is a list of multimedia referenced in that language
-    media_language_map = SchemaDictProperty(MediaList)
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
@@ -4741,9 +4737,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         copy.comment_from = user_id
         copy.is_released = False
 
-        if not copy.is_remote_app():
-            copy.update_mm_map()
-
         prune_auto_generated_builds.delay(self.domain, self._id)
 
         return copy
@@ -4793,25 +4786,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def set_media_versions(self):
         pass
-
-    def update_mm_map(self):
-        if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
-            for lang in self.langs:
-                self.media_language_map[lang] = MediaList()
-            for form in self.get_forms():
-                xml = form.wrapped_xform()
-                for lang in self.langs:
-                    media = []
-                    for path in xml.all_media_references(lang):
-                        if path is not None:
-                            media.append(path)
-                            map_item = self.multimedia_map.get(path)
-                            #dont break if multimedia is missing
-                            if map_item:
-                                map_item.form_media = True
-                    self.media_language_map[lang].media_refs.extend(media)
-        else:
-            self.media_language_map = {}
 
     def get_build_langs(self, build_profile_id=None):
         if build_profile_id is not None:

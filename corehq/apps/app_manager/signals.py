@@ -24,8 +24,8 @@ def update_callcenter_config(sender, application, **kwargs):
         return
 
     try:
-        domain = Domain.get_by_name(application.domain)
-        cc_config = domain.call_center_config
+        domain_obj = Domain.get_by_name(application.domain)
+        cc_config = domain_obj.call_center_config
         if not cc_config or not (cc_config.fixtures_are_active() and cc_config.config_is_valid()):
             return
 

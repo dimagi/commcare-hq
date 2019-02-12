@@ -4,6 +4,7 @@ from datetime import datetime
 import time
 import uuid
 
+import six
 from django.db.transaction import atomic
 from six.moves import map
 
@@ -262,6 +263,7 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
+@six.python_2_unicode_compatible
 class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
@@ -468,8 +470,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     @staticmethod
     @quickcache(['name'], timeout=24 * 60 * 60)
     def is_secure_session_required(name):
-        domain = Domain.get_by_name(name)
-        return domain and domain.secure_sessions
+        domain_obj = Domain.get_by_name(name)
+        return domain_obj and domain_obj.secure_sessions
 
     @staticmethod
     @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
@@ -578,9 +580,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def readable_languages(self):
         return ', '.join(lang_lookup[lang] or lang for lang in self.languages())
-
-    def __unicode__(self):
-        return self.name
 
     @classmethod
     @quickcache(['name'], skip_arg='strict', timeout=30*60)
