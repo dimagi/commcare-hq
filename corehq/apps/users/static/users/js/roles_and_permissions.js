@@ -8,6 +8,17 @@ hqDefine("users/js/roles_and_permissions",[
     'hqwebapp/js/knockout_bindings.ko', // for staticChecked data binding in web_users.html
 ], function ($, ko, _, initialPageData, userRoles) {
 
+    ko.bindingHandlers.linkChecked = {
+        // Makes sure that the value accessor is set to true if the checked
+        // observable is true.
+        update: function(element, valueAccessor, allBindings) {
+            var checkedVal = ko.utils.unwrapObservable(allBindings.get('checked'));
+            if (checkedVal) {
+                valueAccessor()(checkedVal);
+            }
+        },
+    };
+
     $(function () {
         var url = initialPageData.reverse;
 

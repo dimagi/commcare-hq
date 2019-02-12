@@ -43,7 +43,7 @@
                             <div class="form-check">
                                 <input type="checkbox"
                                        id="edit-web-users-checkbox"
-                                       data-bind="checked: permissions.edit_web_users" />
+                                       data-bind="checked: permissions.edit_web_users, linkChecked: permissions.view_web_users" />
                                 <label for="edit-web-users-checkbox"><span class="sr-only">{% trans "Edit & View Web Users" %}</span></label>
                             </div>
                         </div>
@@ -67,7 +67,7 @@
                             <div class="form-check">
                                 <input type="checkbox"
                                        id="edit-commcare-users-checkbox"
-                                       data-bind="checked: permissions.edit_commcare_users" />
+                                       data-bind="checked: permissions.edit_commcare_users, linkChecked: permissions.view_commcare_users" />
                                 <label for="edit-commcare-users-checkbox"><span class="sr-only">{% trans "Edit & View Mobile Workers" %}</span></label>
                             </div>
                         </div>
@@ -91,7 +91,7 @@
                             <div class="form-check">
                                 <input type="checkbox"
                                        id="edit-groups-checkbox"
-                                       data-bind="checked: permissions.edit_groups" />
+                                       data-bind="checked: permissions.edit_groups, linkChecked: permissions.view_groups" />
                                 <label for="edit-groups-checkbox"><span class="sr-only">{% trans "Edit & View Groups" %}</span></label>
                             </div>
                         </div>
@@ -114,7 +114,7 @@
                             <div class="form-check">
                                 <input type="checkbox"
                                        id="edit-locations-checkbox"
-                                       data-bind="checked: permissions.edit_locations" />
+                                       data-bind="checked: permissions.edit_locations, linkChecked: permissions.view_locations" />
                                 <label for="edit-locations-checkbox"><span class="sr-only">{% trans "Edit & View Locations" %}</span></label>
                             </div>
                         </div>
