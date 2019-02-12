@@ -25,7 +25,7 @@ hqDefine("hqwebapp/js/widgets", [
                 tags: true,
                 createTag: function (params) {
                     // Support pasting in comma-separated values
-                    var terms = $.trim(params.term).split(/[, ]\s*/);
+                    var terms = parseEmails(params.term);
                     if (terms.length === 1) {
                         return {
                             id: terms[0],
@@ -56,7 +56,12 @@ hqDefine("hqwebapp/js/widgets", [
         });
     };
 
+    var parseEmails = function (input) {
+        return $.trim(input).split(/[, ]\s*/);
+    };
+
     return {
         init: init,
+        parseEmails: parseEmails,
     };
 });
