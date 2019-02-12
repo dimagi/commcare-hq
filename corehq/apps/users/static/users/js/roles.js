@@ -16,6 +16,7 @@ hqDefine('users/js/roles',[
                     specific: ko.utils.arrayMap(root.reportOptions, function (report) {
                         return {
                             path: report.path,
+                            slug: report.slug,
                             name: report.name,
                             value: data.permissions.view_report_list.indexOf(report.path) !== -1,
                         };
