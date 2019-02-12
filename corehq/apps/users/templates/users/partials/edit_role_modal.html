@@ -29,7 +29,9 @@
                                    class="form-control" />
                         </div>
                     </div>
-                    <hr />
+                    <legend>
+                      {% trans "Area Access" %}
+                    </legend>
                     <div class="form-group">
                       <div class="col-sm-2">
                         {% trans "Can Edit" %}
@@ -154,6 +156,28 @@
                             {% endblocktrans %}
                         </div>
                     </div>
+                    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+                    <div class="form-group">
+                        <div class="col-sm-2 controls">
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       id="edit-shared-exports-checkbox"
+                                       data-bind="checked: permissions.edit_shared_exports" />
+                                <label for="edit-shared-exports-checkbox"><span class="sr-only">{% trans "Edit & View Shared Exports" %}</span></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-2 controls">
+                            <div class="form-check-placeholder">
+                                <label></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-8 control-label">
+                            {% blocktrans %}
+                                <strong>Shared Exports</strong>
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="form-group">
                         <div class="col-sm-2 controls">
                             <div class="form-check">
@@ -204,7 +228,7 @@
                     {% if show_integration %}
                     <div class="form-group">
                         <label class="col-sm-4 control-label">
-                            {% trans "Edit Integration" %}
+                            {% trans "Integration Access" %}
                         </label>
                         <div class="col-sm-8 controls">
                             <div class="form-check">
@@ -219,26 +243,9 @@
                     </div>
                     {% endif %}
 
-                    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                        <div class="form-group">
-                            <label class="col-sm-4 control-label">
-                                {% trans "Edit Shared Exports" %}
-                            </label>
-                            <div class="col-sm-8 controls">
-                                <div class="form-check">
-                                    <input type="checkbox"
-                                           id="edit-shared-exports-checkbox"
-                                           data-bind="checked: permissions.edit_shared_exports" />
-                                    <label for="edit-shared-exports-checkbox">
-                                        {% trans "Allow role to edit shared exports." %}
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
                     <div class="form-group">
                         <label class="col-sm-4 control-label">
-                            {% trans "Edit Subscription Info" %}
+                            {% trans "Manage Subscription Info" %}
                         </label>
                         <div class="col-sm-8 controls">
                             <div class="form-check">
@@ -246,7 +253,7 @@
                                        id="edit-billing-checkbox"
                                        data-bind="checked: permissions.edit_billing" />
                                 <label for="edit-billing-checkbox">
-                                    {% trans "Allow role to edit subscription information." %}
+                                    {% trans "Allow role to manage subscription information." %}
                                 </label>
                             </div>
                         </div>
