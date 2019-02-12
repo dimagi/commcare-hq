@@ -43,7 +43,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
             raw_query['query']['filtered']['filter'].pop('and'),
             json_output['query']['filtered']['filter'].pop('and')
         )
-        self.checkQuery(raw_query, json_output)
+        self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_basic_query(self):
         json_output = {
@@ -59,7 +59,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
             },
             "size": SIZE_LIMIT
         }
-        self.checkQuery(HQESQuery('forms').raw_query, json_output)
+        self.checkQuery(HQESQuery('forms'), json_output)
 
     def test_query_size(self):
         json_output = {
@@ -76,9 +76,9 @@ class TestESQuery(ElasticTestMixin, TestCase):
             "size": 0
         }
         # use `is not None`; 0 or 1000000 == 1000000
-        self.checkQuery(HQESQuery('forms').size(0).raw_query, json_output)
+        self.checkQuery(HQESQuery('forms').size(0), json_output)
         json_output['size'] = 123
-        self.checkQuery(HQESQuery('forms').size(123).raw_query, json_output)
+        self.checkQuery(HQESQuery('forms').size(123), json_output)
 
     def test_form_query(self):
         json_output = {
@@ -106,7 +106,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
             raw_query['query']['filtered']['filter'].pop('and'),
             json_output['query']['filtered']['filter'].pop('and')
         )
-        self.checkQuery(raw_query, json_output)
+        self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_user_query(self):
         json_output = {
@@ -129,7 +129,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
             raw_query['query']['filtered']['filter'].pop('and'),
             json_output['query']['filtered']['filter'].pop('and')
         )
-        self.checkQuery(raw_query, json_output)
+        self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_filtered_forms(self):
         json_output = {
@@ -161,7 +161,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
             raw_query['query']['filtered']['filter'].pop('and'),
             json_output['query']['filtered']['filter'].pop('and')
         )
-        self.checkQuery(raw_query, json_output)
+        self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_users_at_locations(self):
         location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
@@ -248,16 +248,16 @@ class TestESQuery(ElasticTestMixin, TestCase):
             HQESQuery('forms')
             .sort('timeEnd')
         )
-        self.checkQuery(query.raw_query, json_output)
+        self.checkQuery(query, json_output)
         json_output['sort'] = [
             {"timeStart": {"order": "asc"}},
         ]
-        self.checkQuery(query.sort('timeStart').raw_query, json_output)
+        self.checkQuery(query.sort('timeStart'), json_output)
         json_output['sort'] = [
             {"timeEnd": {"order": "asc"}},
             {"timeStart": {"order": "asc"}},
         ]
-        self.checkQuery(query.sort('timeStart', reset_sort=False).raw_query, json_output)
+        self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
 
     def test_cleanup_before_run(self):
         json_output = {
@@ -285,8 +285,8 @@ class TestESQuery(ElasticTestMixin, TestCase):
         expected_output = deepcopy(json_output)
         expected_output['size'] = 0
         query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
-        self.checkQuery(query.raw_query, json_output)
-        self.checkQuery(query._clean_before_run().raw_query, expected_output)
+        self.checkQuery(query, json_output)
+        self.checkQuery(query._clean_before_run(), expected_output)
 
     def test_exclude_source(self):
         json_output = {
@@ -313,4 +313,4 @@ class TestESQuery(ElasticTestMixin, TestCase):
             "size": SIZE_LIMIT,
         }
         query = HQESQuery('forms').domain('test-exclude').exclude_source()
-        self.checkQuery(query.raw_query, json_output)
+        self.checkQuery(query, json_output)

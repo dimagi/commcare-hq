@@ -42,7 +42,7 @@ class TestFilters(ElasticTestMixin, TestCase):
                  .nested("actions",
                          filters.date_range("actions.date", gte=start, lt=end)))
 
-        self.checkQuery(query.raw_query, json_output)
+        self.checkQuery(query, json_output)
 
     def test_not_term_filter(self):
         json_output = {
@@ -68,7 +68,7 @@ class TestFilters(ElasticTestMixin, TestCase):
 
         query = HQESQuery('cases').filter(filters.not_term('type', 'badcasetype'))
 
-        self.checkQuery(query.raw_query, json_output)
+        self.checkQuery(query, json_output)
 
 
 class TestSourceFiltering(ElasticTestMixin, TestCase):
@@ -89,4 +89,4 @@ class TestSourceFiltering(ElasticTestMixin, TestCase):
             "_source": "source_obj"
         }
         q = HQESQuery('forms').source('source_obj')
-        self.checkQuery(q.raw_query, json_output)
+        self.checkQuery(q, json_output)
