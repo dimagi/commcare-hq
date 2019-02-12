@@ -26,7 +26,7 @@ hqDefine('app_manager/js/summary/form_summary',[
                                 return match(query, option.value + self.translateQuestion(option));
                             });
                             var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
-                                return match(query, prop[0] + prop[1]);
+                                return match(query, prop[0]) || match(query, prop[1]);
                             });
                             self.showCaseProperties(self.showCaseProperties() || casePropsVisible);
                             questionIsVisible = questionIsVisible || casePropsVisible;
