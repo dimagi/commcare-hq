@@ -35,7 +35,7 @@ contextlib2==0.5.4
 coverage==4.5.1
 cryptography==2.5
 csiphash==0.0.5
-cssselect==1.0.3
+cssselect2==0.2.1
 csv342==1.0.0
 datadog==0.15.0
 ddtrace==0.14.1
@@ -132,6 +132,7 @@ openpyxl==2.6.0
 paramiko==2.4.2           # via fabric
 pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.1.2
+pdfrw==0.4
 pexpect==4.6.0            # via ipython
 phonenumberslite==8.8.9
 pickleshare==0.7.5        # via ipython
@@ -210,7 +211,7 @@ unittest2==1.1.0
 urllib3==1.24.1
 user-agents==1.1.0
 wcwidth==0.1.7            # via prompt-toolkit
-weasyprint==0.39
+weasyprint==0.42.3
 webencodings==0.5.1
 werkzeug==0.11.15
 wheel==0.29.0
