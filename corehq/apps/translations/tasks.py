@@ -77,7 +77,17 @@ def push_translation_files_to_transifex(domain, data, email):
 
 
 @task(serializer='pickle')
-def pull_translation_files_from_transifex(domain, data, email=None):
+def pull_translation_files_from_transifex(domain, data, user_email=None):
+    def notify_error(error):
+        email = EmailMessage(
+            subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
+            body="The request could not be completed. Something went wrong with the download. "
+                 "Error raised : {}. "
+                 "If you see this repeatedly and need support, please report an issue. ".format(error),
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
     version = data.get('version')
     transifex = Transifex(domain,
                           data.get('app_id'),
@@ -93,11 +103,13 @@ def pull_translation_files_from_transifex(domain, data, email=None):
             email = EmailMessage(
                 subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
                 body="PFA Translations pulled from transifex.",
-                to=[email],
+                to=[user_email],
                 from_email=settings.DEFAULT_FROM_EMAIL
             )
             email.attach(filename=filename, content=file_obj.read())
             email.send()
+    except Exception as e:
+        notify_error(e)
     finally:
         if translation_file and os.path.exists(translation_file.name):
             os.remove(translation_file.name)
