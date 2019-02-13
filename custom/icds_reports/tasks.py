@@ -256,6 +256,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                             ).apply_async()
 
             res_awc.get()
+            reach_keys = cache.keys('*cas_reach_data*')
+            cache.delete_many(reach_keys)
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
