@@ -74,7 +74,8 @@ def require_permission(permission,
 
 
 require_can_edit_web_users = require_permission('edit_web_users')
-require_can_edit_commcare_users = require_permission(
+require_can_edit_commcare_users = require_permission('edit_commcare_users')
+require_can_edit_and_view_commcare_users = require_permission(
     'edit_commcare_users', view_only_permission='view_commcare_users'
 )
 require_can_view_roles = require_permission('view_roles')
