@@ -93,6 +93,7 @@ def send_delayed_report(report_id):
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
+
     try:
         notification.send()
     except UnsupportedScheduledReportError:

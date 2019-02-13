@@ -1751,7 +1751,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('anemic').withTitle('Anemia during last ANC (Y/N)').renderWith(renderAnemic).withClass('medium-col'),
             DTColumnBuilder.newColumn('num_anc_complete').withTitle('Number of ANC visits').renderWith(renderNumAncComplete).withClass('medium-col'),
             DTColumnBuilder.newColumn('beneficiary').withTitle('Beneficiary Status').renderWith(renderBeneficiary).withClass('medium-col'),
-            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given to date').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
+            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given in current month').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
             DTColumnBuilder.newColumn('last_date_thr').withTitle('Date of last THR').renderWith(renderLastDateThr).withClass('medium-col'),
         ];
     } else if (vm.step === 'lactating') {
@@ -1764,7 +1764,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('num_pnc_visits').withTitle('Number of PNC visits').renderWith(renderNumPncVisits).withClass('medium-col'),
             DTColumnBuilder.newColumn('breastfed_at_birth').withTitle('Breastfed within hour of birth').renderWith(renderBreastfedAtBirth).withClass('medium-col'),
             DTColumnBuilder.newColumn('is_ebf').withTitle('Exclusively breastfeeding at last home visit').renderWith(renderIsEbf).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given').renderWith(renderNumRationsDistributed).withClass('medium-col'),
+            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given in current month').renderWith(renderNumRationsDistributed).withClass('medium-col'),
         ];
     }
 
@@ -2201,12 +2201,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartTwoData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartTwoData.length; i++) {
+                        if (vm.lineChartTwoData[i].x === d.value) {
+                            tooltipData = vm.lineChartTwoData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Height: <strong>" + tooltip_data.y + "</strong> cm</p>";
+                    if (tooltipData) {
+                        html = "<p>Height: <strong>" + tooltipData.y + "</strong> cm</p>";
                     } else {
                         html = "<p>Height: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2261,12 +2264,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartOneData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartOneData.length; i++) {
+                        if (vm.lineChartOneData[i].x === d.value) {
+                            tooltipData = vm.lineChartOneData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
+                    if (tooltipData) {
+                        html = "<p>Weight: <strong>" + tooltipData.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2321,12 +2327,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartThreeData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartThreeData.length; i++) {
+                        if (vm.lineChartThreeData[i].x === d.value) {
+                            tooltipData = vm.lineChartThreeData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
+                    if (tooltipData) {
+                        html = "<p>Weight: <strong>" + tooltipData.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2510,44 +2519,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             function (response) {
                 vm.pregnantData = response.data['data'];
                 vm.showTable = false;
-                var empty = {
-                    case_id: null,
-                    trimester: null,
-                    person_name: null,
-                    age: null,
-                    mobile_number: null,
-                    edd: null,
-                    opened_on: null,
-                    preg_order: null,
-                    home_visit_date: 'Data Not Entered',
-                    bp: null,
-                    anc_weight: null,
-                    anc_hemoglobin: null,
-                    anc_abnormalities: null,
-                    anemic: null,
-                    symptoms: null,
-                    counseling: null,
-                    using_ifa: null,
-                    ifa_consumed_last_seven_days: null,
-                    tt_taken: null,
-                    tt_date: null,
-                };
-                if (vm.pregnantData[0].length > 0) {
-                    vm.pregnant = vm.pregnantData[0][0];
-                } else if (vm.pregnantData[1].length > 0) {
-                    vm.pregnantData[0].push(empty);
-                    vm.pregnant = vm.pregnantData[1][0];
-                } else {
-                    vm.pregnantData[0].push(empty);
-                    vm.pregnantData[1].push(empty);
-                    vm.pregnant = vm.pregnantData[2][0];
-                }
-                if (vm.pregnantData[0].length === 1) {
-                    vm.pregnantData[0].push(empty);
-                }
-                if (vm.pregnantData[2].length === 0) {
-                    vm.pregnantData[2].push(empty);
-                }
+                vm.pregnant = response.data['pregnant'];
                 vm.showPregnant = true;
             },
             function (error) {

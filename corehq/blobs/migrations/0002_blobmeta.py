@@ -10,12 +10,14 @@ from django.db import migrations, models
 
 import corehq.blobs.models
 import corehq.blobs.util
+from corehq.sql_db.migrations import partitioned
 from corehq.sql_db.operations import RawSQLMigration
 
 
 migrator = RawSQLMigration(('corehq', 'blobs', 'sql_templates'), {})
 
 
+@partitioned
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -52,5 +54,5 @@ class Migration(migrations.Migration):
             name='blobmeta',
             unique_together=set([('key',)]),
         ),
-        migrator.get_migration('delete_blob_meta.sql'),
+        partitioned(migrator.get_migration('delete_blob_meta.sql'), apply_to_proxy=False),
     ]

@@ -40,6 +40,17 @@
 
         {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
+        {% if CUSTOM_LOGO_URL %}
+            <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
+        {% else %}
+            <link rel="apple-touch-icon" sizes="57x57" href="{% static 'hqstyle/images/commcare-icon-57x57.png' %}"/>
+            <link rel="apple-touch-icon" sizes="76x76" href="{% static 'hqstyle/images/commcare-icon-76x76.png' %}"/>
+            <link rel="apple-touch-icon" sizes="120x120" href="{% static 'hqstyle/images/commcare-icon-120x120.png' %}"/>
+            <link rel="apple-touch-icon" sizes="152x152" href="{% static 'hqstyle/images/commcare-icon-152x152.png' %}"/>
+            <link rel="apple-touch-icon" sizes="167x167" href="{% static 'hqstyle/images/commcare-icon-167x167.png' %}"/>
+            <link rel="apple-touch-icon" sizes="180x180" href="{% static 'hqstyle/images/commcare-icon-180x180.png' %}"/>
+        {% endif %}
+
         {% block stylesheets %}{% endblock stylesheets %}
         {% block csrf_token_block %}
           <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
@@ -387,7 +398,9 @@
                     requirejs([
                         'hqwebapp/js/base_main',
                     ], function () {
-                        requirejs(['{{ requirejs_main }}']);
+                        requirejs(['{{ requirejs_main }}'], function () {
+                            console.log("Loaded requirejs main module: {{ requirejs_main }}");
+                        });
                     });
                 });
             </script>

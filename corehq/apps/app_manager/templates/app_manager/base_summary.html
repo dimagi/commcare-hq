@@ -45,7 +45,8 @@
                         <li role="presentation">
                             <div class="appnav-item">
                                 <a href="{% url 'download_app_summary' domain app_id %}?lang={{ lang }}"
-                                   class="appnav-link-full">
+                                   class="appnav-link-full track-usage-link"
+                                   data-category="App Summary" data-action="Download" data-label="Full Summary">
                                     <i class="fa fa-download appnav-primary-icon"></i>
                                     <span>{% trans "High Level Summary" %}</span>
                                 </a>
@@ -59,7 +60,9 @@
                                     <i class="fa fa-file-text-o appnav-primary-icon"></i>
                                     <span>{% trans "Form Summary" %}</span>
                                 </a>
-                                <a class="appnav-secondary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
+                                <a class="appnav-secondary track-usage-link"
+                                   href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}"
+                                   data-category="App Summary" data-action="Download" data-label="Form Summary">
                                     <i class="fa fa-download"></i>
                                 </a>
                             </div>
@@ -71,7 +74,9 @@
                                     <i class="fcc fcc-fd-external-case appnav-primary-icon"></i>
                                     <span>{% trans "Case Summary" %}</span>
                                 </a>
-                                <a class="appnav-secondary" href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}">
+                                <a class="appnav-secondary track-usage-link"
+                                   href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}"
+                                   data-category="App Summary" data-action="Download" data-label="Case Summary">
                                     <i class="fa fa-download"></i>
                                 </a>
                             </div>
@@ -113,6 +118,7 @@
                 </nav>
             </div>
             <div id="hq-content" class="appmanager-main-container">
+                <div class="appmanager-loading-bg"></div>
                 <div class="appmanager-settings-content ko-template" id="js-appmanager-body">
                   {% block content_extra %}{% endblock %}
                 </div>

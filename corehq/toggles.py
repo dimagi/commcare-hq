@@ -863,13 +863,13 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
 
 def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name, strict=True)
-    if domain and domain.commtrack_enabled != toggle_is_enabled:
+    domain_obj = Domain.get_by_name(domain_name, strict=True)
+    if domain_obj and domain_obj.commtrack_enabled != toggle_is_enabled:
         if toggle_is_enabled:
-            domain.convert_to_commtrack()
+            domain_obj.convert_to_commtrack()
         else:
-            domain.commtrack_enabled = False
-            domain.save()
+            domain_obj.commtrack_enabled = False
+            domain_obj.save()
 
 
 COMMTRACK = StaticToggle(
@@ -1279,6 +1279,7 @@ BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'Add a page to update multimedia paths in bulk',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager"
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1638,7 +1639,7 @@ ICDS_DISHA_API = StaticToggle(
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
-    'eCHIS: Allow blank case tags',
+    'eCHIS/ICDS: Allow blank case tags',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1689,9 +1690,34 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 )
 
 
+SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
+    'set_scheduled_report_start_date',
+    'Allow users to set an effective start date for scheduled reports.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
+)
+
+
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+ODATA = StaticToggle(
+    'odata',
+    'Enable Odata feed.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+DASHBOARD_REACH_REPORT = StaticToggle(
+    'dashboard_reach_reports',
+    'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

@@ -236,7 +236,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             update={
                 'property': 'original value'
             }
-        ).as_string()
+        ).as_text()
         submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
 
         # submit a new form with a different case update
@@ -248,7 +248,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             update={
                 'property': 'edited value'
             }
-        ).as_string()
+        ).as_text()
         submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
 
         self.assertEqual(1, len(self._get_form_ids()))
@@ -299,7 +299,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_submission_error_log_migration(self):
         try:
-            submit_form_locally("To be an XForm or NOT to be an xform/>", self.domain_name)
+            submit_form_locally(b"To be an XForm or NOT to be an xform/>", self.domain_name)
         except LocalSubmissionError:
             pass
 
@@ -382,7 +382,7 @@ class MigrationTestCase(BaseMigrationTestCase):
                 case_type='migrate',
                 create=True,
                 update={'p1': 1},
-            ).as_string(),
+            ).as_text(),
             self.domain_name
         )
 
@@ -390,7 +390,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             CaseBlock(
                 case_id,
                 update={'name': 'test21'},
-            ).as_string(),
+            ).as_text(),
             self.domain_name
         )
 

@@ -167,7 +167,7 @@ class ExportWriter(object):
     max_table_name_size = 500
     target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
-    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=b''):
+    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
         """
         Create any initial files, headings, etc necessary.
         :param header_table: tuple of one of the following formats
@@ -326,23 +326,23 @@ class ZippedExportWriter(OnDiskExportWriter):
     """
     Writer that creates a zip file containing a csv for each table.
     """
-    table_file_extension = b".csv"
+    table_file_extension = ".csv"
 
     def _write_final_result(self):
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
-            if isinstance(name, six.text_type):
-                name = name.encode('utf-8')
+            if isinstance(name, bytes):
+                name = name.decode('utf-8')
             path = self.tables[index].get_path()
-            archive.write(path, self._get_archive_filename(name))
+            archive.write(path, self._get_archive_filename(name).encode('utf-8'))
         archive.close()
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
         path = self.archive_basepath
-        if isinstance(path, six.text_type):
-            path = path.encode('utf-8')
-        return os.path.join(path, b'{}{}'.format(name, self.table_file_extension))
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
+        return os.path.join(path, '{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):
@@ -413,10 +413,8 @@ class Excel2007ExportWriter(ExportWriter):
                 cell.number_format = numbers.FORMAT_TEXT
         if isinstance(row, FormattedRow):
             for hyperlink_column_index in row.hyperlink_column_indices:
-                cell_value = cells[hyperlink_column_index].value
-                if isinstance(cell_value, six.string_types):
-                    cells[hyperlink_column_index].hyperlink = cell_value
-                    cells[hyperlink_column_index].style = 'Hyperlink'
+                cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
+                cells[hyperlink_column_index].style = 'Hyperlink'
         sheet.append(cells)
 
     def _close(self):

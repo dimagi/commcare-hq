@@ -126,6 +126,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("pse_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(pse_eligible)),
             ("pse_days_attended",
                 "CASE WHEN {} THEN COALESCE(df.sum_attended_child_ids, 0) ELSE NULL END".format(pse_eligible)),
+            ("lunch_count", "COALESCE(df.lunch_count, 0)"),
             # EBF Indicators
             ("ebf_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(ebf_eligible)),
             ("ebf_in_month", "CASE WHEN {} THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END".format(ebf_eligible)),

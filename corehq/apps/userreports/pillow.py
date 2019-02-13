@@ -34,6 +34,7 @@ from fluff.signals import (
     reformat_alembic_diffs
 )
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.dao.exceptions import DocumentMismatchError
 from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
@@ -43,7 +44,6 @@ from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
-UCR_PROCESSING_CHUNK_SIZE = 10
 
 
 def time_ucr_process_change(method):
@@ -425,7 +425,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=0,
-                         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
+                         processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
@@ -447,7 +447,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
                                 num_processes=1, process_num=0,
-                                processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
+                                processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]

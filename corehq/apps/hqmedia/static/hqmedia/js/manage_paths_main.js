@@ -1,74 +1,54 @@
 hqDefine("hqmedia/js/manage_paths_main", function () {
     var uploadPathsModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['validateUrl', 'updateUrl']);
+        hqImport("hqwebapp/js/assert_properties").assert(options, ['url']);
         var self = options;
 
-        self.fileId = ko.observable('');
-
+        // Messaging
         self.genericErrorMessage = gettext("There was an error processing your file. Please try again or report an issue if the problem persists.");
         self.serverError = ko.observable('');
         self.errorMessages = ko.observableArray();
         self.warningMessages = ko.observableArray();
         self.successMessage = ko.observable('');
-
-        self.allowUpdate = ko.computed(function () {
-            return self.fileId() && !self.serverError() && !self.errorMessages().length;
-        });
+        self.successMessages = ko.observableArray();
+        self.isSubmitting = ko.observable(false);
 
         self.clearMessages = function () {
             self.serverError('');
             self.errorMessages.removeAll();
             self.warningMessages.removeAll();
             self.successMessage('');
+            self.successMessages.removeAll();
         };
 
-        self.validate = function (form) {
-            // TODO: spinner behavior
+        self.update = function (form) {
+            self.isSubmitting(true);
             self.clearMessages();
             $.ajax({
                 method: 'POST',
-                url: self.validateUrl,
+                url: self.url,
                 data: new FormData(form),
                 processData: false,
                 contentType: false,
                 success: function (data) {
-                    if (data.success) {     // file was uploaded successfully, though its content may have errors
-                        self.fileId(data.file_id);
-                        self.errorMessages(data.errors);
+                    self.isSubmitting(false);
+                    if (data.complete) {
+                        self.errorMessages(data.errors || []);
+                        if (self.errorMessages().length) {
+                            return;
+                        }
+
                         self.warningMessages(data.warnings);
-                        if (!self.errorMessages().length && !self.warningMessages().length) {
-                            self.successMessage(gettext("File validated with no errors or warnings."));
+                        self.successMessages(data.successes);
+                        if (!self.successMessages().length) {
+                            self.successMessage(gettext("No items were found to update."));
                         }
                     } else {
-                        self.serverError(data.error || self.genericError);
+                        self.serverError(data.error || self.genericErrorMessage);
                     }
                 },
                 error: function () {
-                    self.serverError(self.genericError);
-                },
-            });
-
-            return false;
-        };
-
-        self.update = function () {
-            // TODO: spinner behavior
-            self.clearMessages();
-            $.ajax({
-                method: 'POST',
-                url: self.updateUrl,
-                data: {
-                    file_id: self.fileId(),
-                },
-                success: function (data) {
-                    if (data.success) {
-                        alert("TODO: implement");
-                    } else {
-                        self.serverError(data.error || self.genericError);
-                    }
-                },
-                error: function () {
-                    self.serverError(self.genericError);
+                    self.isSubmitting(false);
+                    self.serverError(self.genericErrorMessage);
                 },
             });
         };
@@ -79,8 +59,7 @@ hqDefine("hqmedia/js/manage_paths_main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         $("#upload-paths").koApplyBindings(uploadPathsModel({
-            validateUrl: initialPageData.reverse("validate_multimedia_paths"),
-            updateUrl: initialPageData.reverse("update_multimedia_paths"),
+            url: initialPageData.reverse("update_multimedia_paths"),
         }));
     });
 });

@@ -25,6 +25,8 @@ from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_gm_forms)
 from io import open
+from six.moves import range
+from six.moves import zip
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
@@ -49,6 +51,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_awc_mgt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
     'ls_home_vists': 'config_report_icds-cas_static-ls_home_visit_forms_fill_53a43d79',
     'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
+    'cbe_form': 'config_report_icds-cas_static-cbe_form_f7988a04',
     'agg_awc': 'agg_awc',
 }
 

@@ -35,11 +35,6 @@ class MBTHelper(object):
         return state.name
 
     @property
-    def output_file(self):
-        temp_dir = tempfile.gettempdir()
-        return '{}/{}_{}_{}.csv'.format(temp_dir, self.base_tablename, self.state_name, self.month)
-
-    @property
     def location_columns(self):
         return ('awc.state_name', 'awc.district_name', 'awc.block_name', 'awc.awc_name', 'awc.awc_site_code')
 
@@ -247,7 +242,7 @@ class ChildHealthMbtHelper(MBTHelper):
         LEFT JOIN "{person_cases_ucr}" mother on mother.doc_id=t.mother_case_id
           AND awc.state_id = mother.state_id
           AND lower(substring(mother.state_id, '.{{3}}$'::text)) = '{state_id_last_3}'
-        LEFT JOIN "ccs_record_monthly_{month}" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob
+        LEFT JOIN "ccs_record_monthly_{month}" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob AND (ccs.child_name is null OR ccs.child_name=t.person_name)
         WHERE awc.state_id='{state_id}' AND t.month='{month}')
         TO STDOUT WITH CSV HEADER;
         """.format(

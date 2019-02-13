@@ -300,8 +300,8 @@ def paywall_home(domain):
     Return the url for the page in the report builder paywall that users
     in the given domain should be directed to upon clicking "+ Create new report"
     """
-    project = Domain.get_by_name(domain, strict=True)
-    if project.requested_report_builder_subscription:
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if domain_obj.requested_report_builder_subscription:
         return reverse(ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
     else:
         return reverse(ReportBuilderPaywallPricing.urlname, args=[domain])
@@ -954,7 +954,7 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
                 messages.success(request, _("Data source created for '{}'".format(app_source.source)))
             else:
                 assert app_source.source_type == 'form'
-                xform = Form.get_form(app_source.source)
+                xform = app.get_form(app_source.source)
                 data_source = get_form_data_source(app, xform)
                 data_source.save()
                 messages.success(request, _("Data source created for '{}'".format(xform.default_name())))

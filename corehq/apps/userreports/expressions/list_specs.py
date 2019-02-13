@@ -122,9 +122,14 @@ class SortItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         items = _evaluate_items_expression(self._items_expression, doc, context)
 
         try:
+            def sort_key(item):
+                value = self._sort_expression(item, context)
+                # swap 0 and 1 to sort nulls last instead of first
+                return (0 if value is None else 1), value
+
             return sorted(
                 items,
-                key=lambda i: self._sort_expression(i, context),
+                key=sort_key,
                 reverse=True if self.order == self.DESC else False
             )
         except TypeError:

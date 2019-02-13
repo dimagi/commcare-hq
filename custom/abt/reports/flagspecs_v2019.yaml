@@ -41,7 +41,7 @@ http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
     flag_name_por: "3. Os roceadores  estao completamente equipados antes de embarcar?"
     warning_type: unchecked
     ignore: ["none"]
-    section: "Morning_Mobilization_2018"
+    section: "Morning_Mobilization"
     warning: "Problem reported: Spray operator(s) not wearing {msg} before boarding transport. "
     warning_fr: "Problème signalé: Le (s) opérateur (s) de pulvérisation ne porte (s) pas {msg} avant l'embarquement."
     warning_por: "Problema reportado: Roceador (s) nao esta usando {msg} antes de subir na viatura. "
@@ -188,7 +188,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     flag_name_por: "10. Existe um quite completo equipado de material de primeiros socorros guardado no veiculo?"
     warning_type: unchecked
     ignore: ["none"]
-    section: 'Vehicle_Transportaion_2018'
+    section: 'Vehicle_Transportaion'
     warning: "Problem noted: Missing {msg} for first aid kit for the vehicle. Confirm delivery date for {msg} for first aid kit."
     warning_fr: "Problème noté: Manquant {msg} pour la trousse de premiers soins pour le véhicule. Confirmer la date de livraison pour {msg} pour la trousse de premiers soins."
     warning_por: "Problema notado: Em falta {msg} para kit de primeiros socorros da viatura. Confirmar datas de entrega para {msg} para kit de primeiros socorros."
@@ -201,7 +201,7 @@ http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
     flag_name_por: "11. Ha 1. Kit de derramamento, e 2. procedimentos de resposta á acidentes/ emergencia/ derramamento no veiculo?"
     warning_type: unchecked
     ignore: ["none"]
-    section: 'Vehicle_Transportaion_2018'
+    section: 'Vehicle_Transportaion'
     warning: "Problem noted: Missing {msg} for the vehicle. Confirm delivery date for (List missing items)."
     warning_fr: "Problème noté: Manquant {msg} pour le véhicule. Confirmer la date de livraison pour {msg}."
     warning_por: "Problema notado: Faltando {msg} para o veiculo. Confirmar as datas de entrega {msg}."
@@ -905,7 +905,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     flag_name_por: "16. Os seguintes artigosestão no kit de emergência  de primeiros socorros?"
     warning_type: unchecked
     ignore: ["none"]
-    section: 'Storekeeper_Perf_SOP_2018'
+    section: 'Storekeeper_Perf_SOP'
     warning: "Problem reported: First aid items are needed for this facility. Missing: {msg}"
     warning_fr: "Problème signalé: besoins en éléments de premier secours. Manquant: {msg}"
     warning_por: "Problema reportado: necessidade de componentes do kit de primeiros socorros nesta base operacional. Em falta: {msg}"
@@ -918,7 +918,7 @@ http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
     flag_name_por: "17. Existe um kit completo de derramamento e um extintor de incendio no armazem?"
     warning_type: unchecked
     ignore: ["none"]
-    section: 'Storekeeper_Perf_SOP_2018'
+    section: 'Storekeeper_Perf_SOP'
     warning: "Problem reported: Storeroom missing: {msg}"
     warning_fr: "Problème signalé: manquant dans le magasin de stockage: {msg}"
     warning_por: "Problema reportadoFatas no armazem: {msg}"
@@ -1186,7 +1186,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     flag_name_por: "10. O roceador esta completamente  equipado do EPI?"
     warning_type: unchecked
     ignore: ["none"]
-    section: 'Homeowner_Prep_and_SOP_2018'
+    section: 'Homeowner_Prep_and_SOP'
     warning: "Problem reported: Spray operator not wearing full PPE."
     warning_fr: "Problème signalé: l'opérateur n'a pas porté l'EPI au complet"
     warning_por: "Problema reportado:  roceador não esta completamente equipado com EPI."
@@ -1199,7 +1199,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     flag_name_por: "10. O roceador esta completamente  equipado do EPI?"
     warning_type: unchecked_special
     ignore: ["none"]
-    section: 'Homeowner_Prep_and_SOP_2018'
+    section: 'Homeowner_Prep_and_SOP'
     warning: "Problem reported: Spray operator not wearing full PPE."
     warning_fr: "Problème signalé: l'opérateur n'a pas porté l'EPI au complet"
     warning_por: "Problema reportado:  roceador não esta completamente equipado com EPI."

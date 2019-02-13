@@ -15,6 +15,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.util.dates import get_previous_month_date_range
 
 
@@ -45,6 +46,11 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
     def tearDown(self):
         self.domain.delete()
         super(TestDomainInvoiceFactory, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        clear_plan_version_cache()
+        super(TestDomainInvoiceFactory, cls).tearDownClass()
 
     def test_feature_charges(self):
         domain_under_limits = generator.arbitrary_domain()

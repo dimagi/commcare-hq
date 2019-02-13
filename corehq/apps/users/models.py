@@ -69,7 +69,6 @@ from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_case
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from xml.etree import cElementTree as ElementTree
 
@@ -573,12 +572,12 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, location_id=None, program_id=None):
-        project = Domain.get_by_name(domain)
+        domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
-        if project.commtrack_enabled:
+        if domain_obj.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if project.uses_locations and location_id:
+        if domain_obj.uses_locations and location_id:
             self.set_location(domain, location_id)
         self.save()
 
@@ -941,7 +940,8 @@ class ReportingMetadata(DocumentSchema):
     last_build_for_user = SchemaProperty(LastBuild)
 
 
-class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
+@six.python_2_unicode_compatible
+class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     """
     A user (for web and commcare)
     """
@@ -1067,7 +1067,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     user_id = userID
 
-    def __unicode__(self):
+    def __str__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):
@@ -1648,20 +1648,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, fire_signals=True, spawn_task=True, **params):
+    def save(self, fire_signals=True, spawn_task=False, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
-            from corehq.apps.callcenter.tasks import sync_user_cases
+            from corehq.apps.callcenter.tasks import sync_user_cases_if_applicable
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            if spawn_task:
-                sync_user_cases.delay(self._id)
-            else:
-                sync_user_cases(self._id)
+            sync_user_cases_if_applicable(self, spawn_task)
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1820,14 +1817,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             django_user.delete()
         self.save()
 
-    # Todo; temporary fix: Sravan
-    @quickcache(['self._id'], skip_arg=lambda user: user.domain != 'reach-sandbox', timeout=60 * 60 * 4)
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
+        from corehq.apps.locations.models import get_case_sharing_groups_for_locations
         # get faked location group objects
-        groups = []
-        for sql_location in self.get_sql_locations(self.domain):
-            groups.extend(sql_location.get_case_sharing_groups(self._id))
+        groups = list(get_case_sharing_groups_for_locations(
+            self.get_sql_locations(self.domain),
+            self._id
+        ))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups

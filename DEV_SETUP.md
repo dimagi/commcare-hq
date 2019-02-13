@@ -3,6 +3,19 @@ Setting up CommCare HQ for Developers
 
 Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI. Common issues and their solutions can be found at the end of this document.
 
+### (Optional) Copying data from an existing HQ install
+
+If you're setting up HQ on a new computer, you may have an old, functional environment around.  If you don't want to start from scratch, back up your postgres and couch data.
+
+* PostgreSQL
+  * Create a pg dump.  You'll need to verify the host IP address:
+    `pg_dump -h 0.0.0.0 -U commcarehq commcare_hq > /path/to/backup_hq_db.sql`
+* Couchdb
+  * From a non-docker install: Copy `/var/lib/couchdb2/`
+  * From a docker install: Copy `~/.local/share/dockerhq/couchdb2`.
+
+Save those backups to somewhere you'll be able to access from the new environment.
+
 ### Downloading and configuring CommCare HQ
 
 #### Prerequisites
@@ -41,17 +54,18 @@ Once all the dependencies are in order, please do the following:
     $ cd commcare-hq
     $ git submodule update --init --recursive
     $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
-    $ pip install -r requirements/requirements.txt
+    $ setvirtualenvproject  # optional - sets this directory as the project root
 
-(If the last command fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
+Next, install the appropriate requirements (only one is necessary).
 
-There is also a separate collection of Dimagi dev oriented tools that you can install:
+* Recommended for those developing CommCareHQ
+  * `$ pip install -r requirements/dev-requirements.txt`
+* For production environments
+  * `$ pip install -r requirements/prod-requirements.txt`
+* Minimum required packages
+  * `$ pip install -r requirements/requirements.txt`
 
-    $ pip install -r requirements/dev-requirements.txt
-
-And for production environments you may want:
-
-    $ pip install -r requirements/prod-requirements.txt
+(If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
@@ -71,17 +85,30 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 
     $ mkdir sharedfiles
 
+### Set up docker services
+
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
-Note that if you want to run everything except for riakcs (which you often do not need for a development environment),
-the command to run is
 
-    $ ./scripts/docker up -d postgres couch redis elasticsearch kafka
+### (Optional) Copying data from an existing HQ install
+
+If you previously created backups of another HQ install's data, you can now copy that to the new install.
+
+* Postgres
+  * Make sure postgres is running: `./scripts/docker ps`
+  * Make sure `psql` is installed
+    * Ubuntu: `$ sudo apt install postgresql postgresql-contrib`
+  * Restore the backup: `psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql`
+* Couchdb
+  * Stop couch `./scripts/docker stop couch`
+  * Copy the `couchdb2/` dir to `~/.local/share/dockerhq/couchdb2`.
+  * Start couch `./scripts/docker start couch`
+  * Fire up fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
 
 ### Set up your django environment
 
 Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
-The easiest way to do this is using the docker instructions below.
+The easiest way to do this is using the docker instructions above.
 
 Populate your database:
 
@@ -206,6 +233,12 @@ Formplayer is a Java service that allows us to use applications on the web inste
 In `localsettings.py`:
 ```
 FORMPLAYER_URL = 'http://localhost:8010'
+LOCAL_APPS += ('django_extensions',)
+```
+
+When running HQ, be sure to use `runserver_plus`:
+```
+python manage.py runserver_plus
 ```
 
 Then you need to have formplayer running. There are a few options as described below.

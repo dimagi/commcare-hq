@@ -11,6 +11,7 @@ from requests.exceptions import ConnectionError
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
 import six
+from six.moves import range
 
 
 class PaginationEventHandler(object):

@@ -105,6 +105,26 @@ class BlobMeta(PartitionedModel, Model):
             return get_content_md5(fileobj)
 
 
+class DeletedBlobMeta(PartitionedModel, Model):
+    """Metadata about a non-temporary object deleted from the blob db
+
+    This is intended for research purposes when a blob is missing. It can
+    be used to answer the question "Was the blob deleted by HQ?"
+    """
+
+    partition_attr = "parent_id"
+    objects = RestrictedManager()
+
+    id = IntegerField(primary_key=True)
+    domain = CharField(max_length=255)
+    parent_id = CharField(max_length=255)
+    name = CharField(max_length=255)
+    key = CharField(max_length=255)
+    type_code = PositiveSmallIntegerField()
+    created_on = DateTimeField()
+    deleted_on = DateTimeField()
+
+
 class BlobMigrationState(Model):
     slug = CharField(max_length=20, unique=True)
     timestamp = DateTimeField(auto_now=True)

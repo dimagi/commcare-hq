@@ -664,13 +664,9 @@ class XForm(WrappedNode):
             return self.data_node.find('{x}case')
 
     @requires_itext(list)
-    def media_references(self, form):
-        nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
-        return list(set([n.text for n in nodes]))
-
-    @requires_itext(list)
-    def media_references_by_lang(self, lang, form):
-        nodes = self.itext_node.findall('{f}translation[@lang="%s"]/{f}text/{f}value[@form="%s"]' % (lang, form))
+    def media_references(self, form, lang=None):
+        lang_condition = '[@lang="%s"]' % lang if lang else ''
+        nodes = self.itext_node.findall('{f}translation%s/{f}text/{f}value[@form="%s"]' % (lang_condition, form))
         return list(set([n.text for n in nodes]))
 
     @property
@@ -678,30 +674,28 @@ class XForm(WrappedNode):
         nodes = self.findall('{h}head/{odk}intent')
         return list(set(n.attrib.get('class') for n in nodes))
 
-    @property
-    def text_references(self):
+    def text_references(self, lang=None):
+        # Accepts lang param for consistency with image_references, etc.,
+        # but current text references aren't language-specific
         nodes = self.findall('{h}head/{odk}intent[@class="org.commcare.dalvik.action.PRINT"]/{f}extra[@key="cc:print_template_reference"]')
         return list(set(n.attrib.get('ref').strip("'") for n in nodes))
 
-    @property
-    def image_references(self):
-        return self.media_references(form="image")
+    def image_references(self, lang=None):
+        return self.media_references("image", lang=lang)
 
-    @property
-    def audio_references(self):
-        return self.media_references(form="audio") + self.media_references(form="expanded-audio")
+    def audio_references(self, lang=None):
+        return self.media_references("audio", lang=lang) + self.media_references("expanded-audio", lang=lang)
 
-    @property
-    def video_references(self):
-        return self.media_references(form="video") + self.media_references(form="video-inline")
+    def video_references(self, lang=None):
+        return self.media_references("video", lang=lang) + self.media_references("video-inline", lang=lang)
 
-    def all_media_references(self, lang):
-        images = self.media_references_by_lang(lang=lang, form="image")
-        video = self.media_references_by_lang(lang=lang, form="video")
-        audio = self.media_references_by_lang(lang=lang, form="audio")
-        inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
-        expanded_audio = self.media_references_by_lang(lang=lang, form="expanded-audio")
-        return images + video + audio + inline_video + expanded_audio
+    def rename_media(self, old_path, new_path):
+        update_count = 0
+        for node in self.itext_node.findall('{f}translation/{f}text/{f}value'):
+            if node.text == old_path:
+                node.xml.text = new_path
+                update_count += 1
+        return update_count
 
     def _get_instance_ids(self):
         def _get_instances():

@@ -23,7 +23,7 @@ from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.decorators.cache import cache_control
 
 import ghdiff
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, NoResultFound
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import UserErrorEntry
@@ -211,7 +211,11 @@ def current_app_version(request, domain, app_id):
     """
     Return current app version and the latest release
     """
-    app_version = get_current_app_version(domain, app_id)
+    try:
+        app_version = get_current_app_version(domain, app_id)
+    except NoResultFound:
+        # occurs when passed a build
+        raise Http404
     latest_build_version = get_latest_build_version(domain, app_id)
     latest_released_version = get_latest_released_app_version(domain, app_id)
     return json_response({

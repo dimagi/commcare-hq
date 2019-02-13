@@ -11,9 +11,23 @@ import magic
 from couchdbkit.exceptions import ResourceConflict
 from django.template.defaultfilters import filesizeformat
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.soft_assert import soft_assert
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SafeSaveDocument,
+    SchemaDictProperty,
+    SchemaListProperty,
+    StringListProperty,
+    StringProperty,
+)
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
@@ -22,6 +36,7 @@ from django.utils.translation import ugettext as _
 from PIL import Image
 
 from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
@@ -59,7 +74,7 @@ class HQMediaLicense(DocumentSchema):
         if properties and properties.get('type', '') == 'public':
             properties['type'] = 'cc'
         super(HQMediaLicense, self).__init__(_d, **properties)
-    
+
     @property
     def display_name(self):
         return LICENSES.get(self.type, "Improper License")
@@ -244,7 +259,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     def get_base_mime_type(cls, data, filename=None):
         mime_type = cls.get_mime_type(data, filename=filename)
         return mime_type.split('/')[0] if mime_type else None
-        
+
     @classmethod
     def generate_hash(cls, data):
         return hashlib.md5(data).hexdigest()
@@ -403,7 +418,7 @@ class CommCareImage(CommCareMultimedia):
     def get_icon_class(cls):
         return "fa fa-picture-o"
 
-        
+
 class CommCareAudio(CommCareMultimedia):
 
     class Config(object):
@@ -436,7 +451,6 @@ class HQMediaMapItem(DocumentSchema):
     output_size = DictProperty()
     version = IntegerProperty()
     unique_id = StringProperty()
-    form_media = BooleanProperty(default=False)
 
     @property
     def url(self):
@@ -543,10 +557,204 @@ def _log_media_deletion(app, deleted_media):
     )
 
 
-class HQMediaMixin(Document):
+class MediaMixin(object):
     """
-        Mix this guy in with Application to support multimedia.
-        Anything multimedia related happens here.
+        An object that has multimedia associated with it.
+        Used by apps, modules, forms.
+    """
+    def get_media_ref_kwargs():
+        raise NotImplementedError
+
+    def all_media(self, lang=None):
+        """
+            Finds all the multimedia IMAGES and AUDIO referenced in this object
+            Returns list of ApplicationMediaReference objects
+        """
+        raise NotImplementedError
+
+    def rename_media(self, old_path, new_path):
+        """
+            Returns a count of number of changes made.
+            Should rename each item returned by all_media.
+        """
+        raise NotImplementedError
+
+    @memoized
+    def all_media_paths(self, lang=None):
+        return set([m.path for m in self.all_media(lang=lang)])
+
+    @memoized
+    def get_all_paths_of_type(self, media_type):
+        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_type])
+
+    def menu_media(self, menu, lang=None):
+        """
+            Convenience method. Gets the ApplicationMediaReference for a menu that's
+            associated with this MediaMixin (which may be self or a different attribute)
+
+            Note that "menu" may refer to any object that implements NavMenuItemMediaMixin,
+            like a module or a form.
+        """
+        kwargs = self.get_media_ref_kwargs()
+        media = []
+        media.extend([ApplicationMediaReference(image, media_class=CommCareImage, is_menu_media=True, **kwargs)
+                      for image in menu.all_image_paths(lang=lang) if image])
+        media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
+                      for audio in menu.all_audio_paths(lang=lang) if audio])
+        return media
+
+    def rename_menu_media(self, menu, old_path, new_path):
+        """
+            Convenience method, similar to menu_media.
+        """
+        app = self.get_app()
+        update_count = 0
+        for lang in app.langs:
+            if menu.icon_by_language(lang) == old_path:
+                menu.set_icon(lang, new_path)
+                update_count += 1
+            if menu.audio_by_language(lang) == old_path:
+                menu.set_audio(lang, new_path)
+                update_count += 1
+        return update_count
+
+
+class ModuleMediaMixin(MediaMixin):
+    def get_media_ref_kwargs(self):
+        return {
+            'app_lang': self.get_app().default_language,
+            'module_name': self.name,
+            'module_id': self.id,
+            'form_name': None,
+            'form_id': None,
+            'form_order': None,
+        }
+
+    def all_media(self, lang=None):
+        kwargs = self.get_media_ref_kwargs()
+        media = []
+
+        media.extend(self.menu_media(self, lang=lang))
+
+        # Registration from case list
+        if self.case_list_form.form_id:
+            media.extend(self.menu_media(self.case_list_form, lang=lang))
+
+        # Case list menu item
+        if hasattr(self, 'case_list') and self.case_list.show:
+            media.extend(self.menu_media(self.case_list, lang=lang))
+
+        for name, details, display in self.get_details():
+            # Case list lookup - not language-specific
+            if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                media.append(ApplicationMediaReference(details.lookup_image, media_class=CommCareImage,
+                                                       is_menu_media=True, **kwargs))
+
+            # Print template - not language-specific
+            if display and details.display == 'long' and details.print_template:
+                media.append(ApplicationMediaReference(details.print_template['path'],
+                                                       media_class=CommCareMultimedia, **kwargs))
+
+            # Icon-formatted columns
+            for column in details.get_columns():
+                if column.format == 'enum-image':
+                    for map_item in column.enum:
+                        icon = trans(map_item.value, [lang] + self.get_app().langs, include_lang=False)
+                        if icon:
+                            media.append(ApplicationMediaReference(icon, media_class=CommCareImage,
+                                                                   is_menu_media=True, **kwargs))
+
+        return media
+
+    def rename_media(self, old_path, new_path):
+        count = 0
+
+        count += self.rename_menu_media(self, old_path, new_path)
+
+        # Registration from case list
+        if self.case_list_form.form_id:
+            count += self.rename_menu_media(self.case_list_form, old_path, new_path)
+
+        # Case list menu item
+        if hasattr(self, 'case_list') and self.case_list.show:
+            count += self.rename_menu_media(self.case_list, old_path, new_path)
+
+        for name, details, display in self.get_details():
+            # Case list lookup
+            if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                if details.lookup_image == old_path:
+                    details.lookup_image = new_path
+                    count += 1
+
+            # Print template
+            if display and details.display == 'long' and details.print_template:
+                details.print_template['path'] = new_path
+                count += 1
+
+            # Icon-formatted columns
+            for column in details.get_columns():
+                if column.format == 'enum-image':
+                    for map_item in column.enum:
+                        for lang, icon in six.iteritems(map_item.value):
+                            if icon == old_path:
+                                map_item.value[lang] = new_path
+                                count += 1
+
+        return count
+
+
+class FormMediaMixin(MediaMixin):
+    def get_media_ref_kwargs(self):
+        module = self.get_module()
+        return {
+            'app_lang': module.get_app().default_language,
+            'module_name': module.name,
+            'module_id': module.id,
+            'form_name': self.name,
+            'form_id': self.unique_id,
+            'form_order': self.id,
+        }
+
+    @memoized
+    def memoized_xform(self):
+        return self.wrapped_xform()
+
+    def all_media(self, lang=None):
+        kwargs = self.get_media_ref_kwargs()
+
+        media = self.menu_media(self, lang=lang)
+
+        # Form questions
+        parsed = self.wrapped_xform()
+        if parsed.exists():
+            self.validate_form()
+            for image in parsed.image_references(lang=lang):
+                if image:
+                    media.append(ApplicationMediaReference(image, media_class=CommCareImage, **kwargs))
+            for audio in parsed.audio_references(lang=lang):
+                if audio:
+                    media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **kwargs))
+            for video in parsed.video_references(lang=lang):
+                if video:
+                    media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **kwargs))
+            for text in parsed.text_references(lang=lang):
+                if text:
+                    media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **kwargs))
+
+        return media
+
+    def rename_media(self, old_path, new_path):
+        count = 0
+
+        count += self.rename_menu_media(self, old_path, new_path)
+        count += self.memoized_xform().rename_media(old_path, new_path)
+
+        return count
+
+
+class ApplicationMediaMixin(Document, MediaMixin):
+    """
+        Manages multimedia for itself and sub-objects.
     """
 
     # keys are the paths to each file in the final application media zip
@@ -558,96 +766,26 @@ class HQMediaMixin(Document):
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
     @memoized
-    def all_media(self):
+    def all_media(self, lang=None):
         """
-            Get all the paths of multimedia IMAGES and AUDIO referenced in this application.
-            (Video and anything else is currently not supported...)
+            Somewhat counterituitively, this contains all media in the app EXCEPT app-level media (logos).
         """
         media = []
         self.media_form_errors = False
 
-        def _add_menu_media(item, **kwargs):
-            media.extend([ApplicationMediaReference(image,
-                                                    media_class=CommCareImage,
-                                                    is_menu_media=True, **kwargs)
-                          for image in item.all_image_paths()
-                          if image])
-
-            media.extend([ApplicationMediaReference(audio,
-                                                    media_class=CommCareAudio,
-                                                    is_menu_media=True, **kwargs)
-                          for audio in item.all_audio_paths()
-                          if audio])
-
-        for m, module in enumerate([m for m in self.get_modules() if m.uses_media()]):
-            media_kwargs = {
-                'module_name': module.name,
-                'module_id': m,
-                'app_lang': self.default_language,
-            }
-            _add_menu_media(module, **media_kwargs)
-
-            for name, details, display in module.get_details():
-                if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
-                    media.append(ApplicationMediaReference(
-                        details.lookup_image,
-                        media_class=CommCareImage,
-                        **media_kwargs)
-                    )
-                # Icons in case-details
-                for column in details.get_columns():
-                    if column.format == 'enum-image':
-                        for map_item in column.enum:
-                            # iterate over icons of each lang
-                            icons = list(map_item.value.values())
-                            media.extend([ApplicationMediaReference(
-                                icon,
-                                media_class=CommCareImage,
-                                is_menu_media=True,
-                                **media_kwargs)
-                                for icon in icons
-                                if icon]
-                            )
-                # Print template
-                if display and details.display == 'long' and details.print_template:
-                    media.append(ApplicationMediaReference(
-                        details.print_template['path'],
-                        media_class=CommCareMultimedia,
-                        **media_kwargs)
-                    )
-
-            if module.case_list_form.form_id:
-                _add_menu_media(module.case_list_form, **media_kwargs)
-
-            if hasattr(module, 'case_list') and module.case_list.show:
-                _add_menu_media(module.case_list, **media_kwargs)
-
-            for f_order, f in enumerate(module.get_forms()):
-                media_kwargs['form_name'] = f.name
-                media_kwargs['form_id'] = f.unique_id
-                media_kwargs['form_order'] = f_order
-                _add_menu_media(f, **media_kwargs)
+        for module in [m for m in self.get_modules() if m.uses_media()]:
+            media.extend(module.all_media(lang=lang))
+            for form in module.get_forms():
                 try:
-                    parsed = f.wrapped_xform()
-                    if not parsed.exists():
-                        continue
-                    f.validate_form()
-                    for image in parsed.image_references:
-                        if image:
-                            media.append(ApplicationMediaReference(image, media_class=CommCareImage, **media_kwargs))
-                    for audio in parsed.audio_references:
-                        if audio:
-                            media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **media_kwargs))
-                    for video in parsed.video_references:
-                        if video:
-                            media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
-                    for text in parsed.text_references:
-                        if text:
-                            media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **media_kwargs))
+                    media.extend(form.all_media(lang=lang))
                 except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media
 
+    # The following functions (get_menu_media, get_case_list_form_media, get_case_list_menu_item_media,
+    # get_case_list_lookup_image, _get_item_media, and get_media_ref_kwargs) are used to set up context
+    # for app manager settings pages. Ideally, they'd be moved into ModuleMediaMixin and FormMediaMixin
+    # and perhaps share logic with those mixins' versions of all_media.
     def get_menu_media(self, module, module_index, form=None, form_index=None, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
@@ -713,14 +851,6 @@ class HQMediaMixin(Document):
         audio_ref = audio_ref.as_dict()
         menu_media['audio'] = audio_ref
         return menu_media
-
-    @memoized
-    def all_media_paths(self):
-        return set([m.path for m in self.all_media()])
-
-    @memoized
-    def get_all_paths_of_type(self, media_class_name):
-        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_class_name])
 
     def get_media_ref_kwargs(self, module, module_index, form=None,
                              form_index=None, is_menu_media=False):
@@ -789,13 +919,16 @@ class HQMediaMixin(Document):
             Gets all the media objects stored in the multimedia map.
             If passed a profile, will only get those that are used
             in a language in the profile.
+
+            Returns a generator of tuples, where the first item in the tuple is
+            the path (jr://...) and the second is the object (CommCareMultimedia or a subclass)
         """
         found_missing_mm = False
-        filter_multimedia = languages and self.media_language_map
+        filter_multimedia = languages and domain_has_privilege(self.domain, privileges.BUILD_PROFILES)
         if filter_multimedia:
             requested_media = set()
             for lang in languages:
-                requested_media.update(self.media_language_map[lang].media_refs)
+                requested_media |= self.all_media_paths(lang=lang)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
@@ -804,7 +937,7 @@ class HQMediaMixin(Document):
         deleted_media = []
         allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
         for path, map_item in list(self.multimedia_map.items()):
-            if not filter_multimedia or not map_item.form_media or path in requested_media:
+            if not filter_multimedia or path in requested_media:
                 media_item = raw_docs.get(map_item.multimedia_id)
                 if media_item:
                     media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)

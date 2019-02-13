@@ -39,7 +39,7 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
             reduce=False,
             include_docs=True
         ),
-        key=lambda config: config.display_name)
+        key=lambda config: config.display_name or '')
 
     if include_static:
         static_ds = StaticDataSourceConfiguration.by_domain(domain)
@@ -56,8 +56,8 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
 @unit_testing_only
 def get_all_report_configs():
     all_domains = Domain.get_all()
-    for domain in all_domains:
-        for report_config in get_report_configs_for_domain(domain.name):
+    for domain_obj in all_domains:
+        for report_config in get_report_configs_for_domain(domain_obj.name):
             yield report_config
 
 

@@ -415,20 +415,12 @@ def get_symptoms(value):
 
 def get_counseling(value):
     counseling = []
-    if value['counsel_immediate_bf']:
-        counseling.append('Immediate breast feeding')
-    if value['counsel_bp_vid']:
-        counseling.append('BP vid')
-    if value['counsel_preparation']:
-        counseling.append('Preparation')
-    if value['counsel_fp_vid']:
-        counseling.append('Family planning vid')
-    if value['counsel_immediate_conception']:
-        counseling.append('Immediate conception')
-    if value['counsel_accessible_postpartum_fp']:
-        counseling.append('Accessible postpartum family planning')
-    if value['counsel_fp_methods']:
-        counseling.append('Family planning methods')
+    if value['eating_extra']:
+        counseling.append('Eating Extra')
+    if value['resting']:
+        counseling.append('Taking Rest')
+    if value['immediate_breastfeeding']:
+        counseling.append('Counsel on Immediate Breastfeeding')
     if counseling:
         return ', '.join(counseling)
     else:
@@ -447,6 +439,16 @@ def get_tt_dates(value):
         return '; '.join(tt_dates)
     else:
         return 'None'
+
+
+def get_delivery_nature(value):
+    delivery_natures = {
+        1: 'Vaginal',
+        2: 'Caesarean',
+        3: 'Instrumental',
+        0: DATA_NOT_ENTERED,
+    }
+    return delivery_natures.get(value['delivery_nature'], DATA_NOT_ENTERED)
 
 
 def current_age(dob, selected_date):
@@ -842,15 +844,16 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         worksheet[cell].alignment = warp_text_alignment
     worksheet.merge_cells('B3:C3')
     worksheet['B3'].value = "State: {}".format(state)
-    worksheet.merge_cells('D3:E3')
     worksheet['D3'].value = "District: {}".format(district)
-    worksheet.merge_cells('F3:G3')
-    worksheet['F3'].value = "Block: {}".format(block)
+    worksheet.merge_cells('E3:F3')
+    worksheet['E3'].value = "Block: {}".format(block)
     worksheet.merge_cells('H3:I3')
     worksheet['H3'].value = "Date when downloaded:"
+    worksheet['H3'].alignment = Alignment(horizontal="right")
     utc_now = datetime.now(pytz.utc)
     now_in_india = utc_now.astimezone(india_timezone)
     worksheet['J3'].value = custom_strftime('{S} %b %Y', now_in_india)
+    worksheet['J3'].alignment = Alignment(horizontal="right")
 
     # table header
     table_header_position_row = 5
@@ -896,10 +899,10 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         'A': 4,
         'B': 7,
         'C': max(15, len(state) * 4 // 3),
-        'D': 13,
-        'E': max(12, len(district) * 4 // 3),
-        'F': 13,
-        'G': max(15, len(block) * 4 // 3),
+        'D': 13 + (len(district) * 4 // 3),
+        'E': 12,
+        'F': max(13, len(block) * 4 // 3),
+        'G': 15,
         'H': 11,
         'I': 14,
         'J': 14,
@@ -939,6 +942,31 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet2['B4'].value = export_info[3][1]
     worksheet2['A4'].value = export_info[4][0]
     worksheet2['B4'].value = export_info[4][1]
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash
+
+
+def create_excel_file_in_openpyxl(excel_data, data_type):
+    workbook = Workbook()
+    first_worksheet = True
+    for worksheet_data in excel_data:
+        if first_worksheet:
+            worksheet = workbook.active
+            worksheet.title = worksheet_data[0]
+            first_worksheet = False
+        else:
+            worksheet = workbook.create_sheet(worksheet_data[0])
+        for row_number, row_data in enumerate(worksheet_data[1], start=1):
+            for column_number, cell_data in enumerate(row_data, start=1):
+                worksheet.cell(row=row_number, column=column_number).value = cell_data
 
     # saving file
     file_hash = uuid.uuid4().hex

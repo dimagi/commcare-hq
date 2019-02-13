@@ -36,7 +36,7 @@ from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException, XFormValidationFailed)
-from corehq.apps.app_manager.templatetags.xforms_extras import trans, clean_trans
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.es import FormES
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
@@ -529,11 +529,12 @@ def get_xform_source(request, domain, app_id, form_unique_id):
     source = form.source
     response = HttpResponse(source)
     response['Content-Type'] = "application/xml"
+    filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:
-            filename = "%s.xml" % unidecode(form.name[lc])
+            filename = form.name[lc]
             break
-    set_file_download(response, filename)
+    set_file_download(response, "%s.xml" % unidecode(filename))
     return response
 
 
@@ -576,7 +577,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
             'is_current': app.id == current_app_id,
             'modules': [{
                 'module_id': module.id,
-                'name': clean_trans(module.name, app.langs),
+                'name': trans(module.name, app.langs),
                 'is_current': module.unique_id == current_module_id,
             } for module in app.modules]
         }
@@ -727,6 +728,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,
+        'legacy_select2': False,
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
@@ -892,7 +894,12 @@ class FormHasSubmissionsView(LoginAndDomainMixin, View):
 
     def get(self, request, domain, app_id, form_unique_id):
         app = get_app(domain, app_id)
-        form = app.get_form(form_unique_id)
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
+            has_submissions = False
+        else:
+            has_submissions = form_has_submissions(domain, app_id, form.xmlns)
         return JsonResponse({
-            'form_has_submissions': form_has_submissions(domain, app_id, form.xmlns),
+            'form_has_submissions': has_submissions,
         })

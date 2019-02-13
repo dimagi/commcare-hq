@@ -218,6 +218,12 @@ class AbtExpressionSpec(JsonObject):
             # Iterate over the repeat items, or the single submission
             for partial in repeat_items:
 
+                if not names:
+                    # Update inspector names if don't find by _get_inspector_names because in
+                    # app for 2019 we have new place for this data there is already a string
+                    # with all names joined by ','
+                    names = self._get_val(item, ['supervisor_group', 'join_supervisor_name'])
+
                 form_value = self._get_val(partial, spec['question'])
                 warning_type = spec.get("warning_type", None)
 
@@ -250,14 +256,7 @@ class AbtExpressionSpec(JsonObject):
                     # Don't raise flag if no answer given
                     ignore = spec.get("ignore", [])
                     section = spec.get("section", "data")
-                    master_value = self._get_val(['insecticide_prep_grp', 'Q10'], 'sop_full_ppe')
-                    master_unchecked = self._get_unchecked(
-                        item,
-                        ['insecticide_prep_grp', 'Q10', 'sop_full_ppe'],
-                        master_value,
-                        ignore,
-                        section
-                    )
+                    master_value = self._get_val(item, ['insecticide_prep_grp', 'Q10', 'sop_full_ppe'])
                     second_unchecked = self._get_unchecked(
                         item,
                         spec.get('base_path', []) + spec['question'],
@@ -265,8 +264,8 @@ class AbtExpressionSpec(JsonObject):
                         ignore,
                         section
                     )
-                    if not master_unchecked:
-                        # Raise a flag because there are unchecked answers.
+                    if not master_value and second_unchecked:
+                        # Raise a flag because master question is not answered but duplicate question is.
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(msg=", ".join(second_unchecked)),

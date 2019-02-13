@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-08 20:07+0000\n"
+"POT-Creation-Date: 2019-02-05 20:56+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -97,8 +97,8 @@ msgstr ""
 msgid "Billed Annually"
 msgstr ""
 
-#: corehq/apps/accounting/static/accounting/js/widgets.js:66
-#: corehq/apps/domain/static/domain/js/pro-bono.js:29
+#: corehq/apps/accounting/static/accounting/js/widgets.js:70
+#: corehq/apps/domain/static/domain/js/pro-bono.js:33
 msgid "Please enter a valid email."
 msgstr ""
 
@@ -149,7 +149,7 @@ msgstr ""
 msgid "Invalid Project Selected"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:60
+#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:65
 msgid ""
 "Something went wrong refreshing your form properties. Please refresh the "
 "page and try again"
@@ -568,19 +568,19 @@ msgstr ""
 msgid "Proceed with registered case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:145
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:141
 msgid "Show All"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:249
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:245
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:340
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:336
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:433
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:429
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -637,15 +637,15 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:378
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:390
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:412
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:424
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:417
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:429
 msgid "No new changes!"
 msgstr ""
 
@@ -683,19 +683,19 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:45
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:43
 msgid "Filter properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:95
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:93
 msgid "View All Cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:15
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:13
 msgid "Filter questions"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:124
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:122
 msgid "View All Forms"
 msgstr ""
 
@@ -2699,16 +2699,16 @@ msgstr ""
 msgid "There was an error downloading your export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:55
+#: corehq/apps/export/static/export/js/export_list.js:78
 msgid "Download Requested"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:225
-#: corehq/apps/export/static/export/js/export_list.js:231
+#: corehq/apps/export/static/export/js/export_list.js:326
+#: corehq/apps/export/static/export/js/export_list.js:332
 msgid "Invalid date format"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:338
+#: corehq/apps/export/static/export/js/export_list.js:439
 msgid "Problem saving dashboard feed filters"
 msgstr ""
 
@@ -2820,14 +2820,14 @@ msgstr ""
 msgid "Upload "
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:8
+#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7
 msgid ""
 "There was an error processing your file. Please try again or report an issue "
 "if the problem persists."
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:40
-msgid "File validated with no errors or warnings."
+#: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:43
+msgid "No items were found to update."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js:7
@@ -2844,7 +2844,7 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:61
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:66
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3101,20 +3101,20 @@ msgstr ""
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:104
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:111
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:8
 msgid "Select a language..."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:119
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:126
 msgid "Available Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:120
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:127
 msgid "Included Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:121
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:128
 msgid "Search Reports..."
 msgstr ""
 
@@ -3267,40 +3267,40 @@ msgstr ""
 msgid "You must have at least one phone number."
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat.js:239
+#: corehq/apps/sms/static/sms/js/chat.js:241
 msgid "(New Message) - "
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:46
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:47
 msgid "Chat"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:56
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:57
 msgid "Show "
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:56
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:57
 msgid " contacts per page"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:59
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:60
 msgid "Loading Contacts..."
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:60
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:61
 msgid "Showing _START_ to _END_ of _TOTAL_ contacts"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:61
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:62
 msgid "(filtered from _MAX_ total contacts)"
 msgstr ""
 
-#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:71
-#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:120
+#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:72
+#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:121
 msgid "There was an error fetching the SMS rate."
 msgstr ""
 
-#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:154
+#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:155
 msgid "Please Select a Country Code"
 msgstr ""
 
@@ -3341,47 +3341,47 @@ msgid ""
 "the dropdown in the top left."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
-#: corehq/apps/userreports/static/userreports/js/report_config.js:298
-#: corehq/apps/userreports/static/userreports/js/report_config.js:326
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:368
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:383
+#: corehq/apps/userreports/static/userreports/js/report_config.js:295
+#: corehq/apps/userreports/static/userreports/js/report_config.js:323
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:361
-#: corehq/apps/userreports/static/userreports/js/report_config.js:299
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:369
+#: corehq/apps/userreports/static/userreports/js/report_config.js:296
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:362
-#: corehq/apps/userreports/static/userreports/js/report_config.js:300
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:370
+#: corehq/apps/userreports/static/userreports/js/report_config.js:297
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/report_config.js:327
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:384
+#: corehq/apps/userreports/static/userreports/js/report_config.js:324
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:328
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:385
+#: corehq/apps/userreports/static/userreports/js/report_config.js:325
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:388
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:396
 msgid ""
 "Column format selection will determine how each row's value is calculated."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:417
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:425
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
@@ -3474,25 +3474,25 @@ msgstr ""
 msgid "Are you sure you want to delete the role <%= role %>?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:49
+#: corehq/apps/users/static/users/js/web_users.js:55
 msgid ""
 "Could not load users. Please try again later or report an issue if this "
 "problem persists."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:141
+#: corehq/apps/users/static/users/js/web_users.js:147
 msgid "Delete request"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:142
+#: corehq/apps/users/static/users/js/web_users.js:148
 msgid "Are you sure you want to delete this request?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:149
+#: corehq/apps/users/static/users/js/web_users.js:155
 msgid "Delete invitation"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:150
+#: corehq/apps/users/static/users/js/web_users.js:156
 msgid "Are you sure you want to delete this invitation?"
 msgstr ""
 
@@ -3629,35 +3629,35 @@ msgstr ""
 msgid "minute(s)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:209
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:210
 msgid "last"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:211
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:212
 msgid "last - 1"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:213
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:214
 msgid "last - 2"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:242
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:235
 msgid "every day"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:244
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:237
 msgid "every week"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:246
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:239
 msgid "every month"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:391
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:384
 msgid "Send Broadcast"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:393
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:386
 msgid "Schedule Broadcast"
 msgstr ""
 
@@ -3757,4 +3757,20 @@ msgstr ""
 
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "show"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "hide"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "toggle"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/main-components.js:30
+msgid "6.0.65"
 msgstr ""
