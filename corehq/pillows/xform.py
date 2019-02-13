@@ -183,6 +183,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
+        doc_type='XFormInstance'
     )
     xform_to_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),

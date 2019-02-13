@@ -76,7 +76,7 @@ def _filter_by_hash(configs, ucr_division):
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_providers, ucr_division=None,
+    def __init__(self, data_source_providers, ucr_division=None, doc_type=None
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
         """Initializes the processor for UCRs
 
@@ -94,6 +94,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
+        self.doc_type = doc_type
         self.bootstrap_interval = bootstrap_interval
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
@@ -115,6 +116,9 @@ class ConfigurableReportTableManagerMixin(object):
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
+
+        if self.doc_type:
+            configs = [config for config in configs if config.referenced_doc_type == self.doc_type]
 
         return configs
 
