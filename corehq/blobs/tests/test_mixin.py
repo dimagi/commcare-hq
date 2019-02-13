@@ -222,13 +222,12 @@ class TestBlobMixin(BaseTestCase):
         self.assertEqual(obj.blobs[name].content_length, 7)
 
     def test_blob_directory(self):
-        return
         name = join("commcarehq_test", self.obj._id, "test.1")
         content = BytesIO(b"test_blob_directory content")
         self.obj.put_attachment(content, name)
         blob = self.get_blob(self.obj.blobs[name].key)
         with blob.open() as fh:
-            self.assertEqual(fh.read(), "test_blob_directory content")
+            self.assertEqual(fh.read(), b"test_blob_directory content")
 
     def test_put_attachment_deletes_replaced_blob(self):
         name = "test.\u4500"
