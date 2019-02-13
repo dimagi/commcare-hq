@@ -587,6 +587,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     es_facet_list = []
     es_facet_mapping = []
     es_index = None
+    es_search_fields = ["_all"]
 
     @property
     def template_context(self):
@@ -635,10 +636,11 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
             q['query'] = {
                 "bool": {
                     "must": {
-                        "match": {
-                            "_all": {
-                                "query": search_query,
-                                "operator": "and", }}}}}
+                        "multi_match": {
+                            "query": search_query,
+                            "operator": "and",
+                            "fields": self.es_search_fields,
+                        }}}}
 
         q["facets"] = {}
 
@@ -1042,6 +1044,7 @@ class AdminAppReport(AdminFacetedReport):
     search_for = ugettext_noop("apps...")
     default_sort = {'name.exact': 'asc'}
     es_index = 'apps'
+    es_search_fields = ["name", "description", "domain", "_id", "copy_of", "comment", "build_comment"]
 
     excluded_properties = ["_id", "_rev", "_attachments", "external_blobs",
                            "admin_password_charset", "short_odk_url", "version",
