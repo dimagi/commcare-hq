@@ -16,6 +16,8 @@ backports.shutil-get-terminal-size==1.0.0  # via ipython
 billiard==3.3.0.23
 boto3==1.9.91
 botocore==1.12.91
+cairocffi==0.9.0
+cairosvg==1.0.22
 celery==3.1.25
 certifi==2018.11.29
 cffi==1.11.5
@@ -25,6 +27,7 @@ concurrentloghandler==0.9.1
 contextlib2==0.5.4
 cryptography==2.5
 csiphash==0.0.5
+cssselect==1.0.3
 csv342==1.0.0
 datadog==0.15.0
 ddtrace==0.14.1
@@ -128,6 +131,7 @@ pygooglechart==0.4.0
 pyjwt==1.7.1
 pyopenssl==19.0.0
 pypdf2==1.26.0
+pyphen==0.9.5
 pystache==0.5.4
 python-dateutil==2.6.1
 python-editor==1.0.4
@@ -162,6 +166,7 @@ sqlalchemy==1.2.17
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2
+tinycss2==0.6.1
 tinys3==0.1.12
 tornado==4.5.3
 traitlets==4.3.2          # via ipython
@@ -173,6 +178,7 @@ urllib3==1.24.1
 user-agents==1.1.0
 uwsgi==2.0.11.2
 wcwidth==0.1.7            # via prompt-toolkit
+weasyprint==0.39
 webencodings==0.5.1
 werkzeug==0.11.15
 wrapt==1.11.1
