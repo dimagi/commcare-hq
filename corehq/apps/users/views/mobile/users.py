@@ -70,7 +70,10 @@ from corehq.apps.users.bulkupload import (
     UserUploadError,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
-from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.decorators import (
+    require_can_edit_commcare_users,
+    require_can_edit_and_view_commcare_users,
+)
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
@@ -549,7 +552,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
     @use_select2
     @use_angular_js
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_and_view_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
 
@@ -560,7 +563,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT) and not self.request.is_view_only
 
     @property
     def can_add_extra_users(self):
@@ -655,6 +658,10 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
     @allow_remote_invocation
     def create_mobile_worker(self, in_data):
+        if self.request.is_view_only:
+            return {
+                'error': _("You do not have permission to create mobile workers.")
+            }
         fields = [
             'username',
             'password',
@@ -760,7 +767,7 @@ def _modify_user_status(request, domain, user_id, is_active):
     })
 
 
-@require_can_edit_commcare_users
+@require_can_edit_and_view_commcare_users
 @require_GET
 @location_safe
 def paginate_mobile_workers(request, domain):
