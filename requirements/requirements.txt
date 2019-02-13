@@ -115,7 +115,7 @@ pyjwt==1.7.1              # via pygithub, twilio
 pyopenssl==19.0.0         # via requests
 pypdf2==1.26.0            # via xhtml2pdf
 pystache==0.5.4           # via pycco
-python-dateutil==2.8.0
+python-dateutil==2.6.1
 python-editor==1.0.4      # via alembic
 python-levenshtein==0.12.0
 python-magic==0.4.15

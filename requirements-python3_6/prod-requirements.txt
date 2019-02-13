@@ -129,7 +129,7 @@ pyjwt==1.7.1
 pyopenssl==19.0.0
 pypdf2==1.26.0
 pystache==0.5.4
-python-dateutil==2.8.0
+python-dateutil==2.6.1
 python-editor==1.0.4
 python-levenshtein==0.12.0
 python-magic==0.4.15
