@@ -145,7 +145,7 @@ class CaseProperty(ValueSource):
         1
         >>> CaseProperty(case_property="bar")._get_commcare_value(info)
         2
-        >>> type(CaseProperty(case_property="baz")._get_commcare_value(info)) == type(None)
+        >>> CaseProperty(case_property="baz")._get_commcare_value(info) is None
         True
 
         """
