@@ -44,6 +44,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_build_doc_by_version,
     get_built_app_ids_for_app_id,
     get_current_app_version,
     get_latest_build_id,
@@ -124,14 +125,28 @@ def paginate_releases(request, domain, app_id):
             app_es = app_es.is_released()
         if build_comment:
             app_es = app_es.build_comment(build_comment)
+
         results = app_es.exclude_source().run()
+        total_apps = results.total
         app_ids = results.doc_ids
         apps = get_docs(Application.get_db(), app_ids)
+
+        if build_comment:
+            try:
+                version = int(build_comment)
+                build_doc = get_build_doc_by_version(domain, app_id, version)
+                if build_doc and build_doc['_id'] not in app_ids:
+                    total_apps = total_apps + 1
+                    apps = apps + [build_doc]
+                apps = sorted(apps, key=lambda a: -a['version'])
+                apps = apps[:limit]
+            except ValueError:
+                pass
+
         saved_apps = [
             SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
             for app in apps
         ]
-        total_apps = results.total
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
