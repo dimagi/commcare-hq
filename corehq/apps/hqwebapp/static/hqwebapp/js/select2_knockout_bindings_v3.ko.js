@@ -1,11 +1,18 @@
 hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
-], function () {
+    'jquery',
+    'knockout',
+    'DOMPurify/dist/purify.min',
+], function (
+    $,
+    ko,
+    DOMPurify
+) {
     /**
      * Converts the bound element to a select2 widget. The value of the binding is
      * a list of strings, or a list of objects with the keys 'id' and 'text' used
      * for the select2's options.
      */
-    ko.bindingHandlers.select2 = new function () {
+    ko.bindingHandlers.select2 = function () {
         var that = this;
 
         this.SOURCE_KEY = "select2-source";
@@ -29,7 +36,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
             return source;
         };
 
-        this.init = function (element, valueAccessor) {
+        this.init = function (element) {
             var $el = $(element);
 
             // The select2 jquery element uses the array stored at
@@ -56,7 +63,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
     /**
      * Autocomplete widget based on a select2. Allows free text entry.
      */
-    ko.bindingHandlers.autocompleteSelect2 = new function () {
+    ko.bindingHandlers.autocompleteSelect2 = function () {
         var that = this;
 
         this.SOURCE_KEY = "select2-source";
@@ -82,7 +89,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
             };
         };
 
-        this.init = function (element, valueAccessor) {
+        this.init = function (element) {
             that._init(element, that.select2Options(element));
         };
 
