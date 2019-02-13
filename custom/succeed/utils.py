@@ -63,7 +63,6 @@ def get_app_build(app_dict):
         return get_latest_released_build_id(app_dict['domain'], app_dict['_id'])
     else:
         return get_latest_build_id(app_dict['domain'], app_dict['_id'])
-    return None
 
 
 def get_form_dict(case, form_xmlns):
