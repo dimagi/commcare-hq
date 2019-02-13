@@ -480,6 +480,7 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
         include_ucrs=include_ucrs,
+        doc_type='Location',
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
