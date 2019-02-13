@@ -10,11 +10,13 @@ hqDefine("reports/js/filters/button_group", ['jquery'], function ($) {
             var $activeCheckbox = $('#' + $(this).data("checkfilter"));
 
             if ($(this).hasClass('active')) {
-                $(this).addClass('btn-primary');
-                $activeCheckbox.prop("checked", true);
-            } else {
-                $(this).removeClass('btn-primary');
+                $(this).removeClass('active');
+                $(this).addClass('btn-default');
                 $activeCheckbox.prop("checked", false);
+            } else {
+                $(this).removeClass('btn-default');
+                $(this).addClass('active');
+                $activeCheckbox.prop("checked", true);
             }
             $activeCheckbox.trigger('change');
 
