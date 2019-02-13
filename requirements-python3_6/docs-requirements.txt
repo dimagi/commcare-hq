@@ -13,8 +13,8 @@ asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
 billiard==3.3.0.23
-boto3==1.9.91
-botocore==1.12.91
+boto3==1.9.93
+botocore==1.12.93
 celery==3.1.25
 certifi==2018.11.29
 cffi==1.11.5
@@ -144,7 +144,7 @@ six==1.11.0
 smartypants==2.0.1
 snowballstemmer==1.2.1    # via sphinx
 socketpool==0.5.3
-sphinx-rtd-theme==0.4.2
+sphinx-rtd-theme==0.4.3
 sphinx==1.8.4
 sphinxcontrib-django==0.4
 sphinxcontrib-websupport==1.1.0  # via sphinx
