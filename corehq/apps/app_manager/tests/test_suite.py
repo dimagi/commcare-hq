@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 import hashlib
 import mock
 import re
-from lxml.etree import tostring
 
 from django.test import SimpleTestCase
 from lxml.etree import tostring
