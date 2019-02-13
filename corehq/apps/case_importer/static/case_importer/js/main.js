@@ -18,9 +18,13 @@ hqDefine("case_importer/js/main", [
             return;
         }
 
-        var recentUploads = importHistory.recentUploadsModel();
+        var recentUploads = importHistory.recentUploadsModel({
+            totalItems: initialPageData.get('record_count'),
+        });
         $('#recent-uploads').koApplyBindings(recentUploads);
-        _.delay(recentUploads.fetchCaseUploads);
+        _.delay(function () {
+            recentUploads.goToPage(1);
+        });
     };
 
     var behaviorForExcelMappingPage = function () {
