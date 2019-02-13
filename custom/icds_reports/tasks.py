@@ -76,9 +76,9 @@ from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
-from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport, NUM_LAUNCHED_AWCS
+from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
-    create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl, DATA_NOT_ENTERED
+    create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
 from dimagi.utils.chunked import chunked
@@ -640,16 +640,10 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             config=config,
             loc_level=aggregation_level,
             show_test=include_test
-        ).get_excel_data(location)
-        # as DatabaseColumn from corehq.apps.reports.sqlreport doesn't format None
-        if aggregation_level > 4 and NUM_LAUNCHED_AWCS in excel_data[0][1][0] and beta:
-            num_launched_awcs_column = excel_data[0][1][0].index(NUM_LAUNCHED_AWCS)
-            for record in excel_data[0][1][1:]:
-                if record[num_launched_awcs_column] == DATA_NOT_ENTERED:
-                    record[num_launched_awcs_column] = 'Not Launched'
-                else:
-                    record[num_launched_awcs_column] = \
-                        'Launched' if record[num_launched_awcs_column] else 'Not Launched'
+        ).get_excel_data(
+            location,
+            system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta
+        )
     elif indicator == AWC_INFRASTRUCTURE_EXPORT:
         data_type = 'AWC_Infrastructure'
         excel_data = AWCInfrastructureExport(

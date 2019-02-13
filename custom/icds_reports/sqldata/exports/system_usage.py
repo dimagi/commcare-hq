@@ -5,9 +5,7 @@ from __future__ import unicode_literals
 from sqlagg.columns import SumColumn, SimpleColumn
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-from custom.icds_reports.utils.mixins import ExportableMixin
-
-NUM_LAUNCHED_AWCS = 'Number of launched AWCs (ever submitted at least one HH reg form)'
+from custom.icds_reports.utils.mixins import ExportableMixin, NUM_LAUNCHED_AWCS
 
 
 class SystemUsageExport(ExportableMixin, SqlData):
