@@ -117,7 +117,7 @@
                                 <button type="button"
                                         class="btn btn-default btn-xs"
                                         data-bind="
-                                            visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
+                                            visible: prepareExportError() || !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
                                             attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}
                                         "
                                         data-toggle="modal">
@@ -126,7 +126,7 @@
                                 </button>
                                 <button type="button"
                                         class="btn btn-default btn-xs btn-disabled"
-                                        data-bind="visible: emailedExport.updatingData()"
+                                        data-bind="visible: emailedExport.updatingData() && !prepareExportError()"
                                         disabled="disabled">
                                     <i class="fa fa-refresh fa-spin"></i>
                                     {% trans "Updating Data, please wait..." %}
