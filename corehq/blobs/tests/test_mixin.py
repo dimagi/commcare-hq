@@ -59,7 +59,7 @@ class BaseTestCase(TestCase):
             return os.path.exists(self.path)
 
         def open(self):
-            return open(self.path, encoding='utf-8')
+            return open(self.path, 'b')
 
         def listdir(self):
             path = self.path
