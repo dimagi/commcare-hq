@@ -21,11 +21,19 @@ DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
+AAA_DB_ENGINE_ID = 'aaa-data'
 
 
 def get_icds_ucr_db_alias():
     try:
         return connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
+    except KeyError:
+        return None
+
+
+def get_aaa_db_alias():
+    try:
+        return connection_manager.get_django_db_alias(AAA_DB_ENGINE_ID)
     except KeyError:
         return None
 
