@@ -522,7 +522,7 @@ class TestBlobMixinWithMigratingDbBeforeCopyToNew(TestBlobMixinWithS3Backend):
             super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
             if super_.exists():
                 return super_.open()
-            return open(self.fspath, encoding='utf-8')
+            return open(self.fspath, 'b')
 
         def listdir(self):
             path = self.fspath
