@@ -393,7 +393,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_fixtures_in_graph(self):
         expected_suite = parse_normalize(self.get_xml('suite-fixture-graphing'), to_string=False)
-        actual_suite = parse_normalize(Application.wrap(self.get_json('app_fixture_graphing')).create_suite(), to_string=False)
+        actual_suite = parse_normalize(
+            Application.wrap(self.get_json('app_fixture_graphing')).create_suite(), to_string=False)
 
         expected_configuration_list = expected_suite.findall('detail/field/template/graph/configuration')
         actual_configuration_list = actual_suite.findall('detail/field/template/graph/configuration')
