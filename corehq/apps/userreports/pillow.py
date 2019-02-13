@@ -103,7 +103,7 @@ class ConfigurableReportTableManagerMixin(object):
         return [
             source
             for provider in self.data_source_providers
-            for source in provider.get_data_sources()
+            for source in provider.get_data_sources(referenced_doc_type=doc_type)
         ]
 
     def get_filtered_configs(self, configs=None):
@@ -116,9 +116,6 @@ class ConfigurableReportTableManagerMixin(object):
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
-
-        if self.doc_type:
-            configs = [config for config in configs if config.referenced_doc_type == self.doc_type]
 
         return configs
 
