@@ -49,31 +49,7 @@
 
         <div class="tab-pane" id="groups">
             <div class="panel-body">
-                {% if needs_to_downgrade_locations %}
-                    <div>
-                        <p>
-                            {% trans "This project no longer has access to the Organization feature." %}
-                            <a href="{% url "downgrade_locations" domain %}">
-                                {% trans "Click here to fix this." %}
-                            </a>
-                        </p>
-                    </div>
-                {% else %}
-                    <form class="form-horizontal" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
-                        {% if not are_groups %}
-                        <p>
-                            {% trans "No groups created yet." %}
-                            {% if can_create_groups %}
-                            {% blocktrans %}
-                            Go to <a href="{{ groups_url }}">groups configuration</a> to create them.
-                            {% endblocktrans %}
-                            {% endif %}
-                        </p>
-                        {% else %}
-                        {% crispy group_form %}
-                        {% endif %}
-                    </form>
-                {% endif %}
+                {% include 'users/partials/commcare_user_groups.html' %}
             </div>
         </div>
         {% if commtrack %}
