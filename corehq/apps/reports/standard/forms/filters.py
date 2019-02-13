@@ -21,7 +21,8 @@ class SubmissionErrorType(object):
     OVERWRITTEN = 3
     UNKNOWN_ERROR = 4
     ARCHIVED = 5
-    
+
+
     doc_types = ["XFormInstance", "XFormError", "XFormDuplicate", "XFormDeprecated", "SubmissionErrorLog", "XFormArchived"]
     human_readable = [ugettext_lazy("Normal Form"),
                       ugettext_lazy("Form with Errors"),
@@ -29,7 +30,7 @@ class SubmissionErrorType(object):
                       ugettext_lazy("Overwritten Form"),
                       ugettext_lazy("Generic Error"),
                       ugettext_lazy("Archived Form")]
-    
+
     error_defaults = [False, True, False, False, True, False]
     success_defaults = [True, False, False, False, False, False]
 
@@ -74,7 +75,4 @@ class SubmissionTypeFilter(BaseReportFilter):
     @classmethod
     def get_filter_toggle(cls, request):
         filter_ = request.GET.getlist(cls.slug, None)
-        if filter_:
-            return SubmissionErrorType.use_filter(filter_)
-        else:
-            return SubmissionErrorType.use_error_defaults()
+        return SubmissionErrorType.use_filter(filter_)

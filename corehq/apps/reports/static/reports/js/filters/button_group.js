@@ -20,16 +20,6 @@ hqDefine("reports/js/filters/button_group", ['jquery'], function ($) {
             }
             $activeCheckbox.trigger('change');
 
-            if ((!$el.children().hasClass('btn-primary')) && !canBeEmpty) {
-                var $firstChild = $el.children().first();
-                $firstChild.addClass('btn-primary');
-                $('#' + $firstChild.data("checkfilter")).prop("checked", true);
-                if ($(this).data("checkfilter") !== $firstChild.data("checkfilter")) {
-                    $firstChild.removeClass('active');
-                } else {
-                    return false;
-                }
-            }
         });
     };
 
