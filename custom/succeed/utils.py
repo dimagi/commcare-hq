@@ -2,7 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 import dateutil
-from corehq.apps.app_manager.dbaccessors import get_latest_build_id, get_latest_released_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_latest_build_id,
+    get_latest_released_app,
+    get_latest_released_build_id
+)
 from corehq.apps.domain.models import Domain
 from datetime import timedelta
 from pytz import timezone
@@ -60,7 +64,7 @@ def has_any_role(user):
 def get_app_build(app_dict):
     domain = Domain.get_by_name(app_dict['domain'])
     if domain.use_cloudcare_releases:
-        return get_latest_released_app(app_dict['domain'], app_dict['_id'])
+        return get_latest_released_build_id(app_dict['domain'], app_dict['_id'])
     else:
         return get_latest_build_id(app_dict['domain'], app_dict['_id'])
     return None
