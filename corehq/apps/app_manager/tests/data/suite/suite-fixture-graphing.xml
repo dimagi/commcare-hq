@@ -86,14 +86,14 @@
             <text id="y-max">
               <xpath function="10"/>
             </text>
+            <text id="x-labels">
+              <xpath function="concat('{5:&quot;',instance('commcaresession')/session/context/username,'&quot;}')"/>
+            </text>
             <text id="x-min">
               <xpath function="0"/>
             </text>
             <text id="y-min">
               <xpath function="0"/>
-            </text>
-            <text id="x-labels">
-              <xpath function="concat('{5:&quot;',instance('commcaresession')/session/context/username,'&quot;}')"/>
             </text>
             <text id="secondary-y-title">
               <locale id="m0.case_long.case_my_awesome_graph_2.graph.key.secondary-y-title"/>
