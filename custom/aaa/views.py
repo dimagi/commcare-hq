@@ -10,7 +10,7 @@ from corehq.apps.locations.permissions import location_safe
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView, View
 
-from custom.reach.const import INDICATOR_LIST, NUMERIC, PERCENT, COLORS
+from custom.aaa.const import INDICATOR_LIST, NUMERIC, PERCENT, COLORS
 
 
 class ReachDashboardView(TemplateView):

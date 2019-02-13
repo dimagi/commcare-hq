@@ -904,16 +904,15 @@ class SoftwarePlanVersion(models.Model):
         if self.user_feature is not None:
             return "USD %d" % self.user_feature.per_excess_fee
 
-    def feature_charges_exist_for_domain(self, domain,
-                                         start_date=None, end_date=None):
-        domain = ensure_domain_instance(domain)
-        if domain is None:
+    def feature_charges_exist_for_domain(self, domain, start_date=None, end_date=None):
+        domain_obj = ensure_domain_instance(domain)
+        if domain_obj is None:
             return False
         from corehq.apps.accounting.usage import FeatureUsageCalculator
         for feature_rate in self.feature_rates.all():
             if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE:
                 calc = FeatureUsageCalculator(
-                    feature_rate, domain.name, start_date=start_date,
+                    feature_rate, domain_obj.name, start_date=start_date,
                     end_date=end_date
                 )
                 if calc.get_usage() > feature_rate.monthly_limit:
