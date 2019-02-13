@@ -94,7 +94,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         params = params || {};
 
         self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
-        module.CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
+        module.CC_DETAIL_SCREEN.setUpAutocomplete(self.textField, params.properties);
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
@@ -106,7 +106,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             self.notifyButton();
         });
         self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
-        this.textField.on('change', function () {
+        self.textField.on('change', function () {
             if (!self.hasValidPropertyName()) {
                 self.showWarning(true);
             } else {
@@ -162,7 +162,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 return gettext('Decreasing (1.3, 1.2, 1.1)');
             }
         });
-        
+
         return self;
     };
 
