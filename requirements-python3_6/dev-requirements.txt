@@ -29,7 +29,7 @@ click==7.0                # via pip-tools
 cloudant==2.7.0
 colorama==0.4.1           # via sniffer
 concurrentloghandler==0.9.1
-contextlib2==0.5.4
+contextlib2==0.5.5
 coverage==4.5.1
 cryptography==2.5
 csiphash==0.0.5

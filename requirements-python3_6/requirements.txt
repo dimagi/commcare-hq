@@ -20,7 +20,7 @@ cffi==1.11.5              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff, requests
 cloudant==2.7.0
 concurrentloghandler==0.9.1
-contextlib2==0.5.4
+contextlib2==0.5.5
 cryptography==2.5         # via pyopenssl, requests
 csiphash==0.0.5
 csv342==1.0.0

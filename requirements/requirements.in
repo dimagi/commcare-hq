@@ -94,7 +94,7 @@ dnspython==1.15.0
 raven==6.1.0
 quickcache~=0.5
 ethiopian-date-converter==0.1.5
-contextlib2==0.5.4
+contextlib2~=0.5.4
 hiredis==0.2.0
 xlwt==1.3.0
 django-prbac>=0.0.7
