@@ -2,12 +2,14 @@ hqDefine('case_importer/js/import_history', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components.ko',
 ], function (
     $,
     ko,
     _,
+    assertProperties,
     initialPageData
 ) {
     var uploadModel = function (options) {
@@ -35,8 +37,13 @@ hqDefine('case_importer/js/import_history', [
         return self;
     };
 
-    var recentUploads = function () {
+    var recentUploads = function (options) {
+        assertProperties.assertRequired(options, ['totalItems']);
+
         var self = {};
+        self.totalItems = ko.observable(options.totalItems);
+        self.itemsPerPage = ko.observable();
+        self.showPaginationSpinner = ko.observable(false);
         // this is used both for the state of the ajax request
         // and for the state of celery task
         self.states = {
@@ -79,12 +86,17 @@ hqDefine('case_importer/js/import_history', [
                 }
             }
         };
-        self.fetchCaseUploads = function () {
+        self.goToPage = function (page) {
             if (self.state() === self.states.MISSING) {
                 // only show spinner on first fetch
                 self.state(self.states.STARTED);
             }
-            $.get(initialPageData.reverse('case_importer_uploads'), {limit: initialPageData.getUrlParameter('limit')}).done(function (data) {
+            self.showPaginationSpinner(true);
+            $.get(initialPageData.reverse('case_importer_uploads'), {
+                page: page,
+                limit: self.itemsPerPage(),
+            }).done(function (data) {
+                self.showPaginationSpinner(false);
                 self.state(self.states.SUCCESS);
                 data = _.map(data, function (caseUpload) {
                     return uploadModel(caseUpload);
@@ -96,9 +108,12 @@ hqDefine('case_importer/js/import_history', [
                             caseUpload.task_status().state === self.states.MISSING;
                 });
                 if (anyInProgress) {
-                    _.delay(self.fetchCaseUploads, 5000);
+                    _.delay(function () {
+                        self.goToPage(1);
+                    }, 5000);
                 }
             }).fail(function () {
+                self.showPaginationSpinner(false);
                 self.state(self.states.FAILED);
             });
         };
