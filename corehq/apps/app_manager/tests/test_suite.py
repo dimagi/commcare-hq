@@ -4,9 +4,9 @@ from __future__ import unicode_literals
 import hashlib
 import mock
 import re
+from lxml.etree import tostring
 
 from django.test import SimpleTestCase
-from lxml.etree import tostring
 
 from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
 from corehq.apps.app_manager.models import (
