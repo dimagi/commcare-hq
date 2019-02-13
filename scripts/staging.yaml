@@ -49,7 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
   - dmr/fix-es-service-check  # Danny Jan 3
   - jls/select2-accept-csv  # Jenny Feb 1
   - jls/paginate-case-importer-uploads  # Jenny Feb 8
