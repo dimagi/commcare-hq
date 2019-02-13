@@ -667,7 +667,7 @@ class XForm(WrappedNode):
     def media_references(self, form, lang=None):
         lang_condition = '[@lang="%s"]' % lang if lang else ''
         nodes = self.itext_node.findall('{f}translation%s/{f}text/{f}value[@form="%s"]' % (lang_condition, form))
-        return sorted(set([n.text for n in nodes]))
+        return list(set([n.text for n in nodes]))
 
     @property
     def odk_intents(self):
