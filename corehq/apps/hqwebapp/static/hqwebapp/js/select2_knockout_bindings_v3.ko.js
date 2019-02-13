@@ -12,7 +12,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
      * a list of strings, or a list of objects with the keys 'id' and 'text' used
      * for the select2's options.
      */
-    ko.bindingHandlers.select2 = function () {
+    ko.bindingHandlers.select2 = new function () {
         var that = this;
 
         this.SOURCE_KEY = "select2-source";
@@ -63,7 +63,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
     /**
      * Autocomplete widget based on a select2. Allows free text entry.
      */
-    ko.bindingHandlers.autocompleteSelect2 = function () {
+    ko.bindingHandlers.autocompleteSelect2 = new function () {
         var that = this;
 
         this.SOURCE_KEY = "select2-source";
