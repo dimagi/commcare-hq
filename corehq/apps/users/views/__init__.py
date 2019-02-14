@@ -25,6 +25,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django_otp.plugins.otp_static.models import StaticToken
 
 from couchdbkit.exceptions import ResourceNotFound
+
+from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
@@ -329,6 +331,12 @@ class EditWebUserView(BaseEditUserView):
     page_title = ugettext_noop("Edit Web User")
 
     @property
+    def page_name(self):
+        if self.request.is_view_only:
+            return _("Edit Web User (View Only)")
+        return self.page_title
+
+    @property
     @memoized
     def form_user_update(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
@@ -372,6 +380,8 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
         }
+        if self.request.is_view_only:
+            make_form_readonly(self.commtrack_form)
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
@@ -382,7 +392,7 @@ class EditWebUserView(BaseEditUserView):
 
         return ctx
 
-    @method_decorator(require_can_edit_web_users)
+    @method_decorator(require_can_edit_and_view_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
 
@@ -390,6 +400,9 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        if self.request.is_view_only:
+            return self.get(request, *args, **kwargs)
+
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
