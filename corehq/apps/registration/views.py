@@ -46,7 +46,6 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.users.landing_pages import get_cloudcare_urlname
-from corehq import toggles
 from django.contrib.auth.models import User
 
 from corehq.util.soft_assert import soft_assert
