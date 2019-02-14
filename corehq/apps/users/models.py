@@ -69,7 +69,6 @@ from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_case
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from xml.etree import cElementTree as ElementTree
 
@@ -103,8 +102,20 @@ def _get_default(list):
 
 class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
+    view_web_users = BooleanProperty(default=False)
+
+    # only domain admins can edit roles, due to security issues.
+    view_roles = BooleanProperty(default=False)
+
     edit_commcare_users = BooleanProperty(default=False)
+    view_commcare_users = BooleanProperty(default=False)
+
+    edit_groups = BooleanProperty(default=False)
+    view_groups = BooleanProperty(default=False)
+
     edit_locations = BooleanProperty(default=False)
+    view_locations = BooleanProperty(default=False)
+
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
@@ -121,6 +132,8 @@ class Permissions(DocumentSchema):
     view_web_apps_list = StringListProperty(default=[])
 
     view_file_dropzone = BooleanProperty(default=False)
+    manage_releases = BooleanProperty(default=True)
+    manage_releases_list = StringListProperty(default=[])
 
     @classmethod
     def wrap(cls, data):
@@ -197,8 +210,14 @@ class Permissions(DocumentSchema):
     def max(cls):
         return Permissions(
             edit_web_users=True,
+            view_web_users=True,
+            view_roles=True,
             edit_commcare_users=True,
+            view_commcare_users=True,
+            edit_groups=True,
+            view_groups=True,
             edit_locations=True,
+            view_locations=True,
             edit_motech=True,
             edit_data=True,
             edit_apps=True,
@@ -233,7 +252,11 @@ class UserRolePresets(object):
             cls.READ_ONLY_NO_REPORTS: lambda: Permissions(),
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
+                                                       view_commcare_users=True,
+                                                       edit_groups=True,
+                                                       view_groups=True,
                                                        edit_locations=True,
+                                                       view_locations=True,
                                                        edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
@@ -390,7 +413,11 @@ PERMISSIONS_PRESETS = {
         'name': 'Field Implementer',
         'permissions': Permissions(
             edit_commcare_users=True,
+            view_commcare_users=True,
+            edit_groups=True,
+            view_groups=True,
             edit_locations=True,
+            view_locations=True,
             edit_shared_exports=True,
             view_reports=True,
         ),
@@ -571,12 +598,12 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, location_id=None, program_id=None):
-        project = Domain.get_by_name(domain)
+        domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
-        if project.commtrack_enabled:
+        if domain_obj.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if project.uses_locations and location_id:
+        if domain_obj.uses_locations and location_id:
             self.set_location(domain, location_id)
         self.save()
 
@@ -640,15 +667,19 @@ class _AuthorizableMixin(IsMemberOfMixin):
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
     @memoized
-    def has_permission(self, domain, permission, data=None):
-        # is_admin is the same as having all the permissions set
-        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
-            return True
-        elif self.is_domain_admin(domain):
-            return True
+    def has_permission(self, domain, permission, data=None, restrict_global_admin=False):
+        if not restrict_global_admin:
+            # is_admin is the same as having all the permissions set
+            if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+                return True
+            elif self.is_domain_admin(domain):
+                return True
 
         dm = self.get_domain_membership(domain)
         if dm:
+            # an admin has access to all features by default, restrict that if needed
+            if dm.is_admin and restrict_global_admin:
+                return False
             return dm.has_permission(permission, data)
         else:
             return False
@@ -935,7 +966,8 @@ class ReportingMetadata(DocumentSchema):
     last_build_for_user = SchemaProperty(LastBuild)
 
 
-class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
+@six.python_2_unicode_compatible
+class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     """
     A user (for web and commcare)
     """
@@ -1061,7 +1093,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     user_id = userID
 
-    def __unicode__(self):
+    def __str__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):
@@ -1642,15 +1674,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, fire_signals=True, **params):
+    def save(self, fire_signals=True, spawn_task=False, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
+            from corehq.apps.callcenter.tasks import sync_user_cases_if_applicable
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+            sync_user_cases_if_applicable(self, spawn_task)
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1811,10 +1845,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
+        from corehq.apps.locations.models import get_case_sharing_groups_for_locations
         # get faked location group objects
-        groups = []
-        for sql_location in self.get_sql_locations(self.domain):
-            groups.extend(sql_location.get_case_sharing_groups(self._id))
+        groups = list(get_case_sharing_groups_for_locations(
+            self.get_sql_locations(self.domain),
+            self._id
+        ))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
@@ -1954,7 +1990,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if commit:
             self.save()
 
-    def unset_location(self, fall_back_to_next=False):
+    def unset_location(self, fall_back_to_next=False, commit=True):
         """
         Resets primary location to next available location from assigned_location_ids.
             If there are no more locations in assigned_location_ids,
@@ -1986,7 +2022,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.update_fixture_status(UserFixtureType.LOCATION)
             self.get_domain_membership(self.domain).location_id = None
             self.get_sql_location.reset_cache(self)
-            self.save()
+            if commit:
+                self.save()
 
     def unset_location_by_id(self, location_id, fall_back_to_next=False):
         """
@@ -2025,7 +2062,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'location_id': location_id
             })
 
-    def reset_locations(self, location_ids):
+    def reset_locations(self, location_ids, commit=True):
         """
         Reset user's assigned_locations to given location_ids and update user data.
             This should be called after updating primary location via set_location/unset_location
@@ -2045,8 +2082,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
-            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]))
-        else:
+            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]), commit=False)
+
+        if commit:
             self.save()
 
     def supply_point_index_mapping(self, supply_point, clear=False):
@@ -2086,7 +2124,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         submit_case_blocks(
             ElementTree.tostring(
                 caseblock.as_xml()
-            ),
+            ).decode('utf-8'),
             self.domain,
             device_id=__name__ + ".CommCareUser." + source,
         )
@@ -2686,8 +2724,26 @@ class AnonymousCouchUser(object):
     def can_edit_commcare_users(self):
         return False
 
+    def can_view_commcare_users(self):
+        return False
+
+    def can_edit_groups(self):
+        return False
+
+    def can_view_groups(self):
+        return False
+
     def can_edit_locations(self):
         return False
 
+    def can_view_locations(self):
+        return False
+
     def can_edit_web_users(self):
+        return False
+
+    def can_view_web_uers(self):
+        return False
+
+    def can_view_roles(self):
         return False

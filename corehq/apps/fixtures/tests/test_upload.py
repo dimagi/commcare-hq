@@ -189,6 +189,7 @@ class TestFixtureUpload(TestCase):
         export_raw(headers, rows, file, format=Format.XLS_2007)
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
+            f.seek(0)
             return get_workbook(f)
 
     def get_fixture_items(self, attribute):

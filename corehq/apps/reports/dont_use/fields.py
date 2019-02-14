@@ -9,10 +9,7 @@ import pytz
 import warnings
 from django.utils.translation import ugettext_noop
 import uuid
-from corehq.apps.reports.util import (
-    DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER,
-    DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER,
-)
+from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_FIELD_CLASS
 
 
 class ReportField(object):
@@ -33,8 +30,8 @@ class ReportField(object):
         self.domain = domain
         self.timezone = timezone
         self.parent_report = parent_report
-        self.css_label = css_label or DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER
-        self.css_field = css_field or DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER
+        self.css_label = css_label or (CSS_LABEL_CLASS + ' control-label')
+        self.css_field = css_field or CSS_FIELD_CLASS
 
     def render(self):
         if not self.template: return ""

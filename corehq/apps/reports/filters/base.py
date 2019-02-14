@@ -5,10 +5,7 @@ from django.template.loader import render_to_string
 from memoized import memoized
 # For translations
 from django.utils.translation import ugettext_noop
-from corehq.apps.reports.util import (
-    DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER,
-    DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER,
-)
+from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_FIELD_CLASS
 
 
 class BaseReportFilter(object):
@@ -39,8 +36,8 @@ class BaseReportFilter(object):
         self.request = request
         self.timezone = timezone
         self.parent_report = parent_report
-        self.css_label = css_label or DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER
-        self.css_field = css_field or DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER
+        self.css_label = css_label or (CSS_LABEL_CLASS + ' control-label')
+        self.css_field = css_field or CSS_FIELD_CLASS
         self.context = {}
 
     @property

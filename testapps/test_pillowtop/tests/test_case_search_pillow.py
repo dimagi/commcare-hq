@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import uuid
 
-from django.test import TestCase, override_settings
+from django.test import override_settings, TestCase
 from mock import MagicMock, patch
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
@@ -20,11 +20,11 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.pillows.case import get_case_pillow
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
     domains_needing_search_index,
-    get_case_search_to_elasticsearch_pillow,
 )
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -43,7 +43,7 @@ class CaseSearchPillowTest(TestCase):
         super(CaseSearchPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
-        self.pillow = get_case_search_to_elasticsearch_pillow()
+        self.pillow = get_case_pillow(skip_ucr=True)
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
         # Bootstrap ES

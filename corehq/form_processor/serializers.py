@@ -4,9 +4,10 @@ from jsonfield import JSONField
 from rest_framework import serializers
 
 from corehq.apps.commtrack.models import StockState
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL,
+    XFormInstanceSQL, XFormOperationSQL,
     LedgerValue, CaseAttachmentSQL)
 import six
 
@@ -33,10 +34,10 @@ class XFormOperationSQLSerializer(serializers.ModelSerializer):
 
 
 class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(source="attachment_id")
+    id = serializers.CharField(source="key")
 
     class Meta(object):
-        model = XFormAttachmentSQL
+        model = BlobMeta
         fields = ('id', 'content_type', 'content_length')
 
 

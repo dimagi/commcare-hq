@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test import TestCase, override_settings
+from django.test import override_settings, TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.es import FormES
@@ -57,7 +57,7 @@ class ReportXformPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self, domain):
-        with process_pillow_changes('ReportXFormToElasticsearchPillow'):
+        with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 metadata = TestFormMetadata(domain=domain)
                 form = get_form_ready_to_save(metadata)

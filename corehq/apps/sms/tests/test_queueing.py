@@ -4,8 +4,11 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import send_sms, incoming
 from corehq.apps.sms.models import SMS, QueuedSMS
 from corehq.apps.sms.tasks import process_sms, MAX_TRIAL_SMS, passes_trial_check
-from corehq.apps.sms.tests.util import (BaseSMSTest, setup_default_sms_test_backend,
-    delete_domain_phone_numbers)
+from corehq.apps.sms.tests.util import (
+    BaseSMSTest,
+    setup_default_sms_test_backend,
+    delete_domain_phone_numbers
+)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 from datetime import datetime, timedelta
@@ -16,7 +19,6 @@ from mock import Mock, patch
 from six.moves import range
 
 from corehq.toggles import RETRY_SMS_INDEFINITELY, NAMESPACE_DOMAIN
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
 def patch_datetime_api(timestamp):
@@ -80,8 +82,6 @@ class QueueingTestCase(BaseSMSTest):
         QueuedSMS.objects.all().delete()
         SMS.objects.filter(domain=self.domain).delete()
         self.domain_obj.delete()
-
-        clear_toggle_cache(RETRY_SMS_INDEFINITELY.slug, self.domain, NAMESPACE_DOMAIN)
 
         super(QueueingTestCase, self).tearDown()
 
@@ -189,7 +189,7 @@ class QueueingTestCase(BaseSMSTest):
 
     def test_outgoing_failure_indefinite_retry(self, process_sms_delay_mock, enqueue_directly_mock):
         timestamp = datetime(2016, 1, 1, 12, 0)
-        update_toggle_cache(RETRY_SMS_INDEFINITELY.slug, self.domain, True, NAMESPACE_DOMAIN)
+        RETRY_SMS_INDEFINITELY.set(self.domain, True, NAMESPACE_DOMAIN)
 
         with patch_datetime_api(timestamp):
             send_sms(self.domain, None, '+999123', 'test outgoing')

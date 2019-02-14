@@ -7,7 +7,6 @@ from couchexport.exceptions import SchemaMismatchException,\
 from couchexport.schema import extend_schema
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
 from memoized import memoized
@@ -212,12 +211,13 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
     return config, updated_schema, export_schema_checkpoint
 
 
-class Constant(UnicodeMixIn):
+@six.python_2_unicode_compatible
+class Constant(object):
 
     def __init__(self, message):
         self.message = message
 
-    def __unicode__(self):
+    def __str__(self):
         return self.message
 
 SCALAR_NEVER_WAS = settings.COUCHEXPORT_SCALAR_NEVER_WAS \
@@ -378,12 +378,13 @@ class FormattedRow(object):
     """
 
     def __init__(self, data, id=None, separator=".", id_index=0,
-                 is_header_row=False):
+                 is_header_row=False, hyperlink_column_indices=()):
         self.data = data
         self.id = id
         self.separator = separator
         self.id_index = id_index
         self.is_header_row = is_header_row
+        self.hyperlink_column_indices = hyperlink_column_indices
 
     def __iter__(self):
         for i in self.get_data():

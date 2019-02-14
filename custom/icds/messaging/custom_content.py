@@ -71,23 +71,6 @@ def get_last_growth_monitoring_form(domain, case_id):
     return forms_under_consideration[0]
 
 
-def get_state_code(location):
-    if not location:
-        return None
-
-    state = location.get_ancestors().filter(location_type__code=STATE_TYPE_CODE).first()
-    return state.site_code if state else None
-
-
-def get_language_code_for_state(state_code):
-    if state_code == ANDHRA_PRADESH_SITE_CODE:
-        return TELUGU
-    elif state_code == MAHARASHTRA_SITE_CODE:
-        return MARATHI
-    else:
-        return HINDI
-
-
 def render_message(language_code, template, context):
     try:
         message = render_to_string('icds/messaging/indicators/%s/%s' % (language_code, template), context)
@@ -145,11 +128,6 @@ def get_user_from_usercase(usercase):
         return None
 
     return user
-
-
-def get_language_code_for_user(user):
-    state_code = get_state_code(user.location)
-    return get_language_code_for_state(state_code)
 
 
 def render_content_for_user(user, template, context):

@@ -19,8 +19,8 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
+from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_datatables,
@@ -524,7 +524,7 @@ class GenericReportView(object):
         """
         self.context.update(rendered_as=self.rendered_as)
         self.context.update({
-            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         })
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,

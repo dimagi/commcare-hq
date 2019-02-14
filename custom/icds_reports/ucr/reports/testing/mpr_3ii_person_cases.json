@@ -11,7 +11,7 @@
     "icds"
   ],
   "report_id": "static-mpr_3ii_person_cases-optimized",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR - 3ii - Person cases (Static) (Optimized)",
     "description": "",
@@ -95,7 +95,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -109,7 +109,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex = 'F' AND resident = 'yes'": 1
+          "closed_on IS NULL AND sex = 'F' AND resident = 1": 1
         }
       },
       {
@@ -119,7 +119,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 'yes'": 1
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1": 1
         }
       },
       {
@@ -129,7 +129,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex = 'F' AND resident IS DISTINCT FROM 'yes'": 1
+          "closed_on IS NULL AND sex = 'F' AND resident != 1": 1
         }
       },
       {
@@ -139,7 +139,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') AND resident IS DISTINCT FROM 'yes'": 1
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident != 1": 1
         }
       }
     ],

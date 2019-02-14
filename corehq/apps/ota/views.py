@@ -257,7 +257,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
-        async=async_restore_enabled,
+        is_async=async_restore_enabled,
         case_sync=case_sync,
     )
     return restore_config.get_response(), restore_config.timing_context

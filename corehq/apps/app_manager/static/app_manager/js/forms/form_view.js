@@ -64,7 +64,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
         setupValidation(hqImport("hqwebapp/js/initial_page_data").reverse("validate_form_for_build"));
 
         // Analytics for renaming form
-        $(".appmanager-edit-title").on('click', '.btn-success', function () {
+        $(".appmanager-edit-title").on('click', '.btn-primary', function () {
             hqImport('analytix/js/kissmetrix').track.event("Renamed form from form settings page");
         });
 

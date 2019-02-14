@@ -2,11 +2,10 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-import contextlib
-import datetime
 import logging
 from collections import namedtuple
 
+from ddtrace import tracer
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -35,6 +34,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
+from corehq.form_processor.submission_process_tracker import unfinished_submission
 from corehq.util.global_request import get_request
 from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
@@ -245,29 +245,30 @@ class SubmissionPost(object):
                 instance = xforms[0]
 
                 if instance.is_duplicate:
-                    submission_type = 'duplicate'
-                    existing_form = xforms[1]
-                    stub = UnfinishedSubmissionStub.objects.filter(
-                        domain=instance.domain,
-                        xform_id=existing_form.form_id
-                    ).first()
+                    with tracer.trace('submission.process_duplicate'):
+                        submission_type = 'duplicate'
+                        existing_form = xforms[1]
+                        stub = UnfinishedSubmissionStub.objects.filter(
+                            domain=instance.domain,
+                            xform_id=existing_form.form_id
+                        ).first()
 
-                    result = None
-                    if stub:
-                        from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
-                        result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
-                    elif existing_form.is_error:
-                        from corehq.form_processor.reprocess import reprocess_form
-                        result = reprocess_form(existing_form, lock_form=False)
-                    if result and result.error:
-                        submission_type = 'error'
-                        openrosa_kwargs['error_message'] = result.error
-                        if existing_form.is_error:
-                            openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+                        result = None
+                        if stub:
+                            from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
+                            result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
+                        elif existing_form.is_error:
+                            from corehq.form_processor.reprocess import reprocess_form
+                            result = reprocess_form(existing_form, lock_form=False)
+                        if result and result.error:
+                            submission_type = 'error'
+                            openrosa_kwargs['error_message'] = result.error
+                            if existing_form.is_error:
+                                openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+                            else:
+                                openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         else:
-                            openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
-                    else:
-                        self.interface.save_processed_models([instance])
+                            self.interface.save_processed_models([instance])
                 elif not instance.is_error:
                     submission_type = 'normal'
                     try:
@@ -335,6 +336,7 @@ class SubmissionPost(object):
             revoke_celery_task(task_id)
             async_restore_task_id_cache.invalidate()
 
+    @tracer.wrap(name='submission.save_models')
     def save_processed_models(self, case_db, xforms, case_stock_result):
         instance = xforms[0]
         try:
@@ -358,6 +360,7 @@ class SubmissionPost(object):
             return "Error performing post save operations"
 
     @staticmethod
+    @tracer.wrap(name='submission.post_save_actions')
     def do_post_save_actions(case_db, xforms, case_stock_result):
         instance = xforms[0]
         try:
@@ -380,6 +383,7 @@ class SubmissionPost(object):
             raise PostSaveError
 
     @staticmethod
+    @tracer.wrap(name='submission.process_cases_and_stock')
     def process_xforms_for_cases(xforms, case_db):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
@@ -469,6 +473,7 @@ class SubmissionPost(object):
             status=500,
         ).response()
 
+    @tracer.wrap(name='submission.process_device_log')
     def process_device_log(self, device_log_form):
         self._conditionally_send_device_logs_to_sumologic(device_log_form)
         ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
@@ -511,33 +516,3 @@ def notify_submission_error(instance, exception, message):
         notify_exception(request, message, details=details)
     else:
         logging.error(message, exc_info=sys.exc_info(), extra={'details': details})
-
-
-class SubmissionProcessTracker(object):
-    def __init__(self, stub=None):
-        self.stub = stub
-
-    def submission_saved(self):
-        if self.stub:
-            self.stub.saved = True
-            self.stub.save()
-
-    def submission_fully_processed(self):
-        if self.stub:
-            self.stub.delete()
-
-
-@contextlib.contextmanager
-def unfinished_submission(instance):
-    unfinished_submission_stub = None
-    if not getattr(instance, 'deprecated_form_id', None):
-        # don't create stubs for form edits since we don't want to auto-reprocess them
-        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-            xform_id=instance.form_id,
-            timestamp=datetime.datetime.utcnow(),
-            saved=False,
-            domain=instance.domain,
-        )
-    tracker = SubmissionProcessTracker(unfinished_submission_stub)
-    yield tracker
-    tracker.submission_fully_processed()

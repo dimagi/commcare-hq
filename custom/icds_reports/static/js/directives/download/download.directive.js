@@ -7,6 +7,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.months = [];
     vm.monthsCopy = [];
     vm.years = [];
+    vm.yearsCopy = [];
     vm.task_id = $location.search()['task_id'] || '';
     $rootScope.report_link = '';
 
@@ -66,11 +67,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     }
 
     for (var year=2017; year <= new Date().getFullYear(); year++ ) {
-        vm.years.push({
+        vm.yearsCopy.push({
             name: year,
             id: year,
         });
     }
+    vm.years = vm.yearsCopy;
     vm.queuedTask = false;
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xlsx';
@@ -297,12 +299,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
                     locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
-                    vm.selectedLevel = selectedLocationIndex() + 1;
                     vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
                     vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
                 } else {
                     locationsCache[$item.location_id] = data.locations;
-                    vm.selectedLevel = selectedLocationIndex() + 1;
                     vm.selectedLocations[level + 1] = data.locations[0].location_id;
                     vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
                     if (level === 2 && vm.isISSNIPMonthlyRegisterSelected()) {
@@ -315,6 +315,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
         }
         var levels = [];
+        vm.selectedLevel = selectedLocationIndex() + 1;
         window.angular.forEach(vm.levels, function (value) {
             if (value.id > selectedLocationIndex()) {
                 levels.push(value);
@@ -331,13 +332,30 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.onSelectYear = function (item) {
-        if (item.id === new Date().getFullYear()) {
-            vm.months = _.filter(vm.monthsCopy, function(month) {
-                return month.id <= new Date().getMonth() + 1;
+    vm.onSelectYear = function (year) {
+        var date = new Date();
+        var latest = date;
+        if (vm.isIncentiveReportSelected()) {
+            var offset = date.getDate() < 15 ? 2 : 1;
+            latest.setMonth(date.getMonth() - offset);
+        }
+        if (year.id > latest.getFullYear()) {
+            vm.years =  _.filter(vm.yearsCopy, function (y) {
+                return y.id <= latest.getFullYear();
             });
-            vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
-        } else if (item.id === 2017) {
+            vm.selectedYear = latest.getFullYear();
+            vm.selectedMonth = 12;
+        } else if (year.id < latest.getFullYear()) {
+            vm.years =  _.filter(vm.yearsCopy, function (y) {
+                return y.id <= latest.getFullYear();
+            });
+        }
+        if (year.id === latest.getFullYear()) {
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                return month.id <= latest.getMonth() + 1;
+            });
+            vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
+        } else if (year.id === 2017) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id >= 3;
             });
@@ -364,6 +382,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
+            vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
         }
     };

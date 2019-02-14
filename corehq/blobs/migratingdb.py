@@ -46,8 +46,5 @@ class MigratingBlobDB(object):
         old_result = self.old_db.bulk_delete(*args, **kw)
         return new_result or old_result
 
-    def get_path(self, *args, **kw):
-        return self.new_db.get_path(*args, **kw)
-
     def copy_blob(self, *args, **kw):
         self.new_db.copy_blob(*args, **kw)

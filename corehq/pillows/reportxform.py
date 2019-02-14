@@ -2,9 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 
+from corehq.elastic import get_es_new
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
@@ -36,9 +36,9 @@ def transform_xform_for_report_forms_index(doc_dict):
 
     return doc_ret
 
-
 def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsearchPillow', num_processes=1,
                                              process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'ReportXFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_XFORM_INDEX_INFO, topics.FORM_TOPICS)
     form_processor = ElasticProcessor(
@@ -74,7 +74,7 @@ class ReportFormReindexerFactory(ReindexerFactory):
         domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_form_change_provider(domains=domains)
         return ElasticPillowReindexer(
-            pillow=get_report_xform_to_elasticsearch_pillow(),
+            pillow_or_processor=get_report_xform_to_elasticsearch_pillow(),
             change_provider=change_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,

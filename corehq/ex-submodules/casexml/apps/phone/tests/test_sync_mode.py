@@ -6,6 +6,7 @@ from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 from django.test.utils import override_settings
 from django.test import TestCase
+from mock import patch
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
@@ -1205,6 +1206,7 @@ class LiveQueryChangingOwnershipTestSQL(LiveQueryChangingOwnershipTest):
     pass
 
 
+@patch('casexml.apps.phone.restore.INITIAL_SYNC_CACHE_THRESHOLD', 0)
 class SyncTokenCachingTest(BaseSyncTest):
 
     def testCaching(self):

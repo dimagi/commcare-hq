@@ -2,7 +2,7 @@
 {% load compress %}
 {% load hq_shared_tags %}
 
-{% block title %}App Build Times{% endblock %}
+{% block title %}App Build Times - "{{ app.name }}"{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>

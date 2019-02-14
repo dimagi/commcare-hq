@@ -6,6 +6,7 @@ import sys
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.run_pillowtop import start_pillows, start_pillow
 from pillowtop.utils import (
     get_all_pillow_instances,
@@ -71,6 +72,15 @@ class Command(BaseCommand):
             help="The process number of this pillow process. Should be between 0 and num-processes. "
                  "It's expected that there will only be one process for each number running at once",
         )
+        parser.add_argument(
+            '--processor-chunk-size',
+            action='store',
+            dest='processor_chunk_size',
+            default=DEFAULT_PROCESSOR_CHUNK_SIZE,
+            type=int,
+            help="The process number of this pillow process. Should be between 0 and num-processes. "
+                 "It's expected that there will only be one process for each number running at once",
+        )
 
     def handle(self, **options):
         run_all = options['run_all']
@@ -80,7 +90,9 @@ class Command(BaseCommand):
         pillow_key = options['pillow_key']
         num_processes = options['num_processes']
         process_number = options['process_number']
+        processor_chunk_size = options['processor_chunk_size']
         assert 0 <= process_number < num_processes
+        assert processor_chunk_size
         if list_all:
             print("\nPillows registered in system:")
             for config in get_all_pillow_configs():
@@ -103,7 +115,7 @@ class Command(BaseCommand):
                                   for config in settings.PILLOWTOPS[pillow_key]]
 
         elif not run_all and not pillow_key and pillow_name:
-            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number)
+            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number, processor_chunk_size=processor_chunk_size)
             start_pillow(pillow)
             sys.exit()
         elif list_checkpoints:

@@ -99,17 +99,17 @@ class BulkArchiveForms(TestCase):
 
         # Huge hack for determining what has been sent in django messages object.
         # Need to find out how to inspect messages after redirect
-        self.assertIn('No files uploaded', response.content)
+        self.assertIn('No files uploaded', response.content.decode('utf-8'))
 
     def test_bulk_archive_wrong_filetype(self):
         with open(join(BASE_PATH, WRONG_FILETYPE), encoding='utf-8') as fp:
             response = self.client.post(self.url, {'bulk_upload_file': fp}, follow=True)
-            self.assertIn('CommCare HQ does not support that file type.', response.content)
+            self.assertIn('CommCare HQ does not support that file type.', response.content.decode('utf-8'))
 
     def test_bulk_archive_basic(self):
         with open(join(BASE_PATH, BASIC_XLSX), 'rb') as fp:
             response = self.client.post(self.url, {'bulk_upload_file': fp}, follow=True)
-            self.assertIn('We received your file and are processing it.', response.content)
+            self.assertIn('We received your file and are processing it.', response.content.decode('utf-8'))
 
 
 class BulkArchiveFormsUnit(TestCase):

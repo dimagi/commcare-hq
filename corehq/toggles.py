@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import inspect
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -821,12 +823,13 @@ MOBILE_UCR = StaticToggle(
     always_enabled={'icds-cas'}
 )
 
-RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
-    'restrict_web_users_by_location',
-    "(Deprecated) Allow project to restrict web user permissions by location",
-    TAG_DEPRECATED,
+MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
+    'mobile_ucr_linked_domain',
+    ('Mobile UCR: Configure viewing user configurable reports on the mobile when using linked domains. '
+     'NOTE: This won\'t work without developer intervention'),
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
+    always_enabled={'icds-cas', 'fmoh-echis-staging'}
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -860,13 +863,13 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
 
 def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name, strict=True)
-    if domain and domain.commtrack_enabled != toggle_is_enabled:
+    domain_obj = Domain.get_by_name(domain_name, strict=True)
+    if domain_obj and domain_obj.commtrack_enabled != toggle_is_enabled:
         if toggle_is_enabled:
-            domain.convert_to_commtrack()
+            domain_obj.convert_to_commtrack()
         else:
-            domain.commtrack_enabled = False
-            domain.save()
+            domain_obj.commtrack_enabled = False
+            domain_obj.save()
 
 
 COMMTRACK = StaticToggle(
@@ -1015,14 +1018,6 @@ MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='This flag allows multiple choice fields in custom user data, location data and product data',
-)
-
-RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
-    'restrict_form_edit_by_location',
-    "(Deprecated) Restrict ability to edit/archive forms by the web user's location",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
 )
 
 SUPPORT = StaticToggle(
@@ -1279,6 +1274,14 @@ LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
     help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
+BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
+    'bulk_update_multimedia_paths',
+    'Add a page to update multimedia paths in bulk',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager"
+)
+
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
@@ -1530,13 +1533,13 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
 
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
-    'Allow linking domains (successor to linked apps)',
-    TAG_INTERNAL,
+    'Allow linking project spaces (successor to linked apps)',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
-    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
+    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
@@ -1636,7 +1639,7 @@ ICDS_DISHA_API = StaticToggle(
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
-    'eCHIS: Allow blank case tags',
+    'eCHIS/ICDS: Allow blank case tags',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1653,9 +1656,68 @@ FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
                 'have group and location filters, such as the Submissions by Form report.',
 )
 
+DONT_INDEX_SAME_CASETYPE = StaticToggle(
+    'dont_index_same_casetype',
+    "Don't create a parent index if the child case has the same case type as the parent case",
+    TAG_DEPRECATED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=inspect.cleandoc("""This toggle preserves old behaviour
+        of not creating a parent index on the child case if their case
+        types are the same.""")
+)
+
 SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'sort_out_of_order_form_submissions_sql',
     'Sort out of order form submissions in the SQL update strategy',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+RESTRICT_APP_RELEASE = StaticToggle(
+    'restrict_app_release',
+    'ICDS: Show permission to manage app releases on user roles',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+RELEASE_BUILDS_PER_PROFILE = StaticToggle(
+    'release_builds_per_profile',
+    'Do not release builds for all app profiles by default. Then manage via Source files view',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
+    'set_scheduled_report_start_date',
+    'Allow users to set an effective start date for scheduled reports.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
+)
+
+
+HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
+    'hide_hq_on_mobile_experience',
+    'Do not show modal on mobile that mobile hq experience is bad',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+ODATA = StaticToggle(
+    'odata',
+    'Enable Odata feed.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+DASHBOARD_REACH_REPORT = StaticToggle(
+    'dashboard_reach_reports',
+    'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

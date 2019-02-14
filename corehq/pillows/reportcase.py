@@ -34,8 +34,17 @@ def transform_case_to_report_es(doc_dict):
     return doc_ret
 
 
+def get_case_to_report_es_processor():
+    return ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=REPORT_CASE_INDEX_INFO,
+        doc_prep_fn=transform_case_to_report_es,
+        doc_filter_fn=report_case_filter,
+    )
+
 def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearchPillow',
                                             num_processes=1, process_num=0, **kwargs):
+    # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'ReportCaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_CASE_INDEX_INFO, topics.CASE_TOPICS)
     form_processor = ElasticProcessor(
@@ -71,7 +80,7 @@ class ReportCaseReindexerFactory(ReindexerFactory):
         domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_case_change_provider(domains=domains)
         return ElasticPillowReindexer(
-            pillow=get_report_case_to_elasticsearch_pillow(),
+            pillow_or_processor=get_report_case_to_elasticsearch_pillow(),
             change_provider=change_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_CASE_INDEX_INFO,

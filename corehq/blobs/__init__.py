@@ -1,10 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple
 
 from .exceptions import Error, NotFound  # noqa: F401
 
-DEFAULT_BUCKET = "_default"
 _db = []  # singleton/global, stack for tests to push temporary dbs
 
 
@@ -40,14 +38,6 @@ def _get_fs_db(settings):
 def _get_migrating_db(new_db, old_db):
     from .migratingdb import MigratingBlobDB
     return MigratingBlobDB(new_db, old_db)
-
-
-class BlobInfo(namedtuple("BlobInfo", ["identifier", "length", "digest"])):
-
-    @property
-    def md5_hash(self):
-        if self.digest and self.digest.startswith("md5-"):
-            return self.digest[4:]
 
 
 class CODES:

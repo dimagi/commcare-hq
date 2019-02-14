@@ -10,7 +10,8 @@ from corehq.apps.reports.tasks import (
     _extract_form_attachment_info,
     _get_export_properties,
 )
-from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL
+from corehq.blobs.models import BlobMeta
+from corehq.form_processor.models import XFormInstanceSQL
 from couchforms.models import XFormInstance
 
 
@@ -94,7 +95,7 @@ class FormMultimediaExportTest(SimpleTestCase):
             for name, meta in attachments.items():
                 couch_xform.deferred_put_attachment("content", name, **meta)
             sql_xform = XFormInstanceSQL(received_on=datetime.datetime.now())
-            sql_xform.unsaved_attachments = [XFormAttachmentSQL(name=name, **meta)
+            sql_xform.attachments_list = [BlobMeta(name=name, **meta)
                 for name, meta in attachments.items()]
 
             for xform in (couch_xform, sql_xform):

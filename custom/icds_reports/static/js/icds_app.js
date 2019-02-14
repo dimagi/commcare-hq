@@ -301,6 +301,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_reports/:step", {
                 template: "<awc-reports></awc-reports>",
             })
+            .when("/lady_supervisor", {
+                template: "<lady-supervisor></lady-supervisor>",
+            })
             .when("/download", {
                 template: "<download></download>",
             })
@@ -309,6 +312,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/fact_sheets/:report", {
                 template: "<progress-report></progress-report>",
+            })
+            .when("/cas_export", {
+                template: "<cas-export></cas-export>",
             })
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",

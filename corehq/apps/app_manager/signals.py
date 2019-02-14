@@ -4,6 +4,9 @@ from django.dispatch.dispatcher import Signal
 
 from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.apps.domain.models import Domain
+from corehq.apps.app_manager.util import get_latest_enabled_build_for_profile
+from corehq.apps.app_manager.util import get_enabled_build_profiles_for_version
+from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
 
@@ -21,8 +24,8 @@ def update_callcenter_config(sender, application, **kwargs):
         return
 
     try:
-        domain = Domain.get_by_name(application.domain)
-        cc_config = domain.call_center_config
+        domain_obj = Domain.get_by_name(application.domain)
+        cc_config = domain_obj.call_center_config
         if not cc_config or not (cc_config.fixtures_are_active() and cc_config.config_is_valid()):
             return
 
@@ -34,9 +37,17 @@ def update_callcenter_config(sender, application, **kwargs):
         notify_exception(None, "Error updating CallCenter config for app build")
 
 
+def expire_latest_enabled_build_profiles(sender, application, **kwargs):
+    if application.copy_of and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(application.domain):
+        for build_profile_id in application.build_profiles:
+            get_latest_enabled_build_for_profile.clear(application.domain, build_profile_id)
+        get_enabled_build_profiles_for_version.clear(application.get_id, application.version)
+
+
 app_post_save = Signal(providing_args=['application'])
 
 app_post_save.connect(create_app_structure_repeat_records)
 app_post_save.connect(update_callcenter_config)
+app_post_save.connect(expire_latest_enabled_build_profiles)
 
 app_post_release = Signal(providing_args=['application'])

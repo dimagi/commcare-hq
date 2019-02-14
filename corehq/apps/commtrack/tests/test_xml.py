@@ -526,7 +526,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             case_id=self.sp.case_id,
             user_id='jack',
             update={'test': '1'}
-        ).as_string()
+        ).as_string().decode('utf-8')
         instance_id = self.submit_xml_form(
             ''.join([case_block] + submissions),
             timestamp=datetime.utcnow() + timedelta(-30)

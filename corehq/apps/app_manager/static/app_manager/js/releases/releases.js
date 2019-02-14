@@ -229,6 +229,18 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
 
+        // Spinner behavior
+        self.showLoadingSpinner = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
+        self.fetchState.subscribe(function (newValue) {
+            if (newValue === 'pending') {
+                self.showPaginationSpinner(true);
+            } else {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+            }
+        });
+
         self.download_application_zip = function (appId, multimediaOnly, buildProfile, download_targeted_version) {
             var urlSlug = multimediaOnly ? 'download_multimedia_zip' : 'download_ccz';
             var url = self.reverse(urlSlug, appId);
@@ -352,9 +364,15 @@ hqDefine('app_manager/js/releases/releases', function () {
                         }
                     },
                     success: function (data) {
-                        savedApp.is_released(data.is_released);
-                        self.latestReleasedVersion(data.latest_released_version);
-                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                        if (data.error) {
+                            alert(data.error);
+                            $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                            savedApp.is_released(isReleased);
+                        } else {
+                            savedApp.is_released(data.is_released);
+                            self.latestReleasedVersion(data.latest_released_version);
+                            $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                        }
                     },
                     error: function () {
                         savedApp.is_released('error');

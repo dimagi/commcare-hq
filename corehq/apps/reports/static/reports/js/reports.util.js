@@ -1,5 +1,4 @@
-/* global jQuery */
-hqDefine('reports/js/reports.util', function () {
+hqDefine('reports/js/reports.util', ['jquery'], function ($) {
     return {
         urlSerialize: function (filters, exclude) {
             exclude = exclude || [];
@@ -7,8 +6,8 @@ hqDefine('reports/js/reports.util', function () {
             var rCRLF = /\r?\n/g,
                 rinput = /^(?:color|date|datetime|email|hidden|month|number|password|range|search|tel|text|time|url|week)$/i,
                 rselectTextarea = /^(?:select|textarea)/i;
-            return jQuery.param($(filters).map(function () {
-                return this.elements ? jQuery.makeArray(this.elements) : this;
+            return $.param($(filters).map(function () {
+                return this.elements ? $.makeArray(this.elements) : this;
             })
                 .filter(function (i, elem) {
                     return (
@@ -19,15 +18,15 @@ hqDefine('reports/js/reports.util', function () {
                     );
                 })
                 .map(function (i, elem) {
-                    var val = jQuery(this).val();
+                    var val = $(this).val();
                     if (val === null) {
                         return null;
                     }
                     if (elem.getAttribute('data-ajax-select2')) {
                         val = val.split(',');
                     }
-                    return jQuery.isArray(val) ?
-                        jQuery.map(val, function (val) {
+                    return $.isArray(val) ?
+                        $.map(val, function (val) {
                             return {
                                 name: elem.name,
                                 value: val.replace(rCRLF, "\r\n"),

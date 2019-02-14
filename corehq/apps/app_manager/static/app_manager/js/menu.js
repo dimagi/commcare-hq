@@ -1,6 +1,15 @@
-hqDefine("app_manager/js/menu", function () {
+hqDefine("app_manager/js/menu", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/layout',
+    'app_manager/js/app_manager_utils',
+], function (
+    $,
+    initialPageData,
+    layout,
+    utils
+) {
     var setPublishStatus = function (isOn) {
-        var layout = hqImport("hqwebapp/js/layout");
         if (isOn) {
             layout.showPublishStatus();
         } else {
@@ -23,22 +32,47 @@ hqDefine("app_manager/js/menu", function () {
         });
     };
 
+    // Frequently poll for changes to app, for the sake of showing the "Updates available to publish" banner.
+    // Avoid checking if the user is active, which here is defined by the browser tab having focus.
     var initPublishStatus = function () {
-        var currentAppVersionUrl = hqImport('hqwebapp/js/initial_page_data').reverse('current_app_version');
+        var frequency = 20000,
+            isIdle = false,
+            lastActivity = (new Date()).getTime(),
+            msSinceLastActivity = function () {
+                return (new Date()).getTime() - lastActivity;
+            },
+            updateLastActivity = function () {
+                isIdle = false;
+                if (msSinceLastActivity() > frequency) {
+                    // If they're coming back after long inactivity, do an immediate check
+                    _checkPublishStatus(true);
+                }
+                lastActivity = (new Date()).getTime();
+            };
+
+
+        $(window).focus(updateLastActivity);
+        $(window).blur(function () {
+            isIdle = true;
+        });
+
+        var currentAppVersionUrl = initialPageData.reverse('current_app_version');
         var _checkPublishStatus = function () {
-            $.ajax({
-                url: currentAppVersionUrl,
-                success: function (data) {
-                    setPublishStatus((!data.latestBuild && data.currentVersion > 1) || (data.latestBuild !== null && data.latestBuild < data.currentVersion));
-                },
-            });
+            if (!isIdle) {
+                $.ajax({
+                    url: currentAppVersionUrl,
+                    success: function (data) {
+                        setPublishStatus((!data.latestBuild && data.currentVersion > 1) || (data.latestBuild !== null && data.latestBuild < data.currentVersion));
+                    },
+                });
+            }
         };
         _checkPublishStatus();
-        // check publish status every 20 seconds
-        setInterval(_checkPublishStatus, 20000);
+
+        setInterval(_checkPublishStatus, frequency);
 
         // sniff ajax calls to other urls that make app changes
-        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function () {
+        utils.handleAjaxAppChange(function () {
             setPublishStatus(true);
         });
     };

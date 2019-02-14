@@ -162,8 +162,13 @@ class RegisterWebUserForm(forms.Form):
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
+                        ugettext("Back"),
+                        css_id="back-to-start-btn",
+                        css_class="btn btn-default btn-lg hide",
+                    ),
+                    twbscrispy.StrictButton(
                         ugettext("Next"),
-                        css_class="btn btn-success btn-lg",
+                        css_class="btn btn-primary btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
                     ),
                     hqcrispy.InlineField('is_mobile'),
@@ -192,13 +197,13 @@ class RegisterWebUserForm(forms.Form):
                         data_bind="checked: eulaConfirmed"
                     ),
                     twbscrispy.StrictButton(
-                        ugettext("Previous"),
-                        css_class="btn btn-primary-dark btn-lg",
+                        ugettext("Back"),
+                        css_class="btn btn-default btn-lg",
                         data_bind="click: previousStep"
                     ),
                     twbscrispy.StrictButton(
                         ugettext("Finish"),
-                        css_class="btn btn-success btn-lg",
+                        css_class="btn btn-primary btn-lg",
                         data_bind="click: submitForm, "
                                   "disable: disableNextStepTwo"
                     )
@@ -414,22 +419,22 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
-        domain = None
+        domain_obj = None
         location = None
         if 'domain' in kwargs:
-            domain = Domain.get_by_name(kwargs['domain'])
+            domain_obj = Domain.get_by_name(kwargs['domain'])
             del kwargs['domain']
         if 'location' in kwargs:
             location = kwargs['location']
             del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain and domain.commtrack_enabled:
-            widget = LocationSelectWidget(domain.name, select2_version='v3')
+        if domain_obj and domain_obj.commtrack_enabled:
+            widget = LocationSelectWidget(domain_obj.name, select2_version='v3')
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=widget,
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain.name, wrap=False)
+            programs = Program.by_domain(domain_obj.name, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program'].choices = choices

@@ -155,7 +155,6 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'custom.icds_reports.middleware.ICDSAuditMiddleware',
-    'corehq.apps.domain.middleware.DomainAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -341,7 +340,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'custom.bihar',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -370,6 +368,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
+    'custom.aaa',
 )
 
 # also excludes any app starting with 'django.'
@@ -517,7 +516,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
-    "custom.bihar.reports.indicators.fixtures.generator",
     "custom.m4change.fixtures.report_fixtures.generator",
     "custom.m4change.fixtures.location_fixtures.generator",
 ]
@@ -721,11 +719,6 @@ ENABLE_PRELOGIN_SITE = False
 # dimagi.com urls
 PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
 
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
-
 # Sumologic log aggregator
 SUMOLOGIC_URL = None
 
@@ -741,7 +734,8 @@ BITLY_APIKEY = ''
 INTERNAL_DATA = defaultdict(list)
 
 COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
-
+# Run reindex every 10 minutes (by default)
+COUCH_REINDEX_SCHEDULE = {'timedelta': {'minutes': 10}}
 
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
@@ -860,10 +854,12 @@ KAFKA_API_VERSION = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
-# CommCare HQ - To indicate server
-COMMCARE_HQ_NAME = "CommCare HQ"
-# CommCare - To Indicate mobile
-COMMCARE_NAME = "CommCare"
+COMMCARE_HQ_NAME = {
+    "default": "CommCare HQ",
+}
+COMMCARE_NAME = {
+    "default": "CommCare",
+}
 
 ENTERPRISE_MODE = False
 
@@ -882,6 +878,8 @@ SENTRY_API_KEY = None
 OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
 RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+# Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
@@ -896,23 +894,14 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-# Example:
-# TRANSIFEX_DETAILS = {
-#     'organization': 'selfproject',
-#     'project': {
-#        'icds-test': ['test-1236', 'test-hindi-marathi'],
-#     },
-#     'teams': {
-#         'icds-test': {
-#              source lang code at HQ : link to team on transifex
-#             'en': 'https://www.transifex.com/selfproject/teams/'
-#         }
-#     },
-#     'token': 'api-token'
-#
-# }
-# ToDO: make it support for multiple domains
-TRANSIFEX_DETAILS = None
+
+# used for providing separate landing pages for different URLs
+# default will be used if no hosts match
+CUSTOM_LANDING_TEMPLATE = {
+    # "icds-cas.gov.in": 'icds/login.html',
+    # "default": 'login_and_password/login.html',
+}
+
 from env_settings import *
 
 try:
@@ -937,11 +926,6 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
-
-COUCH_DATABASES['default'] = {
-    k: v.encode('utf-8') if isinstance(v, six.text_type) else v
-    for (k, v) in COUCH_DATABASES['default'].items()
-}
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
 # hosting environments use pgBouncer with transaction pooling. For more information, see:
@@ -992,7 +976,9 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
+                'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.js_api_keys',
+                'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
             ],
@@ -1402,7 +1388,6 @@ COUCHDB_APPS = [
     ('custom_data_fields', META_DB),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
-    ('bihar', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', META_DB),
@@ -1675,7 +1660,28 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
+            'name': 'case-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'xform-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
             'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow_old',
+        },
+        {
+            'name': 'user-pillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
@@ -1687,12 +1693,17 @@ PILLOWTOPS = {
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.group.get_group_pillow',
+            'instance': 'corehq.pillows.group.get_group_pillow_old',
         },
         {
             'name': 'GroupToUserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
+        {
+            'name': 'group-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_pillow',
         },
         {
             'name': 'SqlSMSPillow',
@@ -1718,23 +1729,6 @@ PILLOWTOPS = {
             'name': 'UpdateUserSyncHistoryPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
-        },
-    ],
-    'core_ext': [
-        {
-            'name': 'AppDbChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
-            'name': 'DomainDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'kafka-ucr-main',
@@ -1766,6 +1760,28 @@ PILLOWTOPS = {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
+        },
+    ],
+    'core_ext': [
+        {
+            'name': 'AppDbChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
+        },
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'DomainDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
+        },
+        {
+            'name': 'location-ucr-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_location_pillow',
         },
     ],
     'cache': [
@@ -1829,6 +1845,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_3_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
@@ -1867,7 +1884,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10a_children_referred.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10b_pregnancies_referred.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_11_awc_visits.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2ci_child_birth_list.json'),
@@ -1925,6 +1941,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
@@ -1937,7 +1954,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
@@ -1947,7 +1963,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
@@ -1964,7 +1982,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
-
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
@@ -2009,8 +2027,6 @@ COUCH_CACHE_BACKENDS = [
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
     'hsph',
-    'care-bihar',
-    'bihar',
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
@@ -2031,6 +2047,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
     ('abt_supervisor_v2', 'custom.abt.reports.expressions.abt_supervisor_v2_expression'),
+    ('abt_supervisor_v2019', 'custom.abt.reports.expressions.abt_supervisor_v2019_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
@@ -2048,9 +2065,13 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
-CUSTOM_UCR_REPORT_FILTERS = []
+CUSTOM_UCR_REPORT_FILTERS = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
+]
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = []
+CUSTOM_UCR_REPORT_FILTER_VALUES = [
+    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
+]
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -2066,8 +2087,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'care-bihar': 'custom.bihar',
-    'bihar': 'custom.bihar',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -2087,7 +2106,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
-    'reach-test': 'custom.icds_reports',
+    'reach-test': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
@@ -2160,8 +2179,12 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
 
 RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
+    ("production", "born-on-time-2"),
+    ("production", "hki-nepal-suaahara-2"),
     ("production", "malawi-fp-study"),
+    ("production", "no-lean-season"),
     ("production", "rec"),
+    ("production", "sauti-1"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####
@@ -2180,7 +2203,6 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
-
 
 
 if 'locmem' not in CACHES:

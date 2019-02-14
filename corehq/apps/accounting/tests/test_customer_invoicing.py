@@ -129,7 +129,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('1000.0000'))
+        self.assertEqual(invoice.balance, Decimal('1200.0000'))
         self.assertEqual(invoice.account, self.account)
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
@@ -174,10 +174,14 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         product_line_items = invoice.lineitem_set.get_products()
         self.assertEqual(product_line_items.count(), 2)
         for line_item in product_line_items:
-            self.assertTrue(line_item.base_description == 'One month of CommCare Advanced Software Plan.' or
-                            line_item.base_description == 'One month of CommCare Standard Software Plan.')
-            self.assertTrue(line_item.base_cost == self.product_rate.monthly_fee or
-                            line_item.base_cost == self.advanced_plan.product_rate.monthly_fee)
+            self.assertIn(line_item.base_description, [
+                'One month of CommCare Advanced Edition Software Plan.',
+                'One month of CommCare Standard Edition Software Plan.',
+            ])
+            self.assertIn(line_item.base_cost, [
+                self.product_rate.monthly_fee,
+                self.advanced_plan.product_rate.monthly_fee,
+            ])
 
     def test_product_line_items_in_quarterly_invoice(self):
         self.account.invoicing_plan = InvoicingPlan.QUARTERLY
@@ -234,7 +238,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('1100.0000'))
+        self.assertEqual(invoice.balance, Decimal('1500.0000'))
         user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
         self.assertEqual(user_line_items.count(), 2)
         for user_line_item in user_line_items:
@@ -294,11 +298,11 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         super(TestSmsLineItem, self).tearDown()
 
     def test_under_limit(self):
-        num_sms = random.randint(1, self.sms_rate.monthly_limit // 2)
+        num_sms = self.sms_rate.monthly_limit // 2
         arbitrary_sms_billables_for_domain(
             self.domain, self.sms_date, num_sms, direction=INCOMING
         )
-        num_sms_advanced = random.randint(1, self.advanced_rate.monthly_limit // 2)
+        num_sms_advanced = self.advanced_rate.monthly_limit // 2
         arbitrary_sms_billables_for_domain(
             self.domain2, self.sms_date, num_sms_advanced, direction=INCOMING
         )

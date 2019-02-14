@@ -51,6 +51,9 @@ def print_ast(node):
     visit(node, 0)
 
 
+MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 cases to prevent timeouts
+
+
 OPERATOR_MAPPING = {
     'and': filters.AND,
     'not': filters.NOT,
@@ -117,7 +120,13 @@ def build_filter_from_ast(domain, node):
         if isinstance(node.right, Step):
             _raise_step_RHS(node)
         new_query = "{} {} '{}'".format(serialize(node.left.right), node.op, node.right)
-        return CaseSearchES().domain(domain).xpath_query(domain, new_query).scroll_ids()
+        es_query = CaseSearchES().domain(domain).xpath_query(domain, new_query)
+        if es_query.count() > MAX_RELATED_CASES:
+            raise CaseFilterError(
+                _("The related case lookup you are trying to perform would return too many cases"),
+                new_query
+            )
+        return es_query.scroll_ids()
 
     def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`

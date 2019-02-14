@@ -112,7 +112,7 @@ class WorksheetWrapper(object):
     @cached_property
     def _headers_by_index(self):
         try:
-            header_row = next(self._iter_rows())
+            header_row = next(self.iter_rows())
         except StopIteration:
             header_row = []
 
@@ -128,12 +128,12 @@ class WorksheetWrapper(object):
     def max_row(self):
         return self._worksheet.max_row
 
-    def _iter_rows(self):
+    def iter_rows(self):
         for row in self._worksheet.iter_rows():
             yield [cell.value for cell in row]
 
     def iter_row_dicts(self):
-        for row in self._iter_rows():
+        for row in self.iter_rows():
             yield {
                 self._headers_by_index[i]: value
                 for i, value in enumerate(row)

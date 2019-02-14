@@ -26,7 +26,11 @@ from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
 
 from corehq import toggles, privileges
-from corehq.apps.analytics.tasks import HUBSPOT_APP_TEMPLATE_FORM_ID, send_hubspot_form
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_APP_TEMPLATE_FORM_ID,
+    send_hubspot_form,
+    track_workflow,
+)
 from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.const import (
@@ -53,14 +57,18 @@ from corehq.apps.app_manager.models import (
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.tasks import make_async_build
+from corehq.apps.app_manager.tasks import (
+    make_async_build,
+    update_linked_app_and_notify_task
+)
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_and_assert_practice_user_in_domain,
+    get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, update_linked_app, clear_xmlns_app_id_cache, update_linked_app_and_notify
+    validate_langs, update_linked_app, clear_xmlns_app_id_cache
 from corehq.apps.app_manager.xform import (
     XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -69,16 +77,19 @@ from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    api_key_auth)
+    track_domain_request
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
+from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
@@ -152,7 +163,9 @@ def get_app_view_context(request, app):
     This is where additional app or domain specific context can be added to any individual
     commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
     """
-    context = {}
+    context = {
+        'legacy_select2': True,
+    }
 
     settings_layout = copy.deepcopy(
         get_commcare_settings_layout(app.get_doc_type())
@@ -275,11 +288,24 @@ def get_app_view_context(request, app):
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
+        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
             context['master_version'] = app.get_master_version()
         except RemoteRequestError:
             pass
     return context
+
+
+def _get_upstream_url(app, request_user):
+    """Get the upstream url if the user has access"""
+    if request_user.is_superuser or (
+            not app.domain_link.is_remote
+            and request_user.is_member_of(app.domain_link.master_domain)
+    ):
+        url = reverse('view_app', args=[app.domain_link.master_domain, app.master])
+        if app.domain_link.is_remote:
+            url = '{}{}'.format(app.domain_link.remote_base_url, url)
+        return url
 
 
 def clear_app_cache(request, domain):
@@ -320,6 +346,11 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
 
+        disable_report_modules = (
+            is_master_linked_domain(domain)
+            and not toggles.MOBILE_UCR_LINKED_DOMAIN.enabled(domain)
+        )
+
         # ideally this should be loaded on demand
         practice_users = []
         if app.enable_practice_users:
@@ -328,13 +359,19 @@ def get_apps_base_context(request, domain, app):
             except ESError:
                 notify_exception(request, 'Error getting practice mode mobile workers')
 
+        latest_version_for_build_profiles = {}
+        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+            latest_version_for_build_profiles = get_latest_enabled_versions_per_profile(app.get_id)
+
         context.update({
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
+            'disable_report_modules': disable_report_modules,
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
+            'latest_version_for_build_profiles': latest_version_for_build_profiles,
         })
 
     return context
@@ -390,7 +427,13 @@ def copy_app(request, domain):
                 return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
             else:
                 extra_properties = {'name': data['name']}
-                app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
+                try:
+                    app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
+                except ReportConfigurationNotFoundError:
+                    messages.error(request, _("Copying the application failed because "
+                                              "your application contains a Report Module "
+                                              "that references a static UCR configuration."))
+                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
                 return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         # having login_and_domain_required validates that the user
@@ -406,6 +449,12 @@ def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
     clear_app_cache(request, domain)
 
+    build = load_app_from_slug(domain, request.user.username, slug)
+    cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
+    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
+
+
+def load_app_from_slug(domain, username, slug):
     # Import app itself
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
@@ -419,7 +468,6 @@ def app_from_template(request, domain, slug):
             path_url_map = json.load(f)
             http = urllib3.PoolManager()
             for path, url in path_url_map.items():
-                media_class = None
                 try:
                     req = http.request('GET', url)
                 except Exception:
@@ -432,14 +480,15 @@ def app_from_template(request, domain, slug):
                         multimedia = media_class.get_by_data(data)
                         multimedia.attach_data(data,
                                                original_filename=os.path.basename(path),
-                                               username=request.user.username)
+                                               username=username)
                         multimedia.add_domain(domain, owner=True)
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_async_build(app, request.user.username, release=True, comment=comment)
-    cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
-    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
+    build = make_async_build(app, username, allow_prune=False, comment=comment)
+    build.is_released = True
+    build.save(increment_version=False)
+    return build
 
 
 @require_can_edit_apps
@@ -674,6 +723,7 @@ def get_app_ui_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
@@ -688,7 +738,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
     attributes = [
         'all',
-        'recipients', 'name', 'use_commcare_sense',
+        'recipients', 'name',
         'text_input', 'platform', 'build_spec',
         'use_custom_suite', 'custom_suite',
         'admin_password',
@@ -882,7 +932,7 @@ def drop_user_case(request, domain, app_id):
 def pull_master_app(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
     if async_update:
-        update_linked_app_and_notify.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
+        update_linked_app_and_notify_task.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:
@@ -893,6 +943,7 @@ def pull_master_app(request, domain, app_id):
             messages.error(request, six.text_type(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
+    track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
 

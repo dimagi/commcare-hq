@@ -49,7 +49,9 @@ class Command(BaseCommand):
         self.stdout.write("Processing {} domains".format(len(domains)))
         for domain in with_progress_bar(domains, oneline=False):
             try:
-                self.migrate_domain(domain)
+                success, reason = self.migrate_domain(domain)
+                if not success:
+                    failed.append((domain, reason))
             except Exception as e:
                 if with_traceback:
                     traceback.print_exc()
@@ -68,7 +70,11 @@ class Command(BaseCommand):
     def migrate_domain(self, domain):
         if should_use_sql_backend(domain):
             self.stderr.write("{} already on the SQL backend".format(domain))
-            return
+            return True, None
+
+        if couch_sql_migration_in_progress(domain, include_dry_runs=True):
+            self.stderr.write("{} migration is already in progress".format(domain))
+            return False, "in progress"
 
         set_couch_sql_migration_started(domain)
 
@@ -82,10 +88,12 @@ class Command(BaseCommand):
             writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'], [
                 (doc_type,) + stat for doc_type, stat in stats.items()
             ])
-        else:
-            assert couch_sql_migration_in_progress(domain)
-            set_couch_sql_migration_complete(domain)
-            self.stdout.write(shell_green("Domain migrated: {}".format(domain)))
+            return False, "has diffs"
+
+        assert couch_sql_migration_in_progress(domain)
+        set_couch_sql_migration_complete(domain)
+        self.stdout.write(shell_green("Domain migrated: {}".format(domain)))
+        return True, None
 
     def get_diff_stats(self, domain):
         db = get_diff_db(domain)

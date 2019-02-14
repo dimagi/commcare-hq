@@ -80,11 +80,6 @@ class BasePayloadGenerator(object):
         return True
 
 
-class SOAPPayloadGeneratorMixin(object):
-    @property
-    def content_type(self):
-        return 'application/soap+xml'
-
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 
 

@@ -376,6 +376,7 @@ hqDefine('app_manager/js/app_manager', function () {
                             var requiresCaseDetails = hqImport('app_manager/js/details/screen_config').state.requiresCaseDetails;
                             requiresCaseDetails(data['case_list-show']);
                         }
+                        $form.trigger('saved-app-manager-form');
                     },
                 });
             button.ui.appendTo($buttonHolder);

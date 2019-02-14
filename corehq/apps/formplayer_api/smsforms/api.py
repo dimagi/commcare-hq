@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 from django.conf import settings
+from requests import HTTPError
 from six.moves.urllib.parse import urlparse
 import six.moves.http_client
 import socket
@@ -278,22 +279,8 @@ class XformsResponse(object):
                                         "contact your administrator for help."})
 
 
-def post_data_helper(d, auth, content_type, url, log=False):
-    data = json.dumps(d)
-    up = urlparse(url)
-    headers = {}
-    headers["content-type"] = content_type
-    headers["content-length"] = str(len(data))
-    conn = six.moves.http_client.HTTPConnection(up.netloc)
-    conn.request('POST', up.path, data, headers)
-    resp = conn.getresponse()
-    results = resp.read()
-    return results
-
-
 def formplayer_post_data_helper(d, content_type, url):
     data = json.dumps(d).encode('utf-8')
-    up = urlparse(url)
     headers = {}
     headers["Content-Type"] = content_type
     headers["content-length"] = str(len(data))
@@ -303,8 +290,10 @@ def formplayer_post_data_helper(d, content_type, url):
         data=data,
         headers=headers
     )
-    response_json = response.json()
-    return response.text
+    if 500 <= response.status_code < 600:
+        http_error_msg = '%s Server Error: %s for url: %s' % (response.status_code, response.reason, response.url)
+        raise HTTPError(http_error_msg, response=response)
+    return response.json()
 
 
 def post_data(data, auth=None, content_type="application/json"):
@@ -339,11 +328,11 @@ def get_formplayer_session_data(data):
 
 def get_response(data, auth=None):
     try:
-        response = post_data(data, auth=auth)
+        response_json = post_data(data, auth=auth)
     except socket.error as e:
         return XformsResponse.server_down()
     try:
-        return XformsResponse(json.loads(response))
+        return XformsResponse(response_json)
     except Exception as e:
         raise e
 
@@ -355,9 +344,7 @@ def sync_db(username, domain, auth):
         "domain": domain
     }
 
-    response = post_data(json.dumps(data), auth)
-    response = json.loads(response)
-    return response
+    return post_data(json.dumps(data), auth)
 
 
 def get_raw_instance(session_id, domain=None, auth=None):
@@ -373,11 +360,10 @@ def get_raw_instance(session_id, domain=None, auth=None):
         }
 
     response = post_data(json.dumps(data), auth)
-    response = json.loads(response)
     if "error" in response:
         error = response["error"]
-        if error == "invalid session id":
-            raise InvalidSessionIdException("Invalid Touchforms Session Id")
+        if error == "Form session not found":
+            raise InvalidSessionIdException("Invalid Session Id")
         else:
             raise TouchformsError(error)
     return response

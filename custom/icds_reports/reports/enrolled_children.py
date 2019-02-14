@@ -66,8 +66,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
         "label": "",
         "fills": fills,
         "rightLegend": {
-            "average": sum(average) / float(len(average) or 1),
-            "average_format": 'number',
+            "average": '%.2f' % (total_valid * 100 / float(total or 1)),
             "info": percent_children_enrolled_help_text(age_label=age_label),
             "extended_info": [
                 {

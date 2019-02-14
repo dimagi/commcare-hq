@@ -51,13 +51,13 @@
                             monitored in the Reports section of this {{ hq_name }} project space.
                             <br />
                             Read more about managing mobile workers on our
-                            <a href="http://help.commcarehq.org/" target="_blank">Help Site</a>.
+                            <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers" target="_blank">Help Site</a>.
                         {% endblocktrans %}
                     </p>
                     <div class="btn-toolbar" style="margin-bottom: 20px;">
 
                         <button type="button"
-                                class="btn btn-success"
+                                class="btn btn-primary"
                                 data-toggle="modal"
                                 data-target="#newMobileWorkerModal"
                                 ng-click="initializeMobileWorker()">
@@ -339,7 +339,7 @@
                                                 <button type="button" class="btn btn-default" data-dismiss="modal">
                                                     {% trans "Cancel" %}
                                                 </button>
-                                                <button type="button" class="btn btn-success"
+                                                <button type="button" class="btn btn-primary"
                                                         data-bind="click: function(user) { user.is_active(true); }">
                                                     {% trans 'Reactivate' %}
                                                 </button>
@@ -393,7 +393,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <div class="alert alert-info" data-bind="visible: showSpinner">
+                <div class="alert alert-info" data-bind="visible: showLoadingSpinner() && !hasError()">
                     <i class="fa fa-spin fa-spinner"></i>
                     {% trans "Loading Workers..." %}
                 </div>
@@ -408,7 +408,8 @@
                 <pagination data-apply-bindings="false"
                             params="goToPage: goToPage,
                                     perPage: itemsPerPage,
-                                    totalItems: totalItems"></pagination>
+                                    totalItems: totalItems,
+                                    showSpinner: showPaginationSpinner"></pagination>
             </div>
         </div-->
     </div>

@@ -394,7 +394,7 @@ hqDefine('registration/js/new_user.ko', function () {
                             _private.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
                                 deniedEmail: self.deniedEmail(),
-                                appcuesAbTest: response.appcues_ab_test ? 'On' : 'Off',
+                                appcuesAbTest: response.appcues_ab_test,
                             }));
                         }
                     },

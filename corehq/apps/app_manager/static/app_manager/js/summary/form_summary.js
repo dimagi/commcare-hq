@@ -1,4 +1,3 @@
-// knockout_bindings.ko is a part of this dependency because page uses 'slideVisible' binding form_summary.html
 hqDefine('app_manager/js/summary/form_summary',[
     'jquery',
     'underscore',
@@ -7,7 +6,8 @@ hqDefine('app_manager/js/summary/form_summary',[
     'hqwebapp/js/assert_properties',
     'app_manager/js/summary/models',
     'app_manager/js/summary/utils',
-    'hqwebapp/js/knockout_bindings.ko',
+    'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
+    'hqwebapp/js/knockout_bindings.ko', // popover
 ], function ($, _, ko, initialPageData, assertProperties, models, utils) {
     var formSummaryModel = function (options) {
         var self = models.contentModel(_.extend(options, {

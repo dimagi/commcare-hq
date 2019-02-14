@@ -151,7 +151,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
         def remove_tags(text):
             return TAG_RE.sub('', text)
 
-        practice_percent = map(int, re.findall(r'\d+', remove_tags(row['html'])))[2]
+        practice_percent = list(map(int, re.findall(r'\d+', remove_tags(row['html']))))[2]
         if 76 <= practice_percent <= 100:
             return 0
         elif 51 <= practice_percent < 76:

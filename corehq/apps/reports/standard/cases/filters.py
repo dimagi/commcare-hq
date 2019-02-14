@@ -60,7 +60,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = ugettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
-    DEFAULT_COLUMNS = ['@case_type', 'case_name']
+    DEFAULT_COLUMNS = ['@case_type', 'case_name', 'last_modified']
 
     @property
     def filter_context(self):

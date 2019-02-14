@@ -9,7 +9,8 @@ from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0, MONT
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
 from corehq.apps.callcenter.models import CallCenterIndicatorConfig, TypedIndicator
-from corehq.apps.callcenter.utils import sync_call_center_user_case, CallCenterCase
+from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group

@@ -18,7 +18,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_latest_released_app_doc,
     get_apps_by_id,
-    get_brief_app, get_latest_released_app_version)
+    get_brief_app, get_latest_released_app_version, get_app_ids_in_domain)
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
@@ -157,14 +157,16 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
 
     def test_get_built_app_ids_with_submissions_for_app_ids_and_versions(self):
+        app_ids_in_domain = get_app_ids_in_domain(self.domain)
         app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
             self.domain,
+            app_ids_in_domain,
             {self.apps[0]._id: self.first_saved_version},
         )
         self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
 
         app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
-            self.domain,
+            self.domain, app_ids_in_domain
         )
         self.assertEqual(len(app_ids), 1)  # Should get the one that has_submissions
 

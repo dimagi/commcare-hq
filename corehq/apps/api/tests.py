@@ -236,7 +236,7 @@ class TestXFormInstanceResource(APIResourceTest):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            self.assertEqual(sorted(es_query['filter']['and']), expected_query)
+            self.assertItemsEqual(es_query['filter']['and'], expected_query)
             return prior_run_query(es_query)
 
         fake_xform_es.run_query = mock_run_query
@@ -317,8 +317,7 @@ class TestXFormInstanceResource(APIResourceTest):
         start_date = datetime(1969, 6, 14)
         end_date = datetime(2011, 1, 2)
         expected = [
-            {'range': {'received_on': {'from': start_date.isoformat()}}},
-            {'range': {'received_on': {'to': end_date.isoformat()}}},
+            {'range': {'received_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
             {'term': {'doc_type': 'xforminstance'}},
             {'term': {'domain.exact': 'qwerty'}},
         ]
@@ -377,7 +376,7 @@ class TestXFormInstanceResource(APIResourceTest):
             CaseBlock(
                 case_id=case_id,
                 create=True,
-            ).as_string(),
+            ).as_text(),
             self.domain.name
         )[0]
 
@@ -443,7 +442,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 case_id=parent_case_id,
                 create=True,
                 case_type=parent_type,
-            ).as_string(),
+            ).as_string().decode('utf-8'),
             self.domain.name
         )[1][0]
         child_case_id = uuid.uuid4().hex
@@ -452,7 +451,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 case_id=child_case_id,
                 create=True,
                 index={'parent': (parent_type, parent_case_id)}
-            ).as_string(),
+            ).as_string().decode('utf-8'),
             self.domain.name
         )[1][0]
 
@@ -691,9 +690,15 @@ class TestWebUserResource(APIResourceTest):
         "permissions": {
             "edit_apps": True,
             "edit_commcare_users": True,
+            "view_commcare_users": True,
+            "edit_groups": True,
+            "view_groups": True,
             "edit_locations": True,
+            "view_locations": True,
             "edit_data": True,
             "edit_web_users": True,
+            "view_web_users": True,
+            "view_roles": True,
             "view_reports": True
         },
         "phone_numbers": [
@@ -706,8 +711,20 @@ class TestWebUserResource(APIResourceTest):
         role = user.get_role(self.domain.name)
         self.assertEqual(role.name, json_user['role'])
         self.assertEqual(user.is_domain_admin(self.domain.name), json_user['is_admin'])
-        for perm in ['edit_web_users', 'edit_commcare_users', 'edit_locations',
-                     'edit_data', 'edit_apps', 'view_reports']:
+        for perm in [
+            'edit_web_users',
+            'view_web_users',
+            'view_roles',
+            'edit_commcare_users',
+            'view_commcare_users',
+            'edit_groups',
+            'view_groups',
+            'edit_locations',
+            'view_locations',
+            'edit_data',
+            'edit_apps',
+            'view_reports',
+        ]:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
     def test_get_list(self):
@@ -812,7 +829,7 @@ class TestWebUserResource(APIResourceTest):
                                                    content_type='application/json',
                                                    failure_code=400)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, '{"error": "An admin can have only one role : Admin"}')
+        self.assertEqual(response.content.decode('utf-8'), '{"error": "An admin can have only one role : Admin"}')
 
     def test_create_with_invalid_non_admin_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -823,7 +840,7 @@ class TestWebUserResource(APIResourceTest):
                                                    content_type='application/json',
                                                    failure_code=400)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, '{"error": "Invalid User Role Jack of all trades"}')
+        self.assertEqual(response.content.decode('utf-8'), '{"error": "Invalid User Role Jack of all trades"}')
 
     def test_create_with_missing_non_admin_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -834,7 +851,7 @@ class TestWebUserResource(APIResourceTest):
                                                    content_type='application/json',
                                                    failure_code=400)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, '{"error": "Please assign role for non admin user"}')
+        self.assertEqual(response.content.decode('utf-8'), '{"error": "Please assign role for non admin user"}')
 
     def test_update(self):
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
@@ -907,7 +924,7 @@ class TestRepeaterResource(APIResourceTest):
         api_repeaters = json.loads(response.content)['objects']
         self.assertEqual(len(api_repeaters), 2)
 
-        api_case_repeater = filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters)[0]
+        api_case_repeater = [r for r in api_repeaters if r['type'] == 'CaseRepeater'][0]
         self.assertEqual(api_case_repeater['id'], case_repeater._id)
         self.assertEqual(api_case_repeater['url'], case_repeater.url)
         self.assertEqual(api_case_repeater['domain'], case_repeater.domain)
@@ -1819,7 +1836,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
         return endpoint
 
     def setUp(self):
-        credentials = base64.b64encode("{}:{}".format(self.username, self.password))
+        credentials = base64.b64encode(
+            "{}:{}".format(self.username, self.password).encode('utf-8')
+        ).decode('utf-8')
         self.client.defaults['HTTP_AUTHORIZATION'] = 'Basic ' + credentials
 
     @classmethod
@@ -1945,7 +1964,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.assertIn("expand_column_value", c)
         self.assertSetEqual(set(self.case_property_values), {c['expand_column_value'] for c in columns})
 
-
     def test_page_size(self):
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id, {"limit": 1}))
@@ -1985,7 +2003,14 @@ class TestConfigurableReportDataResource(APIResourceTest):
         query_dict.update({"some_filter": "bar"})
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
             self.domain.name, "123", 100, 50, 3450, query_dict)
-        self.assertEqual(next, self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
+        single_endpoint = self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"})
+
+        def _get_query_params(url):
+            from six.moves.urllib.parse import parse_qs, urlparse
+            return parse_qs(urlparse(url).query)
+
+        self.assertEqual(next.split('?')[0], single_endpoint.split('?')[0])
+        self.assertEqual(_get_query_params(next), _get_query_params(single_endpoint))
 
         # It's the last page
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
@@ -2002,9 +2027,11 @@ class TestConfigurableReportDataResource(APIResourceTest):
         )
         self.addCleanup(user_in_wrong_domain.delete)
         user_in_wrong_domain.save()
-        credentials = base64.b64encode("{}:{}".format(
-            user_in_wrong_domain_name, user_in_wrong_domain_password)
-        )
+        credentials = base64.b64encode(
+            "{}:{}".format(
+                user_in_wrong_domain_name, user_in_wrong_domain_password
+            ).encode('utf-8')
+        ).decode('utf-8')
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
             HTTP_AUTHORIZATION='Basic ' + credentials

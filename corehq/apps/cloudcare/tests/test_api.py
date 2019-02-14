@@ -11,7 +11,6 @@ from mock import patch
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
-from corehq import toggles
 from corehq.apps.cloudcare.api import get_filtered_cases, CaseAPIResult, CASE_STATUS_OPEN, CASE_STATUS_ALL,\
     CASE_STATUS_CLOSED
 from corehq.apps.cloudcare.views import ReadableQuestions
@@ -20,7 +19,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 import six
 
 TEST_DOMAIN = "test-cloudcare-domain"

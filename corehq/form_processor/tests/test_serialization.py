@@ -30,4 +30,4 @@ class SerializationTests(TestCase):
 
         form_xml = form.get_attachment_meta('form.xml')
         form_json = form.to_json(include_attachments=True)
-        self.assertEqual(form_json['external_blobs']['form.xml']['id'], str(form_xml.attachment_id))
+        self.assertEqual(form_json['external_blobs']['form.xml']['id'], str(form_xml.key))

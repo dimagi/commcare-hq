@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
+import time
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
@@ -46,7 +47,6 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
-from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -64,7 +64,7 @@ def _get_config_by_id(indicator_config_id):
 
 
 def _build_indicators(config, document_store, relevant_ids):
-    adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+    adapter = get_indicator_adapter(config, raise_errors=True)
 
     for doc in document_store.iter_documents(relevant_ids):
         if config.asynchronous:
@@ -85,7 +85,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
     if limit == -1:
         send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
-        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
@@ -105,7 +105,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
-        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
             config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
@@ -177,7 +177,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.after_table_build()
 
 
@@ -239,9 +239,32 @@ def delete_data_source_task(domain, config_id):
     delete_data_source_shared(domain, config_id)
 
 
-@periodic_task(serializer='pickle',
-    run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
-)
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
+def reprocess_archive_stubs():
+    # Check for archive stubs
+    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+    from couchforms.models import UnfinishedArchiveStub
+    stubs = UnfinishedArchiveStub.objects.filter()
+    datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
+    start = time.time()
+    cutoff = start + timedelta(minutes=4).total_seconds()
+    for stub in stubs:
+        # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
+        if time.time() - start > cutoff:
+            return
+        xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
+        # If the history wasn't updated the first time around, run the whole thing again.
+        if not stub.history_updated:
+            if stub.archive:
+                xform.archive(user_id=stub.user_id)
+            else:
+                xform.unarchive(user_id=stub.user_id)
+        # If the history was updated the first time around, just send the update to kafka
+        else:
+            xform.publish_archive_action_to_kafka(user_id=stub.user_id, archive=stub.archive)
+
+
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_queue_async_indicators_task():
     if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
@@ -308,12 +331,6 @@ def _queue_indicators(indicators):
         _queue_chunk(to_queue)
 
 
-@quickcache(['config_id'])
-def _get_config(config_id):
-    # performance optimization for build_async_indicators. don't use elsewhere
-    return _get_config_by_id(config_id)
-
-
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
@@ -343,7 +360,7 @@ def _build_async_indicators(indicator_doc_ids):
 
     def doc_ids_from_rows(rows):
         formatted_rows = [
-            {column.column.database_column_name: column.value for column in row}
+            {column.column.database_column_name.decode('utf-8'): column.value for column in row}
             for row in rows
         ]
         return set(row['doc_id'] for row in formatted_rows)
@@ -370,7 +387,6 @@ def _build_async_indicators(indicator_doc_ids):
         doc_store = get_document_store_for_doc_type(
             all_indicators[0].domain, all_indicators[0].doc_type
         )
-        related_doc_ids = set()
         failed_indicators = set()
 
         rows_to_save_by_adapter = defaultdict(list)
@@ -383,7 +399,7 @@ def _build_async_indicators(indicator_doc_ids):
                 for config_id in indicator.indicator_config_ids:
                     config_ids.add(config_id)
                     try:
-                        config = _get_config(config_id)
+                        config = _get_config_by_id(config_id)
                     except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
                         celery_task_logger.info("{} no longer exists, skipping".format(config_id))
                         # remove because the config no longer exists
@@ -395,15 +411,12 @@ def _build_async_indicators(indicator_doc_ids):
                         continue
                     adapter = None
                     try:
-                        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                        adapter = get_indicator_adapter(config)
                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         eval_context.reset_iteration()
                     except Exception as e:
                         failed_indicators.add(indicator)
                         handle_exception(e, config_id, doc, adapter)
-
-                    if config and config.icds_rebuild_related_docs:
-                        related_doc_ids.add(doc['_id'])
 
             for adapter, rows in six.iteritems(rows_to_save_by_adapter):
                 doc_ids = doc_ids_from_rows(rows)
@@ -437,15 +450,6 @@ def _build_async_indicators(indicator_doc_ids):
                 )
                 indicator.save()
 
-        # process asyncindicator for any related docs that are not rebuilt so far
-        related_docs_to_rebuild = []
-        for _id in related_doc_ids:
-            related_docs_to_rebuild.extend(icds_get_related_docs_ids(_id))
-        related_docs_to_rebuild = set(related_docs_to_rebuild) - set(indicator_doc_ids)
-        _queue_indicators(AsyncIndicator.objects.filter(
-            doc_id__in=related_docs_to_rebuild, date_queued=None
-        ))
-
         datadog_counter('commcare.async_indicator.processed_success', len(processed_indicators))
         datadog_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
         datadog_histogram(
@@ -456,15 +460,7 @@ def _build_async_indicators(indicator_doc_ids):
         )
 
 
-@task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(doc_ids):
-    build_async_indicators(doc_ids)
-
-
-@periodic_task(serializer='pickle',
-    run_every=crontab(minute="*/5"),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
+@periodic_task(serializer='pickle', run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
 def async_indicators_metrics():
     now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()

@@ -40,6 +40,12 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return get_table_name(self.domain, config.table_id)
 
     @property
+    def person_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
     def tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
@@ -96,6 +102,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('lactating', 'ucr.lactating'),
             ('lactating_all', 'ucr.lactating_all'),
             ('institutional_delivery_in_month', 'ucr.institutional_delivery_in_month'),
+            ('institutional_delivery', 'case_list.institutional_delivery'),
             ('add', 'ucr.add'),
             ('caste', 'ucr.caste'),
             ('disabled', 'ucr.disabled'),
@@ -135,7 +142,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('person_name', 'case_list.person_name'),
             ('edd', 'case_list.edd'),
             ('delivery_nature', 'case_list.delivery_nature'),
-            ('mobile_number', 'case_list.mobile_number'),
+            ('mobile_number', 'person.phone_number'),
             ('preg_order', 'case_list.preg_order'),
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
             ('last_date_thr', 'case_list.last_date_thr'),
@@ -147,7 +154,13 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 'COALESCE(agg_delivery.valid_visits, 0)'
              ')'),
             ('opened_on', 'case_list.opened_on'),
-            ('dob', 'case_list.dob')
+            ('dob', 'case_list.dob'),
+            ('closed', 'case_list.closed'),
+            ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
+            ('home_visit_date', 'agg_bp.latest_time_end_processed'),
+            ('date_death', 'person.date_death'),
+            ('person_case_id', 'ucr.person_case_id'),
+            ('child_name', 'case_list.child_name')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -162,6 +175,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON ucr.doc_id = agg_delivery.case_id AND ucr.month = agg_delivery.month and ucr.valid_in_month = 1
             LEFT OUTER JOIN "{ccs_record_case_ucr}" case_list ON ucr.doc_id = case_list.doc_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON ucr.doc_id = ut.ccs_record_case_id
+            LEFT OUTER JOIN "{person_cases_ucr}" person ON person.doc_id = ucr.person_case_id
             WHERE ucr.month = %(start_date)s
             ORDER BY ucr.awc_id, ucr.case_id
         )
@@ -177,6 +191,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_delivery_table=AGG_CCS_RECORD_DELIVERY_TABLE,
             pregnant_tasks_case_ucr=self.pregnant_tasks_cases_ucr_tablename,
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
+            person_cases_ucr=self.person_case_ucr_tablename
         ), {
             "start_date": self.month,
             "end_date": self.end_date
@@ -185,4 +200,5 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def indexes(self):
         return [
             'CREATE INDEX ON "{}" (awc_id, case_id)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (person_case_id, add, case_id)'.format(self.tablename)
         ]

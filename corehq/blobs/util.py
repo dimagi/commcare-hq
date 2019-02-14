@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import hashlib
 import os
 import re
-from base64 import urlsafe_b64encode
-from datetime import datetime, timedelta
+from base64 import urlsafe_b64encode, b64encode
+from datetime import datetime
 
 from jsonfield import JSONField
 
 from corehq.blobs.exceptions import BadName
-from corehq.util.datadog.gauges import datadog_counter
 
 SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 
@@ -119,26 +119,47 @@ def check_safe_key(key):
         raise BadName("unsafe key: %r" % key)
 
 
-def set_blob_expire_object(bucket, identifier, length, timeout):
-    from .models import BlobExpiration
-    try:
-        blob_expiration = BlobExpiration.objects.get(
-            bucket=bucket,
-            identifier=identifier,
-            deleted=False,
-        )
-    except BlobExpiration.DoesNotExist:
-        blob_expiration = BlobExpiration(
-            bucket=bucket,
-            identifier=identifier,
-        )
-
-    blob_expiration.expires_on = _utcnow() + timedelta(minutes=timeout)
-    blob_expiration.length = length
-    blob_expiration.save()
-    datadog_counter('commcare.temp_blobs.count')
-    datadog_counter('commcare.temp_blobs.bytes_added', value=length)
-
-
 def _utcnow():
     return datetime.utcnow()
+
+
+def get_content_md5(fileobj):
+    """Get Content-MD5 value
+
+    All content will be read from the current position to the end of the
+    file. The file will be left open with its seek position at the end
+    of the file.
+
+    :param fileobj: A file-like object.
+    :returns: RFC-1864-compliant Content-MD5 header value.
+    """
+    md5 = hashlib.md5()
+    for chunk in iter(lambda: fileobj.read(1024 * 1024), b''):
+        md5.update(chunk)
+    return b64encode(md5.digest()).decode('ascii')
+
+
+def set_max_connections(num_workers):
+    """Set max connections for urllib3
+
+    The default is 10. When using something like gevent to process
+    multiple S3 connections conucurrently it is necessary to set max
+    connections equal to the number of workers to avoid
+    `WARNING Connection pool is full, discarding connection: ...`
+
+    This must be called before `get_blob_db()` is called.
+
+    See botocore.config.Config max_pool_connections
+    https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
+    """
+    from django.conf import settings
+    from corehq.blobs import _db
+
+    def update_config(name):
+        config = getattr(settings, name)["config"]
+        config["max_pool_connections"] = num_workers
+
+    assert not _db, "get_blob_db() has been called"
+    for name in ["S3_BLOB_DB_SETTINGS", "OLD_S3_BLOB_DB_SETTINGS"]:
+        if getattr(settings, name, False):
+            update_config(name)

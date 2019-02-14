@@ -415,7 +415,7 @@ class AutoPayInvoicePaymentHandler(object):
                     description='Auto-payment for Invoice %s' % invoice.invoice_number,
                 )
         except stripe.error.CardError as e:
-            self._handle_card_declined(invoice, payment_method, e)
+            self._handle_card_declined(invoice, e)
         except payment_method.STRIPE_GENERIC_ERROR as e:
             self._handle_card_errors(invoice, e)
         else:
@@ -443,7 +443,7 @@ class AutoPayInvoicePaymentHandler(object):
             self._handle_email_failure(payment_record)
 
     @staticmethod
-    def _handle_card_declined(invoice, payment_method, e):
+    def _handle_card_declined(invoice, e):
         from corehq.apps.accounting.tasks import send_autopay_failed
 
         # https://stripe.com/docs/api/python#error_handling
@@ -457,7 +457,7 @@ class AutoPayInvoicePaymentHandler(object):
             "error = {error}"
             .format(invoice=invoice.id, domain=invoice.get_domain(), error=err)
         )
-        send_autopay_failed.delay(invoice, payment_method)
+        send_autopay_failed.delay(invoice)
 
     @staticmethod
     def _handle_card_errors(invoice, e):

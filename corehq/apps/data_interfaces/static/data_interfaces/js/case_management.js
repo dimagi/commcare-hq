@@ -5,7 +5,7 @@ hqDefine("data_interfaces/js/case_management",[
     'case/js/casexml',
     'hqwebapp/js/initial_page_data',
 ], function ($, _, ko, casexmlModule, initialPageData) {
-    var CaseManagement = function (o) {
+    var caseManagement = function (o) {
         'use strict';
         var self = {};
 
@@ -13,25 +13,25 @@ hqDefine("data_interfaces/js/case_management",[
         self.updatedCase = null;
         self.webUserID = o.webUserID;
         self.webUserName = o.webUserName;
-        self.form_name = o.form_name;
+        self.formName = o.formName;
 
         // What's checked in the table below
-        self.selected_cases = ko.observableArray();
-        self.selected_owners = ko.observableArray();
-        self.selected_owner_types = ko.observableArray();
+        self.selectedCases = ko.observableArray();
+        self.selectedOwners = ko.observableArray();
+        self.selectedOwnerTypes = ko.observableArray();
 
         // What we're assigning to
-        self.new_owner = ko.observable();
+        self.newOwner = ko.observable();
 
-        self.is_submit_enabled = ko.computed(function () {
-            return !!self.new_owner();
+        self.isSubmitEnabled = ko.computed(function () {
+            return !!self.newOwner();
         }, self);
 
-        self.should_show_owners = ko.observable(true);
+        self.shouldShowOwners = ko.observable(true);
 
-        var enddate = new Date(o.enddate),
+        var endDate = new Date(o.endDate),
             now = new Date();
-        self.on_today = (enddate.toDateString() === now.toDateString());
+        self.onToday = (endDate.toDateString() === now.toDateString());
 
         var getOwnerType = function (ownerId) {
             if (ownerId.startsWith('u')) {
@@ -45,7 +45,7 @@ hqDefine("data_interfaces/js/case_management",[
             return function () {
                 var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case'),
                     username = $('#reassign_owner_select').data().select2.data().text,
-                    dateMessage = (self.on_today) ? '<span title="0"></span>' :
+                    dateMessage = (self.onToday) ? '<span title="0"></span>' :
                         '<span class="label label-warning" title="0">Out of range of filter. Will ' +
                                         'not appear on page refresh.</span>';
                 $checkbox.data('owner', ownerId);
@@ -66,7 +66,7 @@ hqDefine("data_interfaces/js/case_management",[
         };
 
         self.changeNewOwner = function () {
-            self.new_owner($('#reassign_owner_select').val());
+            self.newOwner($('#reassign_owner_select').val());
         };
 
         self.updateCaseSelection = function (data, event) {
@@ -75,28 +75,28 @@ hqDefine("data_interfaces/js/case_management",[
                 ownerID = $checkbox.data('owner'),
                 ownerType = $checkbox.data('ownertype');
 
-            var ind = self.selected_cases().indexOf(caseID),
+            var ind = self.selectedCases().indexOf(caseID),
                 $selectedRow = $checkbox.closest('tr');
 
             if ($checkbox.is(':checked')) {
                 $selectedRow.addClass('active');
                 if (ind < 0) {
-                    self.selected_cases.push(caseID);
+                    self.selectedCases.push(caseID);
                 }
-                self.selected_owner_types.push(ownerType);
-                self.selected_owners.push(ownerID);
+                self.selectedOwnerTypes.push(ownerType);
+                self.selectedOwners.push(ownerID);
             } else {
                 $selectedRow.removeClass('active');
                 if (ind >= 0) {
-                    self.selected_cases.splice(ind, 1);
+                    self.selectedCases.splice(ind, 1);
                 }
-                self.selected_owner_types.splice(self.selected_owner_types().indexOf(ownerType), 1);
-                self.selected_owners.splice(self.selected_owners().indexOf(ownerID), 1);
+                self.selectedOwnerTypes.splice(self.selectedOwnerTypes().indexOf(ownerType), 1);
+                self.selectedOwners.splice(self.selectedOwners().indexOf(ownerID), 1);
             }
         };
 
         self.clearCaseSelection = function () {
-            self.selected_cases.removeAll();
+            self.selectedCases.removeAll();
         };
 
         self.updateCaseOwners = function (form) {
@@ -115,8 +115,8 @@ hqDefine("data_interfaces/js/case_management",[
                 $modal.modal('show');
             } else {
                 $(form).find("[type='submit']").disableButton();
-                for (var i = 0; i < self.selected_cases().length; i++) {
-                    var caseId = self.selected_cases()[i],
+                for (var i = 0; i < self.selectedCases().length; i++) {
+                    var caseId = self.selectedCases()[i],
                         xform;
                     xform = casexmlModule.casexml.CaseDelta.wrap({
                         case_id: caseId,
@@ -124,7 +124,7 @@ hqDefine("data_interfaces/js/case_management",[
                     }).asXFormInstance({
                         user_id: self.webUserID,
                         username: self.webUserName,
-                        form_name: self.form_name,
+                        form_name: self.formName,
                     }).serialize();
 
                     $.ajax({
@@ -160,12 +160,12 @@ hqDefine("data_interfaces/js/case_management",[
 
         var applyBindings = function () {
             if ($(interfaceSelector).length) {
-                caseManagementModel = CaseManagement({
+                caseManagementModel = caseManagement({
                     receiverUrl: initialPageData.reverse("receiver_secure_post"),
-                    enddate: initialPageData.get("reassign_cases_enddate"),
+                    endDate: initialPageData.get("reassign_cases_enddate"),
                     webUserID: initialPageData.get("web_user_id"),
                     webUserName: initialPageData.get("web_username"),
-                    form_name: gettext("Case Reassignment (via HQ)"),
+                    formName: gettext("Case Reassignment (via HQ)"),
                 });
                 $(interfaceSelector).koApplyBindings(caseManagementModel);
             }

@@ -1,79 +1,28 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 from datetime import datetime, timedelta
 
-from django.contrib import messages
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
-
-from corehq.blobs.exceptions import NotFound
-from corehq.util.download import get_download_response
-from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.apps.export.models.new import DataFile, DatePeriod
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
-from django.utils.decorators import method_decorator
-from django.views.generic import View
-
-
 import pytz
+from couchexport.models import Format
+from dimagi.utils.web import json_response, get_url_base
+from django.contrib import messages
+from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.generic import View
+from soil import DownloadBase
+from soil.progress import get_task_status
+
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.export.tasks import (
-    generate_schema_for_all_builds,
-    get_saved_export_task_status,
-    rebuild_saved_export,
-)
-from corehq.apps.export.exceptions import (
-    ExportAppException,
-    BadExportConfiguration,
-    ExportFormValidationException,
-    ExportAsyncException,
-)
-from corehq.apps.export.forms import (
-    EmwfFilterFormExport,
-    FilterCaseESExportDownloadForm,
-    FilterSmsESExportDownloadForm,
-    CreateExportTagForm,
-    DashboardFeedFilterForm,
-)
-from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
-    SMSExportDataSchema,
-    FormExportInstance,
-    CaseExportInstance,
-    SMSExportInstance,
-    ExportInstance,
-)
-from corehq.apps.export.const import (
-    FORM_EXPORT,
-    CASE_EXPORT,
-    MAX_EXPORTABLE_ROWS,
-    MAX_DATA_FILE_SIZE,
-    MAX_DATA_FILE_SIZE_TOTAL,
-    SharingOption,
-    UNKNOWN_EXPORT_OWNER,
-)
-from corehq.apps.export.dbaccessors import (
-    get_form_export_instances,
-    get_properly_wrapped_export_instance,
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
-)
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import (
-    use_select2,
-    use_daterangepicker,
-    use_jquery_ui,
-    use_ko_validation,
-    use_angular_js)
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import (
@@ -83,12 +32,15 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
+from corehq.blobs.exceptions import NotFound
+from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
+from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.models import Format
-from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.web import json_response, get_url_base
-from soil import DownloadBase
-from soil.progress import get_task_status
+
+from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT, MAX_DATA_FILE_SIZE, MAX_DATA_FILE_SIZE_TOTAL
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
+from corehq.apps.export.models.new import DataFile, DatePeriod
+from corehq.apps.export.tasks import generate_schema_for_all_builds
 
 
 def get_timezone(domain, couch_user):
@@ -125,7 +77,7 @@ class ExportsPermissionsManager(object):
 
     def __init__(self, form_or_case, domain, couch_user):
         super(ExportsPermissionsManager, self).__init__()
-        if form_or_case not in [None, 'form', 'case']:
+        if form_or_case and form_or_case not in ['form', 'case']:
             raise ValueError("Unrecognized value for form_or_case")
         self.form_or_case = form_or_case
         self.domain = domain

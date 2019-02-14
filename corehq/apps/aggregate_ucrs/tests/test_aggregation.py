@@ -133,7 +133,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         xform = XFormBuilder()
         for prop_name, prop_text, datatype, _ in cls.case_properties:
             xform.new_question(prop_name, prop_text, data_type=datatype)
-        return xform.tostring()
+        return xform.tostring().decode('utf-8')
 
     @classmethod
     def _get_case_property_values(cls):

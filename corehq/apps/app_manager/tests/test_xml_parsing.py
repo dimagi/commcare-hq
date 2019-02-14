@@ -19,6 +19,6 @@ class XMLParsingTest(SimpleTestCase):
         except:    
             self.fail("Parsing normal string data shouldn't fail!")
         try:
-            _parse_xml(six.text_type(xml_data))
+            _parse_xml(xml_data.decode('utf-8'))
         except:    
             self.fail("Parsing unicode data shouldn't fail!")

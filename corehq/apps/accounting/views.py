@@ -41,7 +41,7 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
+    use_select2_v4,
     use_jquery_ui,
     use_multiselect,
 )
@@ -62,6 +62,7 @@ from corehq.apps.accounting.forms import (
     EnterpriseSettingsForm,
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
+    HideInvoiceForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
@@ -85,6 +86,8 @@ from corehq.apps.accounting.async_handlers import (
     DomainFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
     SoftwarePlanAsyncHandler,
+    InvoiceNumberAsyncHandler,
+    InvoiceBalanceAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     Invoice, WireInvoice, CustomerInvoice, BillingAccount, CreditLine, Subscription, CustomerBillingRecord,
@@ -122,7 +125,6 @@ class AccountingSectionView(BaseSectionPageView):
 
     @method_decorator(require_superuser)
     @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -158,6 +160,10 @@ class NewBillingAccountView(BillingAccountsSectionView):
     @property
     def page_url(self):
         return reverse(self.urlname)
+
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewBillingAccountView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.account_form.is_valid():
@@ -235,6 +241,10 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     def page_url(self):
         return reverse(self.urlname, args=(self.args[0],))
 
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageBillingAccountView, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
@@ -271,6 +281,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
+    @use_select2_v4
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
         return super(NewSubscriptionView, self).dispatch(request, *args, **kwargs)
@@ -344,6 +355,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
+    @use_select2_v4
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
         return super(EditSubscriptionView, self).dispatch(request, *args, **kwargs)
@@ -559,6 +571,7 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         SoftwareProductRateAsyncHandler,
     ]
 
+    @use_select2_v4
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(EditSoftwarePlanView, self).dispatch(request, *args, **kwargs)
@@ -656,6 +669,7 @@ class ViewSoftwarePlanVersionView(AccountingSectionView):
         return reverse(self.urlname, args=self.args)
 
 
+
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"
@@ -680,6 +694,10 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         return {
             'trigger_form': self.trigger_form,
         }
+
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(TriggerInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
@@ -721,6 +739,10 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
             'trigger_customer_form': self.trigger_customer_invoice_form,
         }
 
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(TriggerCustomerInvoiceView, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
@@ -758,6 +780,10 @@ class TriggerBookkeeperEmailView(AccountingSectionView):
         return {
             'trigger_email_form': self.trigger_email_form,
         }
+
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(TriggerBookkeeperEmailView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.trigger_email_form.is_valid():
@@ -832,6 +858,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'invoice_info_form': self.invoice_info_form,
             'resend_email_form': self.resend_email_form,
             'suppress_invoice_form': self.suppress_invoice_form,
+            'hide_invoice_form': self.hide_invoice_form,
         }
 
     @property
@@ -862,6 +889,13 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             return SuppressInvoiceForm(self.invoice, self.request.POST)
         return SuppressInvoiceForm(self.invoice)
 
+    @property
+    @memoized
+    def hide_invoice_form(self):
+        if self.request.method == 'POST':
+            return HideInvoiceForm(self.invoice, self.request.POST)
+        return HideInvoiceForm(self.invoice)
+
     def post(self, request, *args, **kwargs):
         if 'adjust' in self.request.POST:
             if self.adjust_balance_form.is_valid():
@@ -884,6 +918,9 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                     return HttpResponseRedirect(CustomerInvoiceInterface.get_url())
                 else:
                     return HttpResponseRedirect(InvoiceInterface.get_url())
+        elif HideInvoiceForm.submit_kwarg in self.request.POST:
+            if self.hide_invoice_form.is_valid():
+                self.hide_invoice_form.hide_invoice()
         return self.get(request, *args, **kwargs)
 
 
@@ -1137,6 +1174,8 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         DomainFilterAsyncHandler,
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
+        InvoiceNumberAsyncHandler,
+        InvoiceBalanceAsyncHandler,
     ]
 
     @method_decorator(require_superuser)

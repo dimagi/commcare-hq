@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
-from . import DEFAULT_BUCKET
 from .metadata import MetaDB
 import six
 
@@ -20,12 +19,10 @@ class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
         self.metadb = MetaDB()
 
     @abstractmethod
-    def put(self, content, identifier=None, bucket=DEFAULT_BUCKET, **blob_meta_args):
+    def put(self, content, **blob_meta_args):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
-        :param identifier: DEPRECATED
-        :param bucket: DEPRECATED
         :param **blob_meta_args: A single `"meta"` argument (`BlobMeta`
         object) or arguments used to construct a `BlobMeta` object:
 
@@ -58,11 +55,9 @@ class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
         raise NotImplementedError
 
     @abstractmethod
-    def get(self, identifier=None, bucket=DEFAULT_BUCKET, key=None):
+    def get(self, key):
         """Get a blob
 
-        :param identifier: DEPRECATED
-        :param bucket: DEPRECATED
         :param key: Blob key.
         :returns: A file-like object in binary read mode. The returned
         object should be closed when finished reading.
@@ -70,33 +65,27 @@ class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
         raise NotImplementedError
 
     @abstractmethod
-    def exists(self, identifier=None, bucket=DEFAULT_BUCKET, key=None):
+    def exists(self, key):
         """Check if blob exists
 
-        :param identifier: DEPRECATED
-        :param bucket: DEPRECATED
         :param key: Blob key.
         :returns: True if the object exists else false.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def size(self, identifier=None, bucket=DEFAULT_BUCKET, key=None):
+    def size(self, key):
         """Gets the size of a blob in bytes
 
-        :param identifier: DEPRECATED
-        :param bucket: DEPRECATED
         :param key: Blob key.
         :returns: The number of bytes of a blob
         """
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, identifier=NOT_SET, bucket=NOT_SET, key=None):
+    def delete(self, key):
         """Delete a blob
 
-        :param identifier: DEPRECATED
-        :param bucket: DEPRECATED
         :param key: Blob key.
         :returns: True if the blob was deleted else false. None if it is
         not known if the blob was deleted or not.
@@ -104,10 +93,9 @@ class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
         raise NotImplementedError
 
     @abstractmethod
-    def bulk_delete(self, paths=None, metas=None):
+    def bulk_delete(self, metas):
         """Delete multiple blobs.
 
-        :param paths: DEPRECATED
         :param metas: The list of `BlobMeta` objects for blobs to delete.
         :returns: True if all the blobs were deleted else false. `None` if
         it is not known if the blob was deleted or not.
@@ -115,28 +103,10 @@ class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
         raise NotImplementedError
 
     @abstractmethod
-    def copy_blob(self, content, info=None, bucket=None, key=None):
+    def copy_blob(self, content, key):
         """Copy blob from other blob database
 
-        :param info: DEPRECATED
-        :param bucket: DEPRECATED
         :param content: File-like blob content object.
         :param key: Blob key.
         """
         raise NotImplementedError
-
-    @staticmethod
-    def get_args_for_delete(identifier=NOT_SET, bucket=NOT_SET):
-        if identifier is NOT_SET and bucket is NOT_SET:
-            raise TypeError("'identifier' and/or 'bucket' is required")
-        if identifier is None:
-            raise TypeError("refusing to delete entire bucket when "
-                            "null blob identifier is provided (either "
-                            "provide a real blob identifier or pass "
-                            "bucket as keyword argument)")
-        if identifier is NOT_SET:
-            assert bucket is not NOT_SET
-            identifier = None
-        elif bucket is NOT_SET:
-            bucket = DEFAULT_BUCKET
-        return identifier, bucket

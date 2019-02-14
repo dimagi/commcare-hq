@@ -10,7 +10,8 @@ import six
 def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
     is_deleted = True
     for app_id, version in six.iteritems(app_ids_and_versions):
-        if last_occurrences.get(app_id) >= version:
+        occurrence = last_occurrences.get(app_id)
+        if occurrence is not None and occurrence >= version:
             is_deleted = False
             break
     return is_deleted

@@ -386,7 +386,7 @@ hqDefine('locations/js/location_types', [
         });
 
         $("form#settings button").on("click", function () {
-            $("form#settings").find(":submit").addClass("btn-success").enable();
+            $("form#settings").find(":submit").enable();
             window.onbeforeunload = warnBeforeUnload;
         });
 

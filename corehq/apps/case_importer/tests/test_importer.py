@@ -369,10 +369,10 @@ class ImporterTest(TestCase):
         case_sharing = LocationType.objects.create(
             domain=self.domain, name='lt2', shares_cases=True
         )
-        location = make_loc('loc-1', 'Loc 1', self.domain, case_sharing)
-        make_loc('loc-2', 'Loc 2', self.domain, case_sharing)
-        duplicate_loc = make_loc('loc-3', 'Loc 2', self.domain, case_sharing)
-        improper_loc = make_loc('loc-4', 'Loc 4', self.domain, non_case_sharing)
+        location = make_loc('loc-1', 'Loc 1', self.domain, case_sharing.code)
+        make_loc('loc-2', 'Loc 2', self.domain, case_sharing.code)
+        duplicate_loc = make_loc('loc-3', 'Loc 2', self.domain, case_sharing.code)
+        improper_loc = make_loc('loc-4', 'Loc 4', self.domain, non_case_sharing.code)
 
         res = self.import_mock_file([
             ['case_id', 'name', 'owner_id', 'owner_name'],

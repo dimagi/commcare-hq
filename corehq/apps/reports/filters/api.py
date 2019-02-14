@@ -20,7 +20,7 @@ from corehq.elastic import ESError
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.reports.filters.users import EmwfUtils, SubmitHistoryUtils, UsersUtils
+from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
 from corehq.apps.es import UserES, GroupES, groups
 from corehq.apps.locations.models import SQLLocation
 
@@ -139,7 +139,8 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         size = int(self.request.GET.get('page_limit', DEFAULT_PAGE_LIMIT))
         start = size * (page - 1)
         count, options = paginate_options(self.data_sources, self.q, start, size)
-        return count, [{'id': id_, 'text': text} for id_, text in options]
+        return count, [{'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
+                       {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in options]
 
     def get_static_options_size(self, query):
         return len(self.get_all_static_options(query))
@@ -217,30 +218,6 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                   .size(size)
                   .sort("name.exact"))
         return [self.utils.reporting_group_tuple(g) for g in groups.run().hits]
-
-
-@location_safe
-class SubmitHistoryOptionsView(EmwfOptionsView):
-    @property
-    def data_sources(self):
-        if self.request.can_access_all_locations:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
-            ]
-
-        else:
-            return [
-                (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
-            ]
-
-    @property
-    @memoized
-    def utils(self):
-        return SubmitHistoryUtils(self.domain)
 
 
 class MobileWorkersOptionsView(EmwfOptionsView):

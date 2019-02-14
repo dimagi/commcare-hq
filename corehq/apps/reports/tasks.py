@@ -55,7 +55,6 @@ from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
-from .export import save_metadata_export_to_tempfile
 from .models import (
     ReportConfig,
     FormExportSchema,
@@ -94,6 +93,7 @@ def send_delayed_report(report_id):
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
+
     try:
         notification.send()
     except UnsupportedScheduledReportError:
@@ -103,24 +103,6 @@ def send_report(notification_id):
 @task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
 def send_report_throttled(notification_id):
     send_report(notification_id)
-
-
-@task(serializer='pickle')
-def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
-    tmp_path = save_metadata_export_to_tempfile(domain, format, datespan, user_ids)
-
-    class FakeCheckpoint(object):
-        # for some silly reason the export cache function wants an object that looks like this
-        # so just hack around it with this stub class rather than do a larger rewrite
-
-        def __init__(self, domain):
-            self.domain = domain
-
-        @property
-        def get_id(self):
-            return '%s-form-metadata' % self.domain
-
-    return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
 
 @periodic_task(serializer='pickle',
@@ -510,7 +492,7 @@ def _extract_form_attachment_info(form, properties):
 
     # TODO make form.attachments always return objects that conform to a
     # uniform interface. XFormInstance attachment values are dicts, and
-    # XFormInstanceSQL attachment values are XFormAttachmentSQL objects.
+    # XFormInstanceSQL attachment values are BlobMeta objects.
     for attachment_name, attachment in six.iteritems(form.attachments):
         if hasattr(attachment, 'content_type'):
             content_type = attachment.content_type
@@ -528,10 +510,10 @@ def _extract_form_attachment_info(form, properties):
         if not properties or question_id in properties:
             extension = six.text_type(os.path.splitext(attachment_name)[1])
             if hasattr(attachment, 'content_length'):
-                # FormAttachmentSQL or BlobMeta
+                # BlobMeta
                 size = attachment.content_length
             elif 'content_length' in attachment:
-                # dict from BlobMeta.to_json() or possibly FormAttachmentSQL
+                # dict from BlobMeta.to_json()
                 size = attachment['content_length']
             else:
                 # couch attachment dict

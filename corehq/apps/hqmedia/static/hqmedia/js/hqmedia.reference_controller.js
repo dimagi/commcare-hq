@@ -214,7 +214,7 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         }, self);
 
         self.upload_button_class = ko.computed(function () {
-            return (self.is_matched()) ? "btn btn-success" : "btn btn-warning";
+            return (self.is_matched()) ? "btn btn-success" : "btn btn-danger";
         }, self);
 
         self.upload_button_text = ko.computed(function () {

@@ -49,13 +49,13 @@ def bulk_upload_async(domain, user_specs, group_specs):
 @task(serializer='pickle', )
 def bulk_download_users_async(domain, download_id, user_filters):
     from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
-    DownloadBase.set_progress(bulk_download_users_async, 0, 100)
     errors = []
     try:
         dump_users_and_groups(
             domain,
             download_id,
-            user_filters
+            user_filters,
+            bulk_download_users_async,
         )
     except GroupNameError as e:
         group_urls = [
@@ -84,7 +84,6 @@ def bulk_download_users_async(domain, download_id, user_filters):
     except BulkFetchException:
         errors.append(_('Error exporting data. Please try again later.'))
 
-    DownloadBase.set_progress(bulk_download_users_async, 100, 100)
     return {
         'errors': errors
     }
@@ -203,7 +202,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         for index_info in indexes_referencing_deleted_cases
         if index_info.case_id not in deleted_ids
     ]
@@ -240,8 +239,8 @@ def resend_pending_invitations():
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
-    for domain in domains:
-        invitations = Invitation.by_domain(domain.name)
+    for domain_obj in domains:
+        invitations = Invitation.by_domain(domain_obj.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:

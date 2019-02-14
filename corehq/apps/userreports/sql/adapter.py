@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
+import six
 
 from architect import install
 from django.utils.translation import ugettext as _
@@ -12,7 +13,7 @@ from sqlalchemy.schema import Index
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
-    MissingColumnWarning)
+    MissingColumnWarning, translate_programming_error)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.util import get_table_name
@@ -53,7 +54,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         properties['__tablename__'] = table.name
         properties['__table_args__'] = ({'extend_existing': True},)
 
-        type_ = type(b"TemporaryTableDef", (Base,), properties)
+        type_ = type("TemporaryTableDef" if six.PY3 else b"TemporaryTableDef", (Base,), properties)
         return type_
 
     def _install_partition(self):
@@ -152,7 +153,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
         # transform format from ColumnValue to dict
         formatted_rows = [
-            {i.column.database_column_name: i.value for i in row}
+            {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
         doc_ids = set(row['doc_id'] for row in formatted_rows)
@@ -198,23 +199,16 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 
     def handle_exception(self, doc, exception):
-        if isinstance(exception, ProgrammingError):
-            orig = getattr(exception, 'orig')
-            if orig:
-                error_code = getattr(orig, 'pgcode')
-                # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
-                if error_code == '42P01':
-                    raise TableNotFoundWarning
-                elif error_code == '42703':
-                    raise MissingColumnWarning
-
+        ex = translate_programming_error(exception)
+        if ex:
+            raise ex
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
 
 def get_indicator_table(indicator_config, custom_metadata=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
     table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
-    columns_by_col_id = {col.database_column_name for col in indicator_config.get_columns()}
+    columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
     for index in indicator_config.sql_column_indexes:
         if set(index.column_ids).issubset(columns_by_col_id):
@@ -239,7 +233,7 @@ def get_indicator_table(indicator_config, custom_metadata=None):
 
 def _custom_index_name(table_name, column_ids):
     base_name = "ix_{}_{}".format(table_name, ','.join(column_ids))
-    base_hash = hashlib.md5(base_name).hexdigest()
+    base_hash = hashlib.md5(base_name.encode('utf-8')).hexdigest()
     return "{}_{}".format(base_name[:50], base_hash[:5])
 
 

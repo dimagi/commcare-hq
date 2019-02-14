@@ -16,9 +16,9 @@
     {% registerurl 'new_list_broadcasts' domain %}
     {% registerurl 'edit_schedule' domain '---' '---' %}
     <div class="btn-group">
-        <a href="{% url 'create_schedule' domain %}" class="btn btn-success">
+        <a href="{% url 'create_schedule' domain %}" class="btn btn-primary">
             <i class="fa fa-plus"></i>
-            {% trans 'New Broadcast' %}
+            {% trans 'Add Broadcast' %}
         </a>
     </div>
     <h4>{% trans 'Scheduled Broadcasts' %}</h4>

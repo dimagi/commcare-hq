@@ -41,7 +41,11 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     {% endcompress %}
 
     {% include 'hqwebapp/includes/atwho.html' %}
-    <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
+    {% if legacy_select2 %}
+        <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
+    {% else %}
+        <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+    {% endif %}
     <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
 

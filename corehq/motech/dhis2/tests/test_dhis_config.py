@@ -187,4 +187,5 @@ class TestDhisConfigValidation(SimpleTestCase):
             'value': 'dhis2_location_id',
             'commcare_data_type': None,
             'external_data_type': None,
+            'direction': None,
         })

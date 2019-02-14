@@ -11,7 +11,7 @@
     "icds"
   ],
   "report_id": "static-mpr_10a_person_cases-optimized",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR - 10a - Person cases (Static) (Optimized)",
     "description": "",
@@ -81,7 +81,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -165,7 +165,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ypremature\\y'": 1
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ypremature\\y'": 1
         }
       },
       {
@@ -175,7 +175,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ysepsis\\y'": 1
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ysepsis\\y'": 1
         }
       },
       {
@@ -185,7 +185,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ydiarrhoea\\y'": 1
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ydiarrhoea\\y'": 1
         }
       },
       {
@@ -195,7 +195,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ypneumonia\\y'": 1
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ypneumonia\\y'": 1
         }
       },
       {
@@ -205,7 +205,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yfever_child\\y'": 1
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yfever_child\\y'": 1
         }
       },
       {
@@ -215,7 +215,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yseverely_underweight\\y'": 1
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yseverely_underweight\\y'": 1
         }
       },
       {
@@ -225,7 +225,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yother_child\\y'": 1
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yother_child\\y'": 1
         }
       }
     ],

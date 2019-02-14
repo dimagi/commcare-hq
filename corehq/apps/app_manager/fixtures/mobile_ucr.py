@@ -226,8 +226,9 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             return row_elem
 
         rows_elem = E.rows()
-        for i, row in enumerate(data_source.get_data()):
-            rows_elem.append(_row_to_row_elem(row, i))
+        row_index = 0
+        for row_index, row in enumerate(data_source.get_data()):
+            rows_elem.append(_row_to_row_elem(row, row_index))
         if data_source.has_total_row:
             total_row = data_source.get_total_row()
             rows_elem.append(_row_to_row_elem(
@@ -237,7 +238,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
                         list(map(str, total_row))
                     )
                 ),
-                data_source.get_total_records(),
+                row_index + 1,
                 is_total_row=True,
             ))
         return rows_elem
@@ -404,8 +405,9 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             return row_elem
 
         rows_elem = E.rows(last_sync=last_sync)
-        for i, row in enumerate(data_source.get_data()):
-            rows_elem.append(_row_to_row_elem(row, i))
+        row_index = 0
+        for row_index, row in enumerate(data_source.get_data()):
+            rows_elem.append(_row_to_row_elem(row, row_index))
         if data_source.has_total_row:
             total_row = data_source.get_total_row()
             rows_elem.append(_row_to_row_elem(
@@ -415,7 +417,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                         list(map(str, total_row))
                     )
                 ),
-                data_source.get_total_records(),
+                row_index + 1,
                 is_total_row=True,
             ))
         return rows_elem

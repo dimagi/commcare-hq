@@ -344,11 +344,6 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
 
             self.assertXmlPartialEqual(partial, suite, './menu/command[@id="m1-f{}"]'.format(form_num))
 
-    def _fetch_sources(self):
-        for form in self.module.forms:
-            name = '{}.xml'.format(form.unique_id)
-            form.source = self.app.lazy_fetch_attachment(name)
-
     # xmlns is added because I needed to use WrappedNode.find() in the next few tests
     xmlns = ("xmlns='http://www.w3.org/2002/xforms' "
              "xmlns:h='http://www.w3.org/1999/xhtml' "
@@ -358,8 +353,6 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
 
     def test_current_schedule_phase(self):
         """ Current Schedule Phase is set depending on transition and termination conditions """
-        self._fetch_sources()
-
         current_schedule_phase_partial = """
         <partial>
             <bind type="xs:integer"
@@ -402,7 +395,6 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
 
     def test_current_schedule_phase_no_transitions(self):
         """The current_schedule_phase is set to the phase of the current form"""
-        self._fetch_sources()
         self._apply_schedule_phases()
 
         current_schedule_phase_partial = """
@@ -434,7 +426,6 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
             {xmlns}/>
         </partial>
         """
-        self._fetch_sources()
         self._apply_schedule_phases()
         xform_1 = self.form_1.wrapped_xform()
         form_id = self.form_1.schedule_form_id
@@ -457,7 +448,6 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
             {xmlns}/>
         </partial>
         """
-        self._fetch_sources()
         self._apply_schedule_phases()
         xform_1 = self.form_1.wrapped_xform()
         form_id = self.form_1.schedule_form_id
@@ -478,7 +468,6 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
             {xmlns}/>
         </partial>
         """
-        self._fetch_sources()
         self._apply_schedule_phases()
         phase_forms = [self.form_1, self.form_2]
         xform_1 = self.form_1.wrapped_xform()

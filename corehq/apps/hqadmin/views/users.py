@@ -197,7 +197,8 @@ class AdminRestoreView(TemplateView):
     @staticmethod
     def get_stats_from_xml(xml_payload):
         restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-        restore_id = restore_id_element.text if restore_id_element else None
+        # note: restore_id_element is ALWAYS falsy, so check explicitly for `None`
+        restore_id = restore_id_element.text if restore_id_element is not None else None
         cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
         num_cases = len(cases)
 
@@ -260,11 +261,12 @@ class AdminRestoreView(TemplateView):
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
                 xml_payload = etree.fromstring(response.content)
             else:
-                message = _('Unexpected restore response {}: {}. '
-                            'If you believe this is a bug please report an issue.').format(response.status_code,
-                                                                                           response.content)
+                message = _(
+                    'Unexpected restore response {}: {}. '
+                    'If you believe this is a bug please report an issue.'
+                ).format(response.status_code, response.content.decode('utf-8'))
                 xml_payload = E.error(message)
-        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True).decode('utf-8')
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,

@@ -193,11 +193,55 @@ class ChildHealthMonthlyView(models.Model):
     current_month_wasting_v2 = models.TextField(blank=True, null=True)
     current_month_stunting_v2_sort = models.IntegerField(blank=True, null=True)
     current_month_wasting_v2_sort = models.IntegerField(blank=True, null=True)
+    aww_phone_number = models.TextField(blank=True, null=True)
+    mother_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'child_health_monthly_view'
+
+
+class AggLsMonthly(models.Model):
+    """
+    Contains rows for LS data.
+    This view is the join between tables:
+        1) agg_ls
+        2) agg_awc
+        3) awc_location_months
+    """
+    supervisor_id = models.TextField(primary_key=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
+
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    awc_visits = models.IntegerField(help_text='Unique AWC visits by LS in the month')
+    vhnd_observed = models.IntegerField(help_text='Vhnd forms submitted by LS where vhnd date in the month')
+    beneficiary_vists = models.IntegerField(help_text='beneficiary visits made by LS in the month')
+    num_launched_awcs = models.IntegerField(
+        blank=True, null=True,
+        help_text="number of AWCs that have at least one Household registration form"
+    )
+
+    class Meta(object):
+        app_label = 'icds_model'
+        managed = False
+        db_table = 'agg_ls_monthly'
 
 
 class AggAwcMonthly(models.Model):
@@ -551,6 +595,7 @@ class CcsRecordMonthlyView(models.Model):
     home_visit_date = models.DateField(blank=True, null=True)
     ifa_consumed_last_seven_days = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    institutional_delivery = models.IntegerField(blank=True, null=True)
     is_ebf = models.SmallIntegerField(blank=True, null=True)
     last_date_thr = models.DateField(blank=True, null=True)
     mobile_number = models.TextField(blank=True, null=True)
@@ -561,6 +606,7 @@ class CcsRecordMonthlyView(models.Model):
     person_name = models.TextField(blank=True, null=True)
     preg_order = models.SmallIntegerField(blank=True, null=True)
     pregnant = models.IntegerField(blank=True, null=True)
+    pregnant_all = models.IntegerField(blank=True, null=True)
     rupture = models.SmallIntegerField(blank=True, null=True)
     swelling = models.SmallIntegerField(blank=True, null=True)
     trimester = models.IntegerField(blank=True, null=True)
@@ -569,6 +615,13 @@ class CcsRecordMonthlyView(models.Model):
     using_ifa = models.IntegerField(blank=True, null=True)
     lactating = models.IntegerField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
+    open_in_month = models.SmallIntegerField(blank=True, null=True)
+    closed = models.SmallIntegerField(blank=True, null=True)
+    anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    eating_extra = models.SmallIntegerField(blank=True, null=True)
+    resting = models.SmallIntegerField(blank=True, null=True)
+    immediate_breastfeeding = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -788,11 +841,7 @@ class AwcLocationMonths(models.Model):
 
 
 class DishaIndicatorView(models.Model):
-    awc_id = models.TextField(primary_key=True)
-    awc_name = models.TextField(blank=True, null=True)
-    supervisor_id = models.TextField(blank=True, null=True)
-    supervisor_name = models.TextField(blank=True, null=True)
-    block_id = models.TextField(blank=True, null=True)
+    block_id = models.TextField(primary_key=True)
     block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)
     district_name = models.TextField(blank=True, null=True)
@@ -820,8 +869,6 @@ class DishaIndicatorView(models.Model):
     functional_toilet_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     # agg_ccs_record_monthly indicators
-    tetanus_complete_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
     resting_during_pregnancy_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
     extra_meal_percent = models.DecimalField(

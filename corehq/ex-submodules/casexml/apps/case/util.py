@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
+import six
 import uuid
 
 from xml.etree import cElementTree as ElementTree
@@ -17,8 +18,10 @@ from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrappe
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
 from corehq.util.soft_assert import soft_assert
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
+
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -63,7 +66,7 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None, user_id=None, d
         domain = domain or TEST_DOMAIN_NAME
 
     return submit_case_blocks(
-        [ElementTree.tostring(case_block) for case_block in case_blocks],
+        [ElementTree.tostring(case_block).decode('utf-8') for case_block in case_blocks],
         domain=domain,
         form_extras=form_extras,
         user_id=user_id,
@@ -281,3 +284,24 @@ def get_paged_changes_to_case_property(case, case_property_name, start=0, per_pa
             break
 
     return infos, last_index
+
+
+def get_case_history(case):
+    from casexml.apps.case.xform import extract_case_blocks
+    from corehq.apps.reports.display import xmlns_to_name
+
+    changes = defaultdict(dict)
+    for form in FormAccessors(case.domain).get_forms(case.xform_ids):
+        case_blocks = extract_case_blocks(form)
+        for block in case_blocks:
+            if block.get('@case_id') == case.case_id:
+                property_changes = {
+                    'Form ID': form.form_id,
+                    'Form Name': xmlns_to_name(case.domain, form.xmlns, form.app_id),
+                    'Form Received On': form.received_on,
+                    'Form Submitted By': form.metadata.username,
+                }
+                property_changes.update(block.get('create', {}))
+                property_changes.update(block.get('update', {}))
+                changes[form.form_id].update(property_changes)
+    return sorted(six.itervalues(changes), key=lambda f: f['Form Received On'])

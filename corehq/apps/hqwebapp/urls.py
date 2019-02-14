@@ -14,7 +14,7 @@ from corehq.apps.hqwebapp.views import (
     yui_crossdomain, password_change, no_permissions, login, logout,
     debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror,
-    dropbox_upload, domain_login, retrieve_download, toggles_js,
+    dropbox_upload, domain_login, retrieve_download,
     server_up, BugReportView,
     redirect_to_dimagi,
     temporary_google_verify,
@@ -66,7 +66,6 @@ domain_specific = [
     url(r'^retreive_download/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
-    url(r'toggles.js$', toggles_js, name='toggles_js'),
 ]
 
 prelogin_root = [

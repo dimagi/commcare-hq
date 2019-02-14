@@ -67,8 +67,7 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
         "label": "",
         "fills": fills,
         "rightLegend": {
-            "average": sum(average) / float(len(average) or 1),
-            "average_format": 'number',
+            "average": '%.2f' % (total_valid * 100 / float(total or 1)),
             "info": percent_lactating_women_enrolled_help_text(),
             "extended_info": [
                 {

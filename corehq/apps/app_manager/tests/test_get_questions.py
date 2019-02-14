@@ -8,12 +8,14 @@ from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.app_manager.models import Application, Module
+from six.moves import filter
 
 QUESTIONS = [
     {
         'tag': 'input',
         'repeat': None,
         'group': None,
+        'constraintMsg_ref': 'question1-constraintMsg',
         'value': '/data/question1',
         'hashtagValue': '#form/question1',
         'label': 'label en ____ label en',
@@ -33,6 +35,7 @@ QUESTIONS = [
         'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -49,6 +52,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': "This is a comment",
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -65,6 +69,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'trigger',
@@ -81,6 +86,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -97,6 +103,7 @@ QUESTIONS = [
         'constraint': '1',
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'select1',
@@ -106,6 +113,7 @@ QUESTIONS = [
             {
                 'value': 'item22',
                 'label': None,
+                'label_ref': 'question21-item22-label',
                 'translations': {},
             }
         ],
@@ -120,6 +128,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -136,6 +145,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -152,6 +162,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'hidden',
@@ -189,14 +200,14 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             module.id,
             name="Form",
             lang='en',
-            attachment=self.get_xml('case_in_form')
+            attachment=self.get_xml('case_in_form').decode('utf-8')
         )
 
         form_with_repeats = self.app.new_form(
             module.id,
             name="Form with repeats",
             lang='en',
-            attachment=self.get_xml('form_with_repeats')
+            attachment=self.get_xml('form_with_repeats').decode('utf-8')
         )
 
         self.form_unique_id = form.unique_id
@@ -235,16 +246,16 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             include_groups=True,
         )
 
-        repeat_name_count = filter(
+        repeat_name_count = list(filter(
             lambda question: question['value'] == '/data/repeat_name_count',
             questions,
-        )[0]
+        ))[0]
         self.assertIsNone(repeat_name_count['repeat'])
 
-        repeat_question = filter(
+        repeat_question = list(filter(
             lambda question: question['value'] == '/data/repeat_name/question5',
             questions,
-        )[0]
+        ))[0]
         self.assertEqual(repeat_question['repeat'], '/data/repeat_name')
 
     def test_blank_form(self):

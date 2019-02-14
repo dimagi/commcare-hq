@@ -64,7 +64,7 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
@@ -130,9 +130,15 @@ def _deactivate_subscription(subscription):
         next_subscription.is_active = True
         next_subscription.save()
     else:
+        domain = subscription.subscriber.domain
+        if not subscription.account.is_customer_billing_account:
+            account = subscription.account
+        else:
+            account = BillingAccount.create_account_for_domain(
+                domain, created_by='default_community_after_customer_level'
+            )
         next_subscription = assign_explicit_community_subscription(
-            subscription.subscriber.domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY,
-            account=subscription.account
+            domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, account=account
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
@@ -220,6 +226,18 @@ def update_subscriptions():
     warn_active_subscriptions_per_domain_not_one()
     warn_subscriptions_without_domain()
 
+    check_credit_line_balances.delay()
+
+
+@task
+def check_credit_line_balances():
+    for credit_line in CreditLine.objects.all():
+        expected_balance = sum(credit_line.creditadjustment_set.values_list('amount', flat=True))
+        if expected_balance != credit_line.balance:
+            log_accounting_error(
+                'Credit line %s has balance %s, expected %s' % (credit_line.id, credit_line.balance, expected_balance)
+            )
+
 
 @periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
@@ -234,29 +252,28 @@ def generate_invoices(based_on_date=None):
     })
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
-        domain = Domain.wrap(domain_doc)
-        if not domain.is_active:
+        domain_obj = Domain.wrap(domain_doc)
+        if not domain_obj.is_active:
             continue
         try:
-            invoice_factory = DomainInvoiceFactory(
-                invoice_start, invoice_end, domain)
+            invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain_obj)
             invoice_factory.create_invoices()
-            log_accounting_info("Sent invoices for domain %s" % domain.name)
+            log_accounting_info("Sent invoices for domain %s" % domain_obj.name)
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                "Could not create invoice for domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
     all_customer_billing_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
@@ -277,18 +294,18 @@ def generate_invoices(based_on_date=None):
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                "Could not create invoice for domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
 
@@ -411,8 +428,6 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
 @task(serializer='pickle', ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
-                                account_created_by,
-                                account_entry_point,
                                 amount,
                                 invoice_items,
                                 contact_emails):
@@ -477,7 +492,7 @@ def send_purchase_receipt(payment_record, domain,
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice, payment_method):
+def send_autopay_failed(invoice):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
@@ -809,7 +824,7 @@ def _create_overdue_notification(invoice, context):
 def archive_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
-            if isinstance(app, HQMediaMixin):
+            if isinstance(app, ApplicationMediaMixin):
                 has_archived = app.archive_logos()
                 if has_archived:
                     app.save()
@@ -828,7 +843,7 @@ def archive_logos(self, domain_name):
 def restore_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
-            if isinstance(app, HQMediaMixin):
+            if isinstance(app, ApplicationMediaMixin):
                 has_restored = app.restore_logos()
                 if has_restored:
                     app.save()

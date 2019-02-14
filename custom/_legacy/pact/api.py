@@ -147,7 +147,7 @@ class PactFormAPI(DomainAPI):
 #                    continue
                 try:
                     xml_str = (BlobHelper(data_row, db, CODES.form_xml)
-                        .fetch_attachment('form.xml')
+                        .fetch_attachment('form.xml', return_bytes=True).decode('utf-8')
                         .replace("<?xml version=\'1.0\' ?>", '')
                         .replace("<?xml version='1.0' encoding='UTF-8' ?>", ''))
                     yield xml_str

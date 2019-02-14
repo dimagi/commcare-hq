@@ -38,7 +38,9 @@ class HeartbeatTests(TestCase):
 
     def _auth_headers(self, user):
         return {
-            'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode('%s:123' % user.username),
+            'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode(
+                ('%s:123' % user.username).encode('utf-8')
+            ).decode('utf-8'),
         }
 
     def _do_request(self, user, device_id, app_id=None, app_version=1, last_sync='',

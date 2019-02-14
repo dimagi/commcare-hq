@@ -33,7 +33,7 @@ from dimagi.utils.web import json_response
 from django_otp import match_token
 
 # CCHQ imports
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
@@ -51,9 +51,9 @@ OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' U
 
 def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
-    domain = Domain.get_by_name(domain_name)
-    req.project = domain
-    return domain_name, domain
+    domain_obj = Domain.get_by_name(domain_name)
+    req.project = domain_obj
+    return domain_name, domain_obj
 
 ########################################################################################################
 
@@ -124,7 +124,7 @@ def login_and_domain_required(view_func):
         ):
             return view_func(req, domain_name, *args, **kwargs)
         else:
-            login_url = reverse('domain_login', kwargs={'domain': domain})
+            login_url = reverse('domain_login', kwargs={'domain': domain_name})
             return redirect_for_login_or_domain(req, login_url=login_url)
 
     return _inner
@@ -292,9 +292,9 @@ def two_factor_check(view_func, api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
-            dom = Domain.get_by_name(domain)
+            domain_obj = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
+            if not api_key and domain_obj and _two_factor_required(view_func, domain_obj, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
                     with mutable_querydict(request.GET):
@@ -474,3 +474,19 @@ def check_domain_migration(view_func):
 
     wrapped_view.domain_migration_handled = True
     return wraps(view_func)(wrapped_view)
+
+
+def track_domain_request(calculated_prop):
+    """
+        Use this decorator to audit request.
+    """
+    def _dec(view_func):
+        @wraps(view_func)
+        def _wrapped(class_based_view, request, *args, **kwargs):
+            domain = kwargs.get("domain", None)
+            if domain:
+                DomainAuditRecordEntry.update_calculations(domain, calculated_prop)
+            return view_func(class_based_view, request, *args, **kwargs)
+        return _wrapped
+
+    return _dec

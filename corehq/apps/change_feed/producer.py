@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 import json
+import six
 
 from django.conf import settings
 from kafka import KafkaProducer
@@ -23,14 +24,18 @@ class ChangeProducer(object):
             api_version=settings.KAFKA_API_VERSION,
             client_id="cchq-producer",
             retries=3,
-            acks=1
+            acks=1,
+            key_serializer=lambda key: str(key).encode()
         )
         return self._producer
 
     def send_change(self, topic, change_meta):
         message = change_meta.to_json()
+        message_json_dump = json.dumps(message)
+        if six.PY3:
+            message_json_dump = message_json_dump.encode('utf-8')
         try:
-            self.producer.send(topic, bytes(json.dumps(message)))
+            self.producer.send(topic, message_json_dump, key=change_meta.document_id)
             self.producer.flush()
         except Exception as e:
             _assert = soft_assert(notify_admins=True)

@@ -75,7 +75,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             for desired_location in desired_locations
         }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
 
-        return self.get_xml(xml_name).format(
+        return self.get_xml(xml_name).decode('utf-8').format(
             user_id=self.user.user_id,
             **ids
         )
@@ -433,7 +433,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         location_type.include_without_expanding = self.locations['DTO'].location_type
         location_type.save()
 
-        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1])
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1]).decode('utf-8')
 
         for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
             self.assertTrue(location_name in fixture)
@@ -685,8 +685,27 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     def test_related_locations(self, *args):
         self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
         self._assert_fixture_matches_file(
+            'related_location_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
             'related_location',
-            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            ['Boston', 'Cambridge'],
+            related=True
+        )
+
+    def test_related_locations_parent_location(self, *args):
+        # verify that being assigned to a parent location pulls in sub location's relations
+        self.user._couch_user.add_to_assigned_locations(self.locations['Middlesex'])
+        self._assert_fixture_matches_file(
+            'related_location_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
+            'related_location',
+            ['Boston', 'Cambridge'],
             related=True
         )
 
@@ -696,10 +715,39 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
         self.relation.save()
         self.addCleanup(lambda: LocationRelation.objects.filter(pk=self.relation.pk).update(distance=None))
         self._assert_fixture_matches_file(
+            'related_location_with_distance_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
             'related_location_with_distance',
-            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            ['Boston', 'Cambridge'],
             related=True
         )
+
+    def test_should_sync_when_changed(self, *args):
+        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
+        last_sync_time = datetime.utcnow()
+        sync_log = SyncLog(date=last_sync_time)
+        locations_queryset = SQLLocation.objects.filter(pk=self.locations['Boston'].pk)
+
+        self.assertFalse(should_sync_locations(sync_log, locations_queryset, self.user))
+        self.assertEquals(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 0)
+
+        LocationRelation.objects.create(location_a=self.locations["Revere"], location_b=self.locations["Boston"])
+        self.assertTrue(should_sync_locations(SyncLog(date=last_sync_time), locations_queryset, self.user))
+
+        # length 2 for index definition + data
+        self.assertEquals(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
+
+    def test_force_empty_when_user_has_no_locations(self, *args):
+        sync_log = SyncLog(date=datetime.utcnow())
+        # no relations have been touched since this synclog, but it still pushes down the empty list
+        self.assertEquals(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
+
 
 
 class ShouldSyncLocationFixturesTest(TestCase):

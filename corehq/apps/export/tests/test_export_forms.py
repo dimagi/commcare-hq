@@ -16,7 +16,7 @@ from corehq.apps.export.filters import (
 from corehq.apps.export.forms import (
     BaseFilterExportDownloadForm,
     EmwfFilterFormExport,
-    SubmitHistoryFilter,
+    ExpandedMobileWorkerFilter,
     FilterCaseESExportDownloadForm,
     CaseExportFilterBuilder,
     FormExportFilterBuilder,
@@ -106,7 +106,7 @@ class TestEmwfFilterFormExport(TestCase):
         self.export_filter = self.subject(self.domain, pytz.utc)
 
         self.assertEqual(self.subject.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(self.subject.dynamic_filter_class, SubmitHistoryFilter)
+        self.assertEqual(self.subject.dynamic_filter_class, ExpandedMobileWorkerFilter)
 
 
 class TestEmwfFilterExportMixin(TestCase):
@@ -183,7 +183,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         export_filter = self.subject(self.domain, pytz.utc)
 
         self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(export_filter.dynamic_filter_class, SubmitHistoryFilter)
+        self.assertEqual(export_filter.dynamic_filter_class, ExpandedMobileWorkerFilter)
 
     @patch('corehq.apps.export.filters.get_groups_user_ids')
     def test_get_group_filter(self, patch_object):
@@ -315,7 +315,7 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         super(TestEmwfFilterFormExportFormFilters, cls).setUpClass()
         cls.subject = cls.form
 
-    def test_get_form_filter_for_all_locations_access(self, locations_patch, users_patch, user_type_patch,
+    def test_get_model_filter_for_all_locations_access(self, locations_patch, users_patch, user_type_patch,
                                                       group_patch):
         domain = Domain(name="testapp", is_active=True)
         group_ids_slug = ['g__e80c5e54ab552245457d2546d0cdbb03', 'g__e80c5e54ab552245457d2546d0cdbb04']
@@ -323,7 +323,7 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         export_filter_form = self.subject(domain, pytz.utc, data=data)
         self.assertTrue(export_filter_form.is_valid())
-        filters = export_filter_form.get_form_filter(group_ids_slug, True, None)
+        filters = export_filter_form.get_model_filter(group_ids_slug, True, None)
         extracted_group_ids = export_filter_form._get_group_ids(group_ids_slug)
 
         self.assertEqual(len(filters), 1)
@@ -333,7 +333,7 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         locations_patch.assert_called_once_with([])
 
     @patch("corehq.apps.export.forms.user_ids_at_locations")
-    def test_get_form_filter_for_restricted_locations_access(self, user_ids_at_locations_patch, locations_patch,
+    def test_get_model_filter_for_restricted_locations_access(self, user_ids_at_locations_patch, locations_patch,
                                                              users_patch, user_type_patch, group_patch):
         domain = Domain(name="testapp", is_active=True)
         group_ids_slug = ['g__e80c5e54ab552245457d2546d0cdbb03', 'g__e80c5e54ab552245457d2546d0cdbb04']
@@ -341,7 +341,7 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         export_filter_form = self.subject(domain, pytz.utc, data=data)
         self.assertTrue(export_filter_form.is_valid())
         location_ids = ['some location', 'ids']
-        filters = export_filter_form.get_form_filter(group_ids_slug, False, location_ids)
+        filters = export_filter_form.get_model_filter(group_ids_slug, False, location_ids)
         extracted_group_ids = export_filter_form._get_group_ids(group_ids_slug)
 
         # There are 2 filters because the scope filter has been applied for the restricted user
@@ -377,11 +377,11 @@ class TestFilterCaseESExportDownloadForm(TestCase):
     @patch.object(filter, 'show_all_data', return_value=True)
     @patch.object(filter, 'show_project_data')
     @patch.object(filter_builder, '_get_filters_from_slugs')
-    def test_get_case_filter_for_all_data(self, filters_from_slugs_patch, project_data_patch, *patches):
+    def test_get_model_filter_for_all_data(self, filters_from_slugs_patch, project_data_patch, *patches):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter_form = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter_form.is_valid())
-        case_filters = self.export_filter_form.get_case_filter('', True, None)
+        case_filters = self.export_filter_form.get_model_filter('', True, None)
         self.assertEqual(len(case_filters), 0)
 
     @patch.object(filter, 'show_project_data', return_value=True)
@@ -389,14 +389,54 @@ class TestFilterCaseESExportDownloadForm(TestCase):
     @patch.object(filter, 'selected_user_types', return_value=[HQUserType.ADMIN])
     @patch.object(filter_builder, '_get_filters_from_slugs')
     @patch.object(filter_builder, 'get_user_ids_for_user_types', return_value=['123'])
-    def test_get_case_filter_for_project_data(self, fetch_user_ids_patch, filters_from_slugs_patch, *patches):
+    def test_get_model_filter_for_project_data(self, fetch_user_ids_patch, filters_from_slugs_patch, *patches):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
-        case_filters = self.export_filter.get_case_filter('', True, None)
+        case_filters = self.export_filter.get_model_filter('', True, None)
 
         fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
                                                      web=False)
+        assert not filters_from_slugs_patch.called
+
+        self.assertIsInstance(case_filters[0], NOT)
+        self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
+        self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
+
+    @patch.object(filter, 'show_deactivated_data', return_value=True)
+    @patch.object(filter, 'show_project_data', return_value=True)
+    @patch.object(filter, 'show_all_data', return_value=False)
+    @patch.object(filter, 'selected_user_types', return_value=[HQUserType.ADMIN])
+    @patch.object(filter_builder, '_get_filters_from_slugs')
+    @patch.object(filter_builder, 'get_user_ids_for_user_types', return_value=['123'])
+    def test_get_model_filter_for_project_data_with_deactivated_filter(self, fetch_user_ids_patch,
+                                                                      filters_from_slugs_patch, *patches):
+        # The show_deactivated_data filter should not change the results.
+        data = {'date_range': '1992-01-30 to 2016-11-28'}
+        self.export_filter = self.subject(self.domain, pytz.utc, data=data)
+        self.assertTrue(self.export_filter.is_valid())
+        case_filters = self.export_filter.get_model_filter('', True, None)
+
+        fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
+                                                     web=False)
+        assert not filters_from_slugs_patch.called
+
+        self.assertIsInstance(case_filters[0], NOT)
+        self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
+        self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
+
+    @patch.object(filter, 'show_deactivated_data', return_value=True)
+    @patch.object(filter, 'selected_user_types', return_value=[HQUserType.DEACTIVATED])
+    @patch.object(filter_builder, '_get_filters_from_slugs')
+    @patch.object(filter_builder, 'get_user_ids_for_user_types', return_value=['123'])
+    def test_get_model_filter_for_deactivated_data(self, fetch_user_ids_patch, filters_from_slugs_patch, *patches):
+        data = {'date_range': '1992-01-30 to 2016-11-28'}
+        self.export_filter = self.subject(self.domain, pytz.utc, data=data)
+        self.assertTrue(self.export_filter.is_valid())
+        case_filters = self.export_filter.get_model_filter('', True, None)
+
+        fetch_user_ids_patch.assert_called_once_with(admin=True, commtrack=True, demo=True, unknown=True,
+                                                     web=True, active=True, deactivated=False)
         assert not filters_from_slugs_patch.called
 
         self.assertIsInstance(case_filters[0], NOT)
@@ -410,7 +450,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         group_ids_patch.return_value = self.group_ids
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
-        self.export_filter.get_case_filter(self.group_ids_slug, True, None)
+        self.export_filter.get_model_filter(self.group_ids_slug, True, None)
 
         group_ids_patch.assert_called_once_with(self.group_ids_slug)
         static_user_ids_for_group_patch.assert_called_once_with(self.group_ids)
@@ -423,7 +463,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
-        self.export_filter.get_case_filter(self.group_ids_slug, False, ["some", "location", "ids"])
+        self.export_filter.get_model_filter(self.group_ids_slug, False, ["some", "location", "ids"])
 
         assert not static_user_ids_for_group_patch.called
 
@@ -438,7 +478,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
 
-        self.export_filter.get_case_filter(self.group_ids_slug, True, None)
+        self.export_filter.get_model_filter(self.group_ids_slug, True, None)
         selected_user_types.assert_called_once_with(self.group_ids_slug)
         get_locations_ids.assert_called_once_with([])
         get_users_filter.assert_called_once_with(list(get_user_ids.return_value))
@@ -457,7 +497,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
 
-        self.export_filter.get_case_filter(self.group_ids_slug, False, ['some', 'location', 'ids'])
+        self.export_filter.get_model_filter(self.group_ids_slug, False, ['some', 'location', 'ids'])
         get_locations_ids.assert_called_once_with([])
         get_users_filter.assert_called_once_with(list(get_user_ids.return_value))
         get_user_ids.assert_called_once_with(self.group_ids_slug)

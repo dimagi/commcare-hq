@@ -5,6 +5,7 @@ from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
 from corehq.apps.export.system_properties import BOTTOM_MAIN_FORM_TABLE_PROPERTIES, MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.userreports.app_manager.data_source_meta import make_form_data_source_filter, \
     make_case_data_source_filter
+from corehq.apps.userreports.exceptions import DuplicateColumnIdError
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import get_column_name
 import unidecode
@@ -68,10 +69,13 @@ def get_form_data_source(app, form):
         xform.data_node.tag_xmlns,
         only_process_current_builds=True,
     )
-    meta_properties = [_export_column_to_ucr_indicator(c) for c in BOTTOM_MAIN_FORM_TABLE_PROPERTIES]
+    meta_properties = [
+        _export_column_to_ucr_indicator(c) for c in BOTTOM_MAIN_FORM_TABLE_PROPERTIES
+        if c.label != 'form_link'
+    ]
     dynamic_properties = _get_dynamic_indicators_from_export_schema(schema)
     form_name = form.default_name()
-    return DataSourceConfiguration(
+    config = DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='XFormInstance',
         table_id=clean_table_name(app.domain, form_name),
@@ -79,6 +83,22 @@ def get_form_data_source(app, form):
         configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns, app.get_id),
         configured_indicators=meta_properties + dynamic_properties + _get_shared_indicators(),
     )
+    return _deduplicate_columns_if_necessary(config)
+
+
+def _deduplicate_columns_if_necessary(config):
+    try:
+        config.validate()
+    except DuplicateColumnIdError as e:
+        # deduplicate any columns by adding a hash of the full display_name/path
+        for indicator in config.configured_indicators:
+            if indicator['column_id'] in e.columns:
+                indicator['column_id'] = get_column_name(indicator['display_name'], add_hash=True)
+
+        # clear indicators cache, which is awkward with properties
+        DataSourceConfiguration.indicators.fget.reset_cache(config)
+        config.validate()
+    return config
 
 
 def _get_shared_indicators():
@@ -169,7 +189,7 @@ def _export_item_to_ucr_indicator(export_item):
     return {
         "type": "expression",
         "column_id": get_column_name(export_item.readable_path, add_hash=False),
-        "display_name": export_item.path[-1].name,
+        "display_name": export_item.readable_path,
         "datatype": export_item.datatype or 'string',
         "expression": inner_expression,
     }

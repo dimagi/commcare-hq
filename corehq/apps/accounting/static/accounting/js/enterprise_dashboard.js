@@ -24,7 +24,7 @@ hqDefine("accounting/js/enterprise_dashboard", [
                 },
             });
 
-            $element.find(".btn-success").click(function () {
+            $element.find(".btn-primary").click(function () {
                 kissmetrics.track.event("[Enterprise Dashboard] Clicked Email Report for " + slug);
                 var $button = $(this);
                 $button.disableButton();

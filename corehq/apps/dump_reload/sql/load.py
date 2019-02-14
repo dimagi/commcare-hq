@@ -31,6 +31,7 @@ PARTITIONED_MODEL_SHARD_ID_FIELDS = {
     'form_processor.casetransaction': 'case',
     'form_processor.ledgervalue': 'case',
     'form_processor.ledgertransaction': 'case',
+    'blobs.blobmeta': 'parent_id',
 }
 
 

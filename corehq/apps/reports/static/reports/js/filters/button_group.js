@@ -10,17 +10,17 @@ hqDefine("reports/js/filters/button_group", ['jquery'], function ($) {
             var $activeCheckbox = $('#' + $(this).data("checkfilter"));
 
             if ($(this).hasClass('active')) {
-                $(this).addClass('btn-success');
+                $(this).addClass('btn-primary');
                 $activeCheckbox.prop("checked", true);
             } else {
-                $(this).removeClass('btn-success');
+                $(this).removeClass('btn-primary');
                 $activeCheckbox.prop("checked", false);
             }
             $activeCheckbox.trigger('change');
 
-            if ((!$el.children().hasClass('btn-success')) && !canBeEmpty) {
+            if ((!$el.children().hasClass('btn-primary')) && !canBeEmpty) {
                 var $firstChild = $el.children().first();
-                $firstChild.addClass('btn-success');
+                $firstChild.addClass('btn-primary');
                 $('#' + $firstChild.data("checkfilter")).prop("checked", true);
                 if ($(this).data("checkfilter") !== $firstChild.data("checkfilter")) {
                     $firstChild.removeClass('active');

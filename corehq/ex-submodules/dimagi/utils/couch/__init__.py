@@ -7,6 +7,8 @@ from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
 from redis.exceptions import RedisError, LockError
 import json
+import six
+import sys
 
 LOCK_EXPIRATION = timedelta(hours=1)
 
@@ -87,20 +89,26 @@ def acquire_lock(lock, degrade_gracefully, **kwargs):
 
 
 def release_lock(lock, degrade_gracefully):
+    from dimagi.utils.logging import notify_exception
     if lock:
         try:
-            lock.release()
-        except RedisError as e:
-            if not degrade_gracefully:
-                raise
-            elif isinstance(e, LockError):
+            try:
+                lock.release()
+            except BaseException as e:
+                exc = sys.exc_info()
+                ext = " (already unlocked)" if isinstance(e, LockError) else ""
                 try:
-                    # TODO: uncomment notify_exception once timeout errors are fixed
-                    pass
-                    # notify_exception(None, message='Warning: Could not release a '
-                    #    'redis lock. This may mean the timeout is too small.')
+                    notify_exception(
+                        None,
+                        message='Warning: Could not release redis lock%s' % ext,
+                        exc_info=exc,
+                    )
                 except:
                     pass
+                six.reraise(*exc)
+        except RedisError:
+            if not degrade_gracefully:
+                raise
 
 
 class RedisLockableMixIn(object):
@@ -365,6 +373,10 @@ class LooselyEqualDocumentSchema(DocumentSchema):
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self._doc == other._doc
+
+    # TODO - remove this in Python 3
+    def __ne__(self, other):
+        return not (self == other)
 
     def __hash__(self):
         return hash(json.dumps(self._doc, sort_keys=True))

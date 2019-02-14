@@ -18,8 +18,8 @@
                     <th class="col-sm-1">{% trans 'Status' %}</th>
                     <th class="col-sm-2">{% trans 'Action' %}</th>
                     <th class="col-sm-2">{% trans 'Preview' %}</th>
-                    <th class="col-sm-6">{% trans 'Size'  %}</th>
-                    <th class="col-sm-6">{% trans 'Path in Application'  %}</th>
+                    <th class="col-sm-1">{% trans 'Size'  %}</th>
+                    <th class="col-sm-5">{% trans 'Path in Application'  %}</th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: {{ ref_type }}">
@@ -34,7 +34,7 @@
                     <td>
                         <code data-bind="text: humanized_content_length"></code>
                         <!-- ko if: image_size -->
-                        (<span data-bind="text: image_size"></span>)
+                        <span data-bind="text: image_size"></span>
                         <!-- /ko -->
                     </td>
                     <td><code data-bind="text: path"></code></td>

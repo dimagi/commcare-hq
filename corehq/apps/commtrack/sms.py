@@ -38,17 +38,17 @@ class SMSError(RuntimeError):
 
 def handle(verified_contact, text, msg):
     """top-level handler for incoming stock report messages"""
-    domain = Domain.get_by_name(verified_contact.domain)
-    if not domain.commtrack_enabled:
+    domain_obj = Domain.get_by_name(verified_contact.domain)
+    if not domain_obj.commtrack_enabled:
         return False
 
     try:
-        if toggles.STOCK_AND_RECEIPT_SMS_HANDLER.enabled(domain.name):
+        if toggles.STOCK_AND_RECEIPT_SMS_HANDLER.enabled(domain_obj.name):
             # handle special stock parser for custom domain logic
-            data = StockAndReceiptParser(domain, verified_contact).parse(text.lower())
+            data = StockAndReceiptParser(domain_obj, verified_contact).parse(text.lower())
         else:
             # default report parser
-            data = StockReportParser(domain, verified_contact).parse(text.lower())
+            data = StockReportParser(domain_obj, verified_contact).parse(text.lower())
         if not data:
             return False
     except NotAUserClassError:
@@ -59,15 +59,12 @@ def handle(verified_contact, text, msg):
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % six.text_type(e))
         return True
 
-    process(domain.name, data)
+    process(domain_obj.name, data)
     send_confirmation(verified_contact, data)
     return True
 
 
 def process(domain, data):
-    import pprint
-    logger.debug(pprint.pformat(data))
-
     xml = to_instance(data)
 
     logger.debug(xml)

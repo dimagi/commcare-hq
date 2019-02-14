@@ -174,9 +174,21 @@ class ObservationMapping(DocumentSchema):
     concept = StringProperty()
     value = SchemaProperty(ValueSource)
 
+    # Import Observations as case updates from Atom feed. (Case type is
+    # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
+    # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
+    case_property = StringProperty(required=False)
+
 
 class OpenmrsFormConfig(DocumentSchema):
     xmlns = StringProperty()
+
+    # Used to determine the start of a visit and an encounter. The end
+    # of a visit is set to one day (specifically 23:59:59) later. If not
+    # given, the value defaults to when the form was completed according
+    # to the device, /meta/timeEnd.
+    openmrs_start_datetime = SchemaProperty(ValueSource, required=False)
+
     openmrs_visit_type = StringProperty()
     openmrs_encounter_type = StringProperty()
     openmrs_form = StringProperty()

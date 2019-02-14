@@ -142,32 +142,30 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             self._batch_process_with_error_handling(chunk)
             self._update_checkpoint(chunk[-1], context)
 
-        # keep track of results for batch processors
+        # keep track of chunk for batch processors
         changes_chunk = []
-        serial_processing_time = 0
         last_process_time = datetime.utcnow()
 
         try:
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 context.changes_seen += 1
                 if change:
-                    # process change on all serial_processors and record datadog success/fail
-                    processing_time = self.process_with_error_handling(change)
-                    serial_processing_time += processing_time
-                    # queue and process on all batch_processors
                     if self.batch_processors:
+                        # Queue and process in chunks for both batch
+                        #   and serial processors
                         changes_chunk.append(change)
                         chunk_full = len(changes_chunk) == self.processor_chunk_size
                         time_elapsed = (datetime.utcnow() - last_process_time).seconds > min_wait_seconds
                         if chunk_full or time_elapsed:
                             last_process_time = datetime.utcnow()
-                            self._batch_process_with_error_handling(changes_chunk, serial_processing_time)
+                            self._batch_process_with_error_handling(changes_chunk)
                             # update checkpoint for just the latest change
                             self._update_checkpoint(changes_chunk[-1], context)
                             # reset for next chunk
                             changes_chunk = []
-                            serial_processing_time = 0
                     else:
+                        # process all changes one by one
+                        processing_time = self.process_with_error_handling(change)
                         self._record_change_in_datadog(change, processing_time)
                         self._update_checkpoint(change, context)
                 else:
@@ -177,15 +175,19 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             process_offset_chunk(changes_chunk, context)
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
-    def _batch_process_with_error_handling(self, changes_chunk, serial_processing_time=0):
+    def _batch_process_with_error_handling(self, changes_chunk):
         """
-        Pass given changes_chunk to batch processors.
+        Process given chunk in batch mode first on batch-processors
+            and only latter on serial processors one by one, so that
+            docs can be fetched only once while batch processing in bulk
+            and cached via change.get_document for serial processors.
+            For the relookup to be avoided at least one batch processor under
+            should use change.set_document after docs are fetched in bulk
 
-            If there is an exception in chunked processing, fall back
-            to serial processing. Return total time it took to process the changes.
-            Tracks all necessary datadog metrics
+            If there is an exception in chunked processing, falls back
+            to serial processing.
         """
-        processing_time = 0 + serial_processing_time
+        processing_time = 0
 
         def reprocess_serially(chunk, processor):
             for change in chunk:
@@ -200,7 +202,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             timer = TimingContext()
             with timer:
                 try:
-                    retry_changes, change_exceptions = processor.process_changes_chunk(self, changes_chunk)
+                    retry_changes, change_exceptions = processor.process_changes_chunk(changes_chunk)
                 except Exception as ex:
                     notify_exception(
                         None,
@@ -220,17 +222,20 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                         handle_pillow_error(self, change, exception)
                     reprocess_serially(retry_changes, processor)
                 processing_time += timer.duration
+        # process on serial_processors
+        for change in changes_chunk:
+            processing_time += self.process_with_error_handling(change)
         self._record_datadog_metrics(changes_chunk, processing_time)
 
     def process_with_error_handling(self, change, processor=None):
         # process given change on all serial processors or given processor.
-        # Tracks success/fail in datadog but doesn't count, caller updates the count
+        # Tracks success/fail in datadog but not the timer metric, caller updates that
         timer = TimingContext()
         is_success = False
         try:
             with timer:
                 if processor:
-                    processor.process_change(self, change)
+                    processor.process_change(change)
                 else:
                     # process on serial processors
                     self.process_change(change, serial_only=True)
@@ -402,6 +407,10 @@ class ConstructedPillow(PillowBase):
         self._change_processed_event_handler = change_processed_event_handler
 
     @property
+    def topics(self):
+        return self._change_feed.topics
+
+    @property
     def pillow_id(self):
         return self._name
 
@@ -421,7 +430,7 @@ class ConstructedPillow(PillowBase):
     def process_change(self, change, serial_only=False):
         processors = self.serial_processors if serial_only else self.processors
         for processor in processors:
-            processor.process_change(self, change)
+            processor.process_change(change)
 
     def update_checkpoint(self, change, context):
         if self._change_processed_event_handler is not None:

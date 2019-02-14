@@ -285,6 +285,7 @@ describe('Location Modal Controller', function () {
                 maxLevel: 5,
                 userLocationId: null,
                 showMessage: true,
+                showSectorMessage: true,
             });
         });
     });
@@ -518,6 +519,7 @@ describe('Location Modal Controller restrictions', function () {
                 maxLevel: 5,
                 userLocationId: null,
                 showMessage: true,
+                showSectorMessage: true,
             });
         });
     });

@@ -17,7 +17,7 @@ from django_prbac.utils import has_privilege
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
+from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view, track_domain_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
@@ -76,13 +76,13 @@ class ReportDispatcher(View):
         attr_name = self.map_name
         from corehq import reports
         if domain:
-            project = Domain.get_by_name(domain)
+            domain_obj = Domain.get_by_name(domain)
         else:
-            project = None
+            domain_obj = None
 
         def process(reports):
             if callable(reports):
-                reports = reports(project) if project else tuple()
+                reports = reports(domain_obj) if domain_obj else tuple()
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))
@@ -91,7 +91,7 @@ class ReportDispatcher(View):
         if module_name is None:
             custom_reports = ()
         else:
-            module = __import__(module_name, fromlist=[b'reports'])
+            module = __import__(module_name, fromlist=['reports' if six.PY3 else b'reports'])
             if hasattr(module, 'reports'):
                 reports = getattr(module, 'reports')
                 custom_reports = process(getattr(reports, attr_name, ()))
@@ -219,7 +219,7 @@ class ReportDispatcher(View):
                     and (show_in_navigation or show_in_dropdown)
                 ):
                     report_contexts.append({
-                        'url': report.get_url(domain=domain, request=request),
+                        'url': report.get_url(domain=domain, request=request, relative=True),
                         'description': _(report.description),
                         'icon': report.icon,
                         'title': _(report.name),
@@ -255,6 +255,7 @@ class ProjectReportDispatcher(ReportDispatcher):
         }
 
     @cls_to_view_login_and_domain
+    @track_domain_request(calculated_prop='cp_n_viewed_non_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 

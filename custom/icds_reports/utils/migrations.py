@@ -14,7 +14,8 @@ def get_view_migrations():
         'agg_awc_daily.sql',
         'child_health_monthly.sql',
         'disha_indicators.sql',
-        'ccs_record_monthly_view.sql'
+        'ccs_record_monthly_view.sql',
+        'agg_ls_monthly.sql',
     ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []

@@ -39,9 +39,9 @@
     <form class="well well-sm form-inline" method="post" action="{% url "add_group" domain %}" id="create_group_form">
         {% csrf_token %}
         <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
-        <button class="btn btn-success" type="submit">
+        <button class="btn btn-primary" type="submit">
             <i class="fa fa-plus"></i>
-            {% trans "Create Group" %}
+            {% trans "Add Group" %}
         </button>
     </form>
 

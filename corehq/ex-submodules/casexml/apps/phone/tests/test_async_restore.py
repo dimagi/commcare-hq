@@ -60,7 +60,7 @@ class BaseAsyncRestoreTest(TestCase):
             cache_settings=RestoreCacheSettings(
                 overwrite_cache=overwrite_cache
             ),
-            async=async
+            is_async=async
         )
         self.addCleanup(get_redis_default_cache().clear)
         return restore_config

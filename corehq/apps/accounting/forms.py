@@ -91,6 +91,7 @@ class BillingAccountBasicForm(forms.Form):
 
     email_list = forms.CharField(
         label=ugettext_lazy('Client Contact Emails'),
+        widget=forms.SelectMultiple(choices=[]),
     )
     is_active = forms.BooleanField(
         label=ugettext_lazy("Account is Active"),
@@ -105,6 +106,7 @@ class BillingAccountBasicForm(forms.Form):
     enterprise_admin_emails = forms.CharField(
         label="Enterprise Admin Emails",
         required=False,
+        widget=forms.SelectMultiple(choices=[]),
     )
     enterprise_restricted_signup_domains = forms.CharField(
         label="Enterprise Domains for Restricting Signups",
@@ -150,10 +152,10 @@ class BillingAccountBasicForm(forms.Form):
                 'name': account.name,
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
-                'email_list': ','.join(contact_info.email_list),
+                'email_list': contact_info.email_list,
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
-                'enterprise_admin_emails': ','.join(account.enterprise_admin_emails),
+                'enterprise_admin_emails': account.enterprise_admin_emails,
                 'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
                 'invoicing_plan': account.invoicing_plan,
                 'dimagi_contact': account.dimagi_contact,
@@ -200,9 +202,11 @@ class BillingAccountBasicForm(forms.Form):
                     'invoicing_plan',
                     crispy.Field(
                         'enterprise_admin_emails',
-                        css_class='input-xxlarge accounting-email-select2'
+                        css_class='input-xxlarge accounting-email-select2',
+                        data_initial=json.dumps(self.initial.get('enterprise_admin_emails')),
                     ),
-                    data_bind='visible: is_customer_billing_account'
+                    data_bind='visible: is_customer_billing_account',
+                    data_initial=json.dumps(self.initial.get('enterprise_admin_emails')),
                 )
             )
             additional_fields.append(
@@ -227,13 +231,14 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 crispy.Div(
                     crispy.Div(
                         css_class='col-sm-3 col-md-2'
                     ),
                     crispy.Div(
-                        crispy.HTML(self.initial['email_list']),
+                        crispy.HTML(", ".join(self.initial.get('email_list'))),
                         css_class='col-sm-9 col-md-8 col-lg-6'
                     ),
                     css_id='emails-text',
@@ -285,14 +290,10 @@ class BillingAccountBasicForm(forms.Form):
         return name
 
     def clean_email_list(self):
-        return self.cleaned_data['email_list'].split(',')
+        return self.data.getlist('email_list')
 
     def clean_enterprise_admin_emails(self):
-        # Do not return a list with an empty string
-        if self.cleaned_data['enterprise_admin_emails']:
-            return [e.strip() for e in self.cleaned_data['enterprise_admin_emails'].split(r',')]
-        else:
-            return []
+        return self.data.getlist('enterprise_admin_emails')
 
     def clean_enterprise_restricted_signup_domains(self):
         if self.cleaned_data['enterprise_restricted_signup_domains']:
@@ -405,6 +406,7 @@ class BillingAccountContactForm(forms.ModelForm):
             'postal_code',
             'country',
         ]
+        widgets = {'country': forms.Select(choices=[])}
 
     def __init__(self, account, *args, **kwargs):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
@@ -416,6 +418,7 @@ class BillingAccountContactForm(forms.ModelForm):
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        country_code = args[0].get('country') if len(args) > 0 else account.billingcontactinfo.country
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Contact Information',
@@ -431,11 +434,8 @@ class BillingAccountContactForm(forms.ModelForm):
                 crispy.Field(
                     'country',
                     css_class="input-xlarge accounting-country-select2",
-                    data_countryname=COUNTRIES.get(
-                        args[0].get('country') if len(args) > 0
-                        else account.billingcontactinfo.country,
-                        ''
-                    )
+                    data_country_code=country_code or '',
+                    data_country_name=COUNTRIES.get(country_code, ''),
                 ),
             ),
             hqcrispy.FormActions(
@@ -451,7 +451,8 @@ class BillingAccountContactForm(forms.ModelForm):
 
 class SubscriptionForm(forms.Form):
     account = forms.IntegerField(
-        label=ugettext_lazy("Billing Account")
+        label=ugettext_lazy("Billing Account"),
+        widget=forms.Select(choices=[]),
     )
     start_date = forms.DateField(
         label=ugettext_lazy("Start Date"), widget=forms.DateInput()
@@ -463,8 +464,14 @@ class SubscriptionForm(forms.Form):
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    plan_version = forms.IntegerField(label=ugettext_lazy("Software Plan"))
-    domain = forms.CharField(label=ugettext_lazy("Project Space"))
+    plan_version = forms.IntegerField(
+        label=ugettext_lazy("Software Plan"),
+        widget=forms.Select(choices=[]),
+    )
+    domain = forms.CharField(
+        label=ugettext_lazy("Project Space"),
+        widget=forms.Select(choices=[]),
+    )
     salesforce_contract_id = forms.CharField(
         label=ugettext_lazy("Salesforce Deployment ID"), max_length=80, required=False
     )
@@ -485,6 +492,7 @@ class SubscriptionForm(forms.Form):
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscription To"),
         required=False,
+        widget=forms.Select(choices=[]),
     )
     service_type = forms.ChoiceField(
         label=ugettext_lazy("Type"),
@@ -742,12 +750,12 @@ class SubscriptionForm(forms.Form):
         return transfer_account
 
     def clean_domain(self):
-        domain_name = self.cleaned_data['domain']
+        domain = self.cleaned_data['domain']
         if self.fields['domain'].required:
-            domain = Domain.get_by_name(domain_name)
-            if domain is None:
+            domain_obj = Domain.get_by_name(domain)
+            if domain_obj is None:
                 raise forms.ValidationError(_("A valid project space is required."))
-        return domain_name
+        return domain
 
     def clean(self):
         if not self.cleaned_data.get('active_accounts') and not self.cleaned_data.get('account'):
@@ -798,7 +806,10 @@ class ChangeSubscriptionForm(forms.Form):
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
-    new_plan_version = forms.CharField(label=ugettext_lazy("New Software Plan"))
+    new_plan_version = forms.CharField(
+        label=ugettext_lazy("New Software Plan"),
+        widget=forms.Select(choices=[]),
+    )
     new_date_end = forms.DateField(
         label=ugettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )
@@ -1136,9 +1147,10 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    feature_id = forms.CharField(
+    select2_feature_id = forms.CharField(
         required=False,
-        label="Search for or Create Feature"
+        label="Search for or Create Feature",
+        widget=forms.Select(choices=[]),
     )
     new_feature_type = forms.ChoiceField(
         required=False,
@@ -1151,7 +1163,8 @@ class SoftwarePlanVersionForm(forms.Form):
 
     product_rate_id = forms.CharField(
         required=False,
-        label="Search for or Create Product"
+        label="Search for or Create Product",
+        widget=forms.Select(choices=[]),
     )
     product_rates = forms.CharField(
         required=False,
@@ -1165,7 +1178,8 @@ class SoftwarePlanVersionForm(forms.Form):
     )
     role_slug = forms.ChoiceField(
         required=False,
-        label="Role"
+        label="Role",
+        widget=forms.Select(choices=[]),
     )
     role_type = forms.ChoiceField(
         required=True,
@@ -1194,6 +1208,8 @@ class SoftwarePlanVersionForm(forms.Form):
         label="New Role Description",
         widget=forms.Textarea,
     )
+
+    new_product_rate = None
 
     def __init__(self, plan, plan_version, *args, **kwargs):
         self.plan = plan
@@ -1274,7 +1290,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 InlineField('feature_rates', data_bind="value: featureRates.ratesString"),
                 hqcrispy.B3MultiField(
                     "Add Feature",
-                    InlineField('feature_id', css_class="input-xxlarge",
+                    InlineField('select2_feature_id', css_class="input-xxlarge",
                                 data_bind="value: featureRates.select2.value"),
                     StrictButton(
                         "Select Feature",
@@ -1297,7 +1313,7 @@ class SoftwarePlanVersionForm(forms.Form):
                     crispy.Div(
                         StrictButton(
                             "Create Feature",
-                            css_class="btn-success",
+                            css_class="btn-primary",
                             data_bind="event: {click: featureRates.createNew}",
 
                         ),
@@ -1335,7 +1351,7 @@ class SoftwarePlanVersionForm(forms.Form):
                     crispy.Div(
                         StrictButton(
                             "Create Product",
-                            css_class="btn-success",
+                            css_class="btn-primary",
                             data_bind="event: {click: productRates.createNew}",
                         ),
                         style="margin: 10px 0;"
@@ -1387,7 +1403,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'currentValue': self['feature_rates'].value(),
             'handlerSlug': FeatureRateAsyncHandler.slug,
             'select2Options': {
-                'fieldName': 'feature_id',
+                'fieldName': 'select2_feature_id',
             }
         }
 
@@ -1522,21 +1538,18 @@ class SoftwarePlanVersionForm(forms.Form):
             raise ValidationError(_("You must specify exactly one product rate."))
         rate_data = rates[0]
         rate_form = ProductRateForm(rate_data)
+
         if not rate_form.is_valid():
             errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
-            rate_instance = None
-        else:
-            rate_instance = self._retrieve_product_rate(rate_form)
-        if errors:
             self._errors.setdefault('product_rates', errors)
-
-        self.new_product_rates = [rate_instance] if rate_instance else []
-        self.is_update = (
-            self.is_update or
-            self.plan_version is None or
-            rate_instance is None or
-            rate_instance.id != self.plan_version.product_rate.id
-        )
+            self.is_update = True
+        else:
+            self.new_product_rate = self._retrieve_product_rate(rate_form)
+            self.is_update = (
+                self.is_update or
+                self.plan_version is None or
+                self.new_product_rate.id != self.plan_version.product_rate.id
+            )
         return original_data
 
     def clean_create_new_role(self):
@@ -1594,9 +1607,8 @@ class SoftwarePlanVersionForm(forms.Form):
             role=role
         )
 
-        product_rate = self.new_product_rates[0]  # always contains one item
-        product_rate.save()
-        new_version.product_rate = product_rate
+        self.new_product_rate.save()
+        new_version.product_rate = self.new_product_rate
         new_version.save()
 
         for feature_rate in self.new_feature_rates:
@@ -1839,7 +1851,7 @@ class AnnualPlanContactForm(forms.Form):
 class TriggerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
-    domain = forms.CharField(label="Project Space")
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
 
     def __init__(self, *args, **kwargs):
         super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
@@ -1879,10 +1891,10 @@ class TriggerInvoiceForm(forms.Form):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
         invoice_start, invoice_end = get_first_last_days(year, month)
-        domain = Domain.get_by_name(self.cleaned_data['domain'])
-        self.clean_previous_invoices(invoice_start, invoice_end, domain.name)
+        domain_obj = Domain.get_by_name(self.cleaned_data['domain'])
+        self.clean_previous_invoices(invoice_start, invoice_end, domain_obj.name)
         invoice_factory = DomainInvoiceFactory(
-            invoice_start, invoice_end, domain, recipients=[settings.ACCOUNTS_EMAIL]
+            invoice_start, invoice_end, domain_obj, recipients=[settings.ACCOUNTS_EMAIL]
         )
         invoice_factory.create_invoices()
 
@@ -1921,7 +1933,7 @@ class TriggerInvoiceForm(forms.Form):
 class TriggerCustomerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
-    customer_account = forms.CharField(label="Billing Account")
+    customer_account = forms.CharField(label="Billing Account", widget=forms.Select(choices=[]))
 
     def __init__(self, *args, **kwargs):
         super(TriggerCustomerInvoiceForm, self).__init__(*args, **kwargs)
@@ -1965,7 +1977,8 @@ class TriggerCustomerInvoiceForm(forms.Form):
             invoice_factory = CustomerAccountInvoiceFactory(
                 date_start=invoice_start,
                 date_end=invoice_end,
-                account=account
+                account=account,
+                recipients=[settings.ACCOUNTS_EMAIL]
             )
             invoice_factory.create_invoice()
         except BillingAccount.DoesNotExist:
@@ -2036,7 +2049,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
 class TriggerBookkeeperEmailForm(forms.Form):
     month = forms.ChoiceField(label="Invoice Month")
     year = forms.ChoiceField(label="Invoice Year")
-    emails = forms.CharField(label="Email To")
+    emails = forms.CharField(label="Email To", widget=forms.SelectMultiple(choices=[]),)
 
     def __init__(self, *args, **kwargs):
         super(TriggerBookkeeperEmailForm, self).__init__(*args, **kwargs)
@@ -2056,7 +2069,8 @@ class TriggerBookkeeperEmailForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Trigger Bookkeeper Email Details',
-                crispy.Field('emails', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('emails', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('emails'))),
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
             ),
@@ -2069,12 +2083,15 @@ class TriggerBookkeeperEmailForm(forms.Form):
             )
         )
 
+    def clean_emails(self):
+        return self.data.getlist('emails')
+
     def trigger_email(self):
         from corehq.apps.accounting.tasks import send_bookkeeper_email
         send_bookkeeper_email(
             month=int(self.cleaned_data['month']),
             year=int(self.cleaned_data['year']),
-            emails=self.cleaned_data['emails'].split(',')
+            emails=self.cleaned_data['emails']
         )
 
 
@@ -2461,6 +2478,42 @@ class SuppressInvoiceForm(forms.Form):
         self.invoice.save()
 
 
+class HideInvoiceForm(forms.Form):
+    submit_kwarg = 'hide'
+    hide = forms.CharField(widget=forms.HiddenInput, required=False)
+
+    def __init__(self, invoice, *args, **kwargs):
+        self.invoice = invoice
+        super(HideInvoiceForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Hide invoice from customer.',
+                crispy.Div(
+                    crispy.HTML('Warning: this can only be undone by a developer.'),
+                    css_class='alert alert-danger',
+                ),
+                'hide',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    'Hide Invoice',
+                    css_class='btn-danger disable-on-submit',
+                    name=self.submit_kwarg,
+                    type='submit',
+                ),
+            ),
+        )
+
+    def hide_invoice(self):
+        self.invoice.is_hidden = True
+        self.invoice.save()
+
+
 class CreateAdminForm(forms.Form):
     username = forms.CharField(
         required=False,
@@ -2481,7 +2534,7 @@ class CreateAdminForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="fa fa-plus"></i> %s' % "Add Admin"),
-                css_class="btn-success disable-on-submit",
+                css_class="btn-primary disable-on-submit",
                 type="submit",
             )
         )
@@ -2534,7 +2587,7 @@ class EnterpriseSettingsForm(forms.Form):
         label="Signup Restriction Message",
         required=False,
         help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
-        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 128}),
+        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 512}),
     )
 
     def __init__(self, *args, **kwargs):

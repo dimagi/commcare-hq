@@ -16,7 +16,7 @@
     </thead>
     <tbody>
         {% for timer in timing_data %}
-        <tr data-tt-id="{{ timer.name }}" {% if timer.parent %}data-tt-parent-id="{{ timer.parent.name }}"{% endif %}>
+        <tr data-tt-id="{{ timer.uuid }}" {% if timer.parent %}data-tt-parent-id="{{ timer.parent.uuid }}"{% endif %}>
             <td>{{ timer.name }}</td>
             <td>{{ timer.duration|stringformat:".3f" }}</td>
             <td>{{ timer.percent_of_parent|stringformat:".1f" }}</td>

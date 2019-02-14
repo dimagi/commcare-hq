@@ -575,7 +575,7 @@ class GraphTemplate(Template):
                                     for k, v in six.iteritems(s.config)
                                 ] + [
                                     ConfigurationItem(id=k, locale_id=locale_series_config(index, k))
-                                    for k, v in six.iteritems(s.locale_specific_config)
+                                    for k, v in sorted(six.iteritems(s.locale_specific_config))
                                 ]
                             )
                         )

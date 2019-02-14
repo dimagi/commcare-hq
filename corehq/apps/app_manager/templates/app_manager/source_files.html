@@ -17,10 +17,11 @@
     {% if not other_app %}
         Or compare with another version:
         <input type="text" class="form-control input-sm" placeholder="version" />
-        <button class="btn btn-default btn-sm">Compare</button>
+        <button class="btn btn-primary btn-sm">Compare</button>
     {% endif %}
     </p>
 
+    {% block app_profiles %}{% endblock %}
     {% block downloads %}{% endblock %}
 
     <h2>Resource Files</h2>

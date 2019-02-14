@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
 import io
+import json
 import logging
 import re
 import sys
@@ -16,7 +17,6 @@ from corehq.apps.users.models import CouchUser
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
@@ -77,11 +77,12 @@ from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV4
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -129,11 +130,8 @@ class ProjectSettingsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(ProjectSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_id = 'my-project-settings-form'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.all().wrap_together(crispy.Fieldset, _('My Timezone'))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -200,10 +198,8 @@ class SnapshotApplicationForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             twbscrispy.PrependedText('publish', ''),
             crispy.Div(
@@ -224,7 +220,7 @@ class SnapshotFixtureForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             twbscrispy.PrependedText('publish', ''),
@@ -269,9 +265,7 @@ class SnapshotSettingsForm(forms.Form):
         self.is_superuser = kw.pop("is_superuser", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -444,7 +438,7 @@ class TransferDomainForm(forms.ModelForm):
         self.fields['domain'].label = _('Type the name of the project to confirm')
         self.fields['to_username'].label = _('New owner\'s CommCare username')
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             'domain',
             'to_username',
@@ -506,7 +500,7 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2AjaxV3):
+class CallCenterOwnerWidget(Select2AjaxV4):
 
     def set_domain(self, domain):
         self.domain = domain
@@ -603,10 +597,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.domain = self.project.name
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
@@ -820,10 +811,7 @@ class PrivacySecurityForm(forms.Form):
         user_name = kwargs.pop('user_name')
         domain = kwargs.pop('domain')
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
         self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
         self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
@@ -1111,10 +1099,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
             )
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -1461,12 +1446,14 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     email_list = forms.CharField(
         label=BillingContactInfo._meta.get_field('email_list').verbose_name,
         help_text=BillingContactInfo._meta.get_field('email_list').help_text,
+        widget=forms.SelectMultiple(choices=[]),
     )
 
     class Meta(object):
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
+        widgets = {'country': forms.Select(choices=[])}
 
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         self.account = account
@@ -1483,7 +1470,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             kwargs['instance'] = self.account.billingcontactinfo
             kwargs['initial'] = {
-                'email_list': ','.join(self.account.billingcontactinfo.email_list),
+                'email_list': self.account.billingcontactinfo.email_list,
             }
 
         except BillingContactInfo.DoesNotExist:
@@ -1491,15 +1478,13 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         fields = [
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                         data_initial=json.dumps(self.initial.get('email_list'))),
             'phone_number'
         ]
 
@@ -1509,7 +1494,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                     css_class='col-sm-3 col-md-2'
                 ),
                 crispy.Div(
-                    crispy.HTML(self.initial['email_list']),
+                    crispy.HTML(", ".join(self.initial.get('email_list'))),
                     css_class='col-sm-9 col-md-8 col-lg-6'
                 ),
                 css_id='emails-text',
@@ -1547,7 +1532,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, '')),
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1572,7 +1558,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
     def clean_email_list(self):
-        return self.cleaned_data['email_list'].split(',')
+        return self.data.getlist('email_list')
 
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
@@ -1611,7 +1597,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1622,7 +1609,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, ''))
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(_("Cancel"),
@@ -1632,7 +1620,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 StrictButton(_("Subscribe to Plan"),
                              type="submit",
                              id='btn-subscribe-to-plan',
-                             css_class='btn btn-success disable-on-submit-no-spinner '
+                             css_class='btn btn-primary disable-on-submit-no-spinner '
                                        'add-spinner-on-click'),
             ),
             crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
@@ -1730,7 +1718,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1741,7 +1730,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, ''))
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
@@ -1752,7 +1742,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 StrictButton(
                     _("Renew Plan"),
                     type="submit",
-                    css_class='btn btn-success',
+                    css_class='btn btn-primary',
                 ),
             ),
         )
@@ -1785,7 +1775,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField(label=ugettext_lazy("Email To"))
+    contact_email = MultiCharField(label=ugettext_lazy("Email To"), widget=forms.Select(choices=[]))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
@@ -1807,10 +1797,7 @@ class ProBonoForm(forms.Form):
         super(ProBonoForm, self).__init__(*args, **kwargs)
         if not use_domain_field:
             self.fields['domain'].required = False
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
             _('Pro-Bono Application'),
@@ -1834,6 +1821,13 @@ class ProBonoForm(forms.Form):
                 )
             ),
         )
+
+    def clean_contact_email(self):
+        if 'contact_email' in self.cleaned_data:
+            copy = self.data.copy()
+            self.data = copy
+            copy.update({'contact_email': ", ".join(self.data.getlist('contact_email'))})
+            return self.data.get('contact_email')
 
     def process_submission(self, domain=None):
         try:
@@ -1972,10 +1966,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
     def __init__(self, domain, web_user, *args, **kwargs):
         super(DimagiOnlyEnterpriseForm, self).__init__(domain, web_user, *args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.HTML(ugettext_noop(
                 '<i class="fa fa-info-circle"></i> You will have access to all '
@@ -2043,10 +2034,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.fields['organization_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails', css_class='input-xxlarge'),
@@ -2161,10 +2149,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
     def __init__(self, domain, web_user, *args, **kwargs):
         super(ContractedPartnerForm, self).__init__(domain, web_user, *args, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         self.fields['fogbugz_client_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
@@ -2374,10 +2359,7 @@ class SelectSubscriptionTypeForm(forms.Form):
         defaults = defaults or {}
         super(SelectSubscriptionTypeForm, self).__init__(defaults, **kwargs)
 
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper = hqcrispy.HQFormHelper()
         if defaults and disable_input:
             self.helper.layout = crispy.Layout(
                 hqcrispy.B3TextField(

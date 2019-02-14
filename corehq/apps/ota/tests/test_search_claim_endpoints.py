@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
+from collections import OrderedDict
 from uuid import uuid4
 
 from django.urls import reverse
@@ -115,12 +116,12 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
         self.config.ignore_patterns.add(rc)
         self.config.save()
 
-        criteria = {
-            'name': "this word should be gone",
-            'other_name': "this word should not be gone",
-            'special_id': 'abc-123-546',
-            'phone_number': '+91999',
-        }
+        criteria = OrderedDict([
+            ('phone_number', '+91999'),
+            ('special_id', 'abc-123-546'),
+            ('name', "this word should be gone"),
+            ('other_name', "this word should not be gone"),
+        ])
 
         expected = {"query": {
             "filtered": {
@@ -337,7 +338,7 @@ class CaseClaimEndpointTests(TestCase):
         # Dup claim
         response = client.post(url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.content, 'You have already claimed that case')
+        self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
     @run_with_all_backends
     def test_duplicate_user_claim(self):
@@ -355,7 +356,7 @@ class CaseClaimEndpointTests(TestCase):
         client2.login(username=USERNAME, password=PASSWORD)
         response = client2.post(url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.content, 'You have already claimed that case')
+        self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
     @run_with_all_backends
     def test_claim_restore_as(self):
@@ -448,7 +449,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(
             score_regex.sub(r'\1xxx\3',
                             re.sub(DATE_PATTERN, FIXED_DATESTAMP,
-                                   re.sub(PATTERN, TIMESTAMP, response.content))),
+                                   re.sub(PATTERN, TIMESTAMP, response.content.decode('utf-8')))),
             known_result)
 
     @patch('corehq.apps.es.es_query.run_query')
