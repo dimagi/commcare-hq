@@ -13,7 +13,7 @@ class DataSourceProvider(six.with_metaclass(ABCMeta, object)):
 
     def get_data_sources(self, referenced_doc_type=None):
         sources = self.get_all_data_sources()
-        if self.referenced_doc_type:
+        if referenced_doc_type:
             return [source for source in sources if source.referenced_doc_type == referenced_doc_type]
         else:
             return sources
