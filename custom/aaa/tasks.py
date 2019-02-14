@@ -5,7 +5,7 @@ from datetime import datetime
 from celery.task import task
 from django.db import connections
 
-from custom.aaa.models import AggregationInformation, Child
+from custom.aaa.models import AggregationInformation, Child, Woman
 
 
 def update_table(domain, slug, method):
@@ -57,3 +57,23 @@ def update_child_table_village_info(domain):
 @task
 def update_child_table_awc_info(domain):
     update_table(domain, 'Child.agg_from_awc_ucr', Child.agg_from_awc_ucr)
+
+
+@task
+def update_woman_table_person_info(domain):
+    update_table(domain, 'Woman.agg_from_person_case_ucr', Woman.agg_from_person_case_ucr)
+
+
+@task
+def update_woman_table_household_info(domain):
+    update_table(domain, 'Woman.agg_from_household_case_ucr', Woman.agg_from_household_case_ucr)
+
+
+@task
+def update_woman_table_village_info(domain):
+    update_table(domain, 'Woman.agg_from_village_ucr', Woman.agg_from_village_ucr)
+
+
+@task
+def update_woman_table_awc_info(domain):
+    update_table(domain, 'Woman.agg_from_awc_ucr', Woman.agg_from_awc_ucr)
