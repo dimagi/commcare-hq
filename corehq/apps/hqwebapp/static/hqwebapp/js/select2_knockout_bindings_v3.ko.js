@@ -12,13 +12,13 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
      * a list of strings, or a list of objects with the keys 'id' and 'text' used
      * for the select2's options.
      */
-    ko.bindingHandlers.select2 = new function () {
-        var that = this;
+    ko.bindingHandlers.select2 = function () {
+        var self = {};
 
-        this.SOURCE_KEY = "select2-source";
+        self.SOURCE_KEY = "select2-source";
 
-        this.updateSelect2Source = function (element, valueAccessor) {
-            var source = $(element).data(that.SOURCE_KEY);
+        self.updateSelect2Source = function (element, valueAccessor) {
+            var source = $(element).data(self.SOURCE_KEY);
             // We clear the array and repopulate it, instead of simply replacing
             // it, because the select2 options are tied to this specific instance.
             while (source.length > 0) {
@@ -36,45 +36,47 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
             return source;
         };
 
-        this.init = function (element) {
+        self.init = function (element) {
             var $el = $(element);
 
             // The select2 jquery element uses the array stored at
-            // $el.data(that.SOURCE_KEY) as its data source. Therefore, the options
+            // $el.data(self.SOURCE_KEY) as its data source. Therefore, the options
             // can only be changed by modifying this object, overwriting it will
             // not change the select options.
-            $el.data(that.SOURCE_KEY, []);
+            $el.data(self.SOURCE_KEY, []);
 
             $el.select2({
                 multiple: false,
                 width: "element",
-                data: $el.data(that.SOURCE_KEY),
+                data: $el.data(self.SOURCE_KEY),
             });
         };
 
-        this.update = function (element, valueAccessor, allBindings) {
-            that.updateSelect2Source(element, valueAccessor);
+        self.update = function (element, valueAccessor, allBindings) {
+            self.updateSelect2Source(element, valueAccessor);
 
             // Update the selected item
             $(element).val(ko.unwrap(allBindings().value)).trigger("change");
         };
+
+        return self;
     }();
 
     /**
      * Autocomplete widget based on a select2. Allows free text entry.
      */
-    ko.bindingHandlers.autocompleteSelect2 = new function () {
-        var that = this;
+    ko.bindingHandlers.autocompleteSelect2 = function () {
+        var self = {};
 
-        this.SOURCE_KEY = "select2-source";
+        self.SOURCE_KEY = "select2-source";
 
-        this.select2Options = function (element) {
+        self.select2Options = function (element) {
             var $el = $(element);
-            $el.data(that.SOURCE_KEY, []);
+            $el.data(self.SOURCE_KEY, []);
             return {
                 multiple: false,
                 width: "off",
-                data: $el.data(that.SOURCE_KEY),
+                data: $el.data(self.SOURCE_KEY),
                 escapeMarkup: function (text) {
                     return DOMPurify.sanitize(text);
                 },
@@ -89,17 +91,17 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
             };
         };
 
-        this.init = function (element) {
-            that._init(element, that.select2Options(element));
+        self.init = function (element) {
+            self._init(element, self.select2Options(element));
         };
 
-        this._init = function (element, select2Options) {
+        self._init = function (element, select2Options) {
             $(element).select2(select2Options).on('change', function () {
                 $(element).trigger('textchange');
             });
         };
 
-        this.update = function (element, valueAccessor, allBindings) {
+        self.update = function (element, valueAccessor, allBindings) {
             var $el = $(element),
                 newValue = ko.unwrap(allBindings().value) || $el.val(),
                 source = ko.bindingHandlers.select2.updateSelect2Source(element, valueAccessor);
@@ -116,6 +118,8 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
             $el.val(newValue);
             $el.select2("val", newValue);
         };
+
+        return self;
     }();
 
     return 1;
