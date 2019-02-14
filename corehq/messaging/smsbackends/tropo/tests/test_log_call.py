@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import corehq.apps.ivr.tests.util as util
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from django.test import Client
 import json
@@ -34,3 +35,7 @@ class TropoLogCallTestCase(util.LogCallTestCase):
         return
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"tropo": [{"reject": {}}]}')
+
+    @run_with_all_backends
+    def test_log_call(self):
+        return
