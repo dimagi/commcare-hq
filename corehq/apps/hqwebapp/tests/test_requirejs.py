@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 
+from django.core.management import call_command
 from django.test import SimpleTestCase
 
 from corehq.apps.hqwebapp.management.commands.build_requirejs import Command as BuildRequireJSCommand
@@ -93,6 +94,7 @@ class TestRequireJS(SimpleTestCase):
 
 class TestRequireJSBuild(SimpleTestCase):
     def test_no_select2_conflicts(self):
+        call_command('collectstatic')
         command = BuildRequireJSCommand()
         command.r_js(local=False, no_optimize=True)
 
