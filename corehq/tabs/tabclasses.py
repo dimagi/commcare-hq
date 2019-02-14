@@ -1187,6 +1187,8 @@ class ProjectUsersTab(UITab):
             })
 
         if self.couch_user.can_edit_groups() or self.couch_user.can_view_groups():
+            is_view_only_subpage = (hasattr(self._request, 'is_view_only')
+                                    and self._request.is_view_only)
             menu.append({
                 'title': _('Groups'),
                 'url': reverse('all_groups', args=[self.domain]),
@@ -1195,7 +1197,8 @@ class ProjectUsersTab(UITab):
                             for Mobile Workers."""),
                 'subpages': [
                     {'title': lambda **context: (
-                            "%s %s" % (_("Editing"), context['group'].name)),
+                            "%s %s" % (_("Viewing") if is_view_only_subpage
+                                       else _("Editing"), context['group'].name)),
                      'urlname': 'group_members'},
                     {'title': _('Membership Info'),
                      'urlname': 'group_membership'}
