@@ -90,7 +90,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
 def location_hierarchy_config(domain):
     return [(loc_type.name, [loc_type.parent_type.name
                              if loc_type.parent_type else None])
-            for loc_type in Domain.get_by_name(domain).location_types]
+            for loc_type in Domain.get_by_name(domain).location_types.order_by('id')]
 
 
 def parent_child(domain):
