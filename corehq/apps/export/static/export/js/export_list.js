@@ -149,7 +149,7 @@ hqDefine("export/js/export_list", [
         };
 
         self.handleExportError = function (data) {
-            self.prepareExportError(gettext(data.error));
+            self.prepareExportError(data.error);
         };
 
         self.updateDisabledState = function (model, e) {
