@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from couchdbkit import ResourceNotFound
 from couchexport.models import Format
+from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -557,11 +558,19 @@ def toggle_saved_export_enabled(request, domain):
 @login_and_domain_required
 @require_POST
 def update_emailed_export_data(request, domain):
+
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
     permissions.access_list_exports_or_404(is_deid=json.loads(request.POST.get('is_deid')))
 
     export_instance_id = request.POST.get('export_id')
-    rebuild_saved_export(export_instance_id, manual=True)
+    try:
+        rebuild_saved_export(export_instance_id, manual=True)
+    except XlsLengthException:
+        return json_response({
+            'error': _('This file has more than 256 columns, which is not supported by xls. '
+                       'Please change the output type to csv or xlsx in the export configuration page '
+                       'to export this file.')
+        })
     return json_response({'success': True})
 
 

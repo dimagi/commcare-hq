@@ -50,10 +50,10 @@ trunk: master
 name: autostaging
 branches:
   - dmr/fix-es-service-check  # Danny Jan 3
-  - jls/select2-accept-csv  # Jenny Feb 1
   - jls/paginate-case-importer-uploads  # Jenny Feb 8
   - es/child-module-metrics  # Ethan Feb 7
   - jls/requirejs-select2-conflict-test   # Jenny Feb 11
+  - ns/update_uwsgi+np/celery-4.x-2  # Nick P Feb 14
   - ns/update_uwsgi  # Nitigya Feb 12 
-
+  - np/celery-4.x-2  # Nick P Feb 14
 submodules: {}

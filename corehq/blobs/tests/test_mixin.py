@@ -59,7 +59,7 @@ class BaseTestCase(TestCase):
             return os.path.exists(self.path)
 
         def open(self):
-            return open(self.path, 'b')
+            return open(self.path, 'rb')
 
         def listdir(self):
             path = self.path
