@@ -47,6 +47,49 @@ class LocationDenormalizedModel(models.Model):
     class Meta(object):
         abstract = True
 
+    @classmethod
+    def agg_from_village_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-village_location')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{child_tablename}" AS child SET
+            sc_id = village.sc_id,
+            phc_id = village.phc_id,
+            taluka_id = village.taluka_id,
+            district_id = village.district_id,
+            state_id = village.state_id
+        FROM (
+            SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
+            FROM "{village_location_ucr_tablename}"
+        ) village
+        WHERE child.village_id = village.doc_id
+        """.format(
+            child_tablename=cls._meta.db_table,
+            village_location_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_awc_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-awc_location')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{child_tablename}" AS child SET
+            supervisor_id = awc.supervisor_id,
+            block_id = awc.block_id
+        FROM (
+            SELECT doc_id, supervisor_id, block_id
+            FROM "{awc_location_ucr_tablename}"
+        ) awc
+        WHERE child.awc_id = awc.doc_id
+        """.format(
+            child_tablename=cls._meta.db_table,
+            awc_location_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
 
 class Woman(LocationDenormalizedModel):
     """Represents a woman registered in the AAA Convergence program.
@@ -128,49 +171,6 @@ class Woman(LocationDenormalizedModel):
         """.format(
             child_tablename=cls._meta.db_table,
             household_cases_ucr_tablename=ucr_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
-
-    @classmethod
-    def agg_from_village_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-village_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
-        return """
-        UPDATE "{child_tablename}" AS child SET
-            sc_id = village.sc_id,
-            phc_id = village.phc_id,
-            taluka_id = village.taluka_id,
-            district_id = village.district_id,
-            state_id = village.state_id
-        FROM (
-            SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
-            FROM "{village_location_ucr_tablename}"
-        ) village
-        WHERE child.village_id = village.doc_id
-        """.format(
-            child_tablename=cls._meta.db_table,
-            village_location_ucr_tablename=ucr_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
-
-    @classmethod
-    def agg_from_awc_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-awc_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
-        return """
-        UPDATE "{child_tablename}" AS child SET
-            supervisor_id = awc.supervisor_id,
-            block_id = awc.block_id
-        FROM (
-            SELECT doc_id, supervisor_id, block_id
-            FROM "{awc_location_ucr_tablename}"
-        ) awc
-        WHERE child.awc_id = awc.doc_id
-        """.format(
-            child_tablename=cls._meta.db_table,
-            awc_location_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
 
@@ -281,49 +281,6 @@ class CcsRecord(LocationDenormalizedModel):
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
-    @classmethod
-    def agg_from_village_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-village_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
-        return """
-        UPDATE "{child_tablename}" AS child SET
-            sc_id = village.sc_id,
-            phc_id = village.phc_id,
-            taluka_id = village.taluka_id,
-            district_id = village.district_id,
-            state_id = village.state_id
-        FROM (
-            SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
-            FROM "{village_location_ucr_tablename}"
-        ) village
-        WHERE child.village_id = village.doc_id
-        """.format(
-            child_tablename=cls._meta.db_table,
-            village_location_ucr_tablename=ucr_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
-
-    @classmethod
-    def agg_from_awc_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-awc_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
-        return """
-        UPDATE "{child_tablename}" AS child SET
-            supervisor_id = awc.supervisor_id,
-            block_id = awc.block_id
-        FROM (
-            SELECT doc_id, supervisor_id, block_id
-            FROM "{awc_location_ucr_tablename}"
-        ) awc
-        WHERE child.awc_id = awc.doc_id
-        """.format(
-            child_tablename=cls._meta.db_table,
-            awc_location_ucr_tablename=ucr_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
-
 
 class Child(LocationDenormalizedModel):
     """Represents a child registered in the AAA Convergence program.
@@ -420,49 +377,6 @@ class Child(LocationDenormalizedModel):
         """.format(
             child_tablename=cls._meta.db_table,
             household_cases_ucr_tablename=ucr_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
-
-    @classmethod
-    def agg_from_village_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-village_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
-        return """
-        UPDATE "{child_tablename}" AS child SET
-            sc_id = village.sc_id,
-            phc_id = village.phc_id,
-            taluka_id = village.taluka_id,
-            district_id = village.district_id,
-            state_id = village.state_id
-        FROM (
-            SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
-            FROM "{village_location_ucr_tablename}"
-        ) village
-        WHERE child.village_id = village.doc_id
-        """.format(
-            child_tablename=cls._meta.db_table,
-            village_location_ucr_tablename=ucr_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
-
-    @classmethod
-    def agg_from_awc_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-awc_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
-        return """
-        UPDATE "{child_tablename}" AS child SET
-            supervisor_id = awc.supervisor_id,
-            block_id = awc.block_id
-        FROM (
-            SELECT doc_id, supervisor_id, block_id
-            FROM "{awc_location_ucr_tablename}"
-        ) awc
-        WHERE child.awc_id = awc.doc_id
-        """.format(
-            child_tablename=cls._meta.db_table,
-            awc_location_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
 
