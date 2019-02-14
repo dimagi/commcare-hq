@@ -35,8 +35,10 @@
         {% if commtrack_enabled or uses_locations %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
         {% endif %}
+        {% if not request.is_view_only %}
         <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
-        {% if not is_currently_logged_in_user %}
+        {% endif %}
+        {% if not is_currently_logged_in_user and not request.is_view_only %}
         <li><a href="#user-permanent" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
         {% endif %}
     </ul>
@@ -64,12 +66,14 @@
             </div>
         </div>
         {% endif %}
+        {% if not request.is_view_only %}
         <div class="tab-pane" id="user-password">
             <div class="panel-body">
                 {% include 'users/partials/reset_password.html' %}
             </div>
         </div>
-        {% if not is_currently_logged_in_user %}
+        {% endif %}
+        {% if not is_currently_logged_in_user and not request.is_view_only %}
         <div class="tab-pane" id="user-permanent">
             <div class="panel-body">
                 <div class="form form-horizontal">
