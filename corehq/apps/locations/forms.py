@@ -71,6 +71,7 @@ class LocationSelectWidget(forms.Widget):
             'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
     def value_from_datadict(self, data, files, name):
