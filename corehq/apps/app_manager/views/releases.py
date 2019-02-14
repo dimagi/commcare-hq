@@ -134,14 +134,15 @@ def paginate_releases(request, domain, app_id):
         if build_comment:
             try:
                 version = int(build_comment)
+            except ValueError:
+                pass
+            else:
                 build_doc = get_build_doc_by_version(domain, app_id, version)
                 if build_doc and build_doc['_id'] not in app_ids:
                     total_apps = total_apps + 1
                     apps = apps + [build_doc]
                 apps = sorted(apps, key=lambda a: -a['version'])
                 apps = apps[:limit]
-            except ValueError:
-                pass
 
         saved_apps = [
             SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
