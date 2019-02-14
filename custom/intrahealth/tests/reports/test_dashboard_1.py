@@ -40,10 +40,10 @@ class TestDashboard1(YeksiTestCase):
             'slug': 'disponibilite',
             'default_rows': 10
         }
-        total_row = dashboard1_report._extract_single_row_from_report(report_table['total_row'])
+        total_row = dashboard1_report._sanitize_single_row(report_table['total_row'])
         self.assertEqual(total_row, ['row_0', 'row_1', 'row_2', 'row_3'])
 
-        all_rows = dashboard1_report._extract_all_rows_from_report(report_table)
+        all_rows = dashboard1_report._sanitize_all_rows(report_table)
         self.assertEqual(all_rows, [['0', '4', '8', '12'],
                                     ['1', '5', '9', '13'],
                                     ['2', '6', '10', '14'],
@@ -74,10 +74,10 @@ class TestDashboard1(YeksiTestCase):
             'slug': 'disponibilite',
             'default_rows': 10
         }
-        report_table_value = dashboard1_report._extract_single_row_from_report(report_table['total_row'])
+        report_table_value = dashboard1_report._sanitize_single_row(report_table['total_row'])
         self.assertEqual(report_table_value, ['row_0', 'row_1', 'row_2', 'row_3'])
 
-        all_rows = dashboard1_report._extract_all_rows_from_report(report_table)
+        all_rows = dashboard1_report._sanitize_all_rows(report_table)
         self.assertEqual(all_rows, [['0', '4', '8', '12'],
                                     ['1', '5', '9', '13'],
                                     ['2', '6', '10', '14'],
