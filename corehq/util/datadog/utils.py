@@ -141,4 +141,9 @@ def form_load_counter(*args, **kw):
 
 
 def sms_load_counter(*args, **kw):
+    """Make a messaging load counter function
+
+    This is used to count all kinds of messaging load, including email
+    (not strictly SMS).
+    """
     return load_counter("sms", *args, **kw)
