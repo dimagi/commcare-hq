@@ -76,7 +76,7 @@ greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1
-httpagentparser==1.7.8
+httpagentparser==1.8.1
 idna==2.8
 imagesize==1.1.0          # via sphinx
 ipaddress==1.0.22

@@ -73,7 +73,7 @@ greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1           # via xhtml2pdf
-httpagentparser==1.7.8
+httpagentparser==1.8.1
 idna==2.8                 # via email-validator, requests
 ipaddress==1.0.22         # via cryptography, faker
 iso8601==0.1.12
