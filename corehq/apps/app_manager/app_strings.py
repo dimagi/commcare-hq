@@ -11,7 +11,7 @@ from corehq.apps.app_manager.util import module_offers_search,\
     create_temp_sort_column, get_sort_and_sort_only_columns
 import langcodes
 import commcare_translations
-from corehq.apps.app_manager.templatetags.xforms_extras import trans as trans_tag
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.util.translation import localize
 from langcodes import langs_by_code
 import six
@@ -41,7 +41,7 @@ def _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, fo
 def _create_custom_app_strings(app, lang, for_default=False):
 
     def trans(d):
-        return trans_tag(d, langs)
+        return clean_trans(d, langs)
 
     def maybe_add_index(text):
         if app.build_version and app.build_version >= LooseVersion('2.8'):

@@ -206,7 +206,7 @@ def download_multimedia_paths(request, domain, app_id):
     app = get_app(domain, app_id)
 
     headers = ((_("Paths"), (_("Old Path"), _("New Path"), _("Usages"))),)
-    rows = download_multimedia_paths_rows(app)
+    rows = download_multimedia_paths_rows(app, only_missing=request.GET.get('only_missing', False))
 
     temp = io.BytesIO()
     export_raw(headers, rows, temp)

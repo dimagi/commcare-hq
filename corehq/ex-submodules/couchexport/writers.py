@@ -21,7 +21,7 @@ import xlwt
 from couchexport.models import Format
 import six
 from openpyxl.styles import numbers
-from openpyxl.worksheet.write_only import WriteOnlyCell
+from openpyxl.cell import WriteOnlyCell
 from six.moves import zip
 from six.moves import map
 
