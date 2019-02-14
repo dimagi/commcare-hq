@@ -76,7 +76,7 @@ def _filter_by_hash(configs, ucr_division):
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_providers, ucr_division=None, doc_type=None
+    def __init__(self, data_source_providers, ucr_division=None, doc_type=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
         """Initializes the processor for UCRs
 
