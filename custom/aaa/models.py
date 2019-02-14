@@ -173,6 +173,32 @@ class Woman(LocationDenormalizedModel):
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    @classmethod
+    def agg_from_ccs_record_case_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-ccs_record_cases')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{woman_tablename}" AS woman SET
+            pregnant_ranges = pregnant_ranges
+        FROM (
+            SELECT person_case_id, agg_array(pregnancy_range) as pregnancy_ranges
+            FROM(
+                SELECT person_case_id,
+                       [opened_on, add] as pregnancy_range
+                FROM "{ccs_record_cases_ucr_tablename}"
+                WHERE opened_on < add
+                GROUP BY person_case_id, pregnancy_range
+            ) AS _tmp_table
+            GROUP BY person_case_id
+        ) ccs_record
+        WHERE woman.person_case_id = ccs_record.doc_id
+        """.format(
+            woman_tablename=cls._meta.db_table,
+            ccs_record_cases_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
 
 class WomanHistory(models.Model):
     """The history of form properties for any woman registered."""

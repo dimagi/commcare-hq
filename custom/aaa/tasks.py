@@ -60,6 +60,10 @@ def update_child_table_awc_info(domain):
 
 
 @task
+def update_woman_table_ccs_record_info(domain):
+    update_table(domain, 'Woman.agg_from_ccs_record_case_ucr', Woman.agg_from_ccs_record_case_ucr)
+
+@task
 def update_woman_table_person_info(domain):
     update_table(domain, 'Woman.agg_from_person_case_ucr', Woman.agg_from_person_case_ucr)
 
