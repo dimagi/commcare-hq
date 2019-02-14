@@ -44,6 +44,7 @@ hqDefine('case_importer/js/import_history', [
         self.totalItems = ko.observable(options.totalItems);
         self.itemsPerPage = ko.observable();
         self.showPaginationSpinner = ko.observable(false);
+        self.currentPage = ko.observable();
         // this is used both for the state of the ajax request
         // and for the state of celery task
         self.states = {
@@ -107,11 +108,16 @@ hqDefine('case_importer/js/import_history', [
                     return caseUpload.task_status().state === self.states.STARTED ||
                             caseUpload.task_status().state === self.states.MISSING;
                 });
+
+                // If there's work in progress, try refreshing this page in a few seconds
                 if (anyInProgress) {
                     _.delay(function () {
-                        self.goToPage(1);
+                        if (page === self.currentPage(page)) {
+                            self.goToPage(page);
+                        }
                     }, 5000);
                 }
+                self.currentPage(page);
             }).fail(function () {
                 self.showPaginationSpinner(false);
                 self.state(self.states.FAILED);
