@@ -12,6 +12,7 @@ from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION
 class PermissionsTest(TestCase):
 
     def test_OR(self):
+        self.maxDiff = 1000
         p1 = Permissions(
             edit_web_users=True,
             view_web_users=True,
