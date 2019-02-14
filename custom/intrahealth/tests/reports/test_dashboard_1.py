@@ -25,7 +25,10 @@ class TestDashboard1(YeksiTestCase):
         report_table = {
             'fix_column': False,
             'comment': 'test_comment',
-            'rows': [],
+            'rows': [[{'html': '0'}, {'html': '4'}, {'html': '8'}, {'html': '12'}],
+                     [{'html': '1'}, {'html': '5'}, {'html': '9'}, {'html': '13'}],
+                     [{'html': '2'}, {'html': '6'}, {'html': '10'}, {'html': '14'}],
+                     [{'html': '3'}, {'html': '7'}, {'html': '11'}, {'html': '15'}]],
             'datatables': False,
             'title': 'test_title',
             'total_row': [
@@ -37,8 +40,14 @@ class TestDashboard1(YeksiTestCase):
             'slug': 'disponibilite',
             'default_rows': 10
         }
-        report_table_value = dashboard1_report._extract_value_from_report_table_row_value(report_table)
-        self.assertEqual(report_table_value, ['row_0', 'row_1', 'row_2', 'row_3'])
+        total_row = dashboard1_report._extract_single_row_from_report(report_table['total_row'])
+        self.assertEqual(total_row, ['row_0', 'row_1', 'row_2', 'row_3'])
+
+        all_rows = dashboard1_report._extract_all_rows_from_report(report_table)
+        self.assertEqual(all_rows, [['0', '4', '8', '12'],
+                                    ['1', '5', '9', '13'],
+                                    ['2', '6', '10', '14'],
+                                    ['3', '7', '11', '15']])
 
     def test_extract_value_from_report_table_row_value_input_string(self):
         mock = MagicMock()
@@ -55,15 +64,24 @@ class TestDashboard1(YeksiTestCase):
         report_table = {
             'fix_column': False,
             'comment': 'test_comment',
-            'rows': [],
+            'rows': [['0', '4', '8', '12'],
+                     ['1', '5', '9', '13'],
+                     ['2', '6', '10', '14'],
+                     ['3', '7', '11', '15']],
             'datatables': False,
             'title': 'test_title',
             'total_row': ['row_0', 'row_1', 'row_2', 'row_3'],
             'slug': 'disponibilite',
             'default_rows': 10
         }
-        report_table_value = dashboard1_report._extract_value_from_report_table_row_value(report_table)
+        report_table_value = dashboard1_report._extract_single_row_from_report(report_table['total_row'])
         self.assertEqual(report_table_value, ['row_0', 'row_1', 'row_2', 'row_3'])
+
+        all_rows = dashboard1_report._extract_all_rows_from_report(report_table)
+        self.assertEqual(all_rows, [['0', '4', '8', '12'],
+                                    ['1', '5', '9', '13'],
+                                    ['2', '6', '10', '14'],
+                                    ['3', '7', '11', '15']])
 
     def test_availability_report(self):
         mock = MagicMock()
