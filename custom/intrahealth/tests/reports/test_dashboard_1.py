@@ -25,29 +25,28 @@ class TestDashboard1(YeksiTestCase):
         report_table = {
             'fix_column': False,
             'comment': 'test_comment',
-            'rows': [[{'html': '0'}, {'html': '4'}, {'html': '8'}, {'html': '12'}],
-                     [{'html': '1'}, {'html': '5'}, {'html': '9'}, {'html': '13'}],
-                     [{'html': '2'}, {'html': '6'}, {'html': '10'}, {'html': '14'}],
-                     [{'html': '3'}, {'html': '7'}, {'html': '11'}, {'html': '15'}]],
+            'rows': [[{'style': 'style0', 'html': 'html0'}, {'style': 'style3', 'html': 'html3'}],
+                     [{'style': 'style1', 'html': 'html1'}, {'style': 'style4', 'html': 'html4'}],
+                     [{'style': 'style2', 'html': 'html2'}, {'style': 'style5', 'html': 'html5'}]],
             'datatables': False,
             'title': 'test_title',
             'total_row': [
-                {'html': 'row_0'},
-                {'html': 'row_1'},
-                {'html': 'row_2'},
-                {'html': 'row_3'}
+                {'html': 'pas de donn\xe9es0'},
+                {'html': 'pas de donn\xe9es1'},
+                {'html': 'pas de donn\xe9es2'},
+                {'html': 'pas de donn\xe9es3'}
             ],
             'slug': 'disponibilite',
             'default_rows': 10
         }
         total_row = dashboard1_report._sanitize_single_row(report_table['total_row'])
-        self.assertEqual(total_row, ['row_0', 'row_1', 'row_2', 'row_3'])
+        self.assertEqual(total_row, ['pas de donn\xe9es0', 'pas de donn\xe9es1',
+                                     'pas de donn\xe9es2', 'pas de donn\xe9es3'])
 
         all_rows = dashboard1_report._sanitize_all_rows(report_table)
-        self.assertEqual(all_rows, [['0', '4', '8', '12'],
-                                    ['1', '5', '9', '13'],
-                                    ['2', '6', '10', '14'],
-                                    ['3', '7', '11', '15']])
+        self.assertEqual(all_rows, [['html0', 'html3'],
+                                    ['html1', 'html4'],
+                                    ['html2', 'html5']])
 
     def test_extract_value_from_report_table_row_value_input_string(self):
         mock = MagicMock()
