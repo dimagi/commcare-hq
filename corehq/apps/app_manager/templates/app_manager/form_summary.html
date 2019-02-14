@@ -137,19 +137,19 @@
                                 <!-- /ko -->
                                 <!-- ko foreach: load_properties -->
                                 <li data-bind="visible: $root.showCaseProperties">
+                                    <i class = "fa fa-li text-muted fa-briefcase"></i>
+                                    <span class="text-muted" data-bind="text:$data[0]"></span> -
+                                    <!-- ko text: $data[1] --><!-- /ko -->
                                     <span title="{% trans 'Load property' %}">
-                                        <i class = "fa fa-li text-muted fa-briefcase"></i>
                                         <i class = "fa text-muted fa-arrow-right"></i>
                                         <i class = "fa text-muted fa-file"></i>
                                     </span>
-                                    <span class="text-muted" data-bind="text:$data[0]"></span> -
-                                    <!-- ko text: $data[1] --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                                 <!-- ko foreach: save_properties -->
                                 <li data-bind="visible: $root.showCaseProperties">
+                                    <i class = "fa fa-li text-muted fa-file"></i>
                                     <span title="{% trans 'Save property' %}">
-                                        <i class = "fa fa-li text-muted fa-file"></i>
                                         <i class = "fa text-muted fa-arrow-right"></i>
                                         <i class = "fa text-muted fa-briefcase"></i>
                                     </span>
