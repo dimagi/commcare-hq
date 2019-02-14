@@ -35,5 +35,5 @@ class StaticDataSourceProvider(DataSourceProvider):
 class MockDataSourceProvider(DataSourceProvider):
     # for testing only
 
-    def get_data_sources(self):
+    def get_all_data_sources(self):
         return []
