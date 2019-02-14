@@ -203,7 +203,7 @@ Reference PRs:
 
 - A single page can only use one version of select2, so all instances on the page need to be migrated.
 - If you changed any python, most likely a form, any other pages using that form also likely need to be migrated.
-- If you're working on a requirejs page, you need to migrate the entire bundle. A bundle that contains both versions of select2 will throw javascript errors. There's a test to check for this, but you can also check manually by deploying to staging and reading the [staging requirejs bundle configuration](https://staging.commcarehq.org/static/build.txt).
+- If you're working on a requirejs page, you need to migrate the entire bundle. A bundle that contains both versions of select2 will throw javascript errors. There's a test to check for this, which you can also run manually: `corehq.apps.hqwebapp.tests.test_requirejs:TestRequireJSBuild.test_no_select2_conflicts`
 
 ### Testing
 
