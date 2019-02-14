@@ -171,7 +171,7 @@ ua-parser==0.8.0
 unidecode==0.04.20
 urllib3==1.24.1
 user-agents==1.1.0
-uwsgi==2.0.11.2
+uwsgi==2.0.18
 wcwidth==0.1.7            # via prompt-toolkit
 webencodings==0.5.1
 werkzeug==0.11.15
