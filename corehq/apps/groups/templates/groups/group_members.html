@@ -92,46 +92,50 @@
         <!-- Tab panes -->
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane" id="membership-tab">
-                <div class="row">
-                    <div class="col-sm-12">
-                        <div class="alert alert-info" id="membership_updating" style="display: none">
-                          <p class="lead">
-                            <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
-                          </p>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="alert alert-info" id="membership_updating" style="display: none">
+                              <p class="lead">
+                                <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
+                              </p>
+                            </div>
+
+                            <form class="form-horizontal disable-on-submit"
+                                  id="edit_membership"
+                                  action="{% url "update_group_membership" domain group.get_id %}" method='post'>
+                                    {% crispy group_membership_form %}
+                            </form>
+
+
                         </div>
-
-                        <form class="form-horizontal disable-on-submit"
-                              id="edit_membership"
-                              action="{% url "update_group_membership" domain group.get_id %}" method='post'>
-                                {% crispy group_membership_form %}
-                        </form>
-
-
                     </div>
                 </div>
             </div>
             <div role="tabpanel" class="tab-pane" id="groupdata-tab">
-                <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
-                    {% csrf_token %}
-                    <fieldset>
-                        <legend>{% trans "Edit Group Data" %}</legend>
-                        <div class="form-group">
-                            <label class="control-label col-sm-2">
-                                {% trans "Group Data" %}
-                            </label>
-                            <div class="col-sm-9">
-                                <div id="group-data-ui-editor"></div>
+                <div class="panel-body">
+                    <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
+                        {% csrf_token %}
+                        <fieldset>
+                            <legend>{% trans "Edit Group Data" %}</legend>
+                            <div class="form-group">
+                                <label class="control-label col-sm-2">
+                                    {% trans "Group Data" %}
+                                </label>
+                                <div class="col-sm-9">
+                                    <div id="group-data-ui-editor"></div>
+                                </div>
                             </div>
-                        </div>
-                        <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
-                        <div class="form-actions">
-                            <div class="col-sm-9 col-sm-offset-2">
-                                <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
+                            <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
+                            <div class="form-actions">
+                                <div class="col-sm-9 col-sm-offset-2">
+                                    <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
+                                </div>
                             </div>
-                        </div>
 
-                    </fieldset>
-                </form>
+                        </fieldset>
+                    </form>
+                </div>
             </div>
         </div>
 
