@@ -25,7 +25,7 @@ lxml~=4.3.0
 kafka-python~=1.4
 mock==2.0.0
 Pillow~=5.2
-phonenumberslite==8.8.9
+phonenumberslite~=8.8
 psycopg2~=2.7
 psycogreen~=1.0
 pycryptodome>=3.6.6  # security update

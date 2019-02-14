@@ -101,7 +101,7 @@ numpy==1.7.1
 openpyxl==2.6.0
 packaging==19.0           # via sphinx
 pbr==5.1.2
-phonenumberslite==8.8.9
+phonenumberslite==8.10.5
 pillow==5.4.1
 ply==3.11
 polib==1.1.0

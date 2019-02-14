@@ -129,7 +129,7 @@ paramiko==2.4.2           # via fabric
 pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.1.2
 pexpect==4.6.0            # via ipython
-phonenumberslite==8.8.9
+phonenumberslite==8.10.5
 pickleshare==0.7.5        # via ipython
 pillow==5.4.1
 pip-tools==2.0.2
