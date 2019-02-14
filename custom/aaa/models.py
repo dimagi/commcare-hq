@@ -128,7 +128,7 @@ class Child(LocationDenormalizedModel):
     # but going with child_health as there's a potential for person case to live
     # on after the child_health case stops being tracked (into adolescent girl, or woman)
     opened_on = models.DateField(help_text="child_health.opened_on")
-    closed_on = models.DateField(help_text="child_health.opened_on", null=True)
+    closed_on = models.DateField(help_text="child_health.closed_on", null=True)
 
     dob = models.DateField(null=True)
     sex = models.TextField(null=True)
