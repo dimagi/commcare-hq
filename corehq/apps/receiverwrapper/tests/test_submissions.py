@@ -166,12 +166,9 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
         form_xml = self.get_xml('case_ledger_form')
         result = submit_form_locally(form_xml, domain=self.domain)
 
-        open_cases = [case for case in result.cases if not case.closed]
-        closed_cases = [case for case in result.cases if case.closed]
-        self.assertEqual(len(open_cases), 1)
-        self.assertEqual(len(closed_cases), 1)
-
-        transaction = closed_cases[0].get_transaction_by_form_id(result.xform.form_id)
+        # use tuple unpacking to verify single closed case
+        closed_case, = [case for case in result.cases if case.closed]
+        transaction = closed_case.get_transaction_by_form_id(result.xform.form_id)
         self.assertTrue(transaction.is_form_transaction)
         self.assertTrue(transaction.is_case_create)
         self.assertTrue(transaction.is_case_close)
