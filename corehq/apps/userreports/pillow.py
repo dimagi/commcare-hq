@@ -103,7 +103,7 @@ class ConfigurableReportTableManagerMixin(object):
         return [
             source
             for provider in self.data_source_providers
-            for source in provider.get_data_sources(referenced_doc_type=doc_type)
+            for source in provider.get_data_sources(referenced_doc_type=self.doc_type)
         ]
 
     def get_filtered_configs(self, configs=None):
