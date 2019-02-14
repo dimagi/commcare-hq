@@ -3,7 +3,7 @@
  * See the user filter for sample usage.
  */
 hqDefine("reports/js/filters/button_group", ['jquery'], function ($) {
-    var link = function (groupIdOrEl, canBeEmpty) {
+    var link = function (groupIdOrEl) {
         var $el = typeof groupIdOrEl === "string" ? $("#" + groupIdOrEl) : $(groupIdOrEl);
         $el.find("button").click(function (e) {
             e.preventDefault();
