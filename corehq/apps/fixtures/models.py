@@ -11,8 +11,11 @@ from corehq.apps.fixtures.dbaccessors import (
     get_fixture_items_for_data_types
 )
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
-from corehq.apps.fixtures.utils import clean_fixture_field_name, \
-    get_fields_without_attributes
+from corehq.apps.fixtures.utils import (
+    clean_fixture_field_name,
+    get_fields_without_attributes,
+    remove_deleted_ownerships,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
@@ -392,13 +395,7 @@ class FixtureDataItem(Document):
                 else:
                     assert result['value']['deleted'] is True
                     deleted_fixture_ids.add(result['id'])
-
-            # fetch and delete ownership documents pointing
-            # to deleted or non-existent fixture documents
-            # this cleanup is necessary since we used to not do this
-            bad_ownerships = FixtureOwnership.for_all_item_ids(deleted_fixture_ids, user.domain)
-            FixtureOwnership.get_db().bulk_delete(bad_ownerships)
-
+            remove_deleted_ownerships.delay(deleted_fixture_ids, user.domain)
             return docs
         else:
             return fixture_ids
