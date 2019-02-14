@@ -76,13 +76,13 @@ class ReportDispatcher(View):
         attr_name = self.map_name
         from corehq import reports
         if domain:
-            project = Domain.get_by_name(domain)
+            domain_obj = Domain.get_by_name(domain)
         else:
-            project = None
+            domain_obj = None
 
         def process(reports):
             if callable(reports):
-                reports = reports(project) if project else tuple()
+                reports = reports(domain_obj) if domain_obj else tuple()
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))
@@ -219,7 +219,7 @@ class ReportDispatcher(View):
                     and (show_in_navigation or show_in_dropdown)
                 ):
                     report_contexts.append({
-                        'url': report.get_url(domain=domain, request=request),
+                        'url': report.get_url(domain=domain, request=request, relative=True),
                         'description': _(report.description),
                         'icon': report.icon,
                         'title': _(report.name),

@@ -2,8 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 import logging
+
+from django.conf import settings
 from django.db.models import Q
 from django.utils import html
+
 from corehq.apps.receiverwrapper.util import (
     get_version_from_appversion_text,
     get_commcare_version_from_appversion_text,
@@ -307,4 +310,6 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
 
 
 class DeviceLogDetailsReport(BaseDeviceLogReport, DeploymentsReport):
-    pass
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return settings.SERVER_ENVIRONMENT not in settings.NO_DEVICE_LOG_ENVS

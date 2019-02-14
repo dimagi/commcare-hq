@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import functools
 import json
 import logging
 import os
@@ -11,7 +13,6 @@ import uuid
 from datetime import datetime
 from six.moves.urllib.parse import urlparse
 
-import functools
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -80,7 +81,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.middleware import always_allow_browser_caching
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
@@ -222,10 +223,10 @@ def redirect_to_default(req, domain=None):
 
 def _two_factor_needed(domain_name, request):
     domain_name = normalize_domain_name(domain_name)
-    domain = Domain.get_by_name(domain_name)
-    if domain:
+    domain_obj = Domain.get_by_name(domain_name)
+    if domain_obj:
         return (
-            domain.two_factor_auth
+            domain_obj.two_factor_auth
             and not request.couch_user.two_factor_disabled
             and not request.user.is_verified()
         )
@@ -338,7 +339,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name, template_name):
+def _login(req, domain_name):
 
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
@@ -363,22 +364,29 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    custom_landing_page = getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
+    template_name = 'login_and_password/login.html'
+    custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
-        template_name = custom_landing_page
+        if isinstance(custom_landing_page, six.string_types):
+            template_name = custom_landing_page
+        else:
+            template_name = custom_landing_page.get(req.get_host())
+            if template_name is None:
+                template_name = custom_landing_page.get('default', template_name)
     elif domain_name:
-        domain = Domain.get_by_name(domain_name)
+        domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
             'domain': domain_name,
-            'hr_name': domain.display_name() if domain else domain_name,
-            'next': req_params.get('next', '/a/%s/' % domain),
-            'allow_domain_requests': domain.allow_domain_requests,
-            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()}
+            'hr_name': domain_obj.display_name(),
+            'next': req_params.get('next', '/a/%s/' % domain_name),
+            'allow_domain_requests': domain_obj.allow_domain_requests,
+            'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
         })
     else:
+        commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
         context.update({
-            'current_page': {'page_name': _('Welcome back to %s!') % settings.COMMCARE_HQ_NAME}
+            'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
@@ -409,11 +417,11 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-    return _login(req, domain, "login_and_password/login.html")
+    return _login(req, domain)
 
 
 @location_safe
-def domain_login(req, domain, template_name="login_and_password/login.html"):
+def domain_login(req, domain):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -423,7 +431,7 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     # necessary domain contexts:
     req.project = project
 
-    return _login(req, domain, template_name)
+    return _login(req, domain)
 
 
 class HQLoginView(LoginView):

@@ -117,6 +117,12 @@ def patch_assertItemsEqual():
         unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
+def patch_pickle_version():
+    # to avoid incompatibility between python 2 and 3
+    import pickle
+    pickle.HIGHEST_PROTOCOL = 2
+
+
 if __name__ == "__main__":
     init_hq_python_path()
 
@@ -151,6 +157,8 @@ if __name__ == "__main__":
     patch_jsonfield()
 
     patch_assertItemsEqual()
+
+    patch_pickle_version()
 
     set_default_settings_path(sys.argv)
     from django.core.management import execute_from_command_line

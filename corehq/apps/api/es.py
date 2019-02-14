@@ -679,6 +679,10 @@ query_param_consumers = [
 
 
 def es_search(request, domain, reserved_query_params=None):
+    return es_search_by_params(request.GET, domain, reserved_query_params)
+
+
+def es_search_by_params(search_params, domain, reserved_query_params=None):
     payload = {
         "filter": {
             "and": [
@@ -690,8 +694,8 @@ def es_search(request, domain, reserved_query_params=None):
     # ?_search=<json> for providing raw ES query, which is nonetheless restricted here
     # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
     # XML / JSON.
-    if '_search' in request.GET:
-        additions = json.loads(request.GET['_search'])
+    if '_search' in search_params:
+        additions = json.loads(search_params['_search'])
 
         if 'filter' in additions:
             payload['filter']['and'].append(additions['filter'])
@@ -700,15 +704,15 @@ def es_search(request, domain, reserved_query_params=None):
             payload['query'] = additions['query']
 
     # ?q=<lucene>
-    if 'q' in request.GET:
+    if 'q' in search_params:
         payload['query'] = payload.get('query', {})
-        payload['query']['query_string'] = {'query': request.GET['q']} # A bit indirect?
+        payload['query']['query_string'] = {'query': search_params['q']}  # A bit indirect?
 
     # filters are actually going to be a more common case
     reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
     query_params = {
         param: value
-        for param, value in request.GET.items()
+        for param, value in search_params.items()
         if param not in reserved_query_params and not param.endswith('__full')
     }
     for consumer in query_param_consumers:

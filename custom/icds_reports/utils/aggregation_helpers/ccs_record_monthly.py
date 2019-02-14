@@ -41,7 +41,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     @property
     def person_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
@@ -54,7 +54,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     @property
     def person_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id).decode('utf-8')
 
@@ -185,6 +185,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('minority', 'case_list.minority'),
             ('resident', 'case_list.resident'),
             ('valid_in_month', "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
+            ('institutional_delivery', 'case_list.institutional_delivery'),
             ('anc_in_month',
              '( '
                 '(CASE WHEN ut.due_list_date_anc_1 BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) + '

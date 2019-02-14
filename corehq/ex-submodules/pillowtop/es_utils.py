@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
@@ -27,13 +29,14 @@ INDEX_STANDARD_SETTINGS = {
 }
 
 
+@six.python_2_unicode_compatible
 class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
     mapping = jsonobject.DictProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return '{} ({})'.format(self.alias, self.index)
 
     @property

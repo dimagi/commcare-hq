@@ -236,7 +236,7 @@ class TestXFormInstanceResource(APIResourceTest):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            self.assertEqual(sorted(es_query['filter']['and']), expected_query)
+            self.assertItemsEqual(es_query['filter']['and'], expected_query)
             return prior_run_query(es_query)
 
         fake_xform_es.run_query = mock_run_query
@@ -690,9 +690,15 @@ class TestWebUserResource(APIResourceTest):
         "permissions": {
             "edit_apps": True,
             "edit_commcare_users": True,
+            "view_commcare_users": True,
+            "edit_groups": True,
+            "view_groups": True,
             "edit_locations": True,
+            "view_locations": True,
             "edit_data": True,
             "edit_web_users": True,
+            "view_web_users": True,
+            "view_roles": True,
             "view_reports": True
         },
         "phone_numbers": [
@@ -705,8 +711,20 @@ class TestWebUserResource(APIResourceTest):
         role = user.get_role(self.domain.name)
         self.assertEqual(role.name, json_user['role'])
         self.assertEqual(user.is_domain_admin(self.domain.name), json_user['is_admin'])
-        for perm in ['edit_web_users', 'edit_commcare_users', 'edit_locations',
-                     'edit_data', 'edit_apps', 'view_reports']:
+        for perm in [
+            'edit_web_users',
+            'view_web_users',
+            'view_roles',
+            'edit_commcare_users',
+            'view_commcare_users',
+            'edit_groups',
+            'view_groups',
+            'edit_locations',
+            'view_locations',
+            'edit_data',
+            'edit_apps',
+            'view_reports',
+        ]:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
     def test_get_list(self):
@@ -1946,7 +1964,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.assertIn("expand_column_value", c)
         self.assertSetEqual(set(self.case_property_values), {c['expand_column_value'] for c in columns})
 
-
     def test_page_size(self):
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id, {"limit": 1}))
@@ -2014,9 +2031,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
             "{}:{}".format(
                 user_in_wrong_domain_name, user_in_wrong_domain_password
             ).encode('utf-8')
-        )
+        ).decode('utf-8')
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
-            HTTP_AUTHORIZATION=b'Basic ' + credentials
+            HTTP_AUTHORIZATION='Basic ' + credentials
         )
         self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"

@@ -2589,7 +2589,7 @@ class TestAWCReport(TestCase):
                 data['data'][0],
                 {
                     'num_rations_distributed': 0,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 20,
@@ -2613,7 +2613,7 @@ class TestAWCReport(TestCase):
                 data['data'][1],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 23,
@@ -2637,7 +2637,7 @@ class TestAWCReport(TestCase):
                 data['data'][2],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 24,
@@ -2661,7 +2661,7 @@ class TestAWCReport(TestCase):
                 data['data'][3],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
@@ -2685,7 +2685,7 @@ class TestAWCReport(TestCase):
                 data['data'][4],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
@@ -2709,7 +2709,7 @@ class TestAWCReport(TestCase):
                 data['data'][5],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
@@ -2734,7 +2734,7 @@ class TestAWCReport(TestCase):
                 data['data'][6],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 29,

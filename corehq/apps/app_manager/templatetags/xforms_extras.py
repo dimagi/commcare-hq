@@ -132,6 +132,4 @@ def _input_trans(template, name, langs=None, allow_blank=True):
 
 @register.filter
 def clean_trans(name, langs=None):
-    if langs is None:
-        langs = ["default"]
-    return trans(name, langs, False)
+    return trans(name, langs=langs, include_lang=False)
