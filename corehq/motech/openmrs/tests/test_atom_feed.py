@@ -58,7 +58,7 @@ class GetTimestampTests(SimpleTestCase):
     def test_bad_date(self):
         xml = re.sub(r'2018-05-15T14:02:08Z', 'Nevermore', self.feed_xml)
         feed_elem = etree.XML(xml.encode('utf-8'))
-        with self.assertRaisesRegex(ValueError, r'^Unknown string format$'):
+        with self.assertRaisesRegex(ValueError, r'Unknown string format'):
             get_timestamp(feed_elem)
 
     def test_timezone(self):
