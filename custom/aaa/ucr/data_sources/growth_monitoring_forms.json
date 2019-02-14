@@ -41,7 +41,7 @@
     },
     "configured_indicators": [
       {
-        "colummn_id": "which_form",
+        "column_id": "which_form",
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
@@ -63,11 +63,15 @@
                 "type": "constant",
                 "constant": 2
             }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
           }
         }
       },
       {
-        "colummn_id": "user_id",
+        "column_id": "user_id",
         "datatype": "string",
         "type": "expression",
         "expression": {

@@ -22,7 +22,7 @@
         "property_path": ["form", "update_eligible_couple", "update_eligible_couple", "case"]
       },
       "expression_if_false": {
-        "type": "iterator",
+        "type": "property_path",
         "property_path": ["form", "create_eligible_couple", "create_eligible_couple", "case"]
       }
     },
@@ -39,7 +39,7 @@
     },
     "configured_indicators": [
       {
-        "colummn_id": "user_id",
+        "column_id": "user_id",
         "datatype": "string",
         "type": "expression",
         "expression": {
