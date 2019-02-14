@@ -112,7 +112,7 @@ hqDefine('case_importer/js/import_history', [
                 // If there's work in progress, try refreshing this page in a few seconds
                 if (anyInProgress) {
                     _.delay(function () {
-                        if (page === self.currentPage(page)) {
+                        if (page === self.currentPage()) {
                             self.goToPage(page);
                         }
                     }, 5000);
