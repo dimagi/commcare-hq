@@ -5,7 +5,7 @@ from datetime import datetime
 from celery.task import task
 from django.db import connections
 
-from custom.aaa.models import AggregationInformation, Child, Woman
+from custom.aaa.models import AggregationInformation, CcsRecord, Child, Woman
 
 
 def update_table(domain, slug, method):
@@ -77,3 +77,28 @@ def update_woman_table_village_info(domain):
 @task
 def update_woman_table_awc_info(domain):
     update_table(domain, 'Woman.agg_from_awc_ucr', Woman.agg_from_awc_ucr)
+
+
+@task
+def update_ccs_record_table_ccs_record_info(domain):
+    update_table(domain, 'CcsRecord.agg_from_ccs_record_case_ucr', CcsRecord.agg_from_ccs_record_case_ucr)
+
+
+@task
+def update_ccs_record_table_person_info(domain):
+    update_table(domain, 'CcsRecord.agg_from_person_case_ucr', CcsRecord.agg_from_person_case_ucr)
+
+
+@task
+def update_ccs_record_table_household_info(domain):
+    update_table(domain, 'CcsRecord.agg_from_household_case_ucr', CcsRecord.agg_from_household_case_ucr)
+
+
+@task
+def update_ccs_record_table_village_info(domain):
+    update_table(domain, 'CcsRecord.agg_from_village_ucr', CcsRecord.agg_from_village_ucr)
+
+
+@task
+def update_ccs_record_table_awc_info(domain):
+    update_table(domain, 'CcsRecord.agg_from_awc_ucr', CcsRecord.agg_from_awc_ucr)
