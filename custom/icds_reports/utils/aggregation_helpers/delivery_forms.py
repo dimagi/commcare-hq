@@ -38,7 +38,7 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
             SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR
                           (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END
                 ) OVER w as valid_visits,
-            where_born
+            LAST_VALUE(where_born) OVER w AS where_born
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND

@@ -23,10 +23,19 @@
                 {% endblocktrans %}
             </div>
 
-            <a class="btn btn-primary" href="{% url 'download_multimedia_paths' domain app_id %}">
-                <i class="fa fa-cloud-download"></i>
-                {% trans "Download Paths" %}
-            </a>
+            <form class="form-horizontal" method="GET" action="{% url 'download_multimedia_paths' domain app_id %}">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" name="only_missing" />
+                        {% trans "Include only paths where the multimedia file is missing" %}
+                    </label>
+                </div>
+                <br>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-cloud-download"></i>
+                    {% trans "Download Paths" %}
+                </button>
+            </form>
         </div>
     </div>
 

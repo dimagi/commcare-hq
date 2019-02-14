@@ -117,7 +117,7 @@
                                 <button type="button"
                                         class="btn btn-default btn-xs"
                                         data-bind="
-                                            visible: !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
+                                            visible: prepareExportError() || !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
                                             attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}
                                         "
                                         data-toggle="modal">
@@ -126,7 +126,7 @@
                                 </button>
                                 <button type="button"
                                         class="btn btn-default btn-xs btn-disabled"
-                                        data-bind="visible: emailedExport.updatingData()"
+                                        data-bind="visible: emailedExport.updatingData() && !prepareExportError()"
                                         disabled="disabled">
                                     <i class="fa fa-refresh fa-spin"></i>
                                     {% trans "Updating Data, please wait..." %}
@@ -196,6 +196,10 @@
 
                         <div data-bind="if: isLocationSafeForUser">
                             <p data-bind="if: !emailedExport.hasFile() && emailedExport.taskStatus && !emailedExport.taskStatus.justFinished()">
+                                <div class="alert alert-warning" data-bind="visible: prepareExportError()">
+                                    <i class="fa fa-exclamation-triangle"></i>
+                                    <span data-bind="text: prepareExportError"></span>
+                                </div>
                                 {% blocktrans %}
                                     <strong>No data is available yet.</strong><br />
                                     Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.

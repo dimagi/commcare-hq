@@ -127,7 +127,7 @@ def get_task_status(task, is_multiple_download_task=False):
 
     def progress_complete():
         return (
-            getattr(settings, 'CELERY_ALWAYS_EAGER', False) or
+            getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False) or
             progress and progress.percent == 100 and
             not progress.error
         )
