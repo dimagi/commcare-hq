@@ -76,7 +76,7 @@ def _filter_by_hash(configs, ucr_division):
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_providers, ucr_division=None, doc_type=None,
+    def __init__(self, data_source_providers, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
         """Initializes the processor for UCRs
 
@@ -94,7 +94,6 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
-        self.doc_type = doc_type
         self.bootstrap_interval = bootstrap_interval
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
@@ -103,7 +102,7 @@ class ConfigurableReportTableManagerMixin(object):
         return [
             source
             for provider in self.data_source_providers
-            for source in provider.get_data_sources(referenced_doc_type=self.doc_type)
+            for source in provider.get_data_sources()
         ]
 
     def get_filtered_configs(self, configs=None):
@@ -475,9 +474,8 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
         [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        data_source_providers=[DynamicDataSourceProvider('Location'), StaticDataSourceProvider('Location')],
         include_ucrs=include_ucrs,
-        doc_type='Location',
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
