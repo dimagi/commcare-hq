@@ -107,7 +107,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         tetanus_complete = "({} AND ut.tt_complete_date is not null AND " \
                            "ut.tt_complete_date<={})".format(pregnant_to_consider,
                                                              end_month_string)
-        pnc_complete = "(case_list.pnc1_date<{})".format(end_month_string)
+        pnc_complete = "(case_list.pnc1_date is not null AND case_list.pnc1_date<{})".format(end_month_string)
         bp_visited_in_month = "date_trunc('MONTH', agg_bp.latest_time_end_processed)=" \
                               "{}".format(start_month_string)
 
