@@ -1,7 +1,7 @@
 attrs~=18.1
 iso8601==0.1.12
 jsonobject==0.9.8
-jsonobject-couchdbkit==0.9.15
+jsonobject-couchdbkit~=0.9
 cloudant==2.7.0  # Remove after version is released containg bugfix https://github.com/cloudant/python-cloudant/pull/415
 celery==3.1.25
 # required by django-digest
@@ -47,7 +47,7 @@ gevent==1.2.2
 greenlet==0.4.12
 numpy==1.7.1
 openpyxl~=2.6
-six==1.11.0
+six~=1.11
 socketpool==0.5.3
 markdown==2.2.1
 sqlagg==0.12.0
