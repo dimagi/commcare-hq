@@ -382,7 +382,7 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
         for row_value in row:
             if isinstance(row_value, dict):
                 # If keys are dicts, they contain html info (ie: row_value = {'html': 'title'})
-                extracted_row_values.append(row_value.items()[0][1])
+                extracted_row_values.append(row_value['html'])
             else:
                 extracted_row_values = row
                 break
