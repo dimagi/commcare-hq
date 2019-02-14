@@ -16,15 +16,17 @@
             However, these users cannot submit forms from phones
             using the {{ cc_name }} Application.
         {% endblocktrans %}
+        {% if not request.is_view_only %}
         <div class="btn-toolbar">
             <a class="btn btn-primary"
                href="{% url "invite_web_user" domain %}">
                 <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}
             </a>
         </div>
+        {% endif %}
     </p>
 
-    {% if requests %}
+    {% if requests and not request.is_view_only %}
         <div class="panel panel-info">
             <div class="panel-heading">
                 <h3 class="panel-title">
@@ -112,7 +114,9 @@
                         <th>{% trans "Role" %}</th>
                         <th>{% trans "Name" %}</th>
                         <th>{% trans "Phone Numbers" %}</th>
+                        {% if not request.is_view_only %}
                         <th></th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: users">
@@ -127,6 +131,7 @@
                                 <li data-bind="text: $data"></li>
                             </ul>
                         </td>
+                        {% if not request.is_view_only %}
                         <td>
                             <div data-bind="visible: removeUrl">
                                 <button type="button"
@@ -181,6 +186,7 @@
                                 </div>
                             <!-- /ko -->
                         </td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -194,7 +200,7 @@
         </div><!-- end .panel-body -->
     </div><!-- end .panel -->
 
-    {% if invitations %}
+    {% if invitations and not request.is_view_only %}
         <div class="panel panel-info">
             <div class="panel-heading">
                 <h3 class="panel-title">
@@ -290,6 +296,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
+{% if not request.is_view_only %}
 <div id="modal-deletion" class="modal fade">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -309,4 +316,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
