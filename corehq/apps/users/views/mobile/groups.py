@@ -170,6 +170,8 @@ class EditGroupMembersView(BaseGroupsView):
 
     @property
     def page_name(self):
+        if self.request.is_view_only:
+            return _('Viewing Group "%s"') % self.group.name
         return _('Editing Group "%s"') % self.group.name
 
     @property
@@ -221,6 +223,7 @@ class EditGroupMembersView(BaseGroupsView):
         )
         return {
             'group': self.group,
+            'group_members': self.members,
             'bulk_sms_verification_enabled': bulk_sms_verification_enabled,
             'num_users': len(self.members),
             'group_membership_form': self.group_membership_form,
