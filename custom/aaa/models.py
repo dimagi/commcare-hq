@@ -151,7 +151,6 @@ class Child(LocationDenormalizedModel):
                 child_health.opened_on AS opened_on,
                 child_health.closed_on AS closed_on
             FROM "{child_health_cases_ucr_tablename}" child_health
-            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
         )
         ON CONFLICT (person_case_id) DO UPDATE SET
            closed_on = EXCLUDED.closed_on
@@ -180,7 +179,6 @@ class Child(LocationDenormalizedModel):
                 sex,
                 migration_status
             FROM "{person_cases_ucr_tablename}"
-            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
         ) person
         WHERE child.person_case_id = person.doc_id
         """.format(
@@ -204,7 +202,6 @@ class Child(LocationDenormalizedModel):
                 awc_owner_id,
                 village_owner_id
             FROM "{household_cases_ucr_tablename}"
-            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
         ) household
         WHERE child.household_case_id = household.doc_id
         """.format(
@@ -228,7 +225,6 @@ class Child(LocationDenormalizedModel):
         FROM (
             SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
             FROM "{village_location_ucr_tablename}"
-            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
         ) village
         WHERE child.village_id = village.doc_id
         """.format(
@@ -249,7 +245,6 @@ class Child(LocationDenormalizedModel):
         FROM (
             SELECT doc_id, supervisor_id, block_id
             FROM "{awc_location_ucr_tablename}"
-            WHERE inserted_at >= %(window_start)s AND inserted_at < %(window_end)s
         ) awc
         WHERE child.awc_id = awc.doc_id
         """.format(
