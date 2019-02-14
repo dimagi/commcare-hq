@@ -363,20 +363,28 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
         export_tables = []
         for individual_report in self.report_context['reports']:
             report_table = individual_report['report_table']
-            total_row = self._extract_value_from_report_table_row_value(report_table)
-            export_tables.append(self._export_table(report_table['title'], report_table['headers'],
-                                                    report_table['rows'], total_row))
+            extracted_rows = self._extract_all_rows_from_report(report_table)
+            extracted_total_row = self._extract_single_row_from_report(report_table['total_row'])
+            export_tables.append(self._export_table(report_table['title'],
+                                                    report_table['headers'],
+                                                    extracted_rows, extracted_total_row))
         return export_tables
 
+    def _extract_all_rows_from_report(self, report_table):
+        extracted_rows = []
+        for row in report_table['rows']:
+            extracted_rows.append(self._extract_single_row_from_report(row))
+        return extracted_rows
+
     @staticmethod
-    def _extract_value_from_report_table_row_value(report_table):
+    def _extract_single_row_from_report(list_to_extract_from):
         extracted_row_values = []
-        for row_value in report_table['total_row']:
+        for row_value in list_to_extract_from:
             if isinstance(row_value, dict):
                 # If keys are dicts, they contain html info (ie: row_value = {'html': 'title'})
                 extracted_row_values.append(row_value.items()[0][1])
             else:
-                extracted_row_values = report_table['total_row']
+                extracted_row_values = list_to_extract_from
                 break
         return extracted_row_values
 
