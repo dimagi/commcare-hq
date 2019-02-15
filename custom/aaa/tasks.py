@@ -137,6 +137,7 @@ def update_agg_awc_table(domain, month):
     update_monthly_table(domain, 'AggAwc.rollup_block', AggAwc.rollup_block, month)
     update_monthly_table(domain, 'AggAwc.rollup_district', AggAwc.rollup_district, month)
     update_monthly_table(domain, 'AggAwc.rollup_state', AggAwc.rollup_state, month)
+    update_monthly_table(domain, 'AggAwc.rollup_national', AggAwc.rollup_national, month)
 
 
 @task
@@ -149,3 +150,4 @@ def update_agg_village_table(domain, month):
     update_monthly_table(domain, 'AggVillage.rollup_taluka', AggVillage.rollup_taluka, month)
     update_monthly_table(domain, 'AggVillage.rollup_district', AggVillage.rollup_district, month)
     update_monthly_table(domain, 'AggVillage.rollup_state', AggVillage.rollup_state, month)
+    update_monthly_table(domain, 'AggVillage.rollup_national', AggVillage.rollup_national, month)
