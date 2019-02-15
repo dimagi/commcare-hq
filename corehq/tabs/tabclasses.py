@@ -1309,6 +1309,71 @@ class ProjectUsersTab(UITab):
 
         return menu
 
+    def _get_locations_menu(self):
+        if (not has_privilege(self._request, privileges.LOCATIONS)
+                and users_have_locations(self.domain)):
+            return [
+                {
+                    'title': _("No longer available"),
+                    'url': reverse('downgrade_locations', args=[self.domain]),
+                    'show_in_dropdown': True,
+                },
+            ]
+
+        if not has_privilege(self._request, privileges.LOCATIONS):
+            return []
+
+        menu = []
+
+        if (self.couch_user.can_edit_locations()
+                or self.couch_user.can_view_locations()):
+            from corehq.apps.locations.views import (
+                LocationsListView,
+                NewLocationView,
+                EditLocationView,
+                LocationImportView,
+                LocationImportStatusView,
+                LocationFieldsView,
+            )
+            menu.append({
+                'title': _(LocationsListView.page_title),
+                'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+                'subpages': [
+                    {
+                        'title': _(NewLocationView.page_title),
+                        'urlname': NewLocationView.urlname,
+                    },
+                    {
+                        'title': _(EditLocationView.page_title),
+                        'urlname': EditLocationView.urlname,
+                    },
+                    {
+                        'title': _(LocationImportView.page_title),
+                        'urlname': LocationImportView.urlname,
+                    },
+                    {
+                        'title': _(LocationImportStatusView.page_title),
+                        'urlname': LocationImportStatusView.urlname,
+                    },
+                    {
+                        'title': _(LocationFieldsView.page_name()),
+                        'urlname': LocationFieldsView.urlname,
+                    },
+                ]
+            })
+
+        from corehq.apps.locations.permissions import user_can_edit_location_types
+        if user_can_edit_location_types(self.couch_user, self.domain):
+            from corehq.apps.locations.views import LocationTypesView
+            menu.append({
+                'title': _(LocationTypesView.page_title),
+                'url': reverse(LocationTypesView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+            })
+
+        return menu
+
     @property
     def sidebar_items(self):
         items = []
@@ -1321,63 +1386,9 @@ class ProjectUsersTab(UITab):
         if project_users_menu:
             items.append((_('Project Users'), project_users_menu))
 
-        if has_privilege(self._request, privileges.LOCATIONS):
-            locations_config = []
-            if self.couch_user.can_edit_locations():
-                from corehq.apps.locations.views import (
-                    LocationsListView,
-                    NewLocationView,
-                    EditLocationView,
-                    LocationImportView,
-                    LocationImportStatusView,
-                    LocationFieldsView,
-                )
-
-                locations_config.append({
-                    'title': _(LocationsListView.page_title),
-                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                    'subpages': [
-                        {
-                            'title': _(NewLocationView.page_title),
-                            'urlname': NewLocationView.urlname,
-                        },
-                        {
-                            'title': _(EditLocationView.page_title),
-                            'urlname': EditLocationView.urlname,
-                        },
-                        {
-                            'title': _(LocationImportView.page_title),
-                            'urlname': LocationImportView.urlname,
-                        },
-                        {
-                            'title': _(LocationImportStatusView.page_title),
-                            'urlname': LocationImportStatusView.urlname,
-                        },
-                        {
-                            'title': _(LocationFieldsView.page_name()),
-                            'urlname': LocationFieldsView.urlname,
-                        },
-                    ]
-                })
-
-            from corehq.apps.locations.permissions import user_can_edit_location_types
-            if user_can_edit_location_types(self.couch_user, self.domain):
-                from corehq.apps.locations.views import LocationTypesView
-                locations_config.append({
-                    'title': _(LocationTypesView.page_title),
-                    'url': reverse(LocationTypesView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                })
-            if locations_config:
-                items.append((_('Organization'), locations_config))
-
-        elif users_have_locations(self.domain):  # This domain was downgraded
-            items.append((_('Organization'), [{
-                'title': _("No longer available"),
-                'url': reverse('downgrade_locations', args=[self.domain]),
-                'show_in_dropdown': True,
-            }]))
+        locations_menu = self._get_locations_menu()
+        if locations_menu:
+            items.append((_('Organization'), locations_menu))
 
         return items
 
