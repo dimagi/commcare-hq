@@ -6,7 +6,7 @@ from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
 from django.template.loader import render_to_string
-from celery import chain
+from celery import chord
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -28,9 +28,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID
 from corehq.util.view_utils import absolute_reverse
 
-HEALTH_APP = 'health'
-AGG_APP = 'agriculture'
-WASH_APP = 'wash'
+APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -136,19 +134,20 @@ def request_new_domain(request, form, is_new_user=True):
     if is_new_user:
         dom_req.save()
         if settings.IS_SAAS_ENVIRONMENT:
+            #  Load template apps to the user's new domain in parallel
             from corehq.apps.app_manager.tasks import load_appcues_template_app
-            chain(
-                load_appcues_template_app.si(new_domain.name, current_user.username, HEALTH_APP),
-                load_appcues_template_app.si(new_domain.name, current_user.username, AGG_APP),
-                load_appcues_template_app.si(new_domain.name, current_user.username, WASH_APP),
-                send_domain_registration_email.si(
-                    request.user.email,
-                    dom_req.domain,
-                    dom_req.activation_guid,
-                    request.user.get_full_name(),
-                    request.user.first_name
-                )
-            ).apply_async()
+            header = [
+                load_appcues_template_app.si(new_domain.name, current_user.username, slug)
+                for slug in APPCUES_APP_SLUGS
+            ]
+            callback = send_domain_registration_email.si(
+                request.user.email,
+                dom_req.domain,
+                dom_req.activation_guid,
+                request.user.get_full_name(),
+                request.user.first_name
+            )
+            chord(header)(callback)
         else:
             send_domain_registration_email(request.user.email,
                                            dom_req.domain,
