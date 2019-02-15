@@ -19,7 +19,7 @@ def task_b():
 
 
 @task
-def task_c()
+def task_c():
     task_a()
 
 
