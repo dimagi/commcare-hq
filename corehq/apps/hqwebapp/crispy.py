@@ -322,6 +322,8 @@ class RadioSelect(Field):
 
 
 def make_form_readonly(form):
+    if form is None:
+        return
+
     for field in form.fields.keys():
-        print(field)
         form.fields[field].widget.attrs['disabled'] = True
