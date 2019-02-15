@@ -435,9 +435,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.hasErrors = function() {
-        beneficiary_list_errors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        incentive_report_errors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
-        return beneficiary_list_errors || incentive_report_errors;
+        var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
+        return beneficiaryListErrors || incentiveReportErrors;
     };
 
     vm.isCombinedPDFSelected = function() {
