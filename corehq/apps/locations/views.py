@@ -46,6 +46,7 @@ from .permissions import (
     locations_access_required,
     can_edit_location,
     require_can_edit_locations,
+    require_can_edit_and_view_locations,
     user_can_edit_location_types,
     can_edit_location_types,
 )
@@ -152,10 +153,6 @@ def check_pending_locations_import(redirect=False):
 class BaseLocationView(BaseDomainView):
     section_name = ugettext_lazy("Locations")
 
-    @method_decorator(require_can_edit_locations)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
-
     @property
     def can_access_all_locations(self):
         return self.request.couch_user.has_permission(self.domain, 'access_all_locations')
@@ -185,8 +182,9 @@ class LocationsListView(BaseLocationView):
     @use_jquery_ui
     @use_select2_v4
     @method_decorator(check_pending_locations_import())
+    @method_decorator(require_can_edit_and_view_locations)
     def dispatch(self, request, *args, **kwargs):
-        return super(LocationsListView, self).dispatch(request, *args, **kwargs)
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     def show_inactive(self):
@@ -237,6 +235,7 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     entity_string = ugettext_lazy("Location")
     template_name = "custom_data_fields/custom_data_fields.html"
 
+    @method_decorator(require_can_edit_locations)
     @method_decorator(locations_access_required)
     @method_decorator(domain_admin_required)
     @method_decorator(check_pending_locations_import())
@@ -491,19 +490,10 @@ class LocationTypesView(BaseDomainView):
         return ordered_loc_types
 
 
-@location_safe
-class NewLocationView(BaseLocationView):
-    urlname = 'create_location'
-    page_title = ugettext_noop("New Location")
+class BaseEditLocationView(BaseLocationView):
     template_name = 'locations/manage/location.html'
     creates_new_location = True
     form_tab = 'basic'
-
-    @use_multiselect
-    @use_select2_v4
-    @method_decorator(check_pending_locations_import(redirect=True))
-    def dispatch(self, request, *args, **kwargs):
-        return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -530,18 +520,6 @@ class NewLocationView(BaseLocationView):
 
     @property
     @memoized
-    def location(self):
-        parent_id = self.request.GET.get('parent')
-        parent = (get_object_or_404(SQLLocation, domain=self.domain, location_id=parent_id)
-                  if parent_id else None)
-        return SQLLocation(domain=self.domain, parent=parent)
-
-    @property
-    def consumption(self):
-        return None
-
-    @property
-    @memoized
     def location_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
         return LocationFormSet(
@@ -550,6 +528,42 @@ class NewLocationView(BaseLocationView):
             request_user=self.request.couch_user,
             is_new=self.creates_new_location,
         )
+
+    def _get_loc_types_with_users(self):
+        return list(LocationType.objects
+                    .filter(domain=self.domain, has_user=True)
+                    .values_list('name', flat=True))
+
+    def form_valid(self):
+        messages.success(self.request, _('Location saved!'))
+        return HttpResponseRedirect(
+            reverse(EditLocationView.urlname,
+                    args=[self.domain,
+                          self.location_form.location.location_id]),
+        )
+
+    def settings_form_post(self, request, *args, **kwargs):
+        if self.location_form.is_valid():
+            self.location_form.save()
+            return self.form_valid()
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def consumption(self):
+        return None
+
+    @property
+    @memoized
+    def location(self):
+        parent_id = self.request.GET.get('parent')
+        parent = (get_object_or_404(SQLLocation, domain=self.domain,
+                                    location_id=parent_id)
+                  if parent_id else None)
+        return SQLLocation(domain=self.domain, parent=parent)
+
+    @method_decorator(lock_locations)
+    def post(self, request, *args, **kwargs):
+        return self.settings_form_post(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -564,27 +578,18 @@ class NewLocationView(BaseLocationView):
             'loc_types_with_users': self._get_loc_types_with_users(),
         }
 
-    def _get_loc_types_with_users(self):
-        return list(LocationType.objects
-                    .filter(domain=self.domain, has_user=True)
-                    .values_list('name', flat=True))
 
-    def form_valid(self):
-        messages.success(self.request, _('Location saved!'))
-        return HttpResponseRedirect(
-            reverse(EditLocationView.urlname,
-                    args=[self.domain, self.location_form.location.location_id]),
-        )
+@location_safe
+class NewLocationView(BaseEditLocationView):
+    urlname = 'create_location'
+    page_title = ugettext_noop("New Location")
 
-    def settings_form_post(self, request, *args, **kwargs):
-        if self.location_form.is_valid():
-            self.location_form.save()
-            return self.form_valid()
-        return self.get(request, *args, **kwargs)
-
-    @method_decorator(lock_locations)
-    def post(self, request, *args, **kwargs):
-        return self.settings_form_post(request, *args, **kwargs)
+    @use_multiselect
+    @use_select2_v4
+    @method_decorator(require_can_edit_locations)
+    @method_decorator(check_pending_locations_import(redirect=True))
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
 
 @location_safe
@@ -653,13 +658,15 @@ def unarchive_location(request, domain, loc_id):
 
 
 @location_safe
-class EditLocationView(NewLocationView):
+class EditLocationView(BaseEditLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
     creates_new_location = False
 
-    @method_decorator(can_edit_location)
+    @use_multiselect
     @use_select2_v4
+    @method_decorator(require_can_edit_and_view_locations)
+    @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -807,6 +814,10 @@ class LocationImportStatusView(BaseLocationView):
     page_title = ugettext_noop('Organization Structure Import Status')
     template_name = 'hqwebapp/soil_status_full.html'
 
+    @method_decorator(require_can_edit_locations)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         context = super(LocationImportStatusView, self).main_context
         context.update({
@@ -927,7 +938,7 @@ def location_importer_job_poll(request, domain, download_id):
     return render(request, template, context)
 
 
-@require_can_edit_locations
+@require_can_edit_and_view_locations
 @location_safe
 def location_export(request, domain):
     headers_only = request.GET.get('download_type', 'full') == 'empty'
@@ -945,7 +956,7 @@ def location_export(request, domain):
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
 
-@require_can_edit_locations
+@require_can_edit_and_view_locations
 @location_safe
 def location_download_job_poll(request, domain,
                                download_id,
@@ -962,6 +973,10 @@ def location_download_job_poll(request, domain,
 class DownloadLocationStatusView(BaseLocationView):
     urlname = 'download_org_structure_status'
     page_title = ugettext_noop('Download Organization Structure Status')
+
+    @method_decorator(require_can_edit_and_view_locations)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadLocationStatusView, self).main_context
