@@ -417,14 +417,14 @@ class AggAwc(models.Model):
 
     month = models.DateField()
 
-    registered_eligible_couples = models.PositiveIntegerField()
-    registered_pregnancies = models.PositiveIntegerField()
-    registered_children = models.PositiveIntegerField()
+    registered_eligible_couples = models.PositiveIntegerField(null=True)
+    registered_pregnancies = models.PositiveIntegerField(null=True)
+    registered_children = models.PositiveIntegerField(null=True)
 
-    eligible_couples_using_fp_method = models.PositiveIntegerField()
-    high_risk_pregnancies = models.PositiveIntegerField()
-    institutional_deliveries = models.PositiveIntegerField()
-    total_deliveries = models.PositiveIntegerField()
+    eligible_couples_using_fp_method = models.PositiveIntegerField(null=True)
+    high_risk_pregnancies = models.PositiveIntegerField(null=True)
+    institutional_deliveries = models.PositiveIntegerField(null=True)
+    total_deliveries = models.PositiveIntegerField(null=True)
 
     @classmethod
     def agg_from_woman_table(cls, domain, window_start, window_end):
@@ -687,21 +687,21 @@ class AggVillage(models.Model):
 
     state_id = models.TextField()
     district_id = models.TextField()
-    taluka_id = models.TextField(null=True)
-    phc_id = models.TextField(null=True)
-    sc_id = models.TextField(null=True)
-    village_id = models.TextField(null=True)
+    taluka_id = models.TextField()
+    phc_id = models.TextField()
+    sc_id = models.TextField()
+    village_id = models.TextField()
 
     month = models.DateField()
 
-    registered_eligible_couples = models.PositiveIntegerField()
-    registered_pregnancies = models.PositiveIntegerField()
-    registered_children = models.PositiveIntegerField()
+    registered_eligible_couples = models.PositiveIntegerField(null=True)
+    registered_pregnancies = models.PositiveIntegerField(null=True)
+    registered_children = models.PositiveIntegerField(null=True)
 
-    eligible_couples_using_fp_method = models.PositiveIntegerField()
-    high_risk_pregnancies = models.PositiveIntegerField()
-    institutional_deliveries = models.PositiveIntegerField()
-    total_deliveries = models.PositiveIntegerField()
+    eligible_couples_using_fp_method = models.PositiveIntegerField(null=True)
+    high_risk_pregnancies = models.PositiveIntegerField(null=True)
+    institutional_deliveries = models.PositiveIntegerField(null=True)
+    total_deliveries = models.PositiveIntegerField(null=True)
 
     @classmethod
     def agg_from_woman_table(cls, domain, window_start, window_end):
