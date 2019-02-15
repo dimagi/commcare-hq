@@ -316,6 +316,8 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "required",
     "comment",
     "default_value",
+    "load_properties",
+    "save_properties",
 ]
 FormSummaryRow = namedtuple('FormSummaryRow', FORM_SUMMARY_EXPORT_HEADER_NAMES)
 FormSummaryRow.__new__.__defaults__ = (None, ) * len(FORM_SUMMARY_EXPORT_HEADER_NAMES)
@@ -328,6 +330,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
         modules = list(self.app.get_modules())
+        case_meta = self.app.get_case_metadata()
         headers = [(_('All Forms'),
                     ('module_name', 'form_name', 'comment', 'module_display_condition', 'form_display_condition'))]
         headers += [
@@ -339,7 +342,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             self.get_all_forms_row(module, form, language)
         ) for module in modules for form in module.get_forms())
         data += list(
-            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language))
+            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language, case_meta))
             for module in modules for form in module.get_forms()
         )
         export_string = io.BytesIO()
@@ -354,7 +357,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             ),
         )
 
-    def _get_form_row(self, form, language):
+    def _get_form_row(self, form, language, case_meta):
         form_summary_rows = []
         for question in form.get_questions(
             self.app.langs,
@@ -381,6 +384,14 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     required="true" if question_response.required else "false",
                     comment=question_response.comment,
                     default_value=question_response.setvalue,
+                    load_properties="\n".join(
+                        ["{} - {}".format(prop.case_type, prop.property)
+                         for prop in case_meta.get_load_properties(form.unique_id, question['value'])]
+                    ),
+                    save_properties="\n".join(
+                        ["{} - {}".format(prop.case_type, prop.property)
+                         for prop in case_meta.get_save_properties(form.unique_id, question['value'])]
+                    ),
                 )
             )
         return tuple(form_summary_rows)
