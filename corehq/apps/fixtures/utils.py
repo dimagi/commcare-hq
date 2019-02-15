@@ -66,7 +66,7 @@ def clear_fixture_cache(domain):
     get_blob_db().delete(key=FIXTURE_BUCKET + '/' + domain)
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
 def remove_deleted_ownerships(deleted_fixture_ids, domain):
     from corehq.apps.fixtures.models import FixtureOwnership
     for fixture_ids in chunked(deleted_fixture_ids, 100):
