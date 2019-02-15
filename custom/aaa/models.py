@@ -184,17 +184,17 @@ class Woman(LocationDenormalizedModel):
         UPDATE "{woman_tablename}" AS woman SET
             pregnant_ranges = pregnant_ranges
         FROM (
-            SELECT person_case_id, agg_array(pregnancy_range) as pregnancy_ranges
+            SELECT person_case_id, array_agg(pregnancy_range) as pregnancy_ranges
             FROM(
                 SELECT person_case_id,
-                       [opened_on, add] as pregnancy_range
+                       daterange(opened_on::date, add, '[]') as pregnancy_range
                 FROM "{ccs_record_cases_ucr_tablename}"
                 WHERE opened_on < add
                 GROUP BY person_case_id, pregnancy_range
             ) AS _tmp_table
             GROUP BY person_case_id
         ) ccs_record
-        WHERE woman.person_case_id = ccs_record.doc_id
+        WHERE woman.person_case_id = ccs_record.person_case_id
         """.format(
             woman_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
@@ -253,7 +253,7 @@ class CcsRecord(LocationDenormalizedModel):
         ucr_tablename = get_table_name(domain, config.table_id)
 
         return """
-        INSERT INTO "{ccs_reccord_tablename}" AS ccs_record (
+        INSERT INTO "{ccs_record_tablename}" AS ccs_record (
             domain, person_case_id, ccs_record_case_id, opened_on, closed_on,
             hrp, child_birth_location, add, edd
         ) (
@@ -269,10 +269,10 @@ class CcsRecord(LocationDenormalizedModel):
                 add
             FROM "{ccs_record_cases_ucr_tablename}" ccs_record_ucr
         )
-        ON CONFLICT (person_case_id) DO UPDATE SET
+        ON CONFLICT (ccs_record_case_id) DO UPDATE SET
            closed_on = EXCLUDED.closed_on
         """.format(
-            woman_tablename=cls._meta.db_table,
+            ccs_record_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
@@ -286,7 +286,7 @@ class CcsRecord(LocationDenormalizedModel):
         UPDATE "{child_tablename}" AS child SET
             household_case_id = person.household_case_id
         FROM (
-            SELECT household_case_id,
+            SELECT doc_id, household_case_id
             FROM "{person_cases_ucr_tablename}"
         ) person
         WHERE child.person_case_id = person.doc_id
