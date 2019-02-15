@@ -974,7 +974,7 @@ def create_mbt_for_month(state_id, month):
             icds_file.save()
 
 
-@task(queue='icds_dashboard_reports_queue')
+@task(queue='background_queue')
 def _bust_awc_cache():
     reach_keys = cache.keys('*cas_reach_data*')
     cache.delete_many(reach_keys)
