@@ -18,7 +18,7 @@ cairocffi==0.9.0          # via cairosvg, weasyprint
 cairosvg==1.0.22          # via weasyprint
 celery==3.1.25
 certifi==2018.11.29       # via requests
-cffi==1.12.0              # via cryptography, csiphash
+cffi==1.12.0              # via cairocffi, cryptography, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
 cloudant==2.7.0
 concurrentloghandler==0.9.1
