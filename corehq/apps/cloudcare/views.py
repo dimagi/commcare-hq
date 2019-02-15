@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, activate
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 from django.views.generic.base import TemplateView
@@ -179,6 +179,8 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
+
+        activate(language)
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
