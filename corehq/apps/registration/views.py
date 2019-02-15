@@ -144,9 +144,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                         'project name unavailable': [],
                     }
                 }
-
-            username = reg_form.cleaned_data['email']
-
             return {
                 'success': True,
                 'appcues_ab_test': appcues_ab_test
