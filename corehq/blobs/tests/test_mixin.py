@@ -800,7 +800,7 @@ class TestBulkAtomicBlobs(BaseTestCase):
             self.assertTrue(key)
         self.assertFalse(obj.saved)
         with self.get_blob(key).open() as fh:
-            self.assertEqual(fh.read(), "data")
+            self.assertEqual(fh.read(), b"data")
 
     def test_bulk_atomic_blobs_with_deferred_deleted_blobs(self):
         obj = self.make_doc(DeferredPutBlobDocument)
