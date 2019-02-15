@@ -18,6 +18,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import models
+from django.utils.decorators import classproperty
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
@@ -199,6 +200,16 @@ class Woman(LocationDenormalizedModel):
             ccs_record_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_person_case_ucr,
+            self.agg_from_household_case_ucr,
+            self.agg_from_ccs_record_case_ucr,
+            self.agg_from_village_ucr,
+            self.agg_from_awc_ucr,
+        ]
+
 
 class WomanHistory(models.Model):
     """The history of form properties for any woman registered."""
@@ -307,6 +318,16 @@ class CcsRecord(LocationDenormalizedModel):
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_ccs_record_case_ucr,
+            self.agg_from_person_case_ucr,
+            self.agg_from_household_case_ucr,
+            self.agg_from_village_ucr,
+            self.agg_from_awc_ucr,
+        ]
+
 
 class Child(LocationDenormalizedModel):
     """Represents a child registered in the AAA Convergence program.
@@ -404,6 +425,16 @@ class Child(LocationDenormalizedModel):
             child_tablename=cls._meta.db_table,
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_child_health_case_ucr,
+            self.agg_from_person_case_ucr,
+            self.agg_from_household_case_ucr,
+            self.agg_from_village_ucr,
+            self.agg_from_awc_ucr,
+        ]
 
 
 class AggAwc(models.Model):
@@ -715,6 +746,19 @@ class AggAwc(models.Model):
             agg_tablename=cls._meta.db_table,
             child_tablename=base_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_woman_table,
+            self.agg_from_ccs_record_table,
+            self.agg_from_child_table,
+            self.rollup_supervisor,
+            self.rollup_block,
+            self.rollup_district,
+            self.rollup_state,
+            self.rollup_national,
+        ]
 
     class Meta(object):
         unique_together = (
@@ -1068,6 +1112,20 @@ class AggVillage(models.Model):
             agg_tablename=cls._meta.db_table,
             child_tablename=base_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_woman_table,
+            self.agg_from_ccs_record_table,
+            self.agg_from_child_table,
+            self.rollup_sc,
+            self.rollup_phc,
+            self.rollup_taluka,
+            self.rollup_district,
+            self.rollup_state,
+            self.rollup_national,
+        ]
 
     class Meta(object):
         unique_together = (

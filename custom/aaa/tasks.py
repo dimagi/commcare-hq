@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 from datetime import datetime
 
-
 from celery.task import task
 from dateutil.relativedelta import relativedelta
 from django.db import connections
@@ -37,78 +36,21 @@ def update_table(domain, slug, method):
 
 
 @task
-def update_base_child_table(domain):
-    update_table(domain, 'Child.agg_from_child_health_case_ucr', Child.agg_from_child_health_case_ucr)
+def update_child_table(domain):
+    for agg_query in Child.aggregation_queries:
+        update_table(domain, Child.__name__ + agg_query.__name__, agg_query)
 
 
 @task
-def update_child_table_person_info(domain):
-    update_table(domain, 'Child.agg_from_person_case_ucr', Child.agg_from_person_case_ucr)
+def update_woman_table(domain):
+    for agg_query in Woman.aggregation_queries:
+        update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
 
 
 @task
-def update_child_table_household_info(domain):
-    update_table(domain, 'Child.agg_from_household_case_ucr', Child.agg_from_household_case_ucr)
-
-
-@task
-def update_child_table_village_info(domain):
-    update_table(domain, 'Child.agg_from_village_ucr', Child.agg_from_village_ucr)
-
-
-@task
-def update_child_table_awc_info(domain):
-    update_table(domain, 'Child.agg_from_awc_ucr', Child.agg_from_awc_ucr)
-
-
-@task
-def update_woman_table_ccs_record_info(domain):
-    update_table(domain, 'Woman.agg_from_ccs_record_case_ucr', Woman.agg_from_ccs_record_case_ucr)
-
-
-@task
-def update_woman_table_person_info(domain):
-    update_table(domain, 'Woman.agg_from_person_case_ucr', Woman.agg_from_person_case_ucr)
-
-
-@task
-def update_woman_table_household_info(domain):
-    update_table(domain, 'Woman.agg_from_household_case_ucr', Woman.agg_from_household_case_ucr)
-
-
-@task
-def update_woman_table_village_info(domain):
-    update_table(domain, 'Woman.agg_from_village_ucr', Woman.agg_from_village_ucr)
-
-
-@task
-def update_woman_table_awc_info(domain):
-    update_table(domain, 'Woman.agg_from_awc_ucr', Woman.agg_from_awc_ucr)
-
-
-@task
-def update_ccs_record_table_ccs_record_info(domain):
-    update_table(domain, 'CcsRecord.agg_from_ccs_record_case_ucr', CcsRecord.agg_from_ccs_record_case_ucr)
-
-
-@task
-def update_ccs_record_table_person_info(domain):
-    update_table(domain, 'CcsRecord.agg_from_person_case_ucr', CcsRecord.agg_from_person_case_ucr)
-
-
-@task
-def update_ccs_record_table_household_info(domain):
-    update_table(domain, 'CcsRecord.agg_from_household_case_ucr', CcsRecord.agg_from_household_case_ucr)
-
-
-@task
-def update_ccs_record_table_village_info(domain):
-    update_table(domain, 'CcsRecord.agg_from_village_ucr', CcsRecord.agg_from_village_ucr)
-
-
-@task
-def update_ccs_record_table_awc_info(domain):
-    update_table(domain, 'CcsRecord.agg_from_awc_ucr', CcsRecord.agg_from_awc_ucr)
+def update_ccs_record_table(domain):
+    for agg_query in CcsRecord.aggregation_queries:
+        update_table(domain, CcsRecord.__name__ + agg_query.__name__, agg_query)
 
 
 def update_monthly_table(domain, slug, method, month):
@@ -130,24 +72,11 @@ def update_monthly_table(domain, slug, method, month):
 
 @task
 def update_agg_awc_table(domain, month):
-    update_monthly_table(domain, 'AggAwc.agg_from_woman_table', AggAwc.agg_from_woman_table, month)
-    update_monthly_table(domain, 'AggAwc.agg_from_ccs_record_table', AggAwc.agg_from_ccs_record_table, month)
-    update_monthly_table(domain, 'AggAwc.agg_from_child_table', AggAwc.agg_from_child_table, month)
-    update_monthly_table(domain, 'AggAwc.rollup_supervisor', AggAwc.rollup_supervisor, month)
-    update_monthly_table(domain, 'AggAwc.rollup_block', AggAwc.rollup_block, month)
-    update_monthly_table(domain, 'AggAwc.rollup_district', AggAwc.rollup_district, month)
-    update_monthly_table(domain, 'AggAwc.rollup_state', AggAwc.rollup_state, month)
-    update_monthly_table(domain, 'AggAwc.rollup_national', AggAwc.rollup_national, month)
+    for agg_query in AggAwc.aggregation_queries:
+        update_monthly_table(domain, AggAwc.__name__ + agg_query.__name__, agg_query, month)
 
 
 @task
 def update_agg_village_table(domain, month):
-    update_monthly_table(domain, 'AggVillage.agg_from_woman_table', AggVillage.agg_from_woman_table, month)
-    update_monthly_table(domain, 'AggVillage.agg_from_ccs_record_table', AggVillage.agg_from_ccs_record_table, month)
-    update_monthly_table(domain, 'AggVillage.agg_from_child_table', AggVillage.agg_from_child_table, month)
-    update_monthly_table(domain, 'AggVillage.rollup_sc', AggVillage.rollup_sc, month)
-    update_monthly_table(domain, 'AggVillage.rollup_phc', AggVillage.rollup_phc, month)
-    update_monthly_table(domain, 'AggVillage.rollup_taluka', AggVillage.rollup_taluka, month)
-    update_monthly_table(domain, 'AggVillage.rollup_district', AggVillage.rollup_district, month)
-    update_monthly_table(domain, 'AggVillage.rollup_state', AggVillage.rollup_state, month)
-    update_monthly_table(domain, 'AggVillage.rollup_national', AggVillage.rollup_national, month)
+    for agg_query in AggVillage.aggregation_queries:
+        update_monthly_table(domain, AggVillage.__name__ + agg_query.__name__, agg_query, month)
