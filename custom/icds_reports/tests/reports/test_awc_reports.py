@@ -2559,7 +2559,7 @@ class TestAWCReport(TestCase):
                      'ifa_consumed_last_seven_days': u'Y',
                      'mobile_number': u'Data Not Entered',
                      'trimester': 2,
-                     'counseling': u'None',
+                     'counseling': u'Eating Extra, Taking Rest',
                      'anc_abnormalities': u'None',
                      'anemic': u'Data Not Entered',
                      'home_visit_date': datetime.date(2017, 5, 4)}]
