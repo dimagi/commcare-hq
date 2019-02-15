@@ -395,7 +395,8 @@ class FixtureDataItem(Document):
                 else:
                     assert result['value']['deleted'] is True
                     deleted_fixture_ids.add(result['id'])
-            remove_deleted_ownerships.delay(deleted_fixture_ids, user.domain)
+            if deleted_fixture_ids:
+                remove_deleted_ownerships.delay(deleted_fixture_ids, user.domain)
             return docs
         else:
             return fixture_ids
