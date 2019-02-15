@@ -1641,6 +1641,7 @@ class AWWIncentiveReport(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    district_id = models.TextField(blank=True, null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition

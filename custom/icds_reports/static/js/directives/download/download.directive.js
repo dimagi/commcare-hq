@@ -436,7 +436,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.hasErrors = function() {
         beneficiary_list_errors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        incentive_report_errors = vm.isIncentiveReportSelected() && !vm.isBlockSelected();
+        incentive_report_errors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         return beneficiary_list_errors || incentive_report_errors;
     };
 
@@ -446,6 +446,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.isBlockOrBelowSelected = function () {
         return vm.selectedLocations[2] && vm.selectedLocations[2] !== ALL_OPTION.location_id;
+    };
+
+    vm.isStateOrBelowSelected = function () {
+        return vm.selectedLocations[0] && vm.selectedLocations[0] !== ALL_OPTION.location_id;
     };
 
     vm.hasErrorsISSNIPExport = function() {
@@ -483,6 +487,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     
     vm.isBlockSelected = function () {
         return vm.isBlockOrBelowSelected() && !vm.isSupervisorOrBelowSelected();
+    };
+
+    vm.isStateSelected = function () {
+        return vm.isStateOrBelowSelected() && !vm.isSupervisorOrBelowSelected();
     };
 
     vm.showViewBy = function () {

@@ -662,21 +662,33 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
     elif indicator == AWW_INCENTIVE_REPORT:
         data_type = 'AWW_Performance'
         excel_data = IncentiveReport(
-            block=location,
-            month=config['month']
+            location=location,
+            month=config['month'],
+            aggregation_level=aggregation_level
         ).get_excel_data()
-        location_object = AwcLocationMonths.objects.filter(
-            block_id=location,
-            aggregation_level=3
-        ).first()
+        if aggregation_level == 1:
+            location_object = AwcLocationMonths.objects.filter(
+                state_id=location,
+                aggregation_level=aggregation_level
+            ).first()
+        elif aggregation_level == 2:
+            location_object = AwcLocationMonths.objects.filter(
+                district_id=location,
+                aggregation_level=aggregation_level
+            ).first()
+        else:
+            location_object = AwcLocationMonths.objects.filter(
+                block_id=location,
+                aggregation_level=aggregation_level
+            ).first()
         if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
                 location_object.state_name,
-                location_object.district_name,
-                location_object.block_name,
+                location_object.district_name if aggregation_level >= 2 else None,
+                location_object.block_name if aggregation_level == 3 else None,
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
