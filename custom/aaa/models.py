@@ -443,19 +443,20 @@ class AggAwc(models.Model):
                 block_id, supervisor_id, awc_id,
                 %(window_start)s AS month,
                 COUNT(*) FILTER (WHERE
-                    (NOT %(window_start)s <@ any(pregnant_ranges))
+                    (NOT daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges))
                     AND migration_status IS DISTINCT FROM 'migrated'
                     AND marital_status = 'married'
                 ) as registered_eligible_couples,
                 COUNT(*) FILTER (WHERE
-                    %(window_start)s <@ any(pregnant_ranges)
+                    daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges)
                     AND migration_status IS DISTINCT FROM 'migrated'
                 ) as registered_pregnancies,
                 COUNT(*) FILTER (WHERE
-                    %(window_start)s <@ any(fp_current_method_ranges)
+                    daterange(%(window_start)s, %(window_end)s) && any(fp_current_method_ranges)
                     AND migration_status IS DISTINCT FROM 'migrated'
                 ) as eligible_couples_using_fp_method
             FROM "{woman_tablename}" woman
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
             GROUP BY state_id, district_id, block_id, supervisor_id, awc_id
         )
         ON CONFLICT (state_id, district_id, block_id, supervisor_id, awc_id, month) DO UPDATE SET
@@ -489,7 +490,8 @@ class AggAwc(models.Model):
                     child_birth_location IS NOT NULL OR child_birth_location != ''
                 ) as total_deliveries
             FROM "{woman_tablename}" woman
-            WHERE (%(window_start)s BETWEEN opened_on AND add OR add IS NULL)
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s) AND
+                  daterange(opened_on, edd) && daterange(%(window_start)s, %(window_end)s)
             GROUP BY state_id, district_id, block_id, supervisor_id, awc_id
         )
         ON CONFLICT (state_id, district_id, block_id, supervisor_id, awc_id, month) DO UPDATE SET
@@ -515,9 +517,9 @@ class AggAwc(models.Model):
                 state_id, district_id,
                 block_id, supervisor_id, awc_id,
                 %(window_start)s AS month,
-                COUNT(*) FILTER (WHERE date_part('year', %(window_end)s - dob) < 5) as registered_children
+                COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5) as registered_children
             FROM "{child_tablename}" child
-            WHERE (opened_on <= %(window_start)s AND (closed_on IS NULL OR closed_on >= %(window_end)s))
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
             GROUP BY state_id, district_id, block_id, supervisor_id, awc_id
         )
         ON CONFLICT (state_id, district_id, block_id, supervisor_id, awc_id, month) DO UPDATE SET
@@ -719,19 +721,20 @@ class AggVillage(models.Model):
                 state_id, district_id, taluka_id, phc_id, sc_id, village_id,
                 %(window_start)s AS month,
                 COUNT(*) FILTER (WHERE
-                    (NOT %(window_start)s <@ any(pregnant_ranges))
+                    (NOT daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges))
                     AND migration_status IS DISTINCT FROM 'migrated'
                     AND marital_status = 'married'
                 ) as registered_eligible_couples,
                 COUNT(*) FILTER (WHERE
-                    %(window_start)s <@ any(pregnant_ranges)
+                    daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges)
                     AND migration_status IS DISTINCT FROM 'migrated'
                 ) as registered_pregnancies,
                 COUNT(*) FILTER (WHERE
-                    %(window_start)s <@ any(fp_current_method_ranges)
+                    daterange(%(window_start)s, %(window_end)s) && any(fp_current_method_ranges)
                     AND migration_status IS DISTINCT FROM 'migrated'
                 ) as eligible_couples_using_fp_method
             FROM "{woman_tablename}" woman
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
             GROUP BY state_id, district_id, taluka_id, phc_id, sc_id, village_id
         )
         ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
@@ -764,7 +767,8 @@ class AggVillage(models.Model):
                     child_birth_location IS NOT NULL OR child_birth_location != ''
                 ) as total_deliveries
             FROM "{woman_tablename}" woman
-            WHERE (%(window_start)s BETWEEN opened_on AND add OR add IS NULL)
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s) AND
+                  daterange(opened_on, edd) && daterange(%(window_start)s, %(window_end)s)
             GROUP BY state_id, district_id, taluka_id, phc_id, sc_id, village_id
         )
         ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
@@ -789,9 +793,9 @@ class AggVillage(models.Model):
                 %(domain)s,
                 state_id, district_id, taluka_id, phc_id, sc_id, village_id,
                 %(window_start)s AS month,
-                COUNT(*) FILTER (WHERE date_part('year', %(window_end)s - dob) < 5) as registered_children
+                COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5) as registered_children
             FROM "{child_tablename}" child
-            WHERE (opened_on <= %(window_start)s AND (closed_on IS NULL OR closed_on >= %(window_end)s))
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
             GROUP BY state_id, district_id, taluka_id, phc_id, sc_id, village_id
         )
         ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
