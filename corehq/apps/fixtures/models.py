@@ -396,6 +396,8 @@ class FixtureDataItem(Document):
                     assert result['value']['deleted'] is True
                     deleted_fixture_ids.add(result['id'])
             if deleted_fixture_ids:
+                # delete ownership documents pointing deleted/non-existent fixture documents
+                # this cleanup is necessary since we used to not do this
                 remove_deleted_ownerships.delay(deleted_fixture_ids, user.domain)
             return docs
         else:
