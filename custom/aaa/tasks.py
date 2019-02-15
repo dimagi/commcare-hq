@@ -2,10 +2,12 @@ from __future__ import absolute_import, unicode_literals
 
 from datetime import datetime
 
+
 from celery.task import task
+from dateutil.relativedelta import relativedelta
 from django.db import connections
 
-from custom.aaa.models import AggregationInformation, CcsRecord, Child, Woman
+from custom.aaa.models import AggAwc, AggregationInformation, AggVillage, CcsRecord, Child, Woman
 
 
 def update_table(domain, slug, method):
@@ -107,3 +109,43 @@ def update_ccs_record_table_village_info(domain):
 @task
 def update_ccs_record_table_awc_info(domain):
     update_table(domain, 'CcsRecord.agg_from_awc_ucr', CcsRecord.agg_from_awc_ucr)
+
+
+def update_monthly_table(domain, slug, method, month):
+    window_start = month.replace(day=1)
+    window_end = window_start + relativedelta(months=1)
+    agg_info = AggregationInformation.objects.create(
+        domain=domain,
+        step=slug,
+        aggregation_window_start=window_start,
+        aggregation_window_end=window_end,
+    )
+
+    agg_query, agg_params = method(domain, window_start, window_end)
+    with connections['aaa-data'].cursor() as cursor:
+        cursor.execute(agg_query, agg_params)
+    agg_info.end_time = datetime.utcnow()
+    agg_info.save()
+
+
+@task
+def update_agg_awc_table(domain, month):
+    update_monthly_table(domain, 'AggAwc.agg_from_woman_table', AggAwc.agg_from_woman_table, month)
+    update_monthly_table(domain, 'AggAwc.agg_from_ccs_record_table', AggAwc.agg_from_ccs_record_table, month)
+    update_monthly_table(domain, 'AggAwc.agg_from_child_table', AggAwc.agg_from_child_table, month)
+    update_monthly_table(domain, 'AggAwc.rollup_supervisor', AggAwc.rollup_supervisor, month)
+    update_monthly_table(domain, 'AggAwc.rollup_block', AggAwc.rollup_block, month)
+    update_monthly_table(domain, 'AggAwc.rollup_district', AggAwc.rollup_district, month)
+    update_monthly_table(domain, 'AggAwc.rollup_state', AggAwc.rollup_state, month)
+
+
+@task
+def update_agg_village_table(domain, month):
+    update_monthly_table(domain, 'AggVillage.agg_from_woman_table', AggVillage.agg_from_woman_table, month)
+    update_monthly_table(domain, 'AggVillage.agg_from_ccs_record_table', AggVillage.agg_from_ccs_record_table, month)
+    update_monthly_table(domain, 'AggVillage.agg_from_child_table', AggVillage.agg_from_child_table, month)
+    update_monthly_table(domain, 'AggVillage.rollup_sc', AggVillage.rollup_sc, month)
+    update_monthly_table(domain, 'AggVillage.rollup_phc', AggVillage.rollup_phc, month)
+    update_monthly_table(domain, 'AggVillage.rollup_taluka', AggVillage.rollup_taluka, month)
+    update_monthly_table(domain, 'AggVillage.rollup_district', AggVillage.rollup_district, month)
+    update_monthly_table(domain, 'AggVillage.rollup_state', AggVillage.rollup_state, month)
