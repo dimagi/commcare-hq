@@ -8,6 +8,22 @@ from dimagi.utils.logging import notify_exception
 import six
 
 
+@task
+def task_a():
+    pass
+
+
+@task
+def task_b():
+    task_a.delay()
+
+
+@task
+def task_c()
+    task_a()
+
+
+
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, from_email, recipient_list,
