@@ -88,6 +88,7 @@ class ParentLocWidget(forms.Widget):
         ).render({
             'name': name,
             'value': value,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
@@ -99,6 +100,7 @@ class LocTypeWidget(forms.Widget):
         ).render({
             'name': name,
             'value': value,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
