@@ -218,18 +218,16 @@ class DashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
-        user_location = self.couch_user.get_location(self.domain)
-        kwargs['user_location_id'] = user_location.location_id if user_location else None
-        kwargs['user_location_type'] = user_location.location_type.code if user_location else None
-        kwargs['user_location_name'] = user_location.name if user_location else None
-        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
-            self.kwargs['domain']
-        ).location_ids())
-        kwargs['state_level_access'] = 'state' in set(
-            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
-                self.kwargs['domain']
-            )]
-        )
+
+        user_locations = self.couch_user.get_sql_locations(self.domain)
+        default_user_location = user_locations.first()
+
+        kwargs['user_location_id'] = default_user_location.location_id if default_user_location else None
+        kwargs['user_location_type'] = default_user_location.location_type.code if default_user_location else None
+        kwargs['user_location_name'] = default_user_location.name if default_user_location else None
+        kwargs['all_user_location_id'] = list(user_locations.location_ids())
+        kwargs['state_level_access'] = 'state' in set([loc.location_type.code for loc in user_locations])
+
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
