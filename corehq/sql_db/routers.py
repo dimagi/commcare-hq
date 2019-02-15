@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 from django.db import connections
 from django.conf import settings
 
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
+from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, \
+    get_icds_ucr_db_alias
 from .config import partition_config
 
 PROXY_APP = 'sql_proxy_accessors'
