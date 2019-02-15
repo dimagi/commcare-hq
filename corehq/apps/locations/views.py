@@ -14,6 +14,8 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
+
+from corehq.apps.hqwebapp.crispy import make_form_readonly
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -720,7 +722,7 @@ class EditLocationView(BaseEditLocationView):
     @property
     @memoized
     def users_form(self):
-        if (not self.request.couch_user.can_edit_commcare_users()
+        if (not (self.can_edit_commcare_users or self.can_view_commcare_users)
                 or not self.can_access_all_locations):
             return None
         form = UsersAtLocationForm(
@@ -752,17 +754,42 @@ class EditLocationView(BaseEditLocationView):
 
     @property
     def page_name(self):
-        return mark_safe(_("Edit {name} <small>{type}</small>").format(
+        if self.request.is_view_only:
+            name = _("View {name} <small>{type}</small>")
+        else:
+            name = _("Edit {name} <small>{type}</small>")
+        return mark_safe(name.format(
             name=self.location.name, type=self.location.location_type_name
         ))
 
     @property
+    def can_edit_commcare_users(self):
+        return self.request.couch_user.can_edit_commcare_users()
+
+    @property
+    def can_view_commcare_users(self):
+        return self.request.couch_user.can_view_commcare_users()
+
+    @property
     def page_context(self):
         context = super(EditLocationView, self).page_context
+
+        if self.request.is_view_only:
+            make_form_readonly(self.location_form.location_form)
+            make_form_readonly(self.location_form.custom_location_data.form)
+            make_form_readonly(self.products_form)
+            make_form_readonly(self.related_location_form)
+            if not self.can_edit_commcare_users:
+                make_form_readonly(self.users_form)
+        elif not self.can_edit_commcare_users:
+            make_form_readonly(self.users_form)
+
         context.update({
             'products_per_location_form': self.products_form,
             'users_per_location_form': self.users_form,
             'related_location_form': self.related_location_form,
+            'can_edit_commcare_users': self.can_edit_commcare_users,
+            'can_view_commcare_users': self.can_view_commcare_users,
         })
         return context
 
@@ -794,10 +821,22 @@ class EditLocationView(BaseEditLocationView):
 
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "location-users":
+            if self.can_edit_commcare_users:
+                return self.users_form_post(request, *args, **kwargs)
+            else:
+                messages.error(
+                    request, _("You do not have permission to edit Mobile Workers.")
+                )
+                return super(EditLocationView, self).get(request, *args, **kwargs)
+
+        if self.request.is_view_only:
+            messages.error(request,
+                           _("You do not have permission to edit locations."))
+            return super(EditLocationView, self).get(request, *args, **kwargs)
+
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
-        elif self.request.POST['form_type'] == "location-users":
-            return self.users_form_post(request, *args, **kwargs)
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
