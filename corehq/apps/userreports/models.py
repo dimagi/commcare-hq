@@ -98,6 +98,7 @@ class SQLPartition(DocumentSchema):
 
 class SQLSettings(DocumentSchema):
     partition_config = SchemaListProperty(SQLPartition)
+    primary_key = ListProperty()
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -339,6 +340,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
         return None
 
+    @memoized
     def get_columns(self):
         return self.indicators.get_columns()
 
@@ -466,6 +468,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 prop_value = [prop_value]
             return prop_value
         return [None]
+
+    @property
+    def pk_columns(self):
+        if not self.sql_settings.primary_key:
+            columns = [i.database_column_name for i in self.get_columns() if i.is_primary_key]
+        else:
+            columns = self.sql_settings.primary_key
+        return columns
 
 
 class ReportMeta(DocumentSchema):
