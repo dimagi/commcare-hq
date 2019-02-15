@@ -94,7 +94,7 @@ class TestRequireJS(SimpleTestCase):
 
 class TestRequireJSBuild(SimpleTestCase):
     def test_no_select2_conflicts(self):
-        call_command('collectstatic')
+        call_command('collectstatic', noinput=True, verbosity=0)
         command = BuildRequireJSCommand()
         command.r_js(local=False, no_optimize=True)
 
