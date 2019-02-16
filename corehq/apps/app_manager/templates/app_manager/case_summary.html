@@ -111,7 +111,7 @@
                                     <th>{% trans "Case Details" %}</th>
                                 </tr>
                             </thead>
-                            <tbody data-bind="foreach: properties">
+                            <tbody data-bind="foreach: visibleProperties">
                                 <!-- ko foreach: forms -->
                                     <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, visible: $parent.isVisible">
                                         <!-- ko if: !$index() -->
@@ -150,7 +150,10 @@
                                     <tr data-bind="attr: {id: $parent.name + ':' + encodeURIComponent(name)}, css: {'danger': has_errors}, visible: isVisible">
                                         <td>
                                             <dl>
-                                                <dt data-bind="text: name"></dt>
+                                                <dt>
+                                                    <!-- ko if: use_xpath_expression --><i class="fa fa-calculator"></i><!-- /ko -->
+                                                    <!-- ko text: name --><!-- /ko -->
+                                                </dt>
                                                 <dd data-bind="text: description"></dd>
                                             </dl>
                                         </td>
