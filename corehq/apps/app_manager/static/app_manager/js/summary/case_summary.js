@@ -50,6 +50,7 @@ hqDefine('app_manager/js/summary/case_summary',[
         var self = models.contentModel(_.extend(options, {
             query_label: gettext("Filter properties"),
             onQuery: function (query) {
+                query = query.trim().toLowerCase();
                 _.each(self.caseTypes, function (caseType) {
                     var hasVisible = false;
                     _.each(caseType.properties, function (property) {
