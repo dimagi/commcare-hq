@@ -132,7 +132,7 @@ class CaseProperty(JsonObject):
     long_details = ListProperty(CaseDetailMeta)
     has_errors = BooleanProperty()
     description = StringProperty()
-    use_xpath_expression = BooleanProperty()
+    is_detail_calculation = BooleanProperty()
 
     def get_form(self, form_id):
         try:
@@ -156,8 +156,8 @@ class CaseProperty(JsonObject):
             condition=(condition if condition and condition.type == 'if' else None)
         ))
 
-    def add_detail(self, type_, module_id, header, use_xpath_expression=False, error=None):
-        self.use_xpath_expression = use_xpath_expression
+    def add_detail(self, type_, module_id, header, is_detail_calculation=False, error=None):
+        self.is_detail_calculation = is_detail_calculation
         {
             "short": self.short_details,
             "long": self.long_details,

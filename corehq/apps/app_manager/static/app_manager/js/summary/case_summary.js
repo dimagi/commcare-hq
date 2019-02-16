@@ -19,7 +19,7 @@ hqDefine('app_manager/js/summary/case_summary',[
         self.visibleProperties = ko.computed(function () {
             return _.filter(self.properties, function (property) {
                 // only show case list / detail calculated properties if calculations are turned on
-                return showCalculations() || !property.use_xpath_expression;
+                return showCalculations() || !property.is_detail_calculation;
             });
         });
 
@@ -56,7 +56,7 @@ hqDefine('app_manager/js/summary/case_summary',[
                     _.each(caseType.properties, function (property) {
                         var isVisible = !query || property.name.indexOf(query) !== -1;
                         property.matchesQuery(isVisible);
-                        self.showCalculations(self.showCalculations() || (query && isVisible && property.use_xpath_expression));
+                        self.showCalculations(self.showCalculations() || (query && isVisible && property.is_detail_calculation));
                         hasVisible = hasVisible || isVisible;
                     });
                     caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);
