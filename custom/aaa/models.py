@@ -561,8 +561,17 @@ class AggAwc(models.Model):
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
-    def rollup_supervisor(cls, domain, window_start, window_end):
+    def _rollup_helper(cls, level):
         base_tablename = cls._meta.db_table
+        location_levels = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
+
+        if level == 0:
+            select_group_by_location_levels = ''
+            group_by = ''
+        else:
+            select_group_by_location_levels = ', '.join(location_levels[:level]) + ','
+            group_by = 'GROUP BY ' + ', '.join(location_levels[:level])
+
         return """
         INSERT INTO "{agg_tablename}" AS agg (
             domain, state_id, district_id, block_id, supervisor_id, awc_id, month,
@@ -571,7 +580,8 @@ class AggAwc(models.Model):
         ) (
             SELECT
                 %(domain)s,
-                state_id, district_id, block_id, supervisor_id, 'ALL',
+                {select_group_by_location_levels}
+                {select_location_levels},
                 %(window_start)s AS month,
                 SUM(registered_eligible_couples),
                 SUM(registered_pregnancies),
@@ -581,8 +591,8 @@ class AggAwc(models.Model):
                 SUM(institutional_deliveries),
                 SUM(total_deliveries)
             FROM "{child_tablename}" child
-            WHERE month = %(window_start)s and awc_id != 'ALL'
-            GROUP BY state_id, district_id, block_id, supervisor_id
+            WHERE month = %(window_start)s AND {where_locations}
+            {group_by_location_levels}
         )
         ON CONFLICT (state_id, district_id, block_id, supervisor_id, awc_id, month) DO UPDATE SET
            registered_eligible_couples = EXCLUDED.registered_eligible_couples,
@@ -595,157 +605,31 @@ class AggAwc(models.Model):
         """.format(
             agg_tablename=cls._meta.db_table,
             child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+            select_group_by_location_levels=select_group_by_location_levels,
+            select_location_levels=', '.join(["'ALL'"] * (5 - level)),
+            where_locations=' AND '.join(["{} = 'ALL'".format(lev) for lev in location_levels[level:]]),
+            group_by_location_levels=group_by
+        )
+
+    @classmethod
+    def rollup_supervisor(cls, domain, window_start, window_end):
+        return cls._rollup_helper(4), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_block(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, block_id, supervisor_id, awc_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                state_id, district_id, block_id, 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s and supervisor_id != 'ALL' AND awc_id != 'ALL'
-            GROUP BY state_id, district_id, block_id
-        )
-        ON CONFLICT (state_id, district_id, block_id, supervisor_id, awc_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(3), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_district(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, block_id, supervisor_id, awc_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                state_id, district_id, 'ALL', 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s and block_id != 'ALL' AND supervisor_id != 'ALL' AND awc_id != 'ALL'
-            GROUP BY state_id, district_id
-        )
-        ON CONFLICT (state_id, district_id, block_id, supervisor_id, awc_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(2), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_state(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, block_id, supervisor_id, awc_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                state_id, 'ALL', 'ALL', 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s and district_id != 'ALL' AND
-                  block_id != 'ALL' AND supervisor_id != 'ALL' AND awc_id != 'ALL'
-            GROUP BY state_id, district_id
-        )
-        ON CONFLICT (state_id, district_id, block_id, supervisor_id, awc_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(1), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_national(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, block_id, supervisor_id, awc_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                'ALL', 'ALL', 'ALL', 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s and state_id = 'ALL' AND district_id != 'ALL' AND
-                  block_id != 'ALL' AND supervisor_id != 'ALL' AND awc_id != 'ALL'
-            GROUP BY state_id, district_id
-        )
-        ON CONFLICT (state_id, district_id, block_id, supervisor_id, awc_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(0), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classproperty
     def aggregation_queries(self):
@@ -888,8 +772,17 @@ class AggVillage(models.Model):
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
-    def rollup_sc(cls, domain, window_start, window_end):
+    def _rollup_helper(cls, level):
         base_tablename = cls._meta.db_table
+        location_levels = ['state_id', 'district_id', 'taluka_id', 'phc_id', 'sc_id', 'village_id']
+
+        if level == 0:
+            select_group_by_location_levels = ''
+            group_by = ''
+        else:
+            select_group_by_location_levels = ', '.join(location_levels[:level]) + ','
+            group_by = 'GROUP BY ' + ', '.join(location_levels[:level])
+
         return """
         INSERT INTO "{agg_tablename}" AS agg (
             domain, state_id, district_id, taluka_id, phc_id, sc_id, village_id, month,
@@ -898,7 +791,8 @@ class AggVillage(models.Model):
         ) (
             SELECT
                 %(domain)s,
-                state_id, district_id, taluka_id, phc_id, sc_id, 'ALL',
+                {select_group_by_location_levels}
+                {select_location_levels},
                 %(window_start)s AS month,
                 SUM(registered_eligible_couples),
                 SUM(registered_pregnancies),
@@ -908,8 +802,8 @@ class AggVillage(models.Model):
                 SUM(institutional_deliveries),
                 SUM(total_deliveries)
             FROM "{child_tablename}" child
-            WHERE month = %(window_start)s and village_id != 'ALL'
-            GROUP BY state_id, district_id, taluka_id, phc_id, sc_id
+            WHERE month = %(window_start)s AND {where_locations}
+            {group_by_location_levels}
         )
         ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
            registered_eligible_couples = EXCLUDED.registered_eligible_couples,
@@ -922,196 +816,35 @@ class AggVillage(models.Model):
         """.format(
             agg_tablename=cls._meta.db_table,
             child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+            select_group_by_location_levels=select_group_by_location_levels,
+            select_location_levels=', '.join(["'ALL'"] * (6 - level)),
+            where_locations=' AND '.join(["{} = 'ALL'".format(lev) for lev in location_levels[level:]]),
+            group_by_location_levels=group_by
+        )
+
+    @classmethod
+    def rollup_sc(cls, domain, window_start, window_end):
+        return cls._rollup_helper(5), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_phc(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, taluka_id, phc_id, sc_id, village_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                state_id, district_id, taluka_id, phc_id, 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s AND sc_id != 'ALL' AND village_id != 'ALL'
-            GROUP BY state_id, district_id, taluka_id, phc_id
-        )
-        ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(4), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_taluka(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, taluka_id, phc_id, sc_id, village_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                state_id, district_id, taluka_id, 'ALL', 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s AND phc_id != 'ALL' AND sc_id != 'ALL' AND village_id != 'ALL'
-            GROUP BY state_id, district_id, taluka_id
-        )
-        ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(3), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_district(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, taluka_id, phc_id, sc_id, village_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                state_id, district_id, 'ALL', 'ALL', 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s AND taluka_id != 'ALL' AND
-                  phc_id != 'ALL' AND sc_id != 'ALL' AND village_id != 'ALL'
-            GROUP BY state_id, district_id
-        )
-        ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(2), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_state(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, taluka_id, phc_id, sc_id, village_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                state_id, 'ALL', 'ALL', 'ALL', 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s AND district_id != 'ALL' AND taluka_id != 'ALL' AND
-                  phc_id != 'ALL' AND sc_id != 'ALL' AND village_id != 'ALL'
-            GROUP BY state_id
-        )
-        ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(1), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_national(cls, domain, window_start, window_end):
-        base_tablename = cls._meta.db_table
-        return """
-        INSERT INTO "{agg_tablename}" AS agg (
-            domain, state_id, district_id, taluka_id, phc_id, sc_id, village_id, month,
-            registered_eligible_couples, registered_pregnancies, registered_children,
-            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-        ) (
-            SELECT
-                %(domain)s,
-                'ALL', 'ALL', 'ALL', 'ALL', 'ALL', 'ALL',
-                %(window_start)s AS month,
-                SUM(registered_eligible_couples),
-                SUM(registered_pregnancies),
-                SUM(registered_children),
-                SUM(eligible_couples_using_fp_method),
-                SUM(high_risk_pregnancies),
-                SUM(institutional_deliveries),
-                SUM(total_deliveries)
-            FROM "{child_tablename}" child
-            WHERE month = %(window_start)s AND state_id != 'ALL' AND
-                  district_id != 'ALL' AND taluka_id != 'ALL' AND
-                  phc_id != 'ALL' AND sc_id != 'ALL' AND village_id != 'ALL'
-            GROUP BY state_id
-        )
-        ON CONFLICT (state_id, district_id, taluka_id, phc_id, sc_id, village_id, month) DO UPDATE SET
-           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-           registered_pregnancies = EXCLUDED.registered_pregnancies,
-           registered_children = EXCLUDED.registered_children,
-           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-           institutional_deliveries = EXCLUDED.institutional_deliveries,
-           total_deliveries = EXCLUDED.total_deliveries
-        """.format(
-            agg_tablename=cls._meta.db_table,
-            child_tablename=base_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(0), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classproperty
     def aggregation_queries(self):
