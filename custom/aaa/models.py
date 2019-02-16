@@ -437,16 +437,8 @@ class Child(LocationDenormalizedModel):
         ]
 
 
-class AggAwc(models.Model):
-    location_levels = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
-
+class AggLocation(models.Model):
     domain = models.TextField()
-
-    state_id = models.TextField()
-    district_id = models.TextField()
-    block_id = models.TextField()
-    supervisor_id = models.TextField()
-    awc_id = models.TextField()
 
     month = models.DateField()
 
@@ -458,6 +450,72 @@ class AggAwc(models.Model):
     high_risk_pregnancies = models.PositiveIntegerField(null=True)
     institutional_deliveries = models.PositiveIntegerField(null=True)
     total_deliveries = models.PositiveIntegerField(null=True)
+
+    @classmethod
+    def _rollup_helper(cls, level):
+        base_tablename = cls._meta.db_table
+        location_levels = cls.location_levels
+
+        insert_into_columns = ', '.join(location_levels)
+        if level == 0:
+            select_group_by_location_levels = ''
+            group_by = ''
+        else:
+            select_group_by_location_levels = ', '.join(location_levels[:level]) + ','
+            group_by = 'GROUP BY ' + ', '.join(location_levels[:level])
+
+        return """
+        INSERT INTO "{agg_tablename}" AS agg (
+            domain, {insert_into_columns}, month,
+            registered_eligible_couples, registered_pregnancies, registered_children,
+            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
+        ) (
+            SELECT
+                %(domain)s,
+                {select_group_by_location_levels}
+                {select_location_levels},
+                %(window_start)s AS month,
+                SUM(registered_eligible_couples),
+                SUM(registered_pregnancies),
+                SUM(registered_children),
+                SUM(eligible_couples_using_fp_method),
+                SUM(high_risk_pregnancies),
+                SUM(institutional_deliveries),
+                SUM(total_deliveries)
+            FROM "{child_tablename}" child
+            WHERE month = %(window_start)s AND {where_locations}
+            {group_by_location_levels}
+        )
+        ON CONFLICT ({insert_into_columns}, month) DO UPDATE SET
+           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
+           registered_pregnancies = EXCLUDED.registered_pregnancies,
+           registered_children = EXCLUDED.registered_children,
+           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
+           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
+           institutional_deliveries = EXCLUDED.institutional_deliveries,
+           total_deliveries = EXCLUDED.total_deliveries
+        """.format(
+            agg_tablename=cls._meta.db_table,
+            child_tablename=base_tablename,
+            insert_into_columns=insert_into_columns,
+            select_group_by_location_levels=select_group_by_location_levels,
+            select_location_levels=', '.join(["'ALL'"] * (len(location_levels) - level)),
+            where_locations=' AND '.join(["{} = 'ALL'".format(lev) for lev in location_levels[level:]]),
+            group_by_location_levels=group_by
+        )
+
+    class Meta(object):
+        abstract = True
+
+
+class AggAwc(AggLocation):
+    location_levels = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
+
+    state_id = models.TextField()
+    district_id = models.TextField()
+    block_id = models.TextField()
+    supervisor_id = models.TextField()
+    awc_id = models.TextField()
 
     @classmethod
     def agg_from_woman_table(cls, domain, window_start, window_end):
@@ -564,23 +622,23 @@ class AggAwc(models.Model):
 
     @classmethod
     def rollup_supervisor(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 4), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(4), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_block(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 3), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(3), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_district(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 2), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(2), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_state(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 1), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(1), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_national(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 0), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(0), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classproperty
     def aggregation_queries(self):
@@ -601,9 +659,8 @@ class AggAwc(models.Model):
         )
 
 
-class AggVillage(models.Model):
+class AggVillage(AggLocation):
     location_levels = ['state_id', 'district_id', 'taluka_id', 'phc_id', 'sc_id', 'village_id']
-    domain = models.TextField()
 
     state_id = models.TextField()
     district_id = models.TextField()
@@ -611,17 +668,6 @@ class AggVillage(models.Model):
     phc_id = models.TextField()
     sc_id = models.TextField()
     village_id = models.TextField()
-
-    month = models.DateField()
-
-    registered_eligible_couples = models.PositiveIntegerField(null=True)
-    registered_pregnancies = models.PositiveIntegerField(null=True)
-    registered_children = models.PositiveIntegerField(null=True)
-
-    eligible_couples_using_fp_method = models.PositiveIntegerField(null=True)
-    high_risk_pregnancies = models.PositiveIntegerField(null=True)
-    institutional_deliveries = models.PositiveIntegerField(null=True)
-    total_deliveries = models.PositiveIntegerField(null=True)
 
     @classmethod
     def agg_from_woman_table(cls, domain, window_start, window_end):
@@ -725,27 +771,27 @@ class AggVillage(models.Model):
 
     @classmethod
     def rollup_sc(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 5), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(5), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_phc(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 4), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(4), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_taluka(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 3), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(3), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_district(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 2), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(2), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_state(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 1), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(1), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def rollup_national(cls, domain, window_start, window_end):
-        return _rollup_helper(cls, 0), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+        return cls._rollup_helper(0), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classproperty
     def aggregation_queries(self):
@@ -779,56 +825,3 @@ class AggregationInformation(models.Model):
     step = models.TextField(help_text="Slug for the step of the aggregation")
     aggregation_window_start = models.DateTimeField()
     aggregation_window_end = models.DateTimeField()
-
-
-def _rollup_helper(cls, level):
-    base_tablename = cls._meta.db_table
-    location_levels = cls.location_levels
-
-    insert_into_columns = ', '.join(location_levels)
-    if level == 0:
-        select_group_by_location_levels = ''
-        group_by = ''
-    else:
-        select_group_by_location_levels = ', '.join(location_levels[:level]) + ','
-        group_by = 'GROUP BY ' + ', '.join(location_levels[:level])
-
-    return """
-    INSERT INTO "{agg_tablename}" AS agg (
-        domain, {insert_into_columns}, month,
-        registered_eligible_couples, registered_pregnancies, registered_children,
-        eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
-    ) (
-        SELECT
-            %(domain)s,
-            {select_group_by_location_levels}
-            {select_location_levels},
-            %(window_start)s AS month,
-            SUM(registered_eligible_couples),
-            SUM(registered_pregnancies),
-            SUM(registered_children),
-            SUM(eligible_couples_using_fp_method),
-            SUM(high_risk_pregnancies),
-            SUM(institutional_deliveries),
-            SUM(total_deliveries)
-        FROM "{child_tablename}" child
-        WHERE month = %(window_start)s AND {where_locations}
-        {group_by_location_levels}
-    )
-    ON CONFLICT ({insert_into_columns}, month) DO UPDATE SET
-       registered_eligible_couples = EXCLUDED.registered_eligible_couples,
-       registered_pregnancies = EXCLUDED.registered_pregnancies,
-       registered_children = EXCLUDED.registered_children,
-       eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
-       high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
-       institutional_deliveries = EXCLUDED.institutional_deliveries,
-       total_deliveries = EXCLUDED.total_deliveries
-    """.format(
-        agg_tablename=cls._meta.db_table,
-        child_tablename=base_tablename,
-        insert_into_columns=insert_into_columns,
-        select_group_by_location_levels=select_group_by_location_levels,
-        select_location_levels=', '.join(["'ALL'"] * (len(location_levels) - level)),
-        where_locations=' AND '.join(["{} = 'ALL'".format(lev) for lev in location_levels[level:]]),
-        group_by_location_levels=group_by
-    )
