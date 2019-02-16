@@ -121,7 +121,6 @@ class CaseFormMeta(JsonObject):
 class CaseDetailMeta(JsonObject):
     module_id = StringProperty()
     header = DictProperty()
-    format = StringProperty()
     error = StringProperty()
 
 
@@ -156,11 +155,11 @@ class CaseProperty(JsonObject):
             condition=(condition if condition and condition.type == 'if' else None)
         ))
 
-    def add_detail(self, type_, module_id, header, format, error=None):
+    def add_detail(self, type_, module_id, header, error=None):
         {
             "short": self.short_details,
             "long": self.long_details,
-        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, format=format, error=error))
+        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, error=error))
 
 
 class CaseTypeMeta(JsonObject):
@@ -329,7 +328,7 @@ class AppCaseMetadata(JsonObject):
         else:
             error = None
         for prop in props:
-            prop.add_detail(detail_type, module_id, column.header, column.format, error)
+            prop.add_detail(detail_type, module_id, column.header, error)
 
     def get_error_property(self, case_type, name):
         type_ = self.get_type(case_type)
