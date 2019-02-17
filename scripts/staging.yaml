@@ -55,6 +55,4 @@ branches:
   - ns/update_uwsgi+np/celery-4.x-2  # Nick P Feb 14
   - ns/update_uwsgi  # Nitigya Feb 12 
   - np/celery-4.x-2  # Nick P Feb 14
-  - send_report_email_sync  # Nick P Feb 14
-  - debug-celery  # Nick P Feb 14
 submodules: {}
