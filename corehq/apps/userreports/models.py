@@ -472,7 +472,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     def pk_columns(self):
         if not self.sql_settings.primary_key:
-            columns = [i.database_column_name for i in self.get_columns() if i.is_primary_key]
+            columns = []
+            for col in self.get_columns():
+                if col.is_primary_key:
+                    column_name = col.database_column_name
+                    if isinstance(column_name, bytes):
+                        column_name = column_name.decode('utf-8')
+                    columns.append(column_name)
         else:
             columns = self.sql_settings.primary_key
         return columns
