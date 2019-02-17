@@ -46,6 +46,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     checked_paths = []
 
     try:
+        save_app = False
         for index, path in enumerate(zipped_files):
             status.update_progress(len(checked_paths))
             checked_paths.append(path)
@@ -79,7 +80,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                                           _("Matching path found, but could not save the data to couch."))
                 continue
 
-            is_new = form_path not in list(app.multimedia_map)
+            is_new = form_path not in app.multimedia_map
             is_updated = multimedia.attach_data(data,
                                                 original_filename=file_name,
                                                 username=username)
@@ -94,11 +95,14 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                 if share_media:
                     multimedia.update_or_add_license(domain, type=license_name, author=author,
                                                      attribution_notes=attribution_notes)
-                app.create_mapping(multimedia, form_path)
+                save_app = True
+                app.create_mapping(multimedia, form_path, save=False)
 
             media_info = multimedia.get_media_info(form_path, is_updated=is_updated, original_path=path)
             status.add_matched_path(media_class, media_info)
 
+        if save_app:
+            app.save()
         status.update_progress(len(checked_paths))
     except Exception as e:
         status.mark_with_error(_("Error while processing zip: %s" % e))
