@@ -7,20 +7,29 @@ from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 
 class IncentiveReport(object):
 
-    def __init__(self, block, month):
-        self.block = block
+    def __init__(self, location, month, aggregation_level):
+        self.location = location
         self.month = month
+        self.aggregation_level = aggregation_level
 
     def get_excel_data(self):
 
         def _format_infrastructure_data(data):
             return data if data else DATA_NOT_ENTERED
 
-        data = AWWIncentiveReport.objects.filter(
-            month=self.month, block_id=self.block
-        ).order_by(
-            '-supervisor_name'
-        ).values(
+        if self.aggregation_level == 1:
+            data = AWWIncentiveReport.objects.filter(
+                month=self.month, state_id=self.location
+            ).order_by('-district_name', '-block_name', '-supervisor_name')
+        elif self.aggregation_level == 2:
+            data = AWWIncentiveReport.objects.filter(
+                month=self.month, district_id=self.location
+            ).order_by('-block_name', '-supervisor_name')
+        else:
+            data = AWWIncentiveReport.objects.filter(
+                month=self.month, block_id=self.location
+            ).order_by('-supervisor_name')
+        data = data.values(
             'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'aww_name',
             'contact_phone_number', 'wer_weighed', 'wer_eligible', 'awc_num_open', 'valid_visits',
             'expected_visits'
