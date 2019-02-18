@@ -96,14 +96,14 @@
         "display": "Owner ID",
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple"
       },
       {
         "display": "Location Name",
         "column_id": "location_name",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
