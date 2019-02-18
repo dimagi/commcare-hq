@@ -484,6 +484,8 @@ class AggLocation(models.Model):
                 ) as eligible_couples_using_fp_method
             FROM "{woman_tablename}" woman
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
+                  AND opened_on < closed_on
+                  AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )
         ON CONFLICT ({location_levels}, month) DO UPDATE SET
@@ -515,8 +517,10 @@ class AggLocation(models.Model):
                     child_birth_location IS NOT NULL OR child_birth_location != ''
                 ) as total_deliveries
             FROM "{woman_tablename}" woman
-            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s) AND
-                  daterange(opened_on, edd) && daterange(%(window_start)s, %(window_end)s)
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
+                  AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
+                  AND opened_on < closed_on AND opened_on < add
+                  AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )
         ON CONFLICT ({location_levels}, month) DO UPDATE SET
@@ -545,6 +549,8 @@ class AggLocation(models.Model):
                 COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5) as registered_children
             FROM "{child_tablename}" child
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
+                  AND opened_on < closed_on
+                  AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )
         ON CONFLICT ({location_levels}, month) DO UPDATE SET
