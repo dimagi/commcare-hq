@@ -120,25 +120,6 @@ def get_lite_case_json(case_id):
     ).one()
 
 
-def get_case_properties(domain, case_type=None):
-    """
-    For a given case type and domain, get all unique existing case properties,
-    known and unknown
-    """
-    key = [domain]
-    if case_type:
-        key.append(case_type)
-    keys = [row['key'] for row in CommCareCase.get_db().view(
-        'all_case_properties/view',
-        startkey=key,
-        endkey=key + [{}],
-        reduce=True,
-        group=True,
-        group_level=3,
-    )]
-    return sorted(set([property_name for _, _, property_name in keys]))
-
-
 def get_cases_in_domain_by_external_id(domain, external_id):
     return CommCareCase.view(
         'cases_by_domain_external_id/view',

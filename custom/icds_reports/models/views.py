@@ -595,6 +595,7 @@ class CcsRecordMonthlyView(models.Model):
     home_visit_date = models.DateField(blank=True, null=True)
     ifa_consumed_last_seven_days = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    institutional_delivery = models.IntegerField(blank=True, null=True)
     is_ebf = models.SmallIntegerField(blank=True, null=True)
     last_date_thr = models.DateField(blank=True, null=True)
     mobile_number = models.TextField(blank=True, null=True)
@@ -617,6 +618,10 @@ class CcsRecordMonthlyView(models.Model):
     open_in_month = models.SmallIntegerField(blank=True, null=True)
     closed = models.SmallIntegerField(blank=True, null=True)
     anc_abnormalities = models.SmallIntegerField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    eating_extra = models.SmallIntegerField(blank=True, null=True)
+    resting = models.SmallIntegerField(blank=True, null=True)
+    immediate_breastfeeding = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'

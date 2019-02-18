@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 import jsonfield
+import six
 from django.dispatch.dispatcher import receiver
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.signals import location_edited
@@ -131,6 +132,7 @@ class SupplyPointStatusTypes(object):
 
 
 # Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L124
+@six.python_2_unicode_compatible
 class SupplyPointStatus(models.Model):
     status_type = models.CharField(choices=((k, k) for k in SupplyPointStatusTypes.CHOICE_MAP.keys()),
                                    max_length=50)
@@ -146,7 +148,7 @@ class SupplyPointStatus(models.Model):
                              (self.status_type, self.status_value))
         super(SupplyPointStatus, self).save(*args, **kwargs)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (self.status_type, self.status_value)
 
     @property
@@ -199,6 +201,7 @@ class ReportingModel(models.Model):
 
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L9
+@six.python_2_unicode_compatible
 class OrganizationSummary(ReportingModel):
     total_orgs = models.PositiveIntegerField(default=0)
     average_lead_time_in_days = models.FloatField(default=0)
@@ -206,12 +209,13 @@ class OrganizationSummary(ReportingModel):
     class Meta(object):
         app_label = 'ilsgateway'
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s/%s" % (self.location_id, self.date.month, self.date.year)
 
 
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L16
+@six.python_2_unicode_compatible
 class GroupSummary(models.Model):
     """
     Warehouse data related to a particular category of reporting
@@ -293,7 +297,7 @@ class GroupSummary(models.Model):
                               SupplyPointStatusTypes.R_AND_R_FACILITY]
         return self.responded - self.complete
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s - %s" % (self.org_summary, self.title)
 
 

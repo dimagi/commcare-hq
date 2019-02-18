@@ -756,7 +756,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
             'is_system_admin': self.is_system_admin,
-            'criteria_form_active': True,
+            'criteria_form_active': False,
             'schedule_form_active': False,
         }
 

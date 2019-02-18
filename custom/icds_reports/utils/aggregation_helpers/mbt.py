@@ -35,11 +35,6 @@ class MBTHelper(object):
         return state.name
 
     @property
-    def output_file(self):
-        temp_dir = tempfile.gettempdir()
-        return '{}/{}_{}_{}.csv'.format(temp_dir, self.base_tablename, self.state_name, self.month)
-
-    @property
     def location_columns(self):
         return ('awc.state_name', 'awc.district_name', 'awc.block_name', 'awc.awc_name', 'awc.awc_site_code')
 
@@ -154,7 +149,7 @@ class ChildHealthMbtHelper(MBTHelper):
 
     @property
     def person_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 

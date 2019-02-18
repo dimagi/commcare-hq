@@ -103,14 +103,14 @@
         </div>
         <div class="panel-body">
             <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
-            <div data-bind="visible: showSpinner">
+            <div data-bind="visible: showLoadingSpinner">
                 <i class="fa fa-spin fa-spinner"></i>
                 {% trans "Loading Users..." %}
             </div>
-            <div data-bind="visible: showNoUsersMessage">
+            <div data-bind="visible: noUsersMessage">
               <p class="alert alert-info">
                 <i class="fa fa-info-circle"></i>
-                {% trans "This project has no web users. Please invite a web user above." %}
+                <!-- ko text: noUsersMessage --><!-- /ko -->
               </p>
             </div>
             <table class="table table-striped table-responsive"
@@ -198,7 +198,8 @@
                         params="goToPage: goToPage,
                                 perPage: itemsPerPage,
                                 maxPagesShown: 10,
-                                totalItems: totalItems"></pagination>
+                                totalItems: totalItems,
+                                showSpinner: showPaginationSpinner"></pagination>
 
         </div><!-- end .panel-body -->
     </div><!-- end .panel -->

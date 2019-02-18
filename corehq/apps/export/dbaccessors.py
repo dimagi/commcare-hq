@@ -82,14 +82,14 @@ def _get_saved_exports(domain, has_deid_permissions, new_exports_getter, include
         return _get_brief_saved_exports(domain, has_deid_permissions, new_exports_getter)
     if not has_deid_permissions:
         exports = [e for e in exports if not e.is_safe]
-    return sorted(exports, key=lambda e: e.name)
+    return exports
 
 
 def _get_brief_saved_exports(domain, has_deid_permissions, new_exports_getter):
     exports = new_exports_getter(domain)
     if not has_deid_permissions:
         exports = [e for e in exports if not e['is_deidentified']]
-    return sorted(exports, key=lambda x: x['name'])
+    return exports
 
 
 # Note that if include_docs is True, this will return wrapped documents, but

@@ -40,13 +40,13 @@ class ChildHealthMonthlyUCR(ConfigurableReportCustomQueryProvider):
         if limit:
             query_obj = query_obj.limit(limit)
         return OrderedDict([
-            (r.awc_id, r._asdict())
+            (r.owner_id, r._asdict())
             for r in query_obj.all()
         ])
 
     def get_total_row(self):
         query_obj = self._get_query_object(total_row=True)
-        return ["Total"] + [r for r in query_obj.first()]
+        return ["Total"] + [r or 0 for r in query_obj.first()]
 
     def get_total_records(self):
         return self._get_query_object().count()
@@ -64,7 +64,7 @@ class MPR6bChildHealth(ChildHealthMonthlyUCR):
             self._column_helper('F').label('pse_daily_attendance_female'),
         )
         if not total_row:
-            columns = (self.table.c.awc_id.label("awc_id"),) + columns
+            columns = (self.table.c.awc_id.label("owner_id"),) + columns
         return columns
 
     def _get_query_object(self, total_row=False):
@@ -122,14 +122,14 @@ class MPR6acChildHealth(ChildHealthMonthlyUCR):
             self._column_helper("16_days", "female", "minority"),
             self._column_helper("absent", "male"),
             self._column_helper("absent", "female"),
-            self._column_helper("partial", "male"),
-            self._column_helper("partial", "female"),
-            func.count(self.table.c.case_id).filter(self.table.c.sex == 'M').label("child_count_male"),
             func.count(self.table.c.case_id).filter(self.table.c.sex == 'F').label("child_count_female"),
+            func.count(self.table.c.case_id).filter(self.table.c.sex == 'M').label("child_count_male"),
+            self._column_helper("partial", "female"),
+            self._column_helper("partial", "male"),
         )
 
         if not total_row:
-            return (self.table.c.awc_id.label("awc_id"),) + columns
+            return (self.table.c.awc_id.label("owner_id"),) + columns
 
         return columns
 
@@ -182,7 +182,7 @@ class MPR5ChildHealth(ChildHealthMonthlyUCR):
             'female': columns.sex == 'F',
         }[other]
         return func.count(self.table.c.case_id).filter(column).label(
-            "thr_rations_{}_{}_{}".format(thr, gender_or_migrant, other))
+            "thr_rations_{}_{}".format(gender_or_migrant, other))
 
     def _columns(self, total_row=False):
         columns = (
@@ -200,8 +200,8 @@ class MPR5ChildHealth(ChildHealthMonthlyUCR):
             self._column_helper("absent", "female"),
             self._column_helper("partial", "male"),
             self._column_helper("partial", "female"),
-            self._column_helper("migrant", "male"),
-            self._column_helper("migrant", "female"),
+            self._column_helper("rations", "migrant", "male"),
+            self._column_helper("rations", "migrant", "female"),
             func.count(self.table.c.case_id).filter(
                 self.table.c.sex == 'M').label("child_count_male"),
             func.count(self.table.c.case_id).filter(
@@ -213,7 +213,7 @@ class MPR5ChildHealth(ChildHealthMonthlyUCR):
         )
 
         if not total_row:
-            return (self.table.c.awc_id.label("awc_id"),) + columns
+            return (self.table.c.awc_id.label("owner_id"),) + columns
 
         return columns
 

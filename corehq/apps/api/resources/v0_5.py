@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.http import Http404
+from django.conf.urls import url
+from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.forms import ValidationError
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
@@ -19,8 +20,10 @@ from django.urls import reverse
 from tastypie import fields
 from tastypie.bundle import Bundle
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
+from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
@@ -930,3 +933,41 @@ class DomainUsernames(Resource):
         results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1]))
                    for user_pair in user_ids_username_pairs]
         return results
+
+
+ODATA_CASE_RESOURCE_NAME = 'Cases'
+
+
+class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
+
+    case_type = None
+
+    def dispatch(self, request_type, request, **kwargs):
+        if not toggles.ODATA.enabled_for_request(request):
+            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        self.case_type = kwargs['case_type']
+        return super(ODataCommCareCaseResource, self).dispatch(request_type, request, **kwargs)
+
+    def determine_format(self, request):
+        # json only
+        return 'application/json'
+
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        # populate the domain which is required by the serializer
+        data['domain'] = request.domain
+        data['case_type'] = self.case_type
+        data['api_path'] = request.path
+        response = super(ODataCommCareCaseResource, self).create_response(request, data, response_class,
+                                                                          **response_kwargs)
+        # adds required odata headers to the returned response
+        return add_odata_headers(response)
+
+    class Meta(v0_4.CommCareCaseResource.Meta):
+        resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
+        serializer = ODataCommCareCaseSerializer()
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<case_type>[\w\d_.-]+)/$" % self._meta.resource_name,
+                self.wrap_view('dispatch_list'))
+        ]

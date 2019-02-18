@@ -301,6 +301,7 @@ class OnlyActiveProductManager(ProductManager):
         return super(OnlyActiveProductManager, self).get_queryset().filter(is_archived=False)
 
 
+@six.python_2_unicode_compatible
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
@@ -327,7 +328,7 @@ class SQLProduct(models.Model):
     objects = ProductManager()
     active_objects = OnlyActiveProductManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return "{} ({})".format(self.name, self.domain)
 
     def __repr__(self):

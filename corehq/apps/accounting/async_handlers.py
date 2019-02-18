@@ -122,12 +122,12 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     """
     slug = 'select2_rate'
     allowed_actions = [
-        'feature_id',
+        'select2_feature_id',
         'product_rate_id',
     ]
 
     @property
-    def feature_id_response(self):
+    def select2_feature_id_response(self):
         features = Feature.objects
         if self.existing:
             features = features.exclude(name__in=self.existing)
@@ -214,7 +214,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__icontains=self.search_string)
-        return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]
+        return [(p.id, six.text_type(p)) for p in plan_versions.order_by('plan__name')]
 
     @property
     def new_plan_version_response(self):

@@ -239,8 +239,8 @@ def resend_pending_invitations():
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
-    for domain in domains:
-        invitations = Invitation.by_domain(domain.name)
+    for domain_obj in domains:
+        invitations = Invitation.by_domain(domain_obj.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
