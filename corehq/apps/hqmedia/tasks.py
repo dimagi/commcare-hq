@@ -3,6 +3,8 @@ from io import open
 import os
 import tempfile
 from wsgiref.util import FileWrapper
+from celery import states
+from celery.exceptions import Ignore
 from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -46,6 +48,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     checked_paths = []
 
     try:
+        save_app = False
         for index, path in enumerate(zipped_files):
             status.update_progress(len(checked_paths))
             checked_paths.append(path)
@@ -79,7 +82,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                                           _("Matching path found, but could not save the data to couch."))
                 continue
 
-            is_new = form_path not in list(app.multimedia_map)
+            is_new = form_path not in app.multimedia_map
             is_updated = multimedia.attach_data(data,
                                                 original_filename=file_name,
                                                 username=username)
@@ -94,11 +97,14 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                 if share_media:
                     multimedia.update_or_add_license(domain, type=license_name, author=author,
                                                      attribution_notes=attribution_notes)
-                app.create_mapping(multimedia, form_path)
+                save_app = True
+                app.create_mapping(multimedia, form_path, save=False)
 
             media_info = multimedia.get_media_info(form_path, is_updated=is_updated, original_path=path)
             status.add_matched_path(media_class, media_info)
 
+        if save_app:
+            app.save()
         status.update_progress(len(checked_paths))
     except Exception as e:
         status.mark_with_error(_("Error while processing zip: %s" % e))
@@ -152,6 +158,9 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     z.writestr(path, data, file_compression)
                     progress += file_progress / file_count
                     DownloadBase.set_progress(build_application_zip, progress, 100)
+        if errors:
+            build_application_zip.update_state(state=states.FAILURE, meta={'errors': errors})
+            raise Ignore()  # We want the task to fail hard, so ignore any future updates to it
     else:
         DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
 
@@ -175,6 +184,3 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
 
     DownloadBase.set_progress(build_application_zip, 100, 100)
-    return {
-        "errors": errors,
-    }

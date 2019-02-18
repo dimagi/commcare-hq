@@ -168,7 +168,7 @@ Migrating one select2 widget typically leads to migrating a number of other depe
 - Pick a page that includes a script tag for `select2-3.5.2-legacy/select2.js` (rare, because most pages use the `@use_select2` decorator rather than including a script tag)
 - Browse the [requirejs bundle configuration](https://www.commcarehq.org/static/build.txt) to find modules that indirectly depend on `select2-3.5.2-legacy/select2`
 - Javascript modules that don't yet declare dependencies but that call the `.select2()` function
-- Pages that use a select2-dependent knockout binding like `select2` or `questionsSelect`
+- Pages that use a select2-dependent knockout binding like `select2`, `autocompleteSelect2`, or `questionsSelect`
 
 ### Migrating
 
@@ -203,7 +203,7 @@ Reference PRs:
 
 - A single page can only use one version of select2, so all instances on the page need to be migrated.
 - If you changed any python, most likely a form, any other pages using that form also likely need to be migrated.
-- If you're working on a requirejs page, you need to migrate the entire bundle. A bundle that contains both versions of select2 will throw javascript errors. Deploy to staging and check the [staging requirejs bundle configuration](https://staging.commcarehq.org/static/build.txt) to make sure you didn't introduce a conflict.
+- If you're working on a requirejs page, you need to migrate the entire bundle. A bundle that contains both versions of select2 will throw javascript errors. There's a test to check for this, which you can also run manually: `corehq.apps.hqwebapp.tests.test_requirejs:TestRequireJSBuild.test_no_select2_conflicts`
 
 ### Testing
 
