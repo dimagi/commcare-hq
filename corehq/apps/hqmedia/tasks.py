@@ -3,6 +3,8 @@ from io import open
 import os
 import tempfile
 from wsgiref.util import FileWrapper
+from celery import states
+from celery.exceptions import Ignore
 from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -156,6 +158,9 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     z.writestr(path, data, file_compression)
                     progress += file_progress / file_count
                     DownloadBase.set_progress(build_application_zip, progress, 100)
+        if errors:
+            build_application_zip.update_state(state=states.FAILURE, meta={'errors': errors})
+            raise Ignore()  # We want the task to fail hard, so ignore any future updates to it
     else:
         DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
 
@@ -179,6 +184,3 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
 
     DownloadBase.set_progress(build_application_zip, 100, 100)
-    return {
-        "errors": errors,
-    }
