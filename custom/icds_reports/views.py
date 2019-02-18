@@ -1820,8 +1820,6 @@ class CasDataExportAPIView(View):
             return JsonResponse(self.message('invalid_type'), status=400)
         type_code = self.get_type_code(data_type)
 
-        import ipdb; ipdb.set_trace()
-
         sync, blob_id = get_cas_data_blob_file(type_code, state_id, selected_date)
 
         try:
