@@ -109,7 +109,7 @@ class LocalCommCareHqClient(object):
         def _inner(es_query_set, start, params):
             from commcare_export.cli import logger
             logger.info("Fetching batch: {}-{}".format(start, start + self.limit))
-            return es_query_set[start:start + self.limit]
+            return list(es_query_set[start:start + self.limit])
 
         return _inner(es_query_set, start, params)
 
