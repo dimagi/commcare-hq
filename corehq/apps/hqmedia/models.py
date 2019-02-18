@@ -12,6 +12,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.template.defaultfilters import filesizeformat
 
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.soft_assert import soft_assert
@@ -880,7 +881,8 @@ class ApplicationMediaMixin(Document, MediaMixin):
         paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths() | self.logo_paths
         deleted_media = []
-        allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
+        allow_deletion = not toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain)
+        allow_deletion = allow_deletion and self.domain not in {'icds-cas', 'icds-test'}
         for path in paths:
             if path not in permitted_paths:
                 map_item = self.multimedia_map[path]
